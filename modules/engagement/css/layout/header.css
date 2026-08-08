@@ -1,0 +1,75 @@
+header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
+    height: var(--header-height);
+    background: var(--color3);
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+    transition: left 0.3s ease, width 0.3s ease;
+    
+}
+
+header i {
+    font-size: 1.5rem;
+    color: var(--color8);
+    margin: 1rem;
+    cursor: pointer;
+}
+
+.hamburger {
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: 1rem;
+    transition: all 0.3s ease;
+}
+
+.hamburger span {
+    width: 25px;
+    height: 3px;
+    background: var(--color8);
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.hamburger:hover span {
+    background: var(--color1);
+}
+
+@media (max-width: 768px) {
+        header {
+        left: 0;
+        width: 100%;
+    }
+
+        .hamburger {
+        display: flex;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        height: 50px;
+    }
+    
+    header div i {
+        font-size: 1.2rem;
+        margin: 0.5rem;
+    }
+
+}
+
+.realtime {
+    margin-left: auto;
+    margin-right: 1rem;
+    font-size: 1rem;
+    color: var(--color8);
+    padding: 0.5rem 1rem;
+}
