@@ -1,3 +1,9 @@
+<?php
+include_once __DIR__ . '/../../../auth/session.php';
+include __DIR__ . '/../classes/Employee.php';
+$employeeClass = new Employee();
+
+?>
 
 <aside class="sidebar">
     <div class="school-logo">
@@ -28,11 +34,11 @@
                     <div class="dropdown-header">
                         <div class="dropdown-user-info">
                             <div class="dropdown-avatar">
-                                S
+                                <?= substr(htmlspecialchars($employeeClass->getEmployeeName()), 0, 1) ?>
                             </div>
                             <div>
-                                <strong>Name</strong>
-                                <span>Position</span>
+                                <strong><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></strong>
+                                <span><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></span>
                             </div>
                         </div>
                     </div>
@@ -45,7 +51,7 @@
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="/hrms/auth/logout.php" class="signout-link">
+                            <a href="/hrms-capstone-master/auth/logout.php" class="signout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                             </a>
                         </li>
@@ -56,11 +62,11 @@
         </div>
     </div>
     <div class="sidebar-header">
-        <div class="user_avatar">S</div>
-        <h1 class="employee_name">Name</h1>
-        <p class="employee_position">Position</p>
+        <div class="user_avatar"><?= substr(htmlspecialchars($employeeClass->getEmployeeName()), 0, 1) ?></div>
+        <h1 class="employee_name"><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></h1>
+        <p class="employee_position"><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></p>
     </div>
-    <h2>Compliance Dashboard</h2>
+    <h2>Recruitment Dashboard</h2>
     <ul>
         <?php $pageController->renderNav(); ?>
     </ul>

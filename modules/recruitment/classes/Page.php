@@ -6,20 +6,23 @@ class Page {
 
     private $labels = [
         'dashboard-overview'          => 'Dashboard Overview',
-        'period-manager'             => 'Period Manager',
-        'payroll-processing'  => 'Payroll Processing',
-        'payslips'   => 'Payslips',
-        'deductions'=> 'Deductions',
-        'reports'=> 'Reports',
-        'final-settlement'     => 'Final Settlement',
+        'account-creation'            => 'Account Creation',
+        'job-list'                    => 'Job Lists',
+        'applications'                => 'Applications',
+        'parsed-resumes'              => 'Parsed Resumes',
+        'schedule-tracker'            => 'Schedule Tracker',
+        'interview-results'           => 'Interview Results',
+        'offered-list'                => 'Offered Lists',
+        'offer'                       => 'Offer',
+        'Onboarding'                  => 'Onboarding',
     ];
 
     private $sections = [
         'top'             => ['dashboard-overview'],
-        'payroll-administration'  => ['period-manager', 'payroll-processsing'],
-        'employee-payroll'      => ['payslips', 'deductions'],
-        'reports-&-analytics'       => ['reports'],
-        'employee-exit-management' => ['final-settlement']
+        'user-management' => ['account-creation'],
+        'recruitment'     => ['job-list', 'applications', 'parsed-resumes'],
+        'interviews'      => ['schedule-tracker', 'interview-results'],
+        'hiring'          => ['offered-list', 'offer', 'onboarding'],
     ];
 
     public function __construct($pagesDir = null) {
@@ -66,7 +69,7 @@ class Page {
         }
 
         // Grouped sections
-        $sectionOrder = ['payroll-administration', 'employee-payroll', 'reports-&-analytics', 'employee-exit-management'];
+        $sectionOrder = ['user-management','recruitment', 'interviews', 'hiring'];
         foreach ($sectionOrder as $section) {
             echo '<div class="separator"></div>';
             echo '<h3>' . ucwords(str_replace('-', ' ', $section)) . '</h3>';
