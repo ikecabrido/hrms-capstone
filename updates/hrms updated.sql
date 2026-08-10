@@ -49,6 +49,7 @@ INSERT INTO `hrms_department` (`department_id`, `department_name`, `department_h
 (23, 'Clinic', NULL),
 (24, 'Workforce', NULL),
 (25, 'Employee Engagement', NULL);
+(26, 'Portal',NULL);
 
 -- --------------------------------------------------------
 
@@ -85,6 +86,7 @@ INSERT INTO `hrms_employee` (`employee_id`, `first_name`, `middle_name`, `last_n
 (1020, 'Geoffrey', NULL, 'Balansag', 11, 'active', '2026-08-09', 29, 25, 51),
 (1021, 'Johnloyd', NULL, 'Reyes', 9, 'active', '2026-08-09', 30, 22, 49),
 (1022, 'Alexis', NULL, 'Cueto', 10, 'active', '2026-08-09', 31, 23, 52);
+(1023, 'Robert',NULL,'Campos',12,'active',,'2026-08-09'32,26,53);
 
 -- --------------------------------------------------------
 
@@ -114,6 +116,7 @@ INSERT INTO `hrms_position` (`position_id`, `position_name`, `department`) VALUE
 (50, 'Time and Attendance', 18),
 (51, 'Employee Engagement', 25),
 (52, 'Clinic', 23);
+(53,'Portal',26)
 
 -- --------------------------------------------------------
 
@@ -143,6 +146,7 @@ INSERT INTO `hrms_roles` (`role_id`, `role_name`, `department`) VALUES
 (9, 'Exit', 22),
 (10, 'Clinic', 23),
 (11, 'Employee Engagement', 25);
+(12,'Portal',26);
 
 -- --------------------------------------------------------
 
@@ -175,7 +179,7 @@ INSERT INTO `user_account` (`user_id`, `password`, `employee_id`, `email`, `crea
 (29, '$2y$10$88ez1flvZDHzMKv/jQdxE.HbveLfEt6x5fEDGjfX/T0GEqPT8iN0G', 1020, NULL, '2026-08-09 05:29:45', NULL),
 (30, '$2y$10$DQB1tiH4sQ2RE7yWxOcz3OLUwoKvO6SghNeaDmT0.1nfJpJv/zJWG', 1021, NULL, '2026-08-09 05:30:45', NULL),
 (31, '$2y$10$Htc.AaV0g3yW1hrOtux6fu1oOXiGgxz5WctWPfE/CjccN3EPwtYlG', 1022, NULL, '2026-08-09 05:31:06', NULL);
-
+(32, '$2y$10$LscHpCGVKkgXBbqYCp4wuuLq3nWpsnV./3mR6n7LcHnLnBBaFZCGm',1023,NULL,'2026-08-09 05:31:06',NULL);
 --
 -- Indexes for dumped tables
 --
