@@ -22,10 +22,6 @@ class Employee
             $this->conn = $database->getConnection();
         }
     }
-
-    /**
-     * Get all employees
-     */
     public function getEmployees()
     {
         $sql = "SELECT 
@@ -48,10 +44,6 @@ class Employee
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
-    /**
-     * Get logged-in employee ID
-     */
     public function getEmployeeId()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -60,10 +52,6 @@ class Employee
 
         return $_SESSION['employee_id'] ?? null;
     }
-
-    /**
-     * Get logged-in employee name
-     */
     public function getEmployeeName()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -93,10 +81,6 @@ class Employee
 
         return 'Unknown User';
     }
-
-    /**
-     * Get logged-in employee position
-     */
     public function getEmployeePosition()
     {
         if (session_status() === PHP_SESSION_NONE) {
