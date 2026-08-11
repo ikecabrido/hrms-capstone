@@ -1,0 +1,45 @@
+The Employee Portal includes the following features:
+
+Secure employee login and authentication.
+
+Employee profile management, allowing users to view and update their personal information.
+
+Attendance monitoring, including daily time records and attendance history.
+
+Leave management, enabling employees to submit leave requests and monitor their approval status.
+
+Payroll viewing, allowing employees to access salary summaries, payslips, and payroll history.
+
+Benefits and government contributions viewing (e.g., SSS, PhilHealth, Pag-IBIG, and tax records, if applicable).
+
+Company announcements and notifications.
+
+Document management for downloading HR-related forms, certificates, and company policies.
+
+Performance evaluation viewing, where employees can access their performance appraisal results.
+
+Training and seminar records, allowing employees to monitor completed and upcoming training activities.
+
+Dashboard displaying employee information, recent activities, announcements, and pending requests. 
+
+Online meeting management, admin can create meeting link where employees are able to join or share links.
+
+
+
+
+
+
+
+
+
+leave request
+online training
+course enrollment training
+evaluation (types of evaluation, example performance eval, training eval)
+payslip request
+medical records & requirements 
+
+employee self upload of documents
+notification
+edit profile
+

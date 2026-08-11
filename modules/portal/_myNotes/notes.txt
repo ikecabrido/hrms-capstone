@@ -1,0 +1,28 @@
+code for showing variable data in the UI
+
+<?php
+echo '<pre>';
+print_r($_SESSION);
+echo '</pre>';
+?>
+
+
+            var_dump($employee_id, $password);
+            exit;
+
+        <?php
+        $employee = "employee";
+        $hashedPass = password_hash($employee, PASSWORD_DEFAULT);
+echo '<pre>';
+print_r($hashedPass);
+echo '</pre>';
+?>
+
+
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=itoayakingpangalan@gmail.com
+MAIL_PASSWORD=swus-------fcwaqoljvdyb
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=itoayakingpangalan-------@gmail.com
+MAIL_FROM_NAME="HR Employee Portal"

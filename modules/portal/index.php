@@ -1,17 +1,56 @@
 <?php
-require_once 'classes/Page.php';
 
-$pageController = new Page();
-$currentPage = $pageController->getPage();
+use App\Controllers\AuthController;
+use App\Controllers\PortalController;
 
-include 'includes/sidebar.php';
-include 'includes/header.php';
-?>
+require_once __DIR__ . '/vendor/autoload.php';
 
-<main class="main-content">
-    <div class="container">
-        <?php $pageController->render(); ?>
-    </div>
-</main>
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
-<?php include 'includes/footer.php'; ?>
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$routes = [
+    // Authentication
+    'auth-index'  => [AuthController::class, 'index'],
+    'auth-login'  => [AuthController::class, 'login'],
+    'auth-logout' => [AuthController::class, 'logout'],
+
+    // Dashboard
+    'employee-dashboard' => [PortalController::class, 'dashboard'],
+];
+
+$url = trim($_GET['url'] ?? '');
+
+if ($url === '') {
+    $url = 'auth-index';
+}
+
+if (!array_key_exists($url, $routes)) {
+    http_response_code(404);
+    require __DIR__ . '/app/views/errors/error-404.php';
+    exit;
+}
+
+$protectedRoutes = [
+    'employee-dashboard',
+];
+
+if (in_array($url, $protectedRoutes, true)) {
+
+    if (empty($_SESSION['user_id'])) {
+
+        header(
+            'Location: /hrms-capstone/modules/portal/index.php?url=auth-index'
+        );
+
+        exit;
+    }
+}
+
+[$controller, $method] = $routes[$url];
+
+$controllerInstance = new $controller();
+$controllerInstance->$method();

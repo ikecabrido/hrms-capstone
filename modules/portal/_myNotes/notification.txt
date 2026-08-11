@@ -1,0 +1,36 @@
+Admin creates announcement
+            │
+            ▼
+Save notification to database
+            │
+            ▼
+Assign recipient(s)
+            │
+            ▼
+Employee logs in
+            │
+            ▼
+System loads unread notifications
+            │
+            ▼
+Employee reads notification
+            │
+            ▼
+Mark notification as read
+
+
+
+
+Notification Types
+
+You can categorize notifications so different modules can generate them.
+
+Announcement
+Payroll
+Leave Request
+Training
+Performance Review
+Employee Documents
+Meeting
+Compliance
+General

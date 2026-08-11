@@ -1,0 +1,1360 @@
+/* =========================================================
+   EMPLOYEE DASHBOARD
+   ========================================================= */
+
+.employee-dashboard {
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   WELCOME
+   ========================================================= */
+
+.dashboard-welcome {
+  position: relative;
+
+  width: 100%;
+  min-height: 200px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 32px 38px;
+  margin-bottom: 22px;
+
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 55%, #eef6ff 100%);
+
+  border-left: 5px solid #2563eb;
+
+  border-top: 1px solid #d6e5f7;
+  border-right: 1px solid #d6e5f7;
+  border-bottom: 1px solid #d6e5f7;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    0 10px 30px rgba(37, 99, 235, 0.06);
+
+  box-sizing: border-box;
+}
+
+.welcome-label {
+  display: block;
+  margin-bottom: 7px;
+
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.welcome-content h1 {
+  margin: 0;
+
+  color: #1f2937;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.welcome-content h1 span {
+  color: #2563eb;
+}
+
+.welcome-content p {
+  margin: 8px 0 0;
+
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* =========================================================
+   CLOCK
+   ========================================================= */
+
+.welcome-time {
+  min-width: 130px;
+  text-align: right;
+}
+
+.time-label {
+  display: block;
+
+  color: #9ca3af;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.realtime {
+  margin-top: 4px;
+
+  color: #1f2937;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   DASHBOARD BANNER
+   ========================================================= */
+
+.dashboard-banner {
+  position: relative;
+
+  width: 100%;
+  height: 240px;
+
+  margin-bottom: 28px;
+
+  overflow: hidden;
+  border-radius: 16px;
+
+  background: #e5e7eb;
+}
+
+.dashboard-banner img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: flex-end;
+
+  padding: 28px;
+
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.05));
+
+  color: #ffffff;
+}
+
+.banner-overlay span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.banner-overlay h2 {
+  margin: 5px 0 0;
+
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+.dashboard-section {
+  margin-bottom: 28px;
+}
+
+.dashboard-section-header {
+  margin-bottom: 14px;
+}
+
+.dashboard-section-header span {
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.dashboard-section-header h2 {
+  margin: 3px 0 0;
+
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   QUICK ACCESS
+   ========================================================= */
+
+.quick-access-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 14px;
+}
+
+.dashboard-card {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  min-width: 0;
+  padding: 18px;
+
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  text-decoration: none;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #dbeafe;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-card-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-right: 13px;
+
+  border-radius: 11px;
+
+  font-size: 17px;
+}
+
+.dashboard-card-icon.attendance {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.dashboard-card-icon.leave {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.dashboard-card-icon.payroll {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.dashboard-card-icon.benefits {
+  background: #fdf2f8;
+  color: #db2777;
+}
+
+.dashboard-card-icon.performance {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+
+.dashboard-card-icon.training {
+  background: #ecfeff;
+  color: #0891b2;
+}
+
+.dashboard-card-content {
+  min-width: 0;
+}
+
+.dashboard-card-content h3 {
+  margin: 0;
+
+  color: #1f2937;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dashboard-card-content p {
+  margin: 4px 0 0;
+
+  color: #6b7280;
+  font-size: 12px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-arrow {
+  margin-left: auto;
+  padding-left: 10px;
+
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+/* =========================================================
+   REQUESTS
+   ========================================================= */
+
+.request-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 14px;
+}
+
+.request-card {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 18px;
+
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  text-decoration: none;
+
+  transition: 0.2s ease;
+}
+
+.request-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #dbeafe;
+
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.request-card > i {
+  color: #2563eb;
+  font-size: 20px;
+}
+
+.request-card h3 {
+  margin: 0;
+
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.request-card p {
+  margin: 4px 0 0;
+
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 991px) {
+  .employee-dashboard {
+    padding: 16px;
+  }
+
+  .quick-access-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .request-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-banner {
+    height: 210px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .employee-dashboard {
+    padding: 12px;
+  }
+
+  .dashboard-welcome {
+    align-items: flex-start;
+    flex-direction: column;
+
+    padding: 20px;
+
+    gap: 15px;
+  }
+
+  .welcome-content h1 {
+    font-size: 22px;
+  }
+
+  .welcome-time {
+    width: 100%;
+    text-align: left;
+  }
+
+  .realtime {
+    font-size: 22px;
+  }
+
+  .dashboard-banner {
+    height: 170px;
+    border-radius: 12px;
+  }
+
+  .banner-overlay {
+    padding: 20px;
+  }
+
+  .banner-overlay h2 {
+    font-size: 19px;
+  }
+
+  .quick-access-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-card {
+    padding: 16px;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .employee-dashboard {
+    padding: 10px;
+  }
+
+  .dashboard-welcome {
+    padding: 17px;
+  }
+
+  .welcome-content h1 {
+    font-size: 20px;
+  }
+
+  .welcome-content p {
+    font-size: 12px;
+  }
+
+  .dashboard-banner {
+    height: 145px;
+  }
+
+  .banner-overlay {
+    padding: 16px;
+  }
+
+  .banner-overlay h2 {
+    font-size: 17px;
+  }
+}
+
+/* =========================================================
+   DASHBOARD BANNER
+   ========================================================= */
+
+.dashboard-banner {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  margin-bottom: 28px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #e5e7eb;
+  cursor: pointer;
+}
+
+/* Image */
+.dashboard-banner img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+
+  transition:
+    transform 0.6s ease,
+    filter 0.6s ease;
+}
+
+/* Hover image movement */
+.dashboard-banner:hover img {
+  transform: scale(1.06);
+  filter: brightness(0.85);
+}
+
+/* Dark overlay */
+.banner-overlay {
+  position: absolute;
+  inset: 0;
+
+  display: flex;
+  align-items: flex-end;
+
+  padding: 30px;
+
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.05));
+
+  color: #ffffff;
+
+  transition: background 0.4s ease;
+}
+
+/* Slightly darken on hover */
+.dashboard-banner:hover .banner-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.15));
+}
+
+/* Text */
+.banner-overlay span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.banner-overlay h2 {
+  margin: 0;
+
+  font-size: 25px;
+  font-weight: 600;
+  line-height: 1.3;
+
+  transition: transform 0.4s ease;
+}
+
+/* Move text slightly on hover */
+.dashboard-banner:hover .banner-overlay h2 {
+  transform: translateX(6px);
+}
+
+/* =========================================================
+   LARGE DESKTOP
+   ========================================================= */
+
+@media (min-width: 1200px) {
+  .dashboard-banner {
+    height: 280px;
+  }
+
+  .banner-overlay {
+    padding: 35px;
+  }
+
+  .banner-overlay h2 {
+    font-size: 27px;
+  }
+}
+
+/* =========================================================
+   LAPTOP
+   ========================================================= */
+
+@media (max-width: 1199px) {
+  .dashboard-banner {
+    height: 240px;
+  }
+
+  .banner-overlay {
+    padding: 26px;
+  }
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 991px) {
+  .dashboard-banner {
+    height: 210px;
+    border-radius: 14px;
+  }
+
+  .banner-overlay {
+    padding: 22px;
+  }
+
+  .banner-overlay h2 {
+    font-size: 21px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .dashboard-banner {
+    height: 180px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+  }
+
+  .dashboard-banner img {
+    object-position: center;
+  }
+
+  .banner-overlay {
+    padding: 18px;
+  }
+
+  .banner-overlay span {
+    font-size: 10px;
+  }
+
+  .banner-overlay h2 {
+    font-size: 18px;
+  }
+
+  /* Disable movement on touch-sized screens */
+  .dashboard-banner:hover img {
+    transform: none;
+    filter: none;
+  }
+
+  .dashboard-banner:hover .banner-overlay h2 {
+    transform: none;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .dashboard-banner {
+    height: 150px;
+    border-radius: 10px;
+  }
+
+  .banner-overlay {
+    padding: 15px;
+  }
+
+  .banner-overlay h2 {
+    font-size: 16px;
+  }
+}
+
+/* =========================================================
+   VERY SMALL PHONES
+   ========================================================= */
+
+@media (max-width: 360px) {
+  .dashboard-banner {
+    height: 135px;
+  }
+
+  .banner-overlay {
+    padding: 13px;
+  }
+
+  .banner-overlay h2 {
+    font-size: 15px;
+  }
+}
+/* =========================================================
+   EMPLOYEE DASHBOARD WELCOME
+   ========================================================= */
+
+.dashboard-welcome {
+  position: relative;
+
+  width: 100%;
+  min-height: 190px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 30px 36px;
+  margin-bottom: 20px;
+
+  overflow: hidden;
+
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.welcome-content {
+  position: relative;
+  z-index: 2;
+  max-width: 750px;
+}
+
+.welcome-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  margin-bottom: 8px;
+
+  color: #2563eb;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.welcome-label i {
+  width: 7px;
+  height: 7px;
+
+  display: inline-block;
+
+  background: #2563eb;
+  border-radius: 50%;
+}
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.welcome-content h1 {
+  margin: 0;
+
+  color: #1f2937;
+
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.welcome-content h1 span {
+  color: #2563eb;
+}
+
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
+
+.welcome-content p {
+  margin: 9px 0 0;
+
+  color: #6b7280;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   DECORATIVE LINE
+   ========================================================= */
+
+.welcome-line {
+  width: 0;
+  height: 3px;
+
+  margin-top: 16px;
+
+  background: #2563eb;
+  border-radius: 10px;
+}
+
+/* =========================================================
+   DECORATIVE ICON
+   ========================================================= */
+
+.welcome-decoration {
+  position: relative;
+  z-index: 2;
+
+  width: 90px;
+  height: 90px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-right: 25px;
+
+  background: #eff6ff;
+
+  border: 1px solid #dbeafe;
+
+  border-radius: 50%;
+
+  color: #2563eb;
+
+  font-size: 36px;
+
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.1);
+}
+
+/* =========================================================
+   ANIMATED BACKGROUND GLOWS
+   ========================================================= */
+
+.welcome-glow {
+  position: absolute;
+
+  width: 180px;
+  height: 180px;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  filter: blur(5px);
+
+  opacity: 0.45;
+}
+
+.glow-one {
+  top: -90px;
+  right: 100px;
+
+  background: #dbeafe;
+}
+
+.glow-two {
+  bottom: -120px;
+  right: 300px;
+
+  background: #e0e7ff;
+}
+
+/* =========================================================
+   HOVER
+   ========================================================= */
+
+.dashboard-welcome {
+  transition:
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.dashboard-welcome:hover {
+  border-color: #dbeafe;
+
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.08);
+}
+
+.welcome-decoration {
+  transition:
+    transform 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+.dashboard-welcome:hover .welcome-decoration {
+  transform: translateY(-4px) rotate(3deg);
+
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.15);
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 991px) {
+  .dashboard-welcome {
+    min-height: 175px;
+    padding: 26px 28px;
+  }
+
+  .welcome-content h1 {
+    font-size: 26px;
+  }
+
+  .welcome-decoration {
+    width: 75px;
+    height: 75px;
+
+    margin-right: 10px;
+
+    font-size: 30px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .dashboard-welcome {
+    min-height: 170px;
+
+    padding: 22px;
+
+    border-radius: 14px;
+  }
+
+  .welcome-content {
+    max-width: 100%;
+  }
+
+  .welcome-content h1 {
+    font-size: 22px;
+  }
+
+  .welcome-content p {
+    font-size: 13px;
+  }
+
+  .welcome-decoration {
+    display: none;
+  }
+
+  .glow-one {
+    right: -80px;
+  }
+
+  .glow-two {
+    right: 100px;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 480px) {
+  .dashboard-welcome {
+    min-height: 155px;
+    padding: 18px;
+  }
+
+  .welcome-label {
+    font-size: 10px;
+  }
+
+  .welcome-content h1 {
+    font-size: 20px;
+  }
+
+  .welcome-content p {
+    font-size: 12px;
+  }
+
+  .welcome-line {
+    margin-top: 12px;
+  }
+}
+/* =========================================================
+   ENHANCED WELCOME HOVER EFFECT
+   ========================================================= */
+
+.dashboard-welcome {
+  position: relative;
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.dashboard-welcome:hover {
+  transform: translateY(-6px);
+
+  border-color: #93c5fd;
+
+  box-shadow:
+    0 18px 40px rgba(37, 99, 235, 0.16),
+    0 0 0 1px rgba(37, 99, 235, 0.08);
+}
+
+/* =========================================================
+   EMPLOYEE NAME
+   ========================================================= */
+
+.welcome-content h1 span {
+  display: inline-block;
+
+  transition:
+    transform 0.35s ease,
+    color 0.35s ease,
+    text-shadow 0.35s ease;
+}
+
+.dashboard-welcome:hover .welcome-content h1 span {
+  transform: translateX(7px);
+
+  color: #1d4ed8;
+
+  text-shadow: 0 3px 12px rgba(37, 99, 235, 0.2);
+}
+
+/* =========================================================
+   PORTAL INDICATOR
+   ========================================================= */
+
+.welcome-label i {
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.dashboard-welcome:hover .welcome-label i {
+  transform: scale(1.7);
+
+  box-shadow:
+    0 0 0 6px rgba(37, 99, 235, 0.15),
+    0 0 12px rgba(37, 99, 235, 0.35);
+}
+
+/* =========================================================
+   DECORATIVE ICON
+   ========================================================= */
+
+.welcome-decoration {
+  transition:
+    transform 0.5s ease,
+    box-shadow 0.5s ease,
+    background 0.5s ease,
+    border-color 0.5s ease;
+}
+
+.dashboard-welcome:hover .welcome-decoration {
+  transform: translateY(-10px) rotate(8deg) scale(1.1);
+
+  background: #dbeafe;
+
+  border-color: #93c5fd;
+
+  box-shadow:
+    0 18px 35px rgba(37, 99, 235, 0.22),
+    0 0 25px rgba(37, 99, 235, 0.12);
+}
+
+/* =========================================================
+   BACKGROUND GLOWS
+   ========================================================= */
+
+.dashboard-welcome .welcome-glow {
+  transition:
+    transform 0.8s ease,
+    opacity 0.6s ease;
+}
+
+.dashboard-welcome:hover .glow-one {
+  transform: translate(-30px, 20px) scale(1.25);
+
+  opacity: 0.8;
+}
+
+.dashboard-welcome:hover .glow-two {
+  transform: translate(30px, -15px) scale(1.2);
+
+  opacity: 0.75;
+}
+
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
+
+.welcome-content p {
+  transition: color 0.35s ease;
+}
+
+.dashboard-welcome:hover .welcome-content p {
+  color: #4b5563;
+}
+
+/* =========================================================
+   BLUE ACCENT LINE
+   ========================================================= */
+
+.welcome-line {
+  transition:
+    width 0.5s ease,
+    box-shadow 0.4s ease;
+}
+
+.dashboard-welcome:hover .welcome-line {
+  width: 100px !important;
+
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+}
+
+/* =========================================================
+   EMPLOYEE WELCOME CARD
+   ========================================================= */
+
+.dashboard-welcome {
+  position: relative;
+
+  width: 100%;
+  min-height: 200px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 32px 38px;
+  margin-bottom: 22px;
+
+  overflow: hidden;
+
+  /* More visible white card */
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 55%, #eef6ff 100%);
+
+  /* Stronger border */
+  border: 1px solid #d6e5f7;
+  border-left: 5px solid #2563eb;
+
+  border-radius: 18px;
+
+  /* More apparent depth */
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.06),
+    0 10px 30px rgba(37, 99, 235, 0.06);
+
+  box-sizing: border-box;
+
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+/* =========================================================
+   CARD HOVER
+   ========================================================= */
+
+.dashboard-welcome:hover {
+  transform: translateY(-5px);
+
+  border-color: #93c5fd;
+
+  box-shadow:
+    0 8px 20px rgba(15, 23, 42, 0.08),
+    0 18px 45px rgba(37, 99, 235, 0.14);
+}
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.welcome-content {
+  position: relative;
+  z-index: 3;
+
+  max-width: 750px;
+}
+
+/* =========================================================
+   LABEL
+   ========================================================= */
+
+.welcome-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 9px;
+
+  color: #2563eb;
+
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.welcome-label i {
+  width: 8px;
+  height: 8px;
+
+  display: inline-block;
+
+  background: #2563eb;
+
+  border-radius: 50%;
+
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.welcome-content h1 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.welcome-content h1 span {
+  display: inline-block;
+
+  color: #2563eb;
+
+  transition:
+    transform 0.35s ease,
+    color 0.35s ease;
+}
+
+.dashboard-welcome:hover .welcome-content h1 span {
+  transform: translateX(7px);
+
+  color: #1d4ed8;
+}
+
+/* =========================================================
+   DESCRIPTION
+   ========================================================= */
+
+.welcome-content p {
+  margin: 10px 0 0;
+
+  color: #4b5563;
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   ACCENT LINE
+   ========================================================= */
+
+.welcome-line {
+  width: 70px;
+  height: 3px;
+
+  margin-top: 17px;
+
+  background: #2563eb;
+
+  border-radius: 10px;
+
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.25);
+
+  transition:
+    width 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+.dashboard-welcome:hover .welcome-line {
+  width: 110px !important;
+
+  box-shadow: 0 0 16px rgba(37, 99, 235, 0.45);
+}
+
+/* =========================================================
+   DECORATIVE ICON
+   ========================================================= */
+
+.welcome-decoration {
+  position: relative;
+  z-index: 3;
+
+  width: 95px;
+  height: 95px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-right: 25px;
+
+  background: linear-gradient(145deg, #eff6ff, #dbeafe);
+
+  border: 1px solid #bfdbfe;
+
+  border-radius: 50%;
+
+  color: #2563eb;
+
+  font-size: 38px;
+
+  box-shadow:
+    0 8px 20px rgba(37, 99, 235, 0.12),
+    inset 0 0 20px rgba(255, 255, 255, 0.7);
+
+  transition:
+    transform 0.5s ease,
+    box-shadow 0.5s ease,
+    background 0.5s ease;
+}
+
+.dashboard-welcome:hover .welcome-decoration {
+  transform: translateY(-10px) rotate(8deg) scale(1.1);
+
+  background: linear-gradient(145deg, #006eff, #bfdbfe);
+
+  box-shadow:
+    0 18px 35px rgba(37, 99, 235, 0.22),
+    0 0 25px rgba(37, 99, 235, 0.15);
+}
+
+/* =========================================================
+   BACKGROUND GLOWS
+   ========================================================= */
+
+.welcome-glow {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  filter: blur(2px);
+
+  z-index: 1;
+
+  transition: opacity 0.5s ease;
+}
+
+.glow-one {
+  width: 230px;
+  height: 230px;
+
+  top: -130px;
+  right: 40px;
+
+  background: rgba(147, 197, 253, 0.35);
+
+  opacity: 0.8;
+}
+
+.glow-two {
+  width: 180px;
+  height: 180px;
+
+  bottom: -110px;
+  right: 280px;
+
+  background: rgba(199, 210, 254, 0.3);
+
+  opacity: 0.7;
+}
+
+/* =========================================================
+   HOVER GLOWS
+   ========================================================= */
+
+.dashboard-welcome:hover .glow-one {
+  opacity: 1;
+}
+
+.dashboard-welcome:hover .glow-two {
+  opacity: 0.95;
+}
