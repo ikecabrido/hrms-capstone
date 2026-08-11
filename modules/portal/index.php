@@ -2,6 +2,7 @@
 
 use App\Controllers\AuthController;
 use App\Controllers\PortalController;
+use App\Controllers\ProfileController;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -15,11 +16,17 @@ if (session_status() === PHP_SESSION_NONE) {
 $routes = [
     // Authentication
     'auth-index'  => [AuthController::class, 'index'],
+    'admin'  => [AuthController::class, 'adminIndex'],
     'auth-login'  => [AuthController::class, 'login'],
+    'admin-login'  => [AuthController::class, 'adminLogin'],
     'auth-logout' => [AuthController::class, 'logout'],
 
     // Dashboard
     'employee-dashboard' => [PortalController::class, 'dashboard'],
+    'admin-dashboard' => [PortalController::class, 'adminDashboard'],
+
+    // Profile
+    'user-profile' => [ProfileController::class, 'index'],
 ];
 
 $url = trim($_GET['url'] ?? '');
@@ -36,6 +43,7 @@ if (!array_key_exists($url, $routes)) {
 
 $protectedRoutes = [
     'employee-dashboard',
+    'admin-dashboard',
 ];
 
 if (in_array($url, $protectedRoutes, true)) {
