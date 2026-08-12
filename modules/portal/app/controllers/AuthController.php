@@ -29,6 +29,12 @@ class AuthController
         $content = __DIR__ . '/../views/auth/login.php';
         require __DIR__ . '/../views/index.php';
     }
+    public function adminIndex()
+    {
+        $title = "Login";
+        $content = __DIR__ . '/../views/auth/admin-login.php';
+        require __DIR__ . '/../views/index.php';
+    }
     public function login(): void
     {
         Session::start();
@@ -77,6 +83,63 @@ class AuthController
 
             Helper::redirect(
                 'index.php?url=auth-index'
+            );
+
+            exit;
+        }
+    }
+    public function adminLogin(): void
+    {
+        Session::start();
+        try {
+
+            // Check login rate limit
+            LoginHelper::checkRateLimit();
+
+            $employeeId = Helper::sanitize(
+                $_POST['employee_id'] ?? ''
+            );
+
+            $password = trim(
+                $_POST['password'] ?? ''
+            );
+
+            $employee = $this->employeeModel
+                ->getByEmployeeNum($employeeId);
+
+            $validationService = new LoginValidationService();
+
+            $validationService->validate(
+                $employeeId,
+                $password,
+                $employee
+            );
+
+            if ((int) ($employee['is_admin'] ?? 0) !== 1) {
+
+                throw new Exception(
+                    'You are not authorized to access the administrator portal.'
+                );
+            }
+            LoginHelper::resetAttempts();
+
+            LoginHelper::setAuthenticatedUser([
+                'id' => $employee['user_id'],
+                'username' => $employee['username'],
+                'role' => $employee['role'],
+                'is_admin' => $employee['is_admin'],
+            ]);
+
+            Helper::redirect(
+                'index.php?url=admin-dashboard'
+            );
+
+        } catch (Exception $e) {
+
+            $this->handleLoginFailure($e);
+
+            Helper::redirect(
+                'index.php?url=admin'
             );
 
             exit;

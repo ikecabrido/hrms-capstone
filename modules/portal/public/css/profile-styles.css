@@ -1,0 +1,633 @@
+.profile-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+}
+
+.profile-card-header {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 28px;
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #ffffff;
+}
+
+.profile-avatar {
+    width: 90px;
+    height: 90px;
+    min-width: 90px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-header-info h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.profile-header-info p {
+    margin: 4px 0;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.profile-position {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.profile-section {
+    padding: 28px;
+    border-bottom: 1px solid #eef0f3;
+}
+
+.profile-section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.profile-section-title > i {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-section-title span {
+    display: block;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.profile-section-title h3 {
+    margin: 2px 0 0;
+    color: #1f2937;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.profile-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.profile-info-item {
+    padding: 16px 18px;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: 12px;
+}
+
+.profile-info-item span {
+    display: block;
+    margin-bottom: 5px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.profile-info-item strong {
+    display: block;
+    color: #1f2937;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.profile-info-full {
+    grid-column: 1 / -1;
+}
+
+.status-active {
+    color: #16a34a !important;
+}
+
+.status-inactive {
+    color: #dc2626 !important;
+}
+
+.status-active i,
+.status-inactive i {
+    font-size: 7px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 12px;
+    padding: 24px 28px;
+    background: #fafafa;
+}
+
+@media (max-width: 768px) {
+
+    .profile-card-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .profile-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-info-full {
+        grid-column: auto;
+    }
+
+    .profile-actions {
+        flex-direction: column;
+    }
+
+    .profile-actions .btn {
+        width: 100%;
+    }
+
+}
+/* =====================================================
+   CHANGE PASSWORD MODAL
+===================================================== */
+
+#changePasswordModal {
+    z-index: 1055;
+}
+
+#changePasswordModal .modal-dialog {
+    z-index: 1056;
+}
+
+.password-modal {
+    border: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+}
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+.password-modal-header {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 24px 26px;
+
+    background: linear-gradient(
+        135deg,
+        #eff6ff 0%,
+        #ffffff 100%
+    );
+
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.password-icon {
+    width: 48px;
+    height: 48px;
+
+    min-width: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+
+    background: #2563eb;
+    color: #ffffff;
+
+    font-size: 19px;
+
+    box-shadow:
+        0 6px 15px rgba(37, 99, 235, 0.25);
+}
+
+.password-header-text {
+    padding-right: 35px;
+}
+
+.password-modal-header span {
+    display: block;
+
+    margin-bottom: 2px;
+
+    color: #2563eb;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 0.12em;
+}
+
+.password-modal-header h5 {
+    margin: 0;
+
+    color: #111827;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.password-modal-header p {
+    margin: 3px 0 0;
+
+    color: #6b7280;
+
+    font-size: 12px;
+}
+
+/* CLOSE BUTTON */
+
+.password-close {
+    position: absolute;
+
+    top: 18px;
+    right: 18px;
+
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: #6b7280;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+.password-close:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+/* =====================================================
+   BODY
+===================================================== */
+
+.password-modal-body {
+    padding: 26px;
+
+    background: #ffffff;
+}
+
+.password-field {
+    margin-bottom: 20px;
+}
+
+.password-field label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #374151;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* =====================================================
+   PASSWORD INPUT
+===================================================== */
+
+.password-input-wrapper {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+
+    left: 14px;
+
+    z-index: 2;
+
+    color: #9ca3af;
+
+    font-size: 14px;
+
+    pointer-events: none;
+}
+
+.password-input-wrapper .form-control {
+    width: 100%;
+
+    height: 46px;
+
+    padding-left: 40px;
+    padding-right: 45px;
+
+    border: 1px solid #dbe1e8;
+
+    border-radius: 11px;
+
+    background: #ffffff;
+
+    color: #111827;
+
+    font-size: 13px;
+
+    box-shadow: none;
+
+    transition: all 0.2s ease;
+}
+
+.password-input-wrapper .form-control:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+.password-input-wrapper .form-control::placeholder {
+    color: #9ca3af;
+}
+
+/* SHOW / HIDE PASSWORD */
+
+.password-toggle {
+    position: absolute;
+
+    right: 10px;
+
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: 0;
+
+    background: transparent;
+
+    color: #9ca3af;
+
+    cursor: pointer;
+}
+
+.password-toggle:hover {
+    color: #2563eb;
+}
+
+/* =====================================================
+   REQUIREMENTS
+===================================================== */
+
+.password-requirements {
+    padding: 14px 16px;
+
+    margin-top: 4px;
+
+    background: #f8fafc;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+}
+
+.requirements-title {
+    margin-bottom: 8px;
+
+    color: #374151;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.requirements-title i {
+    margin-right: 5px;
+
+    color: #2563eb;
+}
+
+.requirement-item {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    margin-top: 5px;
+
+    color: #6b7280;
+
+    font-size: 11px;
+}
+
+.requirement-item i {
+    color: #22c55e;
+
+    font-size: 9px;
+}
+
+/* =====================================================
+   ERROR
+===================================================== */
+
+.password-error {
+    align-items: center;
+
+    gap: 8px;
+
+    margin-top: 15px;
+
+    padding: 11px 13px;
+
+    border-radius: 9px;
+
+    background: #fef2f2;
+
+    border: 1px solid #fecaca;
+
+    color: #dc2626;
+
+    font-size: 12px;
+}
+
+.password-error i {
+    font-size: 13px;
+}
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.password-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    padding: 18px 26px;
+
+    background: #f8fafc;
+
+    border-top: 1px solid #e5e7eb;
+}
+
+.password-cancel {
+    border: 1px solid #d1d5db;
+
+    border-radius: 9px;
+
+    padding: 9px 18px;
+
+    background: #ffffff;
+
+    color: #374151;
+
+    font-size: 13px;
+
+    cursor: pointer;
+}
+
+.password-cancel:hover {
+    background: #f3f4f6;
+}
+
+.password-submit {
+    border: 0;
+
+    border-radius: 9px;
+
+    padding: 9px 18px;
+
+    background: #2563eb;
+
+    color: #ffffff;
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+.password-submit:hover {
+    background: #1d4ed8;
+}
+
+.password-submit i {
+    margin-right: 5px;
+}
+
+/* =====================================================
+   BOOTSTRAP BACKDROP
+===================================================== */
+
+.modal-backdrop {
+    z-index: 1050 !important;
+}
+
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal {
+    z-index: 1055 !important;
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 576px) {
+
+    .password-modal-header {
+        padding: 20px;
+    }
+
+    .password-modal-body {
+        padding: 20px;
+    }
+
+    .password-modal-footer {
+        padding: 15px 20px;
+
+        flex-direction: column-reverse;
+    }
+
+    .password-modal-footer button {
+        width: 100%;
+    }
+}
+/* =====================================================
+   BOOTSTRAP MODAL FIX
+===================================================== */
+
+/* Bootstrap backdrop */
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+/* Modal itself */
+.modal {
+    z-index: 1050 !important;
+}
+
+/* Modal dialog/content must be above everything */
+.modal-dialog {
+    position: relative;
+    z-index: 1051 !important;
+}
+
+/* Your password modal */
+#changePasswordModal {
+    z-index: 1050 !important;
+}
+
+#changePasswordModal .modal-dialog {
+    z-index: 1051 !important;
+}
+
+#changePasswordModal .modal-content {
+    position: relative;
+    z-index: 1052 !important;
+    pointer-events: auto !important;
+}

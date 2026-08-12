@@ -1,5 +1,4 @@
 <aside class="sidebar">
-    <?php require __DIR__ . '/sidebar-data.php'; ?>
 
     <!-- Logo + Icons -->
     <?php require __DIR__ . '/sidebar-logo-icon.php'; ?>
@@ -8,18 +7,18 @@
     <?php require __DIR__ . '/sidebar-employee-info.php'; ?>
 
     <!-- Navigation -->
-    <h2>Employee Portal</h2>
+    <h2>Admin Portal</h2>
     <ul>
         <li>
-            <a href="index.php?url=employee-dashboard" class="menu-link">
+            <a href="index.php?url=admin-dashboard" class="menu-link">
                 <i class="fa-solid fa-home"></i>
                 Dashboard
             </a>
         </li>
         <div class="separator"></div>
-        <h3>Employee Services</h3>
+        <h3>Admin Services</h3>
         <li>
-            <a href="index.php?url=user-profile" class="menu-link">
+            <a href="?page=profile" class="menu-link">
                 <i class="fa-regular fa-user"></i>
                 My Profile
             </a>

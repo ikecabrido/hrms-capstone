@@ -20,6 +20,7 @@
             <div class="school-logo" style="flex:auto; justify-content: center ;">
                 <img src="/hrms-capstone/modules/portal/public/assets/images/bcp-logo.png" alt="School Logo">
             </div>
+            <?php require __DIR__ . '/../partials/notification.php'; ?>
             <?php require __DIR__ . '/rate-limit.php'; ?>
             <form id="loginForm" method="POST" action="index.php?url=auth-login">
                 <div class="error-message" id="errorMsg">

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/hrms-capstone/modules/portal/public/css/styles.css">
     <link rel="stylesheet" href="/hrms-capstone/modules/portal/public/css/dashboard-styles.css">
+    <link rel="stylesheet" href="/hrms-capstone/modules/portal/public/css/profile-styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
