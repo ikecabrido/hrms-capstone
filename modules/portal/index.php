@@ -27,6 +27,7 @@ $routes = [
 
     // Profile
     'user-profile' => [ProfileController::class, 'index'],
+    'update-password' => [ProfileController::class, 'updatePassword'],
 ];
 
 $url = trim($_GET['url'] ?? '');

@@ -103,19 +103,13 @@
 
 
             <!-- Form -->
-            <form
-                action="index.php?url=update-password"
-                method="POST"
-                onsubmit="return validatePassword();">
+            <form action="index.php?url=update-password" method="POST" onsubmit="return validatePassword();">
 
                 <!-- Body -->
-                <div
-                    class="password-modal-body"
-                    style="
+                <div class="password-modal-body" style="
                         padding: 26px;
-                        background: #ffffff;
-                    ">
-
+                        background: #ffffff;">
+                    <input type="hidden" name="user_id" value="<?=  $_SESSION['user_id'] ?? 'null' ?>">
                     <!-- New Password -->
                     <div
                         class="password-field"

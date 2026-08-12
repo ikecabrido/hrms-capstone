@@ -39,7 +39,7 @@
         </div>
 
     </section>
-
+<?php require __DIR__ . '/../../partials/notification.php';?>
     <section class="dashboard-section">
 
         <div class="dashboard-section-header">
@@ -455,13 +455,10 @@
             <div class="profile-actions">
 
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                    data-bs-target="#changePasswordModal">
-
-                    <i class="fas fa-key"></i>
-                    Change Password
-
+                    data-bs-target="#changePasswordModal"> 
+                    <i class="fas fa-key me-1"></i>
+                    Change Password 
                 </button>
-
             </div>
 
         </div>
@@ -470,4 +467,3 @@
 </div>
 
 <?php require __DIR__ . '/../../partials/notification.php'; ?>
-<?php require __DIR__ . '/change-password.php'; ?>
