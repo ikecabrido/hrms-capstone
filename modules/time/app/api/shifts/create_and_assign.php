@@ -20,7 +20,7 @@ try {
     $ed = new DateTime($end_date);
     if ($ed < $sd) throw new Exception('end_date must be >= start_date');
 
-    $db = Database::getInstance();
+    $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
     $conn->beginTransaction();

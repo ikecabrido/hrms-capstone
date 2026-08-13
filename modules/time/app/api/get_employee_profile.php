@@ -4,7 +4,7 @@ require_once __DIR__ . '/../../../../database/db.php';
 header('Content-Type: application/json');
 
 try {
-    $database = Database::getInstance();
+    $database = TimeDatabase::getInstance();
     $db = $database->getConnection();
 
     $id = $_GET['employee_id'] ?? $_GET['id'] ?? null;

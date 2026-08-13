@@ -21,7 +21,7 @@ try {
         throw new Exception('Only POST requests are allowed');
     }
 
-    $database = Database::getInstance();
+    $database = TimeDatabase::getInstance();
     $db = $database->getConnection();
     $shiftController = new ShiftController($db);
 

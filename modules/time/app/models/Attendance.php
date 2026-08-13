@@ -142,7 +142,7 @@ class Attendance
     {
         $query = "SELECT a.*, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, e.position
                   FROM $this->table a
-                  JOIN hrms_employee e ON a.employee_id = e.employee_id
+                  JOIN em_employee e ON a.employee_id = e.employee_id
                   WHERE a.attendance_date BETWEEN :start_date AND :end_date";
 
         if (!is_null($employee_id)) {
@@ -192,9 +192,9 @@ class Attendance
     {
         $query = "SELECT a.*, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, e.position
                   FROM $this->table a
-                  RIGHT JOIN hrms_employee e ON a.employee_id = e.employee_id 
+                  RIGHT JOIN em_employee e ON a.employee_id = e.employee_id 
                     AND a.attendance_date = CURDATE()
-                  WHERE e.status = 'active'
+                  WHERE LOWER(e.status) = 'active'
                   ORDER BY full_name
                   LIMIT :limit OFFSET :offset";
 

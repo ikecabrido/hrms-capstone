@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../../../../database/db.php';
 
 try {
-    $db = Database::getInstance();
+    $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
     $stmt = $conn->prepare("SELECT shift_id, shift_name, start_time, end_time, is_active FROM ta_shifts ORDER BY shift_name ASC");

@@ -18,7 +18,7 @@ try {
     $include_saturday = isset($data['include_saturday']) ? (int)$data['include_saturday'] : null;
     $weekdays = isset($data['weekdays']) ? $data['weekdays'] : [];
 
-    $db = Database::getInstance();
+    $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
     $conn->beginTransaction();

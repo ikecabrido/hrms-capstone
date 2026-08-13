@@ -5,14 +5,14 @@ class Page {
     private $allowed = [];
 
     private $labels = [
-        'dashboard'          => 'Dashboard',
-        'absence_late_management'             => 'Absence & Late Management',
-        'shifts'  => 'Shift Management',
-        'qr_scanner'   => 'Attendance Scanner',
+        'dashboard' => 'Dashboard',
+        'absence_late_management' => 'Absence & Late Management',
+        'shifts' => 'Shift Management',
+        'qr_scanner' => 'Attendance Scanner',
         'employee_qr_list'=> 'Employee QR',
         'schedule_calendar'=> 'Schedule Calendar',
-        'holidays'     => 'Holidays',
-        'leave_approvals'     => 'Leave Management',
+        'holidays'=> 'Holidays',
+        'leave_approvals' => 'Leave Management',
     ];
 
     private $sections = [

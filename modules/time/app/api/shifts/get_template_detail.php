@@ -6,7 +6,7 @@ try {
     if (!isset($_GET['shift_id'])) throw new Exception('shift_id required');
     $shift_id = (int)$_GET['shift_id'];
 
-    $db = Database::getInstance();
+    $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
     $stmt = $conn->prepare("SELECT shift_id, shift_name, start_time, end_time, break_duration, description, include_saturday, is_active FROM ta_shifts WHERE shift_id = ? LIMIT 1");

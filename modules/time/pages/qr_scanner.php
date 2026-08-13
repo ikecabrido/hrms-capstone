@@ -3,20 +3,12 @@
  * QR Camera Scanner - separate tab for live QR camera scanning
  */
 require_once __DIR__ . "/../app/controllers/AuthController.php";
-require_once __DIR__ . "/../app/core/Session.php";
 
-Session::start();
-
-if (!AuthController::isAuthenticated()) {
-    header('Location: ' . dirname(__DIR__) . '/../../login_form.php');
-    exit;
-}
 
 $current_page = 'qr_scanner.php';
-$current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
+$current_role = $_SESSION['role'] ?? 'time';
 $page_title = 'QR Scanner';
 $body_class = 'hold-transition';
-$page_head_extra = "<link rel=\"stylesheet\" href=\"assets/css/style.css\">\n<link rel=\"stylesheet\" href=\"assets/css/hr-template.css\">\n<link rel=\"stylesheet\" href=\"assets/css/qr-scanner.css\">";
 
 $page_footer_extra = <<<'SCRIPT'
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -24,7 +16,6 @@ $page_footer_extra = <<<'SCRIPT'
 SCRIPT;
 
 ?>
-<?php require_once __DIR__ . '/../layout/page_start.php'; ?>
 <div class="content-wrapper p-0" style="min-height:100vh;background:#f4f6f9;">
   <section class="content">
     <div class="container-fluid py-4">

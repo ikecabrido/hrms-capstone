@@ -11,7 +11,7 @@ class ShiftValidator
     private $conn;
     private $shift_assignments_table = "ta_shift_assignments";
     private $shifts_table = "ta_shifts";
-    private $employees_table = "hrms_employee";
+    private $employees_table = "em_employee";
 
     public function __construct()
     {

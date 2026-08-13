@@ -44,7 +44,7 @@ class AbsenceLateMgmt
                         CAST(e.department AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS department,
                         CAST('legacy' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->records_table} r
-                    JOIN hrms_employee e ON r.employee_id = e.employee_id
+                    JOIN em_employee e ON r.employee_id = e.employee_id
                     WHERE 1=1
 
                     UNION ALL
@@ -76,7 +76,7 @@ class AbsenceLateMgmt
                         CAST(e.department AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS department,
                         CAST('attendance' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->attendance_table} a
-                    JOIN hrms_employee e ON a.employee_id = e.employee_id
+                    JOIN em_employee e ON a.employee_id = e.employee_id
                     WHERE a.status IN ('ABSENT', 'LATE')
                 ) AS combined
                 WHERE 1=1";
@@ -152,7 +152,7 @@ class AbsenceLateMgmt
                     e.department,
                     'legacy' AS source
                   FROM {$this->records_table} r
-                  JOIN hrms_employee e ON r.employee_id = e.employee_id
+                  JOIN em_employee e ON r.employee_id = e.employee_id
                   WHERE r.record_id = :record_id";
 
         $stmt = $this->conn->prepare($query);
@@ -191,7 +191,7 @@ class AbsenceLateMgmt
                     e.department,
                     'attendance' AS source
                   FROM {$this->attendance_table} a
-                  JOIN hrms_employee e ON a.employee_id = e.employee_id
+                  JOIN em_employee e ON a.employee_id = e.employee_id
                   WHERE a.attendance_id = :record_id
                   AND a.status IN ('ABSENT', 'LATE')";
 
@@ -447,7 +447,7 @@ class AbsenceLateMgmt
                         r.created_at,
                         CAST('legacy' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->records_table} r
-                    JOIN hrms_employee e ON r.employee_id = e.employee_id
+                    JOIN em_employee e ON r.employee_id = e.employee_id
                     WHERE 1=1
 
                     UNION ALL
@@ -469,7 +469,7 @@ class AbsenceLateMgmt
                         a.created_at,
                         CAST('attendance' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->attendance_table} a
-                    JOIN hrms_employee e ON a.employee_id = e.employee_id
+                    JOIN em_employee e ON a.employee_id = e.employee_id
                     WHERE a.status IN ('ABSENT', 'LATE')
                 ) AS combined
                 WHERE 1=1";
@@ -568,7 +568,7 @@ class AbsenceLateMgmt
                         r.created_at,
                         CAST('legacy' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->records_table} r
-                    JOIN hrms_employee e ON r.employee_id = e.employee_id
+                    JOIN em_employee e ON r.employee_id = e.employee_id
                     WHERE r.excuse_status = 'PENDING'
 
                     UNION ALL
@@ -589,7 +589,7 @@ class AbsenceLateMgmt
                         a.created_at,
                         CAST('attendance' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->attendance_table} a
-                    JOIN hrms_employee e ON a.employee_id = e.employee_id
+                    JOIN em_employee e ON a.employee_id = e.employee_id
                     WHERE a.status IN ('ABSENT', 'LATE')
                 ) AS combined
                 ORDER BY combined.created_at ASC

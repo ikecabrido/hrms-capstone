@@ -17,12 +17,6 @@ if (!AuthController::isAuthenticated()) {
     exit;
 }
 
-// Check HR/Time permission
-if (!AuthController::hasRole('time') && !AuthController::hasRole('hr')) {
-    header('Location: ' . dirname(__DIR__) . '/../../employee_dashboard.php');
-    exit;
-}
-
 $absenceLateMgmt = new AbsenceLateMgmt();
 $employeeModel = new Employee();
 $current_page = 'absence_late_management.php';

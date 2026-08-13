@@ -26,7 +26,7 @@ try {
         throw new Exception('employee_id, start_date and end_date are required');
     }
 
-    $db = Database::getInstance();
+    $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
     // Validate employee exists

@@ -1,4 +1,12 @@
-USE hrms;
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Generation Time: Aug 13, 2026 at 06:46 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
+
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
@@ -8,6 +16,799 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `hrms`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `departments`
+--
+
+CREATE TABLE `departments` (
+  `department_id` int(11) NOT NULL,
+  `department_name` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `status` enum('Active','Inactive') DEFAULT 'Active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `departments`
+--
+
+INSERT INTO `departments` (`department_id`, `department_name`, `description`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'ADMIN STAFF', 'Administrative and support staff', 'Active', '2026-08-06 13:47:35', NULL),
+(2, 'INSTRUCTORS', 'Teaching faculty members', 'Active', '2026-08-06 13:47:35', NULL),
+(3, 'IT DEPARTMENT', 'Information Technology department', 'Active', '2026-08-06 13:47:35', NULL),
+(4, 'PSYCHOLOGY DEPARTMENT', 'Psychology department', 'Active', '2026-08-06 13:47:35', NULL),
+(5, 'CRIMINOLOGY DEPARTMENT', 'Criminology department', 'Active', '2026-08-06 13:47:35', NULL),
+(6, 'TOURISM DEPARTMENT', 'Tourism department', 'Active', '2026-08-06 13:47:35', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employees`
+--
+
+CREATE TABLE `employees` (
+  `employee_id` int(11) NOT NULL,
+  `employee_code` varchar(20) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `first_name` varchar(50) NOT NULL,
+  `middle_name` varchar(50) DEFAULT NULL,
+  `last_name` varchar(50) NOT NULL,
+  `suffix` varchar(10) DEFAULT NULL,
+  `gender` enum('Male','Female','Other') DEFAULT NULL,
+  `birth_date` date DEFAULT NULL,
+  `birth_place` varchar(100) DEFAULT NULL,
+  `civil_status` enum('Single','Married','Divorced','Widowed','Separated') DEFAULT NULL,
+  `citizenship` varchar(50) DEFAULT NULL,
+  `religion` varchar(50) DEFAULT NULL,
+  `email` varchar(100) NOT NULL,
+  `mobile_no` varchar(20) DEFAULT NULL,
+  `phone_no` varchar(20) DEFAULT NULL,
+  `current_address` text DEFAULT NULL,
+  `permanent_address` text DEFAULT NULL,
+  `department` varchar(100) DEFAULT NULL,
+  `position` varchar(100) DEFAULT NULL,
+  `position_id` int(11) DEFAULT NULL,
+  `hire_date` date DEFAULT NULL,
+  `regular_date` date DEFAULT NULL,
+  `employment_status` enum('Active','Resigned','Terminated','Probationary') DEFAULT 'Active',
+  `employment_type` enum('Full-time','Part-time','Laboratory','OJT/Training') DEFAULT NULL,
+  `unit_load` int(11) DEFAULT NULL,
+  `graduate_level` enum('None','Masteral','Doctoral') DEFAULT 'None',
+  `ranking` varchar(100) DEFAULT NULL,
+  `credentials` varchar(255) DEFAULT NULL,
+  `faculty_notes` text DEFAULT NULL,
+  `negotiated_salary` decimal(12,2) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `is_archived` tinyint(1) DEFAULT 0,
+  `archived_at` timestamp NULL DEFAULT NULL,
+  `archived_date` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `employees`
+--
+
+INSERT INTO `employees` (`employee_id`, `employee_code`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `email`, `mobile_no`, `phone_no`, `current_address`, `permanent_address`, `department`, `position`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
+(1, 'EMP-000001', NULL, 'Ronaldo', 'G.', 'Raymundo', NULL, 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 'IT DEPARTMENT', 'IT Staff', 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-06 13:47:35', '2026-08-07 08:33:05', 0, NULL, NULL),
+(2, 'EMP-000002', NULL, 'Juan', 'Dela', 'Cruz', NULL, 'Male', '1990-05-15', NULL, NULL, NULL, NULL, 'juan.delacruz@bcp.edu.ph', '09123456789', '021234567', '123 Main St, Manila', NULL, 'Executive Administration', 'College President', NULL, '2023-01-15', NULL, 'Active', NULL, NULL, 'None', NULL, NULL, NULL, NULL, '2026-08-06 14:54:48', '2026-08-06 16:46:37', 0, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_certifications`
+--
+
+CREATE TABLE `employee_certifications` (
+  `cert_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `cert_name` varchar(100) NOT NULL,
+  `issuing_organization` varchar(100) NOT NULL,
+  `date_issued` date DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_change_history`
+--
+
+CREATE TABLE `employee_change_history` (
+  `change_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `change_type` varchar(50) NOT NULL DEFAULT '',
+  `user_id` int(11) DEFAULT NULL,
+  `field_name` varchar(50) NOT NULL,
+  `old_value` text DEFAULT NULL,
+  `new_value` text DEFAULT NULL,
+  `effective_date` date NOT NULL DEFAULT curdate(),
+  `remarks` text DEFAULT NULL,
+  `updated_by` varchar(100) DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `change_reason` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `employee_change_history`
+--
+
+INSERT INTO `employee_change_history` (`change_id`, `employee_id`, `change_type`, `user_id`, `field_name`, `old_value`, `new_value`, `effective_date`, `remarks`, `updated_by`, `ip_address`, `change_reason`, `created_at`) VALUES
+(1, 1, 'Document Uploaded', NULL, '', 'N/A', 'training cert.', '2026-08-07', 'Uploaded document: training cert. (Other)', 'System', NULL, NULL, '2026-08-07 14:44:05');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_dependents`
+--
+
+CREATE TABLE `employee_dependents` (
+  `dependent_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `relationship` varchar(50) NOT NULL,
+  `birth_date` date DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_documents`
+--
+
+CREATE TABLE `employee_documents` (
+  `document_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `document_name` varchar(100) NOT NULL,
+  `document_type` varchar(50) NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_size` varchar(50) DEFAULT NULL,
+  `uploaded_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `mime_type` varchar(100) DEFAULT NULL,
+  `category` varchar(100) DEFAULT 'Other',
+  `expiry_date` date DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `employee_documents`
+--
+
+INSERT INTO `employee_documents` (`document_id`, `employee_id`, `document_name`, `document_type`, `file_path`, `file_name`, `file_size`, `uploaded_by`, `created_at`, `updated_at`, `mime_type`, `category`, `expiry_date`) VALUES
+(1, 1, 'training cert.', 'Other', '../../assets/documents/2026/08/6a75ef357ca3a_724368498_1322572223322433_1893840578082960664_n.png', '724368498_1322572223322433_1893840578082960664_n.png', '1844150', NULL, '2026-08-07 14:44:05', NULL, NULL, 'Other', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_education`
+--
+
+CREATE TABLE `employee_education` (
+  `id` int(11) NOT NULL,
+  `employee_id` varchar(50) NOT NULL,
+  `institution` varchar(255) NOT NULL,
+  `degree` varchar(255) NOT NULL,
+  `field_of_study` varchar(255) DEFAULT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `grade` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_emergency_contacts`
+--
+
+CREATE TABLE `employee_emergency_contacts` (
+  `contact_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `relationship` varchar(50) NOT NULL,
+  `contact_number` varchar(20) NOT NULL,
+  `address` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_languages`
+--
+
+CREATE TABLE `employee_languages` (
+  `language_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `language_name` varchar(50) NOT NULL,
+  `proficiency` enum('Beginner','Intermediate','Advanced','Fluent','Native') DEFAULT 'Intermediate',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_skills`
+--
+
+CREATE TABLE `employee_skills` (
+  `skill_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `skill_name` varchar(100) NOT NULL,
+  `proficiency` enum('Beginner','Intermediate','Advanced','Expert') DEFAULT 'Intermediate',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employee_work_experience`
+--
+
+CREATE TABLE `employee_work_experience` (
+  `work_exp_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `company_name` varchar(100) NOT NULL,
+  `position` varchar(100) NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `salary` decimal(12,2) DEFAULT NULL,
+  `reason_for_leaving` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `employment_history`
+--
+
+CREATE TABLE `employment_history` (
+  `history_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `company_name` varchar(100) NOT NULL,
+  `position` varchar(100) NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date DEFAULT NULL,
+  `salary` decimal(12,2) DEFAULT NULL,
+  `reason_for_leaving` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `em_departments`
+--
+
+CREATE TABLE `em_departments` (
+  `department_id` int(11) NOT NULL,
+  `department_code` varchar(50) DEFAULT NULL,
+  `department_name` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `status` enum('Active','Inactive') DEFAULT 'Active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `em_departments`
+--
+
+INSERT INTO `em_departments` (`department_id`, `department_code`, `department_name`, `description`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'DEPT-001', 'ADMIN STAFF', 'Administrative and support staff', 'Active', '2026-08-06 13:47:35', '2026-08-11 09:17:00'),
+(2, 'DEPT-002', 'INSTRUCTORS', 'Teaching faculty members', 'Active', '2026-08-06 13:47:35', '2026-08-11 09:17:00'),
+(3, 'DEPT-003', 'IT DEPARTMENT', 'Information Technology department', 'Active', '2026-08-06 13:47:35', '2026-08-11 09:17:00'),
+(4, 'DEPT-004', 'PSYCHOLOGY DEPARTMENT', 'Psychology department', 'Active', '2026-08-06 13:47:35', '2026-08-11 09:17:00'),
+(5, 'DEPT-005', 'CRIMINOLOGY DEPARTMENT', 'Criminology department', 'Active', '2026-08-06 13:47:35', '2026-08-11 09:17:00'),
+(6, 'DEPT-006', 'TOURISM DEPARTMENT', 'Tourism department', 'Active', '2026-08-06 13:47:35', '2026-08-11 09:17:00'),
+(7, 'DEPT-007', 'BTVTED', 'Bachelor of Technical-Vocational Teacher Education department', 'Active', '2026-08-13 10:41:39', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `em_documents`
+--
+
+CREATE TABLE `em_documents` (
+  `doc_id` int(11) NOT NULL,
+  `document_name` varchar(100) NOT NULL,
+  `document_type` varchar(50) NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_size` varchar(50) DEFAULT NULL,
+  `uploaded_by` int(11) DEFAULT NULL,
+  `status` enum('Active','Inactive') DEFAULT 'Active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `em_education`
+--
+
+CREATE TABLE `em_education` (
+  `education_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `level` enum('Elementary','High School','Senior High School','College','Masteral','Doctoral') NOT NULL,
+  `school_name` varchar(100) NOT NULL,
+  `course` varchar(100) DEFAULT NULL,
+  `year_graduated` varchar(20) DEFAULT NULL,
+  `honors` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `em_employees`
+--
+
+CREATE TABLE `em_employees` (
+  `employee_id` int(11) NOT NULL,
+  `employee_code` varchar(20) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `first_name` varchar(50) NOT NULL,
+  `middle_name` varchar(50) DEFAULT NULL,
+  `last_name` varchar(50) NOT NULL,
+  `suffix` varchar(10) DEFAULT NULL,
+  `gender` enum('Male','Female','Other') DEFAULT NULL,
+  `birth_date` date DEFAULT NULL,
+  `birth_place` varchar(100) DEFAULT NULL,
+  `civil_status` enum('Single','Married','Divorced','Widowed','Separated') DEFAULT NULL,
+  `citizenship` varchar(50) DEFAULT NULL,
+  `religion` varchar(50) DEFAULT NULL,
+  `email` varchar(100) NOT NULL,
+  `mobile_no` varchar(20) DEFAULT NULL,
+  `phone_no` varchar(20) DEFAULT NULL,
+  `current_address` text DEFAULT NULL,
+  `permanent_address` text DEFAULT NULL,
+  `department` varchar(100) DEFAULT NULL,
+  `position` varchar(100) DEFAULT NULL,
+  `position_id` int(11) DEFAULT NULL,
+  `hire_date` date DEFAULT NULL,
+  `regular_date` date DEFAULT NULL,
+  `employment_status` enum('Active','Resigned','Terminated','Probationary') DEFAULT 'Active',
+  `employment_type` enum('Full-time','Part-time','Laboratory','OJT/Training') DEFAULT NULL,
+  `unit_load` int(11) DEFAULT NULL,
+  `graduate_level` enum('None','LPT','Masteral','Doctoral') DEFAULT 'None',
+  `ranking` varchar(100) DEFAULT NULL,
+  `credentials` varchar(255) DEFAULT NULL,
+  `faculty_notes` text DEFAULT NULL,
+  `negotiated_salary` decimal(12,2) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
+  `is_archived` tinyint(1) DEFAULT 0,
+  `archived_at` timestamp NULL DEFAULT NULL,
+  `archived_date` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `em_employees`
+--
+
+INSERT INTO `em_employees` (`employee_id`, `employee_code`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `email`, `mobile_no`, `phone_no`, `current_address`, `permanent_address`, `department`, `position`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
+(1, 'EMP-000001', NULL, 'Ronaldo', 'G.', 'Raymundo', NULL, 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 'IT DEPARTMENT', 'IT Staff', 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 13:47:35', '2026-08-13 10:53:46', 0, NULL, NULL),
+(2, 'EMP-000002', NULL, 'Juan', 'Dela', 'Cruz', NULL, 'Male', '1990-05-15', NULL, NULL, NULL, NULL, 'juan.delacruz@bcp.edu.ph', '09123456789', '021234567', '123 Main St, Manila', NULL, 'IT DEPARTMENT', 'IT Staff', 2, '2023-01-15', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 14:54:48', '2026-08-13 10:53:59', 0, NULL, NULL),
+(3, 'EMP-000003', NULL, 'Erwin', 'M.', 'De Guzman', NULL, NULL, '1995-09-18', NULL, NULL, NULL, NULL, 'erwindeguzman@gmail.com', '09123456789', '0987654321', '', NULL, 'IT DEPARTMENT', 'IT Staff', 6, '2026-08-11', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-11 19:09:33', '2026-08-13 10:54:17', 0, NULL, NULL),
+(4, 'EMP-000004', NULL, 'Roberto', 'J', 'Albert', NULL, NULL, '1998-02-12', NULL, NULL, NULL, NULL, 'robert@gmail.com', '09123456789', '987654321', '', NULL, 'IT DEPARTMENT', 'IT Staff', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-13 11:01:36', '2026-08-13 11:01:36', 0, NULL, NULL),
+(5, 'EMP-000005', NULL, 'Althea', 'M.', 'Santos', NULL, NULL, '1999-09-19', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '09123456789', '987654321', '', NULL, 'ADMIN STAFF', 'School Directress', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-13 11:04:21', '2026-08-13 11:04:21', 0, NULL, NULL),
+(6, 'EMP-000006', NULL, 'Bianca', 'G.', 'Reyes', NULL, NULL, '1995-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '987654321', '', NULL, 'ADMIN STAFF', 'College Coordinator', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', NULL, '2026-08-13 11:05:33', '2026-08-13 11:05:33', 0, NULL, NULL),
+(7, 'EMP-000007', NULL, 'Chloe', 'M.', 'Cruz', NULL, NULL, '1995-02-12', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'ADMIN STAFF', 'Monitoring Staff', NULL, '2026-08-13', NULL, 'Active', '', NULL, 'None', '', '', '', NULL, '2026-08-13 11:06:40', '2026-08-13 11:06:40', 0, NULL, NULL),
+(8, 'EMP-000008', NULL, 'Diana', 'G.', 'Bautista', NULL, NULL, '1995-11-11', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '', '', '', NULL, 'ADMIN STAFF', 'Laboratory Technician', NULL, '2026-08-13', NULL, 'Active', '', NULL, 'None', '', '', '', NULL, '2026-08-13 11:07:39', '2026-08-13 11:07:40', 0, NULL, NULL),
+(9, 'EMP-000009', NULL, 'Elena', 'G.', 'Ocampo', NULL, NULL, '1995-06-16', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'INSTRUCTORS', 'General Education Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:08:37', '2026-08-13 11:08:37', 0, NULL, NULL),
+(10, 'EMP-000010', NULL, 'Fiona', 'G.', 'Ramos', NULL, NULL, '1996-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'INSTRUCTORS', 'English Instructor', NULL, '2026-08-13', NULL, 'Active', '', NULL, 'None', '', '', '', NULL, '2026-08-13 11:09:29', '2026-08-13 11:09:29', 0, NULL, NULL),
+(11, 'EMP-000011', NULL, 'Aaron', '', 'Mendoza', NULL, NULL, '1999-07-17', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'INSTRUCTORS', 'Mathematics Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:10:26', '2026-08-13 11:10:26', 0, NULL, NULL),
+(12, 'EMP-000012', NULL, 'Caleb', '', 'Santos', NULL, NULL, '1990-04-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'INSTRUCTORS', 'Entrepreneurship Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:11:23', '2026-08-13 11:11:23', 0, NULL, NULL),
+(13, 'EMP-000013', NULL, 'David', '', 'Aquino', NULL, NULL, '0000-00-00', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '', '', '', NULL, 'PSYCHOLOGY DEPARTMENT', 'Psychology Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:12:30', '2026-08-13 11:12:30', 0, NULL, NULL),
+(14, 'EMP-000014', NULL, 'Ethan', '', 'Garcia', NULL, NULL, '1999-12-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'PSYCHOLOGY DEPARTMENT', 'Psychology Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:13:14', '2026-08-13 11:13:14', 0, NULL, NULL),
+(15, 'EMP-000015', NULL, 'Felix', '', 'Del Rosario', NULL, NULL, '2001-12-15', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'PSYCHOLOGY DEPARTMENT', 'Psychology Instructor', NULL, '2026-08-13', NULL, 'Active', 'OJT/Training', NULL, 'None', '', '', '', NULL, '2026-08-13 11:14:12', '2026-08-13 11:14:12', 0, NULL, NULL),
+(16, 'EMP-000016', NULL, 'Gabriel', '', 'Gonzales', NULL, NULL, '1990-02-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'PSYCHOLOGY DEPARTMENT', 'Psychology Instructor', NULL, '2026-08-13', NULL, 'Active', 'Part-time', 1, 'None', '', '', '', NULL, '2026-08-13 11:15:10', '2026-08-13 11:15:10', 0, NULL, NULL),
+(17, 'EMP-000017', NULL, 'Hugo', '', 'Villanueva', NULL, NULL, '1999-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'CRIMINOLOGY DEPARTMENT', 'Criminology Instructor', NULL, '2026-08-13', NULL, 'Active', 'Part-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:16:41', '2026-08-13 11:16:41', 0, NULL, NULL),
+(18, 'EMP-000018', NULL, 'Ian', '', 'Fernandez', NULL, NULL, '1990-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'CRIMINOLOGY DEPARTMENT', 'Criminology Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:17:19', '2026-08-13 11:17:19', 0, NULL, NULL),
+(19, 'EMP-000019', NULL, 'Jacob', '', 'Lopez', NULL, NULL, '1999-12-15', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'CRIMINOLOGY DEPARTMENT', 'Criminology Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:18:06', '2026-08-13 11:18:06', 0, NULL, NULL),
+(20, 'EMP-000020', NULL, 'Ian', '', 'Perez', NULL, NULL, '1990-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'CRIMINOLOGY DEPARTMENT', 'Criminology Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:18:56', '2026-08-13 11:18:56', 0, NULL, NULL),
+(21, 'EMP-000021', NULL, 'Gia', '', 'Valdez', NULL, NULL, '1990-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'TOURISM DEPARTMENT', 'Tourism Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:19:35', '2026-08-13 11:19:35', 0, NULL, NULL),
+(22, 'EMP-000022', NULL, 'Aaron', '', 'Valdez', NULL, NULL, '1996-12-15', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'TOURISM DEPARTMENT', 'Tourism Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:20:21', '2026-08-13 11:20:21', 0, NULL, NULL),
+(23, 'EMP-000023', NULL, 'Aaron', '', 'Pascual', NULL, NULL, '1999-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'TOURISM DEPARTMENT', 'Tourism Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:21:00', '2026-08-13 11:21:00', 0, NULL, NULL),
+(24, 'EMP-000024', NULL, 'Iris', '', 'Soriano', NULL, NULL, '1998-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'TOURISM DEPARTMENT', 'Tourism Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:21:36', '2026-08-13 11:21:36', 0, NULL, NULL),
+(25, 'EMP-000025', NULL, 'Zenith', '', 'Tolentino', NULL, NULL, '1998-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'BTVTED', 'College Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:22:23', '2026-08-13 11:22:23', 0, NULL, NULL),
+(26, 'EMP-000026', NULL, 'Lumina', '', 'Tolentino', NULL, NULL, '1999-10-20', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'BTVTED', 'Assistant Professor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:22:59', '2026-08-13 11:22:59', 0, NULL, NULL),
+(27, 'EMP-000027', NULL, 'Vibe', '', 'Mercado', NULL, NULL, '1999-08-08', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'BTVTED', 'Associate Professor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:23:32', '2026-08-13 11:23:32', 0, NULL, NULL),
+(28, 'EMP-000028', NULL, 'Diana', '', 'Mercado', NULL, NULL, '1990-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 'BTVTED', 'Technical Instructor', NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:24:04', '2026-08-13 11:24:04', 0, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `em_positions`
+--
+
+CREATE TABLE `em_positions` (
+  `position_id` int(11) NOT NULL,
+  `position_name` varchar(100) NOT NULL,
+  `slot_count` int(11) NOT NULL DEFAULT 1,
+  `department_id` int(11) DEFAULT NULL,
+  `status` enum('Active','Inactive') DEFAULT 'Active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `em_positions`
+--
+
+INSERT INTO `em_positions` (`position_id`, `position_name`, `slot_count`, `department_id`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'School Directress', 1, 1, 'Active', '2026-08-06 13:47:35', NULL),
+(2, 'College Coordinator', 2, 1, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(3, 'HR Officer', 1, 1, 'Active', '2026-08-06 13:47:35', NULL),
+(4, 'HR Staff', 2, 1, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(5, 'Librarian', 2, 1, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(6, 'General Education Instructor', 5, 2, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(7, 'English Instructor', 3, 2, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(8, 'Mathematics Instructor', 3, 2, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(9, 'IT Staff', 3, 3, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(10, 'IT Instructor', 4, 3, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(11, 'Psychology Instructor', 2, 4, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(12, 'Criminology Instructor', 4, 5, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(13, 'Tourism Instructor', 3, 6, 'Active', '2026-08-06 13:47:35', '2026-08-11 18:20:50'),
+(14, 'Monitoring Staff', 2, 1, 'Active', '2026-08-11 18:20:50', NULL),
+(15, 'Laboratory Technician', 2, 1, 'Active', '2026-08-11 18:20:50', NULL),
+(16, 'Records Officer', 1, 1, 'Active', '2026-08-11 18:20:50', NULL),
+(17, 'Records Keeper', 2, 1, 'Active', '2026-08-11 18:20:50', NULL),
+(18, 'Guidance Assistant', 1, 1, 'Active', '2026-08-11 18:20:50', NULL),
+(19, 'Guidance Counselor', 1, 1, 'Active', '2026-08-11 18:20:50', NULL),
+(20, 'Accounting Clerk', 2, 1, 'Active', '2026-08-11 18:20:50', NULL),
+(21, 'School Nurse', 1, 1, 'Active', '2026-08-11 18:20:50', NULL),
+(22, 'Professional Education Instructor', 3, 2, 'Active', '2026-08-11 18:20:50', NULL),
+(23, 'Accounting Instructor', 2, 2, 'Active', '2026-08-11 18:20:50', NULL),
+(24, 'Entrepreneurship Instructor', 2, 2, 'Active', '2026-08-11 18:20:50', NULL),
+(25, 'Criminology Laboratory Staff', 2, 5, 'Active', '2026-08-11 18:20:50', NULL),
+(26, 'Law Instructor', 3, 5, 'Active', '2026-08-11 18:20:50', NULL),
+(27, 'Filipino Instructor', 3, 2, 'Active', '2026-08-11 20:29:07', '2026-08-11 20:36:24'),
+(28, 'Science Instructor', 3, 2, 'Active', '2026-08-11 20:29:07', '2026-08-11 20:36:24'),
+(29, 'Physical Education Instructor', 3, 2, 'Active', '2026-08-11 20:29:07', '2026-08-11 20:36:24'),
+(30, 'Social Science Instructor', 3, 2, 'Active', '2026-08-11 20:29:07', '2026-08-11 20:36:24'),
+(31, 'College Instructor', 3, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(32, 'Assistant Professor', 3, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(33, 'Associate Professor', 2, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(34, 'Technical Instructor', 3, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(35, 'Department Head', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(36, 'Program Chair', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(37, 'College Dean', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(38, 'Curriculum Specialist', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(39, 'Shop Superintendent', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(40, 'Laboratory Manager', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(41, 'Toolkeeper', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(42, 'Laboratory Technician', 2, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(43, 'OJT Coordinator', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(44, 'Internship Coordinator', 1, 7, 'Active', '2026-08-13 10:41:59', NULL),
+(45, 'Extension Services Coordinator', 1, 7, 'Active', '2026-08-13 10:41:59', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `em_users`
+--
+
+CREATE TABLE `em_users` (
+  `user_id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('admin','hr','employee') DEFAULT 'employee',
+  `theme` enum('light','dark') DEFAULT 'light',
+  `employee_id` varchar(50) DEFAULT NULL,
+  `profile_pic` varchar(255) DEFAULT NULL,
+  `account_status` enum('Active','Inactive') DEFAULT 'Active',
+  `last_login` timestamp NULL DEFAULT NULL,
+  `password_changed_at` timestamp NULL DEFAULT NULL,
+  `failed_login_attempts` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `em_users`
+--
+
+INSERT INTO `em_users` (`user_id`, `username`, `password`, `role`, `theme`, `employee_id`, `profile_pic`, `account_status`, `last_login`, `password_changed_at`, `failed_login_attempts`, `created_at`) VALUES
+(1, 'admin', '$2y$10$NamPkg2msMgDuc6CLVq/Y.1ezlD1yYvhrVke4tBLHKe2e1nVvihBa', 'admin', 'light', '1', NULL, 'Active', NULL, '2026-08-07 06:20:30', 0, '2026-08-06 13:47:35'),
+(2, 'hr_employee', '$2y$10$eJUKXrh8r9ay2zZIK6OYYu.QDZqJ5IX4SXZlYt0g.qUH9cN9O7Hd6', 'hr', 'light', NULL, NULL, 'Active', NULL, NULL, 0, '2026-08-07 07:41:26');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `family_background`
+--
+
+CREATE TABLE `family_background` (
+  `family_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `father_name` varchar(100) DEFAULT NULL,
+  `father_occupation` varchar(100) DEFAULT NULL,
+  `mother_name` varchar(100) DEFAULT NULL,
+  `mother_occupation` varchar(100) DEFAULT NULL,
+  `spouse_name` varchar(100) DEFAULT NULL,
+  `spouse_occupation` varchar(100) DEFAULT NULL,
+  `number_of_children` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `government_ids`
+--
+
+CREATE TABLE `government_ids` (
+  `gov_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `sss_no` varchar(50) DEFAULT NULL,
+  `philhealth_no` varchar(50) DEFAULT NULL,
+  `pagibig_no` varchar(50) DEFAULT NULL,
+  `tin_no` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hrms_department`
+--
+
+CREATE TABLE `hrms_department` (
+  `department_id` int(11) NOT NULL,
+  `department_name` varchar(100) DEFAULT NULL,
+  `department_head` bigint(20) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hrms_department`
+--
+
+INSERT INTO `hrms_department` (`department_id`, `department_name`, `department_head`) VALUES
+(15, 'Recruitment', NULL),
+(16, 'Employee Management', NULL),
+(17, 'Payroll', NULL),
+(18, 'Time and Attendance', NULL),
+(19, 'Performance', NULL),
+(20, 'Learning', NULL),
+(21, 'Compliance', NULL),
+(22, 'Exit', NULL),
+(23, 'Clinic', NULL),
+(24, 'Workforce', NULL),
+(25, 'Employee Engagement', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hrms_employee`
+--
+
+CREATE TABLE `hrms_employee` (
+  `employee_id` bigint(20) NOT NULL,
+  `first_name` varchar(100) DEFAULT NULL,
+  `middle_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `role` int(11) DEFAULT NULL,
+  `status` enum('active','inactive') DEFAULT NULL,
+  `date_hired` date DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `department` int(11) DEFAULT NULL,
+  `position` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hrms_employee`
+--
+
+INSERT INTO `hrms_employee` (`employee_id`, `first_name`, `middle_name`, `last_name`, `role`, `status`, `date_hired`, `user_id`, `department`, `position`) VALUES
+(1012, 'Jhon Carlo', NULL, 'Garcia', 1, 'active', '2026-08-08', 21, 15, 42),
+(1013, 'Russel', 'Gohetia', 'Cabrido', 3, 'active', '2026-08-08', 22, 17, 43),
+(1014, 'Jose Mari Rich', 'Alicante', 'Malana', 4, 'active', '2026-08-09', 23, 18, 50),
+(1015, 'Russell', NULL, 'Placer', 2, 'active', '2026-08-09', 24, 16, 44),
+(1016, 'Cheska', 'Bautista', 'Jalotjot', 7, 'active', '2026-08-09', 25, 21, 45),
+(1017, 'Jayson', NULL, 'Paigma', 8, 'active', '2026-08-09', 26, 24, 46),
+(1018, 'Rainiel', NULL, 'Quebada', 6, 'active', '2026-08-09', 27, 20, 47),
+(1019, 'Karl', NULL, 'Solis', 5, 'active', '2026-08-09', 28, 19, 48),
+(1020, 'Geoffrey', 'Cabanag', 'Balansag', 11, 'active', '2026-08-09', 29, 25, 51),
+(1021, 'Johnloyd', 'Tinio', 'Reyes', 9, 'active', '2026-08-09', 30, 22, 49),
+(1022, 'Alexis', NULL, 'Cueto', 10, 'active', '2026-08-09', 31, 23, 52);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hrms_position`
+--
+
+CREATE TABLE `hrms_position` (
+  `position_id` int(11) NOT NULL,
+  `position_name` varchar(100) DEFAULT NULL,
+  `department` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hrms_position`
+--
+
+INSERT INTO `hrms_position` (`position_id`, `position_name`, `department`) VALUES
+(42, 'Recruiter', 15),
+(43, 'Payroll', 17),
+(44, 'Employee Management', 16),
+(45, 'Legal Compliance', 21),
+(46, 'Workforce and Analytics', 24),
+(47, 'Learning and Development', 20),
+(48, 'Performance Management', 19),
+(49, 'Exit Management', 22),
+(50, 'Time and Attendance', 18),
+(51, 'Employee Engagement', 25),
+(52, 'Clinic', 23);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hrms_roles`
+--
+
+CREATE TABLE `hrms_roles` (
+  `role_id` int(11) NOT NULL,
+  `role_name` varchar(100) DEFAULT NULL,
+  `department` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `hrms_roles`
+--
+
+INSERT INTO `hrms_roles` (`role_id`, `role_name`, `department`) VALUES
+(1, 'Recruitment', 15),
+(2, 'Employee', 16),
+(3, 'Payroll', 17),
+(4, 'Time', 18),
+(5, 'Peformance', 19),
+(6, 'Learning', 20),
+(7, 'Compliance', 21),
+(8, 'Workforce', 24),
+(9, 'Exit', 22),
+(10, 'Clinic', 23),
+(11, 'Employee Engagement', 25);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `leave_requests`
+--
+
+CREATE TABLE `leave_requests` (
+  `leave_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `leave_type` enum('Sick Leave','Vacation Leave','Emergency Leave','Maternity Leave','Paternity Leave','Bereavement Leave','Other') NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `reason` text NOT NULL,
+  `status` enum('Pending','Approved','Rejected','Cancelled') DEFAULT 'Pending',
+  `approved_by` int(11) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `overtime_requests`
+--
+
+CREATE TABLE `overtime_requests` (
+  `overtime_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `date` date NOT NULL,
+  `hours` decimal(5,2) NOT NULL,
+  `reason` text NOT NULL,
+  `status` enum('Pending','Approved','Rejected') DEFAULT 'Pending',
+  `approved_by` int(11) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `personal_information`
+--
+
+CREATE TABLE `personal_information` (
+  `personal_info_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `birth_date` date DEFAULT NULL,
+  `birth_place` varchar(100) DEFAULT NULL,
+  `civil_status` enum('Single','Married','Divorced','Widowed','Separated') DEFAULT NULL,
+  `citizenship` varchar(50) DEFAULT NULL,
+  `religion` varchar(50) DEFAULT NULL,
+  `blood_type` varchar(5) DEFAULT NULL,
+  `height` varchar(10) DEFAULT NULL,
+  `weight` varchar(10) DEFAULT NULL,
+  `spouse_name` varchar(100) DEFAULT NULL,
+  `spouse_occupation` varchar(100) DEFAULT NULL,
+  `father_name` varchar(100) DEFAULT NULL,
+  `father_occupation` varchar(100) DEFAULT NULL,
+  `mother_name` varchar(100) DEFAULT NULL,
+  `mother_occupation` varchar(100) DEFAULT NULL,
+  `emergency_contact_name` varchar(100) DEFAULT NULL,
+  `emergency_contact_relationship` varchar(50) DEFAULT NULL,
+  `emergency_contact_number` varchar(20) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `personal_information`
+--
+
+INSERT INTO `personal_information` (`personal_info_id`, `employee_id`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `blood_type`, `height`, `weight`, `spouse_name`, `spouse_occupation`, `father_name`, `father_occupation`, `mother_name`, `mother_occupation`, `emergency_contact_name`, `emergency_contact_relationship`, `emergency_contact_number`, `created_at`, `updated_at`) VALUES
+(1, 1, '1995-01-02', NULL, 'Single', 'Filipino', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-06 13:47:35', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `positions`
+--
+
+CREATE TABLE `positions` (
+  `position_id` int(11) NOT NULL,
+  `position_name` varchar(100) NOT NULL,
+  `department_id` int(11) DEFAULT NULL,
+  `status` enum('Active','Inactive') DEFAULT 'Active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `positions`
+--
+
+INSERT INTO `positions` (`position_id`, `position_name`, `department_id`, `status`, `created_at`, `updated_at`) VALUES
+(1, 'School Directress', 1, 'Active', '2026-08-06 13:47:35', NULL),
+(2, 'College Coordinator', 1, 'Active', '2026-08-06 13:47:35', NULL),
+(3, 'HR Officer', 1, 'Active', '2026-08-06 13:47:35', NULL),
+(4, 'HR Staff', 1, 'Active', '2026-08-06 13:47:35', NULL),
+(5, 'Librarian', 1, 'Active', '2026-08-06 13:47:35', NULL),
+(6, 'General Education Instructor', 2, 'Active', '2026-08-06 13:47:35', NULL),
+(7, 'English Instructor', 2, 'Active', '2026-08-06 13:47:35', NULL),
+(8, 'Mathematics Instructor', 2, 'Active', '2026-08-06 13:47:35', NULL),
+(9, 'IT Staff', 3, 'Active', '2026-08-06 13:47:35', NULL),
+(10, 'IT Instructor', 3, 'Active', '2026-08-06 13:47:35', NULL),
+(11, 'Psychology Instructor', 4, 'Active', '2026-08-06 13:47:35', NULL),
+(12, 'Criminology Instructor', 5, 'Active', '2026-08-06 13:47:35', NULL),
+(13, 'Tourism Instructor', 6, 'Active', '2026-08-06 13:47:35', NULL);
+
+-- --------------------------------------------------------
+
 --
 -- Table structure for table `ta_absence_late_policies`
 --
@@ -765,9 +1566,274 @@ CREATE TABLE `ta_shift_weekday_times` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `user_id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('admin','hr','employee') DEFAULT 'employee',
+  `theme` enum('light','dark') DEFAULT 'light',
+  `employee_id` varchar(50) DEFAULT NULL,
+  `profile_pic` varchar(255) DEFAULT NULL,
+  `account_status` enum('Active','Inactive') DEFAULT 'Active',
+  `last_login` timestamp NULL DEFAULT NULL,
+  `password_changed_at` timestamp NULL DEFAULT NULL,
+  `failed_login_attempts` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`user_id`, `username`, `password`, `role`, `theme`, `employee_id`, `profile_pic`, `account_status`, `last_login`, `password_changed_at`, `failed_login_attempts`, `created_at`) VALUES
+(1, 'admin', '$2y$10$NamPkg2msMgDuc6CLVq/Y.1ezlD1yYvhrVke4tBLHKe2e1nVvihBa', 'admin', 'light', '1', NULL, 'Active', NULL, '2026-08-07 06:20:30', 0, '2026-08-06 13:47:35'),
+(2, 'hr_employee', '$2y$10$eJUKXrh8r9ay2zZIK6OYYu.QDZqJ5IX4SXZlYt0g.qUH9cN9O7Hd6', 'hr', 'light', NULL, NULL, 'Active', NULL, NULL, 0, '2026-08-07 07:41:26');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_account`
+--
+
+CREATE TABLE `user_account` (
+  `user_id` int(11) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `employee_id` bigint(20) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `remember_token` int(1) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_account`
+--
+
+INSERT INTO `user_account` (`user_id`, `password`, `employee_id`, `email`, `created_at`, `remember_token`) VALUES
+(21, '$2y$10$q5/aXH6szEDXVM1rrAgd..BpDjNQCNfjv/bJc/xRR/iWRiLIDypfq', 1012, NULL, '2026-08-09 02:50:23', NULL),
+(22, '$2y$10$dkxxQqySBw.Xj7ynHFVUTugipnIcOsSw9xW9Bkmu1mD6BON74xEJ2', 1013, NULL, '2026-08-08 12:48:40', NULL),
+(23, '$2y$10$E6IfBsx8oYjxiESpMwsiJeIX83m5mRZXW0REze1.YWGohDK5j2Wm.', 1014, NULL, '2026-08-09 05:11:32', NULL),
+(24, '$2y$10$xO/C3.Yk4zkdzaN/iEyxSu2ewtzq6.gJj25pAV3URbF4hD8NY7Fke', 1015, NULL, '2026-08-09 05:24:56', NULL),
+(25, '$2y$10$8yp86m7jO2S8NPM3xTMuyuobAAb4NGsoLxtmv4jpJly2bWcjaYSJi', 1016, NULL, '2026-08-09 05:25:51', NULL),
+(26, '$2y$10$ridpEYIFsgjdYqFI3VTKF.MjSf8GX1H.XrzE/4UxmwWQXkJWHbkh6', 1017, NULL, '2026-08-09 05:26:25', NULL),
+(27, '$2y$10$pZWeY6ODmnwb4VJuxQiCzOMBL4E42/iqg1Xc1tfCQ3IGFdhJ4O112', 1018, NULL, '2026-08-09 05:28:23', NULL),
+(28, '$2y$10$aQ9sEVmIz.cbA5j5eYEIT.r2lCUkfrd6I8X.LY/BLkuo/TUK1Mce6', 1019, NULL, '2026-08-09 05:29:00', NULL),
+(29, '$2y$10$88ez1flvZDHzMKv/jQdxE.HbveLfEt6x5fEDGjfX/T0GEqPT8iN0G', 1020, NULL, '2026-08-09 05:29:45', NULL),
+(30, '$2y$10$DQB1tiH4sQ2RE7yWxOcz3OLUwoKvO6SghNeaDmT0.1nfJpJv/zJWG', 1021, NULL, '2026-08-09 05:30:45', NULL),
+(31, '$2y$10$Htc.AaV0g3yW1hrOtux6fu1oOXiGgxz5WctWPfE/CjccN3EPwtYlG', 1022, NULL, '2026-08-09 05:31:06', NULL);
+
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `departments`
+--
+ALTER TABLE `departments`
+  ADD PRIMARY KEY (`department_id`);
+
+--
+-- Indexes for table `employees`
+--
+ALTER TABLE `employees`
+  ADD PRIMARY KEY (`employee_id`),
+  ADD UNIQUE KEY `employee_code` (`employee_code`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `position_id` (`position_id`);
+
+--
+-- Indexes for table `employee_certifications`
+--
+ALTER TABLE `employee_certifications`
+  ADD PRIMARY KEY (`cert_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employee_change_history`
+--
+ALTER TABLE `employee_change_history`
+  ADD PRIMARY KEY (`change_id`),
+  ADD KEY `employee_id` (`employee_id`),
+  ADD KEY `user_id` (`user_id`);
+
+--
+-- Indexes for table `employee_dependents`
+--
+ALTER TABLE `employee_dependents`
+  ADD PRIMARY KEY (`dependent_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employee_documents`
+--
+ALTER TABLE `employee_documents`
+  ADD PRIMARY KEY (`document_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employee_education`
+--
+ALTER TABLE `employee_education`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_employee_education_employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employee_emergency_contacts`
+--
+ALTER TABLE `employee_emergency_contacts`
+  ADD PRIMARY KEY (`contact_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employee_languages`
+--
+ALTER TABLE `employee_languages`
+  ADD PRIMARY KEY (`language_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employee_skills`
+--
+ALTER TABLE `employee_skills`
+  ADD PRIMARY KEY (`skill_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employee_work_experience`
+--
+ALTER TABLE `employee_work_experience`
+  ADD PRIMARY KEY (`work_exp_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `employment_history`
+--
+ALTER TABLE `employment_history`
+  ADD PRIMARY KEY (`history_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `em_departments`
+--
+ALTER TABLE `em_departments`
+  ADD PRIMARY KEY (`department_id`);
+
+--
+-- Indexes for table `em_documents`
+--
+ALTER TABLE `em_documents`
+  ADD PRIMARY KEY (`doc_id`);
+
+--
+-- Indexes for table `em_education`
+--
+ALTER TABLE `em_education`
+  ADD PRIMARY KEY (`education_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `em_employees`
+--
+ALTER TABLE `em_employees`
+  ADD PRIMARY KEY (`employee_id`),
+  ADD UNIQUE KEY `employee_code` (`employee_code`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `position_id` (`position_id`);
+
+--
+-- Indexes for table `em_positions`
+--
+ALTER TABLE `em_positions`
+  ADD PRIMARY KEY (`position_id`),
+  ADD KEY `department_id` (`department_id`);
+
+--
+-- Indexes for table `em_users`
+--
+ALTER TABLE `em_users`
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `family_background`
+--
+ALTER TABLE `family_background`
+  ADD PRIMARY KEY (`family_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `government_ids`
+--
+ALTER TABLE `government_ids`
+  ADD PRIMARY KEY (`gov_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `hrms_department`
+--
+ALTER TABLE `hrms_department`
+  ADD PRIMARY KEY (`department_id`),
+  ADD KEY `idx_hrms_department_head` (`department_head`);
+
+--
+-- Indexes for table `hrms_employee`
+--
+ALTER TABLE `hrms_employee`
+  ADD PRIMARY KEY (`employee_id`),
+  ADD KEY `idx_hrms_employee_user` (`user_id`),
+  ADD KEY `idx_hrms_employee_role` (`role`),
+  ADD KEY `idx_hrms_employee_department` (`department`),
+  ADD KEY `idx_hrms_employee_position` (`position`);
+
+--
+-- Indexes for table `hrms_position`
+--
+ALTER TABLE `hrms_position`
+  ADD PRIMARY KEY (`position_id`),
+  ADD KEY `idx_hrms_position_department` (`department`);
+
+--
+-- Indexes for table `hrms_roles`
+--
+ALTER TABLE `hrms_roles`
+  ADD PRIMARY KEY (`role_id`),
+  ADD KEY `idx_hrms_roles_department` (`department`);
+
+--
+-- Indexes for table `leave_requests`
+--
+ALTER TABLE `leave_requests`
+  ADD PRIMARY KEY (`leave_id`),
+  ADD KEY `employee_id` (`employee_id`),
+  ADD KEY `approved_by` (`approved_by`);
+
+--
+-- Indexes for table `overtime_requests`
+--
+ALTER TABLE `overtime_requests`
+  ADD PRIMARY KEY (`overtime_id`),
+  ADD KEY `employee_id` (`employee_id`),
+  ADD KEY `approved_by` (`approved_by`);
+
+--
+-- Indexes for table `personal_information`
+--
+ALTER TABLE `personal_information`
+  ADD PRIMARY KEY (`personal_info_id`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `positions`
+--
+ALTER TABLE `positions`
+  ADD PRIMARY KEY (`position_id`),
+  ADD KEY `department_id` (`department_id`);
 
 --
 -- Indexes for table `ta_absence_late_records`
@@ -799,8 +1865,161 @@ ALTER TABLE `ta_shift_weekday_times`
   ADD KEY `weekday` (`weekday`);
 
 --
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD KEY `employee_id` (`employee_id`);
+
+--
+-- Indexes for table `user_account`
+--
+ALTER TABLE `user_account`
+  ADD PRIMARY KEY (`user_id`),
+  ADD KEY `idx_user_account_employee` (`employee_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `departments`
+--
+ALTER TABLE `departments`
+  MODIFY `department_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `employees`
+--
+ALTER TABLE `employees`
+  MODIFY `employee_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `employee_certifications`
+--
+ALTER TABLE `employee_certifications`
+  MODIFY `cert_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `employee_change_history`
+--
+ALTER TABLE `employee_change_history`
+  MODIFY `change_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `employee_dependents`
+--
+ALTER TABLE `employee_dependents`
+  MODIFY `dependent_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `employee_documents`
+--
+ALTER TABLE `employee_documents`
+  MODIFY `document_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `employee_education`
+--
+ALTER TABLE `employee_education`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `employee_emergency_contacts`
+--
+ALTER TABLE `employee_emergency_contacts`
+  MODIFY `contact_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `employee_languages`
+--
+ALTER TABLE `employee_languages`
+  MODIFY `language_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `employee_skills`
+--
+ALTER TABLE `employee_skills`
+  MODIFY `skill_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `employee_work_experience`
+--
+ALTER TABLE `employee_work_experience`
+  MODIFY `work_exp_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `employment_history`
+--
+ALTER TABLE `employment_history`
+  MODIFY `history_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `em_employees`
+--
+ALTER TABLE `em_employees`
+  MODIFY `employee_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+--
+-- AUTO_INCREMENT for table `family_background`
+--
+ALTER TABLE `family_background`
+  MODIFY `family_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `government_ids`
+--
+ALTER TABLE `government_ids`
+  MODIFY `gov_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `hrms_department`
+--
+ALTER TABLE `hrms_department`
+  MODIFY `department_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+
+--
+-- AUTO_INCREMENT for table `hrms_employee`
+--
+ALTER TABLE `hrms_employee`
+  MODIFY `employee_id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1023;
+
+--
+-- AUTO_INCREMENT for table `hrms_position`
+--
+ALTER TABLE `hrms_position`
+  MODIFY `position_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+
+--
+-- AUTO_INCREMENT for table `hrms_roles`
+--
+ALTER TABLE `hrms_roles`
+  MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `leave_requests`
+--
+ALTER TABLE `leave_requests`
+  MODIFY `leave_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `overtime_requests`
+--
+ALTER TABLE `overtime_requests`
+  MODIFY `overtime_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `personal_information`
+--
+ALTER TABLE `personal_information`
+  MODIFY `personal_info_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `positions`
+--
+ALTER TABLE `positions`
+  MODIFY `position_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `ta_absence_late_records`
@@ -827,14 +2046,143 @@ ALTER TABLE `ta_shift_weekday_times`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `user_account`
+--
+ALTER TABLE `user_account`
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+
+--
 -- Constraints for dumped tables
 --
 
 --
--- Constraints for table `ta_absence_late_records`
+-- Constraints for table `employee_certifications`
 --
-ALTER TABLE `ta_absence_late_records`
-  ADD CONSTRAINT `fk_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+ALTER TABLE `employee_certifications`
+  ADD CONSTRAINT `employee_certifications_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employee_change_history`
+--
+ALTER TABLE `employee_change_history`
+  ADD CONSTRAINT `employee_change_history_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employee_dependents`
+--
+ALTER TABLE `employee_dependents`
+  ADD CONSTRAINT `employee_dependents_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employee_documents`
+--
+ALTER TABLE `employee_documents`
+  ADD CONSTRAINT `employee_documents_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employee_emergency_contacts`
+--
+ALTER TABLE `employee_emergency_contacts`
+  ADD CONSTRAINT `employee_emergency_contacts_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employee_languages`
+--
+ALTER TABLE `employee_languages`
+  ADD CONSTRAINT `employee_languages_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employee_skills`
+--
+ALTER TABLE `employee_skills`
+  ADD CONSTRAINT `employee_skills_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employee_work_experience`
+--
+ALTER TABLE `employee_work_experience`
+  ADD CONSTRAINT `employee_work_experience_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `employment_history`
+--
+ALTER TABLE `employment_history`
+  ADD CONSTRAINT `employment_history_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `family_background`
+--
+ALTER TABLE `family_background`
+  ADD CONSTRAINT `family_background_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `government_ids`
+--
+ALTER TABLE `government_ids`
+  ADD CONSTRAINT `government_ids_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `hrms_department`
+--
+ALTER TABLE `hrms_department`
+  ADD CONSTRAINT `fk_hrms_department_head` FOREIGN KEY (`department_head`) REFERENCES `hrms_employee` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `hrms_employee`
+--
+ALTER TABLE `hrms_employee`
+  ADD CONSTRAINT `fk_hrms_employee_department` FOREIGN KEY (`department`) REFERENCES `hrms_department` (`department_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_hrms_employee_position` FOREIGN KEY (`position`) REFERENCES `hrms_position` (`position_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_hrms_employee_role` FOREIGN KEY (`role`) REFERENCES `hrms_roles` (`role_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_hrms_employee_user` FOREIGN KEY (`user_id`) REFERENCES `user_account` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `hrms_position`
+--
+ALTER TABLE `hrms_position`
+  ADD CONSTRAINT `fk_hrms_position_department` FOREIGN KEY (`department`) REFERENCES `hrms_department` (`department_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `hrms_roles`
+--
+ALTER TABLE `hrms_roles`
+  ADD CONSTRAINT `fk_hrms_roles_department` FOREIGN KEY (`department`) REFERENCES `hrms_department` (`department_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `leave_requests`
+--
+ALTER TABLE `leave_requests`
+  ADD CONSTRAINT `leave_requests_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `overtime_requests`
+--
+ALTER TABLE `overtime_requests`
+  ADD CONSTRAINT `overtime_requests_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `personal_information`
+--
+ALTER TABLE `personal_information`
+  ADD CONSTRAINT `personal_information_ibfk_1` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`employee_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `positions`
+--
+ALTER TABLE `positions`
+  ADD CONSTRAINT `positions_ibfk_1` FOREIGN KEY (`department_id`) REFERENCES `departments` (`department_id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `user_account`
+--
+ALTER TABLE `user_account`
+  ADD CONSTRAINT `fk_user_account_employee` FOREIGN KEY (`employee_id`) REFERENCES `hrms_employee` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

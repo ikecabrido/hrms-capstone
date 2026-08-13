@@ -349,52 +349,6 @@ body.dark-mode code {
 /* ====================
    HEADER/NAVBAR STYLES
    ==================== */
-header {
-    background-color: var(--primary-color);
-    color: var(--white);
-    padding: 20px 0;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.header-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.header-brand {
-    font-size: 24px;
-    font-weight: 700;
-    text-decoration: none;
-    color: var(--white);
-}
-
-.header-nav {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.header-nav a {
-    color: var(--white);
-    text-decoration: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    transition: background-color 0.3s;
-}
-
-.header-nav a:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.header-user {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-}
 
 .user-info {
     text-align: right;
@@ -412,20 +366,9 @@ main {
     max-width: 1200px;
     margin: 0 auto;
     padding: 30px 20px;
+    left: var(--sidebar-width);
+    min-height: calc(100vh - var(--header-height));
 }
-
-.page-title {
-    font-size: 32px;
-    margin-bottom: 10px;
-    color: var(--text-color);
-}
-
-.page-subtitle {
-    font-size: 14px;
-    color: var(--border-color);
-    margin-bottom: 30px;
-}
-
 .container {
     background-color: var(--white);
     padding: 30px;

@@ -6,23 +6,14 @@
 
 require_once __DIR__ . '/../app/controllers/AuthController.php';
 require_once __DIR__ . '/../app/models/Attendance.php';
-require_once __DIR__ . '/../app/models/Employee.php';
+require_once __DIR__ . '/../classes/Employee.php';
 require_once __DIR__ . '/../app/models/Holiday.php';
 require_once __DIR__ . '/../app/models/EmployeeShift.php';
 require_once __DIR__ . '/../app/helpers/Helper.php';
 require_once __DIR__ . '/../app/helpers/AuditLog.php';
-require_once __DIR__ . '/../app/core/Session.php';
 require_once __DIR__ . '/../app/core/TimeDatabase.php';
 
 use App\Models\Holiday;
-
-Session::start();
-
-// Check if user is authenticated
-if (!AuthController::isAuthenticated()) {
-    header('Location: ' . dirname(__DIR__) . '/../../login_form.php');
-    exit;
-}
 
 $attendanceModel = new Attendance();
 $employeeModel = new Employee();
@@ -56,18 +47,9 @@ if ($allEmployees > 0 && $todayStats) {
 }
 
 $current_page = 'dashboard.php';
-$current_role = $_SESSION['user']['role']?? $_SESSION['role']?? 'time';
-
-$page_title = 'HR Dashboard - Time & Attendance System';?>
-<?php // require_once __DIR__. '/../layout/page_start.php';?>
-<?php require_once __DIR__. '/../includes/sidebar.php';?>
-<?php // $page_title = 'Time & Attendance Dashboard'; //$page_subtitle = 'Real-time attendance and HR analytics'; $page_icon = 'fa-chart-line';?>
-<?php require_once __DIR__. '/dashboard-overview.php';?>
-<?php require_once __DIR__. '/../includes/header.php';?>
-
-
-
-
+$current_role = $_SESSION['role']?? 'time';
+?>
+<?php require_once __DIR__ . '/dashboard-overview.php'; ?>
     <div class="ta-dashboard absence-late-container glass-panel">
             <!-- Shift Assignment Alert -->
             <?php if ($employeesWithoutShiftCount > 0):?>
@@ -204,4 +186,4 @@ $page_title = 'HR Dashboard - Time & Attendance System';?>
         employees: <?php echo json_encode($activeEmployees); ?>
     };
 </script>
-<script src="../assets/js/dashboard.js"></script>
+<script src="../js/script.js"></script>

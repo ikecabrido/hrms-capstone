@@ -9,7 +9,7 @@ require_once __DIR__ . '/../core/TimeDatabase.php';
 class Employee
 {
     private $conn;
-    private $table = "hrms_employee";
+    private $table = "em_employees";
 
     public function __construct()
     {

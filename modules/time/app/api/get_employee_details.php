@@ -36,7 +36,7 @@ try {
     $employeeId = $_POST['employee_id'] ?? null;
     if (!$employeeId) throw new Exception('employee_id is required');
 
-    $database = Database::getInstance();
+    $database = TimeDatabase::getInstance();
     $db = $database->getConnection();
     $shiftController = new ShiftController($db);
 

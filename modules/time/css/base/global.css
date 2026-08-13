@@ -3,13 +3,14 @@ body {
 }
 
 .main-content {
-    margin-left: var(--sidebar-width);
-    margin-top: var(--header-height);
+    margin-left: 0;
+    margin-top: 0;
     min-height: calc(100vh - var(--header-height));
     padding: 2rem;
-    transition: margin-left 0.3s ease;
+    box-sizing: border-box;
     position: relative;
     z-index: 1;
+    transition: margin-left 0.3s ease;
 }
 
 .container {
@@ -51,7 +52,9 @@ body {
 @media (max-width: 768px) {
     .main-content {
         margin-left: 0;
+        margin-top: var(--header-height);
         padding: 1rem;
+        min-height: calc(100vh - var(--header-height));
     }
     
     .container {
@@ -61,7 +64,7 @@ body {
 
 /* Mobile Phones (480px and below) */
 @media (max-width: 480px) {
-        .main-content {
+    .main-content {
         margin-top: 50px;
         padding: 0.75rem;
         min-height: calc(100vh - 50px);
@@ -82,4 +85,7 @@ body {
         margin-left: 0;
         margin-top: 0;
     }
+}
+.main-content > .container {
+    margin-top: 0 !important;
 }
