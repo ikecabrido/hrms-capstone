@@ -1,0 +1,154 @@
+
+  .stats-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid rgba(13, 71, 161, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+    padding: 18px 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+  }
+
+  .stat-card .info-box-icon {
+    width: 54px;
+    height: 54px;
+    min-width: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 22px;
+    box-shadow: inset 0 -4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .stat-card .info-box-icon.bg-primary {
+    background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
+  }
+
+  .stat-card .info-box-icon.bg-success {
+    background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+  }
+
+  .stat-card .info-box-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .stat-card .info-box-text {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+  }
+
+  .stat-card .info-box-number {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+  }
+
+  .records-table table thead,
+  .records-table table th {
+    background: linear-gradient(135deg, #003d82, #0066cc) !important;
+    color: #ffffff !important;
+  }
+
+  body.dark-mode .stat-card,
+  body.dark-mode .filter-section,
+  body.dark-mode .records-table {
+    background: #1e1e1e !important;
+    color: #e5e7eb !important;
+    border-color: #3f4650 !important;
+  }
+
+  body.dark-mode .stat-card .info-box-text,
+  body.dark-mode .filter-section label {
+    color: #c3d0df !important;
+  }
+
+  body.dark-mode .stat-card .info-box-number,
+  body.dark-mode .records-table td,
+  body.dark-mode .records-table th,
+  body.dark-mode .filter-section input {
+    color: #f3f4f6 !important;
+  }
+
+  body.dark-mode .filter-section input,
+  body.dark-mode .filter-section select,
+  body.dark-mode .form-control {
+    background: #292929 !important;
+    border-color: #596675 !important;
+    color: #f3f4f6 !important;
+  }
+
+  body.dark-mode .filter-section input::placeholder {
+    color: #aeb9c6 !important;
+  }
+
+  body.dark-mode .records-table table thead,
+  body.dark-mode .records-table table th {
+    background: #263b55 !important;
+    color: #f3f4f6 !important;
+  }
+
+  body.dark-mode .records-table table td {
+    background: #1e1e1e !important;
+    border-color: #3f4650 !important;
+  }
+
+  body.dark-mode .records-table table tbody tr:hover td {
+    background: #2a3440 !important;
+  }
+
+  body.dark-mode .modal-content {
+    background: #1e1e1e !important;
+    color: #f3f4f6 !important;
+    border-color: #46515e !important;
+  }
+
+  body.dark-mode .modal-header,
+  body.dark-mode .modal-footer {
+    background: #263b55 !important;
+    border-color: #46515e !important;
+  }
+
+  body.dark-mode .modal-title,
+  body.dark-mode #empQrName {
+    color: #f3f4f6 !important;
+  }
+
+  body.dark-mode .qr-preview-shell {
+    background: #f8fafc !important;
+  }
+
+  .main-header.navbar,
+  .brand-link {
+    background: #1976d2 !important;
+    color: #ffffff !important;
+  }
+
+  .main-header.navbar .nav-link,
+  .brand-link .brand-text {
+    color: #ffffff !important;
+  }

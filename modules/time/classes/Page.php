@@ -1,11 +1,11 @@
 <?php
 class Page {
-    private $default = 'dashboard-overview';
+    private $default = 'dashboard';
     private $pagesDir;
     private $allowed = [];
 
     private $labels = [
-        'dashboard-overview'          => 'Dashboard',
+        'dashboard'          => 'Dashboard',
         'absence_late_management'             => 'Absence & Late Management',
         'shifts'  => 'Shift Management',
         'qr_scanner'   => 'Attendance Scanner',
@@ -16,7 +16,7 @@ class Page {
     ];
 
     private $sections = [
-        'top'             => ['dashboard-overview'],
+        'top'             => ['dashboard'],
         'Attendance'  => ['qr_scanner', 'employee_qr_list', 'absence_late_management'],
         'Scheduling & Shifts'      => ['shifts', 'schedule_calendar'],
         'Leave & Holidays'       => ['holidays', 'leave_approvals']

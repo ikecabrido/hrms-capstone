@@ -1,0 +1,408 @@
+/**
+ * Real-time Dashboard Styles
+ * Styles for live event updates and notifications
+ */
+
+/* Real-time Events Container */
+#realtimeEventsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Individual Event Styling */
+.realtime-event {
+    display: grid;
+    grid-template-columns: 30px 1fr 80px 50px 10px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: white;
+    border-left: 3px solid #003d82;
+    border-radius: 4px;
+    font-size: 13px;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .realtime-event {
+    background: #1e1e1e;
+    border-left-color: #5fa3ff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.realtime-event.animate-in {
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Event Icon */
+.event-icon {
+    text-align: center;
+    font-size: 16px;
+}
+
+/* Event Details */
+.event-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.event-details strong {
+    font-weight: 600;
+    color: #003d82;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark-mode .event-details strong {
+    color: #5fa3ff;
+}
+
+.event-details small {
+    font-size: 11px;
+    color: #999;
+}
+
+body.dark-mode .event-details small {
+    color: #aaa;
+}
+
+/* Event Type Badge */
+.event-type {
+    font-weight: 600;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.realtime-event.event-login .event-type {
+    background: #e3f2fd;
+    color: #1565c0;
+}
+
+body.dark-mode .realtime-event.event-login .event-type {
+    background: #1a3a52;
+    color: #5fa3ff;
+}
+
+.realtime-event.event-timein .event-type {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+body.dark-mode .realtime-event.event-timein .event-type {
+    background: #1b4a2a;
+    color: #66bb6a;
+}
+
+.realtime-event.event-timeout .event-type {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+body.dark-mode .realtime-event.event-timeout .event-type {
+    background: #4a2c1a;
+    color: #ffb74d;
+}
+
+/* Event Time */
+.event-time {
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+    font-family: 'Courier New', monospace;
+}
+
+body.dark-mode .event-time {
+    color: #999;
+}
+
+/* Live Indicator Pulse */
+.event-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ff4444;
+}
+
+.event-indicator.pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.2);
+    }
+}
+
+/* Real-time Metrics */
+#realtimeMetrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 6px;
+}
+
+body.dark-mode #realtimeMetrics {
+    background: #2a2a2a;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+
+.metric-label {
+    font-size: 11px;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+body.dark-mode .metric-label {
+    color: #aaa;
+}
+
+.metric-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #003d82;
+}
+
+body.dark-mode .metric-value {
+    color: #5fa3ff;
+}
+
+/* Real-time Toast Notifications */
+.realtime-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 16px;
+    background: white;
+    border-left: 4px solid #003d82;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    z-index: 9999;
+    animation: toastSlideIn 0.3s ease;
+    max-width: 400px;
+}
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateX(500px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.realtime-toast.toast-info {
+    border-left-color: #0066cc;
+}
+
+.realtime-toast.toast-login {
+    border-left-color: #1565c0;
+}
+
+.realtime-toast.toast-timein {
+    border-left-color: #2e7d32;
+}
+
+.realtime-toast.toast-timeout {
+    border-left-color: #e65100;
+}
+
+.realtime-toast.toast-success {
+    border-left-color: #27ae60;
+}
+
+.realtime-toast.toast-error {
+    border-left-color: #e74c3c;
+}
+
+body.dark-mode .realtime-toast {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.toast-close:hover {
+    color: #333;
+}
+
+body.dark-mode .toast-close:hover {
+    color: #e0e0e0;
+}
+
+/* Realtime Update Container */
+.realtime-dashboard-widget {
+    background: white;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+body.dark-mode .realtime-dashboard-widget {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.realtime-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+body.dark-mode .realtime-header {
+    border-bottom-color: #404040;
+}
+
+.realtime-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #003d82;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+body.dark-mode .realtime-title {
+    color: #5fa3ff;
+}
+
+.realtime-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #999;
+}
+
+body.dark-mode .realtime-status {
+    color: #aaa;
+}
+
+.status-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #27ae60;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-indicator.inactive {
+    background: #e74c3c;
+    animation: none;
+}
+
+/* Refresh Button */
+#realtimeRefresh {
+    background: #0066cc;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#realtimeRefresh:hover {
+    background: #0052a3;
+    transform: translateY(-1px);
+}
+
+#realtimeRefresh:active {
+    transform: translateY(0);
+}
+
+body.dark-mode #realtimeRefresh {
+    background: #0052a3;
+}
+
+body.dark-mode #realtimeRefresh:hover {
+    background: #003f7a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .realtime-toast {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    #realtimeMetrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .realtime-event {
+        grid-template-columns: 30px 1fr 30px;
+        gap: 8px;
+    }
+    
+    .event-time {
+        display: none;
+    }
+    
+    .event-type {
+        text-align: left;
+    }
+}

@@ -1,7 +1,7 @@
 <?php
 include_once __DIR__ . '/../../../auth/session.php';
-include __DIR__ . '/../classes/Employee.php';
-$employeeClass = new Employee();
+include_once __DIR__ . '/../classes/Employee.php';
+$employeeClass = new TimeTemplateEmployee();
 
 ?>
 
@@ -66,7 +66,7 @@ $employeeClass = new Employee();
         <h1 class="employee_name"><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></h1>
         <p class="employee_position"><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></p>
     </div>
-    <h2>Recruitment Dashboard</h2>
+    <h2>Dashboard</h2>
     <ul>
         <?php $pageController->renderNav(); ?>
     </ul>

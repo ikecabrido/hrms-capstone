@@ -1,0 +1,283 @@
+
+        body.dark-mode .container {
+            background: rgba(30, 30, 30, 0.85);
+            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .approvals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+        }
+        body.dark-mode .approvals-table {
+            background: #1e1e1e;
+            color: #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        .approvals-table th {
+            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        body.dark-mode .approvals-table th {
+            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
+        }
+        .approvals-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e8eef7;
+        }
+        body.dark-mode .approvals-table td {
+            border-color: #404040;
+        }
+        .approvals-table tr:hover {
+            background: #f9fbfd;
+        }
+        body.dark-mode .approvals-table tr:hover {
+            background: #2a2a2a;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-pending {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe57f 100%);
+            color: #856404;
+            border: 1px solid #ffc107;
+        }
+        .badge-pending:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+        }
+        .badge-approved {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 1px solid #28a745;
+        }
+        .badge-approved:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+        }
+        body.dark-mode .badge-pending {
+            background: linear-gradient(135deg, #664d03 0%, #997404 100%);
+            color: #fff3cd;
+            border-color: #997404;
+        }
+        body.dark-mode .badge-approved {
+            background: linear-gradient(135deg, #0f3622 0%, #1a5e3a 100%);
+            color: #d4edda;
+            border-color: #1a5e3a;
+        }
+        .action-btn {
+            padding: 8px 14px;
+            margin: 3px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .btn-approve {
+            background: linear-gradient(135deg, #1e90ff 0%, #0066cc 100%);
+            color: white;
+            border: 1px solid #005bb5;
+        }
+        .btn-approve:hover {
+            background: linear-gradient(135deg, #005bb5 0%, #004494 100%);
+        }
+        .btn-reject {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: 1px solid #c0392b;
+        }
+        .btn-reject:hover {
+            background: linear-gradient(135deg, #c0392b 0%, #a93226 100%);
+        }
+        body.dark-mode .action-btn {
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+        body.dark-mode .action-btn:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        body.dark-mode .modal-content {
+            background: #1e1e1e;
+            color: #e0e0e0;
+        }
+        .modal-close {
+            float: right;
+            cursor: pointer;
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            margin-top: -10px;
+            margin-right: -10px;
+        }
+        .modal-close:hover {
+            color: #333;
+        }
+        body.dark-mode .modal-close:hover {
+            color: #e0e0e0;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        body.dark-mode .alert-success {
+            background: #1e4a3b;
+            color: #9fd9c7;
+            border-color: #0d3a2a;
+        }
+        body.dark-mode .alert-error {
+            background: #4a1f1f;
+            color: #e9a8a8;
+            border-color: #6b2f2f;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 10px 0;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+        body.dark-mode textarea {
+            background: #2a2a2a;
+            color: #e0e0e0;
+            border-color: #404040;
+        }
+        .modal-button-group {
+            margin-top: 15px;
+            text-align: right;
+        }
+        .modal-button-group button {
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        /* AdminLTE Preloader Styles */
+        .preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0d47a1 0%, #0b3c91 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 99999;
+        }
+
+        .preloader.flex-column {
+            flex-direction: column;
+        }
+
+        .preloader.justify-content-center {
+            justify-content: center;
+        }
+
+        .preloader.align-items-center {
+            align-items: center;
+        }
+
+        .preloader img {
+            max-width: 100px;
+            height: auto;
+            display: block;
+        }
+
+        .animation__wobble {
+            animation: wobble 2.5s infinite ease-in-out;
+        }
+
+        @keyframes wobble {
+            0% {
+                transform: translateX(0);
+            }
+            15% {
+                transform: translateX(-5px) rotate(-5deg);
+            }
+            30% {
+                transform: translateX(3px) rotate(3deg);
+            }
+            45% {
+                transform: translateX(-3px) rotate(-3deg);
+            }
+            60% {
+                transform: translateX(2px) rotate(2deg);
+            }
+            75% {
+                transform: translateX(-1px) rotate(-1deg);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+    

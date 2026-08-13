@@ -1,0 +1,829 @@
+html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            background: #f4f6f9;
+        }
+
+        body.hold-transition {
+            transition: background-color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: #121212;
+        }
+
+        /* Remove list markers from sidebar navigation */
+        .nav-sidebar,
+        .nav-sidebar ul {
+            list-style: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .nav-sidebar li,
+        .nav-sidebar li.nav-item {
+            list-style: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Dashboard-only override: do not reserve space for the sidebar here.
+           The shared global layout adds a left offset, but this page uses a
+           fixed custom sidebar and should keep its content aligned to the page. */
+        body .main-header.navbar,
+        body .main-content,
+        body .content-wrapper,
+        body .shift-container {
+            margin-left: 0 !important;
+            width: auto !important;
+            max-width: none !important;
+            left: 0 !important;
+            box-sizing: border-box !important;
+        }
+
+        .main-header.navbar {
+            margin: 0 !important;
+            padding: 0 20px !important;
+        }
+
+        .main-content,
+        .shift-container {
+            width: auto !important;
+            min-height: calc(100vh - 60px) !important;
+            padding: 30px 20px !important;
+            box-sizing: border-box !important;
+        }
+
+        /*.content-wrapper {
+            width: auto !important;
+            max-width: none !important;
+            box-sizing: border-box !important;
+        }*/
+
+        /* Sidebar Collapse - Brand Image */
+
+        .live-clock {
+            display: inline-block;
+            font-size: 18px;
+            font-weight: bold;
+            color: #003d82;
+            background: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-left: auto;
+        }
+
+        body.dark-mode .live-clock {
+            background: #1e1e1e;
+            color: #0066cc;
+        }
+
+        h1, h2 {
+            color: #003d82;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        h1 + p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        body.dark-mode h1,
+        body.dark-mode h2 {
+            color: #5fa3ff;
+        }
+
+        body.dark-mode h1 + p {
+            color: #aaa;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 5px solid #3498db;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .card h3 {
+            color: #7f8c8d;
+            font-size: 13px;
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .card-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .card-unit {
+            font-size: 13px;
+            color: #95a5a6;
+            margin-top: 0;
+        }
+
+        .card.present { border-left-color: #27ae60; }
+        .card.absent { border-left-color: #e74c3c; }
+        .card.pending { border-left-color: #f39c12; }
+        .card.employees { border-left-color: #3498db; }
+        
+        body.dark-mode .card {
+            background: #1e1e1e;
+            color: #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        body.dark-mode .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        body.dark-mode .card h3 {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .card-value {
+            color: #e0e0e0;
+        }
+
+/* ===== Payroll-style AdminLTE overrides (applied to Time & Attendance) =====
+     These rules mirror the payroll module's custom.css to produce a matching
+     blue sidebar/header look across the site. Loaded by virtue of being
+     appended to the module's dashboard stylesheet so it takes effect last.
+*/
+
+
+/* MAIN CONTENT WHITE */
+.content-wrapper {
+    background-color: #ffffff !important;
+}
+/*
+/* DARK MODE CUSTOMIZATION 
+body.dark-mode .main-sidebar {
+    background-color: #0b1f3a !important;
+}*/
+
+body.dark-mode .content-wrapper {
+    background-color: #313030 !important;
+}
+
+body.dark-mode .main-header.navbar {
+    background-color: #0d47a1 !important;
+}
+body:not(.dark-mode) .content-wrapper {
+    background-color: #f4f6f9 !important;
+}*/
+
+/*.wrapper .preloader {
+    background-color: #0b3c91 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.preloader img {
+    max-width: 100px;
+    height: auto;
+}
+
+.preloader .animation__wobble {
+    animation: wobble 2.5s infinite !important;
+}
+
+.main-footer {
+    background-color: #1976d2;
+    color: #d6d3d3;
+} 
+body.dark-mode .main-footer {
+    background-color: #0d47a1 !important;
+}*/
+
+/* Strong dark mode container and text overrides */
+body.dark-mode,
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6,
+body.dark-mode p,
+body.dark-mode span,
+body.dark-mode label,
+body.dark-mode a,
+body.dark-mode th,
+body.dark-mode td,
+body.dark-mode li,
+body.dark-mode small,
+body.dark-mode .form-label,
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea,
+body.dark-mode button,
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode .form-control::placeholder {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .content-wrapper,
+body.dark-mode .main-content,
+body.dark-mode .shift-container,
+body.dark-mode .card,
+body.dark-mode .glass-panel,
+body.dark-mode .container,
+body.dark-mode .modal-content,
+body.dark-mode .card-body,
+body.dark-mode .approvals-table,
+body.dark-mode .data-table,
+body.dark-mode .table,
+body.dark-mode .info-box,
+body.dark-mode .table-container,
+body.dark-mode .filter-controls input,
+body.dark-mode .filter-controls select,
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode .btn,
+body.dark-mode .btn-primary,
+body.dark-mode .btn-secondary,
+body.dark-mode .page-header,
+body.dark-mode .shift-tabs,
+body.dark-mode .shift-card,
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer,
+body.dark-mode .breadcrumb,
+body.dark-mode .dropdown-menu,
+body.dark-mode .nav-sidebar,
+body.dark-mode .nav-sidebar .nav-link,
+body.dark-mode .nav-sidebar .user-panel,
+body.dark-mode .main-header.navbar,
+body.dark-mode .main-footer {
+    background-color: rgba(30, 30, 30, 0.98) !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35) !important;
+}
+
+body.dark-mode .main-header.navbar,
+body.dark-mode .main-footer {
+    box-shadow: none !important;
+}
+
+body.dark-mode .card:hover,
+body.dark-mode .shift-card:hover,
+body.dark-mode .modal-content,
+body.dark-mode .data-table tbody tr:hover,
+body.dark-mode .approvals-table tbody tr:hover,
+body.dark-mode .table tbody tr:hover {
+    background-color: rgba(40, 40, 40, 0.98) !important;
+}
+
+body.dark-mode .badge,
+body.dark-mode .badge-success,
+body.dark-mode .badge-warning,
+body.dark-mode .badge-info,
+body.dark-mode .badge-primary,
+body.dark-mode .badge-secondary {
+    background-color: rgba(80, 120, 180, 0.18) !important;
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .form-control,
+body.dark-mode .form-select,
+body.dark-mode .filter-controls input,
+body.dark-mode .filter-controls select,
+body.dark-mode textarea {
+    background-color: #1f1f1f !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255,255,255,0.12) !important;
+}
+
+/* Ensure default white inline containers are dark in dark mode */
+body.dark-mode [style*="background: white"],
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="background: #ffffff"] {
+    background-color: #1d1d1d !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* Animate the Font Awesome icon */
+#themeIcon {
+    display: inline-block;
+    transition:
+        transform 0.35s ease,
+        opacity 0.25s ease;
+}
+
+#themeIcon.animate {
+    transform: rotate(180deg) scale(0.5);
+    opacity: 0;
+}
+
+        body.dark-mode .card-unit {
+            color: #b0b0b0;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .container h2 {
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        body.dark-mode .container {
+            background: #1e1e1e;
+            color: #e0e0e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        body.dark-mode .container h2 {
+            border-bottom-color: #333;
+        }
+
+        /* Table Styles */
+        #attendanceTable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        #attendanceTable thead {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        #attendanceTable th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #495057;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        #attendanceTable td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        #attendanceTable tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        body.dark-mode #attendanceTable {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode #attendanceTable thead {
+            background-color: #2a2a2a;
+            border-bottom-color: #404040;
+        }
+
+        body.dark-mode #attendanceTable th {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode #attendanceTable td {
+            border-color: #404040;
+        }
+
+        body.dark-mode #attendanceTable tbody tr:hover {
+            background-color: #2a2a2a;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, #003d82 0%, #005ba8 100%);
+            border-radius: 18px;
+            padding: 28px 30px;
+            color: #ffffff;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+            position: relative;
+            overflow: hidden;
+            margin: 0 0 30px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -20%;
+            width: 220px;
+            height: 220px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            transform: rotate(25deg);
+        }
+
+        .page-title {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: 0.25px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .page-title i {
+            font-size: 34px;
+            opacity: 0.95;
+        }
+
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 14px;
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+
+        .page-header-right {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+            gap: 8px;
+        }
+
+        .page-header-right .current-month {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.75);
+            letter-spacing: 0.2px;
+        }
+
+        .page-header-right .month-year {
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .glass-panel,
+        .container {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .glass-panel h2,
+        .glass-panel h3,
+        .container h2,
+        .container h3 {
+            color: #1f4258;
+        }
+
+        body.dark-mode .glass-panel,
+        body.dark-mode .container {
+            background: rgba(30, 30, 30, 0.85);
+            border-color: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .approvals-table,
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+        }
+
+        .approvals-table th,
+        .approvals-table td,
+        .data-table th,
+        .data-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .approvals-table thead,
+        .data-table thead {
+            background: linear-gradient(135deg, #003d82 0%, #005ba8 100%);
+            color: #ffffff;
+        }
+
+        .approvals-table tbody tr:hover,
+        .data-table tbody tr:hover {
+            background: rgba(52, 152, 219, 0.08);
+        }
+
+        body.dark-mode .approvals-table,
+        body.dark-mode .data-table {
+            background: rgba(20, 20, 20, 0.95);
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .approvals-table th,
+        body.dark-mode .data-table th {
+            background: linear-gradient(135deg, #003d82 0%, #005ba8 100%);
+            color: #ffffff;
+        }
+
+        body.dark-mode .approvals-table td,
+        body.dark-mode .data-table td {
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        /* Search and Filter Controls */
+        .filter-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-controls input,
+        .filter-controls select {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: border-color 0.2s ease;
+        }
+
+        .filter-controls input:focus,
+        .filter-controls select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .filter-controls input {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        body.dark-mode .filter-controls input,
+        body.dark-mode .filter-controls select {
+            background-color: #2a2a2a;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .card-value {
+                font-size: 28px;
+            }
+
+            .card h3 {
+                font-size: 12px;
+            }
+
+            .container {
+                padding: 20px;
+                border-radius: 8px;
+            }
+
+            .filter-controls {
+                flex-direction: column;
+            }
+
+            .filter-controls input {
+                min-width: auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-buttons .btn {
+                width: 100%;
+                min-height: 48px;
+            }
+        }
+
+        /* Payroll dashboard refinements */
+        .page-header {
+            background: linear-gradient(135deg, #0b3c91 0%, #1976d2 100%) !important;
+            border-radius: 18px !important;
+            padding: 28px 30px !important;
+            box-shadow: 0 18px 40px rgba(0, 61, 130, 0.14) !important;
+            margin: 0 0 30px !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            color: #ffffff !important;
+        }
+
+        .page-header::before {
+            content: '' !important;
+            position: absolute !important;
+            top: -50% !important;
+            right: -50% !important;
+            width: 220px !important;
+            height: 220px !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-radius: 50% !important;
+            transform: rotate(25deg) !important;
+        }
+
+        .calendar-container,
+        .holiday-container,
+        .glass-panel,
+        .container,
+        .shift-container {
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid rgba(229, 236, 246, 0.65) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 18px 40px rgba(0, 61, 130, 0.08) !important;
+        }
+
+        body.dark-mode .calendar-container,
+        body.dark-mode .holiday-container,
+        body.dark-mode .glass-panel,
+        body.dark-mode .container,
+        body.dark-mode .shift-container {
+            background: rgba(28, 28, 28, 0.95) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        .holiday-container {
+            grid-template-columns: 1fr 2fr !important;
+            gap: 20px !important;
+        }
+
+        .calendar-body,
+        .calendar-header,
+        .shift-header,
+        .calendar-container,
+        .holiday-container,
+        .content-wrapper,
+        .main-content,
+        .shift-container {
+            padding: 0 !important;
+            margin: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .holiday-container .holiday-list,
+        .holiday-container .holiday-details {
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .breadcrumb-nav {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+
+        .breadcrumb-nav a {
+            color: rgba(255, 255, 255, 0.95) !important;
+        }
+
+        .page-title,
+        .page-title span,
+        .page-subtitle,
+        .page-header-right .current-month,
+        .page-header-right .month-year {
+            color: #ffffff !important;
+        }
+
+/* Scoped Time & Attendance dashboard adjustments (only when body.ta-module present) */
+body.ta-module .brand-link {
+    background-color: #0b3c91 !important;
+    color: #fff !important;
+}
+
+body.ta-module.sidebar-collapse .brand-link {
+    padding: 8px !important;
+    height: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.ta-module.sidebar-collapse .brand-link .brand-image {
+    width: 50px !important;
+    height: 50px !important;
+    margin: 0 !important;
+    object-fit: contain !important;
+}
+
+body.ta-module .main-header.navbar {
+    background-color: #1976d2 !important;
+}
+
+body.ta-module .main-sidebar {
+    background-color: #0d47a1 !important;
+}
+
+body.ta-module .nav-sidebar .nav-link {
+    color: #ffffff !important;
+}
+
+body.ta-module .nav-sidebar .nav-link.active,
+body.ta-module .nav-sidebar .nav-link:hover {
+    background-color: #1565c0 !important;
+    color: #fff !important;
+}
+
+        .page-title,
+        .page-title span,
+        .page-subtitle,
+        .page-header-right .current-month,
+        .page-header-right .month-year {
+            color: #ffffff !important;
+        }
+
+        .holiday-list-item,
+        .holiday-card,
+        .stat-card,
+        .info-box,
+        .approval-card {
+            background: rgba(255,255,255,0.95) !important;
+        }
+
+        body.dark-mode .holiday-list-item,
+        body.dark-mode .holiday-card,
+        body.dark-mode .stat-card,
+        body.dark-mode .info-box,
+        body.dark-mode .approval-card {
+            background: rgba(30, 30, 30, 0.95) !important;
+        }
+
+        .btn-primary,
+        .btn {
+            border-radius: 0.65rem !important;
+            font-weight: 600 !important;
+        }

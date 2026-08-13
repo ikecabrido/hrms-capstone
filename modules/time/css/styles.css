@@ -10,13 +10,10 @@
 @import url('layout/module-container.css');
 
 /*Pages CSS*/
-@import url('pages/dashboard-overview.css');
-@import url('pages/user-management.css');
-@import url('pages/department-unit-management.css');
-@import url('pages/approval-decision-support.css');
-@import url('pages/communications-announcements.css');
-@import url('pages/report-submission-management.css');
-@import url('pages/concerns-issue-tracking.css');
+@import url('assets/css/dashboard.css');
+@import url('assets/css/dashboard-template.css');
+@import url('assets/css/hr-template.css');
+
 
 /*Base CSS*/
 @import url('base/variables.css');

@@ -1,8 +1,8 @@
 <?php
 
-include_once __DIR__ . '/../../../database/db.php';
+include_once __DIR__ . '/../app/core/TimeDatabase.php';
 
-class Employee
+class TimeTemplateEmployee
 {
     private $conn;
     private $employeeid;
@@ -18,7 +18,7 @@ class Employee
         if ($pdo instanceof PDO) {
             $this->conn = $pdo;
         } else {
-            $database = new Database();
+            $database = TimeDatabase::getInstance();
             $this->conn = $database->getConnection();
         }
     }
