@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 11, 2026 at 06:24 PM
+-- Generation Time: Aug 13, 2026 at 02:53 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -41,10 +41,10 @@ CREATE TABLE `em_employees` (
   `civil_status` enum('Single','Married','Divorced','Widowed','Separated') DEFAULT NULL,
   `citizenship` varchar(50) DEFAULT NULL,
   `religion` varchar(50) DEFAULT NULL,
-  `email` varchar(100) NOT NULL,
   `mobile_no` varchar(20) DEFAULT NULL,
   `phone_no` varchar(20) DEFAULT NULL,
   `current_address` text DEFAULT NULL,
+  `profile_image` varchar(255) DEFAULT NULL,
   `permanent_address` text DEFAULT NULL,
   `department` varchar(100) DEFAULT NULL,
   `position` varchar(100) DEFAULT NULL,
@@ -70,14 +70,14 @@ CREATE TABLE `em_employees` (
 -- Dumping data for table `em_employees`
 --
 
-INSERT INTO `em_employees` (`id`, `employee_num`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `email`, `mobile_no`, `phone_no`, `current_address`, `permanent_address`, `department`, `position`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
-(1, 'EMP-000001', 1, 'Ronaldo', 'G.', 'Raymundo', NULL, 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 'IT DEPARTMENT', 'IT Staff', 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-06 05:47:35', '2026-08-11 04:48:25', 0, NULL, NULL),
-(2, 'EMP-000002', NULL, 'Juan', 'Dela', 'Cruz', NULL, 'Male', '1990-05-15', NULL, NULL, NULL, NULL, 'juan.delacruz@bcp.edu.ph', '09123456789', '021234567', '123 Main St, Manila', NULL, 'Executive Administration', 'College President', NULL, '2023-01-15', NULL, 'Active', NULL, NULL, 'None', NULL, NULL, NULL, NULL, '2026-08-06 06:54:48', '2026-08-06 08:46:37', 0, NULL, NULL),
-(3, 'EMP-000003', NULL, 'Maria', 'Santos', 'Reyes', NULL, 'Female', '1992-03-18', 'Malolos, Bulacan', 'Married', 'Filipino', NULL, 'maria.reyes@bcp.edu.ph', '09171234567', '0441234567', 'Malolos, Bulacan', NULL, 'Employee Management', 'HR Officer', 44, '2024-06-10', '2025-06-10', 'Active', 'Full-time', NULL, 'Masteral', 'Senior HR Staff', 'BS Psychology, MA Human Resource Management', NULL, 45000.00, '2026-08-08 01:00:00', NULL, 0, NULL, NULL),
-(4, 'EMP-000004', NULL, 'Michael', 'Tan', 'Santos', 'Jr.', 'Male', '1988-11-25', 'Meycauayan, Bulacan', 'Married', 'Filipino', NULL, 'michael.santos@bcp.edu.ph', '09181234567', '0442345678', 'Meycauayan, Bulacan', NULL, 'Payroll', 'Payroll Officer', 43, '2023-08-01', '2024-08-01', 'Active', 'Full-time', NULL, 'Masteral', 'Payroll Specialist', 'BS Accountancy, CPA', NULL, 48000.00, '2026-08-08 01:15:00', NULL, 0, NULL, NULL),
-(5, 'EMP-000005', NULL, 'Angela', 'Marie', 'Garcia', NULL, 'Female', '1996-07-09', 'Baliwag, Bulacan', 'Single', 'Filipino', NULL, 'angela.garcia@bcp.edu.ph', '09201234567', '0443456789', 'Baliwag, Bulacan', NULL, 'Learning', 'Training Coordinator', 47, '2025-01-15', NULL, 'Probationary', 'Full-time', NULL, 'None', 'Training Coordinator', 'BS Education', 'Handles employee training and seminar coordination.', 32000.00, '2026-08-08 01:30:00', NULL, 0, NULL, NULL),
-(6, 'EMP-000006', NULL, 'Daniel', 'Lopez', 'Mendoza', NULL, 'Male', '1993-09-14', 'San Fernando, Pampanga', 'Single', 'Filipino', NULL, 'daniel.mendoza@bcp.edu.ph', '09301234567', '0451234567', 'San Fernando, Pampanga', NULL, 'Performance', 'Performance Management Officer', 48, '2024-03-20', '2025-03-20', 'Active', 'Full-time', NULL, 'Masteral', 'Performance Specialist', 'BS Business Administration, MBA', NULL, 42000.00, '2026-08-08 01:45:00', NULL, 0, NULL, NULL),
-(7, 'EMP-000007', NULL, 'Sofia', 'Anne', 'Villanueva', NULL, 'Female', '1997-12-03', 'Quezon City', 'Single', 'Filipino', NULL, 'sofia.villanueva@bcp.edu.ph', '09401234567', '0281234567', 'Quezon City', NULL, 'Employee Engagement', 'Employee Relations Officer', 51, '2025-05-05', NULL, 'Probationary', 'Full-time', NULL, 'None', 'Employee Relations Staff', 'BS Psychology', 'Handles employee engagement activities and concerns.', 35000.00, '2026-08-08 02:00:00', NULL, 0, NULL, NULL);
+INSERT INTO `em_employees` (`id`, `employee_num`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `mobile_no`, `phone_no`, `current_address`, `profile_image`, `permanent_address`, `department`, `position`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
+(1, 'EMP-000001', 1, 'Ronaldo', 'G.', 'Raymundo', '', 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, '09318952822', '0287654321', 'San Jose Del Monte, Bulacan', 'profile_1_1786621064.png', NULL, 'IT DEPARTMENT', 'IT Staff', 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-06 05:47:35', '2026-08-13 11:37:44', 0, NULL, NULL),
+(2, 'EMP-000002', 3, 'Juan', 'Dela', 'Cruz', NULL, 'Male', '1990-05-15', NULL, NULL, NULL, NULL, '09123456789', '021234567', '123 Main St, Manila', NULL, NULL, 'Executive Administration', 'College President', NULL, '2023-01-15', NULL, 'Active', NULL, NULL, 'None', NULL, NULL, NULL, NULL, '2026-08-06 06:54:48', '2026-08-11 16:50:50', 0, NULL, NULL),
+(3, 'EMP-000003', NULL, 'Maria', 'Santos', 'Reyes', NULL, 'Female', '1992-03-18', 'Malolos, Bulacan', 'Married', 'Filipino', NULL, '09171234567', '0441234567', 'Malolos, Bulacan', NULL, NULL, 'Employee Management', 'HR Officer', 44, '2024-06-10', '2025-06-10', 'Active', 'Full-time', NULL, 'Masteral', 'Senior HR Staff', 'BS Psychology, MA Human Resource Management', NULL, 45000.00, '2026-08-08 01:00:00', NULL, 0, NULL, NULL),
+(4, 'EMP-000004', NULL, 'Michael', 'Tan', 'Santos', 'Jr.', 'Male', '1988-11-25', 'Meycauayan, Bulacan', 'Married', 'Filipino', NULL, '09181234567', '0442345678', 'Meycauayan, Bulacan', NULL, NULL, 'Payroll', 'Payroll Officer', 43, '2023-08-01', '2024-08-01', 'Active', 'Full-time', NULL, 'Masteral', 'Payroll Specialist', 'BS Accountancy, CPA', NULL, 48000.00, '2026-08-08 01:15:00', NULL, 0, NULL, NULL),
+(5, 'EMP-000005', NULL, 'Angela', 'Marie', 'Garcia', NULL, 'Female', '1996-07-09', 'Baliwag, Bulacan', 'Single', 'Filipino', NULL, '09201234567', '0443456789', 'Baliwag, Bulacan', NULL, NULL, 'Learning', 'Training Coordinator', 47, '2025-01-15', NULL, 'Probationary', 'Full-time', NULL, 'None', 'Training Coordinator', 'BS Education', 'Handles employee training and seminar coordination.', 32000.00, '2026-08-08 01:30:00', NULL, 0, NULL, NULL),
+(6, 'EMP-000006', NULL, 'Daniel', 'Lopez', 'Mendoza', NULL, 'Male', '1993-09-14', 'San Fernando, Pampanga', 'Single', 'Filipino', NULL, '09301234567', '0451234567', 'San Fernando, Pampanga', NULL, NULL, 'Performance', 'Performance Management Officer', 48, '2024-03-20', '2025-03-20', 'Active', 'Full-time', NULL, 'Masteral', 'Performance Specialist', 'BS Business Administration, MBA', NULL, 42000.00, '2026-08-08 01:45:00', NULL, 0, NULL, NULL),
+(7, 'EMP-000007', NULL, 'Sofia', 'Anne', 'Villanueva', NULL, 'Female', '1997-12-03', 'Quezon City', 'Single', 'Filipino', NULL, '09401234567', '0281234567', 'Quezon City', NULL, NULL, 'Employee Engagement', 'Employee Relations Officer', 51, '2025-05-05', NULL, 'Probationary', 'Full-time', NULL, 'None', 'Employee Relations Staff', 'BS Psychology', 'Handles employee engagement activities and concerns.', 35000.00, '2026-08-08 02:00:00', NULL, 0, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -208,9 +208,9 @@ CREATE TABLE `ep_users` (
 --
 
 INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `is_active`, `theme`, `created_at`, `password_reset_token`, `password_reset_expires`) VALUES
-(1, 'Employee 1', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', 'sample@gmail.com', 0, 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
+(1, 'Employee 1', '$2y$10$O6XSlGEzC5GCae7BrLAhneWoLgqV3P1Pi3a0czwSdmZ.6.kR8F9va', 'crobertjanssen@gmail.com', 0, 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
 (2, 'Employee 2', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', 'crobertjanssen@gmail.com', 0, 1, 'light', '2026-03-24 18:06:12', NULL, NULL),
-(3, 'Admin Employee Portal', '$2y$10$GF34eDR6uEqpxNIovwKmRu2A6u3ALXgmMkn8zBdoREYLb1Em0euAK', NULL, 1, 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
+(3, 'Admin Employee Portal', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 1, 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
 (4, 'Employee 3', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 1, 'light', '2026-01-28 07:21:13', NULL, NULL);
 
 -- --------------------------------------------------------
@@ -343,6 +343,45 @@ INSERT INTO `hrms_roles` (`role_id`, `role_name`, `department`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `ta_attendance`
+--
+
+CREATE TABLE `ta_attendance` (
+  `attendance_id` int(11) NOT NULL,
+  `employee_id` int(11) DEFAULT NULL,
+  `shift_id` int(11) DEFAULT NULL,
+  `attendance_date` date NOT NULL,
+  `time_in` datetime DEFAULT NULL,
+  `time_out` datetime DEFAULT NULL,
+  `recorded_by` enum('MANUAL','QR','SYSTEM') NOT NULL DEFAULT 'MANUAL',
+  `status` enum('PRESENT','ABSENT','LATE','EARLY_OUT','PENDING_APPROVAL') NOT NULL DEFAULT 'PENDING_APPROVAL',
+  `is_approved` tinyint(1) DEFAULT 0,
+  `approved_by` int(11) DEFAULT NULL,
+  `approval_remarks` varchar(255) DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `total_hours_worked` decimal(5,2) DEFAULT NULL,
+  `regular_hours` decimal(5,2) DEFAULT NULL,
+  `overtime_hours` decimal(5,2) DEFAULT NULL,
+  `is_within_time_window` tinyint(1) DEFAULT 1,
+  `is_within_timeout_window` tinyint(1) DEFAULT 1,
+  `is_within_shift_hours` tinyint(1) DEFAULT 1,
+  `is_working_day` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ta_attendance`
+--
+
+INSERT INTO `ta_attendance` (`attendance_id`, `employee_id`, `shift_id`, `attendance_date`, `time_in`, `time_out`, `recorded_by`, `status`, `is_approved`, `approved_by`, `approval_remarks`, `approved_at`, `created_at`, `updated_at`, `total_hours_worked`, `regular_hours`, `overtime_hours`, `is_within_time_window`, `is_within_timeout_window`, `is_within_shift_hours`, `is_working_day`) VALUES
+(40, 1, NULL, '2026-07-30', '2026-07-30 16:40:11', '2026-07-30 16:40:14', 'MANUAL', 'PENDING_APPROVAL', 0, NULL, NULL, NULL, '2026-07-30 08:40:11', '2026-08-13 11:29:08', 0.00, 0.00, 0.00, 1, 1, 1, 1),
+(41, 1, NULL, '2026-08-02', '2026-08-02 13:04:32', '2026-08-02 14:36:07', 'MANUAL', 'PENDING_APPROVAL', 0, NULL, NULL, NULL, '2026-08-02 05:04:32', '2026-08-13 11:29:11', 1.53, 1.53, 0.00, 1, 1, 1, 1),
+(42, 1, NULL, '2026-08-03', '2026-08-03 01:04:25', '2026-08-03 20:43:11', 'MANUAL', 'PENDING_APPROVAL', 0, NULL, NULL, NULL, '2026-08-02 17:04:25', '2026-08-13 11:29:13', 19.65, 8.00, 11.65, 1, 1, 1, 1);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `user_account`
 --
 
@@ -439,6 +478,13 @@ ALTER TABLE `hrms_roles`
   ADD KEY `idx_hrms_roles_department` (`department`);
 
 --
+-- Indexes for table `ta_attendance`
+--
+ALTER TABLE `ta_attendance`
+  ADD PRIMARY KEY (`attendance_id`),
+  ADD KEY `fk_attendance_employee` (`employee_id`);
+
+--
 -- Indexes for table `user_account`
 --
 ALTER TABLE `user_account`
@@ -502,6 +548,12 @@ ALTER TABLE `hrms_position`
 --
 ALTER TABLE `hrms_roles`
   MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `ta_attendance`
+--
+ALTER TABLE `ta_attendance`
+  MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `user_account`

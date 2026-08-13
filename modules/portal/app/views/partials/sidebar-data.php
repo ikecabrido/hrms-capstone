@@ -22,6 +22,9 @@ $employeeName = trim(
         ? ' ' . $employeeDashboard['suffix']
         : '')
 );
+$employeeProfileInfo = $this->employeeModel->findByUserId($userId);
+
+$employeeProfileInfo = $this->employeeModel->findByUserId($userId);
 
 $employeeName = $employeeName !== ''
     ? $employeeName
@@ -37,4 +40,3 @@ $employeeInitial = strtoupper(
         1
     )
 );
-?>
