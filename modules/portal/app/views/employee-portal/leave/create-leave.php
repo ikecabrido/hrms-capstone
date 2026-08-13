@@ -162,7 +162,6 @@
 
                     </div>
 
-
                     <!-- DATES -->
                     <div style="
     display:grid;
@@ -194,7 +193,7 @@
                             </label>
 
                             <input type="date" name="start_date" id="start_date" required value="<?= $today ?>"
-                                min="<?= $minDate ?>" max="<?= $today ?>" style="
+                                min="<?= $minDate ?>" style="
                 width:100%;
                 height:42px;
                 padding:0 12px;
@@ -242,7 +241,6 @@
                         </div>
 
                     </div>
-
 
                     <!-- REASON -->
                     <div style="margin-bottom:4px;">

@@ -1,8 +1,5 @@
 <div class="employee-dashboard">
 
-    <!-- =====================================================
-         WELCOME SECTION
-         ===================================================== -->
     <section class="dashboard-welcome" id="dashboardWelcome">
 
         <!-- Decorative animated background -->
@@ -39,9 +36,6 @@
     </section>
     <?php require __DIR__ . '/../partials/notification.php'; ?>
 
-    <!-- =====================================================
-         QUICK ACCESS
-         ===================================================== -->
     <section class="dashboard-section">
 
         <div class="dashboard-section-header">
@@ -159,10 +153,6 @@
 
     </section>
 
-
-    <!-- =====================================================
-         EMPLOYEE REQUESTS
-         ===================================================== -->
     <section class="dashboard-section">
 
         <div class="dashboard-section-header">

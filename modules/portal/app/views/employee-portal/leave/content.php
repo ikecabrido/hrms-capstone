@@ -119,7 +119,6 @@
 
                     <?= count($leaveHistory ?? []) ?> Records
                 </span>
-                <!-- CREATE LEAVE REQUEST -->
                 <button type="button" data-bs-toggle="modal" data-bs-target="#submitLeaveModal" style="
                 display:inline-flex;
                 align-items:center;

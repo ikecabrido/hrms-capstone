@@ -4,6 +4,7 @@ use App\Middleware\SessionTimeout;
 use App\Controllers\AuthController;
 use App\Controllers\LeaveController;
 use App\Controllers\PortalController;
+use App\Controllers\PayrollController;
 use App\Controllers\ProfileController;
 use App\Controllers\AttendanceController;
 
@@ -48,6 +49,13 @@ $routes = [
     // Leave Request
     'leave-request' => [LeaveController::class, 'index'],
     'leave-store' => [LeaveController::class, 'store'],
+
+    // Payroll
+    'payroll' => [PayrollController::class, 'index'],
+    'payroll-request-store' => [PayrollController::class, 'store'],
+
+
+
 
 
 ];

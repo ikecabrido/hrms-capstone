@@ -1,87 +1,96 @@
-<aside class="sidebar">
-    <?php require __DIR__ . '/sidebar-data.php'; ?>
+<aside class="sidebar" style="
+    height:100vh;
+    overflow-y:auto;
+    overflow-x:hidden;
+    direction:rtl;
+    scrollbar-width:thin;
+    scrollbar-color:#cbd5e1 transparent;
+">
 
-    <!-- Logo + Icons -->
-    <?php require __DIR__ . '/sidebar-logo-icon.php'; ?>
+    <div style="direction:ltr;">
+        <?php require __DIR__ . '/sidebar-data.php'; ?>
 
-    <!-- Employee Information -->
-    <?php require __DIR__ . '/sidebar-employee-info.php'; ?>
+        <!-- Logo + Icons -->
+        <?php require __DIR__ . '/sidebar-logo-icon.php'; ?>
 
-    <!-- Navigation -->
-    <h2>Employee Portal</h2>
-    <ul>
-        <li>
-            <a href="index.php?url=employee-dashboard" class="menu-link">
-                <i class="fa-solid fa-home"></i>
-                Dashboard
-            </a>
-        </li>
-        <div class="separator"></div>
-        <h3>Employee Services</h3>
-        <li>
-            <a href="index.php?url=user-profile" class="menu-link">
-                <i class="fa-regular fa-user"></i>
-                My Profile
-            </a>
-        </li>
-        <li>
-            <a href="index.php?url=attendance" class="menu-link">
-                <i class="fa-regular fa-clock"></i>
-                Attendance
-            </a>
-        </li>
-        <li>
-            <a href="index.php?url=leave-request" class="menu-link">
-                <i class="fa-regular fa-calendar"></i>
-                Leave Request
-            </a>
-        </li>
-        <li>
-            <a href="?page=payroll" class="menu-link">
-                <i class="fa-solid fa-money-bill"></i>
-                Payroll
-            </a>
-        </li>
-        <li>
-            <a href="?page=benefits" class="menu-link">
-                <i class="fa-solid fa-hand-holding-heart"></i>
-                Benefits & Contributions
-            </a>
-        </li>
-        <div class="separator"></div>
-        <h3>Employee Development</h3>
-        <li>
-            <a href="?page=performance" class="menu-link">
-                <i class="fa-solid fa-chart-line"></i>
-                Performance Evaluation
-            </a>
-        </li>
-        <li>
-            <a href="?page=training" class="menu-link">
-                <i class="fa-solid fa-graduation-cap"></i>
-                Training & Seminars
-            </a>
-        </li>
-        <div class="separator"></div>
-        <h3>Employee Relations</h3>
-        <li>
-            <a href="?page=complaints" class="menu-link">
-                <i class="fa-regular fa-message"></i>
-                Complaints
-            </a>
-        </li>
-        <li>
-            <a href="?page=grievances" class="menu-link">
-                <i class="fa-solid fa-scale-balanced"></i>
-                Grievances
-            </a>
-        </li>
-        <li>
-            <a href="?page=resignation" class="menu-link">
-                <i class="fa-solid fa-person-walking-arrow-right"></i>
-                Resignation Request
-            </a>
-        </li>
-    </ul>
+        <!-- Employee Information -->
+        <?php require __DIR__ . '/sidebar-employee-info.php'; ?>
 
+        <!-- Navigation -->
+        <h2>Employee Portal</h2>
+        <ul>
+            <li>
+                <a href="index.php?url=employee-dashboard" class="menu-link">
+                    <i class="fa-solid fa-home"></i>
+                    Dashboard
+                </a>
+            </li>
+            <div class="separator"></div>
+            <h3>Employee Services</h3>
+            <li>
+                <a href="index.php?url=user-profile" class="menu-link">
+                    <i class="fa-regular fa-user"></i>
+                    My Profile
+                </a>
+            </li>
+            <li>
+                <a href="index.php?url=attendance" class="menu-link">
+                    <i class="fa-regular fa-clock"></i>
+                    Attendance
+                </a>
+            </li>
+            <li>
+                <a href="index.php?url=leave-request" class="menu-link">
+                    <i class="fa-regular fa-calendar"></i>
+                    Leave 
+                </a>
+            </li>
+            <li>
+                <a href="index.php?url=payroll" class="menu-link">
+                    <i class="fa-solid fa-money-bill"></i>
+                    Payroll
+                </a>
+            </li>
+            <li>
+                <a href="?page=benefits" class="menu-link">
+                    <i class="fa-solid fa-hand-holding-heart"></i>
+                    Benefits & Contributions
+                </a>
+            </li>
+            <div class="separator"></div>
+            <h3>Employee Development</h3>
+            <li>
+                <a href="?page=performance" class="menu-link">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Performance Evaluation
+                </a>
+            </li>
+            <li>
+                <a href="?page=training" class="menu-link">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                    Training & Seminars
+                </a>
+            </li>
+            <div class="separator"></div>
+            <h3>Employee Relations</h3>
+            <li>
+                <a href="?page=complaints" class="menu-link">
+                    <i class="fa-regular fa-message"></i>
+                    Complaints
+                </a>
+            </li>
+            <li>
+                <a href="?page=grievances" class="menu-link">
+                    <i class="fa-solid fa-scale-balanced"></i>
+                    Grievances
+                </a>
+            </li>
+            <li>
+                <a href="?page=resignation" class="menu-link">
+                    <i class="fa-solid fa-person-walking-arrow-right"></i>
+                    Resignation Request
+                </a>
+            </li>
+        </ul>
+    </div>
 </aside>
