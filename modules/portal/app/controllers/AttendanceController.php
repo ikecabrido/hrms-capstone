@@ -2,7 +2,6 @@
 
 namespace App\Controllers;
 
-use Exception;
 use App\Models\Employee;
 use App\Models\Attendance;
 

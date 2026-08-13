@@ -85,3 +85,21 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 });
+document.addEventListener('DOMContentLoaded', function () {
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('open') === 'change-password') {
+
+        const modalElement = document.getElementById('changePasswordModal');
+
+        if (modalElement) {
+
+            const changePasswordModal = new bootstrap.Modal(modalElement);
+
+            changePasswordModal.show();
+
+        }
+    }
+
+});

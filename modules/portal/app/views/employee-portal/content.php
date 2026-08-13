@@ -55,7 +55,7 @@
         <div class="quick-access-grid">
 
             <!-- Attendance -->
-            <a href="index.php?url=employee-attendance-index" class="dashboard-card">
+            <a href="index.php?url=attendance" class="dashboard-card">
 
                 <div class="dashboard-card-icon attendance">
                     <i class="fas fa-clock"></i>
@@ -79,7 +79,7 @@
                 </div>
 
                 <div class="dashboard-card-content">
-                    <h3>Leave Management</h3>
+                    <h3>Leave Request</h3>
                     <p>Submit and track leave requests</p>
                 </div>
 

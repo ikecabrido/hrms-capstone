@@ -94,12 +94,12 @@
                 <div class="dropdown-divider m-0"></div>
 
                 <!-- Menu -->
-                <a href="#" class="dropdown-item">
+                <a href="index.php?url=user-profile" class="dropdown-item">
                     <i class="fa-regular fa-user me-2"></i>
                     Profile Settings
                 </a>
 
-                <a href="#" class="dropdown-item">
+                <a href="index.php?url=user-profile&modal=change-password" class="dropdown-item">
                     <i class="fa-solid fa-lock me-2"></i>
                     Change Password
                 </a>

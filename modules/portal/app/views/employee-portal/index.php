@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/hrms-capstone/modules/portal/public/css/styles.css">
     <link rel="stylesheet" href="/hrms-capstone/modules/portal/public/css/dashboard-styles.css">
     <link rel="stylesheet" href="/hrms-capstone/modules/portal/public/css/profile-styles.css">
+    <link rel="stylesheet" href="/hrms-capstone/modules/portal/public/css/leave.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -32,10 +33,12 @@
     <?php require __DIR__ . '/../../views/employee-portal/profile/change-password.php'; ?>
     <?php require __DIR__ . '/../../views/employee-portal/profile/profile-image.php'; ?>
     <?php require __DIR__ . '/../../views/employee-portal/profile/edit-profile.php'; ?>
+    <?php require __DIR__ . '/../../views/employee-portal/leave/create-leave.php'; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
     <script src="/hrms-capstone/modules/portal/public/js/dashboardDesign.js"></script>
+    <script src="/hrms-capstone/modules/portal/public/js/sessionOut.js"></script>
     <script src="/hrms-capstone/modules/portal/public/js/profile.js"></script>
 </body>
 

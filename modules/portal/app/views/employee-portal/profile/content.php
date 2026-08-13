@@ -476,3 +476,20 @@
 
     </section>
 </div>
+
+<?php if (($_GET['modal'] ?? '') === 'change-password'): ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const modalElement = document.getElementById('changePasswordModal');
+
+    if (modalElement) {
+        const changePasswordModal = new bootstrap.Modal(modalElement);
+        changePasswordModal.show();
+    }
+
+});
+</script>
+
+<?php endif; ?>

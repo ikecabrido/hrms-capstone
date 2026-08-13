@@ -3,10 +3,8 @@
 namespace App\Controllers;
 
 use Exception;
-use App\Models\Users;
 use App\Core\Session;
 use App\Helper\Helper;
-use App\Core\AuditLog;
 use App\Models\Employee;
 use App\Helper\LoginHelper;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -14,14 +12,11 @@ use App\Services\LoginValidationService;
 
 class AuthController
 {
-    private Users $userModel;
     // private AuditLog $auditLog;
     private Employee $employeeModel;
     public function __construct()
     {
-        $this->userModel = new Users();
         $this->employeeModel = new Employee();
-        // $this->auditLog = new AuditLog();
     }
     public function index()
     {

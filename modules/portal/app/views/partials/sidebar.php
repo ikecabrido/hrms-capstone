@@ -31,9 +31,9 @@
             </a>
         </li>
         <li>
-            <a href="?page=leave" class="menu-link">
+            <a href="index.php?url=leave-request" class="menu-link">
                 <i class="fa-regular fa-calendar"></i>
-                Leave Management
+                Leave Request
             </a>
         </li>
         <li>

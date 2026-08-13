@@ -49,3 +49,12 @@
 
     <?php unset($_SESSION['profile_incomplete']); ?>
 <?php endif; ?>
+
+<?php if (isset($_GET['timeout'])): ?>
+
+    <div class="alert alert-warning">
+        Your session expired due to 10 minutes of inactivity.
+        Please log in again.
+    </div>
+
+<?php endif; ?>

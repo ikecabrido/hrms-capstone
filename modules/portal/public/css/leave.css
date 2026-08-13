@@ -1,0 +1,27 @@
+@media (max-width: 576px) {
+
+    #submitLeaveModal .modal-dialog {
+        margin:10px;
+    }
+
+    #submitLeaveModal .modal-content {
+        border-radius:13px !important;
+    }
+
+    #submitLeaveModal form > div:first-child {
+        padding:18px !important;
+    }
+
+    #submitLeaveModal .modal-dialog > .modal-content > div:first-child {
+        padding:16px 18px !important;
+    }
+
+    #submitLeaveModal form > div:last-child {
+        padding:12px 18px !important;
+    }
+
+    #submitLeaveModal form > div:first-child > div:nth-child(2) {
+        grid-template-columns:1fr !important;
+    }
+
+}

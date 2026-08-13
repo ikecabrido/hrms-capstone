@@ -34,6 +34,7 @@ class Attendance
     ";
 
         $stmt = $this->conn->prepare($query);
+
         $stmt->execute([
             ':employee_id' => $employee_id
         ]);

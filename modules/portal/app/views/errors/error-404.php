@@ -110,7 +110,7 @@
             been moved to another location.
         </p>
 
-        <a href="/hrms-capstone/modules/portal/" class="home-button">
+        <a href="/hrms-capstone/modules/portal/index.php?url=employee-dashboard" class="home-button">
             Back to Home
         </a>
     </div>
