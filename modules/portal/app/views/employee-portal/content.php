@@ -37,24 +37,7 @@
         </div>
 
     </section>
-
-    <!-- =====================================================
-         RANDOM EMPLOYEE IMAGE
-         ===================================================== -->
-    <section class="dashboard-banner">
-
-        <img id="employeeBanner" src="https://random.imagecdn.app/v1/image?width=1200&height=350&category=business"
-            alt="Employee workplace">
-
-        <div class="banner-overlay">
-            <div>
-                <span>EMPLOYEE SERVICES</span>
-                <h2>Your work information in one place.</h2>
-            </div>
-        </div>
-
-    </section>
-
+    <?php require __DIR__ . '/../partials/notification.php'; ?>
 
     <!-- =====================================================
          QUICK ACCESS
@@ -231,4 +214,3 @@
 
     </section>
 </div>
-<?php require __DIR__ . '/../partials/notification.php'; ?>

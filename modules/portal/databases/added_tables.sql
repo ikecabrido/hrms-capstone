@@ -76,3 +76,6 @@ INSERT INTO `em_positions` (`position_id`, `position_name`, `department_id`, `st
 (11, 'Psychology Instructor', 4, 'Active', '2026-08-06 13:47:35', NULL),
 (12, 'Criminology Instructor', 5, 'Active', '2026-08-06 13:47:35', NULL),
 (13, 'Tourism Instructor', 6, 'Active', '2026-08-06 13:47:35', NULL);
+
+ALTER TABLE `em_employees`
+ADD COLUMN `profile_image` VARCHAR(255) NULL AFTER `current_address`;

@@ -3,6 +3,7 @@
 use App\Controllers\AuthController;
 use App\Controllers\PortalController;
 use App\Controllers\ProfileController;
+use App\Controllers\AttendanceController;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -28,6 +29,13 @@ $routes = [
     // Profile
     'user-profile' => [ProfileController::class, 'index'],
     'update-password' => [ProfileController::class, 'updatePassword'],
+    'update-user-profile' => [ProfileController::class, 'updateProfile'],
+    'update-profile-image' => [ProfileController::class, 'updateProfileImage'],
+
+    // Attendance 
+    'attendance' => [AttendanceController::class, 'index'],
+
+
 ];
 
 $url = trim($_GET['url'] ?? '');

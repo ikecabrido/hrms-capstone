@@ -25,7 +25,7 @@
             </a>
         </li>
         <li>
-            <a href="?page=attendance" class="menu-link">
+            <a href="index.php?url=attendance" class="menu-link">
                 <i class="fa-regular fa-clock"></i>
                 Attendance
             </a>
