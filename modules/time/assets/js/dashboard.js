@@ -134,13 +134,14 @@
             const prevBtn = document.getElementById('attendancePrev');
             const nextBtn = document.getElementById('attendanceNext');
 
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             if (records.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999;">No records found</td></tr>';
-                pageInfo.textContent = 'Showing 0 of 0 records';
-                prevBtn.disabled = true;
-                nextBtn.disabled = true;
+                if (pageInfo) pageInfo.textContent = 'Showing 0 of 0 records';
+                if (prevBtn) prevBtn.disabled = true;
+                if (nextBtn) nextBtn.disabled = true;
                 return;
             }
 
@@ -171,15 +172,17 @@
                 tbody.appendChild(row);
             });
 
-            pageInfo.textContent = `Showing ${start + 1} to ${Math.min(start + attendancePageSize, records.length)} of ${records.length} records`;
-            prevBtn.disabled = attendanceCurrentPage === 1;
-            nextBtn.disabled = attendanceCurrentPage === totalPages;
+            if (pageInfo) pageInfo.textContent = `Showing ${start + 1} to ${Math.min(start + attendancePageSize, records.length)} of ${records.length} records`;
+            if (prevBtn) prevBtn.disabled = attendanceCurrentPage === 1;
+            if (nextBtn) nextBtn.disabled = attendanceCurrentPage === totalPages;
         }
 
         function filterAndSort() {
             attendanceCurrentPage = 1;
-            const searchTerm = document.getElementById('attendanceSearch').value.toLowerCase();
-            const sortOption = document.getElementById('attendanceSort').value;
+            const searchField = document.getElementById('attendanceSearch');
+            const sortField = document.getElementById('attendanceSort');
+            const searchTerm = searchField ? searchField.value.toLowerCase() : '';
+            const sortOption = sortField ? sortField.value : '';
 
             let filtered = attendanceData.filter(record => {
                 const name = record.full_name.toLowerCase();
@@ -214,23 +217,32 @@
             return text? String(text).replace(/[&<>"']/g, m => map[m]) : '';
         }
 
-        document.getElementById('attendancePrev').addEventListener('click', function() {
-            if (attendanceCurrentPage > 1) {
-                attendanceCurrentPage -= 1;
-                filterAndSort();
-            }
-        });
+        const prevButton = document.getElementById('attendancePrev');
+        const nextButton = document.getElementById('attendanceNext');
+        const attendanceSearchInput = document.getElementById('attendanceSearch');
+        const attendanceSortSelect = document.getElementById('attendanceSort');
 
-        document.getElementById('attendanceNext').addEventListener('click', function() {
-            attendanceCurrentPage += 1;
-            filterAndSort();
-        });
+        if (prevButton) {
+            prevButton.addEventListener('click', function() {
+                if (attendanceCurrentPage > 1) {
+                    attendanceCurrentPage -= 1;
+                    filterAndSort();
+                }
+            });
+        }
+
+        if (nextButton) {
+            nextButton.addEventListener('click', function() {
+                attendanceCurrentPage += 1;
+                filterAndSort();
+            });
+        }
 
         $(document).ready(function() {
             renderQRDirectory();
             filterAndSort();
-            $('#attendanceSearch').on('keyup', filterAndSort);
-            $('#attendanceSort').on('change', filterAndSort);
+            if (attendanceSearchInput) $(attendanceSearchInput).on('keyup', filterAndSort);
+            if (attendanceSortSelect) $(attendanceSortSelect).on('change', filterAndSort);
         });
 
         // Camera and employee-QR functionality moved to separate pages (`qr_scanner.php`, `employee_qr_list.php`).

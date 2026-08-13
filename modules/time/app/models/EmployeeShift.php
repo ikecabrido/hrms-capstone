@@ -79,7 +79,7 @@ class EmployeeShift {
                          CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name
                   FROM " . $this->table . " es
                   INNER JOIN ta_shifts s ON es.shift_id = s.shift_id
-                  INNER JOIN hrms_employee e ON es.employee_id = e.employee_id
+                  INNER JOIN em_employees e ON es.employee_id = e.employee_id
                   WHERE es.employee_id = ?";
 
         if ($active_only) {
@@ -156,7 +156,7 @@ class EmployeeShift {
                          CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department
                   FROM " . $this->table . " es
                   INNER JOIN ta_shifts s ON es.shift_id = s.shift_id
-                  INNER JOIN hrms_employee e ON es.employee_id = e.employee_id
+                  INNER JOIN em_employees e ON es.employee_id = e.employee_id
                   WHERE es.is_active = 1";
 
         if ($shift_id) {
@@ -245,7 +245,7 @@ class EmployeeShift {
         $dayOfWeek = date('w', strtotime($today));
 
         $query = "SELECT DISTINCT e.employee_id, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, e.position
-                  FROM hrms_employee e
+                  FROM em_employees e
                   LEFT JOIN " . $this->table . " es ON e.employee_id = es.employee_id
                     AND es.is_active = 1
                     AND es.effective_from <= :today
@@ -260,7 +260,7 @@ class EmployeeShift {
                             AND (fs.contract_end_date IS NULL OR fs.contract_end_date >= :today)
                         )
                     )
-                  WHERE e.status = 'active'
+                  WHERE LOWER(e.employment_status) = 'active'
                     AND es.employee_shift_id IS NULL
                     AND fs.id IS NULL
                   ORDER BY full_name ASC";

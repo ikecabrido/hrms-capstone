@@ -3,14 +3,21 @@ body {
 }
 
 .main-content {
-    margin-left: 0;
+    margin-left: var(--sidebar-width);
     margin-top: 0;
+    width: calc(100% - var(--sidebar-width));
     min-height: calc(100vh - var(--header-height));
-    padding: 2rem;
+    padding: 1rem 1rem 1rem 0;
     box-sizing: border-box;
     position: relative;
     z-index: 1;
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+body.sidebar-collapse .main-content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+    padding-left: 0;
 }
 
 .container {
@@ -88,4 +95,15 @@ body {
 }
 .main-content > .container {
     margin-top: 0 !important;
+    max-width: none;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    box-sizing: border-box;
+}
+
+.ta-dashboard {
+    width: 100%;
+    max-width: none;
+    margin: 0;
 }

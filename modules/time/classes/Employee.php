@@ -2,7 +2,7 @@
 
 include_once __DIR__ . '/../app/core/TimeDatabase.php';
 
-class TimeTemplateEmployee
+class Employee
 {
     private $conn;
     private $employeeid;
@@ -29,19 +29,15 @@ class TimeTemplateEmployee
     public function getEmployees()
     {
         $sql = "SELECT 
-                    e.employee_id,
-                    e.first_name,
-                    e.middle_name,
-                    e.last_name,
-                    d.department_name,
-                    p.position_name,
-                    e.status
-                FROM hrms_employee AS e
-                LEFT JOIN hrms_department AS d
-                    ON e.department = d.department_id
-                LEFT JOIN hrms_position AS p
-                    ON e.position = p.position_id
-                ORDER BY e.employee_id";
+                    employee_id,
+                    first_name,
+                    middle_name,
+                    last_name,
+                    department,
+                    position,
+                    employment_status AS status
+                FROM em_employees
+                ORDER BY last_name, first_name";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
@@ -61,34 +57,55 @@ class TimeTemplateEmployee
         return $_SESSION['employee_id'] ?? null;
     }
 
+    private function getProfileRecord()
+    {
+        $employeeId = $this->getEmployeeId();
+
+        if (!$employeeId) {
+            return null;
+        }
+
+        $sql = "SELECT employee_id, first_name, middle_name, last_name, department, position
+                FROM em_employees
+                WHERE employee_id = :employee_id
+                LIMIT 1";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':employee_id', $employeeId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($employee) {
+            return $employee;
+        }
+
+        $sql = "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.department, p.position_name AS position
+                FROM hrms_employee e
+                LEFT JOIN hrms_position p ON p.position_id = e.position
+                WHERE e.employee_id = :employee_id
+                LIMIT 1";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':employee_id', $employeeId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     /**
      * Get logged-in employee name
      */
     public function getEmployeeName()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        $employee = $this->getProfileRecord();
 
-        $employeeId = $_SESSION['employee_id'] ?? null;
+        if ($employee) {
+            $firstName = trim($employee['first_name'] ?? '');
+            $middleName = trim($employee['middle_name'] ?? '');
+            $lastName = trim($employee['last_name'] ?? '');
 
-        if ($employeeId) {
-            $sql = "SELECT first_name, last_name
-                    FROM hrms_employee
-                    WHERE employee_id = :employee_id
-                    LIMIT 1";
-
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':employee_id', $employeeId);
-            $stmt->execute();
-
-            $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($employee) {
-                return htmlspecialchars(
-                    $employee['first_name'] . ' ' . $employee['last_name']
-                );
-            }
+            $fullName = trim($firstName . ' ' . $middleName . ' ' . $lastName);
+            return $fullName !== '' ? htmlspecialchars($fullName) : 'Unknown User';
         }
 
         return 'Unknown User';
@@ -99,31 +116,64 @@ class TimeTemplateEmployee
      */
     public function getEmployeePosition()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        $employee = $this->getProfileRecord();
 
-        $employeeId = $_SESSION['employee_id'] ?? null;
-
-        if ($employeeId) {
-            $sql = "SELECT p.position_name
-                    FROM hrms_employee AS e
-                    LEFT JOIN hrms_position AS p
-                        ON e.position = p.position_id
-                    WHERE e.employee_id = :employee_id
-                    LIMIT 1";
-
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':employee_id', $employeeId);
-            $stmt->execute();
-
-            $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($employee) {
-                return htmlspecialchars($employee['position_name']);
+        if ($employee) {
+            $position = trim((string) ($employee['position'] ?? ''));
+            if ($position !== '') {
+                return htmlspecialchars($position);
             }
         }
 
         return 'Unknown Position';
     }
+
+    public function getAll($status = 'Active', $limit = 100, $offset = 0, $search = '')
+    {
+        $status = trim($status);
+        $sql = "SELECT employee_id,
+                       first_name,
+                       middle_name,
+                       last_name,
+                       CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
+                       department,
+                       position,
+                       employment_status AS status
+                FROM em_employees
+                WHERE LOWER(employment_status) = LOWER(:status)";
+
+        if ($search !== '') {
+            $sql .= " AND (CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE :search OR employee_id LIKE :search)";
+        }
+
+        $sql .= " ORDER BY last_name, first_name LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':status', $status);
+        if ($search !== '') {
+            $searchValue = '%' . $search . '%';
+            $stmt->bindParam(':search', $searchValue, PDO::PARAM_STR);
+        }
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTotalCount($status = 'Active')
+    {
+        $status = trim($status);
+        $sql = "SELECT COUNT(*) AS total FROM em_employees WHERE LOWER(employment_status) = LOWER(:status)";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(':status', $status);
+        $stmt->execute();
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int) ($result['total'] ?? 0);
+    }
+}
+
+class TimeTemplateEmployee extends Employee
+{
 }

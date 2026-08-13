@@ -229,6 +229,17 @@
     }
 
     async function startCamera(){
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showToast('This browser does not support camera access. Use Chrome, Edge, or Safari on desktop/mobile.', 'warning');
+        return;
+      }
+
+      const secureContextAllowed = window.isSecureContext || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!secureContextAllowed) {
+        showToast('Camera access requires HTTPS or localhost. Open this page through localhost or enable HTTPS.', 'warning');
+        return;
+      }
+
       if (html5QrCode || scanInProgress) return;
       saveScanState(true);
       updateOverlaySize();
@@ -349,7 +360,6 @@
     const storedState = loadScanState();
     scanHistory = Array.isArray(storedState.scans) ? storedState.scans : [];
     renderIdleState();
-    startCamera();
 
     document.getElementById('backBtn').addEventListener('click', function(){
       window.history.back();

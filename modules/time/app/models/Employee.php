@@ -22,10 +22,9 @@ class Employee
      */
     public function getByUserId($user_id)
     {
-        $query = "SELECT e.*, u.username, u.role 
-                  FROM " . $this->table . " e
-                  JOIN users u ON e.user_id = u.id
-                  WHERE e.user_id = :user_id LIMIT 1";
+        $query = "SELECT *
+                  FROM " . $this->table . "
+                  WHERE user_id = :user_id LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':user_id', $user_id);
@@ -39,10 +38,9 @@ class Employee
      */
     public function getById($employee_id)
     {
-        $query = "SELECT e.*, u.username, u.role 
-                  FROM " . $this->table . " e
-                  LEFT JOIN users u ON e.user_id = u.id
-                  WHERE e.employee_id = :employee_id LIMIT 1";
+        $query = "SELECT *
+                  FROM " . $this->table . "
+                  WHERE employee_id = :employee_id LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':employee_id', $employee_id);
@@ -56,16 +54,22 @@ class Employee
      */
     public function getAll($status = 'active', $limit = 100, $offset = 0, $search = '')
     {
-        $query = "SELECT e.*,
-                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name
-                  FROM " . $this->table . " e
-                  WHERE e.status = :status";
+        $query = "SELECT employee_id,
+                         first_name,
+                         middle_name,
+                         last_name,
+                         CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
+                         department,
+                         position,
+                         employment_status
+                  FROM " . $this->table . "
+                  WHERE LOWER(employment_status) = LOWER(:status)";
 
         if ($search !== '') {
-            $query .= " AND (CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) LIKE :search OR e.employee_id LIKE :search)";
+            $query .= " AND (CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE :search OR employee_id LIKE :search)";
         }
 
-        $query .= " ORDER BY full_name LIMIT :limit OFFSET :offset";
+        $query .= " ORDER BY last_name, first_name LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':status', $status);
@@ -86,7 +90,7 @@ class Employee
     public function getFullName($employee_id)
     {
         $query = "SELECT CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name
-                  FROM " . $this->table . " 
+                  FROM " . $this->table . "
                   WHERE employee_id = :employee_id LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
@@ -104,16 +108,16 @@ class Employee
     {
         $query = "UPDATE " . $this->table . " SET ";
         $fields = [];
-        
+
         foreach ($data as $key => $value) {
             $fields[] = "$key = :$key";
         }
-        
+
         $query .= implode(", ", $fields) . " WHERE employee_id = :employee_id";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':employee_id', $employee_id);
-        
+
         foreach ($data as $key => $value) {
             $stmt->bindParam(':' . $key, $data[$key]);
         }
@@ -126,7 +130,7 @@ class Employee
      */
     public function getTotalCount($status = 'active', $search = '')
     {
-        $query = "SELECT COUNT(*) as count FROM " . $this->table . " WHERE status = :status";
+        $query = "SELECT COUNT(*) as count FROM " . $this->table . " WHERE LOWER(employment_status) = LOWER(:status)";
 
         if ($search !== '') {
             $query .= " AND (CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE :search OR employee_id LIKE :search)";

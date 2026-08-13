@@ -128,7 +128,7 @@ $current_role = $_SESSION['role']?? 'time';
             </div>
 
             <!-- Today's Attendance Table -->
-            <div class="container">
+            <div class="attendance-table-panel">
                 <h2>Today's Attendance (<?php echo count($todayRecords);?> employees)</h2>
 
                 <div class="filter-controls" style="flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
@@ -186,4 +186,4 @@ $current_role = $_SESSION['role']?? 'time';
         employees: <?php echo json_encode($activeEmployees); ?>
     };
 </script>
-<script src="../js/script.js"></script>
+<script type="module" src="/hrms/hrms-capstone/modules/time/js/script.js"></script>

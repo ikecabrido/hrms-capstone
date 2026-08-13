@@ -362,18 +362,29 @@ body.dark-mode code {
 /* ====================
    MAIN CONTENT STYLES
    ==================== */
-main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 30px 20px;
-    left: var(--sidebar-width);
+main.main-content {
+    max-width: none;
+    width: calc(100% - var(--sidebar-width));
+    margin: 0 0 0 var(--sidebar-width);
+    padding: 16px 14px 16px 0;
+    left: 0;
+    box-sizing: border-box;
     min-height: calc(100vh - var(--header-height));
 }
+
+body.sidebar-collapse main.main-content {
+    margin-left: 80px;
+    width: calc(100% - 80px);
+}
+
 .container {
     background-color: var(--white);
+    width: 100%;
+    max-width: none;
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
 }
 
 /* ====================
