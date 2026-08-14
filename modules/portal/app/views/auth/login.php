@@ -49,7 +49,7 @@
     </div>
     <?php require __DIR__ . '/forgot-password.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/hrms-capstone/modules/portal/public/js/viewPassword.js"></script>
+    <script src="/hrms-capstone/modules/portal/public/js/function/viewPassword.js"></script>
 </body>
 
 </html>

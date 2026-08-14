@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Controllers;
+
+use App\Models\Announcement;
+use App\Models\Employee;
+use App\Helper\Helper;
+
+class AnnouncementController
+{
+    private $announcementModel;
+    private $employeeModel;
+
+    public function __construct()
+    {
+        $this->announcementModel = new Announcement();
+        $this->employeeModel = new Employee();
+    }
+
+    public function index()
+    {
+        $announcements = $this->announcementModel->all();
+
+        $title = "Employee Announcements";
+        $content = __DIR__ . '/../views/employee-portal/announcement/content.php';
+
+        require __DIR__ . '/../views/employee-portal/index.php';
+    }
+    public function view()
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+
+        if ($id <= 0) {
+            $_SESSION['error'] = 'Invalid announcement.';
+            Helper::redirect('index.php?url=announcement');
+        }
+
+        $announcement = $this->announcementModel->find($id);
+
+        if (!$announcement) {
+            $_SESSION['error'] = 'Announcement not found.';
+            Helper::redirect('index.php?url=announcement');
+        }
+
+        $title = "Announcement";
+        $content = __DIR__ . '/../views/employee-portal/announcement/view.php';
+
+        require __DIR__ . '/../views/employee-portal/index.php';
+    }
+}

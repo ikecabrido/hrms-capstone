@@ -7,6 +7,10 @@ use App\Controllers\PortalController;
 use App\Controllers\PayrollController;
 use App\Controllers\ProfileController;
 use App\Controllers\AttendanceController;
+use App\Controllers\AnnouncementController;
+use App\Controllers\NotificationController;
+use App\Controllers\BenefitsAndGovernmentContributionController;
+
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -27,20 +31,20 @@ SessionTimeout::check();
 
 $routes = [
     // Authentication
-    'auth-index'  => [AuthController::class, 'index'],
-    'admin'       => [AuthController::class, 'adminIndex'],
-    'auth-login'  => [AuthController::class, 'login'],
+    'auth-index' => [AuthController::class, 'index'],
+    'admin' => [AuthController::class, 'adminIndex'],
+    'auth-login' => [AuthController::class, 'login'],
     'admin-login' => [AuthController::class, 'adminLogin'],
     'auth-logout' => [AuthController::class, 'logout'],
 
     // Dashboard
     'employee-dashboard' => [PortalController::class, 'dashboard'],
-    'admin-dashboard'    => [PortalController::class, 'adminDashboard'],
+    'admin-dashboard' => [PortalController::class, 'adminDashboard'],
 
     // Profile
-    'user-profile'         => [ProfileController::class, 'index'],
-    'update-password'      => [ProfileController::class, 'updatePassword'],
-    'update-user-profile'  => [ProfileController::class, 'updateProfile'],
+    'user-profile' => [ProfileController::class, 'index'],
+    'update-password' => [ProfileController::class, 'updatePassword'],
+    'update-user-profile' => [ProfileController::class, 'updateProfile'],
     'update-profile-image' => [ProfileController::class, 'updateProfileImage'],
 
     // Attendance
@@ -54,8 +58,18 @@ $routes = [
     'payroll' => [PayrollController::class, 'index'],
     'payroll-request-store' => [PayrollController::class, 'store'],
 
+    // Benefits and Government Contributions
+    'benefits-and-government-contribution' => [BenefitsAndGovernmentContributionController::class, 'index'],
+    'employee-benefits-store' => [BenefitsAndGovernmentContributionController::class, 'store'],
 
+    // Announcement
+    'announcement' => [AnnouncementController::class, 'index'],
+    'announcement-view' => [AnnouncementController::class, 'view'],
 
+    // Notification
+    'notification'  => [NotificationController::class, 'index'],
+    'notification-mark-read'  => [NotificationController::class, 'markRead'],
+    'notification-mark-all-read'  => [NotificationController::class, 'markAllRead'],
 
 
 ];

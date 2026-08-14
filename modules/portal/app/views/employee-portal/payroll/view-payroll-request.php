@@ -1,30 +1,23 @@
-<div class="modal fade"
-    id="viewPayrollRequestModal"
-    tabindex="-1"
-    aria-labelledby="viewPayrollRequestModalLabel"
-    aria-hidden="true">
+<div class="modal fade" id="viewPayrollRequestModal<?= (int) $request['id'] ?>" tabindex="-1"
+    aria-labelledby="viewPayrollRequestModalLabel<?= (int) $request['id'] ?>" aria-hidden="true">
 
     <div class="modal-dialog modal-dialog-centered modal-lg">
 
         <div class="modal-content" style="
-            border:0;
-            border-radius:14px;
-            overflow:hidden;
-            box-shadow:0 10px 30px rgba(0,0,0,.12);
-        ">
+                border:0;
+                border-radius:14px;
+                overflow:hidden;
+                box-shadow:0 10px 30px rgba(0,0,0,.12);
+            ">
 
             <!-- HEADER -->
             <div class="modal-header" style="
-                padding:18px 20px;
-                border-bottom:1px solid #e5e7eb;
-                background:#ffffff;
-            ">
-
-                <div style="
-                    display:flex;
-                    align-items:center;
-                    gap:11px;
+                    padding:18px 20px;
+                    border-bottom:1px solid #e5e7eb;
+                    background:#ffffff;
                 ">
+
+                <div class="d-flex align-items-center gap-3">
 
                     <div style="
                         width:40px;
@@ -42,12 +35,13 @@
                     </div>
 
                     <div>
-                        <h5 id="viewPayrollRequestModalLabel" style="
-                            margin:0;
-                            color:#111827;
-                            font-size:16px;
-                            font-weight:700;
-                        ">
+
+                        <h5 class="modal-title" id="viewPayrollRequestModalLabel<?= (int) $request['id'] ?>" style="
+                                margin:0;
+                                color:#111827;
+                                font-size:16px;
+                                font-weight:700;
+                            ">
                             Payroll Request Details
                         </h5>
 
@@ -58,14 +52,12 @@
                         ">
                             View the details of your payroll request.
                         </p>
+
                     </div>
 
                 </div>
 
-                <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                 </button>
 
             </div>
@@ -73,9 +65,9 @@
 
             <!-- BODY -->
             <div class="modal-body" style="
-                padding:20px;
-                background:#ffffff;
-            ">
+                    padding:20px;
+                    background:#ffffff;
+                ">
 
                 <!-- STATUS -->
                 <div style="
@@ -96,8 +88,7 @@
                         gap:8px;
                     ">
 
-                        <i class="fas fa-circle-info"
-                            style="
+                        <i class="fas fa-circle-info" style="
                                 color:#2563eb;
                                 font-size:14px;
                             ">
@@ -113,7 +104,13 @@
 
                     </div>
 
-                    <span id="viewRequestStatus" style="
+                    <?php
+                    $status = strtolower(
+                        trim($request['status'] ?? 'pending')
+                    );
+                    ?>
+
+                    <span style="
                         display:inline-flex;
                         align-items:center;
                         gap:5px;
@@ -124,17 +121,27 @@
                         font-size:10px;
                         font-weight:700;
                     ">
-                        <i class="fas fa-clock" style="font-size:9px;"></i>
-                        Pending
+
+                        <i class="fas fa-clock" style="font-size:9px;">
+                        </i>
+
+                        <?= htmlspecialchars(
+                            ucwords(
+                                str_replace(
+                                    '_',
+                                    ' ',
+                                    $status
+                                )
+                            )
+                        ) ?>
+
                     </span>
 
                 </div>
 
 
                 <!-- REQUEST INFORMATION -->
-                <div style="
-                    margin-bottom:18px;
-                ">
+                <div style="margin-bottom:18px;">
 
                     <div style="
                         margin-bottom:10px;
@@ -144,7 +151,6 @@
                     ">
                         Request Information
                     </div>
-
 
                     <div class="row g-3">
 
@@ -167,12 +173,14 @@
                                     Request Type
                                 </div>
 
-                                <div id="viewRequestType" style="
+                                <div style="
                                     color:#111827;
                                     font-size:12px;
                                     font-weight:600;
                                 ">
-                                    -
+                                    <?= htmlspecialchars(
+                                        $request['request_type'] ?? '-'
+                                    ) ?>
                                 </div>
 
                             </div>
@@ -199,12 +207,14 @@
                                     Purpose
                                 </div>
 
-                                <div id="viewRequestPurpose" style="
+                                <div style="
                                     color:#111827;
                                     font-size:12px;
                                     font-weight:600;
                                 ">
-                                    -
+                                    <?= htmlspecialchars(
+                                        $request['purpose'] ?? '-'
+                                    ) ?>
                                 </div>
 
                             </div>
@@ -231,12 +241,42 @@
                                     Payroll Period
                                 </div>
 
-                                <div id="viewPayrollPeriod" style="
+                                <div style="
                                     color:#111827;
                                     font-size:12px;
                                     font-weight:600;
                                 ">
-                                    -
+
+                                    <?php
+
+                                    $startDate = !empty(
+                                        $request['payroll_period_start']
+                                    )
+                                        ? date(
+                                            'M d, Y',
+                                            strtotime(
+                                                $request['payroll_period_start']
+                                            )
+                                        )
+                                        : '-';
+
+                                    $endDate = !empty(
+                                        $request['payroll_period_end']
+                                    )
+                                        ? date(
+                                            'M d, Y',
+                                            strtotime(
+                                                $request['payroll_period_end']
+                                            )
+                                        )
+                                        : '-';
+
+                                    ?>
+
+                                    <?= htmlspecialchars(
+                                        $startDate . ' – ' . $endDate
+                                    ) ?>
+
                                 </div>
 
                             </div>
@@ -263,12 +303,24 @@
                                     Requested Date
                                 </div>
 
-                                <div id="viewRequestedDate" style="
+                                <div style="
                                     color:#111827;
                                     font-size:12px;
                                     font-weight:600;
                                 ">
-                                    -
+
+                                    <?= !empty($request['requested_at'])
+                                        ? htmlspecialchars(
+                                            date(
+                                                'M d, Y',
+                                                strtotime(
+                                                    $request['requested_at']
+                                                )
+                                            )
+                                        )
+                                        : '-'
+                                        ?>
+
                                 </div>
 
                             </div>
@@ -281,9 +333,7 @@
 
 
                 <!-- REMARKS -->
-                <div style="
-                    margin-bottom:18px;
-                ">
+                <div style="margin-bottom:18px;">
 
                     <div style="
                         margin-bottom:8px;
@@ -294,7 +344,7 @@
                         Remarks
                     </div>
 
-                    <div id="viewRequestRemarks" style="
+                    <div style="
                         min-height:70px;
                         padding:12px;
                         border:1px solid #e5e7eb;
@@ -304,131 +354,175 @@
                         font-size:12px;
                         line-height:1.6;
                     ">
-                        -
+
+                        <?= nl2br(
+                            htmlspecialchars(
+                                $request['remarks'] ?? '-'
+                            )
+                        ) ?>
+
                     </div>
 
                 </div>
 
 
                 <!-- PROCESSING INFORMATION -->
-                <div id="processingInformation" style="
-                    display:none;
-                    margin-bottom:18px;
-                ">
+                <?php if (
+                    !empty($request['processed_at']) ||
+                    !empty($request['rejection_reason'])
+                ): ?>
 
-                    <div style="
-                        margin-bottom:10px;
-                        color:#111827;
-                        font-size:12px;
-                        font-weight:700;
-                    ">
-                        Processing Information
-                    </div>
+                    <div style="margin-bottom:18px;">
 
-                    <div class="row g-3">
+                        <div style="
+                            margin-bottom:10px;
+                            color:#111827;
+                            font-size:12px;
+                            font-weight:700;
+                        ">
+                            Processing Information
+                        </div>
 
-                        <!-- PROCESSED DATE -->
-                        <div class="col-md-6">
+                        <div class="row g-3">
 
-                            <div style="
-                                padding:12px;
-                                border:1px solid #e5e7eb;
-                                border-radius:10px;
-                                background:#ffffff;
-                            ">
+                            <?php if (
+                                !empty($request['processed_at'])
+                            ): ?>
 
-                                <div style="
-                                    margin-bottom:5px;
-                                    color:#6b7280;
-                                    font-size:10px;
-                                    font-weight:600;
-                                ">
-                                    Processed Date
+                                <div class="col-md-6">
+
+                                    <div style="
+                                        padding:12px;
+                                        border:1px solid #e5e7eb;
+                                        border-radius:10px;
+                                        background:#ffffff;
+                                    ">
+
+                                        <div style="
+                                            margin-bottom:5px;
+                                            color:#6b7280;
+                                            font-size:10px;
+                                            font-weight:600;
+                                        ">
+                                            Processed Date
+                                        </div>
+
+                                        <div style="
+                                            color:#111827;
+                                            font-size:12px;
+                                            font-weight:600;
+                                        ">
+
+                                            <?= htmlspecialchars(
+                                                date(
+                                                    'M d, Y',
+                                                    strtotime(
+                                                        $request['processed_at']
+                                                    )
+                                                )
+                                            ) ?>
+
+                                        </div>
+
+                                    </div>
+
                                 </div>
 
-                                <div id="viewProcessedDate" style="
-                                    color:#111827;
-                                    font-size:12px;
-                                    font-weight:600;
-                                ">
-                                    -
+                            <?php endif; ?>
+
+
+                            <?php if (
+                                $status === 'rejected' &&
+                                !empty($request['rejection_reason'])
+                            ): ?>
+
+                                <div class="col-md-6">
+
+                                    <div style="
+                                        padding:12px;
+                                        border:1px solid #fecaca;
+                                        border-radius:10px;
+                                        background:#fef2f2;
+                                    ">
+
+                                        <div style="
+                                            margin-bottom:5px;
+                                            color:#b91c1c;
+                                            font-size:10px;
+                                            font-weight:600;
+                                        ">
+                                            Rejection Reason
+                                        </div>
+
+                                        <div style="
+                                            color:#991b1b;
+                                            font-size:12px;
+                                            line-height:1.5;
+                                        ">
+
+                                            <?= nl2br(
+                                                htmlspecialchars(
+                                                    $request['rejection_reason']
+                                                )
+                                            ) ?>
+
+                                        </div>
+
+                                    </div>
+
                                 </div>
 
-                            </div>
+                            <?php endif; ?>
 
                         </div>
 
-
-                        <!-- REJECTION REASON -->
-                        <div class="col-md-6" id="rejectionReasonContainer"
-                            style="display:none;">
-
-                            <div style="
-                                padding:12px;
-                                border:1px solid #fecaca;
-                                border-radius:10px;
-                                background:#fef2f2;
-                            ">
-
-                                <div style="
-                                    margin-bottom:5px;
-                                    color:#b91c1c;
-                                    font-size:10px;
-                                    font-weight:600;
-                                ">
-                                    Rejection Reason
-                                </div>
-
-                                <div id="viewRejectionReason" style="
-                                    color:#991b1b;
-                                    font-size:12px;
-                                    line-height:1.5;
-                                ">
-                                    -
-                                </div>
-
-                            </div>
-
-                        </div>
-
                     </div>
 
-                </div>
+                <?php endif; ?>
 
 
                 <!-- DOCUMENT -->
-                <div id="documentContainer" style="
-                    display:none;
-                ">
+                <div>
 
                     <div style="
-                        margin-bottom:8px;
-                        color:#111827;
-                        font-size:12px;
-                        font-weight:700;
-                    ">
+        margin-bottom:8px;
+        color:#111827;
+        font-size:12px;
+        font-weight:700;
+    ">
                         Attached Document
                     </div>
 
-                    <a id="viewRequestDocument"
-                        href="#"
-                        target="_blank"
-                        style="
-                            display:inline-flex;
-                            align-items:center;
-                            gap:7px;
-                            padding:8px 12px;
-                            border:1px solid #dbeafe;
-                            border-radius:8px;
-                            background:#eff6ff;
-                            color:#2563eb;
-                            font-size:11px;
-                            font-weight:600;
-                            text-decoration:none;
-                        ">
-                        <i class="fas fa-file-arrow-down"></i>
-                        View Document
-                    </a>
+                    <?php if (!empty($request['document_path'])): ?>
+
+                        <a href="<?= htmlspecialchars($request['document_path']) ?>" target="_blank" style="
+                display:inline-flex;
+                align-items:center;
+                gap:7px;
+                padding:8px 12px;
+                border:1px solid #dbeafe;
+                border-radius:8px;
+                background:#eff6ff;
+                color:#2563eb;
+                font-size:11px;
+                font-weight:600;
+                text-decoration:none;
+            ">
+                            <i class="fas fa-file-arrow-down"></i>
+                            View Document
+                        </a>
+
+                    <?php else: ?>
+
+                        <span style="
+            color:#9ca3af;
+            font-size:11px;
+            font-weight:500;
+        ">
+                            No document attached
+                        </span>
+
+                    <?php endif; ?>
 
                 </div>
 
@@ -437,14 +531,12 @@
 
             <!-- FOOTER -->
             <div class="modal-footer" style="
-                padding:13px 20px;
-                border-top:1px solid #e5e7eb;
-                background:#f8fafc;
-            ">
+                    padding:13px 20px;
+                    border-top:1px solid #e5e7eb;
+                    background:#f8fafc;
+                ">
 
-                <button type="button"
-                    data-bs-dismiss="modal"
-                    style="
+                <button type="button" data-bs-dismiss="modal" style="
                         display:inline-flex;
                         align-items:center;
                         justify-content:center;
@@ -457,7 +549,9 @@
                         font-weight:600;
                         cursor:pointer;
                     ">
+
                     Close
+
                 </button>
 
             </div>

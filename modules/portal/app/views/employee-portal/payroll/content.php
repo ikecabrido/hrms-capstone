@@ -185,6 +185,17 @@
                             font-weight:700;
                             white-space:nowrap; ">
                                 <i class="fas fa-file-lines me-1"></i>
+                                ID
+                            </th>
+
+                            <th style="
+                            padding:13px 16px;
+                            text-align:left;
+                            color:#64748b;
+                            font-size:11px;
+                            font-weight:700;
+                            white-space:nowrap; ">
+                                <i class="fas fa-file-lines me-1"></i>
                                 Request Type
                             </th>
 
@@ -236,13 +247,22 @@
                             font-size:11px;
                             font-weight:700;
                             white-space:nowrap; ">
+                                File
+                            </th>
+
+                            <th style="
+                            padding:13px 16px;
+                            text-align:center;
+                            color:#64748b;
+                            font-size:11px;
+                            font-weight:700;
+                            white-space:nowrap; ">
                                 Action
                             </th>
 
                         </tr>
 
                     </thead>
-
 
                     <!-- TABLE BODY -->
                     <tbody id="payrollRequestTableBody">
@@ -321,6 +341,22 @@
                             " onmouseover="this.style.background='#f8fafc'"
                                 onmouseout="this.style.background='#ffffff'">
 
+                                <!-- REQUEST TYPE ID -->
+                                <td style="
+                                padding:14px 16px;
+                                color:#111827;
+                                font-weight:600;
+                                white-space:nowrap; ">
+
+                                    <i class="fa-solid fa-id-card" style="
+                                        margin-right:7px;
+                                        color:#2563eb;
+                                    ">
+                                    </i>
+                                    #<?= !empty($request['id'])
+                                        ? $request['id'] : '-' ?>
+                                </td>
+
                                 <!-- REQUEST TYPE -->
                                 <td style="
                                 padding:14px 16px;
@@ -383,7 +419,6 @@
 
                                 </td>
 
-
                                 <!-- STATUS -->
                                 <td style="
                                 padding:14px 16px;
@@ -412,6 +447,19 @@
 
                                 </td>
 
+                                <!-- Files -->
+                                <td style="padding:14px 16px; text-align:center;">
+                                    <?php if (!empty($request['document_path'])): ?>
+                                        <a href="<?= htmlspecialchars($request['document_path']) ?>" target="_blank"
+                                            title="View File" style="color:#2563eb; font-size:14px;">
+                                            <i class="fas fa-file"></i>
+                                        </a>
+                                    <?php else: ?>
+                                        <span title="No file attached" style="color:#9ca3af;">
+                                            <i class="text-xl fas fa-file-circle-xmark"></i>
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
 
                                 <!-- ACTION -->
                                 <td style="
@@ -419,8 +467,7 @@
                                 text-align:center; ">
 
                                     <button type="button" class="view-payroll-request-btn" data-bs-toggle="modal"
-                                        data-bs-target="#viewPayrollRequestModal" data-id="<?= (int) ($request['id'] ?? 0) ?>"
-                                        style="
+                                        data-bs-target="#viewPayrollRequestModal<?= (int) $request['id'] ?>" style="
         display:inline-flex;
         align-items:center;
         justify-content:center;
@@ -440,9 +487,7 @@
                                     </button>
 
                                 </td>
-
                             </tr>
-
                         <?php endforeach; ?>
 
                     </tbody>
@@ -641,6 +686,17 @@
                                 font-weight:700;
                                 white-space:nowrap; ">
                                 <i class="far fa-calendar me-1"></i>
+                                ID
+                            </th>
+
+                            <th style="
+                                padding:13px 16px;
+                                text-align:left;
+                                color:#64748b;
+                                font-size:11px;
+                                font-weight:700;
+                                white-space:nowrap; ">
+                                <i class="far fa-calendar me-1"></i>
                                 Payroll Date
                             </th>
 
@@ -708,6 +764,20 @@
                                 transition:background .2s ease;
                             " onmouseover="this.style.background='#f8fafc'"
                                 onmouseout="this.style.background='#ffffff'">
+
+                                <!-- ID -->
+                                <td style="
+                                    padding:14px 16px;
+                                    color:#111827;
+                                    font-weight:600;
+                                    white-space:nowrap; ">
+                                    <i class="fa-solid fa-id-card" style="
+                                        margin-right:7px;
+                                        color:#2563eb;
+                                    "></i>
+                                    #<?= !empty($payroll['payslip_id'])
+                                        ? $payroll['payslip_id'] : '-' ?>
+                                </td>
 
                                 <!-- DATE -->
                                 <td style="
@@ -798,21 +868,19 @@
                                     padding:14px 16px;
                                     text-align:center; ">
 
-                                    <button type="button" style="
-                                            display:inline-flex;
-                                            align-items:center;
-                                            justify-content:center;
-                                            gap:6px;
-                                            padding:7px 11px;
-                                            border:1px solid #dbeafe;
-                                            border-radius:8px;
-                                            background:#eff6ff;
-                                            color:#2563eb;
-                                            font-size:11px;
-                                            font-weight:600;
-                                            cursor:pointer;
-                                            white-space:nowrap;
-                                        ">
+                                    <button type="button" class="btn btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#viewPayrollModal<?= (int) $payroll['payslip_id'] ?>" style="
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 11px;
+        border:1px solid #dbeafe;
+        border-radius:8px;
+        background:#eff6ff;
+        color:#2563eb;
+        font-size:11px;
+        font-weight:600;
+    ">
                                         <i class="fas fa-eye"></i>
                                         View
                                     </button>

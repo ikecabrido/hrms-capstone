@@ -52,7 +52,7 @@
                 </a>
             </li>
             <li>
-                <a href="?page=benefits" class="menu-link">
+                <a href="index.php?url=benefits-and-government-contribution" class="menu-link">
                     <i class="fa-solid fa-hand-holding-heart"></i>
                     Benefits & Contributions
                 </a>

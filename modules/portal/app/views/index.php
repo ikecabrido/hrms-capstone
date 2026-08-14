@@ -20,7 +20,7 @@
         window.loginLockedUntil =
             <?= $lockedUntil * 1000 ?>;
     </script>
-    <script src="/hrms-capstone/modules/portal/public/js/extended.js"></script>
+    <script type="module" src="/hrms-capstone/modules/portal/public/js/extended.js"></script>
 </body>
 
 </html>

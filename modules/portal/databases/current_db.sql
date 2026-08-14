@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 13, 2026 at 02:53 PM
+-- Generation Time: Aug 14, 2026 at 10:56 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,30 @@ SET time_zone = "+00:00";
 --
 -- Database: `hrms-capstone`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `eer_announcements`
+--
+
+CREATE TABLE `eer_announcements` (
+  `eer_announcements_id` int(11) NOT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `content` text DEFAULT NULL,
+  `created_by` varchar(50) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `target_audience` varchar(100) DEFAULT 'all'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `eer_announcements`
+--
+
+INSERT INTO `eer_announcements` (`eer_announcements_id`, `title`, `content`, `created_by`, `created_at`, `target_audience`) VALUES
+(1, 'Company Town Hall', 'Join tomorrow', 'EMP001', '2026-03-29 04:27:57', 'all'),
+(2, 'Clean-up Day', 'This Friday', 'EMP002', '2026-03-29 04:27:57', 'all'),
+(3, 'Company Town Hall', 'Join tomorrow', 'EMP009', '2026-03-29 12:36:01', 'all');
 
 -- --------------------------------------------------------
 
@@ -116,6 +140,126 @@ INSERT INTO `em_positions` (`position_id`, `position_name`, `department_id`, `st
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `ep_benefits_and_government_contribution`
+--
+
+CREATE TABLE `ep_benefits_and_government_contribution` (
+  `benefit_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `record_type` enum('SSS','PhilHealth','Pag-IBIG','Withholding Tax','BIR Form 2316') NOT NULL,
+  `period` varchar(20) NOT NULL,
+  `description` text DEFAULT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `uploaded_by` int(11) NOT NULL,
+  `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ep_benefits_and_government_contribution`
+--
+
+INSERT INTO `ep_benefits_and_government_contribution` (`benefit_id`, `employee_id`, `record_type`, `period`, `description`, `file_name`, `file_path`, `uploaded_by`, `uploaded_at`, `updated_at`) VALUES
+(2, 1, 'BIR Form 2316', '2026-07', 'Sample 1', '', '', 3, '2026-07-19 08:14:46', '2026-08-14 05:48:42'),
+(4, 1, 'SSS', '2026-08', 'sample', '', '', 3, '2026-07-30 23:34:54', '2026-08-14 05:48:49'),
+(5, 1, 'SSS', '2026-08', 'sample', '', '', 1, '2026-08-02 01:06:38', '2026-08-14 05:48:54'),
+(6, 1, 'BIR Form 2316', '2026-07', NULL, 'TECHNOPRENEURSHIP.docx', 'public/assets/uploads/benefits/1786689743_90f376f3c6.docx', 1, '2026-08-14 06:42:23', '2026-08-14 06:42:23'),
+(7, 1, 'SSS', '2026-02', NULL, 'BSIS-BULACAN-BSIS-RESEARCH-FESTIVAL-2025-2026-EMPLOYEE-PORTAL-CAPSTONE.docx', 'assets/uploads/benefits/benefits1786691045_cd50b6f620.docx', 1, '2026-08-14 07:04:05', '2026-08-14 07:04:05'),
+(8, 1, 'Pag-IBIG', '2026-02', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786692021_7130abb94c.pdf', 1, '2026-08-14 07:20:21', '2026-08-14 07:20:21');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ep_notifications`
+--
+
+CREATE TABLE `ep_notifications` (
+  `notification_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `message` text NOT NULL,
+  `type` enum('announcement','payroll','leave','training','performance','document','meeting','compliance','general') DEFAULT 'general',
+  `priority` enum('normal','important','urgent') DEFAULT 'normal',
+  `target_url` varchar(255) DEFAULT NULL,
+  `created_by_user_id` int(11) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ep_notifications`
+--
+
+INSERT INTO `ep_notifications` (`notification_id`, `title`, `message`, `type`, `priority`, `target_url`, `created_by_user_id`, `created_at`) VALUES
+(1, 'Company Orientation', 'Welcome to the company orientation scheduled on July 20, 2026.', 'announcement', 'normal', 'employee-announcements', 1, '2026-07-15 06:13:02'),
+(2, 'Payslip Available', 'Your payslip for June 2026 is now available.', 'payroll', 'important', 'employee-payslip', 1, '2026-07-15 06:13:02'),
+(3, 'Leave Request Approved', 'Your leave request has been approved.', 'leave', 'important', 'employee-leave-request', 2, '2026-07-15 06:13:02'),
+(4, 'Mandatory Cybersecurity Training', 'You have been enrolled in the Cybersecurity Awareness Training.', 'training', 'urgent', 'employee-training-programs', 2, '2026-07-15 06:13:02'),
+(5, 'Performance Evaluation', 'Your quarterly performance evaluation is now available.', 'performance', 'important', 'performance-feedback', 1, '2026-07-15 06:13:02'),
+(6, 'Document Submission', 'Please submit your updated government IDs.', 'document', 'urgent', 'employee-documents', 3, '2026-07-15 06:13:02'),
+(7, 'Team Meeting', 'A department meeting is scheduled tomorrow at 10:00 AM.', 'meeting', 'normal', 'employee-meetings', 2, '2026-07-15 06:13:02'),
+(8, 'Compliance Reminder', 'Complete the annual compliance training before the deadline.', 'compliance', 'urgent', 'employee-compliance', 1, '2026-07-15 06:13:02'),
+(9, 'Holiday Announcement', 'The office will be closed on National Heroes Day.', 'announcement', 'normal', 'employee-announcements', 1, '2026-07-15 06:13:02'),
+(10, 'Payroll Reminder', 'Payroll processing will begin tomorrow.', 'payroll', 'normal', 'employee-payslip', 2, '2026-07-15 06:13:02'),
+(11, 'Training Certificate', 'Your training certificate is now available.', 'training', 'normal', 'employee-training-programs', 3, '2026-07-15 06:13:02'),
+(12, 'Performance Feedback', 'Your manager has submitted new performance feedback.', 'performance', 'important', 'employee-performance', 2, '2026-07-15 06:13:02'),
+(13, 'Document Verified', 'Your submitted employment documents have been verified.', 'document', 'normal', 'employee-documents', 1, '2026-07-15 06:13:02'),
+(14, 'Meeting Rescheduled', 'The monthly staff meeting has been moved to Friday.', 'meeting', 'important', 'employee-meetings', 2, '2026-07-15 06:13:02'),
+(15, 'Leave Request Pending', 'Your leave request is currently under review.', 'leave', 'normal', 'employee-leave-request', 1, '2026-07-15 06:13:02'),
+(16, 'Company Picnic', 'Join us for the annual company outing this Saturday.', 'announcement', 'normal', 'employee-announcements', 3, '2026-07-15 06:13:02'),
+(17, 'Salary Adjustment Notice', 'Your salary adjustment has been processed.', 'payroll', 'important', 'employee-payslip', 1, '2026-07-15 06:13:02'),
+(18, 'Training Reminder', 'Your enrolled training starts tomorrow.', 'training', 'important', 'employee-training-programs', 2, '2026-07-15 06:13:02'),
+(19, 'Compliance Deadline', 'Your compliance documents must be submitted this week.', 'compliance', 'urgent', 'employee-compliance', 3, '2026-07-15 06:13:02'),
+(20, 'Employee Survey', 'Please complete the annual employee satisfaction survey.', 'general', 'normal', 'employee-dashboard', 1, '2026-07-15 06:13:02');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ep_notification_recipients`
+--
+
+CREATE TABLE `ep_notification_recipients` (
+  `recipient_id` int(11) NOT NULL,
+  `notification_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `read_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ep_notification_recipients`
+--
+
+INSERT INTO `ep_notification_recipients` (`recipient_id`, `notification_id`, `employee_id`, `is_read`, `read_at`) VALUES
+(1, 1, 1, 1, '2026-08-14 08:55:34'),
+(2, 2, 1, 0, '2026-08-14 08:54:41'),
+(3, 3, 3, 0, NULL),
+(4, 4, 4, 0, NULL),
+(5, 5, 5, 1, '2026-07-18 17:49:21'),
+(6, 6, 6, 0, NULL),
+(7, 7, 7, 0, '2026-07-18 17:34:47'),
+(8, 8, 8, 1, '2026-07-15 06:13:02'),
+(9, 9, 9, 0, NULL),
+(10, 10, 10, 0, NULL),
+(11, 11, 11, 1, '2026-07-15 06:13:02'),
+(12, 12, 12, 0, NULL),
+(13, 13, 13, 0, NULL),
+(14, 14, 14, 1, '2026-07-15 06:13:02'),
+(15, 15, 15, 0, NULL),
+(16, 16, 16, 0, NULL),
+(17, 17, 17, 1, '2026-07-15 06:13:02'),
+(18, 18, 18, 0, NULL),
+(19, 19, 19, 0, NULL),
+(20, 27, 15, 0, NULL),
+(21, 27, 16, 0, NULL),
+(22, 27, 14, 0, NULL),
+(23, 20, 15, 0, NULL),
+(24, 20, 16, 0, NULL),
+(25, 20, 14, 1, '2026-08-02 01:42:27'),
+(26, 54, 15, 0, NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `ep_online_meetings`
 --
 
@@ -160,6 +304,13 @@ CREATE TABLE `ep_payroll_request` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ep_payroll_request`
+--
+
+INSERT INTO `ep_payroll_request` (`id`, `employee_id`, `request_type`, `purpose`, `remarks`, `payroll_period_start`, `payroll_period_end`, `status`, `requested_at`, `processed_at`, `processed_by`, `rejection_reason`, `document_path`, `created_at`, `updated_at`) VALUES
+(4, 1, 'Payroll Correction', 'Regular Payroll Processing', NULL, '2026-08-13', '2026-08-15', 'Pending', '2026-08-13 17:55:44', NULL, NULL, NULL, NULL, '2026-08-13 17:55:44', '2026-08-13 17:55:44');
 
 -- --------------------------------------------------------
 
@@ -343,6 +494,71 @@ INSERT INTO `hrms_roles` (`role_id`, `role_name`, `department`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `leave_requests`
+--
+
+CREATE TABLE `leave_requests` (
+  `leave_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `leave_type` enum('Sick Leave','Vacation Leave','Emergency Leave','Maternity Leave','Paternity Leave','Bereavement Leave','Other') NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `reason` text NOT NULL,
+  `status` enum('Pending','Approved','Rejected','Cancelled') DEFAULT 'Pending',
+  `approved_by` int(11) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `leave_requests`
+--
+
+INSERT INTO `leave_requests` (`leave_id`, `employee_id`, `leave_type`, `start_date`, `end_date`, `reason`, `status`, `approved_by`, `remarks`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Sick Leave', '2026-08-04', '2026-08-05', 'Feeling unwell and need to rest.', 'Approved', 2, 'Approved by HR.', '2026-08-01 01:15:00', '2026-08-02 02:30:00'),
+(2, 3, 'Vacation Leave', '2026-08-10', '2026-08-12', 'Personal vacation with family.', 'Approved', 2, 'Leave approved.', '2026-08-03 00:45:00', '2026-08-04 03:20:00'),
+(3, 4, 'Emergency Leave', '2026-08-14', '2026-08-14', 'Family emergency that requires immediate attention.', 'Pending', NULL, NULL, '2026-08-13 01:10:00', '2026-08-13 01:10:00'),
+(4, 5, 'Sick Leave', '2026-08-18', '2026-08-19', 'Medical consultation and recovery.', 'Pending', NULL, NULL, '2026-08-13 05:25:00', '2026-08-13 05:25:00'),
+(5, 6, 'Vacation Leave', '2026-08-24', '2026-08-26', 'Planned personal vacation.', 'Rejected', 2, 'Leave period conflicts with scheduled activities.', '2026-08-08 06:00:00', '2026-08-09 01:45:00'),
+(6, 1, 'Vacation Leave', '2026-08-13', '2026-08-15', 'vacation', 'Pending', NULL, NULL, '2026-08-13 15:49:17', '2026-08-13 15:49:17'),
+(7, 2, 'Sick Leave', '2026-08-13', '2026-08-13', 'sample', 'Pending', NULL, NULL, '2026-08-13 15:50:14', '2026-08-13 15:55:05'),
+(8, 3, 'Bereavement Leave', '2026-08-13', '2026-08-13', 'sample', 'Pending', NULL, NULL, '2026-08-13 15:53:27', '2026-08-13 15:55:09'),
+(9, 4, 'Bereavement Leave', '2026-08-13', '2026-08-13', 'sadad', 'Pending', NULL, NULL, '2026-08-13 15:54:08', '2026-08-13 15:55:12'),
+(10, 5, 'Paternity Leave', '2026-08-13', '2026-08-13', 'dasda', 'Pending', NULL, NULL, '2026-08-13 15:54:40', '2026-08-13 15:55:15');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pr_payslips`
+--
+
+CREATE TABLE `pr_payslips` (
+  `payslip_id` int(11) NOT NULL,
+  `payroll_run_id` int(11) DEFAULT NULL,
+  `employee_id` int(11) DEFAULT NULL,
+  `gross_pay` decimal(10,2) DEFAULT NULL,
+  `total_deductions` decimal(10,2) DEFAULT NULL,
+  `net_pay` decimal(10,2) DEFAULT NULL,
+  `generated_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `is_exit_settlement` tinyint(1) DEFAULT 0 COMMENT 'Flag: 1 if this is an exit/final payslip',
+  `settlement_id` int(11) DEFAULT NULL COMMENT 'Links to exit_employee_settlements.id',
+  `resignation_id` int(11) DEFAULT NULL COMMENT 'Links to exit_resignations.id'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `pr_payslips`
+--
+
+INSERT INTO `pr_payslips` (`payslip_id`, `payroll_run_id`, `employee_id`, `gross_pay`, `total_deductions`, `net_pay`, `generated_at`, `is_exit_settlement`, `settlement_id`, `resignation_id`) VALUES
+(1, 1001, 1, 25000.00, 2500.00, 22500.00, '2026-07-15 01:00:00', 0, NULL, NULL),
+(2, 1002, 1, 25000.00, 2750.00, 22250.00, '2026-07-30 01:00:00', 0, NULL, NULL),
+(3, 1003, 2, 30000.00, 3500.00, 26500.00, '2026-07-30 01:30:00', 0, NULL, NULL),
+(4, 1004, 3, 28000.00, 3200.00, 24800.00, '2026-08-01 02:00:00', 0, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `ta_attendance`
 --
 
@@ -417,10 +633,36 @@ INSERT INTO `user_account` (`user_id`, `password`, `employee_id`, `email`, `crea
 --
 
 --
+-- Indexes for table `eer_announcements`
+--
+ALTER TABLE `eer_announcements`
+  ADD PRIMARY KEY (`eer_announcements_id`);
+
+--
 -- Indexes for table `em_employees`
 --
 ALTER TABLE `em_employees`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ep_benefits_and_government_contribution`
+--
+ALTER TABLE `ep_benefits_and_government_contribution`
+  ADD PRIMARY KEY (`benefit_id`),
+  ADD KEY `idx_employee_id` (`employee_id`),
+  ADD KEY `idx_uploaded_by` (`uploaded_by`);
+
+--
+-- Indexes for table `ep_notifications`
+--
+ALTER TABLE `ep_notifications`
+  ADD PRIMARY KEY (`notification_id`);
+
+--
+-- Indexes for table `ep_notification_recipients`
+--
+ALTER TABLE `ep_notification_recipients`
+  ADD PRIMARY KEY (`recipient_id`);
 
 --
 -- Indexes for table `ep_online_meetings`
@@ -478,6 +720,18 @@ ALTER TABLE `hrms_roles`
   ADD KEY `idx_hrms_roles_department` (`department`);
 
 --
+-- Indexes for table `leave_requests`
+--
+ALTER TABLE `leave_requests`
+  ADD PRIMARY KEY (`leave_id`);
+
+--
+-- Indexes for table `pr_payslips`
+--
+ALTER TABLE `pr_payslips`
+  ADD PRIMARY KEY (`payslip_id`);
+
+--
 -- Indexes for table `ta_attendance`
 --
 ALTER TABLE `ta_attendance`
@@ -496,10 +750,34 @@ ALTER TABLE `user_account`
 --
 
 --
+-- AUTO_INCREMENT for table `eer_announcements`
+--
+ALTER TABLE `eer_announcements`
+  MODIFY `eer_announcements_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
 -- AUTO_INCREMENT for table `em_employees`
 --
 ALTER TABLE `em_employees`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `ep_benefits_and_government_contribution`
+--
+ALTER TABLE `ep_benefits_and_government_contribution`
+  MODIFY `benefit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `ep_notifications`
+--
+ALTER TABLE `ep_notifications`
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `ep_notification_recipients`
+--
+ALTER TABLE `ep_notification_recipients`
+  MODIFY `recipient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `ep_online_meetings`
@@ -511,7 +789,7 @@ ALTER TABLE `ep_online_meetings`
 -- AUTO_INCREMENT for table `ep_payroll_request`
 --
 ALTER TABLE `ep_payroll_request`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `ep_resignation_requests`
@@ -548,6 +826,18 @@ ALTER TABLE `hrms_position`
 --
 ALTER TABLE `hrms_roles`
   MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `leave_requests`
+--
+ALTER TABLE `leave_requests`
+  MODIFY `leave_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `pr_payslips`
+--
+ALTER TABLE `pr_payslips`
+  MODIFY `payslip_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `ta_attendance`

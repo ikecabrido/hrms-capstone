@@ -4,7 +4,8 @@ namespace App\Middleware;
 
 class SessionTimeout
 {
-    private const TIMEOUT = 600; // 10 minutes
+    private const TIMEOUT = 1800; // 30 minutes
+
 
     public static function check(): void
     {

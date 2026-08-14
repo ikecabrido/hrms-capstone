@@ -86,5 +86,4 @@ class PayrollController
         exit;
     }
 
-
 }

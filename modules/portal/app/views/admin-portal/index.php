@@ -30,7 +30,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.2/lib/anime.min.js"></script>
-    <script src="/hrms-capstone/modules/portal/public/js/extended.js"></script>
+    <script type="module" src="/hrms-capstone/modules/portal/public/js/extended.js"></script>
 </body>
 
 </html>
