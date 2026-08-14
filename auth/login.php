@@ -46,20 +46,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── Authentication ────────────────────────────────────────────────────────
     $stmt = $conn->prepare("
-        SELECT
-            user_account.user_id,
-            user_account.employee_id,
-            user_account.password,
-            hrms_employee.role,
-            hrms_employee.department,
-            hrms_roles.role_name,
-            hrms_department.department_name
-        FROM user_account
-        INNER JOIN hrms_employee  ON hrms_employee.employee_id  = user_account.employee_id
-        INNER JOIN hrms_roles      ON hrms_roles.role_id          = hrms_employee.role
-        LEFT  JOIN hrms_department ON hrms_department.department_id = hrms_employee.department
-        WHERE user_account.employee_id = :employeeid
-        AND   hrms_employee.status      = 'active'
+        SELECT 
+            u.user_id, 
+            u.employee_id, 
+            u.role_id,
+            u.password,
+            u.account_status,
+            e.employee_code,
+            e.first_name,
+            e.middle_name,
+            e.last_name,
+            e.position_id,
+            e.department_id,
+            e.employment_status,
+            p.position_name,
+            r.role_name,
+            d.department_name
+        FROM user_account u
+        INNER JOIN em_employees e
+            ON e.employee_id = u.employee_id
+        INNER JOIN em_roles r
+            ON r.role_id = u.role_id
+        INNER JOIN em_positions p
+            ON p.position_id = e.position_id
+        LEFT JOIN em_departments d
+            ON d.department_id = e.department_id
+        WHERE e.employee_code = :employeeid
+        AND e.employment_status = 'ACTIVE'
+        AND p.position_name IN ('HR Staff', 'HR Officer')
         LIMIT 1
     ");
     $stmt->bindParam(':employeeid', $employeeid);
@@ -67,32 +81,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && password_verify($password, $user['password'])) {
+    if ($user && $user['account_status'] === 'Active' && password_verify($password, $user['password'])) {
         // ── Success: clear attempt tracking & build session ───────────────────
         unset($_SESSION[$key]);
 
-        $_SESSION['employee_id']     = $user['employee_id'];
-        $_SESSION['role']            = $user['role'];
-        $_SESSION['role_name']       = $user['role_name'];
-        $_SESSION['department_id']   = $user['department'];
+        $_SESSION['user_id']        = $user['user_id'];
+        $_SESSION['employee_id']    = $user['employee_id'];
+        $_SESSION['employee_code']  = $user['employee_code'];
+        $_SESSION['employee_name']  = trim(
+            $user['first_name'] . ' ' . $user['last_name']
+        );
+        $_SESSION['role_id']        = $user['role_id'];
+        $_SESSION['role_name']      = $user['role_name'];
+        $_SESSION['position_id']    = $user['position_id'];
+        $_SESSION['position_name']  = $user['position_name'];
+        $_SESSION['department_id']   = $user['department_id'];
         $_SESSION['department_name'] = $user['department_name'];
+        $_SESSION['last_activity'] = time();
+
+        $updateLogin = $conn->prepare("
+            UPDATE user_account
+            SET last_login = CURRENT_TIMESTAMP,
+                failed_login_attempts = 0
+            WHERE user_id = :user_id
+        ");
+        $updateLogin->execute([
+            ':user_id' => $user['user_id']
+        ]);
 
         $redirectMap = [
-            1 => 'modules/recruitment/index.php',
-            2 => 'modules/employee/index.php',
-            3 => 'modules/payroll/index.php',
-            4 => 'modules/time/index.php',
-            5 => 'modules/performance/index.php',
-            6 => 'modules/learning/index.php',
-            7 => 'modules/compliance/index.php',
-            8 => 'modules/workforce/index.php',
-            9 => 'modules/exit/index.php',
-            10 => 'modules/clinic/index.php',
-            11 => 'modules/engagement/index.php',
+            2 => 'modules/recruitment/index.php',
+            3 => 'modules/employee/index.php',
+            4 => 'modules/payroll/index.php',
+            5 => 'modules/time/index.php',
+            6 => 'modules/performance/index.php',
+            7 => 'modules/learning/index.php',
+            8 => 'modules/compliance/index.php',
+            9 => 'modules/workforce/index.php',
+            10 => 'modules/exit/index.php',
+            11 => 'modules/clinic/index.php',
+            12 => 'modules/engagement/index.php',
+            13 => 'modules/portal/index.php'
 
         ];
 
-        $role = (int) $user['role'];
+        $role = (int) $user['role_id'];
 
         if (!isset($redirectMap[$role])) {
             echo json_encode(['success' => false, 'locked' => false, 'message' => 'Invalid role.']);

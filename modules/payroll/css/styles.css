@@ -10,7 +10,7 @@
 @import url("layout/module-container.css");
 
 /*Pages CSS*/
-@import url("pages/payroll.css");
+@import url("pages/period-manager.css");
 
 /*Base CSS*/
 @import url("base/variables.css");
