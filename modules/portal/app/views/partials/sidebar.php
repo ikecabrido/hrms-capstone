@@ -60,7 +60,7 @@
             <div class="separator"></div>
             <h3>Employee Development</h3>
             <li>
-                <a href="?page=performance" class="menu-link">
+                <a href="index.php?url=performance" class="menu-link">
                     <i class="fa-solid fa-chart-line"></i>
                     Performance Evaluation
                 </a>

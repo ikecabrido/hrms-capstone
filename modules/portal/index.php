@@ -7,6 +7,7 @@ use App\Controllers\PortalController;
 use App\Controllers\PayrollController;
 use App\Controllers\ProfileController;
 use App\Controllers\AttendanceController;
+use App\Controllers\PerformanceController;
 use App\Controllers\AnnouncementController;
 use App\Controllers\NotificationController;
 use App\Controllers\BenefitsAndGovernmentContributionController;
@@ -70,6 +71,9 @@ $routes = [
     'notification'  => [NotificationController::class, 'index'],
     'notification-mark-read'  => [NotificationController::class, 'markRead'],
     'notification-mark-all-read'  => [NotificationController::class, 'markAllRead'],
+
+    // Performance
+    'performance' => [PerformanceController::class, 'index'],
 
 
 ];
