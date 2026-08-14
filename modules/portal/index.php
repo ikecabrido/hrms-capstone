@@ -1,11 +1,14 @@
 <?php
 
+use App\Middleware\ProtectedRoutes;
 use App\Middleware\SessionTimeout;
+
 use App\Controllers\AuthController;
 use App\Controllers\LeaveController;
 use App\Controllers\PortalController;
 use App\Controllers\PayrollController;
 use App\Controllers\ProfileController;
+use App\Controllers\ComplaintController;
 use App\Controllers\AttendanceController;
 use App\Controllers\PerformanceController;
 use App\Controllers\AnnouncementController;
@@ -75,6 +78,10 @@ $routes = [
     // Performance
     'performance' => [PerformanceController::class, 'index'],
 
+    // Complaint
+    'complaint' => [ComplaintController::class, 'index'],
+    'employee-complaints-store' => [ComplaintController::class, 'store'],
+
 
 ];
 
@@ -116,31 +123,7 @@ if (!array_key_exists($url, $routes)) {
 | Protected Routes
 |--------------------------------------------------------------------------
 */
-
-$protectedRoutes = [
-    'employee-dashboard',
-    'admin-dashboard',
-    'user-profile',
-    'attendance',
-];
-
-/*
-|--------------------------------------------------------------------------
-| Authentication Check
-|--------------------------------------------------------------------------
-*/
-
-if (in_array($url, $protectedRoutes, true)) {
-
-    if (empty($_SESSION['user_id'])) {
-
-        header(
-            'Location: /hrms-capstone/modules/portal/index.php?url=auth-index'
-        );
-
-        exit;
-    }
-}
+ProtectedRoutes::check($url);
 
 /*
 |--------------------------------------------------------------------------

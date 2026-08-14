@@ -74,7 +74,7 @@
             <div class="separator"></div>
             <h3>Employee Relations</h3>
             <li>
-                <a href="?page=complaints" class="menu-link">
+                <a href="index.php?url=complaint" class="menu-link">
                     <i class="fa-regular fa-message"></i>
                     Complaints
                 </a>

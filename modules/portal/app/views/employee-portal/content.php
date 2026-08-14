@@ -326,7 +326,7 @@
 
 
             <!-- Performance -->
-            <a href="index.php?url=performance-feedback" class="dashboard-card">
+            <a href="index.php?url=performance" class="dashboard-card">
 
                 <div class="dashboard-card-icon performance">
                     <i class="fas fa-chart-line"></i>
@@ -374,7 +374,7 @@
 
         <div class="request-grid">
 
-            <a href="index.php?url=employee-complaint-index" class="request-card">
+            <a href="index.php?url=complaint" class="request-card">
 
                 <i class="fas fa-comment-alt"></i>
 

@@ -8,7 +8,7 @@
 
             <span class="welcome-label">
                 <i class="fas fa-circle"></i>
-                PERFORMANCE MANAGEMENT
+                PERFORMANCE EVALUATION
             </span>
 
             <h1 class="welcome-title">
@@ -484,212 +484,161 @@
 
             <!-- TABLE -->
             <div style="
-            width:100%;
-            overflow-x:auto;
-            border:1px solid #e5e7eb;
-            border-radius:14px;
-            background:#fff;
-            box-sizing:border-box;
-            box-shadow:0 4px 16px rgba(15,23,42,.04);
-        ">
+    width:100%;
+    max-width:100%;
+    box-sizing:border-box;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color:#cbd5e1 #f8fafc;
+
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    background:#fff;
+
+    box-shadow:0 4px 16px rgba(15,23,42,.04);
+">
 
                 <table style="
-                width:100%;
-                min-width:1050px;
-                border-collapse:collapse;
-                font-size:11px;
-            ">
+        width:100%;
+        min-width:850px;
+        max-width:none;
+
+        border-collapse:separate;
+        border-spacing:0;
+
+        table-layout:auto;
+
+        font-size:11px;
+        color:#374151;
+
+        white-space:nowrap;
+    
 
                     <thead>
 
-                        <tr style="
-                        background:#f8fafc;
-                        border-bottom:1px solid #e5e7eb;
-                    ">
+                        <tr style=" background:#f8fafc; border-bottom:1px solid #e5e7eb; ">
 
-                            <th style="
-                            padding:14px 16px;
-                            text-align:left;
-                            color:#64748b;
-                            font-size:9px;
-                            font-weight:700;
-                            text-transform:uppercase;
-                            letter-spacing:.05em;
-                        ">
-                                Evaluator
-                            </th>
+                                <th style=" padding:14px 16px; text-align:left; color:#64748b; font-size:9px;
+                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
+                                    Evaluator
+                                </th>
 
-                            <th style="
-                            padding:14px 16px;
-                            text-align:left;
-                            color:#64748b;
-                            font-size:9px;
-                            font-weight:700;
-                            text-transform:uppercase;
-                            letter-spacing:.05em;
-                        ">
-                                Competency
-                            </th>
+                                <th style=" padding:14px 16px; text-align:left; color:#64748b; font-size:9px;
+                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
+                                    Competency
+                                </th>
 
-                            <th style="
-                            padding:14px 16px;
-                            text-align:center;
-                            color:#64748b;
-                            font-size:9px;
-                            font-weight:700;
-                            text-transform:uppercase;
-                            letter-spacing:.05em;
-                        ">
-                                Rating
-                            </th>
+                                <th style=" padding:14px 16px; text-align:center; color:#64748b; font-size:9px;
+                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
+                                    Rating
+                                </th>
 
-                            <th style="
-                            padding:14px 16px;
-                            text-align:left;
-                            color:#64748b;
-                            font-size:9px;
-                            font-weight:700;
-                            text-transform:uppercase;
-                            letter-spacing:.05em;
-                        ">
-                                Feedback
-                            </th>
+                                <th style=" padding:14px 16px; text-align:left; color:#64748b; font-size:9px;
+                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
+                                    Feedback
+                                </th>
 
-                            <th style="
-                            padding:14px 16px;
-                            text-align:center;
-                            color:#64748b;
-                            font-size:9px;
-                            font-weight:700;
-                            text-transform:uppercase;
-                            letter-spacing:.05em;
-                        ">
-                                Privacy
-                            </th>
+                                <th style=" padding:14px 16px; text-align:center; color:#64748b; font-size:9px;
+                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
+                                    Privacy
+                                </th>
 
-                            <th style="
-                            padding:14px 16px;
-                            text-align:left;
-                            color:#64748b;
-                            font-size:9px;
-                            font-weight:700;
-                            text-transform:uppercase;
-                            letter-spacing:.05em;
-                        ">
-                                Evaluation Date
-                            </th>
+                                <th style=" padding:14px 16px; text-align:left; color:#64748b; font-size:9px;
+                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
+                                    Evaluation Date
+                                </th>
 
-                        </tr>
+                            </tr>
 
-                    </thead>
+                        </thead>
 
 
-                    <tbody>
+                        <tbody>
 
-                        <?php foreach ($feedbackRecords as $row): ?>
+                            <?php foreach ($feedbackRecords as $row): ?>
 
-                            <?php
-                            $rating = (int) ($row['rating'] ?? 0);
+                                    <?php
+                                    $rating = (int) ($row['rating'] ?? 0);
 
-                            $anonymous =
-                                (int) ($row['is_anonymous'] ?? 0) === 1;
+                                    $anonymous =
+                                        (int) ($row['is_anonymous'] ?? 0) === 1;
 
-                            $ratingColor = '#6b7280';
-                            $ratingBg = '#f3f4f6';
-                            $ratingLabel = 'Not Rated';
+                                    $ratingColor = '#6b7280';
+                                    $ratingBg = '#f3f4f6';
+                                    $ratingLabel = 'Not Rated';
 
-                            if ($rating >= 5) {
-                                $ratingColor = '#166534';
-                                $ratingBg = '#dcfce7';
-                                $ratingLabel = 'Excellent';
-                            } elseif ($rating >= 4) {
-                                $ratingColor = '#2563eb';
-                                $ratingBg = '#eff6ff';
-                                $ratingLabel = 'Very Good';
-                            } elseif ($rating >= 3) {
-                                $ratingColor = '#b45309';
-                                $ratingBg = '#fef3c7';
-                                $ratingLabel = 'Satisfactory';
-                            } elseif ($rating > 0) {
-                                $ratingColor = '#dc2626';
-                                $ratingBg = '#fef2f2';
-                                $ratingLabel = 'Needs Improvement';
-                            }
-                            ?>
+                                    if ($rating >= 5) {
+                                        $ratingColor = '#166534';
+                                        $ratingBg = '#dcfce7';
+                                        $ratingLabel = 'Excellent';
+                                    } elseif ($rating >= 4) {
+                                        $ratingColor = '#2563eb';
+                                        $ratingBg = '#eff6ff';
+                                        $ratingLabel = 'Very Good';
+                                    } elseif ($rating >= 3) {
+                                        $ratingColor = '#b45309';
+                                        $ratingBg = '#fef3c7';
+                                        $ratingLabel = 'Satisfactory';
+                                    } elseif ($rating > 0) {
+                                        $ratingColor = '#dc2626';
+                                        $ratingBg = '#fef2f2';
+                                        $ratingLabel = 'Needs Improvement';
+                                    }
+                                    ?>
 
-                            <tr style="
-                            border-bottom:1px solid #f1f5f9;
-                            transition:.18s ease;
-                        " onmouseover="
-                            this.style.background='#f8fafc';
-                        " onmouseout="
-                            this.style.background='#fff';
-                        ">
+                                    <tr style=" border-bottom:1px solid #f1f5f9; transition:.18s ease; " onmouseover="
+                this.style.background='#f8fafc' ; " onmouseout=" this.style.background='#fff' ; ">
 
-                                <!-- EVALUATOR -->
-                                <td style="
-                                padding:16px;
-                                vertical-align:middle;
-                            ">
+                                        <!-- EVALUATOR -->
+                                        <td style=" padding:16px; vertical-align:middle; ">
 
-                                    <div style="
-                                    display:flex;
-                                    align-items:center;
-                                    gap:10px;
-                                ">
+                                            <div style=" display:flex; align-items:center; gap:10px; ">
 
-                                        <div style="
-                                        width:38px;
-                                        height:38px;
-                                        min-width:38px;
-                                        display:flex;
-                                        align-items:center;
-                                        justify-content:center;
-                                        border-radius:10px;
-                                        background:#eff6ff;
-                                        color:#2563eb;
-                                        font-size:13px;
-                                    ">
-                                            <i class="fas fa-user"></i>
-                                        </div>
+                                                <div style=" width:38px; height:38px; min-width:38px; display:flex;
+                align-items:center; justify-content:center; border-radius:10px; background:#eff6ff; color:#2563eb;
+                font-size:13px; ">
+                                                    <i class=" fas fa-user"></i>
+                </div>
 
-                                        <div>
+                <div>
 
-                                            <div style="
+                    <div style="
                                             color:#111827;
                                             font-size:11px;
                                             font-weight:700;
                                         ">
-                                                <?= $anonymous
-                                                    ? 'Anonymous Evaluator'
-                                                    : htmlspecialchars(
-                                                        $row['evaluator_type']
-                                                        ?? 'Evaluator'
-                                                    ) ?>
-                                            </div>
+                        <?= $anonymous
+                            ? 'Anonymous Evaluator'
+                            : htmlspecialchars(
+                                $row['evaluator_type']
+                                ?? 'Evaluator'
+                            ) ?>
+                    </div>
 
-                                            <div style="
+                    <div style="
                                             margin-top:3px;
                                             color:#94a3b8;
                                             font-size:8px;
                                         ">
-                                                Performance Feedback
-                                            </div>
+                        Performance Feedback
+                    </div>
 
-                                        </div>
+                </div>
 
-                                    </div>
+        </div>
 
-                                </td>
+        </td>
 
 
-                                <!-- CATEGORY -->
-                                <td style="
+        <!-- CATEGORY -->
+        <td style="
                                 padding:16px;
                                 vertical-align:middle;
                             ">
 
-                                    <span style="
+            <span style="
                                     display:inline-flex;
                                     align-items:center;
                                     gap:6px;
@@ -701,32 +650,32 @@
                                     font-size:10px;
                                     font-weight:600;
                                 ">
-                                        <i class="fas fa-layer-group" style="color:#64748b;font-size:9px;">
-                                        </i>
+                <i class="fas fa-layer-group" style="color:#64748b;font-size:9px;">
+                </i>
 
-                                        <?= htmlspecialchars(
-                                            $row['category'] ?? '-'
-                                        ) ?>
-                                    </span>
+                <?= htmlspecialchars(
+                    $row['category'] ?? '-'
+                ) ?>
+            </span>
 
-                                </td>
+        </td>
 
 
-                                <!-- RATING -->
-                                <td style="
+        <!-- RATING -->
+        <td style="
                                 padding:16px;
                                 text-align:center;
                                 vertical-align:middle;
                             ">
 
-                                    <div style="
+            <div style="
                                     display:flex;
                                     flex-direction:column;
                                     align-items:center;
                                     gap:4px;
                                 ">
 
-                                        <span style="
+                <span style="
                                         display:inline-flex;
                                         align-items:center;
                                         gap:5px;
@@ -739,55 +688,55 @@
                                         font-size:11px;
                                         font-weight:700;
                                     ">
-                                            <i class="fas fa-star" style="font-size:8px;">
-                                            </i>
+                    <i class="fas fa-star" style="font-size:8px;">
+                    </i>
 
-                                            <?= $rating ?>/5
-                                        </span>
+                    <?= $rating ?>/5
+                </span>
 
-                                        <span style="
+                <span style="
                                         color:#94a3b8;
                                         font-size:8px;
                                     ">
-                                            <?= $ratingLabel ?>
-                                        </span>
+                    <?= $ratingLabel ?>
+                </span>
 
-                                    </div>
+            </div>
 
-                                </td>
+        </td>
 
 
-                                <!-- FEEDBACK -->
-                                <td style="
+        <!-- FEEDBACK -->
+        <td style="
                                 padding:16px;
                                 max-width:350px;
                                 vertical-align:middle;
                             ">
 
-                                    <div style="
+            <div style="
                                     color:#475569;
                                     font-size:10px;
                                     line-height:1.55;
                                     max-width:330px;
                                 ">
-                                        <?= htmlspecialchars(
-                                            $row['comments'] ?? 'No comments provided.'
-                                        ) ?>
-                                    </div>
+                <?= htmlspecialchars(
+                    $row['comments'] ?? 'No comments provided.'
+                ) ?>
+            </div>
 
-                                </td>
+        </td>
 
 
-                                <!-- PRIVACY -->
-                                <td style="
+        <!-- PRIVACY -->
+        <td style="
                                 padding:16px;
                                 text-align:center;
                                 vertical-align:middle;
                             ">
 
-                                    <?php if ($anonymous): ?>
+            <?php if ($anonymous): ?>
 
-                                        <span style="
+                <span style="
                                         display:inline-flex;
                                         align-items:center;
                                         gap:5px;
@@ -798,13 +747,13 @@
                                         font-size:9px;
                                         font-weight:600;
                                     ">
-                                            <i class="fas fa-user-secret"></i>
-                                            Anonymous
-                                        </span>
+                    <i class="fas fa-user-secret"></i>
+                    Anonymous
+                </span>
 
-                                    <?php else: ?>
+            <?php else: ?>
 
-                                        <span style="
+                <span style="
                                         display:inline-flex;
                                         align-items:center;
                                         gap:5px;
@@ -815,22 +764,22 @@
                                         font-size:9px;
                                         font-weight:600;
                                     ">
-                                            <i class="fas fa-user"></i>
-                                            Identified
-                                        </span>
+                    <i class="fas fa-user"></i>
+                    Identified
+                </span>
 
-                                    <?php endif; ?>
+            <?php endif; ?>
 
-                                </td>
+        </td>
 
 
-                                <!-- DATE -->
-                                <td style="
+        <!-- DATE -->
+        <td style="
                                 padding:16px;
                                 vertical-align:middle;
                             ">
 
-                                    <div style="
+            <div style="
                                     display:flex;
                                     align-items:center;
                                     gap:7px;
@@ -839,55 +788,55 @@
                                     font-weight:600;
                                 ">
 
-                                        <i class="far fa-calendar-alt" style="color:#94a3b8;">
-                                        </i>
+                <i class="far fa-calendar-alt" style="color:#94a3b8;">
+                </i>
 
-                                        <?= !empty($row['evaluation_date'])
-                                            ? date(
-                                                'M d, Y',
-                                                strtotime(
-                                                    $row['evaluation_date']
-                                                )
-                                            )
-                                            : '-' ?>
+                <?= !empty($row['evaluation_date'])
+                    ? date(
+                        'M d, Y',
+                        strtotime(
+                            $row['evaluation_date']
+                        )
+                    )
+                    : '-' ?>
 
-                                    </div>
+            </div>
 
-                                    <?php if (!empty($row['created_at'])): ?>
+            <?php if (!empty($row['created_at'])): ?>
 
-                                        <div style="
+                <div style="
                                         margin-top:4px;
                                         color:#94a3b8;
                                         font-size:8px;
                                     ">
-                                            Recorded
-                                            <?= date(
-                                                'M d, Y',
-                                                strtotime(
-                                                    $row['created_at']
-                                                )
-                                            ) ?>
-                                        </div>
+                    Recorded
+                    <?= date(
+                        'M d, Y',
+                        strtotime(
+                            $row['created_at']
+                        )
+                    ) ?>
+                </div>
 
-                                    <?php endif; ?>
+            <?php endif; ?>
 
-                                </td>
+        </td>
 
-                            </tr>
+        </tr>
 
-                        <?php endforeach; ?>
+    <?php endforeach; ?>
 
-                    </tbody>
+    </tbody>
 
-                </table>
+    </table>
 
-            </div>
+    </div>
 
 
-        <?php else: ?>
+<?php else: ?>
 
-            <!-- EMPTY STATE -->
-            <div style="
+    <!-- EMPTY STATE -->
+    <div style="
             width:100%;
             padding:70px 25px;
             box-sizing:border-box;
@@ -897,7 +846,7 @@
             background:#fff;
         ">
 
-                <div style="
+        <div style="
                 width:70px;
                 height:70px;
                 margin:0 auto 16px;
@@ -909,34 +858,34 @@
                 color:#93c5fd;
                 font-size:27px;
             ">
-                    <i class="fas fa-chart-line"></i>
-                </div>
+            <i class="fas fa-chart-line"></i>
+        </div>
 
-                <h3 style="
+        <h3 style="
                 margin:0 0 6px;
                 color:#1e293b;
                 font-size:16px;
                 font-weight:700;
             ">
-                    No Performance Evaluations Yet
-                </h3>
+            No Performance Evaluations Yet
+        </h3>
 
-                <p style="
+        <p style="
                 max-width:430px;
                 margin:0 auto;
                 color:#94a3b8;
                 font-size:10px;
                 line-height:1.6;
             ">
-                    Your 360° performance feedback and evaluation records
-                    will appear here once an assessment has been completed.
-                </p>
+            Your 360° performance feedback and evaluation records
+            will appear here once an assessment has been completed.
+        </p>
 
-            </div>
+    </div>
 
-        <?php endif; ?>
+<?php endif; ?>
 
-    </section>
+</section>
 
 
 </div>

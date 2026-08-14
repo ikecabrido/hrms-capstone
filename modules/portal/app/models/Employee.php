@@ -34,7 +34,6 @@ class Employee
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-
     public function getByUserId($user_id)
     {
         $query = "
@@ -68,5 +67,21 @@ class Employee
         $stmt->execute([':user_id' => $user_id]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    public function getAllExcept(int $employeeId): array
+    {
+        $sql = "
+        SELECT id, employee_num,
+        first_name, last_name, middle_name
+        FROM {$this->table}
+        WHERE id != :employee_id
+          AND employment_status = 'active'
+        ORDER BY created_at ASC
+    ";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute(['employee_id' => $employeeId]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

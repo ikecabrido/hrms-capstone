@@ -26,7 +26,7 @@ class Announcement
     {
         $stmt = $this->conn->prepare("
         SELECT *
-        FROM eer_announcements
+        FROM {$this->table}
         WHERE eer_announcements_id = :id
         LIMIT 1
     ");
