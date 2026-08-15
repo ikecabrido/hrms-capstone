@@ -9,173 +9,595 @@ class PayslipModel
         $this->db = $db;
     }
 
-    public function getAll(?int $periodId = null, ?string $employeeId = null): array
-    {
-        $query = "
-        SELECT 
-            p.payslip_id as id,
-            e.full_name AS employee_name,
-            e.position,
-            e.employment_status AS employment_type,
-            pp.period_name, 
-            p.gross_pay, 
-            p.total_deductions, 
-            p.net_pay,
-            prun.status AS payroll_status,
-            p.generated_at
-        FROM pr_payslips p
-        JOIN employees e ON p.employee_id = e.employee_id
-        LEFT JOIN pr_runs prun ON p.payroll_run_id = prun.run_id
-        LEFT JOIN pr_periods pp ON prun.payroll_period_id = pp.period_id
-        WHERE 1=1
-    ";
+    /* ============================================================
+       GET ALL PAYSLIPS
+       ============================================================ */
+
+    /**
+     * Get finalized/generated payslips.
+     *
+     * Optional filters:
+     * - periodId
+     * - employeeId
+     *
+     * Schema:
+     * pr_payslips
+     * pr_runs
+     * pr_periods
+     * em_employees
+     */
+    public function getAll(
+        ?int $periodId = null,
+        ?int $employeeId = null
+    ): array {
+
+        $sql = "
+            SELECT
+                p.payslip_id,
+                p.run_id,
+                p.employee_id,
+
+                e.employee_code,
+                e.first_name,
+                e.middle_name,
+                e.last_name,
+
+                CONCAT(
+                    e.first_name,
+                    CASE
+                        WHEN e.middle_name IS NOT NULL
+                             AND e.middle_name <> ''
+                        THEN CONCAT(' ', e.middle_name)
+                        ELSE ''
+                    END,
+                    ' ',
+                    e.last_name
+                ) AS employee_name,
+
+                e.employment_type,
+                e.employment_status,
+
+                r.run_id,
+                r.period_id,
+                r.status AS payroll_status,
+                r.processed_at,
+
+                pp.period_name,
+                pp.start_date,
+                pp.end_date,
+                pp.status AS period_status,
+
+                p.gross_pay,
+                p.total_deductions,
+                p.net_pay,
+                p.generated_at,
+
+                p.is_exit_settlement,
+                p.settlement_id,
+                p.resignation_id
+
+            FROM pr_payslips p
+
+            INNER JOIN em_employees e
+                ON e.employee_id = p.employee_id
+
+            INNER JOIN pr_runs r
+                ON r.run_id = p.run_id
+
+            INNER JOIN pr_periods pp
+                ON pp.period_id = r.period_id
+
+            WHERE 1 = 1
+        ";
 
         $params = [];
 
-        if ($periodId) {
-            $query .= " AND prun.payroll_period_id = :pid";
-            $params[':pid'] = $periodId;
+        /*
+         * Filter by payroll period.
+         */
+        if ($periodId !== null) {
+            $sql .= "
+                AND r.period_id = :period_id
+            ";
+
+            $params[':period_id'] = $periodId;
         }
 
-        if ($employeeId) {
-            $query .= " AND e.employee_id = :eid";
-            $params[':eid'] = $employeeId;
+        /*
+         * Filter by employee.
+         */
+        if ($employeeId !== null) {
+            $sql .= "
+                AND p.employee_id = :employee_id
+            ";
+
+            $params[':employee_id'] = $employeeId;
         }
 
-        $query .= " ORDER BY pp.start_date DESC, e.full_name ASC";
+        /*
+         * Most recent payroll period first,
+         * then employee name.
+         */
+        $sql .= "
+            ORDER BY
+                pp.start_date DESC,
+                e.last_name ASC,
+                e.first_name ASC,
+                p.payslip_id DESC
+        ";
 
-        $stmt = $this->db->prepare($query);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
 
-    public function getById(int $payslipId): ?array
-    {
-        // Main payslip info
+    /* ============================================================
+       GET SINGLE PAYSLIP
+       ============================================================ */
+
+    /**
+     * Get one complete payslip.
+     *
+     * Includes:
+     * - Employee information
+     * - Payroll run
+     * - Payroll period
+     * - Gross pay
+     * - Total deductions
+     * - Net pay
+     * - Earnings
+     * - Deductions
+     */
+    public function getById(
+        int $payslipId
+    ): ?array {
+
+        /*
+         * --------------------------------------------------------
+         * MAIN PAYSLIP
+         * --------------------------------------------------------
+         */
+
         $stmt = $this->db->prepare("
-            SELECT 
-                p.*, 
-                e.full_name AS employee_name,
-                e.position,
-                e.employment_status AS employment_type
+            SELECT
+                p.payslip_id,
+                p.run_id,
+                p.employee_id,
+
+                e.employee_code,
+                e.first_name,
+                e.middle_name,
+                e.last_name,
+                e.email,
+                e.employment_type,
+                e.employment_status,
+                e.graduate_level,
+                e.negotiated_salary,
+
+                CONCAT(
+                    e.first_name,
+                    CASE
+                        WHEN e.middle_name IS NOT NULL
+                             AND e.middle_name <> ''
+                        THEN CONCAT(' ', e.middle_name)
+                        ELSE ''
+                    END,
+                    ' ',
+                    e.last_name
+                ) AS employee_name,
+
+                r.run_id,
+                r.period_id,
+                r.status AS payroll_status,
+                r.processed_at,
+                r.finalized_by,
+
+                pp.period_name,
+                pp.start_date,
+                pp.end_date,
+                pp.status AS period_status,
+
+                p.gross_pay,
+                p.total_deductions,
+                p.net_pay,
+                p.generated_at,
+
+                p.is_exit_settlement,
+                p.settlement_id,
+                p.resignation_id
+
             FROM pr_payslips p
-            JOIN employees e ON p.employee_id = e.employee_id
-            WHERE p.payslip_id = :id
+
+            INNER JOIN em_employees e
+                ON e.employee_id = p.employee_id
+
+            INNER JOIN pr_runs r
+                ON r.run_id = p.run_id
+
+            INNER JOIN pr_periods pp
+                ON pp.period_id = r.period_id
+
+            WHERE p.payslip_id = :payslip_id
+
+            LIMIT 1
         ");
 
-        $stmt->execute([':id' => $payslipId]);
+        $stmt->execute([
+            ':payslip_id' => $payslipId
+        ]);
+
         $payslip = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$payslip) return null;
+        if (!$payslip) {
+            return null;
+        }
 
-        // Breakdown items (earnings/deductions)
-        $stmt2 = $this->db->prepare("
-            SELECT item_type, description, amount
+
+        /*
+         * --------------------------------------------------------
+         * PAYSLIP ITEMS
+         * --------------------------------------------------------
+         */
+
+        $itemStmt = $this->db->prepare("
+            SELECT
+                payslip_item_id,
+                payslip_id,
+                item_type,
+                description,
+                amount
             FROM pr_payslip_items
-            WHERE payslip_id = :id
+            WHERE payslip_id = :payslip_id
+            ORDER BY
+                item_type ASC,
+                payslip_item_id ASC
         ");
-        $stmt2->execute([':id' => $payslipId]);
-        $items = $stmt2->fetchAll(PDO::FETCH_ASSOC);
 
-        // Separate earnings and deductions
-        $payslip['earnings'] = array_filter($items, fn($i) => $i['item_type'] === 'earning');
-        $payslip['deductions'] = array_filter($items, fn($i) => $i['item_type'] === 'deduction');
+        $itemStmt->execute([
+            ':payslip_id' => $payslipId
+        ]);
+
+        $items = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+        /*
+         * --------------------------------------------------------
+         * SEPARATE EARNINGS AND DEDUCTIONS
+         * --------------------------------------------------------
+         */
+
+        $payslip['earnings'] = [];
+        $payslip['deductions'] = [];
+
+        foreach ($items as $item) {
+
+            if ($item['item_type'] === 'earning') {
+
+                $payslip['earnings'][] = $item;
+            } elseif ($item['item_type'] === 'deduction') {
+
+                $payslip['deductions'][] = $item;
+            }
+        }
+
+
+        /*
+         * --------------------------------------------------------
+         * NORMALIZE NUMERIC VALUES
+         * --------------------------------------------------------
+         */
+
+        $payslip['gross_pay'] =
+            (float)$payslip['gross_pay'];
+
+        $payslip['total_deductions'] =
+            (float)$payslip['total_deductions'];
+
+        $payslip['net_pay'] =
+            (float)$payslip['net_pay'];
+
+        $payslip['employee_id'] =
+            (int)$payslip['employee_id'];
+
+        $payslip['run_id'] =
+            (int)$payslip['run_id'];
+
+        $payslip['period_id'] =
+            (int)$payslip['period_id'];
+
 
         return $payslip;
     }
 
-    public function create(int $runId, string $employeeId, array $data): void
-    {
-        // Insert main payslip
+
+    /* ============================================================
+       GET PAYSLIP BY EMPLOYEE AND PERIOD
+       ============================================================ */
+
+    /**
+     * Get a specific employee's payslip for a payroll period.
+     *
+     * This is useful for:
+     * - Employee payslip page
+     * - "View Payslip" button
+     * - Employee self-service
+     */
+    public function getByEmployeeAndPeriod(
+        int $employeeId,
+        int $periodId
+    ): ?array {
+
         $stmt = $this->db->prepare("
-            INSERT INTO pr_payslips (payroll_run_id, employee_id, gross_pay, total_deductions, net_pay)
-            VALUES (:run, :eid, :gross, :ded, :net)
+            SELECT
+                p.payslip_id
+
+            FROM pr_payslips p
+
+            INNER JOIN pr_runs r
+                ON r.run_id = p.run_id
+
+            WHERE p.employee_id = :employee_id
+              AND r.period_id = :period_id
+
+            ORDER BY p.payslip_id DESC
+
+            LIMIT 1
         ");
+
         $stmt->execute([
-            ':run' => $runId,
-            ':eid' => $employeeId,
-            ':gross' => $data['gross_pay'],
-            ':ded' => $data['total_deductions'],
-            ':net' => $data['net_pay']
+            ':employee_id' => $employeeId,
+            ':period_id' => $periodId
         ]);
 
-        $payslipId = (int)$this->db->lastInsertId();
+        $payslipId = $stmt->fetchColumn();
 
-        // Insert earnings & deductions
-        $stmt2 = $this->db->prepare("
-            INSERT INTO pr_payslip_items (payslip_id, item_type, description, amount)
-            VALUES (:pid, :type, :desc, :amt)
+        if ($payslipId === false) {
+            return null;
+        }
+
+        return $this->getById((int)$payslipId);
+    }
+
+
+    /* ============================================================
+       PAYSLIP COUNTS
+       ============================================================ */
+
+    /**
+     * Get number of payslips.
+     */
+    public function getCount(
+        ?int $periodId = null
+    ): int {
+
+        $sql = "
+            SELECT COUNT(*)
+            FROM pr_payslips p
+        ";
+
+        $params = [];
+
+        if ($periodId !== null) {
+
+            $sql .= "
+                INNER JOIN pr_runs r
+                    ON r.run_id = p.run_id
+                WHERE r.period_id = :period_id
+            ";
+
+            $params[':period_id'] = $periodId;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (int)$stmt->fetchColumn();
+    }
+
+
+    /* ============================================================
+       TOTAL GROSS PAY
+       ============================================================ */
+
+    public function getTotalGrossPay(
+        ?int $periodId = null
+    ): float {
+
+        $sql = "
+            SELECT
+                COALESCE(SUM(p.gross_pay), 0)
+
+            FROM pr_payslips p
+        ";
+
+        $params = [];
+
+        if ($periodId !== null) {
+
+            $sql .= "
+                INNER JOIN pr_runs r
+                    ON r.run_id = p.run_id
+                WHERE r.period_id = :period_id
+            ";
+
+            $params[':period_id'] = $periodId;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (float)$stmt->fetchColumn();
+    }
+
+
+    /* ============================================================
+       TOTAL DEDUCTIONS
+       ============================================================ */
+
+    public function getTotalDeductions(
+        ?int $periodId = null
+    ): float {
+
+        $sql = "
+            SELECT
+                COALESCE(SUM(p.total_deductions), 0)
+
+            FROM pr_payslips p
+        ";
+
+        $params = [];
+
+        if ($periodId !== null) {
+
+            $sql .= "
+                INNER JOIN pr_runs r
+                    ON r.run_id = p.run_id
+                WHERE r.period_id = :period_id
+            ";
+
+            $params[':period_id'] = $periodId;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (float)$stmt->fetchColumn();
+    }
+
+
+    /* ============================================================
+       TOTAL NET PAY
+       ============================================================ */
+
+    public function getTotalNetPay(
+        ?int $periodId = null
+    ): float {
+
+        $sql = "
+            SELECT
+                COALESCE(SUM(p.net_pay), 0)
+
+            FROM pr_payslips p
+        ";
+
+        $params = [];
+
+        if ($periodId !== null) {
+
+            $sql .= "
+                INNER JOIN pr_runs r
+                    ON r.run_id = p.run_id
+                WHERE r.period_id = :period_id
+            ";
+
+            $params[':period_id'] = $periodId;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (float)$stmt->fetchColumn();
+    }
+
+
+    /* ============================================================
+       PAYSLIP SUMMARY
+       ============================================================ */
+
+    /**
+     * Get summary values for the payslip page.
+     */
+    public function getSummary(
+        ?int $periodId = null
+    ): array {
+
+        $sql = "
+            SELECT
+                COUNT(*) AS payslip_count,
+
+                COALESCE(
+                    SUM(p.gross_pay),
+                    0
+                ) AS total_gross_pay,
+
+                COALESCE(
+                    SUM(p.total_deductions),
+                    0
+                ) AS total_deductions,
+
+                COALESCE(
+                    SUM(p.net_pay),
+                    0
+                ) AS total_net_pay
+
+            FROM pr_payslips p
+        ";
+
+        $params = [];
+
+        if ($periodId !== null) {
+
+            $sql .= "
+                INNER JOIN pr_runs r
+                    ON r.run_id = p.run_id
+
+                WHERE r.period_id = :period_id
+            ";
+
+            $params[':period_id'] = $periodId;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $summary = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return [
+            'payslip_count' =>
+            (int)($summary['payslip_count'] ?? 0),
+
+            'total_gross_pay' =>
+            (float)($summary['total_gross_pay'] ?? 0),
+
+            'total_deductions' =>
+            (float)($summary['total_deductions'] ?? 0),
+
+            'total_net_pay' =>
+            (float)($summary['total_net_pay'] ?? 0)
+        ];
+    }
+    public function getFilterEmployees(): array
+    {
+
+        $stmt = $this->db->query("
+            SELECT DISTINCT
+                e.employee_id,
+                e.employee_code,
+
+                CONCAT(
+                    e.first_name,
+                    CASE
+                        WHEN e.middle_name IS NOT NULL
+                             AND e.middle_name <> ''
+                        THEN CONCAT(' ', e.middle_name)
+                        ELSE ''
+                    END,
+                    ' ',
+                    e.last_name
+                ) AS employee_name
+
+            FROM pr_payslips p
+
+            INNER JOIN em_employees e
+                ON e.employee_id = p.employee_id
+
+            ORDER BY
+                e.last_name ASC,
+                e.first_name ASC
         ");
 
-        foreach ($data['earnings'] as $e) {
-            $stmt2->execute([
-                ':pid' => $payslipId,
-                ':type' => 'earning',
-                ':desc' => $e['description'],
-                ':amt' => $e['amount']
-            ]);
-        }
-
-        foreach ($data['deductions'] as $d) {
-            $stmt2->execute([
-                ':pid' => $payslipId,
-                ':type' => 'deduction',
-                ':desc' => $d['description'],
-                ':amt' => $d['amount']
-            ]);
-        }
-    }
-
-    public function getTotalGrossPay(?int $periodId = null): float
-    {
-        $query = "SELECT COALESCE(SUM(gross_pay), 0) as total FROM pr_payslips";
-
-        if ($periodId) {
-            $query .= " WHERE payroll_run_id IN (
-                SELECT run_id FROM pr_runs WHERE payroll_period_id = :pid
-            )";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute([':pid' => $periodId]);
-        } else {
-            $stmt = $this->db->query($query);
-        }
-
-        return (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    }
-
-    public function getTotalDeductions(?int $periodId = null): float
-    {
-        $query = "SELECT COALESCE(SUM(total_deductions), 0) as total FROM pr_payslips";
-
-        if ($periodId) {
-            $query .= " WHERE payroll_run_id IN (
-                SELECT run_id FROM pr_runs WHERE payroll_period_id = :pid
-            )";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute([':pid' => $periodId]);
-        } else {
-            $stmt = $this->db->query($query);
-        }
-
-        return (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
-    }
-
-    public function getTotalNetPay(?int $periodId = null): float
-    {
-        $query = "SELECT COALESCE(SUM(net_pay), 0) as total FROM pr_payslips";
-
-        if ($periodId) {
-            $query .= " WHERE payroll_run_id IN (
-                SELECT run_id FROM pr_runs WHERE payroll_period_id = :pid
-            )";
-            $stmt = $this->db->prepare($query);
-            $stmt->execute([':pid' => $periodId]);
-        } else {
-            $stmt = $this->db->query($query);
-        }
-
-        return (float)$stmt->fetch(PDO::FETCH_ASSOC)['total'];
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

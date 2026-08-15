@@ -1,9 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../../../database/db.php';
-require_once __DIR__ . '/../models/payrollModel.php';
+require_once __DIR__ . '/../classes/payrollModel.php';
 require_once __DIR__ . '/../classes/payrollPeriodModel.php';
-require_once __DIR__ . '/../models/payslipModel.php';
+require_once __DIR__ . '/../classes/payslipModel.php';
 
 class PayrollController
 {
@@ -476,5 +476,229 @@ class PayrollController
         return $this->payrollModel->getPayslipById(
             $payslipId
         );
+    }
+}
+
+/* =====================================================================
+ * AJAX ENDPOINT
+ * ---------------------------------------------------------------------
+ * Only runs when payrollController.php is requested directly (i.e. by
+ * the Payroll Processing page's fetch() calls). Nothing else in the
+ * project currently requires this file, so this is safe. Same pattern
+ * as modules/payroll/controllers/periodController.php.
+ * ===================================================================== */
+if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+
+    require_once __DIR__ . '/../../../auth/session.php';
+    require_once __DIR__ . '/../../../auth/guard.php';
+
+    header('Content-Type: application/json');
+
+    function pp_respond(array $payload, int $httpCode = 200): void
+    {
+        http_response_code($httpCode);
+        echo json_encode($payload);
+        exit;
+    }
+
+    /**
+     * The project also ships database/db2.php (class Database2) which
+     * appears intended as the SMS database connection PayrollModel
+     * expects as its second constructor argument. It is not required
+     * here because its constructor calls die() on a failed connection,
+     * which would break this endpoint's JSON contract and make the
+     * "SMS database unavailable" case impossible to handle gracefully.
+     * Instead we attempt the same connection with the same
+     * host/db/user/pass, but through a catchable try/catch, and fall
+     * back to null — which PayrollModel already treats as "no SMS data
+     * available" (faculty schedule methods simply return []).
+     */
+    function pp_get_sms_connection(): ?PDO
+    {
+        try {
+            $dsn = 'mysql:host=localhost;dbname=demo;charset=utf8';
+            return new PDO($dsn, 'root', '', [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            ]);
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    $db = (new Database())->getConnection();
+    $smsDb = pp_get_sms_connection();
+    $controller = new PayrollController($db, $smsDb);
+
+    $action = $_REQUEST['action'] ?? '';
+    $currentEmployeeId = $_SESSION['employee_id'] ?? null;
+
+    switch ($action) {
+
+        /* ---------------------------------------------------------------
+         * Payroll periods (for the period selector)
+         * --------------------------------------------------------------- */
+        case 'periods': {
+                try {
+                    $periods = $controller->getPeriods();
+                    pp_respond(['success' => true, 'data' => $periods]);
+                } catch (Throwable $e) {
+                    pp_respond(['success' => false, 'message' => 'Failed to load payroll periods.']);
+                }
+                break;
+            }
+
+        case 'period': {
+                $id = intval($_GET['id'] ?? 0);
+                if (!$id) {
+                    pp_respond(['success' => false, 'message' => 'No period ID provided.']);
+                }
+                $period = $controller->getPeriod($id);
+                if (!$period) {
+                    pp_respond(['success' => false, 'message' => 'Payroll period not found.']);
+                }
+                pp_respond(['success' => true, 'data' => $period]);
+                break;
+            }
+
+            /* ---------------------------------------------------------------
+         * Calculate payroll for every active employee in a period.
+         * --------------------------------------------------------------- */
+        case 'calculate': {
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                    pp_respond(['success' => false, 'message' => 'Invalid request method.'], 405);
+                }
+
+                $periodId = intval($_POST['period_id'] ?? 0);
+                if (!$periodId) {
+                    pp_respond(['success' => false, 'message' => 'No payroll period selected.']);
+                }
+
+                $employees = [];
+
+                try {
+                    $employees = $controller->calculate($periodId);
+                } catch (Throwable $e) {
+                    pp_respond(['success' => false, 'message' => $e->getMessage()]);
+                }
+
+                $processed = count($employees);
+                $withEarnings = 0;
+                $withDeductions = 0;
+                $totalGross = 0.0;
+                $totalDeductions = 0.0;
+                $totalNet = 0.0;
+
+                foreach ($employees as $emp) {
+                    $gross = (float)($emp['gross_pay'] ?? 0);
+                    $ded = (float)($emp['total_deductions'] ?? 0);
+                    $net = (float)($emp['net_pay'] ?? 0);
+
+                    if ($gross > 0) $withEarnings++;
+                    if ($ded > 0) $withDeductions++;
+
+                    $totalGross += $gross;
+                    $totalDeductions += $ded;
+                    $totalNet += $net;
+                }
+
+                pp_respond([
+                    'success' => true,
+                    'data' => [
+                        'period_id' => $periodId,
+                        'employees' => $employees,
+                        'summary' => [
+                            'employees_processed' => $processed,
+                            'employees_with_earnings' => $withEarnings,
+                            'employees_with_deductions' => $withDeductions,
+                            'total_gross_pay' => round($totalGross, 2),
+                            'total_deductions' => round($totalDeductions, 2),
+                            'total_net_pay' => round($totalNet, 2),
+                        ],
+                    ],
+                ]);
+                break;
+            }
+
+            /* ---------------------------------------------------------------
+         * Attendance summary / detailed records for one employee.
+         * --------------------------------------------------------------- */
+        case 'attendance': {
+                $employeeId = intval($_GET['employee_id'] ?? 0);
+                $periodId = intval($_GET['period_id'] ?? 0);
+
+                if (!$employeeId || !$periodId) {
+                    pp_respond(['success' => false, 'message' => 'Missing employee or period ID.']);
+                }
+
+                try {
+                    $data = $controller->getAttendance($employeeId, $periodId);
+                    pp_respond(['success' => true, 'data' => $data]);
+                } catch (Throwable $e) {
+                    pp_respond(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+            }
+
+        case 'attendance_records': {
+                $employeeId = intval($_GET['employee_id'] ?? 0);
+                $periodId = intval($_GET['period_id'] ?? 0);
+
+                if (!$employeeId || !$periodId) {
+                    pp_respond(['success' => false, 'message' => 'Missing employee or period ID.']);
+                }
+
+                try {
+                    $data = $controller->getAttendanceRecords($employeeId, $periodId);
+                    pp_respond(['success' => true, 'data' => $data]);
+                } catch (Throwable $e) {
+                    pp_respond(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+            }
+
+            /* ---------------------------------------------------------------
+         * Faculty recurring weekly schedule (SMS-sourced).
+         * --------------------------------------------------------------- */
+        case 'faculty_schedule': {
+                $employeeId = intval($_GET['employee_id'] ?? 0);
+
+                if (!$employeeId) {
+                    pp_respond(['success' => false, 'message' => 'Missing employee ID.']);
+                }
+
+                try {
+                    $schedule = $controller->getFacultySchedule($employeeId);
+                    pp_respond(['success' => true, 'data' => $schedule]);
+                } catch (Throwable $e) {
+                    pp_respond(['success' => false, 'message' => 'Faculty schedule is unavailable right now.']);
+                }
+                break;
+            }
+
+            /* ---------------------------------------------------------------
+         * Finalize: generate payslips, close the run, close the period.
+         * --------------------------------------------------------------- */
+        case 'finalize': {
+                if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                    pp_respond(['success' => false, 'message' => 'Invalid request method.'], 405);
+                }
+
+                $periodId = intval($_POST['period_id'] ?? 0);
+                if (!$periodId) {
+                    pp_respond(['success' => false, 'message' => 'No payroll period selected.']);
+                }
+
+                try {
+                    $result = $controller->finalize($periodId, null, null, $currentEmployeeId);
+                    pp_respond(['success' => true, 'data' => $result]);
+                } catch (Throwable $e) {
+                    pp_respond(['success' => false, 'message' => $e->getMessage()]);
+                }
+                break;
+            }
+
+        default:
+            pp_respond(['success' => false, 'message' => 'Invalid or missing action.'], 400);
     }
 }

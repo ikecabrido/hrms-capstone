@@ -4,6 +4,7 @@ class PayrollModel
 {
     private PDO $db;
     private ?PDO $smsDb;
+    private const ABSENCE_DEDUCTION = 1000.00;
 
     /**
      * $db    = HRIS/payroll database
@@ -15,10 +16,6 @@ class PayrollModel
         $this->smsDb = $smsDb;
     }
 
-    /* ============================================================
-       PAYROLL PERIODS
-       ============================================================ */
-
     public function getPayrollPeriods(): array
     {
         $stmt = $this->db->query("
@@ -26,10 +23,8 @@ class PayrollModel
             FROM pr_periods
             ORDER BY start_date DESC
         ");
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
     public function getPayrollPeriod(int $periodId): ?array
     {
         $stmt = $this->db->prepare("
@@ -47,25 +42,18 @@ class PayrollModel
 
         return $period ?: null;
     }
-
     public function isPeriodClosed(int $periodId): bool
     {
         $period = $this->getPayrollPeriod($periodId);
 
         return $period && $period['status'] === 'closed';
     }
-
-
-    /* ============================================================
-       EMPLOYEES
-       ============================================================ */
-
     public function getAllActiveEmployeesForPeriod(int $periodId): array
     {
         $stmt = $this->db->query("
             SELECT
                 e.employee_id,
-                e.employee_num,
+                e.employee_code,
                 e.first_name,
                 e.middle_name,
                 e.last_name,
@@ -81,10 +69,8 @@ class PayrollModel
               AND e.is_archived = 0
             ORDER BY e.last_name, e.first_name
         ");
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-
     public function getEmployee(int $employeeId): ?array
     {
         $stmt = $this->db->prepare("
@@ -102,12 +88,6 @@ class PayrollModel
 
         return $employee ?: null;
     }
-
-
-    /* ============================================================
-       ATTENDANCE
-       ============================================================ */
-
     public function getTimeAttendanceMetrics(
         int $employeeId,
         string $startDate,
@@ -121,31 +101,26 @@ class PayrollModel
                         THEN 1
                     END
                 ) AS present_days,
-
                 COUNT(
                     CASE
                         WHEN status = 'ABSENT'
                         THEN 1
                     END
                 ) AS absent_days,
-
                 COUNT(
                     CASE
                         WHEN status = 'LATE'
                         THEN 1
                     END
                 ) AS late_days,
-
                 COALESCE(SUM(total_hours_worked), 0) AS total_hours_worked,
                 COALESCE(SUM(late_minutes), 0) AS total_late_minutes,
                 COALESCE(SUM(early_out_minutes), 0) AS total_early_out_minutes
-
             FROM ta_attendance
             WHERE employee_id = :employee_id
               AND attendance_date BETWEEN :start_date AND :end_date
               AND is_approved = 1
         ");
-
         $stmt->execute([
             ':employee_id' => $employeeId,
             ':start_date' => $startDate,
@@ -192,6 +167,161 @@ class PayrollModel
         ]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    /* ============================================================
+   ABSENCE DEDUCTION
+   ============================================================ */
+
+
+    /**
+     * Get absence records for an employee during a payroll period.
+     */
+    private function getAbsenceRecords(
+        int $employeeId,
+        string $startDate,
+        string $endDate
+    ): array {
+        $stmt = $this->db->prepare("
+        SELECT
+            record_id,
+            absence_date,
+            type,
+            excuse_status,
+            reason,
+            approval_notes
+        FROM ta_absence_late_records
+        WHERE employee_id = :employee_id
+          AND absence_date BETWEEN :start_date AND :end_date
+          AND type = 'ABSENT'
+        ORDER BY absence_date ASC
+    ");
+
+        $stmt->execute([
+            ':employee_id' => $employeeId,
+            ':start_date' => $startDate,
+            ':end_date' => $endDate
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    /**
+     * Check whether an employee has an approved excuse
+     * for a specific absence date.
+     */
+    private function hasApprovedAbsenceExcuse(
+        int $employeeId,
+        string $date
+    ): bool {
+        $stmt = $this->db->prepare("
+        SELECT COUNT(*)
+        FROM ta_absence_late_records
+        WHERE employee_id = :employee_id
+          AND absence_date = :absence_date
+          AND type = 'ABSENT'
+          AND excuse_status = 'APPROVED'
+    ");
+
+        $stmt->execute([
+            ':employee_id' => $employeeId,
+            ':absence_date' => $date
+        ]);
+
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+
+    /**
+     * Get actual unexcused absences for payroll deduction.
+     *
+     * An absence is deductible when:
+     *
+     * 1. ta_attendance says ABSENT
+     * 2. The attendance record is approved
+     * 3. There is no APPROVED excuse in
+     *    ta_absence_late_records
+     *
+     * Deduction:
+     * ₱1,000 per unexcused absence.
+     */
+    private function getUnexcusedAbsences(
+        int $employeeId,
+        string $startDate,
+        string $endDate
+    ): array {
+        $stmt = $this->db->prepare("
+        SELECT
+            attendance_id,
+            attendance_date,
+            status
+        FROM ta_attendance
+        WHERE employee_id = :employee_id
+          AND attendance_date BETWEEN :start_date AND :end_date
+          AND status = 'ABSENT'
+          AND is_approved = 1
+        ORDER BY attendance_date ASC
+    ");
+
+        $stmt->execute([
+            ':employee_id' => $employeeId,
+            ':start_date' => $startDate,
+            ':end_date' => $endDate
+        ]);
+
+        $attendanceAbsences = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $unexcused = [];
+
+        foreach ($attendanceAbsences as $absence) {
+
+            $date = $absence['attendance_date'];
+
+            /*
+         * Approved excuse means the absence should
+         * NOT receive the ₱1,000 deduction.
+         */
+            if ($this->hasApprovedAbsenceExcuse(
+                $employeeId,
+                $date
+            )) {
+                continue;
+            }
+
+            $unexcused[] = [
+                'attendance_id' => (int)$absence['attendance_id'],
+                'date' => $date,
+                'deduction' => self::ABSENCE_DEDUCTION
+            ];
+        }
+
+        return $unexcused;
+    }
+
+
+    /**
+     * Calculate total absence deduction for the payroll period.
+     */
+    private function calculateAbsenceDeduction(
+        int $employeeId,
+        string $startDate,
+        string $endDate
+    ): array {
+
+        $absences = $this->getUnexcusedAbsences(
+            $employeeId,
+            $startDate,
+            $endDate
+        );
+
+        $total = count($absences) * self::ABSENCE_DEDUCTION;
+
+        return [
+            'absence_count' => count($absences),
+            'rate_per_absence' => self::ABSENCE_DEDUCTION,
+            'total_deduction' => round($total, 2),
+            'records' => $absences
+        ];
     }
 
 
@@ -484,6 +614,7 @@ class PayrollModel
         $qualification = match ($graduateLevel) {
             'LPT' => 'LPT',
             'Masteral' => 'Masteral',
+            'Doctoral' => 'Doctoral',
             default => 'ProfEd'
         };
 
@@ -563,7 +694,7 @@ class PayrollModel
             SELECT COUNT(*)
             FROM {$table}
             WHERE employee_id = :employee_id
-              AND status = 'submitted'
+              AND status = 'Submitted'
         ";
 
         $stmt = $this->db->prepare($sql);
@@ -601,44 +732,126 @@ class PayrollModel
             )
         ];
     }
-
-
     /* ============================================================
        STATUTORY CONTRIBUTION CALCULATIONS
        ============================================================ */
 
     private function calculateSSS(float $monthlyBase): float
     {
-        /**
-         * Do not hard-code the old 2024 table here.
-         *
-         * This method is intentionally isolated so the current
-         * SSS contribution table/rates can be replaced with the
-         * legal schedule you are using.
-         *
-         * Temporary implementation:
-         * return 0 until the legal rate table is connected.
-         */
-        return 0.00;
+        $stmt = $this->db->prepare("
+        SELECT
+            monthly_salary_credit,
+            employee_rate
+        FROM pr_sss_contribution_rates
+        WHERE :salary >= min_compensation
+          AND (
+                max_compensation IS NULL
+                OR :salary <= max_compensation
+              )
+          AND effective_from <= CURDATE()
+          AND (
+                effective_to IS NULL
+                OR effective_to >= CURDATE()
+              )
+          AND is_active = 1
+        ORDER BY effective_from DESC
+        LIMIT 1
+    ");
+        $stmt->execute([
+            ':salary' => $monthlyBase
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return 0.00;
+        }
+        return round(
+            (float)$row['monthly_salary_credit']
+                * (float)$row['employee_rate'],
+            2
+        );
     }
 
     private function calculatePhilHealth(float $monthlyBase): float
     {
-        /**
-         * Same principle:
-         * contribution formula should follow the legal table
-         * being used by the system.
-         */
-        return 0.00;
+        $stmt = $this->db->prepare("
+        SELECT
+            premium_rate,
+            employee_share
+        FROM pr_philhealth_rates
+        WHERE :salary >= min_salary
+          AND (
+                max_salary IS NULL
+                OR :salary <= max_salary
+              )
+          AND effective_from <= CURDATE()
+          AND (
+                effective_to IS NULL
+                OR effective_to >= CURDATE()
+              )
+          AND is_active = 1
+        ORDER BY effective_from DESC
+        LIMIT 1
+    ");
+        $stmt->execute([
+            ':salary' => $monthlyBase
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return 0.00;
+        }
+        $base = max(
+            10000,
+            min($monthlyBase, 100000)
+        );
+        return round(
+            $base * (float)$row['employee_share'],
+            2
+        );
     }
 
     private function calculatePagIBIG(float $monthlyBase): float
     {
-        /**
-         * Same principle:
-         * use the applicable Pag-IBIG contribution schedule.
-         */
-        return 0.00;
+        $stmt = $this->db->prepare("
+        SELECT
+            employee_rate,
+            employee_max_contribution
+        FROM pr_pagibig_rates
+        WHERE :salary >= min_salary
+          AND (
+                max_salary IS NULL
+                OR :salary <= max_salary
+              )
+          AND effective_from <= CURDATE()
+          AND (
+                effective_to IS NULL
+                OR effective_to >= CURDATE()
+              )
+          AND is_active = 1
+        ORDER BY effective_from DESC
+        LIMIT 1
+    ");
+
+        $stmt->execute([
+            ':salary' => $monthlyBase
+        ]);
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            return 0.00;
+        }
+
+        $contribution =
+            $monthlyBase * (float)$row['employee_rate'];
+
+        if ($row['employee_max_contribution'] !== null) {
+            $contribution = min(
+                $contribution,
+                (float)$row['employee_max_contribution']
+            );
+        }
+
+        return round($contribution, 2);
     }
 
 
@@ -647,56 +860,46 @@ class PayrollModel
        ============================================================ */
 
     private function calculateWithholdingTax(
-        float $taxableIncome
+        float $taxableIncome,
+        string $payFrequency = 'semi_monthly'
     ): float {
-        /**
-         * Use pr_tax_tables rather than hard-coded TRAIN brackets.
-         *
-         * This expects the table to contain:
-         * min_income
-         * max_income
-         * tax_rate
-         * fixed_tax
-         *
-         * The exact BIR table should be populated according to
-         * the tax schedule your capstone is implementing.
-         */
-
         $stmt = $this->db->prepare("
-            SELECT
-                min_income,
-                max_income,
-                tax_rate,
-                fixed_tax
-            FROM pr_tax_tables
-            WHERE :income >= min_income
-              AND (
-                    max_income IS NULL
-                    OR :income <= max_income
-                  )
-            ORDER BY min_income DESC
-            LIMIT 1
-        ");
-
+        SELECT
+            min_income,
+            max_income,
+            tax_rate,
+            fixed_tax
+        FROM pr_tax_tables
+        WHERE pay_frequency = :pay_frequency
+          AND :income >= min_income
+          AND (
+                max_income IS NULL
+                OR :income <= max_income
+              )
+          AND effective_from <= CURDATE()
+          AND (
+                effective_to IS NULL
+                OR effective_to >= CURDATE()
+              )
+          AND is_active = 1
+        ORDER BY min_income DESC
+        LIMIT 1
+    ");
         $stmt->execute([
+            ':pay_frequency' => $payFrequency,
             ':income' => $taxableIncome
         ]);
-
         $bracket = $stmt->fetch(PDO::FETCH_ASSOC);
-
         if (!$bracket) {
             return 0.00;
         }
-
         $minIncome = (float)$bracket['min_income'];
-        $taxRate = (float)$bracket['tax_rate'];
-        $fixedTax = (float)$bracket['fixed_tax'];
-
+        $taxRate   = (float)$bracket['tax_rate'];
+        $fixedTax  = (float)$bracket['fixed_tax'];
         $excess = max(
             0,
             $taxableIncome - $minIncome
         );
-
         return round(
             $fixedTax + ($excess * $taxRate),
             2
@@ -721,7 +924,7 @@ class PayrollModel
                 deduction_subtype
             FROM pr_employee_adjustments
             WHERE employee_id = :employee_id
-              AND payroll_period_id = :period_id
+              AND period_id = :period_id
             ORDER BY adjustment_id
         ");
 
@@ -735,96 +938,60 @@ class PayrollModel
 
 
     /* ============================================================
-       LATE DEDUCTION FOR FACULTY
-       ============================================================ */
+   LATE DEDUCTION
+   ============================================================ */
 
-    private function calculateFacultyLateDeduction(
+    private function calculateLateDeduction(
         int $employeeId,
-        string $date,
-        ?int $schoolYearId = null,
-        ?int $semesterId = null
+        string $startDate,
+        string $endDate
     ): array {
-        $attendanceStmt = $this->db->prepare("
-            SELECT
-                time_in,
-                status
-            FROM ta_attendance
-            WHERE employee_id = :employee_id
-              AND attendance_date = :attendance_date
-              AND is_approved = 1
-            ORDER BY attendance_id DESC
-            LIMIT 1
-        ");
 
-        $attendanceStmt->execute([
+        $stmt = $this->db->prepare("
+        SELECT
+            COALESCE(SUM(late_minutes), 0) AS total_late_minutes
+        FROM ta_attendance
+        WHERE employee_id = :employee_id
+          AND attendance_date BETWEEN :start_date AND :end_date
+          AND is_approved = 1
+    ");
+
+        $stmt->execute([
             ':employee_id' => $employeeId,
-            ':attendance_date' => $date
+            ':start_date' => $startDate,
+            ':end_date' => $endDate
         ]);
 
-        $attendance = $attendanceStmt->fetch(PDO::FETCH_ASSOC);
+        $lateMinutes = (int)$stmt->fetchColumn();
 
-        if (!$attendance || empty($attendance['time_in'])) {
+        if ($lateMinutes <= 0) {
             return [
                 'late_minutes' => 0,
+                'rate_per_minute' => 0,
                 'deduction' => 0
             ];
         }
 
-        $classes = $this->getFacultyClassesForDate(
-            $employeeId,
-            $date,
-            $schoolYearId,
-            $semesterId
-        );
-
-        if (!$classes) {
-            return [
-                'late_minutes' => 0,
-                'deduction' => 0
-            ];
-        }
-
-        usort(
-            $classes,
-            fn($a, $b) =>
-            strcmp($a['start_time'], $b['start_time'])
-        );
-
-        $firstClassStart = $classes[0]['start_time'];
-
-        $scheduled = new DateTime(
-            $date . ' ' . $firstClassStart
-        );
-
-        $actual = new DateTime(
-            $attendance['time_in']
-        );
-
-        if ($actual <= $scheduled) {
-            return [
-                'late_minutes' => 0,
-                'deduction' => 0
-            ];
-        }
-
-        $lateMinutes = (int)(
-            ($actual->getTimestamp() - $scheduled->getTimestamp())
-            / 60
-        );
-
-        /**
-         * Existing payroll table contains a late-per-minute
-         * configuration.
-         */
+        /*
+     * Get the configured late deduction rate.
+     */
         $stmt = $this->db->query("
-            SELECT late_per_minute_rate
-            FROM pr_position_deduction_rates
-            WHERE position_type = 'Teacher'
-              AND is_active = 1
-            LIMIT 1
-        ");
+        SELECT late_per_minute_rate
+        FROM pr_position_deduction_rates
+        WHERE position_type = 'Teacher'
+          AND is_active = 1
+        LIMIT 1
+    ");
 
         $rate = (float)$stmt->fetchColumn();
+
+        if ($rate <= 0) {
+            return [
+                'late_minutes' => $lateMinutes,
+                'rate_per_minute' => 0,
+                'deduction' => 0
+            ];
+        }
 
         $deduction = $lateMinutes * $rate;
 
@@ -1024,36 +1191,6 @@ class PayrollModel
 
                     'amount' => $day['gross']
                 ];
-
-                /*
-                 * Faculty late deduction:
-                 * actual time-in vs first class start.
-                 */
-                $late = $this->calculateFacultyLateDeduction(
-                    $employeeId,
-                    $day['date'],
-                    $schoolYearId,
-                    $semesterId
-                );
-
-                if ($late['deduction'] > 0) {
-
-                    $deductions[] = [
-                        'description' =>
-                        'Late (' .
-                            $late['late_minutes'] .
-                            ' minutes × ₱' .
-                            number_format(
-                                $late['rate_per_minute'],
-                                2
-                            ) .
-                            ')',
-
-                        'amount' => $late['deduction']
-                    ];
-
-                    $totalDeductions += $late['deduction'];
-                }
             }
         } else {
 
@@ -1081,12 +1218,11 @@ class PayrollModel
             ];
         }
 
-
         /*
-         * ========================================================
-         * 3. EMPLOYEE ADJUSTMENTS
-         * ========================================================
-         */
+ * ========================================================
+ * 3. EMPLOYEE ADJUSTMENTS
+ * ========================================================
+ */
 
         $adjustments = $this->getEmployeeAdjustments(
             $employeeId,
@@ -1111,6 +1247,78 @@ class PayrollModel
 
 
         /*
+ * ========================================================
+ * 4. LATE DEDUCTION
+ * ========================================================
+ *
+ * Late minutes come directly from ta_attendance.
+ *
+ * Example:
+ * 10 late minutes × ₱rate per minute
+ */
+
+        $lateDeduction = $this->calculateLateDeduction(
+            $employeeId,
+            $period['start_date'],
+            $period['end_date']
+        );
+
+        if ($lateDeduction['deduction'] > 0) {
+
+            $deductions[] = [
+                'description' =>
+                'Late (' .
+                    $lateDeduction['late_minutes'] .
+                    ' minutes × ₱' .
+                    number_format(
+                        $lateDeduction['rate_per_minute'],
+                        2
+                    ) .
+                    ')',
+
+                'amount' =>
+                $lateDeduction['deduction']
+            ];
+
+            $totalDeductions +=
+                $lateDeduction['deduction'];
+        }
+
+
+        /*
+ * ========================================================
+ * 5. ABSENCE DEDUCTION
+ * ========================================================
+ */
+
+        $absenceDeduction = $this->calculateAbsenceDeduction(
+            $employeeId,
+            $period['start_date'],
+            $period['end_date']
+        );
+
+        if ($absenceDeduction['total_deduction'] > 0) {
+
+            foreach ($absenceDeduction['records'] as $absence) {
+
+                $deductions[] = [
+                    'description' =>
+                    'Unexcused Absence - ' .
+                        date(
+                            'M d, Y',
+                            strtotime($absence['date'])
+                        ) .
+                        ' (₱1,000.00)',
+
+                    'amount' =>
+                    self::ABSENCE_DEDUCTION
+                ];
+
+                $totalDeductions +=
+                    self::ABSENCE_DEDUCTION;
+            }
+        }
+        /*
          * ========================================================
          * 4. LEGAL CONTRIBUTION ELIGIBILITY
          * ========================================================
@@ -1133,7 +1341,7 @@ class PayrollModel
          */
         $monthlyEquivalent = $grossPay * 2;
 
-        if ($eligibility['sss']) {
+        if ($grossPay > 0 && $eligibility['sss']) {
 
             $sss = $this->calculateSSS(
                 $monthlyEquivalent
@@ -1156,7 +1364,7 @@ class PayrollModel
             }
         }
 
-        if ($eligibility['philhealth']) {
+        if ($grossPay > 0 && $eligibility['philhealth']) {
 
             $philhealth = $this->calculatePhilHealth(
                 $monthlyEquivalent
@@ -1177,7 +1385,7 @@ class PayrollModel
             }
         }
 
-        if ($eligibility['pagibig']) {
+        if ($grossPay > 0 && $eligibility['pagibig']) {
 
             $pagibig = $this->calculatePagIBIG(
                 $monthlyEquivalent
@@ -1205,7 +1413,7 @@ class PayrollModel
          * ========================================================
          */
 
-        if ($eligibility['bir']) {
+        if ($grossPay > 0 && $eligibility['bir']) {
 
             /*
              * Simplified semi-monthly taxable base.
@@ -1220,8 +1428,9 @@ class PayrollModel
 
             $withholdingTax =
                 $this->calculateWithholdingTax(
-                    $taxableSemiMonthly * 2
-                ) / 2;
+                    $taxableSemiMonthly,
+                    'semi_monthly'
+                );
 
             if ($withholdingTax > 0) {
 
@@ -1242,18 +1451,53 @@ class PayrollModel
 
 
         /*
-         * ========================================================
-         * 7. NET PAY
-         * ========================================================
-         */
+ * ========================================================
+ * 7. NET PAY
+ * ========================================================
+ *
+ * Payroll must never produce negative net pay.
+ *
+ * Total deductions cannot exceed gross pay.
+ */
 
-        $netPay =
-            round(
+        if ($grossPay <= 0) {
+
+            /*
+     * No earnings means there should be no payable
+     * employee deductions for this payroll period.
+     */
+            $totalDeductions = 0.00;
+
+            $deductions = [];
+
+            $netPay = 0.00;
+        } else {
+
+            /*
+     * Prevent deductions from exceeding gross pay.
+     */
+            $totalDeductions = min(
+                $totalDeductions,
+                $grossPay
+            );
+
+            $totalDeductions = round(
+                $totalDeductions,
+                2
+            );
+
+            $netPay = round(
                 $grossPay - $totalDeductions,
                 2
             );
 
-
+            /*
+     * Final safety check.
+     */
+            if ($netPay < 0) {
+                $netPay = 0.00;
+            }
+        }
         return [
             'employee_id' => $employeeId,
             'period_id' => $periodId,
@@ -1355,7 +1599,7 @@ class PayrollModel
         $stmt = $this->db->prepare("
             INSERT INTO pr_runs
                 (
-                    payroll_period_id,
+                    period_id,
                     processed_at,
                     status
                 )
@@ -1394,7 +1638,7 @@ class PayrollModel
         $stmt = $this->db->prepare("
             INSERT INTO pr_payslips
                 (
-                    payroll_run_id,
+                    run_id,
                     employee_id,
                     gross_pay,
                     total_deductions,

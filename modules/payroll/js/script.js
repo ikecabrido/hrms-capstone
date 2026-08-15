@@ -4,3 +4,5 @@ import "./layout/tab-content.js";
 import "./layout/realtime.js";
 import "./components/dropdown.js";
 import "./pages/period-manager.js";
+import "./pages/payroll-processing.js";
+import "./pages/payslips.js";

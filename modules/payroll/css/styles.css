@@ -11,6 +11,8 @@
 
 /*Pages CSS*/
 @import url("pages/period-manager.css");
+@import url("pages/payroll-processing.css");
+@import url("pages/payslips.css");
 
 /*Base CSS*/
 @import url("base/variables.css");
