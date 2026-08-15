@@ -29,13 +29,39 @@
                     <label for="employee_id">Employee ID *</label>
                     <input type="text" id="employee_id" name="employee_id" required>
                 </div>
-                <div class="password-wrapper" style=" position: relative; width: 340px; margin-bottom: 20px; ">
-                    <label for="password" style=" display: block; margin-bottom: 8px; font-size: 14px; "> Password *
+                <div class="password-wrapper" style="
+    position:relative;
+    width:340px;
+    margin-bottom:20px;
+">
+
+                    <label for="password" style="
+        display:block;
+        margin-bottom:8px;
+        font-size:14px;
+    ">
+                        Password *
                     </label>
-                    <input type="password" id="password" name="password" required
-                        style=" width: 320px; height: 47px; padding: 0 45px 0 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 15px; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); font-size: 16px; ">
-                    <i id="passwordIcon" class="fas fa-eye" onclick="togglePassword()"
-                        style=" position: absolute; right: 30px; bottom: 16px; cursor: pointer; z-index: 10; "></i>
+
+                    <input type="password" id="password" name="password" required style="
+            width:320px;
+            height:47px;
+            padding:0 45px 0 15px;
+            box-sizing:border-box;
+            border:1px solid #ccc;
+            border-radius:15px;
+            box-shadow:inset 0 2px 4px rgba(0,0,0,0.1);
+            font-size:16px;
+        ">
+
+                    <i id="passwordIcon" class="fas fa-eye" style="
+            position:absolute;
+            right:30px;
+            bottom:16px;
+            cursor:pointer;
+            z-index:10;
+        "></i>
+
                 </div>
                 <button type="submit" id="loginBtn">Login</button>
             </form>
@@ -48,6 +74,7 @@
         </div>
     </div>
     <?php require __DIR__ . '/forgot-password.php'; ?>
+    <script src="/hrms-capstone/modules/portal/public/js/function/togglePassword.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/hrms-capstone/modules/portal/public/js/extended.js"></script>
 </body>

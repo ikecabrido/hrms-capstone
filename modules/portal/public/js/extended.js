@@ -5,3 +5,4 @@ import './function/rateLimit.js';
 import './function/sessionOut.js';
 import './function/viewPassword.js';
 import './function/payroll.js';
+import './function/grievance.js';

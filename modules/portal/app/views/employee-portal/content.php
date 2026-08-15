@@ -386,7 +386,7 @@
             </a>
 
 
-            <a href="index.php?url=employee-grievance" class="request-card">
+            <a href="index.php?url=grievance" class="request-card">
 
                 <i class="fas fa-scale-balanced"></i>
 

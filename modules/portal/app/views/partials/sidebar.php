@@ -80,7 +80,7 @@
                 </a>
             </li>
             <li>
-                <a href="?page=grievances" class="menu-link">
+                <a href="index.php?url=grievance" class="menu-link">
                     <i class="fa-solid fa-scale-balanced"></i>
                     Grievances
                 </a>

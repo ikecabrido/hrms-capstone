@@ -10,5 +10,7 @@
 <?php require __DIR__ . '/../views/employee-portal/benefits-and-government-contribution/submit-benefits.php'; ?>
 <?php require __DIR__ . '/../views/employee-portal/complaint/submit-complaint.php'; ?>
 <?php require __DIR__ . '/../views/employee-portal/complaint/view-complaint.php'; ?>
+<?php require __DIR__ . '/../views/employee-portal/grievance/submit-grievance.php'; ?>
+<?php require __DIR__ . '/../views/employee-portal/grievance/view-grievance.php'; ?>
 
 <!-- Employee Portal -->

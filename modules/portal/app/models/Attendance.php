@@ -30,8 +30,7 @@ class Attendance
         SELECT *
         FROM {$this->table}
         WHERE employee_id = :employee_id
-        ORDER BY attendance_date DESC
-    ";
+        ORDER BY attendance_date DESC ";
 
         $stmt = $this->conn->prepare($query);
 

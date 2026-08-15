@@ -9,6 +9,7 @@ use App\Controllers\PortalController;
 use App\Controllers\PayrollController;
 use App\Controllers\ProfileController;
 use App\Controllers\ComplaintController;
+use App\Controllers\GrievanceController;
 use App\Controllers\AttendanceController;
 use App\Controllers\PerformanceController;
 use App\Controllers\AnnouncementController;
@@ -81,6 +82,10 @@ $routes = [
     // Complaint
     'complaint' => [ComplaintController::class, 'index'],
     'employee-complaints-store' => [ComplaintController::class, 'store'],
+
+    // Grievance
+    'grievance' => [GrievanceController::class, 'index'],
+    'grievance-store' => [GrievanceController::class, 'store'],
 
 
 ];
