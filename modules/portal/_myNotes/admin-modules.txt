@@ -1,0 +1,15 @@
+Admin modules
+
+view all employee
+view all attendance
+view, update status of leave req
+view, update status of payroll req
+view, update status, upload benefits & gov contrib
+view, create performance evaluation
+view complaint
+view, update status grievance
+view, update status resignation req
+manage online meeting
+manage notification
+manage announcement
+backup and restore
