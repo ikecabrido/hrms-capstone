@@ -9,6 +9,7 @@ class Employee
 {
     private $conn;
     private $table = "em_employees";
+    private $usersTable = "ep_users";
 
     public function __construct()
     {
@@ -83,5 +84,49 @@ class Employee
         $stmt->execute(['employee_id' => $employeeId]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getWithoutUserAccount(): array
+    {
+        $sql = "
+        SELECT e.*
+        FROM {$this->table} e
+        LEFT JOIN {$this->usersTable} u
+            ON e.user_id = u.id
+        WHERE u.id IS NULL
+        ORDER BY e.created_at ASC
+    ";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getByEmployeeId($employeeId)
+    {
+        $sql = "SELECT *
+            FROM {$this->table}
+            WHERE id = :employee_id
+            LIMIT 1";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->execute([
+            ':employee_id' => $employeeId
+        ]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+    public function updateUserId($employeeId, $userId)
+    {
+        $sql = "UPDATE {$this->table}
+            SET user_id = :user_id
+            WHERE id = :employee_id";
+
+        $stmt = $this->conn->prepare($sql);
+
+        return $stmt->execute([
+            ':user_id' => $userId,
+            ':employee_id' => $employeeId
+        ]);
     }
 }

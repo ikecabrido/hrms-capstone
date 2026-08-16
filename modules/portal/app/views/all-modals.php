@@ -12,4 +12,3 @@
 <?php require __DIR__ . '/../views/employee-portal/complaint/view-complaint.php'; ?>
 <?php require __DIR__ . '/../views/employee-portal/grievance/submit-grievance.php'; ?>
 
-<!-- Employee Portal -->

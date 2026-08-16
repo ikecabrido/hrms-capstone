@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 14, 2026 at 10:56 AM
+-- Generation Time: Aug 16, 2026 at 06:37 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,6 +44,48 @@ INSERT INTO `eer_announcements` (`eer_announcements_id`, `title`, `content`, `cr
 (1, 'Company Town Hall', 'Join tomorrow', 'EMP001', '2026-03-29 04:27:57', 'all'),
 (2, 'Clean-up Day', 'This Friday', 'EMP002', '2026-03-29 04:27:57', 'all'),
 (3, 'Company Town Hall', 'Join tomorrow', 'EMP009', '2026-03-29 12:36:01', 'all');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `eer_grievances`
+--
+
+CREATE TABLE `eer_grievances` (
+  `eer_grievance_id` int(11) NOT NULL,
+  `employee_id` int(11) DEFAULT NULL,
+  `subject` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `status` enum('pending','Resolved','Closed','Escalated') DEFAULT 'pending',
+  `resolution_of_complaint` text DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `priority` enum('low','medium','high','urgent','critical') DEFAULT 'medium',
+  `category` varchar(100) DEFAULT NULL,
+  `anonymous` tinyint(1) DEFAULT 0,
+  `attachment_path` varchar(255) DEFAULT NULL,
+  `confidential` tinyint(1) DEFAULT 0,
+  `action_taken` text DEFAULT NULL,
+  `satisfaction_rating` int(1) DEFAULT NULL,
+  `satisfaction_comment` text DEFAULT NULL,
+  `resolved_at` datetime DEFAULT NULL,
+  `escalation_level` varchar(50) DEFAULT NULL,
+  `escalation_reason` text DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_by_user_id` int(11) DEFAULT NULL,
+  `payslip_id` int(11) DEFAULT NULL,
+  `gross_pay` decimal(10,2) DEFAULT NULL,
+  `total_deductions` decimal(10,2) DEFAULT NULL,
+  `net_pay` decimal(10,2) DEFAULT NULL,
+  `payslip_information` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `eer_grievances`
+--
+
+INSERT INTO `eer_grievances` (`eer_grievance_id`, `employee_id`, `subject`, `description`, `status`, `resolution_of_complaint`, `created_at`, `priority`, `category`, `anonymous`, `attachment_path`, `confidential`, `action_taken`, `satisfaction_rating`, `satisfaction_comment`, `resolved_at`, `escalation_level`, `escalation_reason`, `updated_at`, `created_by_user_id`, `payslip_id`, `gross_pay`, `total_deductions`, `net_pay`, `payslip_information`) VALUES
+(7, 1, 'sample', 'sample', 'pending', NULL, '2026-08-06 16:15:58', 'low', 'Workplace Conflict', 1, 'uploads/grievances/grievance_6a7442bec418f.jpg', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-15 02:34:31', 1, NULL, NULL, NULL, NULL, NULL),
+(8, 1, 'Other Workplace Concern', 'sample', 'pending', NULL, '2026-08-15 13:08:47', 'low', 'Harassment', 1, 'uploads/grievance/grievance_f9995145758f27f18a45a04e7e077f12.pdf', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-15 05:08:47', NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -95,9 +137,9 @@ CREATE TABLE `em_employees` (
 --
 
 INSERT INTO `em_employees` (`id`, `employee_num`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `mobile_no`, `phone_no`, `current_address`, `profile_image`, `permanent_address`, `department`, `position`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
-(1, 'EMP-000001', 1, 'Ronaldo', 'G.', 'Raymundo', '', 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, '09318952822', '0287654321', 'San Jose Del Monte, Bulacan', 'profile_1_1786621064.png', NULL, 'IT DEPARTMENT', 'IT Staff', 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-06 05:47:35', '2026-08-13 11:37:44', 0, NULL, NULL),
+(1, 'EMP-000001', 1, 'Ronaldo', 'G.', 'Raymundo', '', 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, '09318952822', '0287654321', 'Santa Maria, Bulacan', 'profile_1_1786621064.png', NULL, 'IT DEPARTMENT', 'IT Staff', 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-06 05:47:35', '2026-08-14 11:46:27', 0, NULL, NULL),
 (2, 'EMP-000002', 3, 'Juan', 'Dela', 'Cruz', NULL, 'Male', '1990-05-15', NULL, NULL, NULL, NULL, '09123456789', '021234567', '123 Main St, Manila', NULL, NULL, 'Executive Administration', 'College President', NULL, '2023-01-15', NULL, 'Active', NULL, NULL, 'None', NULL, NULL, NULL, NULL, '2026-08-06 06:54:48', '2026-08-11 16:50:50', 0, NULL, NULL),
-(3, 'EMP-000003', NULL, 'Maria', 'Santos', 'Reyes', NULL, 'Female', '1992-03-18', 'Malolos, Bulacan', 'Married', 'Filipino', NULL, '09171234567', '0441234567', 'Malolos, Bulacan', NULL, NULL, 'Employee Management', 'HR Officer', 44, '2024-06-10', '2025-06-10', 'Active', 'Full-time', NULL, 'Masteral', 'Senior HR Staff', 'BS Psychology, MA Human Resource Management', NULL, 45000.00, '2026-08-08 01:00:00', NULL, 0, NULL, NULL),
+(3, 'EMP-000003', 21, 'Maria', 'Santos', 'Reyes', NULL, 'Female', '1992-03-18', 'Malolos, Bulacan', 'Married', 'Filipino', NULL, '09171234567', '0441234567', 'Malolos, Bulacan', NULL, NULL, 'Employee Management', 'HR Officer', 44, '2024-06-10', '2025-06-10', 'Active', 'Full-time', NULL, 'Masteral', 'Senior HR Staff', 'BS Psychology, MA Human Resource Management', NULL, 45000.00, '2026-08-08 01:00:00', '2026-08-16 13:35:55', 0, NULL, NULL),
 (4, 'EMP-000004', NULL, 'Michael', 'Tan', 'Santos', 'Jr.', 'Male', '1988-11-25', 'Meycauayan, Bulacan', 'Married', 'Filipino', NULL, '09181234567', '0442345678', 'Meycauayan, Bulacan', NULL, NULL, 'Payroll', 'Payroll Officer', 43, '2023-08-01', '2024-08-01', 'Active', 'Full-time', NULL, 'Masteral', 'Payroll Specialist', 'BS Accountancy, CPA', NULL, 48000.00, '2026-08-08 01:15:00', NULL, 0, NULL, NULL),
 (5, 'EMP-000005', NULL, 'Angela', 'Marie', 'Garcia', NULL, 'Female', '1996-07-09', 'Baliwag, Bulacan', 'Single', 'Filipino', NULL, '09201234567', '0443456789', 'Baliwag, Bulacan', NULL, NULL, 'Learning', 'Training Coordinator', 47, '2025-01-15', NULL, 'Probationary', 'Full-time', NULL, 'None', 'Training Coordinator', 'BS Education', 'Handles employee training and seminar coordination.', 32000.00, '2026-08-08 01:30:00', NULL, 0, NULL, NULL),
 (6, 'EMP-000006', NULL, 'Daniel', 'Lopez', 'Mendoza', NULL, 'Male', '1993-09-14', 'San Fernando, Pampanga', 'Single', 'Filipino', NULL, '09301234567', '0451234567', 'San Fernando, Pampanga', NULL, NULL, 'Performance', 'Performance Management Officer', 48, '2024-03-20', '2025-03-20', 'Active', 'Full-time', NULL, 'Masteral', 'Performance Specialist', 'BS Business Administration, MBA', NULL, 42000.00, '2026-08-08 01:45:00', NULL, 0, NULL, NULL),
@@ -278,7 +320,7 @@ CREATE TABLE `ep_online_meetings` (
 --
 
 INSERT INTO `ep_online_meetings` (`meetings_id`, `title`, `meeting_link`, `created_by`, `employee_id`, `scheduled_at`, `status`) VALUES
-(2, 'Academic Forum', 'https://meet.jit.si/hr_meeting_69d0b6b27deb8', 3, 6, '2026-04-06 14:58:00', 'scheduled'),
+(2, 'Academic Forum', 'https://meet.jit.si/hr_meeting_69d0b6b27deb8', 3, 6, '2026-04-06 14:58:00', 'cancelled'),
 (3, 'Midterm Planning', 'https://meet.jit.si/hr_meeting_69d0b6d45aa13', 3, 6, '2026-04-08 14:59:00', 'scheduled');
 
 -- --------------------------------------------------------
@@ -335,6 +377,14 @@ CREATE TABLE `ep_resignation_requests` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `ep_resignation_requests`
+--
+
+INSERT INTO `ep_resignation_requests` (`resignation_id`, `employee_id`, `resignation_type`, `resignation_reason`, `attachment`, `date_submitted`, `intended_last_working_day`, `status`, `employee_remarks`, `hr_remarks`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at`) VALUES
+(1, 5, 'With Notice', 'I have accepted a new career opportunity that aligns with my professional goals.', 'uploads/resignation/resignation_1.pdf', '2026-08-01 09:15:00', '2026-08-31', 'Pending', 'I will ensure a proper turnover of my responsibilities.', 'Sample', NULL, NULL, '2026-08-01 07:01:43', '2026-08-16 01:47:11'),
+(8, 1, 'With Notice', 'sample', 'uploads/resignation/resignation_1_1786844898.pdf', '2026-08-16 03:48:18', '2026-08-24', 'Pending', 'sample', NULL, NULL, NULL, '2026-08-15 19:48:18', '2026-08-15 19:48:18');
+
 -- --------------------------------------------------------
 
 --
@@ -347,6 +397,7 @@ CREATE TABLE `ep_users` (
   `password` varchar(255) NOT NULL,
   `email` varchar(255) DEFAULT NULL,
   `is_admin` tinyint(1) NOT NULL DEFAULT 0,
+  `role` varchar(50) NOT NULL DEFAULT 'employee',
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `theme` enum('light','dark') DEFAULT 'light',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -358,11 +409,12 @@ CREATE TABLE `ep_users` (
 -- Dumping data for table `ep_users`
 --
 
-INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `is_active`, `theme`, `created_at`, `password_reset_token`, `password_reset_expires`) VALUES
-(1, 'Employee 1', '$2y$10$O6XSlGEzC5GCae7BrLAhneWoLgqV3P1Pi3a0czwSdmZ.6.kR8F9va', 'crobertjanssen@gmail.com', 0, 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
-(2, 'Employee 2', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', 'crobertjanssen@gmail.com', 0, 1, 'light', '2026-03-24 18:06:12', NULL, NULL),
-(3, 'Admin Employee Portal', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 1, 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
-(4, 'Employee 3', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 1, 'light', '2026-01-28 07:21:13', NULL, NULL);
+INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `role`, `is_active`, `theme`, `created_at`, `password_reset_token`, `password_reset_expires`) VALUES
+(1, 'Employee 1', '$2y$10$O6XSlGEzC5GCae7BrLAhneWoLgqV3P1Pi3a0czwSdmZ.6.kR8F9va', 'monstreborvinsmoke025@gmail.com', 0, 'employee', 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
+(2, 'Employee 2', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 'employee', 1, 'light', '2026-03-24 18:06:12', NULL, NULL),
+(3, 'Admin Employee Portal', '$2y$10$HfBt56Pjiz38byZo9KkiAuoktPuUSLB8nYBckRSdGV2vWbc2wW7jG', 'crobertjanssen@gmail.com', 1, 'super_admin', 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
+(4, 'Employee 3', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 'employee', 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
+(21, 'sample', '$2y$10$dHzUOq6RTrujLH/eo9w4dudWV6qZD41cAhVM22kde2bl8I5KlxZuK', 'camposrobertjanssent.pdm@gmail.com', 0, 'employee', 1, 'light', '2026-08-16 13:35:55', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -494,6 +546,56 @@ INSERT INTO `hrms_roles` (`role_id`, `role_name`, `department`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `lc_incidents`
+--
+
+CREATE TABLE `lc_incidents` (
+  `id` int(11) NOT NULL,
+  `incident_id` varchar(50) DEFAULT NULL COMMENT 'Auto-generated: INC-YYYY-NNNN',
+  `reporter_id` int(11) DEFAULT NULL COMMENT 'Foreign key to employees - who reported',
+  `reporter_employee_id` varchar(20) DEFAULT NULL COMMENT 'Reporter Employee ID',
+  `reporter_name` varchar(100) DEFAULT NULL COMMENT 'Reporter Full Name',
+  `reporter_department` varchar(100) DEFAULT NULL COMMENT 'Reporter Department',
+  `reporter_position` varchar(100) DEFAULT NULL COMMENT 'Reporter Position',
+  `reporter_contact` varchar(100) DEFAULT NULL COMMENT 'Reporter Contact Info',
+  `reporter_role` enum('witness','victim','reporter') DEFAULT 'reporter' COMMENT 'Role in Incident',
+  `reporter_type` enum('employee','hr','management','anonymous') DEFAULT 'employee',
+  `respondent_id` int(11) DEFAULT NULL COMMENT 'Foreign key to employees - person being reported',
+  `respondent_employee_id` varchar(20) DEFAULT NULL COMMENT 'Respondent Employee ID',
+  `respondent_name` varchar(100) DEFAULT NULL COMMENT 'Respondent Full Name',
+  `respondent_department` varchar(100) DEFAULT NULL COMMENT 'Respondent Department',
+  `respondent_position` varchar(100) DEFAULT NULL COMMENT 'Respondent Position',
+  `respondent_relationship` enum('co_worker','supervisor','subordinate','external') DEFAULT 'co_worker' COMMENT 'Relationship to Reporter',
+  `incident_type` varchar(100) DEFAULT NULL COMMENT 'Misconduct, Harassment, Absenteeism, etc.',
+  `type` enum('workplace_safety','harassment','policy_violation','complaint','other') DEFAULT 'other',
+  `severity` enum('low','medium','high','critical') DEFAULT 'medium',
+  `incident_date` date DEFAULT NULL,
+  `incident_time` time DEFAULT NULL,
+  `location` varchar(255) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `status` enum('submitted','under_review','investigation','escalated','resolved','closed','open','in_progress','pending_approval','rejected','closed_no_violation') DEFAULT 'submitted',
+  `assigned_to` int(11) DEFAULT NULL COMMENT 'HR officer assigned to handle',
+  `created_by` int(11) DEFAULT NULL,
+  `reported_by` int(11) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `resolved_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `lc_incidents`
+--
+
+INSERT INTO `lc_incidents` (`id`, `incident_id`, `reporter_id`, `reporter_employee_id`, `reporter_name`, `reporter_department`, `reporter_position`, `reporter_contact`, `reporter_role`, `reporter_type`, `respondent_id`, `respondent_employee_id`, `respondent_name`, `respondent_department`, `respondent_position`, `respondent_relationship`, `incident_type`, `type`, `severity`, `incident_date`, `incident_time`, `location`, `title`, `description`, `status`, `assigned_to`, `created_by`, `reported_by`, `created_at`, `updated_at`, `resolved_at`) VALUES
+(1, 'INC-2026-0001', NULL, NULL, 'Patrick Villanueva', 'Accounting', NULL, NULL, 'victim', 'employee', NULL, NULL, 'Robert Campos', 'Information Technology', NULL, 'supervisor', 'sample', 'harassment', 'medium', '2026-07-31', '14:32:00', 'Office', 'sample', 'sample', 'submitted', NULL, 1, 1, '2026-08-05 23:25:40', '2026-08-05 23:25:40', NULL),
+(2, 'INC-2026-0002', 14, 'EMP-00010', 'Patrick Villanueva', 'Accounting', 'Accountant', '09184567890', 'victim', 'employee', 15, 'EMP-00011', 'Robert Campos', 'Information Technology', 'Software Developer', 'co_worker', 'sample', 'harassment', 'medium', '2026-08-05', '15:12:00', 'Office', 'sample', 'sample', 'submitted', NULL, 1, 1, '2026-08-05 23:37:49', '2026-08-05 23:37:49', NULL),
+(5, 'INC-2026-0005', NULL, '1', 'Ronaldo Raymundo', 'IT DEPARTMENT', '9', NULL, 'reporter', 'employee', NULL, '4', 'Michael Santos', 'Payroll', '43', 'co_worker', 'harassment', 'other', 'medium', '2026-08-14', '00:22:00', 'HR Office', 'Harassment', 'sample', 'submitted', NULL, NULL, NULL, '2026-08-14 16:22:55', '2026-08-14 16:22:55', NULL),
+(6, 'INC-2026-0004', NULL, '1', 'Ronaldo Raymundo', 'IT DEPARTMENT', '9', NULL, 'reporter', 'employee', NULL, '3', 'Maria Reyes', 'Employee Management', '44', 'co_worker', 'workplace_conflict', 'other', 'medium', '2026-08-16', '08:25:00', 'Meeting Room', 'Workplace conflict', 'sample', 'submitted', NULL, NULL, NULL, '2026-08-16 00:25:19', '2026-08-16 00:25:19', NULL);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `leave_requests`
 --
 
@@ -526,6 +628,33 @@ INSERT INTO `leave_requests` (`leave_id`, `employee_id`, `leave_type`, `start_da
 (8, 3, 'Bereavement Leave', '2026-08-13', '2026-08-13', 'sample', 'Pending', NULL, NULL, '2026-08-13 15:53:27', '2026-08-13 15:55:09'),
 (9, 4, 'Bereavement Leave', '2026-08-13', '2026-08-13', 'sadad', 'Pending', NULL, NULL, '2026-08-13 15:54:08', '2026-08-13 15:55:12'),
 (10, 5, 'Paternity Leave', '2026-08-13', '2026-08-13', 'dasda', 'Pending', NULL, NULL, '2026-08-13 15:54:40', '2026-08-13 15:55:15');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pm_360_feedback`
+--
+
+CREATE TABLE `pm_360_feedback` (
+  `feedback_id` int(11) NOT NULL,
+  `employee_id` int(11) NOT NULL,
+  `evaluator_type` enum('Manager','Peer','Subordinate','Self') NOT NULL,
+  `rating` int(11) NOT NULL CHECK (`rating` between 1 and 5),
+  `category` enum('Communication','Teamwork','Leadership','Performance') NOT NULL,
+  `comments` text DEFAULT NULL,
+  `is_anonymous` tinyint(1) DEFAULT 0,
+  `evaluation_date` date NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `pm_360_feedback`
+--
+
+INSERT INTO `pm_360_feedback` (`feedback_id`, `employee_id`, `evaluator_type`, `rating`, `category`, `comments`, `is_anonymous`, `evaluation_date`, `created_at`, `updated_at`) VALUES
+(10, 1, '', 5, 'Leadership', 'sample', 1, '2026-07-31', '2026-07-31 00:26:13', '2026-08-14 11:58:21'),
+(11, 1, '', 5, 'Teamwork', 'sample', 1, '2026-07-31', '2026-07-31 00:28:00', '2026-08-14 11:58:26');
 
 -- --------------------------------------------------------
 
@@ -639,6 +768,12 @@ ALTER TABLE `eer_announcements`
   ADD PRIMARY KEY (`eer_announcements_id`);
 
 --
+-- Indexes for table `eer_grievances`
+--
+ALTER TABLE `eer_grievances`
+  ADD PRIMARY KEY (`eer_grievance_id`);
+
+--
 -- Indexes for table `em_employees`
 --
 ALTER TABLE `em_employees`
@@ -720,10 +855,22 @@ ALTER TABLE `hrms_roles`
   ADD KEY `idx_hrms_roles_department` (`department`);
 
 --
+-- Indexes for table `lc_incidents`
+--
+ALTER TABLE `lc_incidents`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `leave_requests`
 --
 ALTER TABLE `leave_requests`
   ADD PRIMARY KEY (`leave_id`);
+
+--
+-- Indexes for table `pm_360_feedback`
+--
+ALTER TABLE `pm_360_feedback`
+  ADD PRIMARY KEY (`feedback_id`);
 
 --
 -- Indexes for table `pr_payslips`
@@ -756,6 +903,12 @@ ALTER TABLE `eer_announcements`
   MODIFY `eer_announcements_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `eer_grievances`
+--
+ALTER TABLE `eer_grievances`
+  MODIFY `eer_grievance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
 -- AUTO_INCREMENT for table `em_employees`
 --
 ALTER TABLE `em_employees`
@@ -777,13 +930,13 @@ ALTER TABLE `ep_notifications`
 -- AUTO_INCREMENT for table `ep_notification_recipients`
 --
 ALTER TABLE `ep_notification_recipients`
-  MODIFY `recipient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `recipient_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `ep_online_meetings`
 --
 ALTER TABLE `ep_online_meetings`
-  MODIFY `meetings_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `meetings_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `ep_payroll_request`
@@ -795,13 +948,13 @@ ALTER TABLE `ep_payroll_request`
 -- AUTO_INCREMENT for table `ep_resignation_requests`
 --
 ALTER TABLE `ep_resignation_requests`
-  MODIFY `resignation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `resignation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `ep_users`
 --
 ALTER TABLE `ep_users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `hrms_department`
@@ -828,10 +981,22 @@ ALTER TABLE `hrms_roles`
   MODIFY `role_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
+-- AUTO_INCREMENT for table `lc_incidents`
+--
+ALTER TABLE `lc_incidents`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `leave_requests`
 --
 ALTER TABLE `leave_requests`
   MODIFY `leave_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `pm_360_feedback`
+--
+ALTER TABLE `pm_360_feedback`
+  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `pr_payslips`

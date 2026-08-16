@@ -6,17 +6,19 @@ use Exception;
 use App\Core\Session;
 use App\Helper\Helper;
 use App\Models\Employee;
+use App\Models\AdminLogin;
 use App\Helper\LoginHelper;
-use PHPMailer\PHPMailer\PHPMailer;
 use App\Services\LoginValidationService;
 
 class AuthController
 {
     // private AuditLog $auditLog;
     private Employee $employeeModel;
+    private AdminLogin $adminLoginModel;
     public function __construct()
     {
         $this->employeeModel = new Employee();
+        $this->adminLoginModel = new AdminLogin();
     }
     public function index()
     {
@@ -86,48 +88,51 @@ class AuthController
     public function adminLogin(): void
     {
         Session::start();
-        try {
 
-            // Check login rate limit
+        try {
             LoginHelper::checkRateLimit();
 
-            $employeeId = Helper::sanitize(
-                $_POST['employee_id'] ?? ''
+            $email = Helper::sanitize(
+                $_POST['email'] ?? ''
             );
 
             $password = trim(
                 $_POST['password'] ?? ''
             );
 
-            $employee = $this->employeeModel
-                ->getByEmployeeNum($employeeId);
+            $user = $this->adminLoginModel->getByEmail($email);
 
-            $validationService = new LoginValidationService();
+            if (!$user || !password_verify($password, $user['password'])) {
+                throw new Exception('Invalid email or password.');
+            }
 
-            $validationService->validate(
-                $employeeId,
-                $password,
-                $employee
-            );
+            if ((int) ($user['is_active'] ?? 0) !== 1) {
+                throw new Exception(
+                    'Your account is currently inactive.'
+                );
+            }
 
-            if ((int) ($employee['is_admin'] ?? 0) !== 1) {
-
+            if ((int) ($user['is_admin'] ?? 0) !== 1) {
                 throw new Exception(
                     'You are not authorized to access the administrator portal.'
                 );
             }
+
             LoginHelper::resetAttempts();
 
             LoginHelper::setAuthenticatedUser([
-                'id' => $employee['user_id'],
-                'username' => $employee['username'],
-                'role' => $employee['role'],
-                'is_admin' => $employee['is_admin'],
+                'id' => $user['id'],
+                'username' => $user['username'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'is_admin' => $user['is_admin'],
             ]);
 
             Helper::redirect(
                 'index.php?url=admin-dashboard'
             );
+
+            exit;
 
         } catch (Exception $e) {
 
@@ -171,6 +176,39 @@ class AuthController
 
         // Redirect to login page
         header('Location: index.php?url=auth-index');
+        exit;
+    }
+    public function adminLogout()
+    {
+        // Start session if it has not been started yet
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        // Remove all session data
+        $_SESSION = [];
+
+        // Remove the session cookie
+        if (ini_get('session.use_cookies')) {
+
+            $params = session_get_cookie_params();
+
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'],
+                $params['domain'],
+                $params['secure'],
+                $params['httponly']
+            );
+        }
+
+        // Destroy the session
+        session_destroy();
+
+        // Redirect to login page
+        header('Location: index.php?url=admin');
         exit;
     }
     private function handleLoginFailure(Exception $e): void

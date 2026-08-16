@@ -13,8 +13,10 @@ use App\Controllers\GrievanceController;
 use App\Controllers\AttendanceController;
 use App\Controllers\ResignationController;
 use App\Controllers\PerformanceController;
+use App\Controllers\EmployeeUserController;
 use App\Controllers\AnnouncementController;
 use App\Controllers\NotificationController;
+use App\Controllers\OnlineMeetingController;
 use App\Controllers\BenefitsAndGovernmentContributionController;
 
 
@@ -36,12 +38,15 @@ SessionTimeout::check();
 */
 
 $routes = [
+    // default
+    '' => [AuthController::class, 'index'],
     // Authentication
     'auth-index' => [AuthController::class, 'index'],
     'admin' => [AuthController::class, 'adminIndex'],
     'auth-login' => [AuthController::class, 'login'],
     'admin-login' => [AuthController::class, 'adminLogin'],
     'auth-logout' => [AuthController::class, 'logout'],
+    'admin-logout' => [AuthController::class, 'adminLogout'],
 
     // Dashboard
     'employee-dashboard' => [PortalController::class, 'dashboard'],
@@ -73,9 +78,9 @@ $routes = [
     'announcement-view' => [AnnouncementController::class, 'view'],
 
     // Notification
-    'notification'  => [NotificationController::class, 'index'],
-    'notification-mark-read'  => [NotificationController::class, 'markRead'],
-    'notification-mark-all-read'  => [NotificationController::class, 'markAllRead'],
+    'notification' => [NotificationController::class, 'index'],
+    'notification-mark-read' => [NotificationController::class, 'markRead'],
+    'notification-mark-all-read' => [NotificationController::class, 'markAllRead'],
 
     // Performance
     'performance' => [PerformanceController::class, 'index'],
@@ -91,7 +96,20 @@ $routes = [
     // Resignation
     'resignation' => [ResignationController::class, 'index'],
     'employee-resignation-store' => [ResignationController::class, 'store'],
-    
+
+    // User/Employee Management
+    'user-account' => [EmployeeUserController::class, 'index'],
+    'view-all-employees' => [EmployeeUserController::class, 'viewAllEmployees'],
+    'admin-user-store' => [EmployeeUserController::class, 'storeEmployees'],
+    'view-all-attendance' => [EmployeeUserController::class, 'viewAllAttendance'],
+
+    // Online Meeting
+    'online-meeting' => [OnlineMeetingController::class, 'index'],
+    'admin-online-meeting' => [OnlineMeetingController::class, 'adminIndex'],
+    'online-meeting-store' => [OnlineMeetingController::class, 'store'],
+    'online-meeting-update-status' => [OnlineMeetingController::class, 'updateStatus'],
+    'online-meeting-delete' => [OnlineMeetingController::class, 'delete'],
+
 
 
 ];

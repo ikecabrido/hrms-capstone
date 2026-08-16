@@ -9,6 +9,7 @@ view, create performance evaluation
 view complaint
 view, update status grievance
 view, update status resignation req
+manage user account
 manage online meeting
 manage notification
 manage announcement

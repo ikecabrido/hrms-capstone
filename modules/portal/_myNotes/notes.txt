@@ -13,6 +13,8 @@ echo '</pre>';
         <?php
         $employee = "employee";
         $hashedPass = password_hash($employee, PASSWORD_DEFAULT);
+
+        
 echo '<pre>';
 print_r($hashedPass);
 echo '</pre>';

@@ -91,6 +91,12 @@
                     Resignation Request
                 </a>
             </li>
+            <li>
+                <a href="index.php?url=online-meeting" class="menu-link">
+                    <i class="fa-solid fa-person-walking-arrow-right"></i>
+                    Online Meeting
+                </a>
+            </li>
         </ul>
     </div>
 </aside>

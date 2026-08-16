@@ -62,7 +62,7 @@ class PortalController
         $employeeInitial = strtoupper(
             substr($employeeDashboard['first_name'] ?? 'E', 0, 1)
         );
-
+        
         $title = "Admin Dashboard";
         $content = __DIR__ . '/../views/admin-portal/content.php';
 

@@ -23,13 +23,21 @@
         <?php endif; ?>
 
     </div>
+    <?php if (!empty($employeeName)): ?>
+        <h1 class="employee_name fs-6">
+            <?= htmlspecialchars($employeeName) ?>
+        </h1>
+    <?php else: ?>
+        <span class="text-white">no employee data!</span>
+    <?php endif; ?>
 
-    <h1 class="employee_name fs-6">
-        <?= htmlspecialchars($employeeName) ?>
-    </h1>
 
     <p class="employee_position fs-6">
-        <?= htmlspecialchars($employeePosition) ?>
+        <?php if ($_SESSION['is_admin'] == true): ?>
+            <span>HR Admin</span>
+        <?php else: ?>
+            <?= htmlspecialchars($employeePosition) ?>
+        <?php endif; ?>
     </p>
 
 </div>
