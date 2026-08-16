@@ -398,7 +398,7 @@
             </a>
 
 
-            <a href="index.php?url=resignation-request" class="request-card">
+            <a href="index.php?url=resignation" class="request-card">
 
                 <i class="fas fa-user-minus"></i>
 

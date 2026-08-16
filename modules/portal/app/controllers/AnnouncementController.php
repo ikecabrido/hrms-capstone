@@ -3,18 +3,15 @@
 namespace App\Controllers;
 
 use App\Models\Announcement;
-use App\Models\Employee;
 use App\Helper\Helper;
 
 class AnnouncementController
 {
     private $announcementModel;
-    private $employeeModel;
 
     public function __construct()
     {
         $this->announcementModel = new Announcement();
-        $this->employeeModel = new Employee();
     }
 
     public function index()

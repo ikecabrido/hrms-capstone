@@ -86,7 +86,7 @@
                 </a>
             </li>
             <li>
-                <a href="?page=resignation" class="menu-link">
+                <a href="index.php?url=resignation" class="menu-link">
                     <i class="fa-solid fa-person-walking-arrow-right"></i>
                     Resignation Request
                 </a>

@@ -11,6 +11,7 @@ use App\Controllers\ProfileController;
 use App\Controllers\ComplaintController;
 use App\Controllers\GrievanceController;
 use App\Controllers\AttendanceController;
+use App\Controllers\ResignationController;
 use App\Controllers\PerformanceController;
 use App\Controllers\AnnouncementController;
 use App\Controllers\NotificationController;
@@ -86,6 +87,11 @@ $routes = [
     // Grievance
     'grievance' => [GrievanceController::class, 'index'],
     'grievance-store' => [GrievanceController::class, 'store'],
+
+    // Resignation
+    'resignation' => [ResignationController::class, 'index'],
+    'employee-resignation-store' => [ResignationController::class, 'store'],
+    
 
 
 ];

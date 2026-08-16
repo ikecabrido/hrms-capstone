@@ -107,7 +107,38 @@
             </span>
 
         </div>
+    <!-- BACK -->
+    <div style="
+        margin-bottom:20px;
+    ">
 
+        <a href="index.php?url=employee-dashboard" style="
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            padding:9px 14px;
+            border:1px solid #e5e7eb;
+            border-radius:9px;
+            background:#fff;
+            color:#374151;
+            text-decoration:none;
+            font-size:12px;
+            font-weight:600;
+            transition:.2s ease;
+        "
+        onmouseover="
+            this.style.background='#f8fafc';
+            this.style.borderColor='#cbd5e1';
+        "
+        onmouseout="
+            this.style.background='#fff';
+            this.style.borderColor='#e5e7eb';
+        ">
+            <i class="fas fa-arrow-left"></i>
+            Back to Dashboard
+        </a>
+
+    </div>
 
         <?php if (!empty($announcements)): ?>
 
@@ -123,8 +154,8 @@
                     $createdAt = strtotime($announcement['created_at']);
                     $isNew = $createdAt >= strtotime('-7 days');
                     ?>
-
-                    <article style="
+                    <a href="index.php?url=announcement-view&id=<?= (int) $announcement['eer_announcements_id'] ?>" style="text-decoration: none;">
+                        <article style="
                     position:relative;
                     display:flex;
                     gap:15px;
@@ -144,8 +175,8 @@
                     this.style.transform='translateY(0)';
                 ">
 
-                        <!-- LEFT ACCENT -->
-                        <div style="
+                            <!-- LEFT ACCENT -->
+                            <div style="
                         position:absolute;
                         left:0;
                         top:0;
@@ -155,8 +186,8 @@
                     "></div>
 
 
-                        <!-- ICON -->
-                        <div style="
+                            <!-- ICON -->
+                            <div style="
                         width:44px;
                         height:44px;
                         min-width:44px;
@@ -168,18 +199,18 @@
                         color:#2563eb;
                         font-size:16px;
                     ">
-                            <i class="fas fa-bullhorn"></i>
-                        </div>
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
 
 
-                        <!-- CONTENT -->
-                        <div style="
+                            <!-- CONTENT -->
+                            <div style="
                         flex:1;
                         min-width:0;
                     ">
 
-                            <!-- TITLE ROW -->
-                            <div style="
+                                <!-- TITLE ROW -->
+                                <div style="
                             display:flex;
                             align-items:center;
                             gap:8px;
@@ -187,19 +218,19 @@
                             margin-bottom:5px;
                         ">
 
-                                <h4 style="
+                                    <h4 style="
                                 margin:0;
                                 color:#111827;
                                 font-size:14px;
                                 font-weight:700;
                                 line-height:1.4;
                             ">
-                                    <?= htmlspecialchars($announcement['title']) ?>
-                                </h4>
+                                        <?= htmlspecialchars($announcement['title']) ?>
+                                    </h4>
 
-                                <?php if ($isNew): ?>
+                                    <?php if ($isNew): ?>
 
-                                    <span style="
+                                        <span style="
                                     display:inline-flex;
                                     align-items:center;
                                     padding:3px 7px;
@@ -210,27 +241,27 @@
                                     font-weight:700;
                                     letter-spacing:.3px;
                                 ">
-                                        NEW
-                                    </span>
+                                            NEW
+                                        </span>
 
-                                <?php endif; ?>
+                                    <?php endif; ?>
 
-                            </div>
+                                </div>
 
 
-                            <!-- MESSAGE -->
-                            <p style="
+                                <!-- MESSAGE -->
+                                <p style="
                             margin:0 0 10px;
                             color:#4b5563;
                             font-size:11px;
                             line-height:1.6;
                         ">
-                                <?= nl2br(htmlspecialchars($announcement['content'])) ?>
-                            </p>
+                                    <?= nl2br(htmlspecialchars($announcement['content'])) ?>
+                                </p>
 
 
-                            <!-- META -->
-                            <div style="
+                                <!-- META -->
+                                <div style="
                             display:flex;
                             align-items:center;
                             gap:12px;
@@ -239,43 +270,43 @@
                             font-size:9px;
                         ">
 
-                                <span style="
+                                    <span style="
                                 display:inline-flex;
                                 align-items:center;
                                 gap:5px;
                             ">
-                                    <i class="far fa-clock"></i>
-                                    <?= date('M d, Y · h:i A', $createdAt) ?>
-                                </span>
-
-                                <span style="
-                                display:inline-flex;
-                                align-items:center;
-                                gap:5px;
-                            ">
-                                    <i class="fas fa-users"></i>
-                                    <?= htmlspecialchars(ucwords($announcement['target_audience'])) ?>
-                                </span>
-
-                                <?php if (!empty($announcement['created_by'])): ?>
+                                        <i class="far fa-clock"></i>
+                                        <?= date('M d, Y · h:i A', $createdAt) ?>
+                                    </span>
 
                                     <span style="
+                                display:inline-flex;
+                                align-items:center;
+                                gap:5px;
+                            ">
+                                        <i class="fas fa-users"></i>
+                                        <?= htmlspecialchars(ucwords($announcement['target_audience'])) ?>
+                                    </span>
+
+                                    <?php if (!empty($announcement['created_by'])): ?>
+
+                                        <span style="
                                     display:inline-flex;
                                     align-items:center;
                                     gap:5px;
                                 ">
-                                        <i class="fas fa-user"></i>
-                                        <?= htmlspecialchars($announcement['created_by']) ?>
-                                    </span>
+                                            <i class="fas fa-user"></i>
+                                            <?= htmlspecialchars($announcement['created_by']) ?>
+                                        </span>
 
-                                <?php endif; ?>
+                                    <?php endif; ?>
+
+                                </div>
 
                             </div>
 
-                        </div>
-
-                    </article>
-
+                        </article>
+                    </a>
                 <?php endforeach; ?>
 
             </div>

@@ -17,7 +17,7 @@ class Attendance
     }
     public function all(): array
     {
-        $sql = "SELECT * FROM {$this->table} ORDER BY attendance_id DESC";
+        $sql = "SELECT * FROM {$this->table} ORDER BY attendance_date DESC";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
