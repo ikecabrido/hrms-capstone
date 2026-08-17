@@ -81,7 +81,7 @@ class Leave
                          CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, lt.leave_type_name,
                          DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days
                   FROM ta_leave_requests lr
-                  INNER JOIN em_employee e ON lr.employee_id = e.employee_id
+                  INNER JOIN em_employees e ON lr.employee_id = e.employee_id
                   INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
                   INNER JOIN department_heads dh ON dh.department = e.department
                   WHERE dh.user_id = :user_id AND lr.status IN ('Pending', 'PENDING')
@@ -114,7 +114,7 @@ class Leave
     {
         $query = "SELECT COUNT(*) AS total
                   FROM ta_leave_requests lr
-                  INNER JOIN em_employee e ON lr.employee_id = e.employee_id
+                  INNER JOIN em_employees e ON lr.employee_id = e.employee_id
                   INNER JOIN department_heads dh ON dh.department = e.department
                   WHERE dh.user_id = :user_id AND lr.status IN ('Pending', 'PENDING')";
 
@@ -144,7 +144,7 @@ class Leave
                          lt.leave_type_name,
                          DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days
                   FROM ta_leave_requests lr
-                  INNER JOIN em_employee e ON lr.employee_id = e.employee_id
+                  INNER JOIN em_employees e ON lr.employee_id = e.employee_id
                   INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
                   WHERE lr.status IN ('Pending', 'PENDING', 'APPROVED_BY_HEAD')
                   ORDER BY lr.date_submitted DESC";
@@ -505,7 +505,7 @@ class Leave
     {
         $year = (int)($year ?? date('Y'));
 
-        $query = "SELECT employee_id FROM em_employee WHERE status = 'active'";
+        $query = "SELECT employee_id FROM em_employees WHERE employment_status = 'Active'";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);

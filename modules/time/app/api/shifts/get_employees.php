@@ -4,7 +4,7 @@
  * Returns employee list with assignment status (shift or flexible schedule)
  */
 
-require_once(__DIR__ . '/../../../../database/db.php');
+require_once(__DIR__ . '/../../../../../database/db.php');
 
 header('Content-Type: application/json');
 

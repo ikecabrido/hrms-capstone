@@ -13,7 +13,7 @@ require_once __DIR__ . '/../helpers/HolidayHelper.php';
 class AttendanceValidationService
 {
     private $conn;
-    private $employees_table = "employees";
+    private $employees_table = "em_employees";
     private $attendance_table = "ta_attendance";
     private $employee_shifts_table = "ta_employee_shifts";
     private $shifts_table = "ta_shifts";
@@ -23,7 +23,7 @@ class AttendanceValidationService
 
     // Configuration: Late detection threshold (minutes after shift start)
     // Business rule: any time_in after shift start is considered LATE, so default to 0
-    private $late_threshold_minutes = 0;
+    private $late_threshold_minutes = 30;
 
     public function __construct()
     {
@@ -235,19 +235,25 @@ class AttendanceValidationService
     /**
      * Get employee shift for a specific date
      */
-    private function getEmployeeShiftForDate($employee_id, $date = null)
-    {
+        private function getEmployeeShiftForDate($employee_id, $date = null) {
         $date = $date ?? date('Y-m-d');
 
-        $query = "SELECT es.*, s.shift_name, s.start_time, s.end_time, 
-                         s.break_duration, s.shift_id
-                  FROM {$this->employee_shifts_table} es
-                  JOIN {$this->shifts_table} s ON es.shift_id = s.shift_id
-                  WHERE es.employee_id = :employee_id
-                  AND es.is_active = 1
-                  AND es.effective_from <= :date
-                  AND (es.effective_to IS NULL OR es.effective_to >= :date)
-                  LIMIT 1";
+        // 1. First check for a regular assigned shift
+        $query = "SELECT 
+                        es.*,
+                        s.shift_name,
+                        s.start_time,
+                        s.end_time,
+                        s.break_duration,
+                        s.shift_id
+                FROM {$this->employee_shifts_table} es
+                INNER JOIN {$this->shifts_table} s 
+                    ON es.shift_id = s.shift_id
+                WHERE es.employee_id = :employee_id
+                    AND es.is_active = 1
+                    AND es.effective_from <= :date
+                    AND (es.effective_to IS NULL OR es.effective_to >= :date)
+                LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':employee_id', $employee_id, \PDO::PARAM_INT);
@@ -255,10 +261,13 @@ class AttendanceValidationService
         $stmt->execute();
 
         $shift = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        // Regular shift found
         if ($shift) {
             return $shift;
         }
 
+        // 2. No regular shift, so check flexible schedule
         return $this->getFlexibleScheduleShift($employee_id, $date);
     }
 
@@ -311,18 +320,19 @@ class AttendanceValidationService
     /**
      * Check if date is a holiday
      */
-    private function isHoliday($date)
+        public function isHoliday($date)
     {
-        $query = "SELECT id FROM {$this->holidays_table}
-                  WHERE holiday_date = :date
-                  AND is_active = 1
-                  LIMIT 1";
+        $query = "SELECT id
+                FROM ta_holidays
+                WHERE holiday_date = :date
+                AND is_active = 1
+                LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':date', $date);
         $stmt->execute();
 
-        return $stmt->rowCount() > 0;
+        return $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
     }
 
     /**
@@ -374,18 +384,23 @@ class AttendanceValidationService
         $date = $date ?? date('Y-m-d');
 
         $query = "SELECT 
-                    a.attendance_id,
-                    a.employee_id,
-                    a.time_in,
-                    e.full_name,
-                    e.department
-                  FROM ta_attendance a
-                  JOIN {$this->employees_table} e ON a.employee_id = e.employee_id
-                  WHERE a.attendance_date = :date
-                  AND a.time_in IS NOT NULL
-                  AND (a.status IS NULL OR a.status = 'PRESENT')
-                  AND e.employment_status = 'Active'
-                  ORDER BY e.full_name";
+            a.attendance_id,
+            a.employee_id,
+            a.time_in,
+            CONCAT(
+                COALESCE(e.first_name, ''),
+                ' ',
+                COALESCE(e.last_name, '')
+            ) AS full_name,
+            e.department
+          FROM ta_attendance a
+          JOIN {$this->employees_table} e 
+            ON a.employee_id = e.employee_id
+          WHERE a.attendance_date = :date
+          AND a.time_in IS NOT NULL
+          AND (a.status IS NULL OR a.status = 'PRESENT')
+          AND e.employment_status = 'Active'
+          ORDER BY full_name";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':date', $date);
@@ -437,10 +452,17 @@ class AttendanceValidationService
             return [];
         }
 
-        $employeeQuery = "SELECT employee_id, full_name, department
-                          FROM {$this->employees_table}
-                          WHERE employment_status = 'Active'
-                          ORDER BY full_name";
+        $employeeQuery = "SELECT 
+                    employee_id,
+                    CONCAT(
+                        COALESCE(first_name, ''),
+                        ' ',
+                        COALESCE(last_name, '')
+                    ) AS full_name,
+                    department
+                  FROM {$this->employees_table}
+                  WHERE employment_status = 'Active'
+                  ORDER BY full_name";
 
         $stmt = $this->conn->prepare($employeeQuery);
         $stmt->execute();

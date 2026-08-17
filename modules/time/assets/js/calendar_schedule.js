@@ -1011,3 +1011,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 });
+
+function initScheduleCalendarPage() {
+    if (initScheduleCalendarPage._inited) return;
+    initScheduleCalendarPage._inited = true;
+    console.log('[TA INIT] Schedule Calendar initialized');
+    try {
+        if (typeof initCalendar === 'function') initCalendar();
+    } catch (e) { console.error('initScheduleCalendarPage error', e); }
+}

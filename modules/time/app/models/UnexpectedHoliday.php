@@ -35,7 +35,7 @@ class UnexpectedHoliday
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_date (holiday_date),
             INDEX idx_status (status),
-            FOREIGN KEY (created_by) REFERENCES em_employee(employee_id) ON DELETE SET NULL
+            FOREIGN KEY (created_by) REFERENCES em_employees(employee_id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
         return $conn->exec($sql);

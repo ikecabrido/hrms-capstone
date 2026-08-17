@@ -5,17 +5,10 @@
 require_once __DIR__ . "/../app/controllers/AuthController.php";
 
 
-$current_page = 'qr_scanner.php';
+$current_page = 'qr_scanner';
 $current_role = $_SESSION['role'] ?? 'time';
-$page_title = 'QR Scanner';
-$body_class = 'hold-transition';
-
-$page_footer_extra = <<<'SCRIPT'
-<script src="https://unpkg.com/html5-qrcode"></script>
-<script src="assets/js/qr-scanner.js"></script>
-SCRIPT;
-
 ?>
+<link rel="stylesheet" href="assets/css/qr-scanner.css">
 <div class="content-wrapper p-0" style="min-height:100vh;background:#f4f6f9;">
   <section class="content">
     <div class="container-fluid py-4">
@@ -68,4 +61,7 @@ SCRIPT;
     </div>
   </section>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.1/html5-qrcode.min.js"></script>
+<script src="assets/js/qr-scanner.js"></script>
 

@@ -13,7 +13,7 @@ header('Access-Control-Allow-Methods: POST');
 require_once __DIR__ . '/../core/Session.php';
 require_once __DIR__ . '/../controllers/LeaveController.php';
 require_once __DIR__ . '/../models/Leave.php';
-require_once __DIR__ . '/../../../../database/db.php';
+require_once __DIR__ . '/../../../../../database/db.php';
 
 Session::start();
 

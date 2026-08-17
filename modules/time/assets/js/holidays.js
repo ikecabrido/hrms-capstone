@@ -22,9 +22,16 @@
             loadHolidayData();
         });
 
+function initHolidaysPage() {
+    if (initHolidaysPage._inited) return;
+    initHolidaysPage._inited = true;
+    console.log('[TA INIT] Holidays initialized');
+    try { if (typeof initHolidays === 'function') initHolidays(); } catch (e) { console.error('initHolidaysPage error', e); }
+}
+
         // Load holiday data via AJAX
         function loadHolidayData() {
-            fetch('../app/api/holiday_api.php?action=get_page_data')
+            fetch('/hrms/hrms-capstone/modules/time/app/api/holidays/holiday_api.php?action=get_page_data')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('API returned ' + response.status);
@@ -227,7 +234,8 @@
                         2. Click "Sync Holidays from API"<br>
                         3. Return to this page
                     </p>
-                    <a href="../app/setup/holiday_setup.php" style="display: inline-block; background: #005ba8; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; text-decoration: none;">
+                    <a href="/hrms/hrms-capstone/modules/time/app/setup/holiday_setup.php"
+                    style="display: inline-block; background: #005ba8; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; text-decoration: none;">
                         <i class="fas fa-cog"></i> Go to Setup
                     </a>
                 </div>
@@ -250,7 +258,7 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
             btn.disabled = true;
 
-            fetch('../app/api/holiday_api.php?action=sync', {
+            fetch('/hrms/hrms-capstone/modules/time/app/api/holidays/holiday_api.php?action=sync', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -7,7 +7,6 @@ $currentPage = $pageController->getPage();
 
 include 'includes/header.php';
 include 'includes/sidebar.php';
-
 ?>
 
 <main class="main-content">

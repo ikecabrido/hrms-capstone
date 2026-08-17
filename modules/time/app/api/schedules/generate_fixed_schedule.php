@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 ini_set('display_errors', '0');
 ob_start();
 
-require_once __DIR__ . '/../../../../database/db.php';
+require_once __DIR__ . '/../../../../../database/db.php';
 
 try {
     $data = json_decode(file_get_contents('php://input'), true);

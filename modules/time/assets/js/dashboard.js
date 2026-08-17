@@ -4,14 +4,10 @@
         const holidayInfo = config.holidayInfo || null;
         const attendanceData = Array.isArray(config.attendanceData) ? config.attendanceData : [];
         const employees = Array.isArray(config.employees) ? config.employees : [];
+        const jq = window.jQuery || window.$;
 
-        // --- QR Directory Logic ---
-        function toggleQRDirectory() {
-            // legacy stub - directory removed in new UI
-        }
-
-        function filterQRDirectory() {
-            // legacy stub - directory removed in new UI
+        if (!jq) {
+            console.warn('Dashboard jQuery dependency is missing; dashboard interactions are disabled.');
         }
 
         function renderQRDirectory() {
@@ -45,6 +41,10 @@
 
         let currentQRInstance = null;
         function viewQR(id, name, dept, pos) {
+            if (!jq) {
+                return;
+            }
+
             $('#qrModal').modal('show');
             $('#modalEmpName').text(name);
             $('#modalEmpDetails').text(dept + ' - ' + pos);
@@ -77,6 +77,10 @@
         }
 
         function performPrint() {
+            if (!jq) {
+                return;
+            }
+
             const content = document.getElementById('qrcode').innerHTML;
             const win = window.open('', '', 'width=400,height=400');
             win.document.write(`
@@ -238,12 +242,17 @@
             });
         }
 
-        $(document).ready(function() {
+        if (jq) {
+            jq(document).ready(function() {
+                renderQRDirectory();
+                filterAndSort();
+                if (attendanceSearchInput) jq(attendanceSearchInput).on('keyup', filterAndSort);
+                if (attendanceSortSelect) jq(attendanceSortSelect).on('change', filterAndSort);
+            });
+        } else {
             renderQRDirectory();
             filterAndSort();
-            if (attendanceSearchInput) $(attendanceSearchInput).on('keyup', filterAndSort);
-            if (attendanceSortSelect) $(attendanceSortSelect).on('change', filterAndSort);
-        });
+        }
 
         // Camera and employee-QR functionality moved to separate pages (`qr_scanner.php`, `employee_qr_list.php`).
 

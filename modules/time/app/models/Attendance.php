@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/../core/TimeDatabase.php';
+require_once __DIR__ . '/../../classes/Employee.php';
 
 class Attendance
 {
@@ -20,25 +21,56 @@ class Attendance
     /**
      * Get today's attendance record for an employee
      */
-    public function getTodayAttendance($employee_id, $attendance_date = null)
-    {
-        if ($attendance_date === null) {
-            $attendance_date = date('Y-m-d');
-        }
+    public function getTodayAllEmployees($limit = 100, $offset = 0)
+{
+    $query = "SELECT
+                e.employee_id,
+                e.first_name,
+                e.middle_name,
+                e.last_name,
+                CONCAT(
+                    COALESCE(e.first_name, ''),
+                    ' ',
+                    COALESCE(e.last_name, '')
+                ) AS full_name,
+                e.department,
+                e.position,
+                e.employment_status,
 
-        $query = "SELECT * FROM $this->table 
-                  WHERE employee_id = :employee_id 
-                  AND attendance_date = :attendance_date
-                  ORDER BY created_at DESC, attendance_id DESC
-                  LIMIT 1";
+                a.attendance_id,
+                a.time_in,
+                a.time_out,
+                a.attendance_date,
+                a.status,
+                a.late_minutes,
+                a.recorded_by,
+                a.total_hours_worked,
+                a.regular_hours,
+                a.overtime_hours,
+                a.created_at,
+                a.updated_at
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':employee_id', $employee_id);
-        $stmt->bindParam(':attendance_date', $attendance_date);
-        $stmt->execute();
+              FROM em_employees e
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+              LEFT JOIN ta_attendance a
+                ON a.employee_id = e.employee_id
+                AND a.attendance_date = CURDATE()
+
+              WHERE LOWER(e.employment_status) = 'active'
+
+              ORDER BY full_name ASC
+
+              LIMIT :limit OFFSET :offset";
+
+    $stmt = $this->conn->prepare($query);
+
+    $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     /**
      * Record Time In with status and optional late minutes
@@ -185,27 +217,25 @@ class Attendance
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Get attendance status for all employees today
-     */
-    public function getTodayAllEmployees($limit = 100, $offset = 0)
+    public function getTodayAttendance($employee_id, $attendance_date = null)
     {
-        $query = "SELECT a.*, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, e.position
-                  FROM $this->table a
-                  RIGHT JOIN em_employees e ON a.employee_id = e.employee_id 
-                    AND a.attendance_date = CURDATE()
-                  WHERE LOWER(e.employment_status) = 'active'
-                  ORDER BY full_name
-                  LIMIT :limit OFFSET :offset";
+        $attendance_date = $attendance_date ?? date('Y-m-d');
+
+        $query = "SELECT *
+                FROM {$this->table}
+                WHERE employee_id = :employee_id
+                AND attendance_date = :attendance_date
+                LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+
+        $stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_INT);
+        $stmt->bindParam(':attendance_date', $attendance_date);
+
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-
     /**
      * Get attendance history for a specific employee
      */
@@ -455,12 +485,13 @@ class Attendance
     /**
      * Get holiday information for a date
      */
-    public function getHolidayInfo($date)
+        public function getHolidayInfo($date)
     {
-        $query = "SELECT holiday_id, holiday_name, description, is_working_day 
-                  FROM ta_holidays 
-                  WHERE holiday_date = :date 
-                  AND year = YEAR(:date)";
+        $query = "SELECT id, name, description
+                FROM ta_holidays
+                WHERE holiday_date = :date
+                AND is_active = 1
+                LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':date', $date);

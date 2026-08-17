@@ -1,8 +1,54 @@
     
     export function reinitPage(page) {
-    initTabs();
-    initForms();
-    window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: page } }));
+        console.log('[TA INIT] reinitPage:', page);
+        initTabs();
+        initForms();
+
+        // Centralized page initializer dispatch
+        try {
+            // Map page names to init function names
+            switch (page) {
+                case 'shifts':
+                    console.log('[TA INIT] Calling initializer:', 'initShiftsPage');
+                    if (typeof initShiftsPage === 'function') initShiftsPage();
+                    break;
+                case 'qr_scanner':
+                    console.log('[TA INIT] Calling initializer:', 'initQRScannerPage');
+                    if (typeof initQRScannerPage === 'function') initQRScannerPage();
+                    break;
+                case 'schedule_calendar':
+                    console.log('[TA INIT] Calling initializer:', 'initScheduleCalendarPage');
+                    if (typeof initScheduleCalendarPage === 'function') initScheduleCalendarPage();
+                    break;
+                case 'holidays':
+                    console.log('[TA INIT] Calling initializer:', 'initHolidaysPage');
+                    if (typeof initHolidaysPage === 'function') initHolidaysPage();
+                    break;
+                case 'dashboard-overview':
+                    console.log('[TA INIT] Calling initializer:', 'initTimeDashboardPage');
+                    if (typeof initTimeDashboardPage === 'function') initTimeDashboardPage();
+                    break;
+                case 'employee_qr_list':
+                    console.log('[TA INIT] Calling initializer:', 'initEmployeeQRListPage');
+                    if (typeof initEmployeeQRListPage === 'function') initEmployeeQRListPage();
+                    break;
+                case 'absence_late_management':
+                    console.log('[TA INIT] Calling initializer:', 'initAbsenceLateManagementPage');
+                    if (typeof initAbsenceLateManagementPage === 'function') initAbsenceLateManagementPage();
+                    break;
+                case 'leave_approvals':
+                    console.log('[TA INIT] Calling initializer:', 'initLeaveApprovalsPage');
+                    if (typeof initLeaveApprovalsPage === 'function') initLeaveApprovalsPage();
+                    break;
+                default:
+                    // pages without explicit init will still receive the page:loaded event
+                    break;
+            }
+        } catch (err) {
+            console.error('reinitPage initializer error for', page, err);
+        }
+
+        window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: page } }));
     }
 
     // ─── Tab Switcher ─────────────────────────────────────────────────────────────

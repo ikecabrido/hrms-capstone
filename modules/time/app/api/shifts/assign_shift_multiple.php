@@ -4,7 +4,7 @@
  * Handles bulk shift assignment with optional Saturday exclusion
  */
 
-require_once(__DIR__ . '/../../../../database/db.php');
+require_once(__DIR__ . '/../../../../../database/db.php');
 require_once(__DIR__ . '/../controllers/ShiftController.php');
 
 header('Content-Type: application/json');

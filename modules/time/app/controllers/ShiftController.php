@@ -11,7 +11,6 @@ require_once(__DIR__ . '/../models/Shift.php');
 require_once(__DIR__ . '/../models/EmployeeShift.php');
 require_once(__DIR__ . '/../helpers/AuditLog.php');
 // Debug helper (writes to time_attendance/debug_shifts.log)
-require_once __DIR__ . '/../../debug_helpers.php';
 
 class ShiftController {
     private $db;

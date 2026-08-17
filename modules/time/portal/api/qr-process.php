@@ -62,8 +62,8 @@ try {
     }
 
     // Connect to database
-    require_once __DIR__ . '/../../../database/db.php';
-    $db = Database::getInstance()->getConnection();
+    require_once __DIR__ . '/../../app/core/TimeDatabase.php';
+    $db = TimeDatabase::getInstance()->getConnection();
 
     // Validate token exists, is not expired, and hasn't been used
     $stmt = $db->prepare("

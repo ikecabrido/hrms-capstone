@@ -9,18 +9,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
     header('Content-Type: application/json');
     
     if ($_GET['action'] === 'search_employees') {
-        require_once __DIR__ . '/../../../../database/db.php';
+        require_once __DIR__ . '/../core/TimeDatabase.php';
         
         $search = $_GET['q'] ?? '';
         
-        $query = "SELECT employee_id, full_name 
-                  FROM employees 
+        $query = "SELECT employee_id, CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name
+                  FROM em_employees 
                   WHERE employment_status = 'Active' 
-                  AND full_name LIKE ?
-                  ORDER BY full_name
+                  AND CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) LIKE ?
+                  ORDER BY first_name
                   LIMIT 20";
         
-        $db = Database::getInstance();
+        $db = TimeDatabase::getInstance();
         $conn = $db->getConnection();
         $stmt = $conn->prepare($query);
         $search_param = "%$search%";

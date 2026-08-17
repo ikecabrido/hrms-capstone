@@ -6,7 +6,7 @@
  */
 
 session_start();
-require_once __DIR__ . '/../../../../database/db.php';
+require_once __DIR__ . '/../core/TimeDatabase.php';
 
 // Auto-load classes FIRST
 spl_autoload_register(function ($class) {
@@ -26,7 +26,7 @@ use App\Models\Holiday;
 use App\Services\NagerDateService;
 use App\Helpers\HolidayHelper;
 
-$db = Database::getInstance()->getConnection();
+$db = TimeDatabase::getInstance()->getConnection();
 $holidayModel = new Holiday($db);
 $nagerService = new NagerDateService($db, 'PH');
 HolidayHelper::init($db);
@@ -190,7 +190,7 @@ if ($tableExists) {
         <?php endif; ?>
 
         <div class="mt-4 text-center">
-            <a href="../../time_attendance.php" class="btn btn-secondary">
+            <a href="../../../time/index.php" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>

@@ -6,7 +6,7 @@
 
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../../../../database/db.php';
+require_once __DIR__ . '/../../../../../database/db.php';
 require_once __DIR__ . '/../models/Employee.php';
 require_once __DIR__ . '/../models/EmployeeShift.php';
 require_once __DIR__ . '/../models/Attendance.php';

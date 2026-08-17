@@ -8,8 +8,8 @@
 date_default_timezone_set('Asia/Manila');
 
 require_once __DIR__ . '/../core/TimeDatabase.php';
+require_once __DIR__ . '/../classes/Employee.php';
 require_once __DIR__. '/../models/Attendance.php';
-require_once __DIR__. '/../models/Employee.php';
 require_once __DIR__. '/../models/EmployeeShift.php';
 require_once __DIR__. '/../services/AttendanceValidationService.php';
 require_once __DIR__. '/../helpers/QRHelper.php';

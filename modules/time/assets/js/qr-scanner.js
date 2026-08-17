@@ -217,9 +217,9 @@
         const devices = await Html5Qrcode.getCameras();
         console.log('Available cameras:', devices);
         if (devices && devices.length) {
-          const deviceId = devices[0].id;
-          if (deviceId) {
-            return { deviceId: { exact: deviceId } };
+          const preferred = devices.find(device => /back|rear|environment/i.test(device.label || '')) || devices[0];
+          if (preferred && preferred.id) {
+            return { deviceId: { exact: preferred.id } };
           }
         }
       } catch (error) {
@@ -240,21 +240,29 @@
         return;
       }
 
+      if (!window.Html5Qrcode) {
+        showToast('Camera library failed to load. Please refresh the page and try again.', 'warning');
+        return;
+      }
+
       if (html5QrCode || scanInProgress) return;
       saveScanState(true);
       updateOverlaySize();
-      html5QrCode = new Html5Qrcode('cameraScanner');
-      const width = cameraElement.clientWidth || window.innerWidth;
-      const height = cameraElement.clientHeight || window.innerHeight;
-      const qrboxSize = Math.max(240, Math.min(width, height) * 0.82);
+
+      const width = cameraElement?.clientWidth || 640;
+      const height = cameraElement?.clientHeight || 480;
+      const qrboxSize = Math.max(240, Math.min(width, height) * 0.72);
       const config = {
         fps: 10,
         qrbox: { width: qrboxSize, height: qrboxSize },
-        aspectRatio: width / height
+        aspectRatio: (width && height) ? width / height : 1.777,
+        disableFlip: false
       };
 
       try {
+        html5QrCode = new Html5Qrcode('cameraScanner');
         const cameraConfig = await selectCameraConfig();
+
         console.log('Starting camera with config:', cameraConfig, config);
 
         await html5QrCode.start(cameraConfig, config,
@@ -334,10 +342,12 @@
           }
         );
 
+        showToast('Camera is ready. Point it at the QR code.', 'info');
         startBtn.disabled = true;
         stopBtn.disabled = false;
       } catch(e){
         console.error('Camera start failed:', e);
+        showToast('Camera failed to start. Please allow camera permission and try again.', 'warning');
         html5QrCode = null;
         scanInProgress = false;
       }
@@ -365,3 +375,18 @@
       window.history.back();
     });
   });
+
+// Idempotent page-level initializer for AJAX navigation
+function initQRScannerPage() {
+  if (initQRScannerPage._inited) return;
+  initQRScannerPage._inited = true;
+  console.log('[TA INIT] QR Scanner initialized');
+  try {
+    // If existing DOMContentLoaded handler performed startup, replicate any required startup tasks here.
+    if (typeof startCamera === 'function') {
+      // do not auto-start camera; only prepare UI
+    }
+  } catch (err) {
+    console.error('initQRScannerPage error', err);
+  }
+}

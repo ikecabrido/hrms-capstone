@@ -11,7 +11,7 @@ class ShiftValidator
     private $conn;
     private $shift_assignments_table = "ta_shift_assignments";
     private $shifts_table = "ta_shifts";
-    private $employees_table = "em_employee";
+    private $employees_table = "em_employees";
 
     public function __construct()
     {
@@ -89,9 +89,9 @@ class ShiftValidator
                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
                         e.department,
                         e.position,
-                        e.status
+                        e.employment_status
                       FROM {$this->employees_table} e
-                      WHERE e.status = 'active'
+                      WHERE e.employment_status = 'Active'
                       AND NOT EXISTS (
                           SELECT 1 FROM ta_employee_shifts es
                           WHERE es.employee_id = e.employee_id
@@ -126,7 +126,7 @@ class ShiftValidator
                         AND es.effective_from <= :today
                         AND (es.effective_to IS NULL OR es.effective_to >= :today)
                         AND es.is_active = 1
-                      WHERE e.status = 'active'
+                      WHERE e.employment_status = 'Active'
                       AND es.employee_shift_id IS NULL";
 
             $stmt = $this->conn->prepare($query);

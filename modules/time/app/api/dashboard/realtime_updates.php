@@ -60,7 +60,7 @@ try {
     
     // Connect to time_and_attendance for time tracking (if needed)
     try {
-        require_once __DIR__ . '/../../../../database/db.php';
+        require_once __DIR__ . '/../../../../../database/db.php';
         $db_obj = TimeDatabase::getInstance();
         $db = $db_obj->getConnection();
         

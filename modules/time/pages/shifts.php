@@ -1,22 +1,27 @@
 <?php
-// 15. Beginning of shifts.php end-of-file checkpoint will be logged at the end of the file
 /**
  * Shift Management Page
  * HR-only page for managing shifts and employee assignments
  */
 
-// Start session and check authentication
-// Ensure required app bootstrap is available so runtime variables used
-// later (like $db, $shifts, $allAssignments) are defined.
-// JS helpers and modal-prefill moved to the scripts section further down the file.
 require_once __DIR__ . '/../app/controllers/AuthController.php';
 require_once __DIR__ . '/../app/core/Session.php';
-require_once __DIR__ . '/../../../database/db.php';
+require_once __DIR__ . '/../app/core/TimeDatabase.php';
 require_once __DIR__ . '/../app/controllers/ShiftController.php';
 
-?>
-    <?php
-// Get data based on action
+Session::start();
+
+// Initialize DB and controllers
+$database = $database ?? TimeDatabase::getInstance();
+$db = $db ?? $database->getConnection();
+$shiftController = $shiftController ?? new ShiftController($db);
+
+// Ensure variables used later are defined to avoid runtime fatal errors
+$action = $action ?? $_GET['action'] ?? $_POST['action'] ?? null;
+$shifts = $shifts ?? $shiftController->getAllShifts();
+$allAssignments = $allAssignments ?? $shiftController->getEmployeesOnShift(null);
+$message = $message ?? null;
+$error = $error ?? null;
 
 // For edit action, get specific shift
 $editShift = null;
@@ -24,38 +29,21 @@ if ($action === 'edit' && isset($_GET['shift_id'])) {
     $editShift = $shiftController->getShiftById($_GET['shift_id']);
 }
 
-?>
-<?php
-$current_page = 'shifts.php';
+$current_page = 'shifts';
 $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
-$page_title = 'Shift Management';
-$page_subtitle = 'Shift management and assignments';
-$page_head_extra = <<<HTML
-<link rel="stylesheet" href="assets/css/style.css">
+?>
 <link rel="stylesheet" href="assets/css/dashboard.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/hr-template.css">
 <link rel="stylesheet" href="assets/css/shifts.css">
-    <script src="assets/js/mobile-responsive.js" defer></script>
-HTML;
-?>
-<?php
-// 12. Before page_start.php
-if (function_exists('shiftDebug')) shiftDebug('[DIAG] 12 Before page_start.php');
-require_once __DIR__ . '/../layout/page_start.php';
-require_once __DIR__ . '/../layout/sidebar.php';
-// 13. After page_start.php
-if (function_exists('shiftDebug')) shiftDebug('[DIAG] 13 After page_start.php');
-// Before the main Shift Management HTML
-if (function_exists('shiftDebug')) shiftDebug('[DIAG] 14 Before main Shift Management HTML');
-$page_title = 'Shift Management';
-$page_subtitle = 'Create, edit, and assign employee shifts';
-$page_icon = 'fa-clock';
-require_once __DIR__ . '/../layout/content_header.php';
-?>
+<script src="assets/js/mobile-responsive.js" defer></script>
+
+    <div class="module-header">
+        <h1>Shift Management</h1>
+    </div>
+
+    <div class="module-content">
     <div class="shift-container">
-        <div class="container glass-panel">
+        <div class="shift-panel glass-panel">
         <?php if ($message): ?>
             <div class="alert alert-success">
                 <i class="fas fa-check-circle"></i>
@@ -248,7 +236,6 @@ require_once __DIR__ . '/../layout/content_header.php';
         shifts: <?php echo json_encode($shifts ?? [], JSON_HEX_TAG | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_HEX_APOS); ?>
     };
 </script>
-<script src="assets/js/shifts.js"></script>
 
     <!-- MODALS -->
     <!-- Create Shift Modal -->
@@ -514,17 +501,42 @@ require_once __DIR__ . '/../layout/content_header.php';
     <div id="generateFixedModal" class="modal" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-user-clock"></i> Edit Employee Shift</h2>
+                <h2><i class="fas fa-user-clock"></i> Assign Employee Shift</h2>
                 <button class="modal-close" onclick="closeModal('generateFixedModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group" style="margin-bottom: 0;">
                     <label for="gf_employee_search"><i class="fas fa-user"></i> Employee</label>
-                    <input type="text" id="gf_employee_search" autocomplete="off" readonly style="width: 100%; background:#f5f5f5; cursor:not-allowed;">
-                    <div id="gf_selected_employee_display" style="margin-top: 10px; color: #444; font-weight: 600;">No employee selected</div>
-                    <input type="hidden" id="gf_employee_id" name="gf_employee_id">
-                </div>
-
+                        <div style="position: relative;">
+                            <input 
+                                type="text" 
+                                id="gf_employee_search" 
+                                autocomplete="off"
+                                placeholder="Search employee..."
+                                style="width: 100%;">
+                            <div 
+                                id="gf_employee_dropdown"
+                                style="
+                                    display: none;
+                                    position: absolute;
+                                    top: 100%;
+                                    left: 0;
+                                    right: 0;
+                                    background: white;
+                                    border: 1px solid #ddd;
+                                    border-radius: 6px;
+                                    max-height: 220px;
+                                    overflow-y: auto;
+                                    z-index: 9999;
+                                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                                "></div>
+                            </div>
+                        <div id="gf_selected_employee_display" 
+                            style="margin-top: 10px; color: #444; font-weight: 600;">
+                            No employee selected
+                        </div>
+                        <input type="hidden" id="gf_employee_id" name="gf_employee_id">
+                    </div>
                 <div class="form-group">
                     <label for="gf_start_date"><i class="fas fa-calendar-day"></i> Schedule Start</label>
                     <input type="date" id="gf_start_date" name="gf_start_date">
@@ -687,19 +699,9 @@ require_once __DIR__ . '/../layout/content_header.php';
             </div>
         </div>
     </div>
-
-    <!-- Edit Template Modal uses existing editShiftModal to allow changing details -->
-    <!-- Flexible schedule UI deprecated in this view. -->
             </div>
         </div>
     </div>
+    </div>
+    <script src="assets/js/shifts.js"></script>
 
-    <link rel="stylesheet" href="assets/css/shifts.css">
-
-<?php
-if (function_exists('shiftDebug')) shiftDebug('[DIAG] 15 At end of page');
-require_once __DIR__ . '/../layout/content_footer.php';
-if (function_exists('shiftDebug')) shiftDebug('[DIAG] 15a After content_footer.php');
-require_once __DIR__ . '/../layout/page_end.php';
-if (function_exists('shiftDebug')) shiftDebug('[DIAG] 15b After page_end.php');
-?>

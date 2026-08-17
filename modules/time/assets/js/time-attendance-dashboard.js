@@ -16,3 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
     new window.bootstrap.Tab(tabLink).show();
   }
 });
+
+function initTimeDashboardPage() {
+  if (initTimeDashboardPage._inited) return;
+  initTimeDashboardPage._inited = true;
+  console.log('[TA INIT] Time Dashboard initialized');
+  try { if (typeof filterAndSort === 'function') filterAndSort(); } catch (e) { console.error('initTimeDashboardPage error', e); }
+}

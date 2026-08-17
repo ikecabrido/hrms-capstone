@@ -2,21 +2,11 @@
 /**
  * Employee QR List - separate tab for viewing and printing employee QR codes
  */
-require_once "../app/controllers/AuthController.php";
-require_once "../app/models/Employee.php";
-require_once "../app/core/Session.php";
+require_once __DIR__ . '/../app/controllers/AuthController.php';
+require_once __DIR__ . '/../classes/Employee.php';
 
-Session::start();
 
-if (!AuthController::isAuthenticated()) {
-    header('Location: ../../login_form.php');
-    exit;
-}
 
-if (!AuthController::hasRole('time')) {
-    header('Location: employee_dashboard.php');
-    exit;
-}
 
 $employeeModel = new Employee();
 $activeEmployees = $employeeModel->getAll('Active');
@@ -29,17 +19,17 @@ foreach ($activeEmployees as $emp) {
 }
 sort($departmentList, SORT_STRING);
 
-$current_page = 'employee_qr_list.php';
+$current_page = 'employee_qr_list';
 $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
-
-$page_title = 'Employee QR';
-$page_head_extra = "<link rel=\"stylesheet\" href=\"assets/css/style.css\">\n<link rel=\"stylesheet\" href=\"assets/css/hr-template.css\">\n<link rel=\"stylesheet\" href=\"assets/css/employee-qr-list.css\">";
 ?>
-<?php require_once __DIR__ . '/../layout/page_start.php'; ?>
-<?php require_once __DIR__ . '/../layout/sidebar.php'; ?>
-<?php $page_title = 'Employee QR'; $page_subtitle = 'View and print employee QR codes'; $page_icon = 'fa-qrcode'; ?>
-<?php require_once __DIR__ . '/../layout/content_header.php'; ?>
+<link rel="stylesheet" href="assets/css/hr-template.css">
+<link rel="stylesheet" href="assets/css/employee-qr-list.css">
 
+    <div class="module-header">
+        <h1>Employee QR</h1>
+    </div>
+
+    <div class="module-content">
 <div class="stats-grid">
   <div class="stat-card">
     <div class="info-box-icon bg-primary">
@@ -96,6 +86,7 @@ $page_head_extra = "<link rel=\"stylesheet\" href=\"assets/css/style.css\">\n<li
     </tbody>
   </table>
 </div>
+    </div>
 
 <div class="modal fade" id="empQrModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered" role="document">
@@ -117,9 +108,6 @@ $page_head_extra = "<link rel=\"stylesheet\" href=\"assets/css/style.css\">\n<li
     </div>
   </div>
 </div>
-
-<?php require_once __DIR__. '/../layout/content_footer.php';?>
-<?php require_once __DIR__. '/../layout/page_end.php';?>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>

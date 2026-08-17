@@ -4,7 +4,7 @@
  * Returns attendance data with consideration for shift exclusions
  */
 
-require_once(__DIR__ . '/../../../../database/db.php');
+require_once(__DIR__ . '/../../../../../database/db.php');
 require_once(__DIR__ . '/../models/Attendance.php');
 
 header('Content-Type: application/json');

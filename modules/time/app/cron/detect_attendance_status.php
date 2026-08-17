@@ -19,7 +19,7 @@ ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 date_default_timezone_set('Asia/Manila');
 
-require_once __DIR__ . '/../../../../database/db.php';
+require_once __DIR__ . '/../core/TimeDatabase.php';
 require_once __DIR__ . '/../models/Attendance.php';
 require_once __DIR__ . '/../services/AttendanceValidationService.php';
 require_once __DIR__ . '/../helpers/Helper.php';
@@ -53,7 +53,7 @@ $debugLogPath = __DIR__ . '/../../logs/absence_detection_debug.log';
 file_put_contents($debugLogPath, "[detect_attendance_status] run_date={$targetDate} run_time={$now->format('Y-m-d H:i:s')}\n", FILE_APPEND);
 
 try {
-    $db = \Database::getInstance();
+    $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
     $attendanceModel = new Attendance();
     $validationService = new \App\Services\AttendanceValidationService();

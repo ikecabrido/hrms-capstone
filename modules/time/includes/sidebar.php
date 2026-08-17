@@ -1,7 +1,7 @@
 <?php
 include_once __DIR__ . '/../../../auth/session.php';
-include_once __DIR__ . '/../classes/Employee.php';
-$employeeClass = new TimeTemplateEmployee();
+include __DIR__ . '/../classes/Employee.php';
+$employeeClass = new Employee();
 
 ?>
 
@@ -21,9 +21,9 @@ $employeeClass = new TimeTemplateEmployee();
                     <ul class="notif-list">
                         <li class="notif-item">
                         </li>
-                        <div class="dropdown-footer">
-                            <a href="#">View all notifications</a>
-                        </div>
+                    <div class="dropdown-footer">
+                        <a href="#">View all notifications</a>
+                    </div>
                 </div>
             </div>
 
@@ -51,7 +51,7 @@ $employeeClass = new TimeTemplateEmployee();
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="/hrms-capstone/auth/logout.php" class="signout-link">
+                            <a href="../../auth/logout.php" class="signout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                             </a>
                         </li>
@@ -61,12 +61,12 @@ $employeeClass = new TimeTemplateEmployee();
 
         </div>
     </div>
-    <div class="sidebar-header">
+        <div class="sidebar-header">
         <div class="user_avatar"><?= substr(htmlspecialchars($employeeClass->getEmployeeName()), 0, 1) ?></div>
         <h1 class="employee_name"><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></h1>
         <p class="employee_position"><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></p>
     </div>
-    <h2>Dashboard</h2>
+        <h2>Dashboard</h2>
     <ul>
         <?php $pageController->renderNav(); ?>
     </ul>

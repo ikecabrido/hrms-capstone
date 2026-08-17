@@ -4,7 +4,7 @@
  * Returns attendance records for a specific date
  */
 
-require_once __DIR__ . '/../../../../database/db.php';
+require_once __DIR__ . '/../../../../../database/db.php';
 require_once '../core/Session.php';
 
 // Verify session

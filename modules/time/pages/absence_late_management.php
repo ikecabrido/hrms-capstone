@@ -6,20 +6,14 @@
 
 require_once __DIR__ . '/../app/controllers/AuthController.php';
 require_once __DIR__ . '/../app/models/AbsenceLateMgmt.php';
-require_once __DIR__ . '/../app/models/Employee.php';
+require_once __DIR__ . '/../classes/Employee.php';
 require_once __DIR__ . '/../app/core/Session.php';
 
 Session::start();
 
-// Check authentication
-if (!AuthController::isAuthenticated()) {
-    header('Location: ' . dirname(__DIR__) . '/../../login_form.php');
-    exit;
-}
-
 $absenceLateMgmt = new AbsenceLateMgmt();
 $employeeModel = new Employee();
-$current_page = 'absence_late_management.php';
+$current_page = 'absence_late_management';
 $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
 
 // Get initial data
@@ -33,16 +27,14 @@ $filters = [
 $records = $absenceLateMgmt->getRecords($filters);
 $summaryStats = $absenceLateMgmt->getSummaryStats(['start_date' => $filters['start_date'], 'end_date' => $filters['end_date']]);
 ?>
-
-<?php $page_title = 'Absence & Late Management'; ?>
-<?php $page_head_extra = "<link rel=\"stylesheet\" href=\"assets/css/style.css\">\n<link rel=\"stylesheet\" href=\"assets/css/dashboard.css\">"; ?>
-<?php require_once __DIR__ . '/../layout/page_start.php'; ?>
-<?php require_once __DIR__ . '/../layout/sidebar.php'; ?>
-<?php $page_title = 'Absence & Late Management'; $page_subtitle = 'Manage absence and late records'; $page_icon = 'fa-calendar-times'; ?>
-<?php require_once __DIR__ . '/../layout/content_header.php'; ?>
-
+<link rel="stylesheet" href="assets/css/dashboard.css">
 <link rel="stylesheet" href="assets/css/absence-late-management.css">
-            <!-- Page Header -->
+
+    <div class="module-header">
+        <h1>Absence & Late Management</h1>
+    </div>
+
+    <div class="module-content">
             <div class="absence-late-container glass-panel">
 
                 <!-- Statistics -->
@@ -80,7 +72,7 @@ $summaryStats = $absenceLateMgmt->getSummaryStats(['start_date' => $filters['sta
                 <div class="filter-section glass-panel">
                     <input type="date" id="startDate" value="<?php echo $filters['start_date']; ?>" placeholder="Start Date">
                     <input type="date" id="endDate" value="<?php echo $filters['end_date']; ?>" placeholder="End Date">
-                    
+
                     <select id="typeFilter">
                         <option value="">All Types</option>
                         <option value="ABSENT" <?php echo $filters['type'] === 'ABSENT' ? 'selected' : ''; ?>>Absence</option>
@@ -153,7 +145,6 @@ $summaryStats = $absenceLateMgmt->getSummaryStats(['start_date' => $filters['sta
                     <?php endif; ?>
                 </div>
             </div>
-        </div>
     </div>
 
     <!-- View Record Modal -->
@@ -171,7 +162,3 @@ $summaryStats = $absenceLateMgmt->getSummaryStats(['start_date' => $filters['sta
     </div>
 
     <script src="assets/js/absence-late-management.js"></script>
-    <!-- Preloader Management Script -->
-
-<?php require_once __DIR__ . '/../layout/content_footer.php'; ?>
-<?php require_once __DIR__ . '/../layout/page_end.php'; ?>

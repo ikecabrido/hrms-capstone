@@ -4,7 +4,7 @@
  * Returns whether the employee should not work on that date
  */
 
-require_once(__DIR__ . '/../../../../database/db.php');
+require_once(__DIR__ . '/../../../../../database/db.php');
 
 header('Content-Type: application/json');
 

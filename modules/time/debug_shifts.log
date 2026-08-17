@@ -1,16 +1,62 @@
-2026-08-11 06:34:32 [DIAG] 1 First line of PHP execution
-2026-08-11 06:34:32 [DIAG] 2 After Session::start
-2026-08-11 06:34:32 [DIAG] 3 After AuthController::isAuthenticated isAuthenticated=1
-2026-08-12 05:52:25 [DIAG] 12 Before page_start.php
-2026-08-12 05:52:25 [DIAG] 13 After page_start.php
-2026-08-12 05:52:25 [DIAG] 14 Before main Shift Management HTML
-2026-08-12 05:52:29 [DIAG] 12 Before page_start.php
-2026-08-12 05:52:29 [DIAG] 13 After page_start.php
-2026-08-12 05:52:29 [DIAG] 14 Before main Shift Management HTML
-2026-08-12 06:22:15 [DIAG] 12 Before page_start.php
-2026-08-12 06:22:15 [DIAG] 13 After page_start.php
-2026-08-12 06:22:15 [DIAG] 14 Before main Shift Management HTML
-2026-08-13 09:07:51 [DIAG] 12 Before page_start.php
-2026-08-13 09:12:31 [DIAG] 12 Before page_start.php
-2026-08-13 09:12:48 [DIAG] 12 Before page_start.php
-2026-08-13 19:39:16 [DIAG] 12 Before page_start.php
+2026-08-15 11:31:23 [DIAG] ShiftController::__construct start
+2026-08-15 11:31:24 [DIAG] ShiftController::__construct end
+2026-08-15 11:39:33 [DIAG] ShiftController::__construct start
+2026-08-15 11:39:33 [DIAG] ShiftController::__construct end
+2026-08-15 11:39:35 [DIAG] ShiftController::__construct start
+2026-08-15 11:39:35 [DIAG] ShiftController::__construct end
+2026-08-15 11:40:35 [DIAG] ShiftController::__construct start
+2026-08-15 11:40:35 [DIAG] ShiftController::__construct end
+2026-08-15 11:40:39 [DIAG] ShiftController::__construct start
+2026-08-15 11:40:39 [DIAG] ShiftController::__construct end
+2026-08-15 13:48:13 [DIAG] ShiftController::__construct start
+2026-08-15 13:48:14 [DIAG] ShiftController::__construct end
+2026-08-15 13:54:43 [DIAG] ShiftController::__construct start
+2026-08-15 13:54:43 [DIAG] ShiftController::__construct end
+2026-08-15 13:56:08 [DIAG] ShiftController::__construct start
+2026-08-15 13:56:08 [DIAG] ShiftController::__construct end
+2026-08-16 09:08:00 [DIAG] ShiftController::__construct start
+2026-08-16 09:08:00 [DIAG] ShiftController::__construct end
+2026-08-16 09:08:37 [DIAG] ShiftController::__construct start
+2026-08-16 09:08:37 [DIAG] ShiftController::__construct end
+2026-08-16 09:08:43 [DIAG] ShiftController::__construct start
+2026-08-16 09:08:43 [DIAG] ShiftController::__construct end
+2026-08-16 14:47:58 [DIAG] ShiftController::__construct start
+2026-08-16 14:47:58 [DIAG] ShiftController::__construct end
+2026-08-16 14:48:45 [DIAG] ShiftController::__construct start
+2026-08-16 14:48:45 [DIAG] ShiftController::__construct end
+2026-08-16 15:19:50 [DIAG] ShiftController::__construct start
+2026-08-16 15:19:50 [DIAG] ShiftController::__construct end
+2026-08-16 15:20:39 [DIAG] ShiftController::__construct start
+2026-08-16 15:20:39 [DIAG] ShiftController::__construct end
+2026-08-16 15:24:08 [DIAG] ShiftController::__construct start
+2026-08-16 15:24:08 [DIAG] ShiftController::__construct end
+2026-08-16 15:24:21 [DIAG] ShiftController::__construct start
+2026-08-16 15:24:21 [DIAG] ShiftController::__construct end
+2026-08-16 15:25:13 [DIAG] ShiftController::__construct start
+2026-08-16 15:25:13 [DIAG] ShiftController::__construct end
+2026-08-16 15:25:31 [DIAG] ShiftController::__construct start
+2026-08-16 15:25:31 [DIAG] ShiftController::__construct end
+2026-08-16 15:25:49 [DIAG] ShiftController::__construct start
+2026-08-16 15:25:49 [DIAG] ShiftController::__construct end
+2026-08-16 15:26:44 [DIAG] ShiftController::__construct start
+2026-08-16 15:26:44 [DIAG] ShiftController::__construct end
+2026-08-16 15:26:51 [DIAG] ShiftController::__construct start
+2026-08-16 15:26:51 [DIAG] ShiftController::__construct end
+2026-08-16 15:29:19 [DIAG] ShiftController::__construct start
+2026-08-16 15:29:19 [DIAG] ShiftController::__construct end
+2026-08-16 15:32:13 [DIAG] ShiftController::__construct start
+2026-08-16 15:32:13 [DIAG] ShiftController::__construct end
+2026-08-16 15:32:51 [DIAG] ShiftController::__construct start
+2026-08-16 15:32:51 [DIAG] ShiftController::__construct end
+2026-08-16 15:32:58 [DIAG] ShiftController::__construct start
+2026-08-16 15:32:58 [DIAG] ShiftController::__construct end
+2026-08-16 15:33:03 [DIAG] ShiftController::__construct start
+2026-08-16 15:33:03 [DIAG] ShiftController::__construct end
+2026-08-16 15:35:31 [DIAG] ShiftController::__construct start
+2026-08-16 15:35:31 [DIAG] ShiftController::__construct end
+2026-08-16 15:36:00 [DIAG] ShiftController::__construct start
+2026-08-16 15:36:00 [DIAG] ShiftController::__construct end
+2026-08-16 15:39:24 [DIAG] ShiftController::__construct start
+2026-08-16 15:39:24 [DIAG] ShiftController::__construct end
+2026-08-16 16:07:18 [DIAG] ShiftController::__construct start
+2026-08-16 16:07:18 [DIAG] ShiftController::__construct end

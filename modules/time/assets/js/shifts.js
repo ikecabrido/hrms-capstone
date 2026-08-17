@@ -1,4 +1,4 @@
-
+            
             // Shared helpers available early in the page.
             if (typeof window.safeLower !== 'function') {
                 window.safeLower = function(value) {
@@ -41,7 +41,6 @@
                 }
             }
 
-            let fixedScheduleEmployees = [];
             let filteredFixedScheduleEmployees = [];
 
             function showToast(message, type) {
@@ -56,6 +55,37 @@
                     setTimeout(function() { toast.remove(); }, 250);
                 }, 3500);
             }
+
+            function initShiftManagement() {
+                            console.log('[TA INIT] initShiftManagement');
+
+                setupEmployeeSearch();
+
+                if (typeof loadEmployees === 'function') {
+                    loadEmployees();
+                }
+
+                if (typeof loadShiftTemplates === 'function') {
+                    loadShiftTemplates();
+                }
+
+                if (typeof loadAssignments === 'function') {
+                    loadAssignments();
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                initShiftManagement();
+            });
+
+// Expose idempotent page-level initializer for AJAX navigation
+function initShiftsPage() {
+    if (initShiftsPage._inited) return;
+    initShiftsPage._inited = true;
+    console.log('[TA INIT] Shifts initialized');
+    // call existing init flow
+    try { initShiftManagement(); } catch (e) { console.error('initShiftsPage error', e); }
+}
 
             function submitGenerateFixed() {
                 const employeeId = document.getElementById('gf_employee_id').value;
@@ -263,7 +293,7 @@
                 }
 
                 const weekRange = getCurrentWeekRange();
-                fetch(`../app/api/get_employee_schedule.php?employee_id=${encodeURIComponent(id)}&start_date=${encodeURIComponent(weekRange.start)}&end_date=${encodeURIComponent(weekRange.end)}`)
+                fetch(`/hrms/hrms-capstone/modules/time/app/api/shifts/get_employee_schedule.php?employee_id=${encodeURIComponent(id)}&start_date=${encodeURIComponent(weekRange.start)}&end_date=${encodeURIComponent(weekRange.end)}`)
                     .then(r => r.text())
                     .then(text => {
                         let data;
@@ -442,7 +472,8 @@
 
         // Load employees when modal opens
         function loadEmployeeList() {
-            fetch('../app/api/get_employees_for_shift.php')
+            const empApiUrl = (window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : '/hrms/hrms-capstone/modules/time/app/api')) + '/shifts/get_employees_for_shift.php';
+            fetch(empApiUrl)
                 .then(response => response.text())
                 .then(text => {
                     let data;
@@ -1522,7 +1553,7 @@
 
         // Load existing shift templates into templates table
         function loadShiftTemplates() {
-            fetch('../app/api/shifts/get_templates.php')
+            fetch('/hrms/hrms-capstone/modules/time/app/api/shifts/get_templates.php')
                 .then(r => r.text())
                 .then(text => {
                     let data;
@@ -1550,7 +1581,7 @@
         }
 
         function viewTemplate(shiftId) {
-            fetch('../app/api/shifts/get_template_detail.php?shift_id=' + encodeURIComponent(shiftId))
+            fetch('/hrms/hrms-capstone/modules/time/app/api/shifts/get_template_detail.php?shift_id=' + encodeURIComponent(shiftId))
                 .then(r => r.text())
                 .then(text => {
                     let data; try { data = JSON.parse(text); } catch (err) { console.error('get_template_detail non-json', text); return; }
@@ -1717,6 +1748,113 @@
             assignmentMode = 'create';
             openModal('assignmentModal');
         }
+
+        function setupEmployeeSearch() {
+            const input = document.getElementById('gf_employee_search');
+            const dropdown = document.getElementById('gf_employee_dropdown');
+
+            if (!input || !dropdown) return;
+
+            input.addEventListener('input', function () {
+                const search = this.value.trim().toLowerCase();
+
+                // Nothing typed
+                if (!search) {
+                    dropdown.style.display = 'none';
+                    dropdown.innerHTML = '';
+                    return;
+                }
+
+                const matches = fixedScheduleEmployees.filter(employee => {
+                    const name = `${employee.first_name || ''} ${employee.last_name || ''}`.toLowerCase();
+                    const code = (employee.employee_code || '').toLowerCase();
+
+                    return name.includes(search) || code.includes(search);
+                });
+
+                dropdown.innerHTML = '';
+
+                if (matches.length === 0) {
+                    dropdown.innerHTML = `
+                        <div style="padding: 12px; color: #777;">
+                            No employees found
+                        </div>
+                    `;
+                    dropdown.style.display = 'block';
+                    return;
+                }
+
+                matches.forEach(employee => {
+                    const item = document.createElement('div');
+
+                    item.style.padding = '10px 12px';
+                    item.style.cursor = 'pointer';
+                    item.style.borderBottom = '1px solid #eee';
+
+                    const fullName =
+                        `${employee.first_name || ''} ${employee.middle_name || ''} ${employee.last_name || ''}`
+                        .replace(/\s+/g, ' ')
+                        .trim();
+
+                    item.innerHTML = `
+                        <strong>${escapeHtml(fullName)}</strong>
+                        <br>
+                        <small style="color:#777;">
+                            ${escapeHtml(employee.employee_code || '')}
+                        </small>
+                    `;
+
+                    item.addEventListener('click', function () {
+                        selectFixedScheduleEmployee(employee);
+                    });
+
+                    item.addEventListener('mouseenter', function () {
+                        item.style.background = '#f5f7fa';
+                    });
+
+                    item.addEventListener('mouseleave', function () {
+                        item.style.background = 'white';
+                    });
+
+                    dropdown.appendChild(item);
+                });
+
+                dropdown.style.display = 'block';
+            });
+        }
+
+            function selectFixedScheduleEmployee(employee) {
+                const input = document.getElementById('gf_employee_search');
+                const employeeId = document.getElementById('gf_employee_id');
+                const display = document.getElementById('gf_selected_employee_display');
+                const dropdown = document.getElementById('gf_employee_dropdown');
+
+                const fullName =
+                    `${employee.first_name || ''} ${employee.middle_name || ''} ${employee.last_name || ''}`
+                    .replace(/\s+/g, ' ')
+                    .trim();
+
+                input.value = fullName;
+
+                employeeId.value = employee.employee_id;
+
+                display.innerHTML = `
+                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                    Selected: ${escapeHtml(fullName)}
+                `;
+
+                dropdown.style.display = 'none';
+            }
+
+            function escapeHtml(value) {
+                const div = document.createElement('div');
+                div.textContent = value ?? '';
+                return div.innerHTML;
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                setupEmployeeSearch();
+            });
 
         function openMultipleAssignForTemplate(shiftId) {
             // preselect the shift in assignment modal and show only unassigned employees

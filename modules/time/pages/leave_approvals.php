@@ -7,7 +7,7 @@
 require_once __DIR__ . '/../app/controllers/AuthController.php';
 require_once __DIR__ . '/../app/controllers/LeaveController.php';
 require_once __DIR__ . '/../app/models/Leave.php';
-require_once __DIR__ . '/../app/models/Employee.php';
+require_once __DIR__ . '/../classes/Employee.php';
 require_once __DIR__ . '/../app/helpers/Helper.php';
 require_once __DIR__ . '/../app/helpers/LeaveAbsenceHelper.php';
 require_once __DIR__ . '/../app/core/Session.php';
@@ -30,17 +30,6 @@ if (isset($_SESSION['user']) && is_array($_SESSION['user']) && isset($_SESSION['
     $authenticated = true;
     $role = AuthController::getCurrentRole();
     $user_id = AuthController::getCurrentUserId();
-}
-
-if (!$authenticated) {
-    header('Location: ' . dirname(__DIR__) . '/../../login_form.php');
-    exit;
-}
-
-// Only the time module approver roles can access this page
-if (!in_array($role, ['time', 'HR_ADMIN', 'DEPARTMENT_HEAD'], true)) {
-    header('Location: ' . dirname(__DIR__) . '/../../employee_dashboard.php');
-    exit;
 }
 
 $leaveModel = new Leave();
@@ -101,7 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = trim($_POST['action'] ?? '');
     $leave_request_id = (int)($_POST['leave_request_id'] ?? 0);
     $remarks = Helper::sanitize($_POST['remarks'] ?? '');
-    $is_hr = in_array($role, ['time', 'HR_ADMIN'], true);
+    $is_hr = in_array($role, ['admin', 'hr'], true);
     $is_department_head = $role === 'DEPARTMENT_HEAD';
     $submittedEmployeePageSize = max(5, min(50, (int)($_POST['employee_page_size'] ?? $recordsPerPage)));
     $submittedEmployeeSearch = trim($_POST['employee_search'] ?? $employeeSearch);
@@ -114,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($result['success']) {
             $_SESSION['flash_message'] = "Leave request approved successfully!";
             $_SESSION['flash_type'] = "success";
-            header("Location: " . $_SERVER['PHP_SELF'] . "?employee_page={$employeePage}&leave_page={$leavePage}&employee_page_size={$submittedEmployeePageSize}&employee_search=" . urlencode($submittedEmployeeSearch));
+            header("Location: " . $_SERVER['PHP_SELF'] . "?page=leave_approvals&employee_page={$employeePage}&leave_page={$leavePage}&employee_page_size={$submittedEmployeePageSize}&employee_search=" . urlencode($submittedEmployeeSearch));
             exit;
         }
 
@@ -129,7 +118,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             if ($result['success']) {
                 $_SESSION['flash_message'] = "Leave request rejected.";
                 $_SESSION['flash_type'] = "warning";
-                header("Location: " . $_SERVER['PHP_SELF'] . "?employee_page={$employeePage}&leave_page={$leavePage}&employee_page_size={$submittedEmployeePageSize}&employee_search=" . urlencode($submittedEmployeeSearch));
+                header("Location: " . $_SERVER['PHP_SELF'] . "?page=leave_approvals&employee_page={$employeePage}&leave_page={$leavePage}&employee_page_size={$submittedEmployeePageSize}&employee_search=" . urlencode($submittedEmployeeSearch));
                 exit;
             }
             $message = $result['message'] ?? 'Failed to process rejection.';
@@ -138,21 +127,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-
-$current_page = 'leave_approvals.php';
+$current_page = 'leave_approvals';
 $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
-$page_title = 'Leave Management';
-$page_subtitle = 'Review requests and view employee leave balances in one place';
-$page_icon = 'fa-file-signature';
-$page_head_extra = "<link rel=\"icon\" href=\"assets/images/Bestlink College of the Philippines.jpeg\" type=\"image/jpeg\">\n<link rel=\"stylesheet\" href=\"assets/css/style.css\">\n<link rel=\"stylesheet\" href=\"assets/css/dashboard.css\">\n<link rel=\"stylesheet\" href=\"assets/css/hr-template.css\">\n<link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback\">\n<script src=\"assets/js/mobile-responsive.js\" defer></script>";
 ?>
-
-<?php require_once __DIR__ . '/../layout/page_start.php'; ?>
-<?php require_once __DIR__ . '/../layout/sidebar.php'; ?>
-<?php require_once __DIR__ . '/../layout/content_header.php'; ?>
-
+<link rel="stylesheet" href="assets/css/dashboard.css">
+<link rel="stylesheet" href="assets/css/hr-template.css">
 <link rel="stylesheet" href="assets/css/leave-approvals.css">
+<script src="assets/js/mobile-responsive.js" defer></script>
 
+    <div class="module-header">
+        <h1>Leave Management</h1>
+    </div>
+
+    <div class="module-content">
     <div class="card shadow-sm border-0">
         <?php if (!empty($message)): ?>
             <div class="card-body pb-0">
@@ -169,11 +156,12 @@ $page_head_extra = "<link rel=\"icon\" href=\"assets/images/Bestlink College of 
             </div>
             <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap" style="gap: 10px;">
                 <form method="GET" class="d-flex flex-wrap" style="gap: 10px; align-items: center; margin: 0;">
+                    <input type="hidden" name="page" value="leave_approvals">
                     <input type="hidden" name="leave_page" value="<?php echo $leavePage; ?>">
                     <input type="hidden" name="employee_page_size" value="<?php echo $recordsPerPage; ?>">
                     <input type="text" name="employee_search" class="form-control" placeholder="Search employees..." value="<?php echo htmlspecialchars($employeeSearch); ?>" style="min-width:240px;">
                     <button type="submit" class="action-btn btn-approve" style="padding: 10px 18px;">Search</button>
-                    <a href="leave_approvals.php?employee_page_size=<?php echo $recordsPerPage; ?>&leave_page=<?php echo $leavePage; ?>&employee_search=" class="action-btn" style="background: #ffffff; color: #0066cc; padding: 10px 18px; border: 1px solid #cce4ff;">Clear</a>
+                    <a href="?page=leave_approvals&employee_page_size=<?php echo $recordsPerPage; ?>&leave_page=<?php echo $leavePage; ?>&employee_search=" class="action-btn" style="background: #ffffff; color: #0066cc; padding: 10px 18px; border: 1px solid #cce4ff;">Clear</a>
                 </form>
                 <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
                     <label for="employeePageSize" style="margin:0; font-weight:600;">Page size:</label>
@@ -219,11 +207,11 @@ $page_head_extra = "<link rel=\"icon\" href=\"assets/images/Bestlink College of 
                 </div>
                 <div class="pagination mb-4">
                     <?php if ($employeePage > 1): ?>
-                        <a href="?employee_page=<?php echo $employeePage - 1; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">&laquo; Previous</a>
+                        <a href="?page=leave_approvals&employee_page=<?php echo $employeePage - 1; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">&laquo; Previous</a>
                     <?php endif; ?>
                     <span class="active">Employee Page <?php echo $employeePage; ?> of <?php echo $totalEmployeePages; ?></span>
                     <?php if ($employeePage < $totalEmployeePages): ?>
-                        <a href="?employee_page=<?php echo $employeePage + 1; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">Next &raquo;</a>
+                        <a href="?page=leave_approvals&employee_page=<?php echo $employeePage + 1; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">Next &raquo;</a>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
@@ -288,15 +276,16 @@ $page_head_extra = "<link rel=\"icon\" href=\"assets/images/Bestlink College of 
                 </div>
                 <div class="pagination">
                     <?php if ($leavePage > 1): ?>
-                        <a href="?leave_page=<?php echo $leavePage - 1; ?>&employee_page=<?php echo $employeePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">&laquo; Previous</a>
+                        <a href="?page=leave_approvals&leave_page=<?php echo $leavePage - 1; ?>&employee_page=<?php echo $employeePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">&laquo; Previous</a>
                     <?php endif; ?>
                     <span class="active">Leave Page <?php echo $leavePage; ?> of <?php echo $totalLeavePages; ?></span>
                     <?php if ($leavePage < $totalLeavePages): ?>
-                        <a href="?leave_page=<?php echo $leavePage + 1; ?>&employee_page=<?php echo $employeePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">Next &raquo;</a>
+                        <a href="?page=leave_approvals&leave_page=<?php echo $leavePage + 1; ?>&employee_page=<?php echo $employeePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">Next &raquo;</a>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
         </div>
+    </div>
     </div>
 
     <!-- Approve Modal -->
@@ -304,7 +293,7 @@ $page_head_extra = "<link rel=\"icon\" href=\"assets/images/Bestlink College of 
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('approveModal')">&times;</span>
             <h3>Approve Leave Request</h3>
-            <form id="approveForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>" method="POST">
+            <form id="approveForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>?page=leave_approvals" method="POST">
                 <input type="hidden" name="action" value="approve">
                 <input type="hidden" name="leave_request_id" id="approveRequestId">
                 <input type="hidden" name="employee_page" value="<?php echo $employeePage; ?>">
@@ -326,7 +315,7 @@ $page_head_extra = "<link rel=\"icon\" href=\"assets/images/Bestlink College of 
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('rejectModal')">&times;</span>
             <h3>Reject Leave Request</h3>
-            <form id="rejectForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>" method="POST">
+            <form id="rejectForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>?page=leave_approvals" method="POST">
                 <input type="hidden" name="action" value="reject">
                 <input type="hidden" name="leave_request_id" id="rejectRequestId">
                 <input type="hidden" name="employee_page" value="<?php echo $employeePage; ?>">
@@ -366,7 +355,3 @@ $page_head_extra = "<link rel=\"icon\" href=\"assets/images/Bestlink College of 
     };
 </script>
 <script src="assets/js/leave-approvals.js"></script>
-<?php require_once __DIR__ . '/../layout/content_footer.php'; ?>
-<?php require_once __DIR__ . '/../layout/page_end.php'; ?>
-
-

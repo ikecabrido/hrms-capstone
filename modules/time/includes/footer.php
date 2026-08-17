@@ -1,8 +1,9 @@
 <div>
     <footer>
-        <p>&copy; <?php echo date('Y'); ?> Human Resources Management System. All rights reserved.</p>
+        <p>&copy; <?php echo date('Y'); ?> School Management System. All rights reserved.</p>
     </footer>
 </div>
-    <script type="module" src="/hrms/hrms-capstone/modules/time/js/script.js"></script>
+    <script type="module" src="js/script.js"></script>
+    <?php if (!empty($page_footer_extra)) { echo $page_footer_extra; } ?>
 </body>
 </html>

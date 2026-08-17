@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require_once __DIR__ . '/../../../../database/db.php';
+require_once __DIR__ . '/../../core/TimeDatabase.php';
 
 try {
     $db = TimeDatabase::getInstance();
