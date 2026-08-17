@@ -16,6 +16,7 @@ use App\Controllers\PerformanceController;
 use App\Controllers\EmployeeUserController;
 use App\Controllers\AnnouncementController;
 use App\Controllers\NotificationController;
+use App\Controllers\ResetPasswordController;
 use App\Controllers\OnlineMeetingController;
 use App\Controllers\BenefitsAndGovernmentContributionController;
 
@@ -49,9 +50,9 @@ $routes = [
     'admin-logout' => [AuthController::class, 'adminLogout'],
 
     // Reset Password
-    'auth-forgot-password' => [AuthController::class, 'send'],
-    'auth-reset-password' => [AuthController::class, 'resetPassword'],
-    'auth-update-password' => [AuthController::class, 'updatePassword'],
+    'auth-forgot-password' => [ResetPasswordController::class, 'send'],
+    'auth-reset-password' => [ResetPasswordController::class, 'resetPassword'],
+    'auth-update-password' => [ResetPasswordController::class, 'updatePassword'],
 
     // Dashboard
     'employee-dashboard' => [PortalController::class, 'dashboard'],

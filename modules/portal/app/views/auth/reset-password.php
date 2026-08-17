@@ -1,165 +1,117 @@
-<div class="text-center mb-4">
+<div style="text-align:center;margin-bottom:24px;">
 
-    <div class="mb-3">
-        <i class="fas fa-lock fa-3x text-primary"></i>
+    <div
+        style="width:64px;height:64px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#eaf2ff;color:#0d6efd;font-size:25px;">
+        <i class="fas fa-lock"></i>
     </div>
 
-    <h4 class="font-weight-bold">
+    <h4 style="font-weight:700;font-size:22px;color:#222;margin:0 0 5px;">
         Reset Password
     </h4>
 
-    <p class="text-muted mb-0">
+    <p style="font-size:14px;color:#6c757d;margin:0;">
         Create a new password for your account.
     </p>
 
 </div>
 
-<form action="index.php?url=auth-update-password"
-    method="POST">
+<form action="index.php?url=auth-update-password" method="POST">
 
-    <!-- Reset token -->
-    <input
-        type="hidden"
-        name="token"
-        value="<?= htmlspecialchars($_GET['token'] ?? '') ?>">
+    <input type="hidden" name="token" value="<?= htmlspecialchars($_GET['token'] ?? '') ?>">
 
-    <!-- New Password -->
-    <div class="form-group">
+    <div style="margin-bottom:18px;">
 
-        <label for="password" class="font-weight-bold">
+        <label for="password" style="display:block;font-size:14px;font-weight:600;color:#212529;margin-bottom:7px;">
             New Password
         </label>
 
-        <div class="input-group">
+        <div style="display:flex;width:100%;height:46px;">
 
-            <div class="input-group-prepend">
-                <span class="input-group-text">
-                    <i class="fas fa-lock"></i>
-                </span>
-            </div>
+            <span
+                style="width:45px;min-width:45px;height:46px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border:1px solid #ced4da;border-right:0;border-radius:7px 0 0 7px;color:#6c757d;box-sizing:border-box;">
+                <i class="fas fa-lock"></i>
+            </span>
 
-            <input
-                type="password"
-                name="password"
-                id="password"
-                class="form-control"
-                placeholder="Enter new password"
-                minlength="8"
-                required>
+            <input type="password" name="password" id="password" placeholder="Enter new password" minlength="8" required
+                style="width:100%;height:46px;min-width:0;padding:0 12px;border:1px solid #ced4da;border-right:0;border-radius:0;outline:none;box-shadow:none;font-size:14px;box-sizing:border-box;">
 
-            <div class="input-group-append">
-                <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    onclick="togglePassword('password', 'passwordIcon')"
-                    tabindex="-1">
+            <button type="button" onclick="togglePassword('password','passwordIcon')" tabindex="-1"
+                style="width:48px;min-width:48px;height:46px;padding:0;border:1px solid #ced4da;border-radius:0 7px 7px 0;background:#fff;color:#6c757d;display:flex;align-items:center;justify-content:center;cursor:pointer;">
 
-                    <i id="passwordIcon" class="fas fa-eye"></i>
+                <i id="passwordIcon" class="fas fa-eye"></i>
 
-                </button>
-            </div>
+            </button>
 
         </div>
 
-        <small class="form-text text-muted">
-            Password must be at least 8 characters.
-        </small>
+        <div style="font-size:12px;color:#6c757d;margin-top:5px;">
+            Use at least 8 characters.
+        </div>
 
     </div>
 
-
-    <!-- Confirm Password -->
-    <div class="form-group">
+    <div style="margin-bottom:18px;">
 
         <label for="password_confirmation"
-            class="font-weight-bold">
+            style="display:block;font-size:14px;font-weight:600;color:#212529;margin-bottom:7px;">
             Confirm New Password
         </label>
 
-        <div class="input-group">
+        <div style="display:flex;width:100%;height:46px;">
 
-            <div class="input-group-prepend">
-                <span class="input-group-text">
-                    <i class="fas fa-lock"></i>
-                </span>
-            </div>
+            <span
+                style="width:45px;min-width:45px;height:46px;display:flex;align-items:center;justify-content:center;background:#f8f9fa;border:1px solid #ced4da;border-right:0;border-radius:7px 0 0 7px;color:#6c757d;box-sizing:border-box;">
+                <i class="fas fa-lock"></i>
+            </span>
 
-            <input
-                type="password"
-                name="password_confirmation"
-                id="password_confirmation"
-                class="form-control"
-                placeholder="Confirm new password"
-                minlength="8"
-                required>
+            <input type="password" name="password_confirmation" id="password_confirmation"
+                placeholder="Confirm new password" minlength="8" required
+                style="flex:1;width:100%;height:46px;min-width:0;padding:0 12px;border:1px solid #ced4da;border-right:0;border-radius:0;outline:none;box-shadow:none;font-size:14px;box-sizing:border-box;">
 
-            <div class="input-group-append">
-                <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    onclick="togglePassword(
-                        'password_confirmation',
-                        'confirmPasswordIcon'
-                    )"
-                    tabindex="-1">
+            <button type="button" onclick="toggleConfirmPassword()" tabindex="-1"
+                style="width:48px;min-width:48px;height:46px;padding:0;border:1px solid #ced4da;border-radius:0 7px 7px 0;background:#fff;color:#6c757d;display:flex;align-items:center;justify-content:center;cursor:pointer;">
 
-                    <i id="confirmPasswordIcon"
-                        class="fas fa-eye"></i>
+                <i id="confirmPasswordIcon" class="fas fa-eye"></i>
 
-                </button>
-            </div>
+            </button>
 
         </div>
 
     </div>
 
+    <button type="submit"
+        style="width:100%;height:46px;margin-top:8px;border:0;border-radius:10px;background:#0d6efd;color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;">
 
-    <!-- Submit -->
-    <button
-        type="submit"
-        class="btn btn-primary btn-block mt-4">
-
-        <i class="fas fa-key mr-1"></i>
+        <i class="fas fa-key" style="margin-right:8px;"></i>
         Reset Password
 
     </button>
 
 </form>
 
+<div style="text-align:center;margin-top:24px;">
 
-<div class="text-center mt-3">
+    <a href="index.php?url=auth-index" style="font-size:14px;color:#6c757d;text-decoration:none;">
 
-    <a href="index.php?url=auth-index"
-        class="text-muted">
-
-        <i class="fas fa-arrow-left mr-1"></i>
+        <i class="fas fa-arrow-left" style="margin-right:8px;"></i>
         Back to Login
 
     </a>
 
 </div>
-
-
 <script>
-    function togglePassword(inputId, iconId) {
+function toggleConfirmPassword() {
+    const input = document.getElementById('password_confirmation');
+    const icon = document.getElementById('confirmPasswordIcon');
 
-        const input = document.getElementById(inputId);
-        const icon = document.getElementById(iconId);
-
-        if (input.type === "password") {
-
-            input.type = "text";
-
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
-
-        } else {
-
-            input.type = "password";
-
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
-
-        }
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
     }
+}
 </script>
