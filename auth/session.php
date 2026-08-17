@@ -16,7 +16,7 @@ if (!isset($_SESSION['employee_id'])) {
         echo json_encode(['success' => false, 'message' => 'Unauthorized. Please log in.']);
         exit();
     }
-    header('Location: /index.php');
+    header('Location: hrms-capstone/index.php');
     exit();
 }
 
