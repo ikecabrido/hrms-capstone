@@ -254,7 +254,7 @@
                                                     <span class="text-xs font-medium text-slate-600
                                                            group-hover:text-blue-600 transition">
 
-                                                        Google Meet
+                                                        Join Meet
 
                                                     </span>
 

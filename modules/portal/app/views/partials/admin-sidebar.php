@@ -51,7 +51,7 @@
         <h3>Request Management</h3>
 
         <li>
-            <a href="?page=leave-requests" class="menu-link">
+            <a href="index.php?url=admin-leave-request" class="menu-link">
                 <i class="fa-regular fa-calendar"></i>
                 Leave Requests
             </a>

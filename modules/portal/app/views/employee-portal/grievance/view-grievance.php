@@ -1,7 +1,7 @@
 <?php foreach ($employeeGrievances as $grievance): ?>
 
     <?php
-    $grievanceId = (int)($grievance['eer_grievance_id'] ?? 0);
+    $grievanceId = (int) ($grievance['eer_grievance_id'] ?? 0);
     $status = strtolower($grievance['status'] ?? 'pending');
 
     $statusStyle = match ($status) {
@@ -14,34 +14,26 @@
     };
     ?>
 
-    <div class="modal fade"
-        id="viewEmployeeGrievanceModal<?= $grievanceId ?>"
-        tabindex="-1"
-        aria-labelledby="viewEmployeeGrievanceModalLabel<?= $grievanceId ?>"
-        aria-hidden="true">
+    <div class="modal fade" id="viewEmployeeGrievanceModal<?= $grievanceId ?>" tabindex="-1"
+        aria-labelledby="viewEmployeeGrievanceModalLabel<?= $grievanceId ?>" aria-hidden="true">
 
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"
-            style="max-width:760px;">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" style="max-width:760px;">
 
-            <div class="modal-content"
-                style="
+            <div class="modal-content" style="
                     border:0;
                     border-radius:16px;
                     overflow:hidden;
                     box-shadow:0 20px 50px rgba(0,0,0,.15);
                 ">
 
-                <div class="modal-header"
-                    style="
+                <div class="modal-header" style="
                         padding:20px 24px;
                         border-bottom:1px solid #eef2f7;
                         background:#fff;
                     ">
 
                     <div>
-                        <h5
-                            id="viewEmployeeGrievanceModalLabel<?= $grievanceId ?>"
-                            style="
+                        <h5 id="viewEmployeeGrievanceModalLabel<?= $grievanceId ?>" style="
                                 margin:0;
                                 color:#111827;
                                 font-size:16px;
@@ -65,16 +57,12 @@
                         </div>
                     </div>
 
-                    <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                     </button>
 
                 </div>
 
-                <div class="modal-body"
-                    style="
+                <div class="modal-body" style="
                         padding:24px;
                         background:#fff;
                     ">
@@ -163,42 +151,25 @@
                             </div>
 
                             <div style="
-                                padding:12px 14px;
-                                border:1px solid #f1f5f9;
-                                border-radius:9px;
-                                background:#fafafa;
-                            ">
+    padding:12px 14px;
+    border:1px solid #f1f5f9;
+    border-radius:9px;
+    background:#fafafa;
+">
                                 <div style="color:#9ca3af;font-size:9px;">
-                                    Incident Date
+                                    Submitted Date
                                 </div>
 
                                 <div style="
-                                    margin-top:4px;
-                                    color:#374151;
-                                    font-size:11px;
-                                    font-weight:600;
-                                ">
-                                    <?= htmlspecialchars($grievance['incident_date'] ?? '—') ?>
-                                </div>
-                            </div>
-
-                            <div style="
-                                padding:12px 14px;
-                                border:1px solid #f1f5f9;
-                                border-radius:9px;
-                                background:#fafafa;
-                            ">
-                                <div style="color:#9ca3af;font-size:9px;">
-                                    Location
-                                </div>
-
-                                <div style="
-                                    margin-top:4px;
-                                    color:#374151;
-                                    font-size:11px;
-                                    font-weight:600;
-                                ">
-                                    <?= htmlspecialchars($grievance['location'] ?? '—') ?>
+        margin-top:4px;
+        color:#374151;
+        font-size:11px;
+        font-weight:600;
+    ">
+                                    <?= !empty($grievance['created_at'])
+                                        ? date('M d, Y • h:i A', strtotime($grievance['created_at']))
+                                        : '—'
+                                        ?>
                                 </div>
                             </div>
 
@@ -282,7 +253,7 @@
                             <?= !empty($grievance['description'])
                                 ? htmlspecialchars($grievance['description'])
                                 : 'No description provided.'
-                            ?>
+                                ?>
                         </div>
 
                     </div>
@@ -416,14 +387,13 @@
                                 Attachment
                             </div>
 
-                            <a href="<?= htmlspecialchars($grievance['attachment_path']) ?>"
-                                target="_blank"
-                                style="
-                                    color:#2563eb;
-                                    font-size:10px;
-                                    font-weight:600;
-                                    text-decoration:none;
-                                ">
+                            <a href="<?= htmlspecialchars('/hrms-capstone/modules/portal/public/assets/' . $grievance['attachment_path']) ?>"
+                                target="_blank" rel="noopener noreferrer" style="
+       color:#2563eb;
+       font-size:10px;
+       font-weight:600;
+       text-decoration:none;
+   ">
                                 <i class="fas fa-paperclip"></i>
                                 View Attachment
                             </a>
@@ -434,16 +404,13 @@
 
                 </div>
 
-                <div class="modal-footer"
-                    style="
+                <div class="modal-footer" style="
                         padding:14px 24px;
                         border-top:1px solid #eef2f7;
                         background:#fff;
                     ">
 
-                    <button type="button"
-                        data-bs-dismiss="modal"
-                        style="
+                    <button type="button" data-bs-dismiss="modal" style="
                             padding:9px 16px;
                             border:1px solid #d1d5db;
                             border-radius:8px;

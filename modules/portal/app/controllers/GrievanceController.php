@@ -49,28 +49,20 @@ class GrievanceController
             $description = trim($_POST['description'] ?? '');
             $subject = trim($_POST['subject'] ?? '');
 
-            if (empty($category)) {
+            if (!$category) {
                 throw new Exception('Grievance category is required.');
             }
 
-            if (empty($description)) {
+            if (!$description) {
                 throw new Exception('Grievance description is required.');
             }
 
-            if (empty($subject)) {
+            if (!$subject) {
                 $subject = 'Other Workplace Concern';
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | Anonymous / Confidential
-            |--------------------------------------------------------------------------
-            */
-
             $anonymous = isset($_POST['anonymous']) ? 1 : 0;
             $confidential = isset($_POST['confidential']) ? 1 : 0;
-
 
             /*
             |--------------------------------------------------------------------------
@@ -110,23 +102,21 @@ class GrievanceController
                     );
                 }
 
-                // 5 MB maximum
                 if ($fileSize > 5 * 1024 * 1024) {
                     throw new Exception(
                         'Attachment must not exceed 5 MB.'
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Upload Directory
+                | Correct Upload Directory
                 |--------------------------------------------------------------------------
                 */
 
                 $uploadDirectory =
-                    __DIR__ .
-                    '/../public/assets/uploads/grievance/';
+                    dirname(__DIR__, 2) .
+                    '/public/assets/uploads/grievance/';
 
                 if (!is_dir($uploadDirectory)) {
                     if (!mkdir($uploadDirectory, 0755, true)) {
@@ -136,10 +126,9 @@ class GrievanceController
                     }
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Generate Safe Filename
+                | Generate Filename
                 |--------------------------------------------------------------------------
                 */
 
@@ -153,17 +142,15 @@ class GrievanceController
                     $uploadDirectory .
                     $newFileName;
 
-
                 if (!move_uploaded_file($tmpName, $destination)) {
                     throw new Exception(
                         'Unable to save attachment.'
                     );
                 }
 
-
                 /*
                 |--------------------------------------------------------------------------
-                | Path stored in database
+                | Database Path
                 |--------------------------------------------------------------------------
                 */
 
@@ -171,7 +158,6 @@ class GrievanceController
                     'uploads/grievance/' .
                     $newFileName;
             }
-
 
             /*
             |--------------------------------------------------------------------------
@@ -181,30 +167,20 @@ class GrievanceController
 
             $data = [
                 'employee_id' => $employee['id'],
-
                 'subject' => $subject,
-
                 'description' => $description,
-
                 'status' => 'pending',
-
                 'priority' => 'low',
-
                 'category' => $category,
-
                 'anonymous' => $anonymous,
-
                 'attachment_path' => $attachmentPath,
-
                 'confidential' => $confidential,
-
                 'created_by_user_id' => $userId
             ];
 
-
             /*
             |--------------------------------------------------------------------------
-            | Create Grievance
+            | Save Grievance
             |--------------------------------------------------------------------------
             */
 
@@ -212,12 +188,11 @@ class GrievanceController
 
             if (!$success) {
 
-                // Remove uploaded file if database insert fails
                 if ($attachmentPath) {
 
                     $uploadedFile =
-                        __DIR__ .
-                        '/../public/assets/' .
+                        dirname(__DIR__, 2) .
+                        '/public/assets/' .
                         $attachmentPath;
 
                     if (file_exists($uploadedFile)) {
@@ -230,32 +205,28 @@ class GrievanceController
                 );
             }
 
-
             $_SESSION['success'] =
                 'Your grievance has been submitted successfully.';
 
-            header(
-                'Location: index.php?url=grievance'
-            );
-
+            header('Location: index.php?url=grievance');
             exit;
 
         } catch (\Throwable $e) {
 
-    error_log(
-        'Grievance submission error: ' .
-        $e->getMessage() .
-        ' | File: ' .
-        $e->getFile() .
-        ' | Line: ' .
-        $e->getLine()
-    );
+            error_log(
+                'Grievance submission error: ' .
+                $e->getMessage() .
+                ' | File: ' .
+                $e->getFile() .
+                ' | Line: ' .
+                $e->getLine()
+            );
 
-    $_SESSION['error'] =
-        'Grievance Error: ' . $e->getMessage();
+            $_SESSION['error'] =
+                'Grievance Error: ' . $e->getMessage();
 
-    header('Location: index.php?url=grievance');
-    exit;
-}
+            header('Location: index.php?url=grievance');
+            exit;
+        }
     }
 }

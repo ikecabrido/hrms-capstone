@@ -63,7 +63,10 @@ $routes = [
 
     // Leave Request
     'leave-request' => [LeaveController::class, 'index'],
+    'admin-leave-request' => [LeaveController::class, 'adminIndex'],
     'leave-store' => [LeaveController::class, 'store'],
+    'leave-cancel' => [LeaveController::class, 'cancel'],
+    'leave-reject' => [LeaveController::class, 'reject'],
 
     // Payroll
     'payroll' => [PayrollController::class, 'index'],

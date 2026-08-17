@@ -162,7 +162,7 @@
 
                                     $meetingLink = $meeting['meeting_link'] ?? '';
 
-                                    $platform = 'Google Meet';
+                                    $platform = 'Join Meet';
                                     $platformIcon = 'fa-video';
                                     $platformClass = 'bg-blue-50 text-blue-600';
                                     ?>

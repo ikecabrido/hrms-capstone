@@ -28,3 +28,20 @@ MAIL_PASSWORD=swus-------fcwaqoljvdyb
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=itoayakingpangalan-------@gmail.com
 MAIL_FROM_NAME="HR Employee Portal"
+
+
+
+} catch (\Throwable $e) {
+
+    error_log(
+        "LEAVE REQUEST ERROR\n" .
+        "Message: " . $e->getMessage() . "\n" .
+        "File: " . $e->getFile() . "\n" .
+        "Line: " . $e->getLine() . "\n" .
+        "Trace:\n" . $e->getTraceAsString() . "\n" .
+        "POST: " . print_r($_POST, true) . "\n" .
+        "FILES: " . print_r($_FILES, true)
+    );
+
+    $_SESSION['error'] = $e->getMessage();
+}
