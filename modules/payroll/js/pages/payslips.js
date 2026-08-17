@@ -145,21 +145,235 @@ function initPayslips() {
     return data;
   }
 
+  function createCombobox({
+    inputEl,
+    hiddenEl,
+    optionsEl,
+    clearBtn,
+    getId,
+    getLabel,
+    getSubLabel,
+    matchFn,
+  }) {
+    let data = [];
+    let filtered = [];
+    let highlightedIndex = -1;
+
+    function setData(items) {
+      data = items || [];
+    }
+
+    function defaultMatch(item, q) {
+      const hay = (
+        getLabel(item) +
+        " " +
+        (getSubLabel ? getSubLabel(item) : "")
+      ).toLowerCase();
+      return hay.includes(q);
+    }
+
+    function updateClearButton() {
+      clearBtn.classList.toggle(
+        "ps-combobox-clear-visible",
+        hiddenEl.value !== "",
+      );
+    }
+
+    function updateHighlight() {
+      const items = optionsEl.querySelectorAll(".ps-combobox-option");
+      items.forEach(function (el, idx) {
+        el.classList.toggle(
+          "ps-combobox-highlighted",
+          idx === highlightedIndex,
+        );
+      });
+      if (items[highlightedIndex]) {
+        items[highlightedIndex].scrollIntoView({ block: "nearest" });
+      }
+    }
+
+    function renderOptions(list) {
+      filtered = list;
+      if (list.length === 0) {
+        optionsEl.innerHTML =
+          '<div class="ps-combobox-empty">No matches found</div>';
+        highlightedIndex = -1;
+        return;
+      }
+      optionsEl.innerHTML = list
+        .map(function (item, idx) {
+          const sub = getSubLabel ? getSubLabel(item) : "";
+          return `<div class="ps-combobox-option" role="option" data-index="${idx}">
+                    <span class="ps-combobox-option-label">${esc(getLabel(item))}</span>
+                    ${sub ? `<span class="ps-combobox-option-sub">${esc(sub)}</span>` : ""}
+                  </div>`;
+        })
+        .join("");
+      highlightedIndex = 0;
+      updateHighlight();
+    }
+
+    function openDropdown() {
+      optionsEl.classList.add("ps-combobox-open");
+      inputEl.setAttribute("aria-expanded", "true");
+    }
+
+    function closeDropdown() {
+      optionsEl.classList.remove("ps-combobox-open");
+      inputEl.setAttribute("aria-expanded", "false");
+      highlightedIndex = -1;
+    }
+
+    function filterAndShow(query) {
+      const q = query.trim().toLowerCase();
+      const test = matchFn || defaultMatch;
+      const list =
+        q === ""
+          ? data
+          : data.filter(function (item) {
+              return test(item, q);
+            });
+      renderOptions(list);
+      openDropdown();
+    }
+
+    function selectItem(item) {
+      hiddenEl.value = getId(item);
+      inputEl.value = getLabel(item);
+      updateClearButton();
+      closeDropdown();
+    }
+
+    function clearSelection() {
+      hiddenEl.value = "";
+      inputEl.value = "";
+      updateClearButton();
+      closeDropdown();
+    }
+
+    inputEl.addEventListener("focus", function () {
+      filterAndShow("");
+      inputEl.select();
+    });
+
+    inputEl.addEventListener("input", function () {
+      if (inputEl.value === "") hiddenEl.value = "";
+      updateClearButton();
+      filterAndShow(inputEl.value);
+    });
+
+    inputEl.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (!filtered.length) return;
+        highlightedIndex = Math.min(highlightedIndex + 1, filtered.length - 1);
+        updateHighlight();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (!filtered.length) return;
+        highlightedIndex = Math.max(highlightedIndex - 1, 0);
+        updateHighlight();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (highlightedIndex >= 0 && filtered[highlightedIndex]) {
+          selectItem(filtered[highlightedIndex]);
+        }
+      } else if (e.key === "Escape") {
+        closeDropdown();
+      }
+    });
+
+    // mousedown (not click) fires before the input's blur, so selecting an
+    // option registers before the input loses focus and snaps back.
+    optionsEl.addEventListener("mousedown", function (e) {
+      const optEl = e.target.closest(".ps-combobox-option");
+      if (!optEl) return;
+      e.preventDefault();
+      const item = filtered[Number(optEl.getAttribute("data-index"))];
+      if (item) selectItem(item);
+    });
+
+    inputEl.addEventListener("blur", function () {
+      window.setTimeout(function () {
+        if (hiddenEl.value) {
+          const selected = data.find(function (item) {
+            return String(getId(item)) === String(hiddenEl.value);
+          });
+          inputEl.value = selected ? getLabel(selected) : "";
+        } else {
+          inputEl.value = "";
+        }
+        closeDropdown();
+      }, 120);
+    });
+
+    clearBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      clearSelection();
+      inputEl.focus();
+    });
+
+    document.addEventListener("click", function (e) {
+      const combobox = inputEl.closest(".ps-combobox");
+      if (combobox && !combobox.contains(e.target)) closeDropdown();
+    });
+
+    return { setData, clearSelection };
+  }
+
+  const periodCombobox = createCombobox({
+    inputEl: document.getElementById("psPeriodSearchInput"),
+    hiddenEl: periodFilter,
+    optionsEl: document.getElementById("psPeriodOptions"),
+    clearBtn: document.getElementById("psPeriodClearBtn"),
+    getId: function (p) {
+      return p.period_id;
+    },
+    getLabel: function (p) {
+      return p.period_name;
+    },
+    getSubLabel: function (p) {
+      return `${formatDate(p.start_date)} – ${formatDate(p.end_date)}`;
+    },
+  });
+
+  const employeeCombobox = createCombobox({
+    inputEl: document.getElementById("psEmployeeSearchInput"),
+    hiddenEl: employeeFilter,
+    optionsEl: document.getElementById("psEmployeeOptions"),
+    clearBtn: document.getElementById("psEmployeeClearBtn"),
+    getId: function (e) {
+      return e.employee_id;
+    },
+    getLabel: function (e) {
+      return e.employee_name;
+    },
+    getSubLabel: function (e) {
+      return e.employee_code;
+    },
+    // Match on employee name/code normally, and ALSO match when the typed
+    // digits are the tail end of the employee code's digits — so typing
+    // "34" finds "EMP-000034" (and "EMP-001234", etc.) without needing the
+    // "EMP-" prefix or the leading zeros.
+    matchFn: function (emp, q) {
+      const name = (emp.employee_name || "").toLowerCase();
+      const code = (emp.employee_code || "").toLowerCase();
+      if (name.includes(q) || code.includes(q)) return true;
+
+      const codeDigits = code.replace(/\D/g, "");
+      const queryDigits = q.replace(/\D/g, "");
+      return queryDigits !== "" && codeDigits.endsWith(queryDigits);
+    },
+  });
+
   // ---- Filter option loading --------------------------------------------------------------
   async function loadPeriodOptions() {
     try {
       const data = await apiRequest(PERIOD_ENDPOINT, "list");
       if (!data.success) return;
-      const periods = data.data || [];
-      periodFilter.innerHTML =
-        '<option value="">All Periods</option>' +
-        periods
-          .map(function (p) {
-            return `<option value="${esc(p.period_id)}">${esc(p.period_name)}</option>`;
-          })
-          .join("");
+      periodCombobox.setData(data.data || []);
     } catch (err) {
-      // Filter dropdown is a non-critical enhancement — fail silently.
+      // Filter is a non-critical enhancement — fail silently.
       console.error("Failed to load payroll periods", err);
     }
   }
@@ -168,14 +382,7 @@ function initPayslips() {
     try {
       const data = await apiRequest(PAYSLIP_ENDPOINT, "employees");
       if (!data.success) return;
-      const employees = data.data || [];
-      employeeFilter.innerHTML =
-        '<option value="">All Employees</option>' +
-        employees
-          .map(function (e) {
-            return `<option value="${esc(e.employee_id)}">${esc(e.employee_name)} (${esc(e.employee_code)})</option>`;
-          })
-          .join("");
+      employeeCombobox.setData(data.data || []);
     } catch (err) {
       console.error("Failed to load employees", err);
     }
@@ -429,8 +636,8 @@ function initPayslips() {
   btnApply.addEventListener("click", loadPayslips);
 
   btnReset.addEventListener("click", function () {
-    periodFilter.value = "";
-    employeeFilter.value = "";
+    periodCombobox.clearSelection();
+    employeeCombobox.clearSelection();
     loadPayslips();
   });
 

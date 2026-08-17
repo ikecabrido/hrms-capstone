@@ -133,19 +133,120 @@
   letter-spacing: 0.02em;
 }
 
-.ps-filter-group select {
-  padding: 0.55rem 0.75rem;
+.ps-combobox {
+  position: relative;
+  min-width: 240px;
+}
+
+.ps-combobox-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ps-combobox-icon {
+  position: absolute;
+  left: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--color5);
+  pointer-events: none;
+}
+
+.ps-combobox-input {
+  width: 100%;
+  padding: 0.55rem 2.1rem;
   border: 1px solid var(--color4);
   border-radius: 8px;
   font-size: 0.85rem;
   background: var(--color3);
   color: var(--color8);
   outline: none;
-  min-width: 200px;
 }
 
-.ps-filter-group select:focus {
+.ps-combobox-input::placeholder {
+  color: var(--color5);
+}
+
+.ps-combobox-input:focus {
   border-color: var(--color7);
+}
+
+.ps-combobox-clear {
+  position: absolute;
+  right: 0.55rem;
+  background: none;
+  border: none;
+  color: var(--color5);
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+}
+
+.ps-combobox-clear.ps-combobox-clear-visible {
+  display: inline-flex;
+}
+
+.ps-combobox-clear:hover {
+  color: var(--color10);
+}
+
+.ps-combobox-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--color3);
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+  z-index: 20;
+}
+
+.ps-combobox-options.ps-combobox-open {
+  display: block;
+}
+
+.ps-combobox-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color8);
+}
+
+.ps-combobox-option:hover,
+.ps-combobox-option.ps-combobox-highlighted {
+  background: var(--color9);
+}
+
+.ps-combobox-option-label {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ps-combobox-option-sub {
+  font-size: 0.75rem;
+  color: var(--color5);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ps-combobox-empty {
+  padding: 0.75rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--color5);
+  text-align: center;
 }
 
 .ps-toolbar-actions {
@@ -648,6 +749,7 @@
   footer,
   .hamburger,
   .module-header,
+  .module-content,
   .ps-alert,
   .ps-summary-cards,
   .ps-toolbar,
@@ -666,7 +768,6 @@
 
   #psPrintSheet {
     display: block !important;
-    padding: 0.4in;
   }
 
   #psPrintSheet .ps-doc-net {
@@ -685,7 +786,6 @@
      net pay, meta) intact — never let the browser split a block
      across two pages, and never split a table header from its rows
      or one row across a page break. */
-  #psPrintSheet,
   #psPrintSheet .ps-doc-header,
   #psPrintSheet .ps-doc-title-row,
   #psPrintSheet .ps-doc-section,

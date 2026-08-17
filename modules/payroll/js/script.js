@@ -6,3 +6,7 @@ import "./components/dropdown.js";
 import "./pages/period-manager.js";
 import "./pages/payroll-processing.js";
 import "./pages/payslips.js";
+import "./pages/deduction.js";
+import "./pages/reports.js";
+import "./pages/dashboard.js";
+import "./pages/final-settlement.js";

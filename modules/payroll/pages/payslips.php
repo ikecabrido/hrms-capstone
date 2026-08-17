@@ -44,16 +44,48 @@
         <div class="ps-toolbar">
             <div class="ps-toolbar-filters">
                 <div class="ps-filter-group">
-                    <label for="psPeriodFilter">Payroll Period</label>
-                    <select id="psPeriodFilter">
-                        <option value="">All Periods</option>
-                    </select>
+                    <label for="psPeriodSearchInput">Payroll Period</label>
+                    <div class="ps-combobox" id="psPeriodCombobox">
+                        <div class="ps-combobox-input-wrap">
+                            <i class="fa-solid fa-magnifying-glass ps-combobox-icon"></i>
+                            <input
+                                type="text"
+                                id="psPeriodSearchInput"
+                                class="ps-combobox-input"
+                                placeholder="All Periods"
+                                autocomplete="off"
+                                role="combobox"
+                                aria-expanded="false"
+                                aria-autocomplete="list">
+                            <button type="button" class="ps-combobox-clear" id="psPeriodClearBtn" title="Clear" aria-label="Clear payroll period filter">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" id="psPeriodFilter" value="">
+                        <div class="ps-combobox-options" id="psPeriodOptions" role="listbox"></div>
+                    </div>
                 </div>
                 <div class="ps-filter-group">
-                    <label for="psEmployeeFilter">Employee</label>
-                    <select id="psEmployeeFilter">
-                        <option value="">All Employees</option>
-                    </select>
+                    <label for="psEmployeeSearchInput">Employee</label>
+                    <div class="ps-combobox" id="psEmployeeCombobox">
+                        <div class="ps-combobox-input-wrap">
+                            <i class="fa-solid fa-magnifying-glass ps-combobox-icon"></i>
+                            <input
+                                type="text"
+                                id="psEmployeeSearchInput"
+                                class="ps-combobox-input"
+                                placeholder="Search by name or employee code..."
+                                autocomplete="off"
+                                role="combobox"
+                                aria-expanded="false"
+                                aria-autocomplete="list">
+                            <button type="button" class="ps-combobox-clear" id="psEmployeeClearBtn" title="Clear" aria-label="Clear employee filter">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" id="psEmployeeFilter" value="">
+                        <div class="ps-combobox-options" id="psEmployeeOptions" role="listbox"></div>
+                    </div>
                 </div>
             </div>
             <div class="ps-toolbar-actions">
