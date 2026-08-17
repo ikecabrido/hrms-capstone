@@ -211,4 +211,18 @@ class Leave
             ':reason' => $reason
         ]);
     }
+    public function approveLeave($leaveId)
+    {
+        $sql = "
+        UPDATE {$this->table}
+        SET status = 'approved'
+        WHERE id = :leave_id
+    ";
+
+        $stmt = $this->conn->prepare($sql);
+
+        return $stmt->execute([
+            ':leave_id' => $leaveId
+        ]);
+    }
 }

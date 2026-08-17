@@ -257,5 +257,28 @@ class LeaveController
 
         Helper::redirect('index.php?url=admin-leave-request');
     }
+    public function approve()
+    {
+        try {
+            $leaveId = (int) ($_POST['leave_request_id'] ?? 0);
+
+            if ($leaveId <= 0) {
+                throw new Exception('Leave request is required.');
+            }
+
+            $success = $this->leaveModel->approveLeave($leaveId);
+
+            if (!$success) {
+                throw new Exception('Failed to approve leave request.');
+            }
+
+            Session::set('success', 'Leave request approved successfully.');
+
+        } catch (Exception $e) {
+            Session::set('error', $e->getMessage());
+        }
+
+        Helper::redirect('index.php?url=admin-leave-request');
+    }
 
 }

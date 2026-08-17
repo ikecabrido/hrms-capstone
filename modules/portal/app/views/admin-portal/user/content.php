@@ -375,6 +375,554 @@
         </div>
 
     </section>
+
+    <section id="dashboardWelcome" style="
+    width:100%;
+    min-height:0;
+    background:#f8fafc;
+    padding:20px;
+    box-sizing:border-box;
+">
+
+        <div style="
+        width:100%;
+        background:#fff;
+        border:1px solid #e2e8f0;
+        border-radius:14px;
+        overflow:hidden;
+        box-shadow:0 4px 16px rgba(15,23,42,.05);
+    ">
+
+            <!-- HEADER -->
+            <div style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:15px;
+            padding:18px 20px;
+            border-bottom:1px solid #e2e8f0;
+            flex-wrap:wrap;
+        ">
+
+                <div>
+                    <div style="
+                    font-size:15px;
+                    font-weight:700;
+                    color:#0f172a;
+                ">
+                        Inactive User Accounts
+                    </div>
+
+                    <div style="
+                    margin-top:4px;
+                    font-size:10px;
+                    color:#64748b;
+                ">
+                        Employees whose user accounts are currently inactive.
+                    </div>
+                </div>
+
+                <div style="
+                display:inline-flex;
+                align-items:center;
+                gap:6px;
+                padding:6px 10px;
+                border-radius:999px;
+                background:#fef2f2;
+                color:#dc2626;
+                font-size:10px;
+                font-weight:700;
+            ">
+                    <i class="fas fa-user-slash"></i>
+                    <?= count($inactiveUsers ?? []) ?> Inactive
+                </div>
+
+            </div>
+
+
+            <!-- TABLE SCROLL -->
+            <div style="
+            width:100%;
+            overflow-x:auto;
+            overflow-y:visible;
+            -webkit-overflow-scrolling:touch;
+            scrollbar-width:thin;
+            scrollbar-color:#cbd5e1 #f1f5f9;
+        ">
+
+                <table style="
+                width:100%;
+                min-width:850px;
+                border-collapse:separate;
+                border-spacing:0;
+                text-align:left;
+            ">
+
+                    <!-- STICKY HEADER -->
+                    <thead style="
+                    background:#f8fafc;
+                ">
+
+                        <tr>
+
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:12px 16px;
+                            background:#f8fafc;
+                            border-bottom:1px solid #e2e8f0;
+                            font-size:10px;
+                            font-weight:700;
+                            text-transform:uppercase;
+                            color:#94a3b8;
+                            white-space:nowrap;
+                        ">
+                                ID
+                            </th>
+
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:12px 16px;
+                            background:#f8fafc;
+                            border-bottom:1px solid #e2e8f0;
+                            font-size:10px;
+                            font-weight:700;
+                            text-transform:uppercase;
+                            color:#94a3b8;
+                            white-space:nowrap;
+                        ">
+                                Employee
+                            </th>
+
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:12px 16px;
+                            background:#f8fafc;
+                            border-bottom:1px solid #e2e8f0;
+                            font-size:10px;
+                            font-weight:700;
+                            text-transform:uppercase;
+                            color:#94a3b8;
+                            white-space:nowrap;
+                        ">
+                                Username
+                            </th>
+
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:12px 16px;
+                            background:#f8fafc;
+                            border-bottom:1px solid #e2e8f0;
+                            font-size:10px;
+                            font-weight:700;
+                            text-transform:uppercase;
+                            color:#94a3b8;
+                            white-space:nowrap;
+                        ">
+                                Email
+                            </th>
+
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:12px 16px;
+                            background:#f8fafc;
+                            border-bottom:1px solid #e2e8f0;
+                            font-size:10px;
+                            font-weight:700;
+                            text-transform:uppercase;
+                            color:#94a3b8;
+                            white-space:nowrap;
+                        ">
+                                Role
+                            </th>
+
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:12px 16px;
+                            background:#f8fafc;
+                            border-bottom:1px solid #e2e8f0;
+                            font-size:10px;
+                            font-weight:700;
+                            text-transform:uppercase;
+                            color:#94a3b8;
+                            white-space:nowrap;
+                        ">
+                                Status
+                            </th>
+
+                        </tr>
+
+                    </thead>
+                    <?php
+                    $firstName = trim($user['first_name'] ?? '');
+                    $middleName = trim($user['middle_name'] ?? '');
+                    $lastName = trim($user['last_name'] ?? '');
+
+                    $employeeName = trim(
+                        $firstName . ' ' .
+                        ($middleName ? $middleName . ' ' : '') .
+                        $lastName
+                    );
+
+                    $employeeName = $employeeName ?: 'Unknown Employee';
+
+                    $avatarLetter = strtoupper(substr($firstName ?: $lastName ?: 'U', 0, 1));
+
+                    $employeeId = (int) ($user['employee_id'] ?? 0);
+                    ?>
+
+                    <!-- BODY -->
+                    <tbody id="inactiveUserTable">
+
+                        <?php if (!empty($inactiveUsers)): ?>
+
+                            <?php foreach ($inactiveUsers as $user): ?>
+
+                                <?php
+                                $firstName = trim($user['first_name'] ?? '');
+                                $middleName = trim($user['middle_name'] ?? '');
+                                $lastName = trim($user['last_name'] ?? '');
+
+                                $employeeName = trim(
+                                    $firstName . ' ' .
+                                    ($middleName ? $middleName . ' ' : '') .
+                                    $lastName
+                                );
+
+                                if ($employeeName === '') {
+                                    $employeeName = 'Unknown Employee';
+                                }
+
+                                $avatarLetter = strtoupper(
+                                    substr($employeeName, 0, 1)
+                                );
+                                ?>
+
+                                <tr class="inactive-user-row" style="
+                                    border-bottom:1px solid #f1f5f9;
+                                    transition:background .2s ease;
+                                " onmouseover="this.style.background='#f8fafc'"
+                                    onmouseout="this.style.background='#ffffff'">
+
+                                    <!-- ID -->
+                                    <td style="
+                                    padding:14px 16px;
+                                    white-space:nowrap;
+                                    border-bottom:1px solid #f1f5f9;
+                                ">
+                                        <span style="
+                                        font-size:11px;
+                                        font-weight:700;
+                                        color:#334155;
+                                    ">
+                                            #<?= (int) ($user['id'] ?? 0) ?>
+                                        </span>
+                                    </td>
+
+
+                                    <!-- EMPLOYEE -->
+                                    <td style="
+    padding:14px 16px;
+    border-bottom:1px solid #f1f5f9;
+">
+
+                                        <div style="
+        display:flex;
+        align-items:center;
+        gap:10px;
+        min-width:200px;
+    ">
+
+                                            <div style="
+            width:36px;
+            height:36px;
+            flex-shrink:0;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#eff6ff;
+            color:#2563eb;
+            font-size:11px;
+            font-weight:700;
+        ">
+                                                <?= htmlspecialchars($avatarLetter) ?>
+                                            </div>
+
+                                            <div style="min-width:0;">
+
+                                                <div style="
+                font-size:11px;
+                font-weight:700;
+                color:#334155;
+                white-space:nowrap;
+            ">
+                                                    <?= htmlspecialchars($employeeName) ?>
+                                                </div>
+
+                                                <div style="
+                margin-top:3px;
+                font-size:9px;
+                color:#94a3b8;
+            ">
+                                                    Employee ID: <?= $employeeId ?>
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- USERNAME -->
+                                    <td style="
+                                    padding:14px 16px;
+                                    font-size:11px;
+                                    color:#475569;
+                                    white-space:nowrap;
+                                    border-bottom:1px solid #f1f5f9;
+                                ">
+                                        <?= htmlspecialchars($user['username'] ?? '—') ?>
+                                    </td>
+
+
+                                    <!-- EMAIL -->
+                                    <td style="
+                                    padding:14px 16px;
+                                    font-size:11px;
+                                    color:#475569;
+                                    white-space:nowrap;
+                                    border-bottom:1px solid #f1f5f9;
+                                ">
+                                        <?= htmlspecialchars($user['email'] ?? '—') ?>
+                                    </td>
+
+
+                                    <!-- ROLE -->
+                                    <td style="
+                                    padding:14px 16px;
+                                    white-space:nowrap;
+                                    border-bottom:1px solid #f1f5f9;
+                                ">
+
+                                        <span style="
+                                        display:inline-flex;
+                                        align-items:center;
+                                        padding:5px 9px;
+                                        border-radius:999px;
+                                        background:#f1f5f9;
+                                        color:#475569;
+                                        font-size:9px;
+                                        font-weight:700;
+                                    ">
+                                            <?= htmlspecialchars(
+                                                ucfirst($user['role'] ?? 'Employee')
+                                            ) ?>
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- STATUS -->
+                                    <td style="
+    padding:14px 16px;
+    white-space:nowrap;
+    border-bottom:1px solid #f1f5f9;
+">
+
+                                        <div style="
+        display:flex;
+        align-items:center;
+        gap:8px;
+    ">
+
+                                            <span style="
+            display:inline-flex;
+            align-items:center;
+            gap:5px;
+            padding:5px 9px;
+            border-radius:999px;
+            background:#fef2f2;
+            color:#dc2626;
+            font-size:9px;
+            font-weight:700;
+        ">
+
+                                                <span style="
+                width:5px;
+                height:5px;
+                border-radius:50%;
+                background:#dc2626;
+            "></span>
+
+                                                Inactive
+
+                                            </span>
+
+                                            <button type="button"
+                                                onclick="setUserActive(<?= (int) ($user['id'] ?? 0) ?>, '<?= htmlspecialchars($employeeName, ENT_QUOTES) ?>')"
+                                                style="
+                display:inline-flex;
+                align-items:center;
+                justify-content:center;
+                gap:5px;
+                padding:6px 10px;
+                border:1px solid #a7f3d0;
+                border-radius:7px;
+                background:#ecfdf5;
+                color:#059669;
+                font-size:9px;
+                font-weight:700;
+                cursor:pointer;
+                transition:all .2s ease;
+            " onmouseover="
+                this.style.background='#d1fae5';
+                this.style.borderColor='#6ee7b7';
+            " onmouseout="
+                this.style.background='#ecfdf5';
+                this.style.borderColor='#a7f3d0';
+            ">
+                                                <i class="fas fa-user-check"></i>
+                                                Set Active
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            <?php endforeach; ?>
+
+                        <?php else: ?>
+
+                            <tr>
+                                <td colspan="6" style="
+                                padding:50px 20px;
+                                text-align:center;
+                            ">
+
+                                    <div style="
+                                    width:45px;
+                                    height:45px;
+                                    margin:0 auto;
+                                    border-radius:12px;
+                                    background:#f1f5f9;
+                                    color:#94a3b8;
+                                    display:flex;
+                                    align-items:center;
+                                    justify-content:center;
+                                    font-size:16px;
+                                ">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+
+                                    <div style="
+                                    margin-top:12px;
+                                    font-size:12px;
+                                    font-weight:700;
+                                    color:#475569;
+                                ">
+                                        No Inactive Accounts
+                                    </div>
+
+                                    <div style="
+                                    margin-top:4px;
+                                    font-size:10px;
+                                    color:#94a3b8;
+                                ">
+                                        All user accounts are currently active.
+                                    </div>
+
+                                </td>
+                            </tr>
+
+                        <?php endif; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- PAGINATION -->
+            <?php if (!empty($inactiveUsers)): ?>
+
+                <div style="
+                display:flex;
+                align-items:center;
+                justify-content:space-between;
+                gap:15px;
+                padding:14px 18px;
+                border-top:1px solid #e2e8f0;
+                background:#ffffff;
+                flex-wrap:wrap;
+            ">
+
+                    <!-- ROW COUNT -->
+                    <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:7px;
+                    font-size:10px;
+                    color:#64748b;
+                ">
+
+                        <span>
+                            Rows per page:
+                        </span>
+
+                        <select id="rowsPerPage" onchange="changeRowsPerPage()" style="
+                            padding:6px 8px;
+                            border:1px solid #cbd5e1;
+                            border-radius:7px;
+                            background:#fff;
+                            color:#334155;
+                            font-size:10px;
+                            font-weight:600;
+                            outline:none;
+                            cursor:pointer;
+                        ">
+
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+
+                        </select>
+
+                        <span id="paginationInfo"></span>
+
+                    </div>
+
+
+                    <!-- PAGINATION BUTTONS -->
+                    <div id="paginationButtons" style="
+                    display:flex;
+                    align-items:center;
+                    gap:4px;
+                    flex-wrap:wrap;
+                "></div>
+
+                </div>
+
+            <?php endif; ?>
+
+        </div>
+
+    </section>
 </div>
 
 <script src="/hrms-capstone/modules/portal/public/js/function/contentUserCreation.js"></script>

@@ -20,6 +20,7 @@ class EmployeeUserController
     }
     public function index()
     {
+        $inactiveUsers = $this->userAccountModel->getInactiveUsers();
         $employeeWithoutAccount = $this->employeeModel->getWithoutUserAccount();
 
         $title = "Manage User Account";
@@ -133,5 +134,32 @@ class EmployeeUserController
         $content = __DIR__ . '/../views/admin-portal/attendance/content.php';
 
         require __DIR__ . '/../views/admin-portal/index.php';
+    }
+    public function setActive()
+    {
+        try {
+
+            $userId = (int) ($_POST['user_id'] ?? 0);
+
+            if ($userId <= 0) {
+                $_SESSION['error'] = 'Invalid user account.';
+                Helper::redirect('index.php?url=user-account');
+                return;
+            }
+
+            $success = $this->userAccountModel->setActive($userId);
+
+            if ($success) {
+                $_SESSION['success'] = 'User account has been activated.';
+            } else {
+                $_SESSION['error'] = 'Failed to activate user account.';
+            }
+
+        } catch (\Throwable $e) {
+
+            $_SESSION['error'] = 'Failed to activate user account.';
+        }
+
+        Helper::redirect('index.php?url=user-account');
     }
 }

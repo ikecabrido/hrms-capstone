@@ -169,3 +169,239 @@
         }
 
     });
+    
+function setUserActive(userId, employeeName) {
+
+    if (!userId) {
+        alert('Invalid user account.');
+        return;
+    }
+
+    const confirmed = confirm(
+        'Set this user account as active?\n\n' +
+        'Employee: ' + employeeName
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const form = document.createElement('form');
+
+    form.method = 'POST';
+    form.action = 'index.php?url=user-set-active';
+
+    const userInput = document.createElement('input');
+    userInput.type = 'hidden';
+    userInput.name = 'user_id';
+    userInput.value = userId;
+
+    form.appendChild(userInput);
+
+    document.body.appendChild(form);
+
+    form.submit();
+}
+        let currentPage = 1;
+        let rowsPerPage = 10;
+
+        function getInactiveRows() {
+            return Array.from(
+                document.querySelectorAll('.inactive-user-row')
+            );
+        }
+
+
+        function renderPagination() {
+
+            const rows = getInactiveRows();
+            const totalRows = rows.length;
+
+            if (!totalRows) {
+                return;
+            }
+
+            const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+            if (currentPage > totalPages) {
+                currentPage = totalPages;
+            }
+
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+
+            rows.forEach((row, index) => {
+
+                row.style.display =
+                    index >= start && index < end
+                        ? 'table-row'
+                        : 'none';
+
+            });
+
+
+            /* PAGINATION INFO */
+
+            const info = document.getElementById('paginationInfo');
+
+            if (info) {
+
+                const showingStart = start + 1;
+                const showingEnd = Math.min(end, totalRows);
+
+                info.textContent =
+                    `${showingStart}-${showingEnd} of ${totalRows}`;
+
+            }
+
+
+            /* PAGINATION BUTTONS */
+
+            const container =
+                document.getElementById('paginationButtons');
+
+            if (!container) {
+                return;
+            }
+
+            container.innerHTML = '';
+
+
+            /* PREVIOUS */
+
+            const previous = document.createElement('button');
+
+            previous.type = 'button';
+            previous.innerHTML =
+                '<i class="fas fa-chevron-left"></i>';
+
+            previous.disabled = currentPage === 1;
+
+            previous.style.cssText = `
+        width:30px;
+        height:30px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:1px solid #e2e8f0;
+        border-radius:7px;
+        background:${currentPage === 1 ? '#f8fafc' : '#fff'};
+        color:${currentPage === 1 ? '#cbd5e1' : '#475569'};
+        font-size:9px;
+        cursor:${currentPage === 1 ? 'not-allowed' : 'pointer'};
+    `;
+
+            previous.onclick = function () {
+
+                if (currentPage > 1) {
+
+                    currentPage--;
+
+                    renderPagination();
+
+                }
+
+            };
+
+            container.appendChild(previous);
+
+
+            /* PAGE NUMBERS */
+
+            for (let i = 1; i <= totalPages; i++) {
+
+                const button = document.createElement('button');
+
+                button.type = 'button';
+                button.textContent = i;
+
+                const active = i === currentPage;
+
+                button.style.cssText = `
+            min-width:30px;
+            height:30px;
+            padding:0 8px;
+            border:1px solid ${active ? '#2563eb' : '#e2e8f0'};
+            border-radius:7px;
+            background:${active ? '#2563eb' : '#fff'};
+            color:${active ? '#fff' : '#475569'};
+            font-size:9px;
+            font-weight:700;
+            cursor:pointer;
+        `;
+
+                button.onclick = function () {
+
+                    currentPage = i;
+
+                    renderPagination();
+
+                };
+
+                container.appendChild(button);
+
+            }
+
+
+            /* NEXT */
+
+            const next = document.createElement('button');
+
+            next.type = 'button';
+            next.innerHTML =
+                '<i class="fas fa-chevron-right"></i>';
+
+            next.disabled = currentPage === totalPages;
+
+            next.style.cssText = `
+        width:30px;
+        height:30px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border:1px solid #e2e8f0;
+        border-radius:7px;
+        background:${currentPage === totalPages ? '#f8fafc' : '#fff'};
+        color:${currentPage === totalPages ? '#cbd5e1' : '#475569'};
+        font-size:9px;
+        cursor:${currentPage === totalPages ? 'not-allowed' : 'pointer'};
+    `;
+
+            next.onclick = function () {
+
+                if (currentPage < totalPages) {
+
+                    currentPage++;
+
+                    renderPagination();
+
+                }
+
+            };
+
+            container.appendChild(next);
+
+        }
+
+
+        function changeRowsPerPage() {
+
+            rowsPerPage = parseInt(
+                document.getElementById('rowsPerPage').value
+            );
+
+            currentPage = 1;
+
+            renderPagination();
+
+        }
+
+
+        /* INITIALIZE */
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            function () {
+                renderPagination();
+            }
+        );

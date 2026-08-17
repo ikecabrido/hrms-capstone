@@ -100,4 +100,43 @@ class UserAccount
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    public function getInactiveUsers(): array
+    {
+        $sql = "
+        SELECT
+            u.id,
+            u.username,
+            u.email,
+            u.role,
+            u.is_active,
+            e.id AS employee_id,
+            e.first_name,
+            e.middle_name,
+            e.last_name
+        FROM ep_users u
+        INNER JOIN {$this->employeesTable} e
+            ON e.user_id = u.id
+        WHERE u.is_active = 0
+        ORDER BY e.last_name ASC, e.first_name ASC
+    ";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function setActive(int $userId): bool
+    {
+        $sql = "
+        UPDATE ep_users
+        SET is_active = 1
+        WHERE id = :user_id
+    ";
+
+        $stmt = $this->conn->prepare($sql);
+
+        return $stmt->execute([
+            ':user_id' => $userId
+        ]);
+    }
 }

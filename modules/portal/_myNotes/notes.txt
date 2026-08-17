@@ -45,3 +45,19 @@ MAIL_FROM_NAME="HR Employee Portal"
 
     $_SESSION['error'] = $e->getMessage();
 }
+
+
+<script>
+    document.querySelectorAll('.modal').forEach(modal => {
+        document.body.appendChild(modal);
+    });
+</script>
+<style>
+    .modal {
+        z-index: 1055 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 1050 !important;
+    }
+</style>

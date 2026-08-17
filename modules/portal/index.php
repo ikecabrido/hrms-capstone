@@ -48,6 +48,11 @@ $routes = [
     'auth-logout' => [AuthController::class, 'logout'],
     'admin-logout' => [AuthController::class, 'adminLogout'],
 
+    // Reset Password
+    'auth-forgot-password' => [AuthController::class, 'send'],
+    'auth-reset-password' => [AuthController::class, 'resetPassword'],
+    'auth-update-password' => [AuthController::class, 'updatePassword'],
+
     // Dashboard
     'employee-dashboard' => [PortalController::class, 'dashboard'],
     'admin-dashboard' => [PortalController::class, 'adminDashboard'],
@@ -67,14 +72,21 @@ $routes = [
     'leave-store' => [LeaveController::class, 'store'],
     'leave-cancel' => [LeaveController::class, 'cancel'],
     'leave-reject' => [LeaveController::class, 'reject'],
+    'leave-approve' => [LeaveController::class, 'approve'],
 
     // Payroll
     'payroll' => [PayrollController::class, 'index'],
+    'admin-payroll' => [PayrollController::class, 'adminIndex'],
     'payroll-request-store' => [PayrollController::class, 'store'],
+    'payroll-approve-upload' => [PayrollController::class, 'upload'],
+    'payroll-reject' => [PayrollController::class, 'reject'],
 
     // Benefits and Government Contributions
     'benefits-and-government-contribution' => [BenefitsAndGovernmentContributionController::class, 'index'],
+    'admin-benefits' => [BenefitsAndGovernmentContributionController::class, 'adminIndex'],
     'employee-benefits-store' => [BenefitsAndGovernmentContributionController::class, 'store'],
+    'benefits-store' => [BenefitsAndGovernmentContributionController::class, 'adminStore'],
+    'benefit-upload' => [BenefitsAndGovernmentContributionController::class, 'upload'],
 
     // Announcement
     'announcement' => [AnnouncementController::class, 'index'],
@@ -98,13 +110,17 @@ $routes = [
 
     // Resignation
     'resignation' => [ResignationController::class, 'index'],
+    'admin-resignation' => [ResignationController::class, 'adminIndex'],
     'employee-resignation-store' => [ResignationController::class, 'store'],
+    'resignation-approve' => [ResignationController::class, 'approve'],
+    'resignation-reject' => [ResignationController::class, 'reject'],
 
     // User/Employee Management
     'user-account' => [EmployeeUserController::class, 'index'],
     'view-all-employees' => [EmployeeUserController::class, 'viewAllEmployees'],
     'admin-user-store' => [EmployeeUserController::class, 'storeEmployees'],
     'view-all-attendance' => [EmployeeUserController::class, 'viewAllAttendance'],
+    'user-set-active' => [EmployeeUserController::class, 'setActive'],
 
     // Online Meeting
     'online-meeting' => [OnlineMeetingController::class, 'index'],

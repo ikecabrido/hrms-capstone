@@ -58,21 +58,21 @@
         </li>
 
         <li>
-            <a href="?page=payroll-requests" class="menu-link">
+            <a href="index.php?url=admin-payroll" class="menu-link">
                 <i class="fa-solid fa-money-bill"></i>
                 Payroll Requests
             </a>
         </li>
 
         <li>
-            <a href="?page=benefits" class="menu-link">
+            <a href="index.php?url=admin-benefits" class="menu-link">
                 <i class="fa-solid fa-hand-holding-heart"></i>
                 Benefits & Contributions
             </a>
         </li>
 
         <li>
-            <a href="?page=resignation-requests" class="menu-link">
+            <a href="index.php?url=admin-resignation" class="menu-link">
                 <i class="fa-solid fa-person-walking-arrow-right"></i>
                 Resignation Requests
             </a>

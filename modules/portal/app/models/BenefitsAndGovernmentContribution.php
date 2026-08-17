@@ -9,6 +9,7 @@ class BenefitsAndGovernmentContribution
 {
     private $conn;
     private $table = "ep_benefits_and_government_contribution";
+    private $employeeTable = "em_employees";
 
     public function __construct()
     {
@@ -17,7 +18,15 @@ class BenefitsAndGovernmentContribution
     }
     public function all(): array
     {
-        $sql = "SELECT * FROM {$this->table} ORDER BY uploaded_at DESC";
+        $sql = "
+        SELECT
+            b.*,
+            CONCAT(e.first_name, ' ', e.last_name) AS employee_name
+        FROM {$this->table} b
+        INNER JOIN {$this->employeeTable} e
+            ON b.employee_id = e.id
+        ORDER BY b.uploaded_at DESC
+    ";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
@@ -76,5 +85,31 @@ class BenefitsAndGovernmentContribution
             ':uploaded_by' => $data['uploaded_by']
         ]);
     }
+    public function updateFile(
+        int $benefitId,
+        string $fileName,
+        string $filePath,
+        int $uploadedBy
+    ): bool {
+        $sql = "
+        UPDATE {$this->table}
+        SET
+            file_name = :file_name,
+            file_path = :file_path,
+            uploaded_by = :uploaded_by,
+            updated_at = NOW()
+        WHERE benefit_id = :benefit_id
+    ";
+
+        $stmt = $this->conn->prepare($sql);
+
+        return $stmt->execute([
+            ':file_name' => $fileName,
+            ':file_path' => $filePath,
+            ':uploaded_by' => $uploadedBy,
+            ':benefit_id' => $benefitId
+        ]);
+    }
+
 
 }

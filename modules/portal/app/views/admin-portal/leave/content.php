@@ -146,10 +146,13 @@
 
             </div>
 
-            <!-- TABLE -->
-            <div class="overflow-x-auto">
+            <div class="w-full overflow-x-auto overflow-y-hidden" style="
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e1 #f1f5f9;
+    ">
 
-                <table class="w-full text-left">
+                <table class="w-full min-w-[950px] text-left">
 
                     <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
@@ -489,7 +492,13 @@
                 </table>
 
             </div>
+<div class="px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
 
+    <p id="paginationInfo" class="text-[10px] text-slate-400"></p>
+
+    <div id="pagination" class="flex items-center gap-1"></div>
+
+</div>
         </div>
 
     </section>
@@ -497,94 +506,5 @@
 
     <!-- REJECT MODAL -->
     <?php require __DIR__ . '/reject.php'; ?>
-
-
-    <script>
-        function openRejectModal(id, employee, leaveType, start, end) {
-
-            document.getElementById('rejectLeaveId').value = id;
-            document.getElementById('rejectEmployee').textContent = employee;
-            document.getElementById('rejectLeaveType').textContent = leaveType;
-            document.getElementById('rejectDates').textContent =
-                start === end ? start : start + ' - ' + end;
-
-            document.getElementById('rejectReason').value = '';
-            document.getElementById('quickRejectReason').value = '';
-
-            const modal = document.getElementById('rejectLeaveModal');
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-
-            updateRejectButton();
-        }
-
-        function closeRejectModal() {
-
-            const modal = document.getElementById('rejectLeaveModal');
-
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
-        function updateRejectButton() {
-
-            const reason = document
-                .getElementById('rejectReason')
-                .value
-                .trim();
-
-            document.getElementById('confirmRejectButton').disabled =
-                reason.length === 0;
-        }
-
-        document
-            .getElementById('rejectReason')
-            .addEventListener('input', updateRejectButton);
-
-        document
-            .getElementById('quickRejectReason')
-            .addEventListener('change', function () {
-
-                if (this.value) {
-                    document.getElementById('rejectReason').value = this.value;
-                    updateRejectButton();
-                }
-
-            });
-
-        document
-            .getElementById('rejectLeaveModal')
-            .addEventListener('click', function (e) {
-
-                if (e.target === this) {
-                    closeRejectModal();
-                }
-
-            });
-
-
-        // STATUS FILTER
-        document
-            .getElementById('leaveStatusFilter')
-            .addEventListener('change', function () {
-
-                const selected = this.value;
-
-                document
-                    .querySelectorAll('#leaveRequestTable tr[data-status]')
-                    .forEach(row => {
-
-                        row.style.display =
-                            selected === 'all' ||
-                                row.dataset.status === selected
-                                ? ''
-                                : 'none';
-
-                    });
-
-            });
-    </script>
 </div>
-
-<script src="/hrms-capstone/modules/portal/public/js/function/"></script>
+<script src="/hrms-capstone/modules/portal/public/js/function/contentLeaveAdmin.js"></script>
