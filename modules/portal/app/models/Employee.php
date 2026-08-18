@@ -16,7 +16,7 @@ class Employee
         $database = new Database();
         $this->conn = $database->getConnection();
     }
-    public function getByEmployeeNum($employee_num)
+    public function getByEmployeeNum($employee_code)
     {
         $query = "SELECT e.*, 
                      eu.username,
@@ -24,13 +24,13 @@ class Employee
                      eu.is_admin,
                      eu.is_active
               FROM {$this->table} e
-              LEFT JOIN ep_users eu ON e.user_id = eu.id
-              WHERE e.employee_num = :employee_num
+              LEFT JOIN {$this->usersTable} eu ON e.user_id = eu.id
+              WHERE e.employee_code = :employee_code
               LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
         $stmt->execute([
-            ':employee_num' => $employee_num
+            ':employee_code' => $employee_code
         ]);
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -44,7 +44,7 @@ class Employee
             u.is_admin,
             p.position_name AS position
         FROM {$this->table} e
-        JOIN ep_users u
+        JOIN {$this->usersTable} u
             ON e.user_id = u.id
         LEFT JOIN em_positions p
             ON e.position_id = p.position_id

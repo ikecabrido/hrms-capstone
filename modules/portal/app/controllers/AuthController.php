@@ -12,7 +12,6 @@ use App\Services\LoginValidationService;
 
 class AuthController
 {
-    // private AuditLog $auditLog;
     private Employee $employeeModel;
     private AdminLogin $adminLoginModel;
     public function __construct()
@@ -38,10 +37,9 @@ class AuthController
 
         try {
 
-            // Check if login is currently locked
             LoginHelper::checkRateLimit();
 
-            $employeeId = Helper::sanitize(
+            $employeeCode = Helper::sanitize(
                 $_POST['employee_id'] ?? ''
             );
 
@@ -50,17 +48,16 @@ class AuthController
             );
 
             $employee = $this->employeeModel
-                ->getByEmployeeNum($employeeId);
+                ->getByEmployeeNum($employeeCode);
 
             $validationService = new LoginValidationService();
 
             $validationService->validate(
-                $employeeId,
+                $employeeCode,
                 $password,
                 $employee
             );
 
-            // Login successful
             LoginHelper::resetAttempts();
 
             LoginHelper::setAuthenticatedUser([

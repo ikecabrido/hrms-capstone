@@ -20,9 +20,8 @@ class AttendanceController
         $userId = $_SESSION['user_id'];
 
         $employeeAttendance = $this->employeeModel->getByUserId($userId);
-
         $attendanceHistory = $this->attendanceModel->getAttendance(
-            $employeeAttendance['id']
+            $employeeAttendance['employee_id']
         );
 
         $title = "Employee Attendance";
