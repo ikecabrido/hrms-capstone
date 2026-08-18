@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 16, 2026 at 06:37 PM
+-- Generation Time: Aug 18, 2026 at 03:48 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -84,8 +84,7 @@ CREATE TABLE `eer_grievances` (
 --
 
 INSERT INTO `eer_grievances` (`eer_grievance_id`, `employee_id`, `subject`, `description`, `status`, `resolution_of_complaint`, `created_at`, `priority`, `category`, `anonymous`, `attachment_path`, `confidential`, `action_taken`, `satisfaction_rating`, `satisfaction_comment`, `resolved_at`, `escalation_level`, `escalation_reason`, `updated_at`, `created_by_user_id`, `payslip_id`, `gross_pay`, `total_deductions`, `net_pay`, `payslip_information`) VALUES
-(7, 1, 'sample', 'sample', 'pending', NULL, '2026-08-06 16:15:58', 'low', 'Workplace Conflict', 1, 'uploads/grievances/grievance_6a7442bec418f.jpg', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-15 02:34:31', 1, NULL, NULL, NULL, NULL, NULL),
-(8, 1, 'Other Workplace Concern', 'sample', 'pending', NULL, '2026-08-15 13:08:47', 'low', 'Harassment', 1, 'uploads/grievance/grievance_f9995145758f27f18a45a04e7e077f12.pdf', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-15 05:08:47', NULL, NULL, NULL, NULL, NULL, NULL);
+(10, 1, 'Workplace Conflict', 'conflict', 'pending', NULL, '2026-08-17 09:01:59', 'low', 'Harassment', 1, 'uploads/grievance/grievance_9568e1aa7e005c63a7d17fbe96362e0e.pdf', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-17 01:01:59', NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -206,9 +205,11 @@ INSERT INTO `ep_benefits_and_government_contribution` (`benefit_id`, `employee_i
 (2, 1, 'BIR Form 2316', '2026-07', 'Sample 1', '', '', 3, '2026-07-19 08:14:46', '2026-08-14 05:48:42'),
 (4, 1, 'SSS', '2026-08', 'sample', '', '', 3, '2026-07-30 23:34:54', '2026-08-14 05:48:49'),
 (5, 1, 'SSS', '2026-08', 'sample', '', '', 1, '2026-08-02 01:06:38', '2026-08-14 05:48:54'),
-(6, 1, 'BIR Form 2316', '2026-07', NULL, 'TECHNOPRENEURSHIP.docx', 'public/assets/uploads/benefits/1786689743_90f376f3c6.docx', 1, '2026-08-14 06:42:23', '2026-08-14 06:42:23'),
+(6, 1, 'BIR Form 2316', '2026-07', NULL, 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits_1786954895_ab4dee60.pdf', 3, '2026-08-14 06:42:23', '2026-08-17 08:21:35'),
 (7, 1, 'SSS', '2026-02', NULL, 'BSIS-BULACAN-BSIS-RESEARCH-FESTIVAL-2025-2026-EMPLOYEE-PORTAL-CAPSTONE.docx', 'assets/uploads/benefits/benefits1786691045_cd50b6f620.docx', 1, '2026-08-14 07:04:05', '2026-08-14 07:04:05'),
-(8, 1, 'Pag-IBIG', '2026-02', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786692021_7130abb94c.pdf', 1, '2026-08-14 07:20:21', '2026-08-14 07:20:21');
+(8, 1, 'Pag-IBIG', '2026-02', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786692021_7130abb94c.pdf', 1, '2026-08-14 07:20:21', '2026-08-14 07:20:21'),
+(9, 2, 'Pag-IBIG', '2026-06', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits_1786954963_92bdd2e8.pdf', 3, '2026-08-17 08:03:22', '2026-08-17 08:22:43'),
+(10, 3, 'BIR Form 2316', '2026-07', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786953890_74e86d6cf9.pdf', 3, '2026-08-17 08:04:50', '2026-08-17 08:04:50');
 
 -- --------------------------------------------------------
 
@@ -352,7 +353,8 @@ CREATE TABLE `ep_payroll_request` (
 --
 
 INSERT INTO `ep_payroll_request` (`id`, `employee_id`, `request_type`, `purpose`, `remarks`, `payroll_period_start`, `payroll_period_end`, `status`, `requested_at`, `processed_at`, `processed_by`, `rejection_reason`, `document_path`, `created_at`, `updated_at`) VALUES
-(4, 1, 'Payroll Correction', 'Regular Payroll Processing', NULL, '2026-08-13', '2026-08-15', 'Pending', '2026-08-13 17:55:44', NULL, NULL, NULL, NULL, '2026-08-13 17:55:44', '2026-08-13 17:55:44');
+(4, 1, 'Payroll Correction', 'Regular Payroll Processing', NULL, '2026-08-13', '2026-08-15', 'Approved', '2026-08-13 17:55:44', '2026-08-17 05:49:33', 3, NULL, 'assets/uploads/payroll/payroll_4_1786945773.pdf', '2026-08-13 17:55:44', '2026-08-17 05:49:33'),
+(5, 1, 'Incorrect Deduction', 'New Hire Payroll Onboarding', NULL, '2026-08-01', '2026-08-03', 'Rejected', '2026-08-17 06:04:20', '2026-08-17 07:12:44', 3, 'sample', NULL, '2026-08-17 06:04:20', '2026-08-17 07:12:44');
 
 -- --------------------------------------------------------
 
@@ -382,8 +384,8 @@ CREATE TABLE `ep_resignation_requests` (
 --
 
 INSERT INTO `ep_resignation_requests` (`resignation_id`, `employee_id`, `resignation_type`, `resignation_reason`, `attachment`, `date_submitted`, `intended_last_working_day`, `status`, `employee_remarks`, `hr_remarks`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at`) VALUES
-(1, 5, 'With Notice', 'I have accepted a new career opportunity that aligns with my professional goals.', 'uploads/resignation/resignation_1.pdf', '2026-08-01 09:15:00', '2026-08-31', 'Pending', 'I will ensure a proper turnover of my responsibilities.', 'Sample', NULL, NULL, '2026-08-01 07:01:43', '2026-08-16 01:47:11'),
-(8, 1, 'With Notice', 'sample', 'uploads/resignation/resignation_1_1786844898.pdf', '2026-08-16 03:48:18', '2026-08-24', 'Pending', 'sample', NULL, NULL, NULL, '2026-08-15 19:48:18', '2026-08-15 19:48:18');
+(1, 5, 'With Notice', 'I have accepted a new career opportunity that aligns with my professional goals.', 'uploads/resignation/resignation_1.pdf', '2026-08-01 09:15:00', '2026-08-31', 'Rejected', 'I will ensure a proper turnover of my responsibilities.', 'sample', 3, '2026-08-17 19:40:34', '2026-08-01 07:01:43', '2026-08-17 11:40:34'),
+(8, 1, 'With Notice', 'sample', 'uploads/resignation/resignation_1_1786844898.pdf', '2026-08-16 03:48:18', '2026-08-24', 'Approved', 'sample', 'sample', 3, '2026-08-17 19:35:16', '2026-08-15 19:48:18', '2026-08-17 11:35:16');
 
 -- --------------------------------------------------------
 
@@ -412,7 +414,7 @@ CREATE TABLE `ep_users` (
 INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `role`, `is_active`, `theme`, `created_at`, `password_reset_token`, `password_reset_expires`) VALUES
 (1, 'Employee 1', '$2y$10$O6XSlGEzC5GCae7BrLAhneWoLgqV3P1Pi3a0czwSdmZ.6.kR8F9va', 'monstreborvinsmoke025@gmail.com', 0, 'employee', 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
 (2, 'Employee 2', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 'employee', 1, 'light', '2026-03-24 18:06:12', NULL, NULL),
-(3, 'Admin Employee Portal', '$2y$10$HfBt56Pjiz38byZo9KkiAuoktPuUSLB8nYBckRSdGV2vWbc2wW7jG', 'crobertjanssen@gmail.com', 1, 'super_admin', 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
+(3, 'Admin Employee Portal', '$2y$10$3m8PF0TJNecAeYAvYUZ7ReQdHvOHlM4ATszqVK4WoQ/dnbAlpoi5O', 'crobertjanssen@gmail.com', 1, 'super_admin', 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
 (4, 'Employee 3', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 'employee', 1, 'light', '2026-01-28 07:21:13', NULL, NULL),
 (21, 'sample', '$2y$10$dHzUOq6RTrujLH/eo9w4dudWV6qZD41cAhVM22kde2bl8I5KlxZuK', 'camposrobertjanssent.pdm@gmail.com', 0, 'employee', 1, 'light', '2026-08-16 13:35:55', NULL, NULL);
 
@@ -596,42 +598,6 @@ INSERT INTO `lc_incidents` (`id`, `incident_id`, `reporter_id`, `reporter_employ
 -- --------------------------------------------------------
 
 --
--- Table structure for table `leave_requests`
---
-
-CREATE TABLE `leave_requests` (
-  `leave_id` int(11) NOT NULL,
-  `employee_id` int(11) NOT NULL,
-  `leave_type` enum('Sick Leave','Vacation Leave','Emergency Leave','Maternity Leave','Paternity Leave','Bereavement Leave','Other') NOT NULL,
-  `start_date` date NOT NULL,
-  `end_date` date NOT NULL,
-  `reason` text NOT NULL,
-  `status` enum('Pending','Approved','Rejected','Cancelled') DEFAULT 'Pending',
-  `approved_by` int(11) DEFAULT NULL,
-  `remarks` text DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `leave_requests`
---
-
-INSERT INTO `leave_requests` (`leave_id`, `employee_id`, `leave_type`, `start_date`, `end_date`, `reason`, `status`, `approved_by`, `remarks`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Sick Leave', '2026-08-04', '2026-08-05', 'Feeling unwell and need to rest.', 'Approved', 2, 'Approved by HR.', '2026-08-01 01:15:00', '2026-08-02 02:30:00'),
-(2, 3, 'Vacation Leave', '2026-08-10', '2026-08-12', 'Personal vacation with family.', 'Approved', 2, 'Leave approved.', '2026-08-03 00:45:00', '2026-08-04 03:20:00'),
-(3, 4, 'Emergency Leave', '2026-08-14', '2026-08-14', 'Family emergency that requires immediate attention.', 'Pending', NULL, NULL, '2026-08-13 01:10:00', '2026-08-13 01:10:00'),
-(4, 5, 'Sick Leave', '2026-08-18', '2026-08-19', 'Medical consultation and recovery.', 'Pending', NULL, NULL, '2026-08-13 05:25:00', '2026-08-13 05:25:00'),
-(5, 6, 'Vacation Leave', '2026-08-24', '2026-08-26', 'Planned personal vacation.', 'Rejected', 2, 'Leave period conflicts with scheduled activities.', '2026-08-08 06:00:00', '2026-08-09 01:45:00'),
-(6, 1, 'Vacation Leave', '2026-08-13', '2026-08-15', 'vacation', 'Pending', NULL, NULL, '2026-08-13 15:49:17', '2026-08-13 15:49:17'),
-(7, 2, 'Sick Leave', '2026-08-13', '2026-08-13', 'sample', 'Pending', NULL, NULL, '2026-08-13 15:50:14', '2026-08-13 15:55:05'),
-(8, 3, 'Bereavement Leave', '2026-08-13', '2026-08-13', 'sample', 'Pending', NULL, NULL, '2026-08-13 15:53:27', '2026-08-13 15:55:09'),
-(9, 4, 'Bereavement Leave', '2026-08-13', '2026-08-13', 'sadad', 'Pending', NULL, NULL, '2026-08-13 15:54:08', '2026-08-13 15:55:12'),
-(10, 5, 'Paternity Leave', '2026-08-13', '2026-08-13', 'dasda', 'Pending', NULL, NULL, '2026-08-13 15:54:40', '2026-08-13 15:55:15');
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `pm_360_feedback`
 --
 
@@ -723,6 +689,74 @@ INSERT INTO `ta_attendance` (`attendance_id`, `employee_id`, `shift_id`, `attend
 (40, 1, NULL, '2026-07-30', '2026-07-30 16:40:11', '2026-07-30 16:40:14', 'MANUAL', 'PENDING_APPROVAL', 0, NULL, NULL, NULL, '2026-07-30 08:40:11', '2026-08-13 11:29:08', 0.00, 0.00, 0.00, 1, 1, 1, 1),
 (41, 1, NULL, '2026-08-02', '2026-08-02 13:04:32', '2026-08-02 14:36:07', 'MANUAL', 'PENDING_APPROVAL', 0, NULL, NULL, NULL, '2026-08-02 05:04:32', '2026-08-13 11:29:11', 1.53, 1.53, 0.00, 1, 1, 1, 1),
 (42, 1, NULL, '2026-08-03', '2026-08-03 01:04:25', '2026-08-03 20:43:11', 'MANUAL', 'PENDING_APPROVAL', 0, NULL, NULL, NULL, '2026-08-02 17:04:25', '2026-08-13 11:29:13', 19.65, 8.00, 11.65, 1, 1, 1, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ta_leave_requests`
+--
+
+CREATE TABLE `ta_leave_requests` (
+  `id` int(11) NOT NULL,
+  `employee_id` varchar(50) NOT NULL,
+  `leave_type_id` int(11) NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `date_submitted` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `status` enum('Pending','Approved','Rejected','Cancelled') NOT NULL DEFAULT 'Pending',
+  `details` varchar(255) DEFAULT NULL,
+  `supporting_document` varchar(255) DEFAULT NULL,
+  `reject_reason` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ta_leave_requests`
+--
+
+INSERT INTO `ta_leave_requests` (`id`, `employee_id`, `leave_type_id`, `start_date`, `end_date`, `date_submitted`, `updated_at`, `status`, `details`, `supporting_document`, `reject_reason`) VALUES
+(1, '7', 4, '2026-04-02', '2026-04-03', '2026-04-01 19:59:51', NULL, 'Approved', 'sample', NULL, NULL),
+(2, '7', 1, '2026-04-04', '2026-04-05', '2026-04-03 21:16:06', NULL, 'Pending', 'sample', NULL, NULL),
+(3, '7', 4, '2026-04-04', '2026-04-05', '2026-04-04 00:50:24', NULL, 'Pending', 'Sample', NULL, NULL),
+(4, '7', 7, '2026-04-05', '2026-04-06', '2026-04-04 22:17:18', NULL, 'Pending', 'sample', NULL, NULL),
+(5, '6', 5, '2026-04-05', '2026-04-06', '2026-04-04 22:36:25', NULL, 'Approved', 'tetsting', NULL, NULL),
+(6, '7', 6, '2026-04-05', '2026-04-06', '2026-04-05 05:30:48', NULL, 'Pending', 'Sample', NULL, NULL),
+(7, '7', 5, '2026-04-12', '2026-04-13', '2026-04-11 23:30:26', '2026-07-30 21:22:13', 'Approved', 'I need to accompany my wife during her labor', NULL, NULL),
+(8, '7', 3, '2026-07-13', '2026-07-14', '2026-07-13 05:03:25', '2026-07-30 21:22:11', 'Rejected', 'emergency', NULL, 'sample'),
+(9, '16', 1, '2026-07-31', '2026-08-01', '2026-07-30 20:33:27', '2026-07-30 21:20:31', 'Rejected', 'sample', NULL, 'sample'),
+(10, '14', 1, '2026-08-02', '2026-08-03', '2026-08-02 01:02:13', NULL, 'Pending', 'sample', NULL, NULL),
+(11, '1', 2, '2026-08-18', '2026-08-20', '2026-08-17 02:26:31', NULL, 'Pending', 'sample', NULL, NULL),
+(12, '1', 5, '2026-08-18', '2026-08-19', '2026-08-17 03:48:30', '2026-08-17 04:45:14', 'Rejected', 'sample', 'leave_1_20260817054830_4dde1bdbdf.pdf', 'Incomplete Leave Documentation Sample'),
+(13, '1', 1, '2026-08-19', '2026-08-20', '2026-08-17 03:53:55', NULL, 'Cancelled', 'sample', 'leave_1_20260817055355_b8558fb35f.pdf', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ta_leave_types`
+--
+
+CREATE TABLE `ta_leave_types` (
+  `leave_type_id` int(11) NOT NULL,
+  `leave_type_name` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `days_per_year` int(11) NOT NULL DEFAULT 10,
+  `is_deductible` tinyint(1) DEFAULT 1,
+  `requires_approval` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ta_leave_types`
+--
+
+INSERT INTO `ta_leave_types` (`leave_type_id`, `leave_type_name`, `description`, `days_per_year`, `is_deductible`, `requires_approval`, `created_at`) VALUES
+(1, 'Sick Leave', 'Leave taken when an employee is unable to work due to illness or medical reasons.', 3, 1, 1, '2026-02-09 08:00:00'),
+(2, 'Vacation Leave', 'Leave taken for vacation, rest, travel, or personal time away from work.', 4, 1, 1, '2026-02-14 08:00:00'),
+(3, 'Emergency Leave', 'Leave granted when an employee needs to attend to an unexpected or urgent personal matter.', 1, 1, 1, '2026-02-02 08:00:00'),
+(4, 'Maternity Leave', 'Leave granted to an employee for childbirth, recovery, and related maternity needs.', 105, 0, 1, '2026-02-19 08:00:00'),
+(5, 'Paternity Leave', 'Leave granted to a father following the birth of a child to provide care and support.', 7, 0, 1, '2026-02-20 08:00:00'),
+(6, 'Bereavement Leave', 'Leave granted when an employee experiences the death of an immediate family member.', 5, 0, 1, '2026-02-21 08:00:00'),
+(7, 'Study Leave', 'Leave granted to an employee for educational, academic, or study-related purposes.', 10, 1, 1, '2026-02-22 08:00:00');
 
 -- --------------------------------------------------------
 
@@ -861,12 +895,6 @@ ALTER TABLE `lc_incidents`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `leave_requests`
---
-ALTER TABLE `leave_requests`
-  ADD PRIMARY KEY (`leave_id`);
-
---
 -- Indexes for table `pm_360_feedback`
 --
 ALTER TABLE `pm_360_feedback`
@@ -884,6 +912,18 @@ ALTER TABLE `pr_payslips`
 ALTER TABLE `ta_attendance`
   ADD PRIMARY KEY (`attendance_id`),
   ADD KEY `fk_attendance_employee` (`employee_id`);
+
+--
+-- Indexes for table `ta_leave_requests`
+--
+ALTER TABLE `ta_leave_requests`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ta_leave_types`
+--
+ALTER TABLE `ta_leave_types`
+  ADD PRIMARY KEY (`leave_type_id`);
 
 --
 -- Indexes for table `user_account`
@@ -906,7 +946,7 @@ ALTER TABLE `eer_announcements`
 -- AUTO_INCREMENT for table `eer_grievances`
 --
 ALTER TABLE `eer_grievances`
-  MODIFY `eer_grievance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `eer_grievance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `em_employees`
@@ -918,7 +958,7 @@ ALTER TABLE `em_employees`
 -- AUTO_INCREMENT for table `ep_benefits_and_government_contribution`
 --
 ALTER TABLE `ep_benefits_and_government_contribution`
-  MODIFY `benefit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `benefit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `ep_notifications`
@@ -942,7 +982,7 @@ ALTER TABLE `ep_online_meetings`
 -- AUTO_INCREMENT for table `ep_payroll_request`
 --
 ALTER TABLE `ep_payroll_request`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `ep_resignation_requests`
@@ -987,12 +1027,6 @@ ALTER TABLE `lc_incidents`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
--- AUTO_INCREMENT for table `leave_requests`
---
-ALTER TABLE `leave_requests`
-  MODIFY `leave_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
---
 -- AUTO_INCREMENT for table `pm_360_feedback`
 --
 ALTER TABLE `pm_360_feedback`
@@ -1009,6 +1043,18 @@ ALTER TABLE `pr_payslips`
 --
 ALTER TABLE `ta_attendance`
   MODIFY `attendance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+
+--
+-- AUTO_INCREMENT for table `ta_leave_requests`
+--
+ALTER TABLE `ta_leave_requests`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `ta_leave_types`
+--
+ALTER TABLE `ta_leave_types`
+  MODIFY `leave_type_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `user_account`
