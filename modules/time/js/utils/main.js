@@ -84,6 +84,10 @@
         console.log('[TA PAGE] Loading page:', page);
 
         try {
+            if (typeof window.clearPageCleanup === 'function') {
+                window.clearPageCleanup();
+            }
+
             const response = await fetch(`page-loader.php?page=${encodeURIComponent(page)}`, { credentials: 'same-origin' });
             // Session expired — redirect to login
             if (response.status === 401) {

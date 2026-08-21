@@ -282,5 +282,43 @@ class EmployeeShift {
         $employees = $this->getEmployeesWithoutShift();
         return count($employees);
     }
+
+    /**
+     * Get employees flagged as near-termination risk because they missed assigned shifts
+     * recently. This is a lightweight warning list for HR review.
+     *
+     * @param int $daysBack
+     * @param int $limit
+     * @return array
+     */
+    public function getEmployeesNearTermination($daysBack = 7, $limit = 10) {
+        $query = "SELECT
+                    e.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                    e.department,
+                    e.position,
+                    COUNT(a.attendance_id) AS missed_shift_days,
+                    MAX(a.attendance_date) AS last_missed_shift
+                  FROM em_employees e
+                  INNER JOIN " . $this->table . " es ON e.employee_id = es.employee_id
+                    AND es.is_active = 1
+                    AND es.effective_from <= CURDATE()
+                    AND (es.effective_to IS NULL OR es.effective_to >= CURDATE())
+                  LEFT JOIN ta_attendance a ON a.employee_id = e.employee_id
+                    AND a.status = 'ABSENT'
+                    AND a.attendance_date >= DATE_SUB(CURDATE(), INTERVAL :days_back DAY)
+                  WHERE LOWER(e.employment_status) = 'active'
+                  GROUP BY e.employee_id, e.first_name, e.last_name, e.department, e.position
+                  HAVING COUNT(a.attendance_id) >= 1
+                  ORDER BY missed_shift_days DESC, last_missed_shift DESC
+                  LIMIT :limit";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':days_back', $daysBack, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

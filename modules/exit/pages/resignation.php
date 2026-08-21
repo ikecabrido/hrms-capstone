@@ -1,8 +1,7 @@
 <?php
 $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 ?>
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.6.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="assets/vendor/flatpickr/flatpickr.min.css">
 <link rel="stylesheet" href="assets/css/custom.css">
 <script>
     window.exitManagementUserRole = <?php echo json_encode($currentRoleName); ?>;
@@ -243,9 +242,8 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
         </div>
     </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="assets/vendor/jquery/jquery.min.js"></script>
+<script src="assets/vendor/flatpickr/flatpickr.min.js"></script>
 <script src="assets/js/custom.js"></script>
 <script>
     if (typeof loadResignationsTable === 'function') {

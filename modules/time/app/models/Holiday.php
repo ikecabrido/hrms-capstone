@@ -29,6 +29,10 @@ class Holiday
                     country_code,
                     description,
                     category,
+                    holiday_scope,
+                    province_name,
+                    is_working_day,
+                    source,
                     is_active,
                     created_by,
                     created_at,
@@ -78,6 +82,10 @@ class Holiday
                     country_code,
                     description,
                     category,
+                    holiday_scope,
+                    province_name,
+                    is_working_day,
+                    source,
                     is_active,
                     created_by,
                     created_at,
@@ -107,6 +115,10 @@ class Holiday
                     country_code,
                     description,
                     category,
+                    holiday_scope,
+                    province_name,
+                    is_working_day,
+                    source,
                     is_active,
                     created_by,
                     created_at,
@@ -154,6 +166,10 @@ class Holiday
                     country_code,
                     description,
                     category,
+                    holiday_scope,
+                    province_name,
+                    is_working_day,
+                    source,
                     is_active,
                     created_by,
                     created_at,
@@ -176,9 +192,9 @@ class Holiday
     public function create($data)
     {
         $query = "INSERT INTO {$this->table}
-                 (name, holiday_date, is_recurring, country_code, description, category, is_active, created_by)
+                 (name, holiday_date, is_recurring, country_code, description, category, holiday_scope, province_name, is_working_day, source, is_active, created_by)
                  VALUES
-                 (:name, :holiday_date, :is_recurring, :country_code, :description, :category, :is_active, :created_by)";
+                 (:name, :holiday_date, :is_recurring, :country_code, :description, :category, :holiday_scope, :province_name, :is_working_day, :source, :is_active, :created_by)";
 
         $stmt = $this->db->prepare($query);
 
@@ -186,6 +202,10 @@ class Holiday
         $data['is_recurring'] = $data['is_recurring'] ?? 0;
         $data['country_code'] = $data['country_code'] ?? 'PH';
         $data['category'] = $data['category'] ?? 'national';
+        $data['holiday_scope'] = $data['holiday_scope'] ?? ($data['category'] ?? 'national');
+        $data['province_name'] = $data['province_name'] ?? null;
+        $data['is_working_day'] = isset($data['is_working_day']) ? (int)$data['is_working_day'] : 0;
+        $data['source'] = $data['source'] ?? 'manual';
         $data['is_active'] = $data['is_active'] ?? 1;
 
         $stmt->bindParam(':name', $data['name']);
@@ -194,6 +214,10 @@ class Holiday
         $stmt->bindParam(':country_code', $data['country_code']);
         $stmt->bindParam(':description', $data['description']);
         $stmt->bindParam(':category', $data['category']);
+        $stmt->bindParam(':holiday_scope', $data['holiday_scope']);
+        $stmt->bindParam(':province_name', $data['province_name']);
+        $stmt->bindParam(':is_working_day', $data['is_working_day']);
+        $stmt->bindParam(':source', $data['source']);
         $stmt->bindParam(':is_active', $data['is_active']);
         $stmt->bindParam(':created_by', $data['created_by']);
 
@@ -209,7 +233,7 @@ class Holiday
         $updates = [];
 
         foreach ($data as $key => $value) {
-            if (in_array($key, ['name', 'holiday_date', 'is_recurring', 'description', 'category', 'is_active'])) {
+            if (in_array($key, ['name', 'holiday_date', 'is_recurring', 'description', 'category', 'holiday_scope', 'province_name', 'is_working_day', 'is_active'])) {
                 $updates[] = "$key = :$key";
             }
         }
@@ -220,7 +244,7 @@ class Holiday
         $stmt->bindParam(':id', $id);
 
         foreach ($data as $key => $value) {
-            if (in_array($key, ['name', 'holiday_date', 'is_recurring', 'description', 'category', 'is_active'])) {
+            if (in_array($key, ['name', 'holiday_date', 'is_recurring', 'description', 'category', 'holiday_scope', 'province_name', 'is_working_day', 'is_active'])) {
                 $stmt->bindParam(":$key", $data[$key]);
             }
         }
@@ -253,6 +277,10 @@ class Holiday
                     country_code,
                     description,
                     category,
+                    holiday_scope,
+                    province_name,
+                    is_working_day,
+                    source,
                     is_active,
                     created_by,
                     created_at,
@@ -332,8 +360,8 @@ class Holiday
             $this->db->beginTransaction();
 
             $query = "INSERT INTO {$this->table}
-                     (name, holiday_date, is_recurring, country_code, description, category, is_active, created_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                     (name, holiday_date, is_recurring, country_code, description, category, holiday_scope, province_name, is_working_day, source, is_active, created_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $this->db->prepare($query);
 
@@ -345,6 +373,10 @@ class Holiday
                     $holiday['country_code'] ?? 'PH',
                     $holiday['description'] ?? '',
                     $holiday['category'] ?? 'national',
+                    $holiday['holiday_scope'] ?? ($holiday['category'] ?? 'national'),
+                    $holiday['province_name'] ?? null,
+                    $holiday['is_working_day'] ?? 0,
+                    $holiday['source'] ?? 'manual',
                     1, // is_active
                     $createdBy
                 ]);

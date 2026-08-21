@@ -132,6 +132,14 @@ class HolidayController
                 return $this->response(false, 'Name and holiday date are required');
             }
 
+            $validation = $this->validateHolidayMetadata($data, true);
+            if ($validation !== true) {
+                return $this->response(false, $validation);
+            }
+
+            $data['category'] = $data['holiday_scope'];
+            $data['source'] = 'manual';
+
             $data['created_by'] = $_SESSION['user_id'] ?? null;
             
             if ($this->holiday->create($data)) {
@@ -158,6 +166,22 @@ class HolidayController
             }
 
             unset($data['id']);
+
+            // Source is controlled by the backend and cannot be changed through this route.
+            unset($data['source']);
+
+            if (array_key_exists('holiday_scope', $data)
+                || array_key_exists('province_name', $data)
+                || array_key_exists('is_working_day', $data)) {
+                $validation = $this->validateHolidayMetadata($data, false);
+                if ($validation !== true) {
+                    return $this->response(false, $validation);
+                }
+            }
+
+            if (isset($data['holiday_scope'])) {
+                $data['category'] = $data['holiday_scope'];
+            }
 
             if ($this->holiday->update($id, $data)) {
                 return $this->response(true, 'Holiday updated successfully');
@@ -252,6 +276,57 @@ class HolidayController
     {
         $input = file_get_contents('php://input');
         return json_decode($input, true) ?? [];
+    }
+
+    /**
+     * Validate and normalize holiday scope, province, and working-day metadata.
+     */
+    private function validateHolidayMetadata(&$data, $requireMetadata = false)
+    {
+        $allowedScopes = ['national', 'provincial', 'company'];
+
+        if ($requireMetadata && !array_key_exists('holiday_scope', $data)) {
+            return 'Holiday scope is required';
+        }
+
+        if ($requireMetadata && !array_key_exists('is_working_day', $data)) {
+            return 'Working-day status is required';
+        }
+
+        if (array_key_exists('holiday_scope', $data)) {
+            $scope = strtolower(trim((string)$data['holiday_scope']));
+            if (!in_array($scope, $allowedScopes, true)) {
+                return 'Invalid holiday scope. Allowed values: national, provincial, company';
+            }
+            $data['holiday_scope'] = $scope;
+
+            if ($scope === 'provincial') {
+                $province = trim((string)($data['province_name'] ?? ''));
+                if ($province === '') {
+                    return 'Province is required for provincial holidays';
+                }
+                $data['province_name'] = $province;
+            } else {
+                $data['province_name'] = null;
+            }
+        } elseif (array_key_exists('province_name', $data)) {
+            $province = trim((string)$data['province_name']);
+            $data['province_name'] = $province === '' ? null : $province;
+        }
+
+        if (array_key_exists('is_working_day', $data)) {
+            if ($data['is_working_day'] === '' || !is_numeric($data['is_working_day'])) {
+                return 'is_working_day must be 0 or 1';
+            }
+
+            $workingDay = (int)$data['is_working_day'];
+            if (!in_array($workingDay, [0, 1], true) || (string)$data['is_working_day'] !== (string)$workingDay) {
+                return 'is_working_day must be 0 or 1';
+            }
+            $data['is_working_day'] = $workingDay;
+        }
+
+        return true;
     }
 
     /**

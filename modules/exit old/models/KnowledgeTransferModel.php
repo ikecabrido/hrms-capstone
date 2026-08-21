@@ -115,12 +115,12 @@ class KnowledgeTransferModel extends ExitManagementModel
                 ktp.status,
                 ktp.created_at,
                 ktp.updated_at,
-                e.full_name as employee_name,
+                CONCAT(e.first_name, ' ', e.last_name) as employee_name,
                 e.employee_id as emp_id,
-                s.full_name as successor_name
+                CONCAT(s.first_name, ' ', s.last_name) as successor_name
             FROM exit_knowledge_transfer_plans ktp
-            JOIN employees e ON ktp.employee_id = e.employee_id
-            LEFT JOIN employees s ON ktp.successor_id = s.employee_id
+            JOIN em_employees e ON ktp.employee_id = e.employee_id
+            LEFT JOIN em_employees s ON ktp.successor_id = s.employee_id
             WHERE ktp.id = ?
         ");
         $stmt->execute([$planId]);
@@ -142,9 +142,9 @@ class KnowledgeTransferModel extends ExitManagementModel
                 ktp.status,
                 ktp.created_at,
                 ktp.updated_at,
-                s.full_name as successor_name
+                CONCAT(s.first_name, ' ', s.last_name) as successor_name
             FROM exit_knowledge_transfer_plans ktp
-            LEFT JOIN employees s ON ktp.successor_id = s.employee_id
+            LEFT JOIN em_employees s ON ktp.successor_id = s.employee_id
             WHERE ktp.employee_id = ?
             ORDER BY ktp.created_at DESC
         ");
@@ -220,11 +220,11 @@ class KnowledgeTransferModel extends ExitManagementModel
                 ktp.status,
                 ktp.created_at,
                 ktp.updated_at,
-                e.full_name as employee_name,
-                s.full_name as successor_name
+                CONCAT(e.first_name, ' ', e.last_name) as employee_name,
+                CONCAT(s.first_name, ' ', s.last_name) as successor_name
             FROM exit_knowledge_transfer_plans ktp
-            JOIN employees e ON ktp.employee_id = e.employee_id
-            LEFT JOIN employees s ON ktp.successor_id = s.employee_id
+            JOIN em_employees e ON ktp.employee_id = e.employee_id
+            LEFT JOIN em_employees s ON ktp.successor_id = s.employee_id
             WHERE ktp.status = 'active'
             ORDER BY ktp.end_date ASC
         ");
@@ -248,18 +248,18 @@ class KnowledgeTransferModel extends ExitManagementModel
                 ktp.status,
                 ktp.created_at,
                 ktp.updated_at,
-                e.full_name as employee_name,
-                s.full_name as successor_name
+                CONCAT(e.first_name, ' ', e.last_name) as employee_name,
+                CONCAT(s.first_name, ' ', s.last_name) as successor_name
             FROM exit_knowledge_transfer_plans ktp
-            JOIN employees e ON ktp.employee_id = e.employee_id
-            LEFT JOIN employees s ON ktp.successor_id = s.employee_id
+            JOIN em_employees e ON ktp.employee_id = e.employee_id
+            LEFT JOIN em_employees s ON ktp.successor_id = s.employee_id
         ";
 
         $countSql = "
             SELECT COUNT(*) as total
             FROM exit_knowledge_transfer_plans ktp
-            JOIN employees e ON ktp.employee_id = e.employee_id
-            LEFT JOIN employees s ON ktp.successor_id = s.employee_id
+            JOIN em_employees e ON ktp.employee_id = e.employee_id
+            LEFT JOIN em_employees s ON ktp.successor_id = s.employee_id
         ";
 
         $params = [];
@@ -273,7 +273,7 @@ class KnowledgeTransferModel extends ExitManagementModel
         // Add search condition if provided
         if (!empty($search)) {
             $searchCondition = $whereClause ? " AND" : " WHERE";
-            $searchCondition .= " (e.full_name LIKE :search0 OR s.full_name LIKE :search1)";
+            $searchCondition .= " (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR CONCAT(s.first_name, ' ', s.last_name) LIKE :search1)";
             $whereClause .= $searchCondition;
             $searchParam = "%$search%";
             $params['search0'] = $searchParam;
@@ -315,7 +315,7 @@ class KnowledgeTransferModel extends ExitManagementModel
                 a.original_id as plan_id,
                 a.employee_id,
                 COALESCE(
-                    e.full_name,
+                    CONCAT(e.first_name, ' ', e.last_name),
                     JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.employee_id')),
                     JSON_UNQUOTE(JSON_EXTRACT(a.content, '$.employee_id'))
                 ) as employee_name,
@@ -335,7 +335,7 @@ class KnowledgeTransferModel extends ExitManagementModel
                 a.archive_reason,
                 IF(a.archived_at >= DATE_SUB(NOW(), INTERVAL 1 DAY), 1, 0) as is_new
             FROM exit_archive a
-            LEFT JOIN employees e ON a.employee_id = e.employee_id
+            LEFT JOIN em_employees e ON a.employee_id = e.employee_id
             WHERE a.archive_type = 'transfer_plan' AND a.restored = 0
         ";
 
@@ -344,7 +344,7 @@ class KnowledgeTransferModel extends ExitManagementModel
 
         $params = [];
         if (!empty($search)) {
-            $searchCondition = " AND (e.full_name LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.start_date')) LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.end_date')) LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.status')) LIKE :search OR a.archive_reason LIKE :search)";
+            $searchCondition = " AND (CONCAT(e.first_name, ' ', e.last_name) LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.start_date')) LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.end_date')) LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.status')) LIKE :search OR a.archive_reason LIKE :search)";
             $sql .= $searchCondition;
             $countSql .= $searchCondition;
             $newCountSql .= $searchCondition;

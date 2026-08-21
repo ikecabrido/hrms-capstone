@@ -16,7 +16,7 @@ class EnhancedAbsenceDetector
 {
     private $conn;
     private $attendance_table = "ta_attendance";
-    private $employees_table = "employees";
+    private $employees_table = "em_employees";
     private $late_threshold_minutes = 0; // will read from validation service
     private $unexpectedHolidayModel;
     private $validationService;
@@ -92,7 +92,12 @@ class EnhancedAbsenceDetector
             }
 
             // Get active employees
-            $employeesQuery = "SELECT employee_id, full_name, department FROM {$this->employees_table} WHERE employment_status = 'Active'";
+            $employeesQuery = "SELECT 
+                                employee_id,
+                                CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
+                                department
+                              FROM {$this->employees_table}
+                              WHERE employment_status = 'Active'";
             $stmt = $this->conn->prepare($employeesQuery);
             $stmt->execute();
             $employees = $stmt->fetchAll(\PDO::FETCH_ASSOC);

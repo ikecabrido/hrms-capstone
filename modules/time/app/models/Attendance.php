@@ -23,6 +23,9 @@ class Attendance
      */
     public function getTodayAllEmployees($limit = 100, $offset = 0)
 {
+    $today = date('Y-m-d');
+    $dayOfWeek = (int) date('w', strtotime($today));
+
     $query = "SELECT
                 e.employee_id,
                 e.first_name,
@@ -35,7 +38,66 @@ class Attendance
                 ) AS full_name,
                 e.department,
                 e.position,
+                COALESCE(
+                    (
+                        SELECT s.start_time
+                        FROM ta_employee_shifts es
+                        LEFT JOIN ta_shifts s ON s.shift_id = es.shift_id
+                        WHERE es.employee_id = e.employee_id
+                          AND es.is_active = 1
+                          AND es.effective_from <= :today
+                          AND (es.effective_to IS NULL OR es.effective_to >= :today)
+                        ORDER BY es.effective_from DESC, es.employee_shift_id DESC
+                        LIMIT 1
+                    ),
+                    (
+                        SELECT fs.start_time
+                        FROM ta_flexible_schedules fs
+                        WHERE fs.employee_id = e.employee_id
+                          AND (
+                              fs.schedule_date = :today
+                              OR (
+                                  fs.day_of_week IS NOT NULL
+                                  AND fs.day_of_week = :day_of_week
+                                  AND (fs.repeat_until IS NULL OR fs.repeat_until >= :today)
+                                  AND (fs.contract_end_date IS NULL OR fs.contract_end_date >= :today)
+                              )
+                          )
+                        ORDER BY fs.schedule_date DESC, fs.id DESC
+                        LIMIT 1
+                    )
+                ) AS shift_start,
+                COALESCE(
+                    (
+                        SELECT s.end_time
+                        FROM ta_employee_shifts es
+                        LEFT JOIN ta_shifts s ON s.shift_id = es.shift_id
+                        WHERE es.employee_id = e.employee_id
+                          AND es.is_active = 1
+                          AND es.effective_from <= :today
+                          AND (es.effective_to IS NULL OR es.effective_to >= :today)
+                        ORDER BY es.effective_from DESC, es.employee_shift_id DESC
+                        LIMIT 1
+                    ),
+                    (
+                        SELECT fs.end_time
+                        FROM ta_flexible_schedules fs
+                        WHERE fs.employee_id = e.employee_id
+                          AND (
+                              fs.schedule_date = :today
+                              OR (
+                                  fs.day_of_week IS NOT NULL
+                                  AND fs.day_of_week = :day_of_week
+                                  AND (fs.repeat_until IS NULL OR fs.repeat_until >= :today)
+                                  AND (fs.contract_end_date IS NULL OR fs.contract_end_date >= :today)
+                              )
+                          )
+                        ORDER BY fs.schedule_date DESC, fs.id DESC
+                        LIMIT 1
+                    )
+                ) AS shift_end,
                 e.employment_status,
+                1 AS has_shift_today,
 
                 a.attendance_id,
                 a.time_in,
@@ -52,9 +114,32 @@ class Attendance
 
               FROM em_employees e
 
+              INNER JOIN (
+                  SELECT DISTINCT employee_id
+                  FROM ta_employee_shifts
+                  WHERE is_active = 1
+                    AND effective_from <= :today
+                    AND (effective_to IS NULL OR effective_to >= :today)
+
+                  UNION
+
+                  SELECT DISTINCT employee_id
+                  FROM ta_flexible_schedules
+                  WHERE (
+                      schedule_date = :today
+                      OR (
+                          day_of_week IS NOT NULL
+                          AND day_of_week = :day_of_week
+                          AND (repeat_until IS NULL OR repeat_until >= :today)
+                          AND (contract_end_date IS NULL OR contract_end_date >= :today)
+                      )
+                  )
+              ) assigned
+                ON assigned.employee_id = e.employee_id
+
               LEFT JOIN ta_attendance a
                 ON a.employee_id = e.employee_id
-                AND a.attendance_date = CURDATE()
+                AND a.attendance_date = :today
 
               WHERE LOWER(e.employment_status) = 'active'
 
@@ -64,6 +149,8 @@ class Attendance
 
     $stmt = $this->conn->prepare($query);
 
+    $stmt->bindValue(':today', $today);
+    $stmt->bindValue(':day_of_week', $dayOfWeek, PDO::PARAM_INT);
     $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
 

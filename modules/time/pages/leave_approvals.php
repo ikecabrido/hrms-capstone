@@ -70,6 +70,78 @@ if ($role === 'DEPARTMENT_HEAD') {
 
 $totalLeavePages = max(1, (int)ceil($totalLeaveRequests / $recordsPerPage));
 
+/**
+ * Render numeric pagination with ellipses and jump-to-page form.
+ * $pageParam: the GET param name for the page (e.g., 'employee_page')
+ */
+function render_pagination($pageParam, $currentPage, $totalPages, $extraParams = []) {
+    $currentPage = max(1, (int)$currentPage);
+    $totalPages = max(1, (int)$totalPages);
+    $window = 2; // pages to show around current
+
+    // build base query from existing GET but override page param when rendering
+    $baseQuery = $_GET;
+    $baseQuery['page'] = 'leave_approvals';
+    // ensure other paging params preserved
+    foreach ($extraParams as $k => $v) {
+        $baseQuery[$k] = $v;
+    }
+
+    echo '<div class="pagination pagination--numeric" role="navigation" aria-label="Pagination">';
+
+    // Previous
+    if ($currentPage > 1) {
+        $baseQuery[$pageParam] = $currentPage - 1;
+        echo '<a class="page-btn" href="?' . htmlentities(http_build_query($baseQuery)) . '" aria-label="Previous page">&laquo;</a>';
+    }
+
+    // First page
+    if ($currentPage - $window > 1) {
+        $baseQuery[$pageParam] = 1;
+        echo '<a class="page-number" href="?' . htmlentities(http_build_query($baseQuery)) . '">1</a>';
+        if ($currentPage - $window > 2) echo '<span class="page-ellipsis">&hellip;</span>';
+    }
+
+    // Window
+    $start = max(1, $currentPage - $window);
+    $end = min($totalPages, $currentPage + $window);
+    for ($p = $start; $p <= $end; $p++) {
+        $baseQuery[$pageParam] = $p;
+        if ($p == $currentPage) {
+            echo '<span class="page-number active" aria-current="page">' . $p . '</span>';
+        } else {
+            echo '<a class="page-number" href="?' . htmlentities(http_build_query($baseQuery)) . '">' . $p . '</a>';
+        }
+    }
+
+    // Last page
+    if ($currentPage + $window < $totalPages) {
+        if ($currentPage + $window < $totalPages - 1) echo '<span class="page-ellipsis">&hellip;</span>';
+        $baseQuery[$pageParam] = $totalPages;
+        echo '<a class="page-number" href="?' . htmlentities(http_build_query($baseQuery)) . '">' . $totalPages . '</a>';
+    }
+
+    // Next
+    if ($currentPage < $totalPages) {
+        $baseQuery[$pageParam] = $currentPage + 1;
+        echo '<a class="page-btn" href="?' . htmlentities(http_build_query($baseQuery)) . '" aria-label="Next page">&raquo;</a>';
+    }
+
+    // Jump-to-page form
+    echo '<form class="jump-to-page" method="GET" onsubmit="return jumpToPage(this, \'' . $pageParam . '\')">';
+    // include all current query params as hidden inputs
+    foreach ($baseQuery as $k => $v) {
+        if ($k === $pageParam) continue;
+        echo '<input type="hidden" name="' . htmlentities($k) . '" value="' . htmlentities($v) . '">';
+    }
+    echo '<label for="jump_' . $pageParam . '" class="sr-only">Jump to page</label>';
+    echo '<input id="jump_' . $pageParam . '" class="jump-input" type="number" name="' . $pageParam . '" min="1" max="' . $totalPages . '" placeholder="Page"/>'; 
+    echo '<button type="submit" class="page-btn">Go</button>';
+    echo '</form>';
+
+    echo '</div>';
+}
+
 // Load leave balances for pending request rows to display alongside approvals
 $leaveBalances = [];
 foreach ($pendingRequests as $request) {
@@ -133,14 +205,32 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
 <link rel="stylesheet" href="assets/css/dashboard.css">
 <link rel="stylesheet" href="assets/css/hr-template.css">
 <link rel="stylesheet" href="assets/css/leave-approvals.css">
+<!-- Toastr notifications -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 <script src="assets/js/mobile-responsive.js" defer></script>
 
     <div class="module-header">
         <h1>Leave Management</h1>
     </div>
 
-    <div class="module-content">
-    <div class="card shadow-sm border-0">
+    <div class="module-content leave-management-shell">
+        <div class="summary-grid">
+            <div class="summary-card summary-card--primary">
+                <span class="summary-label">Pending Requests</span>
+                <strong class="summary-value"><?php echo (int) $totalLeaveRequests; ?></strong>
+            </div>
+            <div class="summary-card summary-card--blue">
+                <span class="summary-label">Active Employees</span>
+                <strong class="summary-value"><?php echo (int) $totalEmployees; ?></strong>
+            </div>
+            <div class="summary-card summary-card--green">
+                <span class="summary-label">Current Page</span>
+                <strong class="summary-value"><?php echo $leavePage; ?>/<?php echo $totalLeavePages; ?></strong>
+            </div>
+        </div>
+
+    <div class="card shadow-sm border-0 leave-panel">
         <?php if (!empty($message)): ?>
             <div class="card-body pb-0">
                 <div class="alert alert-<?php echo $messageType; ?> mb-0">
@@ -154,23 +244,23 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                 <h4>Employee Leave Balances</h4>
                 <p>Click an employee to view their remaining leave balances.</p>
             </div>
-            <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap" style="gap: 10px;">
-                <form method="GET" class="d-flex flex-wrap" style="gap: 10px; align-items: center; margin: 0;">
+            <div class="toolbar-panel mb-4">
+                <form method="GET" class="toolbar-form">
                     <input type="hidden" name="page" value="leave_approvals">
                     <input type="hidden" name="leave_page" value="<?php echo $leavePage; ?>">
                     <input type="hidden" name="employee_page_size" value="<?php echo $recordsPerPage; ?>">
-                    <input type="text" name="employee_search" class="form-control" placeholder="Search employees..." value="<?php echo htmlspecialchars($employeeSearch); ?>" style="min-width:240px;">
-                    <button type="submit" class="action-btn btn-approve" style="padding: 10px 18px;">Search</button>
-                    <a href="?page=leave_approvals&employee_page_size=<?php echo $recordsPerPage; ?>&leave_page=<?php echo $leavePage; ?>&employee_search=" class="action-btn" style="background: #ffffff; color: #0066cc; padding: 10px 18px; border: 1px solid #cce4ff;">Clear</a>
+                    <input type="text" name="employee_search" class="form-control toolbar-search" placeholder="Search employees..." value="<?php echo htmlspecialchars($employeeSearch); ?>">
+                    <button type="submit" class="action-btn btn-approve">Search</button>
+                    <a href="?page=leave_approvals&employee_page_size=<?php echo $recordsPerPage; ?>&leave_page=<?php echo $leavePage; ?>&employee_search=" class="action-btn action-btn--light">Clear</a>
                 </form>
-                <div style="display:flex; gap:10px; align-items:center; flex-wrap: wrap;">
-                    <label for="employeePageSize" style="margin:0; font-weight:600;">Page size:</label>
-                    <select id="employeePageSize" class="form-control" onchange="changeEmployeePageSize(this.value)" style="min-width:100px;">
+                <div class="toolbar-actions">
+                    <label for="employeePageSize" class="toolbar-label">Page size:</label>
+                    <select id="employeePageSize" class="form-control toolbar-select" onchange="changeEmployeePageSize(this.value)">
                         <?php foreach ([5, 10, 15, 20, 30] as $size): ?>
                             <option value="<?php echo $size; ?>" <?php echo $recordsPerPage === $size ? 'selected' : ''; ?>><?php echo $size; ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <button class="action-btn btn-approve" type="button" onclick="provisionLeaveBalances()" style="padding: 10px 18px;">Provision Balances for All Active Employees</button>
+                    <button class="action-btn btn-approve toolbar-btn" type="button" onclick="provisionLeaveBalances()">Provision Balances</button>
                 </div>
             </div>
             <?php if (empty($employees)): ?>
@@ -205,15 +295,7 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                         </tbody>
                     </table>
                 </div>
-                <div class="pagination mb-4">
-                    <?php if ($employeePage > 1): ?>
-                        <a href="?page=leave_approvals&employee_page=<?php echo $employeePage - 1; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">&laquo; Previous</a>
-                    <?php endif; ?>
-                    <span class="active">Employee Page <?php echo $employeePage; ?> of <?php echo $totalEmployeePages; ?></span>
-                    <?php if ($employeePage < $totalEmployeePages): ?>
-                        <a href="?page=leave_approvals&employee_page=<?php echo $employeePage + 1; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">Next &raquo;</a>
-                    <?php endif; ?>
-                </div>
+                <?php render_pagination('employee_page', $employeePage, $totalEmployeePages, ['employee_search' => $employeeSearch, 'employee_page_size' => $recordsPerPage, 'leave_page' => $leavePage]); ?>
             <?php endif; ?>
 
             <div class="section-header">
@@ -274,15 +356,7 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                         </tbody>
                     </table>
                 </div>
-                <div class="pagination">
-                    <?php if ($leavePage > 1): ?>
-                        <a href="?page=leave_approvals&leave_page=<?php echo $leavePage - 1; ?>&employee_page=<?php echo $employeePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">&laquo; Previous</a>
-                    <?php endif; ?>
-                    <span class="active">Leave Page <?php echo $leavePage; ?> of <?php echo $totalLeavePages; ?></span>
-                    <?php if ($leavePage < $totalLeavePages): ?>
-                        <a href="?page=leave_approvals&leave_page=<?php echo $leavePage + 1; ?>&employee_page=<?php echo $employeePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&employee_search=<?php echo urlencode($employeeSearch); ?>">Next &raquo;</a>
-                    <?php endif; ?>
-                </div>
+                <?php render_pagination('leave_page', $leavePage, $totalLeavePages, ['employee_page' => $employeePage, 'employee_page_size' => $recordsPerPage, 'employee_search' => $employeeSearch]); ?>
             <?php endif; ?>
         </div>
     </div>
@@ -293,7 +367,7 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('approveModal')">&times;</span>
             <h3>Approve Leave Request</h3>
-            <form id="approveForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>?page=leave_approvals" method="POST">
+            <form id="approveForm" data-skip="true" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>?page=leave_approvals" method="POST">
                 <input type="hidden" name="action" value="approve">
                 <input type="hidden" name="leave_request_id" id="approveRequestId">
                 <input type="hidden" name="employee_page" value="<?php echo $employeePage; ?>">
@@ -315,7 +389,7 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
         <div class="modal-content">
             <span class="modal-close" onclick="closeModal('rejectModal')">&times;</span>
             <h3>Reject Leave Request</h3>
-            <form id="rejectForm" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>?page=leave_approvals" method="POST">
+            <form id="rejectForm" data-skip="true" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'); ?>?page=leave_approvals" method="POST">
                 <input type="hidden" name="action" value="reject">
                 <input type="hidden" name="leave_request_id" id="rejectRequestId">
                 <input type="hidden" name="employee_page" value="<?php echo $employeePage; ?>">
@@ -346,12 +420,14 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
         </div>
     </div>
 
-<script>
+    <script>
+    // Use absolute module paths to avoid dirname() ambiguity when pages are included
     window.__TA_CONFIG = {
-        balanceApiUrl: <?php echo json_encode(dirname($_SERVER['SCRIPT_NAME']) . '/../app/api/get_leave_balance.php'); ?>,
-        provisionUrl: <?php echo json_encode(dirname($_SERVER['SCRIPT_NAME']) . '/../app/api/provision_leave_balances.php'); ?>,
+        balanceApiUrl: <?php echo json_encode('/hrms/hrms-capstone/modules/time/app/api/leave/get_leave_balance.php'); ?>,
+        provisionUrl: <?php echo json_encode('/hrms/hrms-capstone/modules/time/app/api/leave/provision_leave_balances.php'); ?>,
+        approveLeaveUrl: <?php echo json_encode('/hrms/hrms-capstone/modules/time/app/api/leave/approve_leave_head.php'); ?>,
         leavePage: <?php echo (int) $leavePage; ?>,
         recordsPerPage: <?php echo (int) $recordsPerPage; ?>
     };
-</script>
+    </script>
 <script src="assets/js/leave-approvals.js"></script>

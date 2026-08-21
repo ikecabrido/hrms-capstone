@@ -184,6 +184,10 @@
         .tab-pane {
             width: 100% !important;
             box-sizing: border-box !important;
+            display: none;
+        }
+        .tab-pane.show.active {
+            display: block;
         }
         .tab-content {
             width: 100% !important;
@@ -193,9 +197,10 @@
         .main-content {
             background-color: transparent !important;
             width: auto !important;
-            margin: 0 0 0 0px !important;
-            min-height: calc(100vh - 60px) !important;
-            padding: 28px 28px !important;
+            margin-left: var(--sidebar-width) !important;
+            margin-top: var(--header-height) !important;
+            min-height: calc(100vh - var(--header-height)) !important;
+            padding: 28px !important;
             box-sizing: border-box !important;
         }
         body.dark-mode .main-content {
@@ -209,5 +214,49 @@
             box-sizing: border-box !important;
             background: transparent !important;
         }
+        .module-content {
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+        }
         /* Ensure page looks consistent with dashboard */
+
+        .fc .shift-event,
+        .fc .shift-event .fc-event-main {
+            background-color: #28a745 !important;
+            border-color: #218838 !important;
+            color: #fff !important;
+        }
+
+        .fc .holiday-shift-event,
+        .fc .holiday-shift-event .fc-event-main,
+        .fc .holiday-worked-event,
+        .fc .holiday-worked-event .fc-event-main {
+            background-color: #f39c12 !important;
+            border-color: #d98200 !important;
+            color: #fff !important;
+        }
+
+        .fc .attendance-event,
+        .fc .attendance-event .fc-event-main {
+            background-color: #17a2b8 !important;
+            border-color: #138496 !important;
+            color: #fff !important;
+        }
+
+        .fc .late-event,
+        .fc .late-event .fc-event-main {
+            background-color: #ffc107 !important;
+            border-color: #d39e00 !important;
+            color: #212529 !important;
+        }
+
+        .fc .absent-event,
+        .fc .absent-event .fc-event-main {
+            background-color: #dc3545 !important;
+            border-color: #bd2130 !important;
+            color: #fff !important;
+        }
     

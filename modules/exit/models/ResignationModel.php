@@ -263,9 +263,23 @@ class ResignationModel extends ExitManagementModel
      */
     public function getResignations(?string $status = null, int $page = 1, int $limit = 10, string $search = ''): array
     {
+        if ($status === null || $status === '') {
+            $status = 'active';
+        }
+
         $offset = ($page - 1) * $limit;
+        $hasArchivedFromStatus = $this->columnExists('exit_resignations', 'archived_from_status');
 
         if ($status === 'archived') {
+            if (!$this->tableExists('exit_archive')) {
+                return [
+                    'data' => [],
+                    'total' => 0,
+                    'page' => $page,
+                    'limit' => $limit,
+                    'total_pages' => 0
+                ];
+            }
             // Query from exit_archive for archived records
             $sql = "
                 SELECT
@@ -319,6 +333,7 @@ class ResignationModel extends ExitManagementModel
         } else {
             // Query from exit_resignations for active records
             $resignationTypeSelect = $this->columnExists('exit_resignations', 'resignation_type') ? 'r.resignation_type' : "NULL AS resignation_type";
+            $archivedFromStatusSelect = $hasArchivedFromStatus ? 'r.archived_from_status' : 'NULL AS archived_from_status';
 
             $sql = "
                 SELECT
@@ -330,7 +345,7 @@ class ResignationModel extends ExitManagementModel
                     r.last_working_date,
                     r.comments,
                     r.status,
-                    r.archived_from_status,
+                    " . $archivedFromStatusSelect . ",
                     r.created_at,
                     r.updated_at,
                     CONCAT(e.first_name, ' ', e.last_name) as employee_name,

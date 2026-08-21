@@ -132,10 +132,10 @@ class DocumentationModel extends ExitManagementModel
             return [];
         }
 
-        $stmt = $this->db->prepare("SELECT d.*, e.full_name as employee_name, u.full_name as uploaded_by_name
+        $stmt = $this->db->prepare("SELECT d.*, CONCAT(e.first_name, ' ', e.last_name) as employee_name, CONCAT(u.first_name, ' ', u.last_name) as uploaded_by_name
             FROM exit_documents d
-            LEFT JOIN employees e ON d.employee_id = e.employee_id
-            LEFT JOIN users u ON d.uploaded_by = u.id
+            LEFT JOIN em_employees e ON d.employee_id = e.employee_id
+            LEFT JOIN hrms_employee u ON d.uploaded_by = u.employee_id
             WHERE d.exit_case_type = ? AND d.exit_case_id = ? AND d.status = 'active'
             ORDER BY d.created_at DESC");
         $stmt->execute([$exitCaseType, $exitCaseId]);
@@ -148,10 +148,10 @@ class DocumentationModel extends ExitManagementModel
     public function getDocumentById(int $documentId): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT d.*, e.full_name as employee_name, u.full_name as uploaded_by_name
+            SELECT d.*, CONCAT(e.first_name, ' ', e.last_name) as employee_name, CONCAT(u.first_name, ' ', u.last_name) as uploaded_by_name
             FROM exit_documents d
-            LEFT JOIN employees e ON d.employee_id = e.employee_id
-            LEFT JOIN users u ON d.uploaded_by = u.id
+            LEFT JOIN em_employees e ON d.employee_id = e.employee_id
+            LEFT JOIN hrms_employee u ON d.uploaded_by = u.employee_id
             WHERE d.id = ? AND d.status = 'active'
         ");
         $stmt->execute([$documentId]);
@@ -206,17 +206,17 @@ class DocumentationModel extends ExitManagementModel
                 'd.uploaded_by',
                 'd.status',
                 'd.created_at',
-                'e.full_name as employee_name',
-                'u.full_name as uploaded_by_name'
+                "CONCAT(e.first_name, ' ', e.last_name) as employee_name",
+                "CONCAT(u.first_name, ' ', u.last_name) as uploaded_by_name"
             ]);
 
-            $sql = "SELECT\n                " . implode(",\n                    ", $selectFields) . "\n                FROM exit_documents d\n                LEFT JOIN employees e ON d.employee_id = e.employee_id\n                LEFT JOIN users u ON d.uploaded_by = u.id\n            ";
+            $sql = "SELECT\n                " . implode(",\n                    ", $selectFields) . "\n                FROM exit_documents d\n                LEFT JOIN em_employees e ON d.employee_id = e.employee_id\n                LEFT JOIN hrms_employee u ON d.uploaded_by = u.employee_id\n            ";
 
             $countSql = "
                 SELECT COUNT(*) as total
                 FROM exit_documents d
-                LEFT JOIN employees e ON d.employee_id = e.employee_id
-                LEFT JOIN users u ON d.uploaded_by = u.id
+                LEFT JOIN em_employees e ON d.employee_id = e.employee_id
+                LEFT JOIN hrms_employee u ON d.uploaded_by = u.employee_id
             ";
 
             $params = [];
@@ -231,7 +231,7 @@ class DocumentationModel extends ExitManagementModel
             if (!empty($search)) {
                 $searchCondition = $whereClause ? " AND" : " WHERE";
                 // include employee name, document title/type, and exit case type/id in searchable fields
-                $searchCondition .= " (e.full_name LIKE :search0 OR d.title LIKE :search1 OR d.document_type LIKE :search2";
+                $searchCondition .= " (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR d.title LIKE :search1 OR d.document_type LIKE :search2";
                 if ($hasExitCaseCols) {
                     $searchCondition .= " OR d.exit_case_type LIKE :search3 OR CAST(d.exit_case_id AS CHAR) LIKE :search4";
                 }

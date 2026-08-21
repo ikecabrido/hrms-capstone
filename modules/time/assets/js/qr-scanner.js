@@ -133,12 +133,22 @@
       return payload.message + ' Available in ' + remaining + ' second' + (remaining === 1 ? '' : 's') + '.';
     }
 
-    function buildRecentScansMarkup() {
-      if (!scanHistory.length) {
+    function buildRecentScansMarkup(employeeInfo = null, action = 'TIME_IN') {
+      const entries = scanHistory.length
+        ? scanHistory
+        : (employeeInfo ? [{
+            employee_name: employeeInfo.full_name || 'Employee',
+            employee_id: employeeInfo.employee_id || null,
+            department: employeeInfo.department || null,
+            action: action,
+            timestamp: new Date().toISOString()
+          }] : []);
+
+      if (!entries.length) {
         return '';
       }
 
-      const items = scanHistory.slice(0, 2).map(entry => {
+      const items = entries.slice(0, 2).map(entry => {
         const timeLabel = entry.timestamp ? formatDisplayDateTime(new Date(entry.timestamp)) : 'Unknown time';
         const pillClass = entry.action === 'TIME_OUT' ? 'out' : 'in';
         const actionLabel = entry.action === 'TIME_OUT' ? 'Timed Out' : 'Timed In';
@@ -160,7 +170,6 @@
       const now = new Date();
       infoPanel.innerHTML = '<div class="employee-info-shell">'
         + '<div class="greeting-label">' + getGreeting() + '</div>'
-        + '<div class="employee-avatar-circle"><i class="fas fa-user"></i></div>'
         + '<h4 class="employee-name">Ready to Scan</h4>'
         + '<p class="employee-subtext">Scan an employee QR code to record attendance.</p>'
         + '<div class="scan-summary-card">'
@@ -179,7 +188,7 @@
       if (!infoPanel) return;
       const avatarMarkup = employeeInfo?.avatar && String(employeeInfo.avatar).trim() && !String(employeeInfo.avatar).includes('default-user.png')
         ? '<img src="' + employeeInfo.avatar + '" alt="Employee photo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">'
-        : '<i class="fas fa-user"></i>';
+        : '';
       const actionLabel = action === 'TIME_OUT' ? 'Timed Out' : 'Timed In';
       infoPanel.innerHTML = '<div class="employee-info-shell">'
         + '<div class="greeting-label">' + getGreeting() + '</div>'
@@ -199,7 +208,7 @@
         + '<div class="scan-summary-label">Scanned at</div>'
         + '<div class="scan-summary-value">' + scanTime + '</div>'
         + '</div>'
-        + buildRecentScansMarkup()
+        + buildRecentScansMarkup(employeeInfo, action)
         + '</div>';
     }
 
@@ -259,6 +268,14 @@
         disableFlip: false
       };
 
+      const mirrorVideo = () => {
+        const videoEl = document.querySelector('#cameraScanner video');
+        if (!videoEl) return;
+        videoEl.style.transform = 'scaleX(-1)';
+        videoEl.style.webkitTransform = 'scaleX(-1)';
+        videoEl.style.mozTransform = 'scaleX(-1)';
+      };
+
       try {
         html5QrCode = new Html5Qrcode('cameraScanner');
         const cameraConfig = await selectCameraConfig();
@@ -267,6 +284,7 @@
 
         await html5QrCode.start(cameraConfig, config,
           decodedText => {
+            mirrorVideo();
             if (!isScanAllowed()) {
               const remaining = Math.max(1, Math.ceil((scanCooldownUntil - Date.now()) / 1000));
               const waitingMessage = 'Please wait ' + remaining + ' second' + (remaining === 1 ? '' : 's') + ' before scanning again.';
@@ -284,11 +302,25 @@
             startScanCooldown(cooldownSeconds);
 
             console.log('QR decoded:', decodedText);
-            const requestUrl = 'processStaticQR.php?id=' + encodeURIComponent(decodedText);
+            const apiRoot = window.__TA_ROOT || '/hrms/hrms-capstone/modules/time';
+            const requestUrl = apiRoot + '/processStaticQR.php?id=' + encodeURIComponent(decodedText);
             console.log('QR request URL:', requestUrl);
             console.log('QR request params:', { id: decodedText, method: 'GET' });
 
-            fetch(requestUrl).then(r => r.json()).then(j => {
+            fetch(requestUrl, { headers: { Accept: 'application/json' } })
+              .then(async r => {
+                const text = await r.text();
+                if (!r.ok) {
+                  throw new Error('HTTP ' + r.status + ': ' + text.slice(0, 200));
+                }
+                try {
+                  return JSON.parse(text);
+                } catch (error) {
+                  console.error('QR response was not valid JSON:', text.slice(0, 300));
+                  throw new Error('Invalid JSON response from QR endpoint.');
+                }
+              })
+              .then(j => {
               if (j && !j.success && j.time_left_seconds) {
                 const warningMessage = formatCooldownMessage(j);
                 showToast(warningMessage, 'warning');
@@ -328,6 +360,7 @@
               }
             }).catch(error => {
               console.error('processStaticQR fetch error:', error);
+              showToast(error.message || 'QR scan failed. Please try again.', 'error');
             }).finally(() => {
               scanInProgress = false;
               setTimeout(() => {
@@ -364,6 +397,15 @@
       stopBtn.disabled = true;
     }
 
+    window.__taQrScannerStop = stopCamera;
+    if (typeof window.registerPageCleanup === 'function') {
+      window.registerPageCleanup(function () {
+        if (typeof window.__taQrScannerStop === 'function') {
+          window.__taQrScannerStop().catch(function () {});
+        }
+      });
+    }
+
     startBtn.addEventListener('click', function(){ startCamera(); });
     stopBtn.addEventListener('click', function(){ stopCamera(); });
 
@@ -371,20 +413,42 @@
     scanHistory = Array.isArray(storedState.scans) ? storedState.scans : [];
     renderIdleState();
 
-    document.getElementById('backBtn').addEventListener('click', function(){
-      window.history.back();
-    });
+    // Back button removed in kiosk mode; no-op if element missing
+    const backBtnEl = document.getElementById('backBtn');
+    if (backBtnEl) {
+      backBtnEl.addEventListener('click', function(){ window.history.back(); });
+    }
+    
+    // Auto-start camera when scanner page loads (if allowed by browser/permissions)
+    (async function tryAutoStart() {
+      try {
+        const storedState = loadScanState();
+        if (storedState && storedState.active !== false) {
+          await startCamera();
+        }
+      } catch (err) {
+        console.warn('Auto-start camera failed:', err);
+      }
+    })();
   });
 
-// Idempotent page-level initializer for AJAX navigation
+window.addEventListener('pagehide', function () {
+  if (typeof window.__taQrScannerStop === 'function') {
+    window.__taQrScannerStop().catch(function () {});
+  }
+});
+window.addEventListener('beforeunload', function () {
+  if (typeof window.__taQrScannerStop === 'function') {
+    window.__taQrScannerStop().catch(function () {});
+  }
+});
+
+// Reinitialize on each visit to the scanner page (the page DOM is replaced by AJAX navigation).
 function initQRScannerPage() {
-  if (initQRScannerPage._inited) return;
-  initQRScannerPage._inited = true;
   console.log('[TA INIT] QR Scanner initialized');
   try {
-    // If existing DOMContentLoaded handler performed startup, replicate any required startup tasks here.
-    if (typeof startCamera === 'function') {
-      // do not auto-start camera; only prepare UI
+    if (typeof window.__taQrScannerStop === 'function') {
+      window.__taQrScannerStop().catch(function () {});
     }
   } catch (err) {
     console.error('initQRScannerPage error', err);

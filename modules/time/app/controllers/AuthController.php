@@ -21,7 +21,35 @@ class AuthController
             session_start();
         }
 
-        return !empty($_SESSION['role']) && (string) $_SESSION['role'] === (string) $role;
+        $requestedRole = strtolower(trim((string) $role));
+        $sessionRole = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? null;
+        $sessionRoleName = $_SESSION['role_name'] ?? $_SESSION['user']['role_name'] ?? null;
+
+        $matches = function ($candidate) use ($requestedRole) {
+            if ($candidate === null) {
+                return false;
+            }
+
+            $normalized = strtolower(trim((string) $candidate));
+            return $normalized === $requestedRole
+                || $normalized === str_replace('_', '', $requestedRole)
+                || str_replace('_', '', $normalized) === str_replace('_', '', $requestedRole);
+        };
+
+        if ($matches($sessionRole) || $matches($sessionRoleName)) {
+            return true;
+        }
+
+        // Compat layer for the app-wide HRMS login session, where role IDs are stored as ints.
+        $roleIdMap = [
+            'time' => ['4'],
+            'hr' => ['2', '3', '7'],
+            'employee' => ['2'],
+        ];
+
+        $roleAliases = $roleIdMap[$requestedRole] ?? [];
+        $sessionRoleValue = (string) ($sessionRole ?? '');
+        return in_array($sessionRoleValue, $roleAliases, true);
     }
 
     public static function getCurrentUserId()

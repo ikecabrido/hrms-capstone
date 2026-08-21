@@ -74,6 +74,211 @@
     color: #ffffff !important;
   }
 
+  .history-section {
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid rgba(13, 71, 161, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.06);
+    padding: 18px;
+  }
+
+  .history-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    background: rgba(13, 71, 161, 0.03);
+    border: 1px solid rgba(13, 71, 161, 0.08);
+    border-radius: 12px;
+  }
+
+  .history-date-input {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #0f172a;
+    min-width: 150px;
+    font-size: 14px;
+  }
+
+  .history-limit-select {
+    width: 120px;
+    margin-left: auto;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #0f172a;
+  }
+
+  .history-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 14px;
+    background: #ffffff;
+  }
+
+  .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    min-width: 980px;
+  }
+
+  .history-table thead th {
+    background: linear-gradient(135deg, #0d47a1 0%, #1769c7 100%);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 14px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    text-align: left;
+  }
+
+  .history-table tbody td {
+    padding: 12px 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    color: #334155;
+    vertical-align: middle;
+    background: #fff;
+    font-size: 14px;
+  }
+
+  .history-table tbody tr:nth-child(even) td {
+    background: #f8fbff;
+  }
+
+  .history-table tbody tr:hover td {
+    background: #edf6ff;
+  }
+
+  .history-status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .status-present {
+    background: rgba(34, 197, 94, 0.12);
+    color: #166534;
+  }
+
+  .status-late {
+    background: rgba(251, 191, 36, 0.15);
+    color: #92400e;
+  }
+
+  .status-absent {
+    background: rgba(239, 68, 68, 0.12);
+    color: #991b1b;
+  }
+
+  .status-overtime {
+    background: rgba(168, 85, 247, 0.12);
+    color: #7c3aed;
+  }
+
+  .status-default {
+    background: rgba(148, 163, 184, 0.15);
+    color: #475569;
+  }
+
+  .history-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(148, 163, 184, 0.25);
+    flex-wrap: wrap;
+  }
+
+  .history-page-info {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .history-pagination-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  body.dark-mode .history-section,
+  body.dark-mode .history-table-wrapper {
+    background: #1e1e1e !important;
+    border-color: #3f4650 !important;
+  }
+
+  body.dark-mode .history-toolbar {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: #3f4650;
+  }
+
+  body.dark-mode .history-date-input,
+  body.dark-mode .history-limit-select {
+    background: #292929 !important;
+    border-color: #596675 !important;
+    color: #f3f4f6 !important;
+  }
+
+  body.dark-mode .history-table thead th {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+  }
+
+  body.dark-mode .history-table tbody td {
+    background: #1e1e1e !important;
+    border-color: #3f4650 !important;
+    color: #e5e7eb !important;
+  }
+
+  body.dark-mode .history-table tbody tr:nth-child(even) td,
+  body.dark-mode .history-table tbody tr:hover td {
+    background: #2a3440 !important;
+  }
+
+  body.dark-mode .history-page-info {
+    color: #cbd5e1 !important;
+  }
+
+  body.dark-mode .status-present {
+    background: rgba(34, 197, 94, 0.18);
+    color: #86efac;
+  }
+
+  body.dark-mode .status-late {
+    background: rgba(251, 191, 36, 0.18);
+    color: #fcd34d;
+  }
+
+  body.dark-mode .status-absent {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+  }
+
+  body.dark-mode .status-overtime {
+    background: rgba(168, 85, 247, 0.18);
+    color: #d8b4fe;
+  }
+
+  body.dark-mode .status-default {
+    background: rgba(148, 163, 184, 0.18);
+    color: #cbd5e1;
+  }
+
   body.dark-mode .stat-card,
   body.dark-mode .filter-section,
   body.dark-mode .records-table {
@@ -140,6 +345,78 @@
 
   body.dark-mode .qr-preview-shell {
     background: #f8fafc !important;
+  }
+
+  .emp-qr-modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 2147483647 !important;
+    pointer-events: auto;
+  }
+
+  .emp-qr-modal-overlay.hidden {
+    display: none;
+  }
+
+  .emp-qr-modal {
+    position: relative;
+    width: min(92vw, 420px);
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: 0 25px 70px rgba(15, 23, 42, 0.35);
+    z-index: 2147483647 !important;
+    overflow: hidden;
+  }
+
+  .emp-qr-modal-header,
+  .emp-qr-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    background: #f8fbff;
+  }
+
+  .emp-qr-modal-footer {
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    border-bottom: none;
+    justify-content: flex-end;
+  }
+
+  .emp-qr-modal-header h5 {
+    margin: 0;
+    color: #0d47a1;
+    font-weight: 700;
+  }
+
+  .emp-qr-close {
+    border: none;
+    background: transparent;
+    color: #475569;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .emp-qr-close:hover {
+    color: #0f172a;
+  }
+
+  .emp-qr-modal-body {
+    padding: 1.5rem 1.25rem;
+    background: #fff;
+  }
+
+  body.emp-qr-modal-open {
+    overflow: hidden;
   }
 
   .main-header.navbar,

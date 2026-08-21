@@ -1,9 +1,54 @@
 // Data from PHP
-        const config = window.__TA_CONFIG || {};
-        const isHolidayToday = Boolean(config.isHolidayToday);
-        const holidayInfo = config.holidayInfo || null;
-        const attendanceData = Array.isArray(config.attendanceData) ? config.attendanceData : [];
-        const employees = Array.isArray(config.employees) ? config.employees : [];
+(function(){
+    const dashboardConfig = window.__TA_CONFIG || {};
+        const isHolidayToday = Boolean(dashboardConfig.isHolidayToday);
+        const holidayInfo = dashboardConfig.holidayInfo || null;
+        const attendanceData = Array.isArray(dashboardConfig.attendanceData) ? dashboardConfig.attendanceData : [];
+        // Ensure each record has a `duration` string. Prefer `total_hours_worked` then compute from time_in/time_out.
+        function formatHoursToHm(hours) {
+            if (hours === null || hours === undefined || hours === '') return null;
+            const hFloat = parseFloat(hours);
+            if (isNaN(hFloat)) return null;
+            const totalMinutes = Math.round(hFloat * 60);
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            return `${h}h ${m}m`;
+        }
+
+        function formatMsToHm(ms) {
+            if (ms === null || isNaN(ms)) return null;
+            const totalMinutes = Math.round(ms / 60000);
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            return `${h}h ${m}m`;
+        }
+
+        // Normalize attendanceData to include `duration`
+        for (let i = 0; i < attendanceData.length; i++) {
+            const rec = attendanceData[i];
+            // prefer existing duration
+            if (rec.duration && String(rec.duration).trim() !== '') continue;
+
+            // try total_hours_worked (decimal hours)
+            if (rec.total_hours_worked !== undefined && rec.total_hours_worked !== null && rec.total_hours_worked !== '') {
+                const formatted = formatHoursToHm(rec.total_hours_worked);
+                if (formatted) { rec.duration = formatted; continue; }
+            }
+
+            // fallback: compute from time_in/time_out
+            if (rec.time_in && rec.time_out) {
+                const tin = Date.parse(rec.time_in);
+                const tout = Date.parse(rec.time_out);
+                if (!isNaN(tin) && !isNaN(tout) && tout > tin) {
+                    rec.duration = formatMsToHm(tout - tin);
+                    continue;
+                }
+            }
+
+            // still missing
+            rec.duration = 'N/A';
+        }
+        const employees = Array.isArray(dashboardConfig.employees) ? dashboardConfig.employees : [];
         const jq = window.jQuery || window.$;
 
         if (!jq) {
@@ -108,15 +153,15 @@
                 return 'HOLIDAY';
             }
 
-            // If employee has a recorded time_in, derive status from that
             if (record.time_in) {
                 const time = new Date(record.time_in);
-                // Simple heuristic: present if before or at shift start (handled server-side when inserted)
-                // Fallback: consider hours > 9 as late for legacy records
-                return time.getHours() > 9 ? 'LATE' : 'PRESENT';
+                return (record.status && String(record.status).toUpperCase() === 'LATE') || time.getHours() > 9 ? 'LATE' : 'PRESENT';
             }
 
-            // No time_in recorded yet: fall back to stored status or legacy ABSENT
+            if (record.has_shift_today || record.employee_id) {
+                return 'WAITING FOR TIME IN';
+            }
+
             if (record.status) {
                 return record.status;
             }
@@ -127,9 +172,72 @@
             switch (status) {
                 case 'PRESENT': return 1;
                 case 'LATE': return 2;
-                case 'ABSENT': return 3;
-                default: return 4;
+                case 'WAITING FOR TIME IN': return 3;
+                case 'ABSENT': return 4;
+                default: return 5;
             }
+        }
+
+        function hideAttendanceInfoModal() {
+            const modal = document.getElementById('attendanceInfoModal');
+            if (!modal) return;
+
+            modal.classList.remove('show');
+            modal.setAttribute('aria-hidden', 'true');
+            modal.style.display = 'none';
+
+            if (window.jQuery) {
+                window.jQuery(modal).modal('hide');
+            }
+        }
+
+        function openAttendanceInfoModal(record) {
+            const modalBody = document.getElementById('attendanceInfoModalBody');
+            if (!modalBody) return;
+
+            const status = getStatus(record);
+            const timeIn = record.time_in ? new Date(record.time_in).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'Not recorded';
+            const timeOut = record.time_out ? new Date(record.time_out).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : 'Pending';
+            const duration = record.duration || 'N/A';
+
+            const shiftStart = record.shift_start ? formatTimeValue(record.shift_start) : 'N/A';
+            const shiftEnd = record.shift_end ? formatTimeValue(record.shift_end) : 'N/A';
+
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-12 mb-2"><strong>Employee:</strong> ${escapeHtml(record.full_name || 'N/A')}</div>
+                    <div class="col-12 mb-2"><strong>ID:</strong> ${escapeHtml(record.employee_id || record.employee_no || 'N/A')}</div>
+                    <div class="col-12 mb-2"><strong>Shift Start:</strong> ${shiftStart}</div>
+                    <div class="col-12 mb-2"><strong>Shift End:</strong> ${shiftEnd}</div>
+                    <div class="col-12 mb-2"><strong>Time In:</strong> ${escapeHtml(timeIn)}</div>
+                    <div class="col-12 mb-2"><strong>Time Out:</strong> ${escapeHtml(timeOut)}</div>
+                    <div class="col-12 mb-2"><strong>Duration:</strong> ${escapeHtml(duration)}</div>
+                    <div class="col-12 mb-2"><strong>Status:</strong> <span class="badge ${status === 'PRESENT' ? 'badge-success' : status === 'LATE' ? 'badge-warning' : status === 'WAITING FOR TIME IN' ? 'badge-secondary' : status === 'HOLIDAY' ? 'badge-info' : 'badge-absent'}">${escapeHtml(status)}</span></div>
+                </div>
+            `;
+
+            const modal = document.getElementById('attendanceInfoModal');
+            if (window.jQuery && modal) {
+                window.jQuery(modal).modal('show');
+                modal.classList.add('show');
+                modal.style.display = 'block';
+                modal.setAttribute('aria-hidden', 'false');
+            } else if (modal) {
+                modal.classList.add('show');
+                modal.style.display = 'block';
+                modal.setAttribute('aria-hidden', 'false');
+            }
+        }
+
+        function formatTimeValue(value) {
+            if (!value) return '<span style="color: #999;">N/A</span>';
+
+            const date = new Date(`2000-01-01T${value}`);
+            if (Number.isNaN(date.getTime())) {
+                return escapeHtml(value);
+            }
+
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
         }
 
         function renderAttendancePage(records) {
@@ -142,7 +250,7 @@
             tbody.innerHTML = '';
 
             if (records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #999;">No records found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #999;">No records found</td></tr>';
                 if (pageInfo) pageInfo.textContent = 'Showing 0 of 0 records';
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = true;
@@ -159,21 +267,58 @@
                 const status = getStatus(record);
                 const statusClass = status === 'PRESENT'? 'badge-success' : (
                     status === 'LATE'? 'badge-warning' : (
-                        status === 'HOLIDAY'? 'badge-info' : 'badge-absent'
+                        status === 'WAITING FOR TIME IN'? 'badge-secondary' : (
+                            status === 'HOLIDAY'? 'badge-info' : 'badge-absent'
+                        )
                     )
                 );
 
                 row.innerHTML = `
-                    <td><strong>${escapeHtml(record.employee_no || record.employee_id)}</strong></td>
+                    <td><strong>${escapeHtml(record.employee_no || record.employee_id || 'N/A')}</strong></td>
                     <td>${escapeHtml(record.full_name)}</td>
-                    <td>${escapeHtml(record.department || 'N/A')}</td>
-                    <td>${escapeHtml(record.position || 'N/A')}</td>
+                    <td>${formatTimeValue(record.shift_start)}</td>
+                    <td>${formatTimeValue(record.shift_end)}</td>
                     <td>${record.time_in? new Date(record.time_in).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true}) : '<span style="color: #e74c3c;">Not recorded</span>'}</td>
                     <td>${record.time_out? new Date(record.time_out).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true}) : '<span style="color: #f39c12;">Pending</span>'}</td>
                     <td>${record.duration || 'N/A'}</td>
                     <td><span class="badge ${statusClass}">${status}</span></td>
+                    <td>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-info attendance-view-btn"
+                            data-employee-id="${escapeHtml(record.employee_id || '')}"
+                            data-full-name="${escapeHtml(record.full_name || '')}"
+                            data-department="${escapeHtml(record.department || '')}"
+                            data-position="${escapeHtml(record.position || '')}"
+                            data-time-in="${escapeHtml(record.time_in || '')}"
+                            data-time-out="${escapeHtml(record.time_out || '')}"
+                            data-duration="${escapeHtml(record.duration || '')}"
+                            data-status="${escapeHtml(status)}"
+                            data-shift-start="${escapeHtml(record.shift_start || '')}"
+                            data-shift-end="${escapeHtml(record.shift_end || '')}"
+                            style="padding: 5px 10px;"
+                        >View Info</button>
+                    </td>
                 `;
                 tbody.appendChild(row);
+            });
+
+            document.querySelectorAll('.attendance-view-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const record = {
+                        employee_id: this.dataset.employeeId || '',
+                        full_name: this.dataset.fullName || '',
+                        department: this.dataset.department || '',
+                        position: this.dataset.position || '',
+                        shift_start: this.dataset.shiftStart || '',
+                        shift_end: this.dataset.shiftEnd || '',
+                        time_in: this.dataset.timeIn || '',
+                        time_out: this.dataset.timeOut || '',
+                        duration: this.dataset.duration || '',
+                        status: this.dataset.status || ''
+                    };
+                    openAttendanceInfoModal(record);
+                });
             });
 
             if (pageInfo) pageInfo.textContent = `Showing ${start + 1} to ${Math.min(start + attendancePageSize, records.length)} of ${records.length} records`;
@@ -244,12 +389,14 @@
 
         if (jq) {
             jq(document).ready(function() {
+                hideAttendanceInfoModal();
                 renderQRDirectory();
                 filterAndSort();
                 if (attendanceSearchInput) jq(attendanceSearchInput).on('keyup', filterAndSort);
                 if (attendanceSortSelect) jq(attendanceSortSelect).on('change', filterAndSort);
             });
         } else {
+            hideAttendanceInfoModal();
             renderQRDirectory();
             filterAndSort();
         }
@@ -264,4 +411,18 @@
             }
         }
         setInterval(updateClock, 1000);
+
+        // Export commonly used functions to the global scope so other scripts and inline handlers continue to work
+        try {
+            window.renderQRDirectory = renderQRDirectory;
+            window.viewQR = viewQR;
+            window.printQR = printQR;
+            window.hideAttendanceInfoModal = hideAttendanceInfoModal;
+            window.openAttendanceInfoModal = openAttendanceInfoModal;
+            window.filterAndSort = filterAndSort;
+            window.updateClock = updateClock;
+        } catch (e) {
+            // noop
+        }
+})();
     

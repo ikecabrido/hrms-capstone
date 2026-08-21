@@ -17,14 +17,11 @@ $current_role = $_SESSION['role'] ?? 'time';
         <div class="card card-primary card-outline h-100" style="margin:0;">
           <div class="card-header kiosk-header">
             <div class="camera-card-title">
-              <div class="d-flex align-items-center gap-2">
-                <i class="fas fa-video text-primary"></i>
-                <span>Camera Scanner</span>
+                <div class="d-flex align-items-center gap-2">
+                <h1 style="margin:0;font-size:1.5rem;">Scan here!</h1>
               </div>
             </div>
-            <div class="camera-card-toolbar">
-              <button id="backBtn" type="button" class="btn btn-outline-secondary btn-sm kiosk-back-btn">Back</button>
-            </div>
+            <!-- back button removed for kiosk scanner -->
           </div>
           <div class="card-body d-flex flex-column p-3">
             <div class="scanner-panel">
@@ -44,16 +41,7 @@ $current_role = $_SESSION['role'] ?? 'time';
           <div class="card-header">
             <h5 class="card-title mb-0">Employee Info</h5>
           </div>
-          <div class="card-body employee-info-body" id="employeeInfo">
-            <div class="employee-info-shell">
-              <div class="greeting-label">Good morning</div>
-              <div class="employee-avatar-circle"><i class="fas fa-user"></i></div>
-              <div class="scan-summary-card">
-                <div class="scan-summary-label">Last scan</div>
-                <div class="scan-summary-value">Waiting for a QR code</div>
-              </div>
-            </div>
-          </div>
+          <div class="card-body employee-info-body" id="employeeInfo"></div>
         </div>
       </div>
     </div>

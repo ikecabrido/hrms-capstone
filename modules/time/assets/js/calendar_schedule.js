@@ -4,12 +4,16 @@
  */
 
 // Global variables
-let selectedEmployee = null;
-let currentCalendar = null;
-let timelineData = [];
-let selectedDate = null;
-let allSchedulesMode = false; // Only show employee-specific data once selected
-let targetCalendarView = 'dayGridMonth'; // Track which view should be active
+var selectedEmployee = null;
+var currentCalendar = null;
+var timelineData = [];
+var selectedDate = null;
+var allSchedulesMode = false; // Only show employee-specific data once selected
+var targetCalendarView = 'dayGridMonth'; // Track which view should be active
+
+var timeModuleBase = '/hrms/hrms-capstone/modules/time/';
+var timeModuleApiBase = `${timeModuleBase}app/`;
+var timeModuleScheduleApiBase = `${timeModuleBase}app/api/schedules/`;
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== CALENDAR SCHEDULE PAGE LOADED ===');
@@ -83,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         console.log('Searching for:', query);
-        fetch(`../app/components/calendar_schedule.php?action=search_employees&q=${encodeURIComponent(query)}`)
+        fetch(`${timeModuleApiBase}components/calendar_schedule.php?action=search_employees&q=${encodeURIComponent(query)}`)
             .then(response => {
                 console.log('Response status:', response.status);
                 if (!response.ok) {
@@ -329,13 +333,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         console.log('Loading calendar for employee:', selectedEmployee.id, 'from', startDate, 'to', endDate);
         
-        fetch(`../app/api/get_employee_schedule.php?employee_id=${selectedEmployee.id}&start_date=${startDate}&end_date=${endDate}`)
-            .then(response => {
-                console.log('Calendar API response status:', response.status);
+        fetch(`${timeModuleScheduleApiBase}get_employee_schedule.php?employee_id=${selectedEmployee.id}&start_date=${startDate}&end_date=${endDate}`)
+            .then(async response => {
+                const text = await response.text();
+                console.log('Calendar API response status:', response.status, 'body preview:', text.slice(0, 220));
+
                 if (!response.ok) {
-                    throw new Error('Failed to fetch schedule: ' + response.status);
+                    throw new Error('Failed to fetch schedule: ' + response.status + ' - ' + text.slice(0, 220));
                 }
-                return response.json();
+
+                try {
+                    return JSON.parse(text);
+                } catch (parseError) {
+                    throw new Error('Invalid JSON response from schedule API: ' + text.slice(0, 220));
+                }
             })
             .then(data => {
                 console.log('Calendar data received:', data);
@@ -593,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Draw events for this day from attendance data
         console.log('Fetching attendance data for:', dateStr);
         const employeeParam = selectedEmployee ? `&employee_id=${selectedEmployee.id}` : '';
-        fetch(`../app/api/get_day_schedule.php?date=${dateStr}${employeeParam}`)
+        fetch(`${timeModuleScheduleApiBase}get_day_schedule.php?date=${dateStr}${employeeParam}`)
             .then(response => {
                 console.log('Day schedule API response status:', response.status);
                 return response.json();
@@ -920,7 +931,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 shifts: shiftsToSave
             };
 
-            fetch('../app/api/save_employee_schedule.php', {
+            fetch(`${timeModuleScheduleApiBase}save_employee_schedule.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

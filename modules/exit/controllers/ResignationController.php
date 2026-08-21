@@ -311,6 +311,10 @@ class ResignationController extends ExitManagementController
 
             case 'get_resignations':
                 $status = $data['status'] ?? null;
+                if ($status === null || $status === '') {
+                    $status = 'active';
+                }
+
                 $page = (int)($data['page'] ?? 1);
                 $limit = (int)($data['limit'] ?? 10);
                 $search = $data['search'] ?? '';

@@ -499,13 +499,35 @@ class Leave
     }
 
     /**
+     * Get active employees that are missing leave balances for the given year.
+     * Returns array of ['employee_id' => ..., 'full_name' => ...]
+     */
+    public function getActiveEmployeesMissingBalances($year = null)
+    {
+        $year = (int)($year ?? date('Y'));
+
+        $query = "SELECT e.employee_id, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name
+                  FROM em_employees e
+                  LEFT JOIN ta_leave_balances lb ON e.employee_id = lb.employee_id AND lb.year = :year
+                  WHERE LOWER(COALESCE(e.employment_status, '')) = 'active'
+                    AND lb.employee_id IS NULL";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':year', $year, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Provision default leave balances for all active employees.
      */
     public function provisionLeaveBalancesForActiveEmployees($year = null)
     {
         $year = (int)($year ?? date('Y'));
 
-        $query = "SELECT employee_id FROM em_employees WHERE employment_status = 'Active'";
+        // Use case-insensitive match for employment_status to catch variations like 'Active', 'ACTIVE', 'active'
+        $query = "SELECT employee_id FROM em_employees WHERE LOWER(COALESCE(employment_status, '')) = 'active'";
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);

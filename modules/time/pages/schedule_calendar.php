@@ -31,7 +31,6 @@ $current_page = 'schedule_calendar';
 $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
 ?>
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/dashboard.css">
 <link rel="stylesheet" href="assets/css/calendar_schedule.css">
 <link rel="stylesheet" href="assets/css/hr-template.css">

@@ -128,6 +128,68 @@ class Employee
         return 'Unknown Position';
     }
 
+    public function getById($employee_id)
+    {
+        $employee_id = (int) $employee_id;
+
+        $queries = [
+            "SELECT e.employee_id,
+                    e.first_name,
+                    e.middle_name,
+                    e.last_name,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                    e.department,
+                    p.position_name AS position
+             FROM hrms_employee e
+             LEFT JOIN hrms_position p ON p.position_id = e.position
+             WHERE e.employee_id = :employee_id
+             LIMIT 1",
+            "SELECT employee_id,
+                    first_name,
+                    middle_name,
+                    last_name,
+                    CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
+                    department,
+                    position
+             FROM em_employees
+             WHERE employee_id = :employee_id
+             LIMIT 1"
+        ];
+
+        foreach ($queries as $sql) {
+            try {
+                $stmt = $this->conn->prepare($sql);
+                $stmt->bindValue(':employee_id', $employee_id, PDO::PARAM_INT);
+                $stmt->execute();
+                $employee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($employee) {
+                    return $employee;
+                }
+            } catch (PDOException $e) {
+                continue;
+            }
+        }
+
+        return null;
+    }
+
+    public function getByUserId($user_id)
+    {
+        $user_id = (int) $user_id;
+
+        $stmt = $this->conn->prepare("SELECT employee_id FROM user_account WHERE user_id = :user_id LIMIT 1");
+        $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row || empty($row['employee_id'])) {
+            return null;
+        }
+
+        return $this->getById((int) $row['employee_id']);
+    }
+
     public function getAll($status = 'Active', $limit = 100, $offset = 0, $search = '')
     {
         $status = trim($status);

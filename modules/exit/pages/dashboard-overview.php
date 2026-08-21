@@ -7,136 +7,96 @@ $currentEmployeeName = method_exists($employee, 'getEmployeeName')
     : 'HR Staff';
 $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 ?>
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.6.2/css/bootstrap.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+
 <link rel="stylesheet" href="assets/css/custom.css">
 <script>
     window.exitManagementUserRole = <?php echo json_encode($currentRoleName); ?>;
     window.exitManagementUserId = <?php echo json_encode($_SESSION['employee_id'] ?? null); ?>;
 </script>
 
-    <div class="module-header">
+    <div class="module-header" style="display:none;">
         <h1>Exit Management</h1>
         <p style="margin:4px 0 0;color:#666;font-size:14px;">Welcome, <?php echo htmlspecialchars($currentEmployeeName); ?></p>
     </div>
 
     <div class="module-content">
-        <div id="dashboard-section" class="section">
-            <div class="row">
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-info">
-                        <div class="inner">
-                            <h3 id="active-exits">0</h3>
-                            <p>Active Exit Cases</p>
-                        </div>
-                        <div class="icon"><i class="fas fa-user-clock"></i></div>
-                    </div>
+        <div id="dashboard-section" class="exit-dashboard">
+            <h2 class="dashboard-title">Dashboard</h2>
+
+            <div class="dashboard-kpi-grid">
+                <div class="dashboard-kpi-card dashboard-kpi-blue">
+                    <div class="dashboard-kpi-icon"><i class="fas fa-arrow-right"></i></div>
+                    <div class="dashboard-kpi-value" id="active-exits">0</div>
+                    <div class="dashboard-kpi-label">Total exited (this year)</div>
                 </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-warning">
-                        <div class="inner">
-                            <h3 id="pending-approval">0</h3>
-                            <p>Pending Approval</p>
-                        </div>
-                        <div class="icon"><i class="fas fa-hourglass-half"></i></div>
-                    </div>
+                <div class="dashboard-kpi-card dashboard-kpi-blue">
+                    <div class="dashboard-kpi-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <div class="dashboard-kpi-value" id="pending-approval">0</div>
+                    <div class="dashboard-kpi-label">Avg notice period (days)</div>
                 </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-success">
-                        <div class="inner">
-                            <h3 id="approved-preclearances">0</h3>
-                            <p>Approved Preclearances</p>
-                        </div>
-                        <div class="icon"><i class="fas fa-check-circle"></i></div>
-                    </div>
+                <div class="dashboard-kpi-card dashboard-kpi-blue">
+                    <div class="dashboard-kpi-icon"><i class="fas fa-chart-pie"></i></div>
+                    <div class="dashboard-kpi-value" id="approved-preclearances">0</div>
+                    <div class="dashboard-kpi-label">Top resignation reason</div>
                 </div>
-                <div class="col-lg-3 col-6">
-                    <div class="small-box bg-danger">
-                        <div class="inner">
-                            <h3 id="upcoming-exits">0</h3>
-                            <p>Upcoming Exits (14d)</p>
-                        </div>
-                        <div class="icon"><i class="fas fa-calendar-alt"></i></div>
-                    </div>
+                <div class="dashboard-kpi-card dashboard-kpi-green">
+                    <div class="dashboard-kpi-icon"><i class="fas fa-dollar-sign"></i></div>
+                    <div class="dashboard-kpi-value" id="upcoming-exits">0</div>
+                    <div class="dashboard-kpi-label">Settlements pending</div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Exit Status Distribution</h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="exitStatusChart" style="min-height:250px;"></canvas>
-                        </div>
+            <div class="dashboard-panel chart-panel">
+                <div class="dashboard-panel-header">Exit Process Pipeline</div>
+                <div class="dashboard-panel-body chart-container">
+                    <canvas id="exitPipelineChart" height="260"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-lower-grid">
+                <div class="dashboard-panel mini-panel">
+                    <div class="dashboard-panel-header">Upcoming Last Working Dates</div>
+                    <div class="dashboard-panel-body">
+                        <ul id="upcoming-exits-list" class="dashboard-list">
+                            <li class="empty-state">No upcoming exits found</li>
+                        </ul>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Resignation Trend</h3>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="resignationTrendChart" style="min-height:250px;"></canvas>
+
+                <div class="dashboard-panel mini-panel">
+                    <div class="dashboard-panel-header">
+                        <span>Action Required</span>
+                        <button type="button" class="panel-refresh-btn" onclick="loadActionRequiredList();">Refresh</button>
+                    </div>
+                    <div class="dashboard-panel-body">
+                        <div id="action-required-list" class="dashboard-action-list">
+                            <div class="empty-state">No actions required</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Upcoming Exits</h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <table class="table table-striped" id="upcomingExitsTable">
-                                <thead>
-                                    <tr>
-                                        <th>Employee</th>
-                                        <th>Department</th>
-                                        <th>Last Working Date</th>
-                                        <th>Days Left</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Action Required</h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <ul class="list-group list-group-flush" id="actionRequiredList"></ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Recent Activity</h3>
-                        </div>
-                        <div class="card-body p-0">
-                            <table class="table table-striped" id="recentActiveCasesTable">
-                                <thead>
-                                    <tr>
-                                        <th>Employee</th>
-                                        <th>Type</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                            </table>
-                        </div>
-                    </div>
+            <div class="dashboard-panel full-panel">
+                <div class="dashboard-panel-header">Recent / Active Exit Cases</div>
+                <div class="dashboard-panel-body">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Type</th>
+                                <th>Last Day</th>
+                                <th>Stage</th>
+                                <th>Status</th>
+                                <th>View</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="6" class="empty-row">No recent cases</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -144,8 +104,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div id="customToastContainer" style="position: fixed; top: 1rem; right: 1rem; z-index: 11000; display: flex; flex-direction: column; gap: .75rem;"></div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.6.2/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="assets/vendor/jquery/jquery.min.js"></script>
+<script src="assets/vendor/chartjs/chart.umd.js"></script>
+<script src="assets/vendor/flatpickr/flatpickr.min.js"></script>
 <script src="assets/js/custom.js"></script>

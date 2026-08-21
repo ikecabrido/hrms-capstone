@@ -355,6 +355,49 @@ body.dark-mode [style*="background: #ffffff"] {
             border-bottom: 2px solid #f0f0f0;
         }
 
+        #attendanceInfoModal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 99999 !important;
+            display: none;
+            background: rgba(15, 23, 42, 0.6) !important;
+            backdrop-filter: blur(1.5px);
+        }
+
+        #attendanceInfoModal.show {
+            display: block;
+        }
+
+        #attendanceInfoModal .modal-dialog {
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 100000 !important;
+            margin: 0 !important;
+            max-width: 520px;
+            width: min(520px, calc(100% - 30px));
+        }
+
+        #attendanceInfoModal .modal-content {
+            position: relative;
+            z-index: 100001 !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        #attendanceInfoModal .modal-dialog-centered {
+            display: -ms-flexbox;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
         body.dark-mode .container {
             background: #1e1e1e;
             color: #e0e0e0;

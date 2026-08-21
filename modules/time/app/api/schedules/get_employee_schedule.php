@@ -6,10 +6,9 @@
 
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../../../../../database/db.php';
-require_once __DIR__ . '/../models/Employee.php';
-require_once __DIR__ . '/../models/EmployeeShift.php';
-require_once __DIR__ . '/../models/Attendance.php';
+require_once __DIR__ . '/../../core/TimeDatabase.php';
+require_once __DIR__ . '/../../models/EmployeeShift.php';
+require_once __DIR__ . '/../../models/Attendance.php';
 
 try {
     $employee_id = $_GET['employee_id'] ?? null;
@@ -27,8 +26,16 @@ try {
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
-    // Get employee info
-    $employee_query = "SELECT * FROM employees WHERE employee_id = ? AND employment_status = 'Active'";
+    // Get employee info from the canonical Time module employee table
+    $employee_query = "SELECT employee_id,
+                            CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
+                            first_name,
+                            last_name,
+                            department,
+                            position,
+                            employment_status
+                       FROM em_employees
+                       WHERE employee_id = ? AND employment_status = 'Active'";
     $stmt = $conn->prepare($employee_query);
     $stmt->execute([$employee_id]);
     $employee = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -84,6 +91,18 @@ try {
     $interval = new DateInterval('P1D');
     $period = new DatePeriod($start, $interval, $end);
 
+        $holiday_query = "SELECT holiday_date, name, holiday_scope, province_name, is_working_day
+                                            FROM ta_holidays
+                                            WHERE is_active = 1
+                                                AND holiday_date BETWEEN ? AND ?
+                                            ORDER BY holiday_date ASC, id ASC";
+        $holiday_stmt = $conn->prepare($holiday_query);
+        $holiday_stmt->execute([$start_date, $end_date]);
+        $holidays_by_date = [];
+        foreach ($holiday_stmt->fetchAll(PDO::FETCH_ASSOC) as $holiday) {
+                $holidays_by_date[$holiday['holiday_date']] = $holiday;
+        }
+
     foreach ($period as $date) {
         $date_str = $date->format('Y-m-d');
         $day_of_week = (int)$date->format('w'); // 0=Sunday, 1=Monday, ..., 6=Saturday
@@ -93,6 +112,7 @@ try {
             'shift' => $current_shift,
             'attendance' => null,
             'flexible' => null,
+            'holiday' => $holidays_by_date[$date_str] ?? null,
             'has_exclusion' => false
         ];
 

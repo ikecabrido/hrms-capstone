@@ -96,7 +96,10 @@ class NagerDateService
                 'is_recurring' => $isRecurring ? 1 : 0,
                 'country_code' => $this->countryCode,
                 'description' => $holiday['localName'] ?? $holiday['name'] ?? '',
-                'category' => 'national', // Nager.Date returns public holidays as national
+                'category' => 'national',
+                'holiday_scope' => 'national',
+                'is_working_day' => 0,
+                'source' => 'api_nager',
                 'api_source' => 'nager.date'
             ];
         }
@@ -186,7 +189,8 @@ class NagerDateService
         $query = "DELETE FROM ta_holidays
                  WHERE YEAR(holiday_date) = :year
                  AND country_code = :country_code
-                 AND is_recurring = 0";
+                 AND is_recurring = 0
+                 AND source = 'api_nager'";
 
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':year', $year, PDO::PARAM_INT);
@@ -204,8 +208,8 @@ class NagerDateService
             $this->db->beginTransaction();
 
             $query = "INSERT INTO ta_holidays
-                     (name, holiday_date, is_recurring, country_code, description, category, is_active, created_by)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                     (name, holiday_date, is_recurring, country_code, description, category, holiday_scope, province_name, is_working_day, source, is_active, created_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             $stmt = $this->db->prepare($query);
 
@@ -217,7 +221,11 @@ class NagerDateService
                     $holiday['country_code'],
                     $holiday['description'],
                     $holiday['category'],
-                    1, // is_active
+                    $holiday['holiday_scope'] ?? 'national',
+                    $holiday['province_name'] ?? null,
+                    $holiday['is_working_day'] ?? 0,
+                    $holiday['source'] ?? 'api_nager',
+                    1,
                     $createdBy
                 ]);
             }

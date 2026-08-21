@@ -9,44 +9,93 @@
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Methods: POST');
+// Start output buffering to prevent accidental HTML/whitespace from breaking JSON responses
+if (function_exists('ob_start')) ob_start();
 
-require_once __DIR__ . '/../core/Session.php';
-require_once __DIR__ . '/../controllers/LeaveController.php';
-require_once __DIR__ . '/../models/Leave.php';
-require_once __DIR__ . '/../../../../../database/db.php';
-
-Session::start();
-
-// Check if user is authenticated
-if (!Session::get('user_id')) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized - Please log in']);
+function respond($code, $payload) {
+    http_response_code($code);
+    if (function_exists('ob_get_level') && ob_get_level() > 0) {
+        // discard any prior output that might break JSON
+        ob_end_clean();
+    }
+    header('Content-Type: application/json');
+    echo json_encode($payload);
     exit;
 }
 
+// Attempt to load required files from several candidate relative paths to avoid fatal include errors
+$candidatesBase = [
+    __DIR__ . '/../../', // app/
+    __DIR__ . '/../',     // api/leave/../
+    __DIR__ . '/../../../', // app/api/.. up one more
+    __DIR__ . '/../../../../',
+];
+
+$requiredFiles = [
+    'core/Session.php',
+    'controllers/AuthController.php',
+    'controllers/LeaveController.php',
+    'models/Leave.php',
+    '../../../../database/db.php',
+];
+
+foreach ($requiredFiles as $rel) {
+    $found = false;
+    foreach ($candidatesBase as $base) {
+        $path = realpath($base . $rel) ?: ($base . $rel);
+        if (file_exists($path)) {
+            require_once $path;
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) {
+        error_log('[TA][approve_leave_head] Missing required file: ' . $rel);
+        respond(500, ['success' => false, 'message' => 'Server configuration error: missing ' . $rel]);
+    }
+}
+
+Session::start();
+
+// Debug logging to help diagnose empty/invalid responses
+error_log('[TA][approve_leave_head] invoked. REQUEST_METHOD=' . ($_SERVER['REQUEST_METHOD'] ?? '')); 
+error_log('[TA][approve_leave_head] Session: ' . print_r($_SESSION, true));
+
+
+// Check if user is authenticated
+$session_user_id = Session::get('user_id') ?? Session::get('employee_id') ?? ($_SESSION['user']['id'] ?? $_SESSION['employee_id'] ?? null);
+if (!$session_user_id) {
+    respond(401, ['success' => false, 'message' => 'Unauthorized - Please log in']);
+}
+
 // Check if user is department head or HR admin
-$user_role = Session::get('role');
-if ($user_role !== 'DEPARTMENT_HEAD' && $user_role !== 'HR_ADMIN') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Forbidden - Only department heads or HR admins can approve']);
-    exit;
+$sessionRole = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? null;
+$isHrAdmin = AuthController::hasRole('HR_ADMIN') || (is_string($sessionRole) && in_array(strtolower($sessionRole), ['hr_admin','admin','hr']));
+$isDeptHead = AuthController::hasRole('DEPARTMENT_HEAD') || (is_string($sessionRole) && strtolower($sessionRole) === 'department_head');
+// numeric role fallbacks (compat mapping)
+$sessionRoleValue = (string) ($sessionRole ?? '');
+if (!$isHrAdmin && in_array($sessionRoleValue, ['2','3','7'], true)) $isHrAdmin = true;
+if (!$isDeptHead && $sessionRoleValue === '4') $isDeptHead = true;
+
+if (!($isDeptHead || $isHrAdmin)) {
+    // include detected session role in debug message to help diagnose role mismatch
+    respond(403, ['success' => false, 'message' => 'Forbidden - Only department heads or HR admins can approve', 'detected_role' => $sessionRole]);
 }
 
 // Verify request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method Not Allowed']);
-    exit;
+    respond(405, ['success' => false, 'message' => 'Method Not Allowed']);
 }
 
 // Get POST data
-$data = json_decode(file_get_contents("php://input"), true);
+$rawInput = file_get_contents('php://input');
+error_log('[TA][approve_leave_head] Raw input: ' . substr($rawInput, 0, 2000));
+$data = json_decode($rawInput ?: '', true);
+error_log('[TA][approve_leave_head] Parsed JSON: ' . var_export($data, true));
 
 // Validate required fields
 if (!isset($data['leave_request_id']) || !isset($data['action'])) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Missing required fields']);
-    exit;
+    respond(400, ['success' => false, 'message' => 'Missing required fields']);
 }
 
 $leave_request_id = (int)$data['leave_request_id'];
@@ -64,13 +113,13 @@ $leaveModel = new Leave();
 $leaveRequest = $leaveModel->getById($leave_request_id);
 
 if (!$leaveRequest) {
-    http_response_code(404);
-    echo json_encode(['success' => false, 'message' => 'Leave request not found']);
-    exit;
+    respond(404, ['success' => false, 'message' => 'Leave request not found']);
 }
 
 // Verify department head has authority for this employee
-if ($user_role === 'DEPARTMENT_HEAD') {
+// Use AuthController::hasRole() to avoid undefined variable notices
+$isDeptHead = AuthController::hasRole('DEPARTMENT_HEAD');
+if ($isDeptHead) {
     $database = TimeDatabase::getInstance();
     $conn = $database->getConnection();
     
@@ -84,9 +133,7 @@ if ($user_role === 'DEPARTMENT_HEAD') {
     $employee = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$employee) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Employee not found']);
-        exit;
+        respond(404, ['success' => false, 'message' => 'Employee not found']);
     }
     
     // Check if department head is assigned to this department
@@ -97,36 +144,31 @@ if ($user_role === 'DEPARTMENT_HEAD') {
               AND is_active = 1";
     
     $stmt = $conn->prepare($query);
-    $stmt->bindParam(':user_id', Session::get('user_id'), PDO::PARAM_INT);
+    $stmt->bindParam(':user_id', $session_user_id, PDO::PARAM_INT);
     $stmt->bindParam(':department', $employee['department']);
     $stmt->execute();
     
     if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Not authorized to approve leaves for this department']);
-        exit;
+        respond(403, ['success' => false, 'message' => 'Not authorized to approve leaves for this department']);
     }
 }
 
 // Process approval or rejection
 $leaveController = new LeaveController();
-$user_id = Session::get('user_id');
+$user_id = $session_user_id;
 
 if ($action === 'APPROVE') {
     $result = $leaveController->approve($leave_request_id, $user_id, false, $remarks);
 } else {
     // Rejection
     if (empty($remarks)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Rejection reason is required']);
-        exit;
+        respond(400, ['success' => false, 'message' => 'Rejection reason is required']);
     }
     $result = $leaveController->reject($leave_request_id, $user_id, $remarks);
 }
 
 if ($result['success']) {
-    http_response_code(200);
-    echo json_encode([
+    respond(200, [
         'success' => true,
         'message' => $result['message'],
         'data' => [
@@ -136,8 +178,7 @@ if ($result['success']) {
         ]
     ]);
 } else {
-    http_response_code(400);
-    echo json_encode([
+    respond(400, [
         'success' => false,
         'message' => $result['message']
     ]);

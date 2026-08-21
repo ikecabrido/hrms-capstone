@@ -11,7 +11,7 @@ header('Content-Type: application/json');
 ini_set('display_errors', '0');
 ob_start();
 
-require_once __DIR__ . '/../../../../../database/db.php';
+require_once __DIR__ . '/../../core/TimeDatabase.php';
 
 try {
     $data = json_decode(file_get_contents('php://input'), true);
@@ -29,9 +29,9 @@ try {
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
-    // Validate employee exists
-    $emp_check = $conn->prepare("SELECT employee_id FROM employees WHERE employee_id = ? OR employee_id LIKE ? LIMIT 1");
-    $emp_check->execute([$employee_id, $employee_id]);
+    // Validate employee exists in the actual employee table used by the Time module.
+    $emp_check = $conn->prepare("SELECT employee_id FROM em_employees WHERE employee_id = ? LIMIT 1");
+    $emp_check->execute([$employee_id]);
     if ($emp_check->rowCount() === 0) {
         throw new Exception('Employee not found');
     }

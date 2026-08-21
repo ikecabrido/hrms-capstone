@@ -21,7 +21,7 @@ try {
 
     $query = "SELECT a.*, e.full_name
               FROM ta_attendance a
-              JOIN employees e ON a.employee_id = e.employee_id
+              JOIN em_employees e ON a.employee_id = e.employee_id
               WHERE a.attendance_date = ?";
     $params = [$date];
 

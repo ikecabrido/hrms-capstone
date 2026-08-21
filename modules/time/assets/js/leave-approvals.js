@@ -1,14 +1,44 @@
 console.log('leave approvals script loaded');
+        // Ensure toastr is configured if available
+        if (typeof toastr !== 'undefined') {
+            toastr.options = toastr.options || {};
+            toastr.options.positionClass = toastr.options.positionClass || 'toast-top-right';
+            toastr.options.timeOut = toastr.options.timeOut || 4000;
+        }
+        // Safe toastr wrapper to avoid crashes if toastr is in a bad state
+        function safeToastr(type, message, title) {
+            try {
+                if (typeof toastr !== 'undefined' && toastr && typeof toastr[type] === 'function') {
+                    toastr[type](message, title);
+                    return;
+                }
+                // fallback logging
+                if (type === 'error' || type === 'warning') console.error(message);
+                else console.log(message);
+            } catch (err) {
+                console.error('toastr invocation failed', err);
+                try { window.alert(message); } catch (e) {}
+            }
+        }
         function openApproveModal(requestId) {
             console.log('openApproveModal', requestId);
             document.getElementById('approveRequestId').value = requestId;
-            document.getElementById('approveModal').classList.add('active');
+            const modal = document.getElementById('approveModal');
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            // focus first textarea or button inside modal
+            const focusable = modal.querySelector('textarea, button, input');
+            if (focusable) focusable.focus();
         }
 
         function openRejectModal(requestId) {
             console.log('openRejectModal', requestId);
             document.getElementById('rejectRequestId').value = requestId;
-            document.getElementById('rejectModal').classList.add('active');
+            const modal = document.getElementById('rejectModal');
+            modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            const focusable = modal.querySelector('textarea, button, input');
+            if (focusable) focusable.focus();
         }
 
         function formatLeaveDays(value) {
@@ -27,10 +57,20 @@ console.log('leave approvals script loaded');
             title.textContent = fullName + ' — Leave Balances';
             body.innerHTML = '<p>Loading leave balances...</p>';
             modal.classList.add('active');
+            modal.setAttribute('aria-hidden', 'false');
+            // focus the modal close button if present
+            const closeBtn = modal.querySelector('.modal-close');
+            if (closeBtn) closeBtn.focus();
 
             var balanceApiUrl = (window.__TA_CONFIG || {}).balanceApiUrl;
-            fetch(balanceApiUrl + '?employee_id=' + encodeURIComponent(employeeId))
+            fetch(balanceApiUrl + '?employee_id=' + encodeURIComponent(employeeId), { credentials: 'same-origin' })
                 .then(function(response) {
+                    if (response.status === 401) {
+                        body.innerHTML = '<p class="text-danger">Unauthorized. Please log in to view leave balances.</p>';
+                        safeToastr('error', 'Unauthorized — please log in');
+                        throw new Error('Unauthorized');
+                    }
+
                     if (!response.ok) {
                         return response.text().then(function(text) {
                             body.innerHTML = '<p class="text-danger">Unable to load leave balances. Server returned ' + response.status + '.</p>';
@@ -80,6 +120,17 @@ console.log('leave approvals script loaded');
                 });
         }
 
+        // Close modals on Escape key for accessibility
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' || e.key === 'Esc') {
+                var modals = document.querySelectorAll('.modal.active');
+                modals.forEach(function(m) {
+                    m.classList.remove('active');
+                    m.setAttribute('aria-hidden', 'true');
+                });
+            }
+        });
+
         function debounce(fn, delay) {
             var timer;
             return function() {
@@ -111,7 +162,8 @@ console.log('leave approvals script loaded');
             document.getElementById(modalId).classList.remove('active');
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        function initLeaveApprovals() {
+            console.log('initLeaveApprovals');
             var balanceButtons = document.querySelectorAll('.balance-button');
             balanceButtons.forEach(function(button) {
                 button.addEventListener('click', function() {
@@ -132,18 +184,98 @@ console.log('leave approvals script loaded');
             });
             var approveForm = document.getElementById('approveForm');
             if (approveForm) {
-                approveForm.addEventListener('submit', function() {
-                    console.log('approveForm submitted');
+                approveForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const requestId = document.getElementById('approveRequestId').value;
+                    const remarks = approveForm.querySelector('textarea[name="remarks"]').value || '';
+                    const apiUrl = (window.__TA_CONFIG || {}).approveLeaveUrl;
+                    if (!apiUrl) {
+                        safeToastr('error', 'Approve API not configured');
+                        console.error('Approve API not configured');
+                        return;
+                    }
+
+                    fetch(apiUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ leave_request_id: parseInt(requestId, 10), action: 'APPROVE', remarks: remarks })
+                    })
+                    .then(function(res) { return res.json().catch(function(){ return { success: false, message: 'Invalid JSON response' }; }); })
+                    .then(function(data) {
+                        if (data && data.success) {
+                            // remove the row for this request
+                            const btn = document.querySelector('.approve-request-btn[data-request-id="' + requestId + '"]');
+                            if (btn) {
+                                const row = btn.closest('tr');
+                                if (row) row.remove();
+                            }
+                            closeModal('approveModal');
+                            safeToastr('success', data.message || 'Leave approved');
+                        } else {
+                            safeToastr('error', data.message || 'Failed to approve leave');
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('Approve error', err);
+                        safeToastr('error', 'Unable to approve leave at this time');
+                    });
                 });
             }
             var rejectForm = document.getElementById('rejectForm');
             if (rejectForm) {
-                rejectForm.addEventListener('submit', function() {
-                    console.log('rejectForm submitted');
+                rejectForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const requestId = document.getElementById('rejectRequestId').value;
+                    const remarks = rejectForm.querySelector('textarea[name="remarks"]').value || '';
+                    if (!remarks || remarks.trim() === '') {
+                        safeToastr('warning', 'Rejection reason is required');
+                        return;
+                    }
+                    const apiUrl = (window.__TA_CONFIG || {}).approveLeaveUrl;
+                    if (!apiUrl) {
+                        safeToastr('error', 'Approve API not configured');
+                        console.error('Approve API not configured');
+                        return;
+                    }
+
+                    fetch(apiUrl, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ leave_request_id: parseInt(requestId, 10), action: 'REJECT', remarks: remarks })
+                    })
+                    .then(function(res) { return res.json().catch(function(){ return { success: false, message: 'Invalid JSON response' }; }); })
+                    .then(function(data) {
+                        if (data && data.success) {
+                            const btn = document.querySelector('.reject-request-btn[data-request-id="' + requestId + '"]');
+                            if (btn) {
+                                const row = btn.closest('tr');
+                                if (row) row.remove();
+                            }
+                            closeModal('rejectModal');
+                            safeToastr('success', data.message || 'Leave rejected');
+                        } else {
+                            safeToastr('error', data.message || 'Failed to reject leave');
+                        }
+                    })
+                    .catch(function(err) {
+                        console.error('Reject error', err);
+                        safeToastr('error', 'Unable to reject leave at this time');
+                    });
                 });
             }
             attachLiveSearch();
-        });
+        }
+
+        // Attach handlers now if DOM already loaded, otherwise wait for DOMContentLoaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initLeaveApprovals);
+        } else {
+            initLeaveApprovals();
+        }
 
         window.onclick = function(event) {
             if (event.target.classList.contains('modal')) {
@@ -159,6 +291,36 @@ console.log('leave approvals script loaded');
             url.searchParams.set('leave_page', (window.__TA_CONFIG || {}).leavePage || 1);
             url.searchParams.set('employee_search', searchValue || '');
             window.location.href = url.toString();
+        }
+
+        /**
+         * Validate and submit jump-to-page forms produced by render_pagination().
+         * Returns true to allow normal form submission, or false to block it.
+         */
+        function jumpToPage(form, pageParam) {
+            try {
+                if (!form || !pageParam) return false;
+                var input = form.querySelector('input[name="' + pageParam + '"]');
+                if (!input) return false;
+                var val = parseInt(input.value, 10);
+                var max = parseInt(input.getAttribute('max') || input.max || 0, 10) || 0;
+                if (!val || val < 1) {
+                    safeToastr('warning', 'Please enter a valid page number (>= 1)');
+                    input.focus();
+                    return false;
+                }
+                if (max && val > max) {
+                    safeToastr('warning', 'Page number exceeds maximum (' + max + ')');
+                    input.focus();
+                    return false;
+                }
+                // ensure integer value is set
+                input.value = val;
+                return true;
+            } catch (err) {
+                console.error('jumpToPage error', err);
+                return false;
+            }
         }
 
         function provisionLeaveBalances() {
@@ -184,14 +346,17 @@ console.log('leave approvals script loaded');
             })
             .then(function(data) {
                 if (data.success) {
-                    alert('Leave balances provisioned for ' + data.employees_processed + ' active employees for ' + data.year + '.');
+                    if (typeof toastr !== 'undefined') toastr.success('Leave balances provisioned for ' + data.employees_processed + ' active employees for ' + data.year + '.');
+                    else alert('Leave balances provisioned for ' + data.employees_processed + ' active employees for ' + data.year + '.');
                     window.location.reload();
                 } else {
-                    alert('Provisioning failed: ' + (data.message || 'Unknown error'));
+                    if (typeof toastr !== 'undefined') toastr.error('Provisioning failed: ' + (data.message || 'Unknown error'));
+                    else alert('Provisioning failed: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(function(error) {
-                alert('Unable to provision leave balances. ' + error.message);
+                if (typeof toastr !== 'undefined') toastr.error('Unable to provision leave balances. ' + error.message);
+                else alert('Unable to provision leave balances. ' + error.message);
             });
         }
 

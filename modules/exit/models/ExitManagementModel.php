@@ -785,7 +785,7 @@ class ExitManagementModel
      */
     public function getEmployeesNeedingKnowledgeTransfer(): array
     {
-        if ($this->tableExists('exit_interview_hr_assessments')) {
+        if (!$this->tableExists('exit_interview_hr_assessments')) {
             return [];
         }
 

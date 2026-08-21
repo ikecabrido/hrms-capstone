@@ -4,12 +4,16 @@
  */
 
 // Global variables
-let selectedEmployee = null;
-let currentCalendar = null;
-let timelineData = [];
-let selectedDate = null;
-let allSchedulesMode = false; // Only show employee-specific data once selected
-let targetCalendarView = 'dayGridMonth'; // Track which view should be active
+var selectedEmployee = null;
+var currentCalendar = null;
+var timelineData = [];
+var selectedDate = null;
+var allSchedulesMode = false; // Only show employee-specific data once selected
+var targetCalendarView = 'dayGridMonth'; // Track which view should be active
+
+var timeModuleBase = '/hrms/hrms-capstone/modules/time/';
+var timeModuleApiBase = `${timeModuleBase}app/`;
+var timeModuleScheduleApiBase = `${timeModuleBase}app/api/schedules/`;
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== CALENDAR SCHEDULE PAGE LOADED ===');
@@ -83,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         console.log('Searching for:', query);
-        fetch(`../app/components/calendar_schedule.php?action=search_employees&q=${encodeURIComponent(query)}`)
+        fetch(`${timeModuleApiBase}components/calendar_schedule.php?action=search_employees&q=${encodeURIComponent(query)}`)
             .then(response => {
                 console.log('Response status:', response.status);
                 if (!response.ok) {
@@ -329,13 +333,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         console.log('Loading calendar for employee:', selectedEmployee.id, 'from', startDate, 'to', endDate);
         
-        fetch(`../app/api/get_employee_schedule.php?employee_id=${selectedEmployee.id}&start_date=${startDate}&end_date=${endDate}`)
-            .then(response => {
-                console.log('Calendar API response status:', response.status);
+        fetch(`${timeModuleScheduleApiBase}get_employee_schedule.php?employee_id=${selectedEmployee.id}&start_date=${startDate}&end_date=${endDate}`)
+            .then(async response => {
+                const text = await response.text();
+                console.log('Calendar API response status:', response.status, 'body preview:', text.slice(0, 220));
+
                 if (!response.ok) {
-                    throw new Error('Failed to fetch schedule: ' + response.status);
+                    throw new Error('Failed to fetch schedule: ' + response.status + ' - ' + text.slice(0, 220));
                 }
-                return response.json();
+
+                try {
+                    return JSON.parse(text);
+                } catch (parseError) {
+                    throw new Error('Invalid JSON response from schedule API: ' + text.slice(0, 220));
+                }
             })
             .then(data => {
                 console.log('Calendar data received:', data);
@@ -444,13 +455,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     // Skip Sunday shifts
                     if (day.shift && !isSunday(day.date)) {
+                        const holiday = day.holiday;
+                        const isWorkingHoliday = holiday && Number(holiday.is_working_day) === 1;
+                        const storedShiftName = day.shift.shift_name || 'Assigned Shift';
+                        const shiftName = /^custom\b/i.test(storedShiftName) && selectedEmployee?.full_name
+                            ? `${selectedEmployee.full_name}'s Shift`
+                            : storedShiftName;
+                        const shiftTitle = holiday
+                            ? `${shiftName} • ${isWorkingHoliday ? 'Holiday Work' : 'Holiday'}`
+                            : shiftName;
                         events.push({
-                            title: `${day.shift.shift_name}`,
+                            title: shiftTitle,
                             start: day.date,
-                            className: 'shift-event',
+                            className: holiday ? 'holiday-shift-event' : 'shift-event',
+                            backgroundColor: holiday ? (isWorkingHoliday ? '#f39c12' : '#6f42c1') : '#28a745',
+                            borderColor: holiday ? (isWorkingHoliday ? '#d98200' : '#59339d') : '#218838',
                             extendedProps: {
                                 type: 'shift',
-                                shift: day.shift
+                                shift: day.shift,
+                                holiday: holiday
                             }
                         });
                     }
@@ -458,33 +481,36 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (day.attendance) {
                         const timeIn = day.attendance.time_in ? new Date(day.attendance.time_in).toLocaleTimeString() : 'N/A';
                         const timeOut = day.attendance.time_out ? new Date(day.attendance.time_out).toLocaleTimeString() : 'N/A';
+                        const attendanceStatus = String(day.attendance.status || 'PRESENT').toUpperCase();
+                        const attendanceClass = attendanceStatus === 'LATE'
+                            ? 'late-event'
+                            : attendanceStatus === 'ABSENT'
+                                ? 'absent-event'
+                                : attendanceStatus === 'HOLIDAY_WORKED'
+                                    ? 'holiday-worked-event'
+                                    : 'attendance-event';
+                        const attendanceColor = attendanceStatus === 'LATE'
+                            ? '#ffc107'
+                            : attendanceStatus === 'ABSENT'
+                                ? '#dc3545'
+                                : attendanceStatus === 'HOLIDAY_WORKED'
+                                    ? '#f39c12'
+                                    : '#17a2b8';
                         
                         events.push({
-                            title: `Check-in: ${timeIn}`,
+                            title: `${attendanceStatus}: ${timeIn}`,
                             start: day.date,
-                            className: 'attendance-event',
+                            className: attendanceClass,
+                            backgroundColor: attendanceColor,
+                            borderColor: attendanceColor,
                             extendedProps: {
                                 type: 'attendance',
-                                attendance: day.attendance
+                                attendance: day.attendance,
+                                holiday: day.holiday
                             }
                         });
                     }
 
-                    if (day.flexible) {
-                        const startTime = day.flexible.start_time ? day.flexible.start_time.substring(0, 5) : 'N/A';
-                        const endTime = day.flexible.end_time ? day.flexible.end_time.substring(0, 5) : 'N/A';
-                        
-                        events.push({
-                            title: `Flexible: ${startTime} - ${endTime}`,
-                            start: day.date + 'T' + day.flexible.start_time,
-                            end: day.date + 'T' + day.flexible.end_time,
-                            className: 'flexible-event',
-                            extendedProps: {
-                                type: 'flexible',
-                                flexible: day.flexible
-                            }
-                        });
-                    }
                 });
             }
         }
@@ -593,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Draw events for this day from attendance data
         console.log('Fetching attendance data for:', dateStr);
         const employeeParam = selectedEmployee ? `&employee_id=${selectedEmployee.id}` : '';
-        fetch(`../app/api/get_day_schedule.php?date=${dateStr}${employeeParam}`)
+        fetch(`${timeModuleScheduleApiBase}get_day_schedule.php?date=${dateStr}${employeeParam}`)
             .then(response => {
                 console.log('Day schedule API response status:', response.status);
                 return response.json();
@@ -920,7 +946,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 shifts: shiftsToSave
             };
 
-            fetch('../app/api/save_employee_schedule.php', {
+            fetch(`${timeModuleScheduleApiBase}save_employee_schedule.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

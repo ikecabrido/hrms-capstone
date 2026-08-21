@@ -15,7 +15,7 @@ class AbsenceAndLateDetector
     private $conn;
     private $absenceLateMgmt;
     private $attendance_table = "ta_attendance";
-    private $employees_table = "employees";
+    private $employees_table = "em_employees";
     private $shifts_table = "ta_shifts";
     private $shift_assignments_table = "ta_shift_assignments";
     private $absence_late_table = "ta_absence_late_records";
@@ -45,7 +45,10 @@ class AbsenceAndLateDetector
             return ['message' => 'Today is a weekend, no absence detection'];
         }
 
-        $query = "SELECT e.employee_id, e.full_name, e.department
+        $query = "SELECT 
+                    e.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                    e.department
                   FROM {$this->employees_table} e
                   WHERE e.employment_status = 'Active'";
 

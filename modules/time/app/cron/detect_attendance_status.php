@@ -58,7 +58,13 @@ try {
     $attendanceModel = new Attendance();
     $validationService = new \App\Services\AttendanceValidationService();
 
-    $employeeQuery = "SELECT employee_id, full_name, department FROM employees WHERE employment_status = 'Active' ORDER BY full_name";
+    $employeeQuery = "SELECT 
+                        employee_id,
+                        CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
+                        department
+                      FROM em_employees
+                      WHERE employment_status = 'Active'
+                      ORDER BY full_name";
     $employeeStmt = $conn->prepare($employeeQuery);
     $employeeStmt->execute();
     $employees = $employeeStmt->fetchAll(PDO::FETCH_ASSOC);

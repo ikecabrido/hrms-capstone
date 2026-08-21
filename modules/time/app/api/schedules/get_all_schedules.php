@@ -19,8 +19,11 @@ try {
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
-    // Get all active employees
-    $employees_query = "SELECT employee_id, full_name FROM employees WHERE employment_status = 'Active' ORDER BY full_name";
+    // Get all active employees from the Time module employee table
+    $employees_query = "SELECT employee_id, CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name
+                        FROM em_employees
+                        WHERE employment_status = 'Active'
+                        ORDER BY full_name";
     $stmt = $conn->prepare($employees_query);
     $stmt->execute();
     $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -28,7 +31,7 @@ try {
     // Get attendance records for the date range
     $attendance_query = "SELECT a.*, e.full_name
                         FROM ta_attendance a
-                        JOIN employees e ON a.employee_id = e.employee_id
+                        JOIN em_employees e ON a.employee_id = e.employee_id
                         WHERE a.attendance_date BETWEEN ? AND ?
                         ORDER BY a.attendance_date, e.full_name";
     
@@ -40,7 +43,7 @@ try {
     $shifts_query = "SELECT es.*, s.shift_name, s.start_time, s.end_time, e.full_name
                     FROM ta_employee_shifts es
                     JOIN ta_shifts s ON es.shift_id = s.shift_id
-                    JOIN employees e ON es.employee_id = e.employee_id
+                    JOIN em_employees e ON es.employee_id = e.employee_id
                     WHERE es.is_active = 1";
     
     $stmt = $conn->prepare($shifts_query);
@@ -50,7 +53,7 @@ try {
     // Get flexible schedules for the date range (both one-time and recurring)
     $flexible_query = "SELECT fs.*, e.full_name
                        FROM ta_flexible_schedules fs
-                       JOIN employees e ON fs.employee_id = e.employee_id
+                       JOIN em_employees e ON fs.employee_id = e.employee_id
                        WHERE (fs.schedule_date BETWEEN ? AND ?)
                           OR (fs.day_of_week IS NOT NULL AND 
                               (fs.repeat_until IS NULL OR fs.repeat_until >= ?) AND

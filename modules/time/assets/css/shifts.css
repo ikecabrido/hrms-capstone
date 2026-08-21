@@ -475,7 +475,7 @@
 
         .shift-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 25px;
             margin-bottom: 35px;
         }
@@ -720,7 +720,7 @@
             }
 
             .shift-stats {
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 15px;
             }
 
@@ -754,16 +754,13 @@
         .content-wrapper { position: relative; }
 
         .modal {
-            position: absolute; /* cover only the content wrapper */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            position: fixed;
+            inset: 0;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
-            padding: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
             overflow-y: auto;
             z-index: 1000;
         }
@@ -774,17 +771,13 @@
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             max-width: 680px;
             width: min(95vw, 680px);
-            max-height: calc(100vh - 16px);
-            overflow: hidden;
-            animation: slideIn 0.3s ease;
+            max-height: calc(100vh - 32px);
             display: flex;
             flex-direction: column;
-            /* Keep the dialog fixed and centered in viewport so it doesn't move while scrolling */
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 100000; /* on top of overlay */
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+            position: relative;
+            z-index: 100000;
         }
 
         .modal-body {
@@ -855,6 +848,28 @@
             border: 1px solid rgba(0, 0, 0, 0.08);
             box-shadow: none;
             background: #fff;
+        }
+
+        #generateFixedModal .form-group {
+            position: relative;
+        }
+
+        #generateFixedModal .modal-body {
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: calc(100vh - 220px);
+        }
+
+        #generateFixedModal #gf_employee_dropdown {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+            max-height: 220px;
         }
 
         body.modal-open {

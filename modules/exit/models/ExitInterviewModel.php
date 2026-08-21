@@ -169,13 +169,13 @@ class ExitInterviewModel extends ExitManagementModel
             SELECT
                 ei.*,
                 COALESCE(e.employee_id, ei.employee_id) AS employee_id,
-                COALESCE(e.full_name, '') AS employee_full_name,
+                COALESCE(CONCAT(e.first_name, ' ', e.last_name), '') AS employee_full_name,
                 e.department AS employee_department,
                 e.position AS employee_position,
-                e.date_hired AS employee_date_hired,
+                e.hire_date AS employee_date_hired,
                 e.employment_status AS employee_employment_status,
                 '' AS manager_name,
-                iu.full_name AS interviewer_name,
+                CONCAT(iu.first_name, ' ', iu.last_name) AS interviewer_name,
                 CASE WHEN ei.exit_case_type = 'resignation' THEN r.reason ELSE t.termination_reason END AS exit_reason,
                 CASE WHEN ei.exit_case_type = 'resignation' THEN r.last_working_date ELSE t.effective_date END AS exit_date,
                 r.notice_date,
@@ -183,8 +183,8 @@ class ExitInterviewModel extends ExitManagementModel
                 COALESCE(r.approved_by, t.approved_by) AS case_approved_by,
                 COALESCE(r.approved_at, t.approved_at) AS case_approved_at
             FROM exit_interviews ei
-            LEFT JOIN employees e ON ei.employee_id = e.employee_id
-            LEFT JOIN users iu ON ei.interviewer_id = iu.id
+            LEFT JOIN em_employees e ON ei.employee_id = e.employee_id
+            LEFT JOIN hrms_employee iu ON ei.interviewer_id = iu.employee_id
             LEFT JOIN exit_resignations r ON ei.exit_case_type = 'resignation' AND ei.exit_case_id = r.id
             LEFT JOIN exit_terminations t ON ei.exit_case_type = 'termination' AND ei.exit_case_id = t.id
             WHERE ei.id = ?
@@ -257,9 +257,9 @@ class ExitInterviewModel extends ExitManagementModel
     public function getInterviewsByEmployee(string $employeeId): array
     {
         $stmt = $this->db->prepare("
-            SELECT ei.*, i.full_name as interviewer_name
+            SELECT ei.*, CONCAT(i.first_name, ' ', i.last_name) as interviewer_name
             FROM exit_interviews ei
-            LEFT JOIN users i ON ei.interviewer_id = i.id
+            LEFT JOIN hrms_employee i ON ei.interviewer_id = i.employee_id
             WHERE ei.employee_id = ?
             ORDER BY ei.scheduled_date DESC
         ");
@@ -288,20 +288,20 @@ class ExitInterviewModel extends ExitManagementModel
                 ei.status,
                 ei.created_at,
                 ei.updated_at,
-                e.full_name as employee_name,
-                u.full_name as interviewer_name,
+                CONCAT(e.first_name, ' ', e.last_name) as employee_name,
+                CONCAT(u.first_name, ' ', u.last_name) as interviewer_name,
                 CASE WHEN h.id IS NOT NULL THEN 1 ELSE 0 END AS has_hr_assessment
             FROM exit_interviews ei
-            JOIN employees e ON ei.employee_id = e.employee_id
-            LEFT JOIN users u ON ei.interviewer_id = u.id
+            JOIN em_employees e ON ei.employee_id = e.employee_id
+            LEFT JOIN hrms_employee u ON ei.interviewer_id = u.employee_id
             LEFT JOIN exit_interview_hr_assessments h ON ei.id = h.interview_id
         ";
 
         $countSql = "
             SELECT COUNT(*) as total
             FROM exit_interviews ei
-            JOIN employees e ON ei.employee_id = e.employee_id
-            LEFT JOIN users u ON ei.interviewer_id = u.id
+            JOIN em_employees e ON ei.employee_id = e.employee_id
+            LEFT JOIN hrms_employee u ON ei.interviewer_id = u.employee_id
         ";
 
         $params = [];
@@ -315,7 +315,7 @@ class ExitInterviewModel extends ExitManagementModel
         // Add search condition if provided
         if (!empty($search)) {
             $searchCondition = $whereClause ? " AND" : " WHERE";
-            $searchCondition .= " (e.full_name LIKE :search0 OR u.full_name LIKE :search1 OR ei.location LIKE :search2)";
+            $searchCondition .= " (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR CONCAT(u.first_name, ' ', u.last_name) LIKE :search1 OR ei.location LIKE :search2)";
             $whereClause .= $searchCondition;
             $searchParam = "%$search%";
             $params['search0'] = $searchParam;
@@ -423,13 +423,13 @@ class ExitInterviewModel extends ExitManagementModel
     public function getScheduledInterviews(): array
     {
         $stmt = $this->db->query("
-            SELECT ei.*, e.full_name, e.employee_id as emp_id,
-                   u.full_name as interviewer_name,
+            SELECT ei.*, CONCAT(e.first_name, ' ', e.last_name) AS full_name, e.employee_id as emp_id,
+                   CONCAT(u.first_name, ' ', u.last_name) as interviewer_name,
                    ei.exit_case_type,
                    ei.exit_case_id
             FROM exit_interviews ei
-            JOIN employees e ON ei.employee_id = e.employee_id
-            LEFT JOIN users u ON ei.interviewer_id = u.id
+            JOIN em_employees e ON ei.employee_id = e.employee_id
+            LEFT JOIN hrms_employee u ON ei.interviewer_id = u.employee_id
             WHERE ei.status = 'scheduled'
             ORDER BY ei.scheduled_date ASC
         ");
@@ -509,6 +509,17 @@ class ExitInterviewModel extends ExitManagementModel
      */
     public function getArchivedInterviews(int $page = 1, int $limit = 10, string $search = ''): array
     {
+        if (!$this->tableExists('exit_archive')) {
+            return [
+                'data' => [],
+                'total' => 0,
+                'page' => $page,
+                'limit' => $limit,
+                'total_pages' => 0,
+                'new_count' => 0
+            ];
+        }
+
         $offset = ($page - 1) * $limit;
 
         $sql = "
@@ -517,11 +528,11 @@ class ExitInterviewModel extends ExitManagementModel
                 a.original_id,
                 a.employee_id,
                 COALESCE(
-                    e.full_name,
+                    CONCAT(e.first_name, ' ', e.last_name),
                     JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.employee_id')),
                     JSON_UNQUOTE(JSON_EXTRACT(a.content, '$.employee_id'))
                 ) as employee_name,
-                COALESCE(u.full_name, '') as archived_by_name,
+                COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') as archived_by_name,
                 COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.scheduled_date')),
                     JSON_UNQUOTE(JSON_EXTRACT(a.content, '$.scheduled_date'))
@@ -538,8 +549,8 @@ class ExitInterviewModel extends ExitManagementModel
                 a.archive_reason,
                 IF(a.archived_at >= DATE_SUB(NOW(), INTERVAL 1 DAY), 1, 0) as is_new
             FROM exit_archive a
-            LEFT JOIN employees e ON a.employee_id = e.employee_id
-            LEFT JOIN users u ON a.archived_by = u.id
+            LEFT JOIN em_employees e ON a.employee_id = e.employee_id
+            LEFT JOIN hrms_employee u ON a.archived_by = u.employee_id
             WHERE a.archive_type = 'interview' AND a.restored = 0
         ";
 
@@ -548,7 +559,7 @@ class ExitInterviewModel extends ExitManagementModel
 
         $params = [];
         if (!empty($search)) {
-            $searchCondition = " AND (e.full_name LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.status')) LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.archive_reason')) LIKE :search)";
+            $searchCondition = " AND (CONCAT(e.first_name, ' ', e.last_name) LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.status')) LIKE :search OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.archive_reason')) LIKE :search)";
             $sql .= $searchCondition;
             $countSql .= $searchCondition;
             $newCountSql .= $searchCondition;

@@ -9,9 +9,9 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Methods: GET');
 
-require_once __DIR__ . '/../core/Session.php';
-require_once __DIR__ . '/../controllers/AuthController.php';
-require_once __DIR__ . '/../models/Leave.php';
+require_once __DIR__ . '/../../core/Session.php';
+require_once __DIR__ . '/../../controllers/AuthController.php';
+require_once __DIR__ . '/../../models/Leave.php';
 
 Session::start();
 
@@ -24,7 +24,7 @@ if (!AuthController::isAuthenticated()) {
 
 // Resolve user context from session or global session fallback
 $user_role = Session::get('role') ?? ($_SESSION['user']['role'] ?? null);
-$session_user_id = Session::get('user_id') ?? ($_SESSION['user']['id'] ?? null);
+$session_user_id = Session::get('user_id') ?? Session::get('employee_id') ?? ($_SESSION['user']['id'] ?? $_SESSION['employee_id'] ?? null);
 
 if (!$session_user_id) {
     http_response_code(401);
@@ -51,11 +51,12 @@ if ($employee_id === null || $employee_id === '') {
 }
 
 // Check if user is requesting their own balance or is an authorized approver
-$user_role = Session::get('role');
-$session_user_id = Session::get('user_id');
-
-$allowedRoles = ['HR_ADMIN', 'DEPARTMENT_HEAD', 'time'];
-if ($employee_id != $session_user_id && !in_array($user_role, $allowedRoles, true)) {
+// Authorization: allow if requesting own balances or if user has an approver/admin role
+if ($employee_id != $session_user_id && !(
+    AuthController::hasRole('HR_ADMIN') ||
+    AuthController::hasRole('DEPARTMENT_HEAD') ||
+    AuthController::hasRole('time')
+)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Forbidden - Cannot view other employees balance', 'data' => []]);
     exit;

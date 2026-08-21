@@ -154,7 +154,7 @@
             padding: 16px;
             text-align: left;
             font-weight: 600;
-            font-size: 14px;
+                    font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: #ffffff !important;
@@ -167,8 +167,13 @@
         }
 
         .records-table td {
-            padding: 14px 16px;
+                    padding: 10px 12px;
             border-bottom: 1px solid #e8eef7;
+        }
+
+        /* Reduce font size for the absence/late management tab table */
+        .records-table table, .records-table th, .records-table td {
+            font-size: 13px;
         }
 
         .records-table tbody tr {

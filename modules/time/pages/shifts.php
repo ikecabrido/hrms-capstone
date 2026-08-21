@@ -20,6 +20,38 @@ $shiftController = $shiftController ?? new ShiftController($db);
 $action = $action ?? $_GET['action'] ?? $_POST['action'] ?? null;
 $shifts = $shifts ?? $shiftController->getAllShifts();
 $allAssignments = $allAssignments ?? $shiftController->getEmployeesOnShift(null);
+$assignedEmployeeIds = array_unique(array_filter(array_map(function ($assignment) {
+    return $assignment['employee_id'] ?? null;
+}, $allAssignments ?? [])));
+$weekdayNames = [1 => 'Monday', 2 => 'Tuesday', 3 => 'Wednesday', 4 => 'Thursday', 5 => 'Friday', 6 => 'Saturday'];
+$weekdayEmployeeCounts = [];
+foreach ($weekdayNames as $weekdayNumber => $weekdayName) {
+    try {
+        $weekdayStatement = $db->prepare(
+            "SELECT COUNT(DISTINCT assigned_employee_id) AS employee_count
+             FROM (
+                 SELECT es.employee_id AS assigned_employee_id
+                 FROM ta_employee_shifts es
+                 WHERE es.is_active = 1
+                   AND DAYOFWEEK(es.effective_from) = :mysql_weekday
+                 UNION
+                 SELECT es.employee_id AS assigned_employee_id
+                 FROM ta_employee_shifts es
+                 INNER JOIN ta_shift_weekday_times swt
+                     ON swt.shift_id = es.shift_id
+                    AND swt.weekday = :template_weekday
+                    AND swt.is_active = 1
+                 WHERE es.is_active = 1
+             ) AS weekday_assignments"
+        );
+        $weekdayStatement->bindValue(':mysql_weekday', $weekdayNumber + 1, PDO::PARAM_INT);
+        $weekdayStatement->bindValue(':template_weekday', $weekdayNumber, PDO::PARAM_INT);
+        $weekdayStatement->execute();
+        $weekdayEmployeeCounts[$weekdayNumber] = (int)($weekdayStatement->fetchColumn() ?: 0);
+    } catch (Exception $e) {
+        $weekdayEmployeeCounts[$weekdayNumber] = 0;
+    }
+}
 $message = $message ?? null;
 $error = $error ?? null;
 
@@ -80,45 +112,13 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
         </h2>
             
             <div class="shift-stats">
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                    <div class="stat-number"><?php echo count($shifts); ?></div>
-                    <div class="stat-label">Total Shifts</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="stat-number">
-                        <?php
-                        $activeShiftCount = 0;
-                        foreach ($shifts as $shift) {
-                            if (!empty($shift['is_active'])) {
-                                $activeShiftCount++;
-                            }
-                        }
-                        echo $activeShiftCount;
-                        ?>
+                <?php foreach ($weekdayNames as $weekdayNumber => $weekdayName): ?>
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-calendar-day"></i></div>
+                        <div class="stat-number"><?php echo $weekdayEmployeeCounts[$weekdayNumber]; ?></div>
+                        <div class="stat-label"><?php echo htmlspecialchars($weekdayName); ?> Employees</div>
                     </div>
-                    <div class="stat-label">Active Shifts</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-users"></i></div>
-                    <div class="stat-number"><?php echo count($allAssignments ?? []); ?></div>
-                    <div class="stat-label">Total Assignments</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
-                    <div class="stat-number">
-                        <?php 
-                        try {
-                            $flex_count = $db->query("SELECT COUNT(*) as count FROM ta_flexible_schedules")->fetch(PDO::FETCH_ASSOC);
-                            echo $flex_count['count'] ?? 0;
-                        } catch (Exception $e) {
-                            echo 0;
-                        }
-                        ?>
-                    </div>
-                    <div class="stat-label">Flexible Schedules</div>
-                </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -159,20 +159,20 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                 </thead>
                 <tbody id="assignmentTableBody"></tbody>
             </table>
-            
-            <!-- Shift Templates Table -->
+
             <h3 style="margin-top: 24px; font-size: 18px; font-weight: 700;">Shift Templates</h3>
             <table id="templatesTable" style="margin-top:10px;">
                 <thead>
                     <tr>
                         <th>Template</th>
-                        <th>Time</th>
+                        <th>Days Assigned</th>
                         <th>Active</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="templatesTableBody"></tbody>
             </table>
+
             <!-- Pagination for Assignments -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding: 15px; background: white; border-radius: 10px; flex-wrap: wrap; gap: 10px;">
                 <div>
@@ -203,11 +203,11 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
             <div class="modal-content">
                 <div class="modal-header">
                     <h2><i class="fas fa-user-clock"></i> Employee Shift Details</h2>
-                    <button class="modal-close" onclick="closeModal('employeeShiftModal')">&times;</button>
+                    <button type="button" id="employeeShiftModalClose" class="modal-close" data-close-modal="employeeShiftModal" aria-label="Close employee shift details">&times;</button>
                 </div>
                 <div class="modal-body" id="employeeShiftModalBody" style="padding-bottom: 0;"></div>
                 <div class="modal-action-row" style="justify-content: flex-end; gap: 10px; padding: 20px 24px 24px;">
-                    <button class="btn btn-secondary" onclick="closeModal('employeeShiftModal')">Close</button>
+                    <button type="button" id="employeeShiftModalCancel" class="btn btn-secondary" data-close-modal="employeeShiftModal">Close</button>
                     <button class="btn btn-primary" id="employeeShiftModalEditButton" type="button" onclick="openGenerateFixedModalForEmployee()" style="display: none;">
                         <i class="fas fa-edit"></i> Edit Schedule
                     </button>
@@ -308,7 +308,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                 <div>
                     <span class="edit-modal-eyebrow">SHIFT MANAGEMENT</span>
                     <h2><i class="fas fa-edit"></i> Edit Shift</h2>
-                    <p>Update the shift details and availability.</p>
+                    <p>Update the shift details and weekday schedule.</p>
                 </div>
                 <button class="modal-close" onclick="closeModal('editShiftModal')">&times;</button>
             </div>
@@ -369,23 +369,6 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             <?php endfor; ?>
                         </div>
                     </div>
-                    <div class="edit-form-section edit-options-section">
-                        <div class="edit-section-title"><i class="fas fa-toggle-on"></i><span>Availability</span></div>
-                    <div class="form-group">
-                        <label class="checkbox-group">
-                            <input type="checkbox" id="edit_is_active" name="is_active">
-                            <span><i class="fas fa-check"></i> Active</span>
-                        </label>
-                    </div>
-                    <div class="form-group" style="display: flex; align-items: center; gap: 12px; background: #f0f8ff; padding: 15px; border-radius: 6px; border-left: 4px solid #2196F3;">
-                        <input type="checkbox" id="edit_exclude_saturday" name="exclude_saturday" style="width: 20px; height: 20px; cursor: pointer;">
-                        <label for="edit_exclude_saturday" style="margin: 0; cursor: pointer; flex: 1;">
-                            <strong style="color: #1565c0;">Exclude Saturdays?</strong>
-                            <p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">Check this if the shift does not operate on Saturdays</p>
-                        </label>
-                    </div>
-                    </div>
-
                     <div class="modal-action-row">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('editShiftModal')">Cancel</button>
                         <button type="submit" form="editShiftForm" name="update_shift" class="btn btn-primary"><i class="fas fa-save"></i> Update Shift</button>
@@ -533,7 +516,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         <div id="gf_selected_employee_display" 
                             style="margin-top: 10px; color: #444; font-weight: 600;">
-                            No employee selected
+                            Select an employee
                         </div>
                         <input type="hidden" id="gf_employee_id" name="gf_employee_id">
                     </div>
@@ -703,5 +686,5 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
         </div>
     </div>
     </div>
-    <script src="assets/js/shifts.js"></script>
+    <script src="/hrms/hrms-capstone/modules/time/assets/js/shifts.js"></script>
 

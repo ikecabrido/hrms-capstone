@@ -14,7 +14,7 @@ try {
     $shift = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$shift) throw new Exception('Shift not found');
 
-    $wstmt = $conn->prepare("SELECT weekday, start_time, end_time, break_start, break_end, is_active FROM ta_shift_weekday_times WHERE shift_id = ? ORDER BY weekday ASC");
+    $wstmt = $conn->prepare("SELECT weekday, start_time, end_time, break_start, break_end, is_active FROM ta_shift_weekday_times WHERE shift_id = ? AND is_active = 1 AND start_time IS NOT NULL AND end_time IS NOT NULL ORDER BY weekday ASC");
     $wstmt->execute([$shift_id]);
     $weekdays = [];
     while ($r = $wstmt->fetch(PDO::FETCH_ASSOC)) {
@@ -25,6 +25,26 @@ try {
             'break_end' => $r['break_end'],
             'is_active' => (int)$r['is_active']
         ];
+    }
+
+    if (empty($weekdays)) {
+        $assignmentWeekdayStmt = $conn->prepare(
+            "SELECT DAYOFWEEK(effective_from) - 1 AS weekday
+             FROM ta_employee_shifts
+             WHERE shift_id = ? AND is_active = 1
+             GROUP BY DAYOFWEEK(effective_from) - 1
+             ORDER BY DAYOFWEEK(effective_from) - 1 ASC"
+        );
+        $assignmentWeekdayStmt->execute([$shift_id]);
+        while ($assignmentWeekday = $assignmentWeekdayStmt->fetch(PDO::FETCH_ASSOC)) {
+            $weekdays[(int)$assignmentWeekday['weekday']] = [
+                'start' => $shift['start_time'],
+                'end' => $shift['end_time'],
+                'break_start' => null,
+                'break_end' => null,
+                'is_active' => 1
+            ];
+        }
     }
 
     $template = [

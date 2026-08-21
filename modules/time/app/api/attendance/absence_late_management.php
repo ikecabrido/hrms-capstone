@@ -6,9 +6,9 @@
 
 header('Content-Type: application/json');
 
-require_once "../../app/controllers/AuthController.php";
-require_once "../../app/models/AbsenceLateMgmt.php";
-require_once "../../app/core/Session.php";
+require_once __DIR__ . '/../../controllers/AuthController.php';
+require_once __DIR__ . '/../../models/AbsenceLateMgmt.php';
+require_once __DIR__ . '/../../core/Session.php';
 
 Session::start();
 

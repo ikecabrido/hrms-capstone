@@ -145,9 +145,9 @@ class SurveyModel extends ExitManagementModel
     public function getSurveyById(int $surveyId): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT s.*, e.full_name AS employee_name, e.employment_status
+            SELECT s.*, CONCAT(e.first_name, ' ', e.last_name) AS employee_name, e.employment_status
             FROM exit_surveys s
-            LEFT JOIN employees e ON e.employee_id = s.employee_id
+            LEFT JOIN em_employees e ON e.employee_id = s.employee_id
             WHERE s.id = ?
         ");
         $stmt->execute([$surveyId]);
@@ -434,12 +434,11 @@ class SurveyModel extends ExitManagementModel
         }
 
         $stmt = $this->db->prepare("\
-            SELECT {$selectFields}, COALESCE(emp.full_name, u.full_name, u.username, sr.employee_id) AS respondent_name\
+            SELECT {$selectFields}, COALESCE(CONCAT(emp.first_name, ' ', emp.last_name), sr.employee_id) AS respondent_name\
             FROM exit_survey_answers sa\
             JOIN exit_survey_questions sq ON sa.question_id = sq.id\
             JOIN exit_survey_responses sr ON sa.response_id = sr.id\
-            LEFT JOIN employees emp ON sr.employee_id = emp.employee_id\
-            LEFT JOIN users u ON sr.employee_id = u.id\
+            LEFT JOIN em_employees emp ON sr.employee_id = emp.employee_id\
             WHERE sr.survey_id = ?\
             ORDER BY sr.submitted_at DESC, sq.order_num ASC\
         ");
@@ -453,7 +452,7 @@ class SurveyModel extends ExitManagementModel
     public function getSurveyResponseDetails(int $responseId): array
     {
         // Get response info
-        $selectFields = 'sr.*, s.title as survey_title, COALESCE(emp.full_name, u.full_name, u.username, sr.employee_id) AS full_name';
+        $selectFields = 'sr.*, s.title as survey_title, COALESCE(CONCAT(emp.first_name, ' ', emp.last_name), sr.employee_id) AS full_name';
         if ($this->hasResponseCaseColumns()) {
             $selectFields .= ', sr.exit_case_type, sr.exit_case_id';
         }
@@ -466,8 +465,7 @@ class SurveyModel extends ExitManagementModel
             SELECT {$selectFields}\
             FROM exit_survey_responses sr\
             JOIN exit_surveys s ON sr.survey_id = s.id\
-            LEFT JOIN employees emp ON sr.employee_id = emp.employee_id\
-            LEFT JOIN users u ON sr.employee_id = u.id\
+            LEFT JOIN em_employees emp ON sr.employee_id = emp.employee_id\
             WHERE sr.id = ?\
         ");
         $stmt->execute([$responseId]);
@@ -538,10 +536,10 @@ class SurveyModel extends ExitManagementModel
                 s.approval_status,
                 s.created_at,
                 s.updated_at,
-                e.full_name AS employee_name,
+                CONCAT(e.first_name, ' ', e.last_name) AS employee_name,
                 CONCAT(COALESCE(UPPER(LEFT(s.exit_case_type, 1)), ''), SUBSTRING(COALESCE(s.exit_case_type, ''), 2)) AS exit_case_label
             FROM exit_surveys s
-            LEFT JOIN employees e ON e.employee_id = s.employee_id
+            LEFT JOIN em_employees e ON e.employee_id = s.employee_id
         ";
 
         $countSql = "
@@ -559,7 +557,7 @@ class SurveyModel extends ExitManagementModel
 
         if (!empty($search)) {
             $searchCondition = $whereClause ? " AND" : " WHERE";
-            $searchCondition .= " (s.title LIKE :search0 OR s.description LIKE :search1 OR e.full_name LIKE :search2)";
+            $searchCondition .= " (s.title LIKE :search0 OR s.description LIKE :search1 OR CONCAT(e.first_name, ' ', e.last_name) LIKE :search2)";
             $whereClause .= $searchCondition;
             $searchParam = "%$search%";
             $params['search0'] = $searchParam;

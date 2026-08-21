@@ -4,7 +4,7 @@
  * Returns employee list with assignment status (shift or flexible schedule)
  */
 
-require_once(__DIR__ . '/../../../../../database/db.php');
+require_once __DIR__ . '/../../core/TimeDatabase.php';
 
 header('Content-Type: application/json');
 
@@ -12,10 +12,9 @@ try {
     $database = TimeDatabase::getInstance();
     $db = $database->getConnection();
 
-    // Get all active employees with their shift and flexible schedule status
     $query = "SELECT 
                 e.employee_id,
-                e.full_name,
+                CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
                 e.department,
                 e.position,
                 CASE 
@@ -39,7 +38,7 @@ try {
                     ) THEN 1
                     ELSE 0
                 END AS has_flexible_schedule
-              FROM employees e
+              FROM em_employees e
               LEFT JOIN ta_flexible_schedules fs ON e.employee_id = fs.employee_id
                   AND (
                       fs.schedule_date = CURDATE()
@@ -55,8 +54,8 @@ try {
                   AND es.effective_from <= CURDATE()
                   AND (es.effective_to IS NULL OR es.effective_to >= CURDATE())
               WHERE e.employment_status = 'Active'
-              GROUP BY e.employee_id, e.full_name, e.department, e.position
-              ORDER BY e.full_name ASC";
+              GROUP BY e.employee_id, e.first_name, e.middle_name, e.last_name, e.department, e.position
+              ORDER BY full_name ASC";
 
     $stmt = $db->query($query);
     $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);

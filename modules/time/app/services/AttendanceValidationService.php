@@ -41,17 +41,34 @@ class AttendanceValidationService
         $date = $date ?? date('Y-m-d');
         $dayOfWeek = date('w', strtotime($date)); // 0=Sunday, 6=Saturday
 
-        // Check if today is a holiday - ALLOW TIME-IN (for double pay)
         $holiday = $this->getHolidayInfo($date);
         if ($holiday) {
+            $isWorkingHoliday = (int)$holiday['is_working_day'] === 1;
+
+            if ($isWorkingHoliday) {
+                return [
+                    'valid' => true,
+                    'can_timein' => true,
+                    'status' => 'HOLIDAY_WORKED',
+                    'message' => 'Today is a working holiday (' . $holiday['name'] . '). You can time-in for regular/holiday work compliance.',
+                    'reason' => 'Working holiday - attendance allowed',
+                    'is_holiday' => true,
+                    'holiday_name' => $holiday['name'],
+                    'holiday_scope' => $holiday['holiday_scope'] ?? 'national',
+                    'is_working_day' => true
+                ];
+            }
+
             return [
                 'valid' => true,
-                'can_timein' => true,
-                'status' => 'HOLIDAY_WORKED', // Will be used if they time-in
-                'message' => 'Today is a holiday (' . $holiday['name'] . '). You can time-in for double pay.',
-                'reason' => 'Holiday - double pay eligible',
+                'can_timein' => false,
+                'status' => 'NON_WORKING_HOLIDAY',
+                'message' => 'Today is a non-working holiday (' . $holiday['name'] . '). No attendance is required.',
+                'reason' => 'Non-working holiday',
                 'is_holiday' => true,
-                'holiday_name' => $holiday['name']
+                'holiday_name' => $holiday['name'],
+                'holiday_scope' => $holiday['holiday_scope'] ?? 'national',
+                'is_working_day' => false
             ];
         }
 
@@ -109,9 +126,9 @@ class AttendanceValidationService
         $date = $date ?? date('Y-m-d');
         $time_in_obj = new \DateTime($time_in);
 
-        // Check if today is a holiday - if they timed in, mark as HOLIDAY_WORKED
-        if ($this->isHoliday($date)) {
-            return 'HOLIDAY_WORKED'; // They chose to work on holiday
+        $holiday = $this->getHolidayInfo($date);
+        if ($holiday && (int)$holiday['is_working_day'] === 1) {
+            return 'HOLIDAY_WORKED';
         }
 
         // Get employee's shift
@@ -123,9 +140,15 @@ class AttendanceValidationService
 
         // Parse shift start time
         $shift_start = new \DateTime($date . ' ' . $shift['start_time']);
-        // Any time_in after shift start is LATE per business rules
+        $late_deadline = (clone $shift_start)->modify('+' . $this->late_threshold_minutes . ' minutes');
+
+        // Only mark as late after the 30-minute grace period.
         if ($time_in_obj <= $shift_start) {
             return 'PRESENT'; // On time or early
+        }
+
+        if ($time_in_obj <= $late_deadline) {
+            return 'PRESENT'; // still within the 30-minute grace period
         }
 
         return 'LATE';
@@ -148,17 +171,23 @@ class AttendanceValidationService
 
         // Parse shift start time
         $shift_start = new \DateTime($date . ' ' . $shift['start_time']);
+        $late_deadline = (clone $shift_start)->modify('+' . $this->late_threshold_minutes . ' minutes');
 
-        // If time_in is before or equal to shift start, not late
+        // Before or at shift start, not late.
         if ($time_in_obj <= $shift_start) {
             return 0;
         }
 
-        // Calculate difference in minutes
+        // Within the 30-minute grace period, not late.
+        if ($time_in_obj <= $late_deadline) {
+            return 0;
+        }
+
+        // Calculate difference in minutes after the grace period.
         $interval = $shift_start->diff($time_in_obj);
         $minutes_late = ($interval->h * 60) + $interval->i;
 
-        return $minutes_late;
+        return max(0, $minutes_late - $this->late_threshold_minutes);
     }
 
     /**
@@ -169,9 +198,17 @@ class AttendanceValidationService
     {
         $date = $date ?? date('Y-m-d');
         $dayOfWeek = date('w', strtotime($date));
+        $holiday = $this->getHolidayInfo($date);
 
-        if ($this->isHoliday($date) || $dayOfWeek == 0) {
-            return ['status' => null, 'reason' => 'holiday_or_weekend'];
+        if ($holiday) {
+            $isWorkingHoliday = (int)$holiday['is_working_day'] === 1;
+            if (!$isWorkingHoliday) {
+                return ['status' => null, 'reason' => 'holiday_or_weekend', 'is_holiday' => true, 'holiday_name' => $holiday['name']];
+            }
+        }
+
+        if ($dayOfWeek == 0) {
+            return ['status' => null, 'reason' => 'weekend'];
         }
 
         $shift = $this->getEmployeeShiftForDate($employee_id, $date);
@@ -188,13 +225,18 @@ class AttendanceValidationService
 
         $shiftStart = new \DateTime($date . ' ' . $shift['start_time'], new \DateTimeZone('Asia/Manila'));
         $shiftEnd = new \DateTime($date . ' ' . $shift['end_time'], new \DateTimeZone('Asia/Manila'));
+        $lateDeadline = (clone $shiftStart)->modify('+' . $this->late_threshold_minutes . ' minutes');
 
         if ($currentTime < $shiftStart) {
             return ['status' => 'WAITING_FOR_TIME_IN', 'shift' => $shift, 'reason' => 'Before shift start'];
         }
 
+        if ($currentTime <= $lateDeadline) {
+            return ['status' => 'WAITING_FOR_TIME_IN', 'shift' => $shift, 'reason' => 'Within grace period'];
+        }
+
         if ($currentTime < $shiftEnd) {
-            return ['status' => 'LATE', 'shift' => $shift, 'reason' => 'After shift start'];
+            return ['status' => 'LATE', 'shift' => $shift, 'reason' => 'Late beyond 30-minute threshold'];
         }
 
         return ['status' => 'ABSENT', 'shift' => $shift, 'reason' => 'After shift end'];
@@ -322,17 +364,7 @@ class AttendanceValidationService
      */
         public function isHoliday($date)
     {
-        $query = "SELECT id
-                FROM ta_holidays
-                WHERE holiday_date = :date
-                AND is_active = 1
-                LIMIT 1";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':date', $date);
-        $stmt->execute();
-
-        return $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
+        return $this->getHolidayInfo($date) !== null;
     }
 
     /**
@@ -340,7 +372,7 @@ class AttendanceValidationService
      */
     private function getHolidayInfo($date)
     {
-        $query = "SELECT id, name, holiday_date, description, is_recurring, category
+        $query = "SELECT id, name, holiday_date, description, is_recurring, category, holiday_scope, is_working_day, source
                   FROM {$this->holidays_table}
                   WHERE holiday_date = :date
                   AND is_active = 1

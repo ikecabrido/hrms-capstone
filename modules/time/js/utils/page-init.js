@@ -1,4 +1,19 @@
     
+    window.__taPageCleanup = null;
+    window.registerPageCleanup = function (cleanupFn) {
+        window.__taPageCleanup = cleanupFn;
+    };
+    window.clearPageCleanup = function () {
+        try {
+            if (typeof window.__taPageCleanup === 'function') {
+                window.__taPageCleanup();
+            }
+        } catch (err) {
+            console.warn('Page cleanup failed:', err);
+        }
+        window.__taPageCleanup = null;
+    };
+
     export function reinitPage(page) {
         console.log('[TA INIT] reinitPage:', page);
         initTabs();

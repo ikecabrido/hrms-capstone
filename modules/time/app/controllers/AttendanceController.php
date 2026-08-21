@@ -8,7 +8,7 @@
 date_default_timezone_set('Asia/Manila');
 
 require_once __DIR__ . '/../core/TimeDatabase.php';
-require_once __DIR__ . '/../classes/Employee.php';
+require_once __DIR__ . '/../../classes/Employee.php';
 require_once __DIR__. '/../models/Attendance.php';
 require_once __DIR__. '/../models/EmployeeShift.php';
 require_once __DIR__. '/../services/AttendanceValidationService.php';
@@ -168,18 +168,17 @@ class AttendanceController
             }
 
             // STEP 3: Determine status based on shift time
-            $status = $this->validationService->determineStatus($employee_id, date('Y-m-d H:i:s'), $todayDate);
+            $timeInNow = date('Y-m-d H:i:s');
+            $status = $this->validationService->determineStatus($employee_id, $timeInNow, $todayDate);
+            $minutesLate = 0;
+            if ($status === 'LATE') {
+                $minutesLate = $this->validationService->calculateMinutesLate($employee_id, $timeInNow, $todayDate);
+            }
 
-            // STEP 4: Insert time in record with status
-            if ($this->attendanceModel->timeIn($employee_id, $method, $status)) {
+            // STEP 4: Insert time in record with status and late minutes
+            if ($this->attendanceModel->timeIn($employee_id, $method, $status, $minutesLate)) {
                 // Get the record to get attendance_id
                 $record = $this->attendanceModel->getTodayAttendance($employee_id, $todayDate);
-
-                // Calculate minutes late if applicable
-                $minutesLate = 0;
-                if ($status === 'LATE') {
-                    $minutesLate = $this->validationService->calculateMinutesLate($employee_id, $record['time_in'], $todayDate);
-                }
 
                 // Get full employee name
                 $employee = $this->employeeModel->getById($employee_id);
@@ -451,7 +450,12 @@ class AttendanceController
      */
     public function processStaticQR($employee_id)
     {
-        $debugLogPath = dirname(__DIR__, 2) . '/public/qr_debug.log';
+        $debugLogDir = dirname(__DIR__, 2) . '/public';
+        if (!is_dir($debugLogDir)) {
+            @mkdir($debugLogDir, 0777, true);
+        }
+
+        $debugLogPath = $debugLogDir . '/qr_debug.log';
         $entry = '[processStaticQR] ' . date('Y-m-d H:i:s') . ' ' . json_encode([
             'employee_id' => $employee_id,
             'get' => $_GET,
@@ -459,7 +463,7 @@ class AttendanceController
             'request_method' => $_SERVER['REQUEST_METHOD'] ?? null,
             'request_uri' => $_SERVER['REQUEST_URI'] ?? null
         ], JSON_UNESCAPED_SLASHES) . PHP_EOL;
-        file_put_contents($debugLogPath, $entry, FILE_APPEND);
+        @file_put_contents($debugLogPath, $entry, FILE_APPEND);
 
         error_log('processStaticQR ENTRY: ' . json_encode([
             'employee_id' => $employee_id,

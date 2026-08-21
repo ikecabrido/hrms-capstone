@@ -81,8 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
                     <span style="font-weight: 600; color: #333;">Absent</span>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="display: inline-block; width: 16px; height: 16px; background: #9c27b0; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
-                    <span style="font-weight: 600; color: #333;">Flexible Schedule</span>
+                    <span style="display: inline-block; width: 16px; height: 16px; background: #f39c12; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></span>
+                    <span style="font-weight: 600; color: #333;">Holiday Work</span>
                 </div>
             </div>
         </div>

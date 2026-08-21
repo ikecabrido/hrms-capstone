@@ -232,10 +232,10 @@ class SettlementModel extends ExitManagementModel
 
         $stmt = $this->db->prepare("
              SELECT s.*, COALESCE(NULLIF(s.status, ''), 'pending_approval') AS status,
-                 e.full_name, e.employee_id as emp_id,
+                 CONCAT(e.first_name, ' ', e.last_name) AS full_name, e.employee_id as emp_id,
                    " . $resignationTypeSelect . ", r.last_working_date
             FROM exit_employee_settlements s
-            JOIN employees e ON s.employee_id = e.employee_id
+            JOIN em_employees e ON s.employee_id = e.employee_id
             LEFT JOIN exit_resignations r ON s.resignation_id = r.id
             WHERE s.id = ?
         ");
@@ -374,9 +374,9 @@ class SettlementModel extends ExitManagementModel
     public function getPendingSettlements(): array
     {
         $stmt = $this->db->query("
-            SELECT s.*, e.full_name, e.employee_id as emp_id
+            SELECT s.*, CONCAT(e.first_name, ' ', e.last_name) AS full_name, e.employee_id as emp_id
             FROM exit_employee_settlements s
-            JOIN employees e ON s.employee_id = e.employee_id
+            JOIN em_employees e ON s.employee_id = e.employee_id
             WHERE s.status = 'pending_approval'
             ORDER BY s.settlement_date ASC
         ");
@@ -393,7 +393,7 @@ class SettlementModel extends ExitManagementModel
         $baseSelect = [
             's.id',
             's.employee_id',
-            'e.full_name AS employee_name',
+            "CONCAT(e.first_name, ' ', e.last_name) AS employee_name",
             'e.department',
             'e.position',
             's.resignation_id',
@@ -424,12 +424,12 @@ class SettlementModel extends ExitManagementModel
 
         $selectList = implode(",\n                ", $baseSelect);
 
-        $sql = "\n            SELECT\n                {$selectList}\n            FROM exit_employee_settlements s\n            JOIN employees e ON s.employee_id = e.employee_id\n            LEFT JOIN exit_resignations r ON s.resignation_id = r.id\n        ";
+        $sql = "\n            SELECT\n                {$selectList}\n            FROM exit_employee_settlements s\n            JOIN em_employees e ON s.employee_id = e.employee_id\n            LEFT JOIN exit_resignations r ON s.resignation_id = r.id\n        ";
 
         $countSql = "
             SELECT COUNT(*) as total
             FROM exit_employee_settlements s
-            JOIN employees e ON s.employee_id = e.employee_id
+            JOIN em_employees e ON s.employee_id = e.employee_id
             LEFT JOIN exit_resignations r ON s.resignation_id = r.id
         ";
 
@@ -444,7 +444,7 @@ class SettlementModel extends ExitManagementModel
         // Add search condition if provided
         if (!empty($search)) {
             $searchCondition = $whereClause ? " AND" : " WHERE";
-            $searchCondition .= " (e.full_name LIKE :search0 OR s.settlement_date LIKE :search1 OR e.employee_id LIKE :search2 OR r.last_working_date LIKE :search3)";
+            $searchCondition .= " (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR s.settlement_date LIKE :search1 OR e.employee_id LIKE :search2 OR r.last_working_date LIKE :search3)";
             $whereClause .= $searchCondition;
             $searchParam = "%$search%";
             $params['search0'] = $searchParam;
@@ -531,9 +531,9 @@ class SettlementModel extends ExitManagementModel
                 JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.created_at')) AS created_at,
                 a.archived_at AS archived_at,
                 a.archive_reason,
-                e.full_name AS employee_name
+                CONCAT(e.first_name, ' ', e.last_name) AS employee_name
             FROM exit_archive a
-            LEFT JOIN employees e ON JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.employee_id')) = e.employee_id
+            LEFT JOIN em_employees e ON JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.employee_id')) = e.employee_id
             WHERE a.archive_type = 'settlement' AND a.restored = 0
         ";
 
@@ -545,8 +545,8 @@ class SettlementModel extends ExitManagementModel
 
         $params = [];
         if (!empty($search)) {
-            $sql .= " AND (e.full_name LIKE :search0 OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.settlement_date')) LIKE :search1 OR a.archive_reason LIKE :search2 OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.status')) LIKE :search3)";
-            $countSql .= " AND (e.full_name LIKE :search0 OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.settlement_date')) LIKE :search1 OR a.archive_reason LIKE :search2 OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.status')) LIKE :search3)";
+            $sql .= " AND (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.settlement_date')) LIKE :search1 OR a.archive_reason LIKE :search2 OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.status')) LIKE :search3)";
+            $countSql .= " AND (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.settlement_date')) LIKE :search1 OR a.archive_reason LIKE :search2 OR JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.status')) LIKE :search3)";
             $searchParam = "%$search%";
             $params['search0'] = $searchParam;
             $params['search1'] = $searchParam;

@@ -26,8 +26,8 @@ try {
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
-    // Verify employee exists
-    $verify_query = "SELECT employee_id FROM employees WHERE employee_id = ? AND employment_status = 'Active'";
+    // Verify employee exists in the Time module employee table
+    $verify_query = "SELECT employee_id FROM em_employees WHERE employee_id = ? AND employment_status = 'Active'";
     $stmt = $conn->prepare($verify_query);
     $stmt->execute([$employee_id]);
     
