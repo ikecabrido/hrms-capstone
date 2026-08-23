@@ -3,14 +3,17 @@
 namespace App\Controllers;
 
 use App\Models\Employee;
+use App\Models\Announcement;
 
 class PortalController
 {
     private Employee $employeeModel;
+    private Announcement $announcementModel;
 
     public function __construct()
     {
         $this->employeeModel = new Employee();
+        $this->announcementModel = new Announcement();
     }
     public function dashboard()
     {
@@ -32,6 +35,7 @@ class PortalController
         $employeeInitial = strtoupper(
             substr($employeeDashboard['first_name'] ?? 'E', 0, 1)
         );
+        $announcements = $this->announcementModel->all();
 
         $title = "Employee Dashboard";
         $content = __DIR__ . '/../views/employee-portal/content.php';
@@ -58,7 +62,7 @@ class PortalController
         $employeeInitial = strtoupper(
             substr($employeeDashboard['first_name'] ?? 'E', 0, 1)
         );
-
+        
         $title = "Admin Dashboard";
         $content = __DIR__ . '/../views/admin-portal/content.php';
 

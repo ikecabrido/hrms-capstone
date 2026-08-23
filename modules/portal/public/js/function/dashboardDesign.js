@@ -30,30 +30,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     setInterval(updateClock, 1000);
 
-
-    /* =====================================================
-       EMPLOYEE BANNER
-       ===================================================== */
-
-    const banner = document.getElementById('employeeBanner');
-
-    if (banner) {
-
-        function changeBannerImage() {
-
-            const randomNumber =
-                Math.floor(Math.random() * 999999);
-
-            banner.src =
-                `https://loremflickr.com/1200/350/employee,office,teamwork?lock=${randomNumber}`;
-        }
-
-        changeBannerImage();
-
-        setInterval(changeBannerImage, 5000);
-    }
-
-
     /* =====================================================
        WELCOME ANIMATION
        ===================================================== */

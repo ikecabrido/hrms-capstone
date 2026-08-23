@@ -1,6 +1,6 @@
 <div class="employee-dashboard">
 
-    <section class="dashboard-welcome" id="dashboardWelcome">
+    <section class="dashboard-welcome" id="profileWelcome">
 
         <!-- Animated background -->
         <div class="welcome-glow glow-one"></div>
@@ -8,23 +8,16 @@
 
         <div class="welcome-content">
 
-            <span class="welcome-label" id="welcomeLabel">
+            <span class="welcome-label">
                 <i class="fas fa-circle"></i>
                 EMPLOYEE PROFILE
             </span>
 
-            <h1 id="welcomeTitle">
-                Welcome to Profile Page,
-                <span>
-                    <?= htmlspecialchars(
-                        $employeeProfileInfo['first_name']
-                        ?? $userInfos['username']
-                        ?? 'Employee'
-                    ); ?>
-                </span>
+            <h1 class="welcome-title">
+                My Profile
             </h1>
 
-            <p id="welcomeDescription">
+            <p class="welcome-description">
                 View and manage your personal information, account details,
                 and employee records.
             </p>
@@ -34,12 +27,12 @@
         </div>
 
         <!-- Profile icon -->
-        <div class="welcome-decoration" id="welcomeDecoration">
+        <div class="welcome-decoration">
             <i class="fas fa-user-tie"></i>
         </div>
 
     </section>
-
+    <?php require __DIR__ . '/../../partials/notification.php'; ?>
     <section class="dashboard-section">
 
         <div class="dashboard-section-header">
@@ -57,29 +50,37 @@
             <!-- Profile Header -->
             <div class="profile-card-header">
 
-                <!-- Avatar -->
-                <div class="profile-avatar">
+                <div class="profile-avatar-wrapper">
 
-                    <?php if (!empty($employeeProfileInfo['profile_image'])): ?>
+                    <div class="profile-avatar">
 
-                        <img src="/hrms-capstone/modules/portal/public/uploads/profile/<?= htmlspecialchars(
-                            $employeeProfileInfo['profile_image']
-                        ); ?>" alt="Profile Photo">
+                        <?php if (!empty($employeeProfileInfo['profile_image'])): ?>
 
-                    <?php else: ?>
+                            <img src="/hrms-capstone/modules/portal/public/assets/uploads/profile/<?= htmlspecialchars(
+                                $employeeProfileInfo['profile_image']
+                            ); ?>" alt="Profile Photo">
 
-                        <?= strtoupper(
-                            substr(
-                                $employeeProfileInfo['first_name']
-                                ?? $userInfos['username']
-                                ?? 'E',
-                                0,
-                                1
-                            )
-                        ); ?>
+                        <?php else: ?>
 
-                    <?php endif; ?>
+                            <?= strtoupper(
+                                substr(
+                                    $employeeProfileInfo['first_name']
+                                    ?? $userInfos['username']
+                                    ?? 'E',
+                                    0,
+                                    1
+                                )
+                            ); ?>
 
+                        <?php endif; ?>
+
+                    </div>
+
+                    <!-- Plus button -->
+                    <button type="button" class="profile-avatar-upload" data-bs-toggle="modal"
+                        data-bs-target="#profileImageModal" title="Change profile photo">
+                        <i class="fas fa-plus"></i> upload
+                    </button>
                 </div>
 
 
@@ -127,15 +128,25 @@
 
             <div class="profile-section">
 
-                <div class="profile-section-title">
-                    <i class="fas fa-user-circle"></i>
+                <div class="profile-section-title"
+                    style="display:flex;align-items:center;justify-content:space-between;width:100%;">
 
-                    <div>
-                        <span>ACCOUNT</span>
-                        <h3>Account Information</h3>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <i class="fas fa-user-circle"></i>
+
+                        <div>
+                            <span>ACCOUNT</span>
+                            <h3>Account Information</h3>
+                        </div>
                     </div>
-                </div>
 
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editProfileModal" style="border-radius:8px;padding:8px 14px;font-size:13px;">
+                        <i class="fas fa-pen me-1"></i>
+                        Edit Profile
+                    </button>
+
+                </div>
 
                 <div class="profile-info-grid">
 
@@ -456,12 +467,9 @@
 
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                     data-bs-target="#changePasswordModal">
-
-                    <i class="fas fa-key"></i>
+                    <i class="fas fa-key me-1"></i>
                     Change Password
-
                 </button>
-
             </div>
 
         </div>
@@ -469,5 +477,19 @@
     </section>
 </div>
 
-<?php require __DIR__ . '/../../partials/notification.php'; ?>
-<?php require __DIR__ . '/change-password.php'; ?>
+<?php if (($_GET['modal'] ?? '') === 'change-password'): ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const modalElement = document.getElementById('changePasswordModal');
+
+    if (modalElement) {
+        const changePasswordModal = new bootstrap.Modal(modalElement);
+        changePasswordModal.show();
+    }
+
+});
+</script>
+
+<?php endif; ?>

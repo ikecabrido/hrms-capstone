@@ -110,9 +110,15 @@
             been moved to another location.
         </p>
 
-        <a href="/hrms-capstone/modules/portal/" class="home-button">
-            Back to Home
-        </a>
+        <?php if ($_SESSION['is_admin'] == true): ?>
+            <a href="/hrms-capstone/modules/portal/index.php?url=admin-dashboard" class="home-button">
+                Back to Home
+            </a>
+        <?php else: ?>
+            <a href="/hrms-capstone/modules/portal/index.php?url=employee-dashboard" class="home-button">
+                Back to Home
+            </a>
+        <?php endif; ?>
     </div>
 
 </body>
