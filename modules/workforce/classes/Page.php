@@ -5,21 +5,20 @@ class Page {
     private $allowed = [];
 
     private $labels = [
-        'dashboard-overview'          => 'Dashboard Overview',
-        'period-manager'             => 'Period Manager',
-        'payroll-processing'  => 'Payroll Processing',
-        'payslips'   => 'Payslips',
-        'deductions'=> 'Deductions',
+        'dashboard-overview'          => 'Dashboard overview',
+        'resignation-replacement'     => 'Resignation & Replacement',
+        'Diversity-and-Inclusion'  => 'Diversity and Inclusion',
+        'Predictive Analytics'   => 'Predictive Analytics',
         'reports'=> 'Reports',
-        'final-settlement'     => 'Final Settlement',
+        
     ];
 
     private $sections = [
         'top'             => ['dashboard-overview'],
-        'payroll-administration'  => ['period-manager', 'payroll-processsing'],
-        'employee-payroll'      => ['payslips', 'deductions'],
-        'reports-&-analytics'       => ['reports'],
-        'employee-exit-management' => ['final-settlement']
+        'Attrition and Turnover Analysis ' => ['resignation-replacement'],
+        'Diversity and Inclusion Reports' => ['Diversity-and-Inclusion'],
+        'Predictive Analytics '       => ['Predictive Analytics'],
+        'Custom HR Reports ' => ['Reports']
     ];
 
     public function __construct($pagesDir = null) {
@@ -66,7 +65,7 @@ class Page {
         }
 
         // Grouped sections
-        $sectionOrder = ['payroll-administration', 'employee-payroll', 'reports-&-analytics', 'employee-exit-management'];
+        $sectionOrder = ['Attrition and Turnover Analysis ', 'Diversity and Inclusion Reports', 'Predictive Analytics ', 'Custom HR Reports '];
         foreach ($sectionOrder as $section) {
             echo '<div class="separator"></div>';
             echo '<h3>' . ucwords(str_replace('-', ' ', $section)) . '</h3>';
@@ -80,7 +79,8 @@ class Page {
         $label = $this->labels[$p] ?? ucwords(str_replace('-', ' ', $p));
         if (in_array($p, $this->allowed)) {
             $class = $this->isActive($p) ? 'active-menu-link' : 'menu-link';
-            echo "<li><a href=\"?page={$p}\" data-page=\"{$p}\" class=\"{$class}\">{$label}</a></li>";
+            $page = htmlspecialchars($p, ENT_QUOTES, 'UTF-8');
+            echo "<li><a href=\"?page={$page}\" data-page=\"{$page}\" class=\"{$class}\">{$label}</a></li>";
         } else {
             echo "<li><a href=\"#\" class=\"menu-link\">{$label}</a></li>";
         }
