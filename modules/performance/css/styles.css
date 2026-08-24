@@ -10,7 +10,7 @@
 @import url('layout/module-container.css');
 
 /*Pages CSS*/
-
+@import url('pages/appraisals.css');
 
 /*Base CSS*/
 @import url('base/variables.css');
