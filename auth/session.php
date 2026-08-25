@@ -29,7 +29,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
         echo json_encode(['success' => false, 'message' => 'Session expired. Please log in again.']);
         exit();
     }
-    header('Location: hrms-capstone/index.php?reason=timeout');
+    header('Location: /hrms-capstone/index.php?reason=timeout');
     exit();
 }
 
