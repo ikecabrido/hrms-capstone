@@ -1,48 +1,58 @@
 <?php
-class Page {
+class Page
+{
     private $default = 'dashboard-overview';
     private $pagesDir;
     private $allowed = [];
 
     private $labels = [
-        'dashboard-overview'          => 'Dashboard overview',
-        'resignation-replacement'     => 'Resignation & Replacement',
-        'Diversity-and-Inclusion'  => 'Diversity and Inclusion',
-        'Predictive Analytics'   => 'Predictive Analytics',
-        'reports'=> 'Reports',
-        
+        'dashboard-overview' => 'Dashboard & Metrics',
+        'period-manager' => 'Attrition & Turnover',
+        'payroll-processing' => 'Diversity & Inclusion',
+        'payslips' => 'Predictive Analytics',
+        'reports' => 'Custom Reports',
     ];
 
     private $sections = [
-        'top'             => ['dashboard-overview'],
-        'Attrition and Turnover Analysis ' => ['resignation-replacement'],
-        'Diversity and Inclusion Reports' => ['Diversity-and-Inclusion'],
-        'Predictive Analytics '       => ['Predictive Analytics'],
-        'Custom HR Reports ' => ['Reports']
+        'top'             => [],
+        'analytics' => ['dashboard-overview', 'period-manager', 'payroll-processing', 'payslips', 'reports']
     ];
 
-    public function __construct($pagesDir = null) {
+    private $renderFiles = [
+        'dashboard-overview' => 'analytics-dashboard.php',
+        'period-manager' => 'attrition-turnover.php',
+        'payroll-processing' => 'diversity-inclusion.php',
+        'payslips' => 'predictive-analytics.php',
+        'reports' => 'custom-reports.php',
+    ];
+
+    public function __construct($pagesDir = null)
+    {
         $this->pagesDir = $pagesDir ?? dirname(__DIR__) . '/pages';
         $this->discoverPages();
     }
 
-    private function discoverPages() {
+    private function discoverPages()
+    {
         if (!is_dir($this->pagesDir)) return;
         foreach (glob($this->pagesDir . '/*.php') as $file) {
             $this->allowed[] = basename($file, '.php');
         }
     }
 
-    public function getPage() {
+    public function getPage()
+    {
         if (!empty($_GET['page']) && in_array($_GET['page'], $this->allowed)) {
             return $_GET['page'];
         }
         return $this->default;
     }
 
-    public function render() {
+    public function render()
+    {
         $page = $this->getPage();
-        $file = $this->pagesDir . '/' . $page . '.php';
+        $fileName = $this->renderFiles[$page] ?? $page . '.php';
+        $file = $this->pagesDir . '/' . $fileName;
         if (file_exists($file)) {
             include $file;
         } else {
@@ -50,22 +60,25 @@ class Page {
         }
     }
 
-    public function isActive($page) {
+    public function isActive($page)
+    {
         return $this->getPage() === $page;
     }
 
-    public function getAllowedPages() {
+    public function getAllowedPages()
+    {
         return $this->allowed;
     }
 
-    public function renderNav() {
+    public function renderNav()
+    {
         // Top section (no heading/separator)
         foreach ($this->sections['top'] as $p) {
             $this->renderLink($p);
         }
 
         // Grouped sections
-        $sectionOrder = ['Attrition and Turnover Analysis ', 'Diversity and Inclusion Reports', 'Predictive Analytics ', 'Custom HR Reports '];
+        $sectionOrder = ['analytics'];
         foreach ($sectionOrder as $section) {
             echo '<div class="separator"></div>';
             echo '<h3>' . ucwords(str_replace('-', ' ', $section)) . '</h3>';
@@ -75,12 +88,12 @@ class Page {
         }
     }
 
-    private function renderLink($p) {
+    private function renderLink($p)
+    {
         $label = $this->labels[$p] ?? ucwords(str_replace('-', ' ', $p));
         if (in_array($p, $this->allowed)) {
             $class = $this->isActive($p) ? 'active-menu-link' : 'menu-link';
-            $page = htmlspecialchars($p, ENT_QUOTES, 'UTF-8');
-            echo "<li><a href=\"?page={$page}\" data-page=\"{$page}\" class=\"{$class}\">{$label}</a></li>";
+            echo "<li><a href=\"?page={$p}\" data-page=\"{$p}\" class=\"{$class}\">{$label}</a></li>";
         } else {
             echo "<li><a href=\"#\" class=\"menu-link\">{$label}</a></li>";
         }

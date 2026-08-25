@@ -1,0 +1,1072 @@
+/* ==========================================================================
+   Final Settlement — page-specific styles
+   Reuses the shared pm-* component classes from pages/period-manager.css
+   (alerts, buttons, summary cards, toolbar, table, modals, form groups)
+   the same way deductions.css and reports.css do. Adds what's genuinely
+   new to this page: the status/exit-type badges, the workflow strip, the
+   employee combobox (mirroring deduction.css), the settlement detail
+   sections, the earnings/deductions calc tables, the final-calculation
+   card, the adjustments tabs, and the printable statement.
+   ========================================================================== */
+
+/* ---------- Header ---------- */
+.fs-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.fs-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color5);
+}
+
+/* ---------- Summary cards (5-up) ---------- */
+.fs-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+.fs-icon-pending {
+  background: var(--color2);
+}
+.fs-icon-review {
+  background: #b7791f;
+}
+.fs-icon-approved {
+  background: var(--color7);
+}
+.fs-icon-released {
+  background: #1e9e64;
+}
+.fs-icon-total {
+  background: var(--color1);
+}
+
+/* ---------- Workflow strip (list-page overview) ---------- */
+.fs-flow-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 0.85rem 1.1rem;
+  font-size: 0.8rem;
+  color: var(--color5);
+}
+
+.fs-flow-strip i {
+  font-size: 0.7rem;
+  color: var(--color4);
+}
+
+.fs-flow-current {
+  color: var(--color1);
+  font-weight: 700;
+}
+
+/* ---------- Filter group (label + select) ---------- */
+.fs-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 180px;
+}
+
+.fs-filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color2);
+}
+
+.fs-filter-group select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: var(--color3);
+  color: var(--color8);
+  outline: none;
+}
+
+/* ---------- Table cell content ---------- */
+.fs-employee-code {
+  font-weight: 600;
+  color: var(--color8);
+}
+
+.fs-employee-name {
+  color: var(--color5);
+  font-size: 0.78rem;
+  margin-top: 0.1rem;
+}
+
+.fs-amount-cell {
+  font-weight: 700;
+  color: var(--color8);
+  white-space: nowrap;
+}
+
+/* ---------- Status badges ---------- */
+.fs-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.fs-status-draft {
+  background: var(--color9);
+  color: var(--color2);
+}
+.fs-status-for_review {
+  background: #fdf3e0;
+  color: #b7791f;
+}
+.fs-status-approved {
+  background: rgba(81, 70, 183, 0.12);
+  color: var(--color7);
+}
+.fs-status-released {
+  background: #e6f7ee;
+  color: #1e7e4d;
+}
+.fs-status-cancelled {
+  background: #fdecec;
+  color: var(--color10);
+}
+
+/* ---------- Employee combobox (Create Settlement modal) ----------
+   Mirrors .dd-combobox in css/pages/deduction.css. */
+.fs-combobox {
+  position: relative;
+}
+
+.fs-combobox-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fs-combobox-icon {
+  position: absolute;
+  left: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--color5);
+  pointer-events: none;
+}
+
+.fs-combobox-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem 0.6rem 2.1rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  background: var(--color3);
+  color: var(--color8);
+  outline: none;
+}
+
+.fs-combobox-input:focus {
+  border-color: var(--color7);
+}
+
+.fs-combobox-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--color3);
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+  z-index: 20;
+}
+
+.fs-combobox-options.fs-combobox-open {
+  display: block;
+}
+
+.fs-combobox-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color8);
+}
+
+.fs-combobox-option:hover,
+.fs-combobox-option.fs-combobox-highlighted {
+  background: var(--color9);
+}
+
+.fs-combobox-option-label {
+  font-weight: 600;
+}
+
+.fs-combobox-option-sub {
+  font-size: 0.75rem;
+  color: var(--color5);
+}
+
+.fs-combobox-empty {
+  padding: 0.75rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--color5);
+  text-align: center;
+}
+
+/* ---------- Create modal: exit detail readout + preview ---------- */
+.fs-create-details {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--color4);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fs-create-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+}
+
+.fs-detail-label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color5);
+  margin-bottom: 0.2rem;
+}
+
+.fs-detail-value {
+  display: block;
+  font-size: 0.87rem;
+  font-weight: 600;
+  color: var(--color8);
+}
+
+.fs-settlement-preview .pm-preview-row strong {
+  font-weight: 700;
+}
+
+/* ---------- Amount input (Add Adjustment modal) ---------- */
+.fs-amount-input-wrap {
+  position: relative;
+}
+
+.fs-peso-prefix {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color5);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.fs-amount-input-wrap input {
+  width: 100%;
+  padding-left: 2rem !important;
+}
+
+/* ---------- Confirmation modals ---------- */
+.fs-confirm-lead {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color8);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Settlement Detail Modal
+   ========================================================================== */
+.fs-detail-modal {
+  max-width: 760px;
+}
+
+.fs-detail-modal .pm-modal-header {
+  align-items: flex-start;
+}
+
+.fs-detail-subtitle {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--color5);
+}
+
+.fs-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.fs-section-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color5);
+}
+
+.fs-section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.fs-section-header-row .fs-section-title {
+  margin-bottom: 0;
+}
+
+/* ---------- Workflow timeline ---------- */
+.fs-workflow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+
+.fs-workflow-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  gap: 0.5rem;
+}
+
+.fs-workflow-step::before {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--color9);
+  z-index: 0;
+}
+
+.fs-workflow-step:first-child::before {
+  content: none;
+}
+
+.fs-workflow-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--color9);
+  color: var(--color5);
+  border: 2px solid var(--color9);
+  position: relative;
+  z-index: 1;
+}
+
+.fs-workflow-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color5);
+}
+
+.fs-workflow-step.fs-step-done .fs-workflow-dot {
+  background: #1e9e64;
+  border-color: #1e9e64;
+  color: var(--color3);
+}
+.fs-workflow-step.fs-step-done::before {
+  background: #1e9e64;
+}
+.fs-workflow-step.fs-step-done .fs-workflow-label {
+  color: var(--color8);
+}
+
+.fs-workflow-step.fs-step-current .fs-workflow-dot {
+  background: var(--color1);
+  border-color: var(--color1);
+  color: var(--color3);
+  box-shadow: 0 0 0 4px rgba(32, 0, 130, 0.14);
+}
+.fs-workflow-step.fs-step-current .fs-workflow-label {
+  color: var(--color1);
+  font-weight: 700;
+}
+
+.fs-workflow.fs-workflow-cancelled .fs-workflow-dot {
+  background: #fdecec;
+  border-color: #fdecec;
+  color: var(--color10);
+}
+.fs-workflow.fs-workflow-cancelled .fs-workflow-label {
+  color: var(--color10);
+}
+
+/* ---------- Info grids (Employee / Exit information) ---------- */
+.fs-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.9rem 1.5rem;
+  background: var(--color9);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+}
+
+.fs-info-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.fs-info-row .fs-detail-label {
+  margin-bottom: 0;
+}
+
+/* ---------- Earnings / Deductions calc tables ---------- */
+.fs-calc-table {
+  min-width: 0;
+}
+
+.fs-calc-table thead th {
+  background: var(--color9);
+}
+
+.fs-amount-col {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fs-total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--color9);
+  background: var(--color9);
+}
+
+/* ---------- Final calculation card ---------- */
+.fs-final-calc-card {
+  background: linear-gradient(135deg, var(--color1), var(--color7));
+  border-radius: 12px;
+  padding: 1.4rem 1.6rem;
+  color: var(--color3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.fs-final-calc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  opacity: 0.92;
+}
+
+.fs-final-calc-less strong {
+  color: #ffd7d7;
+}
+
+.fs-final-calc-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 0.3rem 0;
+}
+
+.fs-final-calc-net {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.fs-final-calc-net strong {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+/* ---------- Adjustments tabs ---------- */
+.fs-tab-list {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color9);
+}
+
+.fs-tab-list .tab-item {
+  padding: 0.6rem 0.9rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: var(--color5);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.fs-tab-list .tab-item:hover {
+  color: var(--color8);
+}
+
+.fs-tab-list .tab-item.active {
+  color: var(--color1);
+  border-bottom-color: var(--color1);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.fs-adjust-empty {
+  text-align: center;
+  padding: 1.25rem;
+  color: var(--color5);
+  font-size: 0.85rem;
+}
+
+/* ---------- Detail footer actions ---------- */
+.fs-detail-footer {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.fs-detail-footer-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.fs-locked-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--color5);
+}
+
+/* ==========================================================================
+   Modal fixes — center in viewport, sit above the fixed header, scroll
+   instead of clipping. Scoped to the Final Settlement modals.
+   ========================================================================== */
+#fsCreateModalOverlay,
+#fsDetailModalOverlay,
+#fsAdjustModalOverlay,
+#fsApproveModalOverlay,
+#fsReleaseModalOverlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.55);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+#fsCreateModalOverlay[style*="flex"],
+#fsDetailModalOverlay[style*="flex"],
+#fsAdjustModalOverlay[style*="flex"],
+#fsApproveModalOverlay[style*="flex"],
+#fsReleaseModalOverlay[style*="flex"] {
+  display: flex !important;
+}
+
+#fsCreateModalOverlay .pm-modal,
+#fsDetailModalOverlay .pm-modal,
+#fsAdjustModalOverlay .pm-modal,
+#fsApproveModalOverlay .pm-modal,
+#fsReleaseModalOverlay .pm-modal {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  margin: auto;
+  width: 100%;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 14px;
+  background: var(--color3);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+#fsCreateModalOverlay .pm-modal > form,
+#fsAdjustModalOverlay .pm-modal > form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
+#fsCreateModalOverlay .pm-modal-body,
+#fsDetailModalOverlay .pm-modal-body,
+#fsAdjustModalOverlay .pm-modal-body {
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+#fsCreateModalOverlay .pm-modal-header,
+#fsDetailModalOverlay .pm-modal-header,
+#fsAdjustModalOverlay .pm-modal-header,
+#fsApproveModalOverlay .pm-modal-header,
+#fsReleaseModalOverlay .pm-modal-header,
+#fsCreateModalOverlay .pm-modal-footer,
+#fsDetailModalOverlay .pm-modal-footer,
+#fsAdjustModalOverlay .pm-modal-footer,
+#fsApproveModalOverlay .pm-modal-footer,
+#fsReleaseModalOverlay .pm-modal-footer {
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Animations — subtle, professional
+   ========================================================================== */
+.pm-page {
+  animation: fsFadeIn 0.35s ease both;
+}
+
+.pm-summary-card,
+.pm-table-card,
+.fs-flow-strip,
+.pm-toolbar {
+  animation: fsSlideUp 0.35s ease both;
+}
+
+.pm-summary-card:hover,
+.fs-final-calc-card {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.pm-summary-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.pm-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+#fsCreateModalOverlay .pm-modal,
+#fsDetailModalOverlay .pm-modal,
+#fsAdjustModalOverlay .pm-modal,
+#fsApproveModalOverlay .pm-modal,
+#fsReleaseModalOverlay .pm-modal {
+  animation: fsModalIn 0.2s ease both;
+}
+
+@keyframes fsFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fsSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fsModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-page,
+  .pm-summary-card,
+  .pm-table-card,
+  .fs-flow-strip,
+  .pm-toolbar,
+  #fsCreateModalOverlay .pm-modal,
+  #fsDetailModalOverlay .pm-modal,
+  #fsAdjustModalOverlay .pm-modal,
+  #fsApproveModalOverlay .pm-modal,
+  #fsReleaseModalOverlay .pm-modal {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Printable Final Settlement Statement
+   Mirrors #rpPrintSheet in css/pages/reports.css
+   ========================================================================== */
+#fsPrintSheet {
+  display: none;
+}
+
+.fs-doc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.1rem;
+  border-bottom: 2px solid var(--color8);
+}
+
+.fs-doc-header img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.fs-doc-header-text h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color8);
+}
+
+.fs-doc-header-text span {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--color5);
+}
+
+.fs-doc-title-row {
+  margin-bottom: 1.25rem;
+}
+
+.fs-doc-title-row h4 {
+  margin: 0 0 0.2rem;
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  color: var(--color1);
+  text-transform: uppercase;
+}
+
+.fs-doc-generated {
+  font-size: 0.8rem;
+  color: var(--color5);
+}
+
+.fs-doc-section {
+  margin-bottom: 1.35rem;
+}
+
+.fs-doc-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color5);
+  margin-bottom: 0.6rem;
+}
+
+.fs-doc-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 1.5rem;
+  font-size: 0.85rem;
+}
+
+.fs-doc-info-grid div span {
+  display: block;
+  color: var(--color5);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.fs-doc-info-grid div strong {
+  color: var(--color8);
+  font-weight: 600;
+}
+
+.fs-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fs-doc-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color5);
+  background: var(--color9);
+  padding: 0.5rem 0.7rem;
+}
+
+.fs-doc-table td {
+  padding: 0.5rem 0.7rem;
+  font-size: 0.84rem;
+  color: var(--color8);
+  border-bottom: 1px solid var(--color9);
+}
+
+.fs-doc-table td:last-child {
+  text-align: right;
+}
+
+.fs-doc-total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--color9);
+  border-bottom: none;
+}
+
+.fs-doc-net-card {
+  background: var(--color9);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color8);
+}
+
+.fs-doc-net-card strong {
+  font-size: 1.3rem;
+}
+
+.fs-doc-signatures {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--color4);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.75rem 2rem;
+}
+
+.fs-doc-signature-line {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  font-size: 0.82rem;
+  color: var(--color5);
+}
+
+.fs-doc-signature-space {
+  border-bottom: 1px solid var(--color8);
+  height: 1.1rem;
+}
+
+.fs-doc-ack {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--color4);
+  font-size: 0.85rem;
+  color: var(--color8);
+}
+
+.fs-doc-ack p {
+  margin: 0 0 1.5rem;
+}
+
+.fs-doc-ack-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.fs-doc-ack-space {
+  flex: 1;
+  border-bottom: 1px solid var(--color8);
+  max-width: 320px;
+  height: 1.1rem;
+}
+
+@media print {
+  .sidebar,
+  header,
+  footer,
+  .hamburger,
+  .module-header,
+  .module-content,
+  .pm-alert,
+  .pm-modal-overlay {
+    display: none !important;
+  }
+
+  body,
+  .main-content,
+  .container {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  #fsPrintSheet {
+    display: block !important;
+  }
+
+  #fsPrintSheet .fs-doc-table th {
+    background: #eee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #fsPrintSheet .fs-doc-net-card {
+    background: #eee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #fsPrintSheet .fs-doc-header,
+  #fsPrintSheet .fs-doc-title-row,
+  #fsPrintSheet .fs-doc-section,
+  #fsPrintSheet .fs-doc-table tr,
+  #fsPrintSheet .fs-doc-signatures {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #fsPrintSheet .fs-doc-table thead {
+    display: table-header-group;
+  }
+
+  #fsPrintSheet::after {
+    content: "Page " counter(page) " of " counter(pages);
+    position: fixed;
+    bottom: 0.3in;
+    right: 0.5in;
+    font-size: 0.72rem;
+    color: #555;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0.5in;
+  }
+}
+
+/* ==========================================================================
+   Responsiveness
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .fs-summary-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .pm-summary-card-wide {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 1024px) {
+  .fs-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pm-summary-card-wide {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .fs-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .fs-header-row .pm-btn {
+    justify-content: center;
+  }
+
+  .fs-filter-group {
+    min-width: 0;
+  }
+
+  .fs-create-details-grid,
+  .fs-info-grid,
+  .fs-doc-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fs-detail-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .fs-detail-footer-actions {
+    justify-content: stretch;
+  }
+  .fs-detail-footer-actions .pm-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .fs-doc-signatures {
+    grid-template-columns: 1fr;
+  }
+
+  .fs-workflow {
+    flex-wrap: wrap;
+  }
+  .fs-workflow-step {
+    flex: 1 1 33%;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .fs-summary-cards {
+    grid-template-columns: 1fr;
+  }
+  .pm-summary-card-wide {
+    grid-column: span 1;
+  }
+
+  .fs-flow-strip {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .fs-flow-strip i {
+    display: none;
+  }
+
+  .fs-workflow-step {
+    flex: 1 1 50%;
+  }
+}
