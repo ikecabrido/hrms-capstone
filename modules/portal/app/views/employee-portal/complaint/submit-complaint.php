@@ -83,11 +83,11 @@
 
                                     <?php foreach ($employees as $employeeOption): ?>
 
-                                        <option value="<?= htmlspecialchars($employeeOption['id'] ?? '') ?>">
+                                        <option value="<?= htmlspecialchars($employeeOption['employee_id'] ?? '') ?>">
                                             <?= htmlspecialchars($employeeOption['first_name'] ?? '') ?>
                                             <?= htmlspecialchars($employeeOption['middle_name'] ?? '') ?>
                                             <?= htmlspecialchars($employeeOption['last_name'] ?? '') ?>
-                                            (<?= htmlspecialchars($employeeOption['employee_num'] ?? '') ?>)
+                                            (<?= htmlspecialchars($employeeOption['employee_code'] ?? '') ?>)
                                         </option>
 
                                     <?php endforeach; ?>

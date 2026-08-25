@@ -66,7 +66,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="menu-link">
+                <a href="index.php?url=training" class="menu-link">
                     <i class="fa-solid fa-graduation-cap"></i>
                     Training & Seminars
                 </a>

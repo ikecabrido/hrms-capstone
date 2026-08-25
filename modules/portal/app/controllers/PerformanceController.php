@@ -20,7 +20,7 @@ class PerformanceController
     {
         $userId = $_SESSION['user_id'];
         $employee = $this->employeeModel->getByUserId($userId);
-        $employeePerformanceFeedback = $this->performanceModel->getPerformance($employee['id']);
+        $employeePerformanceFeedback = $this->performanceModel->getPerformance($employee['employee_id']);
 
         $title = "Performance Evaluation";
         $content = __DIR__ . '/../views/employee-portal/performance/content.php';

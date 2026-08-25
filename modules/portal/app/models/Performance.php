@@ -8,7 +8,7 @@ use PDO;
 class Performance
 {
     private $conn;
-    private $table = "pm_360_feedback";
+    private $table = "pm_feedback_360_entries";
 
     public function __construct()
     {

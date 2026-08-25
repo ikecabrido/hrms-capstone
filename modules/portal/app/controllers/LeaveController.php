@@ -25,7 +25,7 @@ class LeaveController
         $employeeAttendance = $this->employeeModel->getByUserId($userId);
 
         $leaveHistory = $this->leaveModel->getLeave(
-            $employeeAttendance['id']
+            $employeeAttendance['employee_id']
         );
 
         $leaveTypes = $this->leaveModel->allTypes();
@@ -45,8 +45,8 @@ class LeaveController
                 throw new Exception('Employee record not found.');
             }
 
-            $employeeId = (int) $employee['id'];
-
+            $employeeId = (int) $employee['employee_id'];
+            
             $leaveTypeId = (int) ($_POST['leave_type_id'] ?? 0);
             $startDate = trim($_POST['start_date'] ?? '');
             $endDate = trim($_POST['end_date'] ?? '');

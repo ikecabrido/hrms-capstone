@@ -10,6 +10,7 @@ class Complaint
 {
     private $conn;
     private string $table = 'lc_incidents';
+    private string $employeeTable = 'em_employees';
     public function __construct()
     {
         $database = new Database();
@@ -26,16 +27,27 @@ class Complaint
     public function getComplaint(int $reporterEmployeeId): array
     {
         $query = "
-        SELECT *
-        FROM {$this->table}
-        WHERE reporter_employee_id = :reporter_employee_id
-        ORDER BY created_at DESC
+        SELECT 
+            i.*,
+
+            CONCAT(
+                r.first_name, ' ', r.last_name
+            ) AS respondent_name
+
+        FROM {$this->table} i
+
+        LEFT JOIN {$this->employeeTable} r
+            ON r.employee_id = i.respondent_id
+
+        WHERE i.reporter_id = :reporter_id
+
+        ORDER BY i.created_at DESC
     ";
 
         $stmt = $this->conn->prepare($query);
 
         $stmt->execute([
-            ':reporter_employee_id' => $reporterEmployeeId
+            ':reporter_id' => $reporterEmployeeId
         ]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -53,20 +65,18 @@ class Complaint
             */
             $reporterSql = "
             SELECT
-                id,
+                employee_id,
                 first_name,
-                last_name,
-                department,
-                position_id
-            FROM em_employees
-            WHERE id = :employee_id
+                last_name
+            FROM {$this->employeeTable}
+            WHERE employee_id = :employee_id
             LIMIT 1
         ";
 
             $stmt = $this->conn->prepare($reporterSql);
 
             $stmt->execute([
-                ':employee_id' => $data['reporter_employee_id']
+                ':employee_id' => $data['reporter_id']
             ]);
 
             $reporter = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -83,13 +93,11 @@ class Complaint
             */
             $respondentSql = "
             SELECT
-                id,
+                employee_id,
                 first_name,
-                last_name,
-                department,
-                position_id
-            FROM em_employees
-            WHERE id = :employee_id
+                last_name
+            FROM {$this->employeeTable}
+            WHERE employee_id = :employee_id
             LIMIT 1
         ";
 
@@ -128,74 +136,71 @@ class Complaint
             $count = (int) $stmt->fetchColumn();
 
             $incidentId = 'INC-' . $year . '-' .
-                str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+                str_pad($count + 1, 3, '0', STR_PAD_LEFT);
 
 
             /*
             |--------------------------------------------------------------------------
             | Insert Complaint
             |--------------------------------------------------------------------------
+            |
+            | Columns here match the actual lc_incidents table.
+            |
             */
             $sql = "
             INSERT INTO {$this->table} (
 
                 incident_id,
-
-                reporter_employee_id,
-                reporter_name,
-                reporter_department,
-                reporter_position,
-                reporter_role,
-                reporter_type,
-
-                respondent_employee_id,
-                respondent_name,
-                respondent_department,
-                respondent_position,
-                respondent_relationship,
-
-                incident_type,
                 type,
+                incident_type,
                 severity,
-
-                incident_date,
-                incident_time,
-                location,
                 title,
                 description,
+                incident_date,
+                location,
+
+                respondent_id,
+                reporter_id,
+                reporter_name,
 
                 status,
+                current_workflow_step,
+                status_changed_at,
+
+                is_confidential,
+
+                nte_deadline,
+                explanation_deadline,
+
+                created_by,
                 created_at,
                 updated_at
 
             ) VALUES (
 
                 :incident_id,
-
-                :reporter_employee_id,
-                :reporter_name,
-                :reporter_department,
-                :reporter_position,
-                :reporter_role,
-                :reporter_type,
-
-                :respondent_employee_id,
-                :respondent_name,
-                :respondent_department,
-                :respondent_position,
-                :respondent_relationship,
-
-                :incident_type,
                 :type,
+                :incident_type,
                 :severity,
-
-                :incident_date,
-                :incident_time,
-                :location,
                 :title,
                 :description,
+                :incident_date,
+                :location,
+
+                :respondent_id,
+                :reporter_id,
+                :reporter_name,
 
                 :status,
+                :current_workflow_step,
+                NOW(),
+
+                :is_confidential,
+
+                NULL,
+                NULL,
+
+                :created_by,
                 NOW(),
                 NOW()
             )
@@ -205,30 +210,33 @@ class Complaint
 
             $success = $stmt->execute([
 
-                ':incident_id' => $incidentId,
-
                 /*
                 |--------------------------------------------------------------------------
-                | Reporter
+                | Incident
                 |--------------------------------------------------------------------------
                 */
-                ':reporter_employee_id' => $reporter['id'],
+                ':incident_id' => $incidentId,
 
-                ':reporter_name' =>
-                    trim(
-                        $reporter['first_name'] . ' ' .
-                        $reporter['last_name']
-                    ),
+                ':type' =>
+                    $data['type'] ?? null,
 
-                ':reporter_department' =>
-                    $reporter['department'],
+                ':incident_type' =>
+                    $data['incident_type'] ?? null,
 
-                ':reporter_position' =>
-                    $reporter['position_id'],
+                ':severity' =>
+                    $data['severity'] ?? 'medium',
 
-                ':reporter_role' => 'reporter',
+                ':title' =>
+                    $data['title'] ?? null,
 
-                ':reporter_type' => 'employee',
+                ':description' =>
+                    $data['description'] ?? null,
+
+                ':incident_date' =>
+                    $data['incident_date'] ?? null,
+
+                ':location' =>
+                    $data['location'] ?? null,
 
 
                 /*
@@ -236,56 +244,53 @@ class Complaint
                 | Respondent
                 |--------------------------------------------------------------------------
                 */
-                ':respondent_employee_id' =>
-                    $respondent['id'],
-
-                ':respondent_name' =>
-                    trim(
-                        $respondent['first_name'] . ' ' .
-                        $respondent['last_name']
-                    ),
-
-                ':respondent_department' =>
-                    $respondent['department'],
-
-                ':respondent_position' =>
-                    $respondent['position_id'],
-
-                ':respondent_relationship' =>
-                    $data['respondent_relationship'],
+                ':respondent_id' =>
+                    $respondent['employee_id'],
 
 
                 /*
                 |--------------------------------------------------------------------------
-                | Incident
+                | Reporter
                 |--------------------------------------------------------------------------
                 */
-                ':incident_type' =>
-                    $data['incident_type'],
+                ':reporter_id' =>
+                    $reporter['employee_id'],
 
-                ':type' =>
-                    $data['type'] ?? 'other',
+                ':reporter_name' =>
+                    trim(
+                        $reporter['first_name'] . ' ' .
+                        $reporter['last_name']
+                    ),
 
-                ':severity' =>
-                    $data['severity'] ?? 'medium',
 
-                ':incident_date' =>
-                    $data['incident_date'],
-
-                ':incident_time' =>
-                    $data['incident_time'],
-
-                ':location' =>
-                    $data['location'],
-
-                ':title' =>
-                    $data['title'],
-
-                ':description' =>
-                    $data['description'],
-
+                /*
+                |--------------------------------------------------------------------------
+                | Workflow
+                |--------------------------------------------------------------------------
+                */
                 ':status' =>
-                    'submitted'
+                    'submitted',
+
+                ':current_workflow_step' =>
+                    'Initial Review',
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Confidentiality
+                |--------------------------------------------------------------------------
+                */
+                ':is_confidential' =>
+                    !empty($data['is_confidential']) ? 1 : 0,
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Created By
+                |--------------------------------------------------------------------------
+                */
+                ':created_by' =>
+                    $data['created_by'] ?? $data['reporter_id']
             ]);
 
 

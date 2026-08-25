@@ -39,7 +39,7 @@ class Leave
         lt.requires_approval
     FROM {$this->table} lr
     INNER JOIN {$this->employeesTable} e
-        ON lr.employee_id = e.id
+        ON lr.employee_id = e.employee_id
     INNER JOIN {$this->leaveTypeTable} lt
         ON lr.leave_type_id = lt.leave_type_id
     ORDER BY lr.date_submitted DESC

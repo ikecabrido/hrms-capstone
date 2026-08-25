@@ -8,6 +8,7 @@ use App\Controllers\LeaveController;
 use App\Controllers\PortalController;
 use App\Controllers\PayrollController;
 use App\Controllers\ProfileController;
+use App\Controllers\TrainingController;
 use App\Controllers\ComplaintController;
 use App\Controllers\GrievanceController;
 use App\Controllers\AttendanceController;
@@ -16,10 +17,10 @@ use App\Controllers\PerformanceController;
 use App\Controllers\EmployeeUserController;
 use App\Controllers\AnnouncementController;
 use App\Controllers\NotificationController;
+use App\Controllers\SendEmployeesController;
 use App\Controllers\ResetPasswordController;
 use App\Controllers\OnlineMeetingController;
 use App\Controllers\BenefitsAndGovernmentContributionController;
-
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -101,6 +102,9 @@ $routes = [
     // Performance
     'performance' => [PerformanceController::class, 'index'],
 
+    // Training
+    'training' => [TrainingController::class, 'index'],
+
     // Complaint
     'complaint' => [ComplaintController::class, 'index'],
     'employee-complaints-store' => [ComplaintController::class, 'store'],
@@ -130,6 +134,9 @@ $routes = [
     'online-meeting-update-status' => [OnlineMeetingController::class, 'updateStatus'],
     'online-meeting-delete' => [OnlineMeetingController::class, 'delete'],
 
+    // API
+    'send-all-employees' => [SendEmployeesController::class, 'getAll'],
+    'employee-api-login' => [SendEmployeesController::class, 'login'],
 
 
 ];

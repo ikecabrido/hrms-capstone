@@ -112,9 +112,9 @@ class Profile
     }
     public function updateProfileImage(int $userId, string $profileImage): bool
     {
-        $sql = "UPDATE {$this->employeesTable}
+        $sql = "UPDATE {$this->table}
             SET profile_image = :profile_image
-            WHERE user_id = :user_id";
+            WHERE id = :user_id";
 
         $stmt = $this->conn->prepare($sql);
 

@@ -343,7 +343,7 @@
 
 
             <!-- Training -->
-            <a href="index.php?url=learning-and-development" class="dashboard-card">
+            <a href="index.php?url=training" class="dashboard-card">
 
                 <div class="dashboard-card-icon training">
                     <i class="fas fa-graduation-cap"></i>

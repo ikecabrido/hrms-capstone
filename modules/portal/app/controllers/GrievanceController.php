@@ -21,7 +21,7 @@ class GrievanceController
     {
         $userId = $_SESSION['user_id'];
         $employee = $this->employeeModel->getByUserId($userId);
-        $employeeGrievances = $this->grievanceModel->getGrievance($employee['id']);
+        $employeeGrievances = $this->grievanceModel->getGrievance($employee['employee_id']);
 
 
         $title = "Employee Grievance";
@@ -166,7 +166,7 @@ class GrievanceController
             */
 
             $data = [
-                'employee_id' => $employee['id'],
+                'employee_id' => $employee['employee_id'],
                 'subject' => $subject,
                 'description' => $description,
                 'status' => 'pending',

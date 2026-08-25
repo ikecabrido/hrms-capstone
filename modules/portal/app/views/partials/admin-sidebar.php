@@ -84,9 +84,15 @@
         <h3>Performance & Development</h3>
 
         <li>
-            <a href="?page=performance" class="menu-link">
+            <a href="" class="menu-link">
                 <i class="fa-solid fa-chart-line"></i>
                 Performance Evaluation
+            </a>
+        </li>
+        <li>
+            <a href="" class="menu-link">
+                <i class="fa-solid fa-graduation-cap"></i>
+                Training & Seminars
             </a>
         </li>
 
@@ -96,14 +102,14 @@
         <h3>Employee Relations</h3>
 
         <li>
-            <a href="?page=complaints" class="menu-link">
+            <a href="" class="menu-link">
                 <i class="fa-regular fa-message"></i>
                 Complaints
             </a>
         </li>
 
         <li>
-            <a href="?page=grievances" class="menu-link">
+            <a href="" class="menu-link">
                 <i class="fa-solid fa-scale-balanced"></i>
                 Grievances
             </a>
@@ -122,14 +128,14 @@
         </li>
 
         <li>
-            <a href="?page=notifications" class="menu-link">
+            <a href="" class="menu-link">
                 <i class="fa-regular fa-bell"></i>
                 Notifications
             </a>
         </li>
 
         <li>
-            <a href="?page=announcements" class="menu-link">
+            <a href="" class="menu-link">
                 <i class="fa-solid fa-bullhorn"></i>
                 Announcements
             </a>
@@ -141,7 +147,7 @@
         <h3>System</h3>
 
         <li>
-            <a href="?page=backup-restore" class="menu-link">
+            <a href="" class="menu-link">
                 <i class="fa-solid fa-database"></i>
                 Backup & Restore
             </a>

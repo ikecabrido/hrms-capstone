@@ -2,25 +2,7 @@
 
     <div class="profile-avatar">
 
-        <?php if (!empty($employeeProfileInfo['profile_image'])): ?>
-
-            <img src="/hrms-capstone/modules/portal/public/assets/uploads/profile/<?= htmlspecialchars(
-                $employeeProfileInfo['profile_image']
-            ); ?>" alt="Profile Photo">
-
-        <?php else: ?>
-
-            <?= strtoupper(
-                substr(
-                    $employeeProfileInfo['first_name']
-                    ?? $userInfos['username']
-                    ?? 'E',
-                    0,
-                    1
-                )
-            ); ?>
-
-        <?php endif; ?>
+    <?php require __DIR__ . '/employee-profile-image-logo.php'; ?>
 
     </div>
     <?php if (!empty($employeeName)): ?>

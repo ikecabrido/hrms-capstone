@@ -7,55 +7,11 @@ use PDOException;
 
 class Database
 {
-    private string $host;
+    private string $host = '127.0.0.1';
     private string $db_name = 'hrms-capstone';
     private string $username = 'root';
     private string $password = '';
     private ?PDO $conn = null;
-
-    public function __construct()
-    {
-        $this->host = $this->getServerHost();
-    }
-
-    private function getServerHost(): string
-    {
-        // If accessing via HTTP host, use that host/IP
-        if (!empty($_SERVER['HTTP_HOST'])) {
-            $host = explode(':', $_SERVER['HTTP_HOST'])[0];
-
-            // Already an IP address
-            if (filter_var($host, FILTER_VALIDATE_IP)) {
-                return $host;
-            }
-
-            // Try to resolve hostname to IP
-            $ip = gethostbyname($host);
-
-            if ($ip !== $host && filter_var($ip, FILTER_VALIDATE_IP)) {
-                return $ip;
-            }
-        }
-
-        // Try to get the server's IP address
-        if (!empty($_SERVER['SERVER_ADDR'])) {
-            return $_SERVER['SERVER_ADDR'];
-        }
-
-        // Try to resolve the server hostname
-        $hostname = gethostname();
-
-        if ($hostname) {
-            $ip = gethostbyname($hostname);
-
-            if ($ip !== $hostname && filter_var($ip, FILTER_VALIDATE_IP)) {
-                return $ip;
-            }
-        }
-
-        // Final fallback
-        return 'localhost';
-    }
 
     public function getConnection(): PDO
     {

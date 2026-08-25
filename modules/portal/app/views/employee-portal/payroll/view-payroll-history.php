@@ -141,7 +141,7 @@
                                     font-size:12px;
                                     font-weight:600;
                                 ">
-                                            #<?= htmlspecialchars($payroll['payroll_run_id'] ?? '-') ?>
+                                            #<?= htmlspecialchars($payroll['run_id'] ?? '-') ?>
                                         </div>
 
                                     </div>

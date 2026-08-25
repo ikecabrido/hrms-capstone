@@ -32,7 +32,9 @@
         </div>
 
     </section>
+    
     <?php require __DIR__ . '/../../partials/notification.php'; ?>
+
     <section class="dashboard-section">
 
         <div class="dashboard-section-header">
@@ -54,25 +56,7 @@
 
                     <div class="profile-avatar">
 
-                        <?php if (!empty($employeeProfileInfo['profile_image'])): ?>
-
-                            <img src="/hrms-capstone/modules/portal/public/assets/uploads/profile/<?= htmlspecialchars(
-                                $employeeProfileInfo['profile_image']
-                            ); ?>" alt="Profile Photo">
-
-                        <?php else: ?>
-
-                            <?= strtoupper(
-                                substr(
-                                    $employeeProfileInfo['first_name']
-                                    ?? $userInfos['username']
-                                    ?? 'E',
-                                    0,
-                                    1
-                                )
-                            ); ?>
-
-                        <?php endif; ?>
+                        <?php require __DIR__ . '/../../partials/employee-profile-image-logo.php'; ?>
 
                     </div>
 
@@ -251,7 +235,7 @@
 
                         <strong>
                             <?= htmlspecialchars(
-                                $employeeProfileInfo['employee_num']
+                                $employeeProfileInfo['employee_code']
                                 ?? 'N/A'
                             ); ?>
                         </strong>
@@ -265,7 +249,7 @@
 
                         <strong>
                             <?= htmlspecialchars(
-                                $employeeProfileInfo['department']
+                                $employeeProfileInfo['department_name']
                                 ?? 'N/A'
                             ); ?>
                         </strong>
@@ -279,7 +263,7 @@
 
                         <strong>
                             <?= htmlspecialchars(
-                                $employeeProfileInfo['position']
+                                $employeeProfileInfo['position_name']
                                 ?? 'N/A'
                             ); ?>
                         </strong>
@@ -479,17 +463,17 @@
 
 <?php if (($_GET['modal'] ?? '') === 'change-password'): ?>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
 
-    const modalElement = document.getElementById('changePasswordModal');
+            const modalElement = document.getElementById('changePasswordModal');
 
-    if (modalElement) {
-        const changePasswordModal = new bootstrap.Modal(modalElement);
-        changePasswordModal.show();
-    }
+            if (modalElement) {
+                const changePasswordModal = new bootstrap.Modal(modalElement);
+                changePasswordModal.show();
+            }
 
-});
-</script>
+        });
+    </script>
 
 <?php endif; ?>

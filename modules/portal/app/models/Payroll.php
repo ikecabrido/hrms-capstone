@@ -25,7 +25,7 @@ class Payroll
             CONCAT(e.first_name, ' ', e.last_name) AS employee_name
         FROM {$this->tableRequest} pr
         INNER JOIN {$this->employeeTable} e
-            ON pr.employee_id = e.id
+            ON pr.employee_id = e.employee_id
         ORDER BY pr.created_at DESC
     ";
 

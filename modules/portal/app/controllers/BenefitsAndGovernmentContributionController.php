@@ -20,7 +20,7 @@ class BenefitsAndGovernmentContributionController
     {
         $userId = $_SESSION['user_id'];
         $employeeBenefits = $this->employeeModel->getByUserId($userId);
-        $benefits = $this->benefitsModel->getBenefits($employeeBenefits['id']);
+        $benefits = $this->benefitsModel->getBenefits($employeeBenefits['employee_id']);
 
         $title = "Employee Benefits and Government Contribution";
         $content = __DIR__ . '/../views/employee-portal/benefits-and-government-contribution/content.php';
@@ -28,11 +28,24 @@ class BenefitsAndGovernmentContributionController
     }
     public function adminIndex()
     {
-        $userId = $_SESSION['user_id'];
-        $employee = $this->employeeModel->getByUserId($userId);
-        $employeesList = $this->employeeModel->getAllExcept($employee['id']);
-        $benefitList = $this->benefitsModel->all();
+        $userId = $_SESSION['user_id'] ?? null;
 
+        if (!$userId) {
+            throw new Exception('User session not found.');
+        }
+
+        $employee = $this->employeeModel->getByUserId($userId);
+
+        $employeesList = [];
+
+        if ($employee && !empty($employee['employee_id'])) {
+
+            $employeeId = (int) $employee['employee_id'];
+
+            $employeesList = $this->employeeModel->getAllExcept($employeeId);
+        }
+
+        $benefitList = $this->benefitsModel->all();
 
         $title = "Benefits and Government Contribution";
         $content = __DIR__ . '/../views/admin-portal/benefit/content.php';
@@ -43,7 +56,7 @@ class BenefitsAndGovernmentContributionController
     {
         $userId = $_SESSION['user_id'] ?? null;
         $employeeInfo = $this->employeeModel->getByUserId($userId);
-        $employeeId = $employeeInfo['id'];
+        $employeeId = $employeeInfo['employee_id'];
 
         try {
             $recordType = trim($_POST['record_type'] ?? '');
@@ -183,7 +196,7 @@ class BenefitsAndGovernmentContributionController
                 'description' => $description ?: null,
                 'file_name' => $file['name'],
                 'file_path' => 'assets/uploads/benefits/' . $fileName,
-                'uploaded_by' => $_SESSION['user_id'] ?? $employeeId
+                'uploaded_by' => $employeeId
             ]);
 
             $_SESSION['success'] = 'Document submitted successfully.';

@@ -31,98 +31,227 @@
 
     <?php require __DIR__ . '/../../partials/notification.php'; ?>
 
-    <section class="dashboard-section" style="
-    width:100%;
-    box-sizing:border-box;
-">
+    <section class="dashboard-section" style="width:100%;box-sizing:border-box;">
 
         <?php
         $feedbackRecords = $employeePerformanceFeedback ?? [];
 
+        /*
+        |--------------------------------------------------------------------------
+        | SUMMARY
+        |--------------------------------------------------------------------------
+        */
+
         $totalFeedback = count($feedbackRecords);
 
         $totalRating = 0;
+        $ratedCount = 0;
 
         foreach ($feedbackRecords as $feedback) {
-            $totalRating += (int) ($feedback['rating'] ?? 0);
+            $rating = isset($feedback['overall_rating'])
+                ? (float) $feedback['overall_rating']
+                : (float) ($feedback['rating'] ?? 0);
+
+            if ($rating > 0) {
+                $totalRating += $rating;
+                $ratedCount++;
+            }
         }
 
-        $averageRating = $totalFeedback > 0
-            ? round($totalRating / $totalFeedback, 1)
+        $averageRating = $ratedCount > 0
+            ? round($totalRating / $ratedCount, 2)
             : 0;
 
         $ratingPercentage = $averageRating > 0
             ? min(100, ($averageRating / 5) * 100)
             : 0;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | PERFORMANCE STATUS
+        |--------------------------------------------------------------------------
+        */
+
+        if ($averageRating >= 4.5) {
+
+            $performanceLabel = 'Excellent';
+            $performanceColor = '#166534';
+            $performanceBg = '#dcfce7';
+
+        } elseif ($averageRating >= 3.5) {
+
+            $performanceLabel = 'Very Good';
+            $performanceColor = '#2563eb';
+            $performanceBg = '#eff6ff';
+
+        } elseif ($averageRating >= 2.5) {
+
+            $performanceLabel = 'Satisfactory';
+            $performanceColor = '#b45309';
+            $performanceBg = '#fef3c7';
+
+        } elseif ($averageRating > 0) {
+
+            $performanceLabel = 'Needs Improvement';
+            $performanceColor = '#dc2626';
+            $performanceBg = '#fef2f2';
+
+        } else {
+
+            $performanceLabel = 'No Rating';
+            $performanceColor = '#64748b';
+            $performanceBg = '#f1f5f9';
+        }
         ?>
 
 
-        <!-- SUMMARY CARDS -->
+        <!-- =========================================================
+         HEADER
+    ========================================================== -->
+
         <div style="
+        display:flex;
+        align-items:flex-end;
+        justify-content:space-between;
+        gap:20px;
+        margin-bottom:20px;
+        flex-wrap:wrap;
+    ">
+
+            <div>
+
+                <div style="
+                display:flex;
+                align-items:center;
+                gap:7px;
+                margin-bottom:6px;
+                color:#2563eb;
+                font-size:9px;
+                font-weight:800;
+                text-transform:uppercase;
+                letter-spacing:.08em;
+            ">
+
+                    <i class="fas fa-chart-line"></i>
+
+                    Performance Management
+
+                </div>
+
+                <h2 style="
+                margin:0;
+                color:#111827;
+                font-size:20px;
+                font-weight:750;
+                letter-spacing:-.02em;
+            ">
+                    360° Performance Feedback
+                </h2>
+
+                <p style="
+                margin:5px 0 0;
+                color:#64748b;
+                font-size:11px;
+            ">
+                    Review your performance evaluations, ratings, and development feedback.
+                </p>
+
+            </div>
+
+            <div style="
+            display:inline-flex;
+            align-items:center;
+            gap:7px;
+            padding:7px 11px;
+            border:1px solid #e5e7eb;
+            border-radius:9px;
+            background:#fff;
+            color:#64748b;
+            font-size:10px;
+            font-weight:600;
+        ">
+
+                <i class="fas fa-clock" style="color:#94a3b8;"></i>
+
+                <?= $totalFeedback ?>
+
+                <?= $totalFeedback === 1 ? 'Evaluation' : 'Evaluations' ?>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================================================
+         SUMMARY CARDS
+    ========================================================== -->
+
+        <div class="performance-summary-grid" style="
         display:grid;
         grid-template-columns:repeat(3,minmax(0,1fr));
         gap:14px;
-        margin-bottom:22px;
+        margin-bottom:24px;
     ">
 
-            <!-- TOTAL EVALUATIONS -->
+
+            <!-- TOTAL -->
+
             <div style="
             padding:18px;
             border:1px solid #e5e7eb;
             border-radius:14px;
             background:#fff;
-            box-sizing:border-box;
+            box-shadow:0 2px 8px rgba(15,23,42,.03);
         ">
 
                 <div style="
                 display:flex;
                 align-items:center;
                 justify-content:space-between;
-                gap:10px;
+                gap:15px;
             ">
 
                     <div>
 
-                        <span style="
-                        display:block;
-                        margin-bottom:5px;
-                        color:#9ca3af;
+                        <div style="
+                        margin-bottom:6px;
+                        color:#94a3b8;
                         font-size:9px;
-                        font-weight:700;
+                        font-weight:800;
                         text-transform:uppercase;
                         letter-spacing:.06em;
                     ">
                             Evaluation Records
-                        </span>
+                        </div>
 
-                        <strong style="
-                        display:block;
+                        <div style="
                         color:#111827;
-                        font-size:24px;
+                        font-size:25px;
                         line-height:1;
+                        font-weight:750;
                     ">
                             <?= $totalFeedback ?>
-                        </strong>
+                        </div>
 
-                        <span style="
-                        display:block;
-                        margin-top:6px;
-                        color:#6b7280;
+                        <div style="
+                        margin-top:7px;
+                        color:#64748b;
                         font-size:9px;
                     ">
                             Total feedback received
-                        </span>
+                        </div>
 
                     </div>
 
-
                     <div style="
-                    width:42px;
-                    height:42px;
+                    width:44px;
+                    height:44px;
+                    min-width:44px;
                     display:flex;
                     align-items:center;
                     justify-content:center;
-                    border-radius:11px;
+                    border-radius:12px;
                     background:#eff6ff;
                     color:#2563eb;
                     font-size:16px;
@@ -135,67 +264,71 @@
             </div>
 
 
-            <!-- AVERAGE RATING -->
+            <!-- AVERAGE -->
+
             <div style="
             padding:18px;
             border:1px solid #e5e7eb;
             border-radius:14px;
             background:#fff;
-            box-sizing:border-box;
+            box-shadow:0 2px 8px rgba(15,23,42,.03);
         ">
 
                 <div style="
                 display:flex;
                 align-items:center;
                 justify-content:space-between;
-                gap:10px;
+                gap:15px;
             ">
 
                     <div>
 
-                        <span style="
-                        display:block;
-                        margin-bottom:5px;
-                        color:#9ca3af;
+                        <div style="
+                        margin-bottom:6px;
+                        color:#94a3b8;
                         font-size:9px;
-                        font-weight:700;
+                        font-weight:800;
                         text-transform:uppercase;
                         letter-spacing:.06em;
                     ">
                             Average Rating
-                        </span>
+                        </div>
 
-                        <strong style="
-                        display:block;
+                        <div style="
                         color:#111827;
-                        font-size:24px;
+                        font-size:25px;
                         line-height:1;
+                        font-weight:750;
                     ">
-                            <?= number_format($averageRating, 1) ?>
+
+                            <?= number_format($averageRating, 2) ?>
+
                             <span style="
-                            color:#9ca3af;
-                            font-size:12px;
+                            color:#94a3b8;
+                            font-size:11px;
                             font-weight:500;
                         ">
                                 / 5
                             </span>
-                        </strong>
+
+                        </div>
+
 
                         <div style="
                         display:flex;
                         align-items:center;
                         gap:3px;
-                        margin-top:7px;
+                        margin-top:8px;
                     ">
 
                             <?php for ($i = 1; $i <= 5; $i++): ?>
 
                                 <i class="fas fa-star" style="
-                                color:<?= $i <= round($averageRating)
-                                    ? '#f59e0b'
-                                    : '#e5e7eb' ?>;
-                                font-size:9px;
-                            "></i>
+                                    color:<?= $i <= round($averageRating)
+                                        ? '#f59e0b'
+                                        : '#e5e7eb' ?>;
+                                    font-size:10px;
+                                "></i>
 
                             <?php endfor; ?>
 
@@ -205,12 +338,13 @@
 
 
                     <div style="
-                    width:42px;
-                    height:42px;
+                    width:44px;
+                    height:44px;
+                    min-width:44px;
                     display:flex;
                     align-items:center;
                     justify-content:center;
-                    border-radius:11px;
+                    border-radius:12px;
                     background:#fffbeb;
                     color:#d97706;
                     font-size:16px;
@@ -223,94 +357,73 @@
             </div>
 
 
-            <!-- PERFORMANCE STATUS -->
+            <!-- PERFORMANCE -->
+
             <div style="
             padding:18px;
             border:1px solid #e5e7eb;
             border-radius:14px;
             background:#fff;
-            box-sizing:border-box;
+            box-shadow:0 2px 8px rgba(15,23,42,.03);
         ">
 
                 <div style="
                 display:flex;
                 align-items:center;
                 justify-content:space-between;
-                gap:10px;
+                gap:15px;
             ">
 
                     <div>
 
-                        <span style="
-                        display:block;
-                        margin-bottom:5px;
-                        color:#9ca3af;
+                        <div style="
+                        margin-bottom:7px;
+                        color:#94a3b8;
                         font-size:9px;
-                        font-weight:700;
+                        font-weight:800;
                         text-transform:uppercase;
                         letter-spacing:.06em;
                     ">
                             Performance Status
-                        </span>
-
-                        <?php
-                        if ($averageRating >= 4.5) {
-                            $performanceLabel = 'Excellent';
-                            $performanceColor = '#166534';
-                            $performanceBg = '#dcfce7';
-                        } elseif ($averageRating >= 3.5) {
-                            $performanceLabel = 'Very Good';
-                            $performanceColor = '#2563eb';
-                            $performanceBg = '#eff6ff';
-                        } elseif ($averageRating >= 2.5) {
-                            $performanceLabel = 'Satisfactory';
-                            $performanceColor = '#b45309';
-                            $performanceBg = '#fef3c7';
-                        } elseif ($averageRating > 0) {
-                            $performanceLabel = 'Needs Improvement';
-                            $performanceColor = '#dc2626';
-                            $performanceBg = '#fef2f2';
-                        } else {
-                            $performanceLabel = 'No Rating';
-                            $performanceColor = '#6b7280';
-                            $performanceBg = '#f3f4f6';
-                        }
-                        ?>
+                        </div>
 
                         <span style="
                         display:inline-flex;
                         align-items:center;
                         gap:6px;
-                        padding:6px 9px;
+                        padding:6px 10px;
                         border-radius:20px;
                         background:<?= $performanceBg ?>;
                         color:<?= $performanceColor ?>;
                         font-size:10px;
-                        font-weight:700;
+                        font-weight:750;
                     ">
+
                             <i class="fas fa-circle" style="font-size:5px;"></i>
-                            <?= $performanceLabel ?>
+
+                            <?= htmlspecialchars($performanceLabel) ?>
+
                         </span>
 
-                        <span style="
-                        display:block;
+                        <div style="
                         margin-top:7px;
-                        color:#6b7280;
+                        color:#64748b;
                         font-size:9px;
                     ">
-                            Based on available feedback
-                        </span>
+                            Based on <?= $ratedCount ?> rated evaluation<?= $ratedCount === 1 ? '' : 's' ?>
+                        </div>
 
                     </div>
 
 
                     <div style="
-                    width:42px;
-                    height:42px;
+                    width:44px;
+                    height:44px;
+                    min-width:44px;
                     display:flex;
                     align-items:center;
                     justify-content:center;
-                    border-radius:11px;
+                    border-radius:12px;
                     background:#f0fdf4;
                     color:#16a34a;
                     font-size:16px;
@@ -325,457 +438,754 @@
         </div>
 
 
-        <!-- FEEDBACK SECTION -->
+
+        <!-- =========================================================
+         TABLE HEADER
+    ========================================================== -->
+
         <div style="
-        margin-bottom:12px;
         display:flex;
         align-items:flex-end;
         justify-content:space-between;
         gap:15px;
+        margin-bottom:12px;
         flex-wrap:wrap;
     ">
 
             <div>
 
-                <span style="
-                display:block;
+                <div style="
                 margin-bottom:4px;
                 color:#2563eb;
                 font-size:9px;
-                font-weight:700;
+                font-weight:800;
                 letter-spacing:.07em;
+                text-transform:uppercase;
             ">
-                    EVALUATION HISTORY
-                </span>
+                    Evaluation History
+                </div>
 
-                <h2 style="
+                <h3 style="
                 margin:0;
                 color:#111827;
-                font-size:17px;
-                font-weight:700;
+                font-size:16px;
+                font-weight:750;
             ">
-                    360° Feedback Records
-                </h2>
-
-                <p style="
-                margin:4px 0 0;
-                color:#9ca3af;
-                font-size:10px;
-            ">
-                    Detailed feedback submitted as part of your performance evaluation.
-                </p>
+                    Feedback Records
+                </h3>
 
             </div>
 
         </div>
 
 
+
         <?php if (!empty($feedbackRecords)): ?>
 
-            <!-- TABLE -->
+
+            <!-- =====================================================
+             TABLE CONTAINER
+        ====================================================== -->
+
             <div style="
     width:100%;
     max-width:100%;
-    box-sizing:border-box;
     overflow-x:auto;
     overflow-y:hidden;
     -webkit-overflow-scrolling:touch;
-    scrollbar-width:thin;
-    scrollbar-color:#cbd5e1 #f8fafc;
 
     border:1px solid #e5e7eb;
     border-radius:14px;
     background:#fff;
 
-    box-shadow:0 4px 16px rgba(15,23,42,.04);
+    scrollbar-width:thin;
+    scrollbar-color:#cbd5e1 #f8fafc;
 ">
 
                 <table style="
         width:100%;
-        min-width:850px;
-        max-width:none;
-
+        min-width:1050px;
         border-collapse:separate;
         border-spacing:0;
-
         table-layout:auto;
-
-        font-size:11px;
         color:#374151;
-
+        font-size:11px;
         white-space:nowrap;
-    
+    ">
+
+                    <!-- =================================================
+                     STICKY HEADER
+                ================================================== -->
 
                     <thead>
 
-                        <tr style=" background:#f8fafc; border-bottom:1px solid #e5e7eb; ">
+                        <tr style="
+                        background:#f8fafc;
+                    ">
 
-                                <th style=" padding:14px 16px; text-align:left; color:#64748b; font-size:9px;
-                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
-                                    Evaluator
-                                </th>
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:13px 16px;
+                            text-align:left;
+                            border-bottom:1px solid #e5e7eb;
+                            color:#64748b;
+                            font-size:9px;
+                            font-weight:800;
+                            text-transform:uppercase;
+                            letter-spacing:.05em;
+                            background:#f8fafc;
+                        ">
+                                Evaluator
+                            </th>
 
-                                <th style=" padding:14px 16px; text-align:left; color:#64748b; font-size:9px;
-                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
-                                    Competency
-                                </th>
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:13px 16px;
+                            text-align:left;
+                            border-bottom:1px solid #e5e7eb;
+                            color:#64748b;
+                            font-size:9px;
+                            font-weight:800;
+                            text-transform:uppercase;
+                            letter-spacing:.05em;
+                            background:#f8fafc;
+                        ">
+                                Category
+                            </th>
 
-                                <th style=" padding:14px 16px; text-align:center; color:#64748b; font-size:9px;
-                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
-                                    Rating
-                                </th>
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:13px 16px;
+                            text-align:center;
+                            border-bottom:1px solid #e5e7eb;
+                            color:#64748b;
+                            font-size:9px;
+                            font-weight:800;
+                            text-transform:uppercase;
+                            letter-spacing:.05em;
+                            background:#f8fafc;
+                        ">
+                                Rating
+                            </th>
 
-                                <th style=" padding:14px 16px; text-align:left; color:#64748b; font-size:9px;
-                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
-                                    Feedback
-                                </th>
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:13px 16px;
+                            text-align:left;
+                            border-bottom:1px solid #e5e7eb;
+                            color:#64748b;
+                            font-size:9px;
+                            font-weight:800;
+                            text-transform:uppercase;
+                            letter-spacing:.05em;
+                            background:#f8fafc;
+                        ">
+                                Feedback
+                            </th>
 
-                                <th style=" padding:14px 16px; text-align:center; color:#64748b; font-size:9px;
-                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
-                                    Privacy
-                                </th>
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:13px 16px;
+                            text-align:center;
+                            border-bottom:1px solid #e5e7eb;
+                            color:#64748b;
+                            font-size:9px;
+                            font-weight:800;
+                            text-transform:uppercase;
+                            letter-spacing:.05em;
+                            background:#f8fafc;
+                        ">
+                                Status
+                            </th>
 
-                                <th style=" padding:14px 16px; text-align:left; color:#64748b; font-size:9px;
-                font-weight:700; text-transform:uppercase; letter-spacing:.05em; ">
-                                    Evaluation Date
-                                </th>
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:13px 16px;
+                            text-align:left;
+                            border-bottom:1px solid #e5e7eb;
+                            color:#64748b;
+                            font-size:9px;
+                            font-weight:800;
+                            text-transform:uppercase;
+                            letter-spacing:.05em;
+                            background:#f8fafc;
+                        ">
+                                Period
+                            </th>
 
-                            </tr>
+                            <th style="
+                            position:sticky;
+                            top:0;
+                            z-index:5;
+                            padding:13px 16px;
+                            text-align:center;
+                            border-bottom:1px solid #e5e7eb;
+                            color:#64748b;
+                            font-size:9px;
+                            font-weight:800;
+                            text-transform:uppercase;
+                            letter-spacing:.05em;
+                            background:#f8fafc;
+                        ">
+                                Action
+                            </th>
 
-                        </thead>
+                        </tr>
+
+                    </thead>
 
 
-                        <tbody>
+                    <tbody>
 
-                            <?php foreach ($feedbackRecords as $row): ?>
+                        <?php foreach ($feedbackRecords as $row): ?>
 
-                                    <?php
-                                    $rating = (int) ($row['rating'] ?? 0);
+                            <?php
 
-                                    $anonymous =
-                                        (int) ($row['is_anonymous'] ?? 0) === 1;
+                            $feedbackId = (int) ($row['feedback_id'] ?? 0);
 
-                                    $ratingColor = '#6b7280';
-                                    $ratingBg = '#f3f4f6';
-                                    $ratingLabel = 'Not Rated';
+                            $rating = isset($row['overall_rating'])
+                                ? (float) $row['overall_rating']
+                                : (float) ($row['rating'] ?? 0);
 
-                                    if ($rating >= 5) {
-                                        $ratingColor = '#166534';
-                                        $ratingBg = '#dcfce7';
-                                        $ratingLabel = 'Excellent';
-                                    } elseif ($rating >= 4) {
-                                        $ratingColor = '#2563eb';
-                                        $ratingBg = '#eff6ff';
-                                        $ratingLabel = 'Very Good';
-                                    } elseif ($rating >= 3) {
-                                        $ratingColor = '#b45309';
-                                        $ratingBg = '#fef3c7';
-                                        $ratingLabel = 'Satisfactory';
-                                    } elseif ($rating > 0) {
-                                        $ratingColor = '#dc2626';
-                                        $ratingBg = '#fef2f2';
-                                        $ratingLabel = 'Needs Improvement';
-                                    }
-                                    ?>
+                            $anonymous =
+                                (int) ($row['is_anonymous'] ?? 0) === 1;
 
-                                    <tr style=" border-bottom:1px solid #f1f5f9; transition:.18s ease; " onmouseover="
-                this.style.background='#f8fafc' ; " onmouseout=" this.style.background='#fff' ; ">
+                            $evaluator = $anonymous
+                                ? 'Anonymous Evaluator'
+                                : ($row['reviewer_name']
+                                    ?? $row['reviewer_type']
+                                    ?? 'Evaluator');
 
-                                        <!-- EVALUATOR -->
-                                        <td style=" padding:16px; vertical-align:middle; ">
+                            $category =
+                                $row['feedback_category']
+                                ?? $row['category']
+                                ?? '-';
 
-                                            <div style=" display:flex; align-items:center; gap:10px; ">
+                            $comments =
+                                $row['comments']
+                                ?? 'No comments provided.';
 
-                                                <div style=" width:38px; height:38px; min-width:38px; display:flex;
-                align-items:center; justify-content:center; border-radius:10px; background:#eff6ff; color:#2563eb;
-                font-size:13px; ">
-                                                    <i class=" fas fa-user"></i>
-                </div>
+                            $status =
+                                $row['feedback_status']
+                                ?? 'Submitted';
 
-                <div>
+                            $period =
+                                $row['review_period']
+                                ?? '-';
 
-                    <div style="
+
+                            /*
+                            | Rating styling
+                            */
+
+                            if ($rating >= 4.5) {
+
+                                $ratingColor = '#166534';
+                                $ratingBg = '#dcfce7';
+                                $ratingLabel = 'Excellent';
+
+                            } elseif ($rating >= 3.5) {
+
+                                $ratingColor = '#2563eb';
+                                $ratingBg = '#eff6ff';
+                                $ratingLabel = 'Very Good';
+
+                            } elseif ($rating >= 2.5) {
+
+                                $ratingColor = '#b45309';
+                                $ratingBg = '#fef3c7';
+                                $ratingLabel = 'Satisfactory';
+
+                            } elseif ($rating > 0) {
+
+                                $ratingColor = '#dc2626';
+                                $ratingBg = '#fef2f2';
+                                $ratingLabel = 'Needs Improvement';
+
+                            } else {
+
+                                $ratingColor = '#64748b';
+                                $ratingBg = '#f1f5f9';
+                                $ratingLabel = 'Not Rated';
+                            }
+
+
+                            /*
+                            | Status styling
+                            */
+
+                            $statusLower = strtolower(trim($status));
+
+                            if ($statusLower === 'approved' || $statusLower === 'completed') {
+
+                                $statusColor = '#166534';
+                                $statusBg = '#dcfce7';
+
+                            } elseif ($statusLower === 'submitted') {
+
+                                $statusColor = '#2563eb';
+                                $statusBg = '#eff6ff';
+
+                            } elseif ($statusLower === 'draft') {
+
+                                $statusColor = '#64748b';
+                                $statusBg = '#f1f5f9';
+
+                            } elseif ($statusLower === 'rejected') {
+
+                                $statusColor = '#dc2626';
+                                $statusBg = '#fef2f2';
+
+                            } else {
+
+                                $statusColor = '#b45309';
+                                $statusBg = '#fef3c7';
+                            }
+
+                            ?>
+
+                            <!-- =================================================
+                             ROW
+                        ================================================== -->
+
+                            <tr style="
+                                transition:background .15s ease;
+                            " onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+
+
+                                <!-- EVALUATOR -->
+
+                                <td style="
+                                padding:15px 16px;
+                                border-bottom:1px solid #f1f5f9;
+                                vertical-align:middle;
+                            ">
+
+                                    <div style="
+                                    display:flex;
+                                    align-items:center;
+                                    gap:10px;
+                                ">
+
+                                        <div style="
+                                        width:36px;
+                                        height:36px;
+                                        min-width:36px;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        border-radius:10px;
+                                        background:<?= $anonymous ? '#f1f5f9' : '#eff6ff' ?>;
+                                        color:<?= $anonymous ? '#64748b' : '#2563eb' ?>;
+                                    ">
+
+                                            <i class="fas <?= $anonymous ? 'fa-user-secret' : 'fa-user-check' ?>"></i>
+
+                                        </div>
+
+                                        <div>
+
+                                            <div style="
                                             color:#111827;
                                             font-size:11px;
                                             font-weight:700;
                                         ">
-                        <?= $anonymous
-                            ? 'Anonymous Evaluator'
-                            : htmlspecialchars(
-                                $row['evaluator_type']
-                                ?? 'Evaluator'
-                            ) ?>
-                    </div>
+                                                <?= htmlspecialchars($evaluator) ?>
+                                            </div>
 
-                    <div style="
+                                            <div style="
                                             margin-top:3px;
                                             color:#94a3b8;
                                             font-size:8px;
                                         ">
-                        Performance Feedback
-                    </div>
+                                                <?= htmlspecialchars($row['department'] ?? 'Performance Evaluation') ?>
+                                            </div>
 
-                </div>
+                                        </div>
 
-        </div>
+                                    </div>
 
-        </td>
+                                </td>
 
 
-        <!-- CATEGORY -->
-        <td style="
-                                padding:16px;
+                                <!-- CATEGORY -->
+
+                                <td style="
+                                padding:15px 16px;
+                                border-bottom:1px solid #f1f5f9;
                                 vertical-align:middle;
                             ">
 
-            <span style="
+                                    <span style="
                                     display:inline-flex;
                                     align-items:center;
                                     gap:6px;
                                     padding:6px 9px;
+                                    border:1px solid #e5e7eb;
                                     border-radius:8px;
                                     background:#f8fafc;
-                                    border:1px solid #e5e7eb;
-                                    color:#374151;
-                                    font-size:10px;
-                                    font-weight:600;
+                                    color:#475569;
+                                    font-size:9px;
+                                    font-weight:650;
                                 ">
-                <i class="fas fa-layer-group" style="color:#64748b;font-size:9px;">
-                </i>
 
-                <?= htmlspecialchars(
-                    $row['category'] ?? '-'
-                ) ?>
-            </span>
+                                        <i class="fas fa-layer-group" style="
+                                            color:#94a3b8;
+                                            font-size:8px;
+                                        "></i>
 
-        </td>
+                                        <?= htmlspecialchars($category) ?>
+
+                                    </span>
+
+                                </td>
 
 
-        <!-- RATING -->
-        <td style="
-                                padding:16px;
+                                <!-- RATING -->
+
+                                <td style="
+                                padding:15px 16px;
+                                border-bottom:1px solid #f1f5f9;
                                 text-align:center;
                                 vertical-align:middle;
                             ">
 
-            <div style="
+                                    <div style="
                                     display:flex;
                                     flex-direction:column;
                                     align-items:center;
                                     gap:4px;
                                 ">
 
-                <span style="
+                                        <span style="
                                         display:inline-flex;
                                         align-items:center;
                                         gap:5px;
-                                        min-width:48px;
-                                        justify-content:center;
                                         padding:6px 9px;
                                         border-radius:8px;
                                         background:<?= $ratingBg ?>;
                                         color:<?= $ratingColor ?>;
-                                        font-size:11px;
-                                        font-weight:700;
+                                        font-size:10px;
+                                        font-weight:750;
                                     ">
-                    <i class="fas fa-star" style="font-size:8px;">
-                    </i>
 
-                    <?= $rating ?>/5
-                </span>
+                                            <i class="fas fa-star" style="font-size:8px;"></i>
 
-                <span style="
+                                            <?= number_format($rating, 1) ?>/5
+
+                                        </span>
+
+                                        <span style="
                                         color:#94a3b8;
                                         font-size:8px;
                                     ">
-                    <?= $ratingLabel ?>
-                </span>
+                                            <?= $ratingLabel ?>
+                                        </span>
 
-            </div>
+                                    </div>
 
-        </td>
+                                </td>
 
 
-        <!-- FEEDBACK -->
-        <td style="
-                                padding:16px;
-                                max-width:350px;
+                                <!-- FEEDBACK -->
+
+                                <td style="
+                                width:320px;
+                                max-width:320px;
+                                padding:15px 16px;
+                                border-bottom:1px solid #f1f5f9;
                                 vertical-align:middle;
                             ">
 
-            <div style="
+                                    <div style="
+                                    max-width:300px;
+                                    overflow:hidden;
+                                    text-overflow:ellipsis;
+                                    white-space:nowrap;
                                     color:#475569;
                                     font-size:10px;
-                                    line-height:1.55;
-                                    max-width:330px;
                                 ">
-                <?= htmlspecialchars(
-                    $row['comments'] ?? 'No comments provided.'
-                ) ?>
-            </div>
+                                        <?= htmlspecialchars($comments) ?>
+                                    </div>
 
-        </td>
+                                </td>
 
 
-        <!-- PRIVACY -->
-        <td style="
-                                padding:16px;
+                                <!-- STATUS -->
+
+                                <td style="
+                                padding:15px 16px;
+                                border-bottom:1px solid #f1f5f9;
                                 text-align:center;
                                 vertical-align:middle;
                             ">
 
-            <?php if ($anonymous): ?>
+                                    <span style="
+                                    display:inline-flex;
+                                    align-items:center;
+                                    gap:5px;
+                                    padding:6px 9px;
+                                    border-radius:20px;
+                                    background:<?= $statusBg ?>;
+                                    color:<?= $statusColor ?>;
+                                    font-size:9px;
+                                    font-weight:700;
+                                ">
 
-                <span style="
-                                        display:inline-flex;
-                                        align-items:center;
-                                        gap:5px;
-                                        padding:6px 9px;
-                                        border-radius:20px;
-                                        background:#f1f5f9;
-                                        color:#64748b;
-                                        font-size:9px;
-                                        font-weight:600;
-                                    ">
-                    <i class="fas fa-user-secret"></i>
-                    Anonymous
-                </span>
+                                        <i class="fas fa-circle" style="font-size:5px;"></i>
 
-            <?php else: ?>
+                                        <?= htmlspecialchars(ucwords(str_replace('_', ' ', $status))) ?>
 
-                <span style="
-                                        display:inline-flex;
-                                        align-items:center;
-                                        gap:5px;
-                                        padding:6px 9px;
-                                        border-radius:20px;
-                                        background:#eff6ff;
-                                        color:#2563eb;
-                                        font-size:9px;
-                                        font-weight:600;
-                                    ">
-                    <i class="fas fa-user"></i>
-                    Identified
-                </span>
+                                    </span>
 
-            <?php endif; ?>
-
-        </td>
+                                </td>
 
 
-        <!-- DATE -->
-        <td style="
-                                padding:16px;
+                                <!-- PERIOD -->
+
+                                <td style="
+                                padding:15px 16px;
+                                border-bottom:1px solid #f1f5f9;
                                 vertical-align:middle;
                             ">
 
-            <div style="
+                                    <div style="
                                     display:flex;
                                     align-items:center;
-                                    gap:7px;
+                                    gap:6px;
                                     color:#475569;
                                     font-size:10px;
                                     font-weight:600;
                                 ">
 
-                <i class="far fa-calendar-alt" style="color:#94a3b8;">
-                </i>
+                                        <i class="far fa-calendar-alt" style="color:#94a3b8;"></i>
 
-                <?= !empty($row['evaluation_date'])
-                    ? date(
-                        'M d, Y',
-                        strtotime(
-                            $row['evaluation_date']
-                        )
-                    )
-                    : '-' ?>
+                                        <?= htmlspecialchars($period) ?>
 
-            </div>
+                                    </div>
 
-            <?php if (!empty($row['created_at'])): ?>
+                                    <?php if (!empty($row['created_at'])): ?>
 
-                <div style="
+                                        <div style="
                                         margin-top:4px;
                                         color:#94a3b8;
                                         font-size:8px;
                                     ">
-                    Recorded
-                    <?= date(
-                        'M d, Y',
-                        strtotime(
-                            $row['created_at']
-                        )
-                    ) ?>
-                </div>
 
-            <?php endif; ?>
+                                            <?= date(
+                                                'M d, Y',
+                                                strtotime($row['created_at'])
+                                            ) ?>
 
-        </td>
+                                        </div>
 
-        </tr>
+                                    <?php endif; ?>
 
-    <?php endforeach; ?>
-
-    </tbody>
-
-    </table>
-
-    </div>
+                                </td>
 
 
-<?php else: ?>
+                                <!-- ACTION -->
 
-    <!-- EMPTY STATE -->
-    <div style="
-            width:100%;
-            padding:70px 25px;
-            box-sizing:border-box;
+                                <td style="
+                                padding:15px 16px;
+                                border-bottom:1px solid #f1f5f9;
+                                text-align:center;
+                                vertical-align:middle;
+                            ">
+
+                                    <button type="button" data-bs-toggle="modal"
+                                        data-bs-target="#feedbackModal<?= $feedbackId ?>" style="
+                                        display:inline-flex;
+                                        align-items:center;
+                                        gap:6px;
+                                        padding:7px 11px;
+                                        border:1px solid #dbeafe;
+                                        border-radius:8px;
+                                        background:#eff6ff;
+                                        color:#2563eb;
+                                        font-size:9px;
+                                        font-weight:700;
+                                        cursor:pointer;
+                                    ">
+
+                                        <i class="fas fa-eye"></i>
+
+                                        View
+
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+
+                        <?php endforeach; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            <!-- =========================================================
+             DETAIL MODALS
+        ========================================================== -->
+
+            <?php require __DIR__ . '/view.php'; ?>
+
+
+        <?php else: ?>
+
+
+            <!-- =====================================================
+             EMPTY STATE
+        ====================================================== -->
+
+            <div style="
+            padding:65px 25px;
             text-align:center;
             border:1px solid #e5e7eb;
             border-radius:14px;
             background:#fff;
         ">
 
-        <div style="
-                width:70px;
-                height:70px;
-                margin:0 auto 16px;
+                <div style="
+                width:64px;
+                height:64px;
+                margin:0 auto 15px;
                 display:flex;
                 align-items:center;
                 justify-content:center;
-                border-radius:18px;
+                border-radius:17px;
                 background:#eff6ff;
                 color:#93c5fd;
-                font-size:27px;
+                font-size:24px;
             ">
-            <i class="fas fa-chart-line"></i>
-        </div>
+                    <i class="fas fa-chart-line"></i>
+                </div>
 
-        <h3 style="
+                <h3 style="
                 margin:0 0 6px;
                 color:#1e293b;
-                font-size:16px;
-                font-weight:700;
+                font-size:15px;
+                font-weight:750;
             ">
-            No Performance Evaluations Yet
-        </h3>
+                    No Performance Evaluations Yet
+                </h3>
 
-        <p style="
+                <p style="
                 max-width:430px;
                 margin:0 auto;
                 color:#94a3b8;
                 font-size:10px;
-                line-height:1.6;
+                line-height:1.7;
             ">
-            Your 360° performance feedback and evaluation records
-            will appear here once an assessment has been completed.
-        </p>
+                    Your 360° performance feedback and evaluation records
+                    will appear here once an assessment has been completed.
+                </p>
 
-    </div>
+            </div>
 
-<?php endif; ?>
+        <?php endif; ?>
 
-</section>
+    </section>
 
 
+    <!-- =============================================================
+     RESPONSIVE
+============================================================= -->
+
+    <style>
+        .performance-summary-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        @media (max-width: 900px) {
+
+            .performance-summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+        }
+
+        @media (max-width: 600px) {
+
+            .performance-summary-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+        }
+
+        .performance-table-wrapper {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            background: #fff;
+
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f8fafc;
+        }
+
+        /* Chrome, Edge, Safari */
+        .performance-table-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .performance-table-wrapper::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+
+        .performance-table-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .performance-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .performance-table {
+            width: 100%;
+            min-width: 1050px;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: auto;
+            color: #374151;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+    </style>
 </div>
+<script>
+    document.querySelectorAll('.modal').forEach(modal => {
+        document.body.appendChild(modal);
+    });
+</script>
+<style>
+    .modal {
+        z-index: 1055 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 1050 !important;
+    }
+</style>

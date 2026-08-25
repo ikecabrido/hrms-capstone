@@ -21,7 +21,7 @@ class ResignationController
     {
         $userId = $_SESSION;
         $employee = $this->employeeModel->getByUserId($userId['user_id']);
-        $resignations = $this->resignationModel->getResignation($employee['id']);
+        $resignations = $this->resignationModel->getResignation($employee['employee_id']);
 
         $title = "Employee Resignation";
         $content = __DIR__ . '/../views/employee-portal/resignation/content.php';
@@ -45,7 +45,7 @@ class ResignationController
             }
             $userId = $_SESSION;
             $employee = $this->employeeModel->getByUserId($userId['user_id']);
-            $employeeId = (int) ($employee['id']);
+            $employeeId = (int) ($employee['employee_id']);
 
             if (!$employeeId) {
                 $_SESSION['error'] = 'Employee session not found.';

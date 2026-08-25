@@ -236,7 +236,7 @@
                                     <td class="px-4 py-4 sm:px-5">
 
                                         <span class="block max-w-[130px] truncate text-xs font-medium text-slate-700">
-                                            <?= htmlspecialchars($employee['department'] ?? '-') ?>
+                                            <?= htmlspecialchars($employee['department_name'] ?? '-') ?>
                                         </span>
 
                                     </td>
@@ -246,7 +246,7 @@
                                     <td class="px-4 py-4 sm:px-5">
 
                                         <span class="block max-w-[130px] truncate text-xs text-slate-500">
-                                            <?= htmlspecialchars($employee['position'] ?? '-') ?>
+                                            <?= htmlspecialchars($employee['position_name'] ?? '-') ?>
                                         </span>
 
                                     </td>
@@ -271,7 +271,7 @@
                                     <td class="px-4 py-4 sm:px-5">
 
                                         <span class="whitespace-nowrap font-mono text-[10px] font-medium text-slate-500">
-                                            <?= htmlspecialchars($employee['employee_num'] ?? '-') ?>
+                                            <?= htmlspecialchars($employee['employee_code'] ?? '-') ?>
                                         </span>
 
                                     </td>
@@ -281,15 +281,15 @@
                                         <button type="button"
                                             class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2 rounded-3"
                                             data-bs-toggle="modal" data-bs-target="#employeeViewModal"
-                                            data-id="<?= (int) $employee['id'] ?>"
+                                            data-id="<?= (int) $employee['employee_id'] ?>"
                                             data-profile-image="<?= htmlspecialchars($employee['profile_image'] ?? '') ?>"
-                                            data-employee-num="<?= htmlspecialchars($employee['employee_num'] ?? '') ?>"
+                                            data-employee-num="<?= htmlspecialchars($employee['employee_code'] ?? '') ?>"
                                             data-first-name="<?= htmlspecialchars($employee['first_name'] ?? '') ?>"
                                             data-middle-name="<?= htmlspecialchars($employee['middle_name'] ?? '') ?>"
                                             data-last-name="<?= htmlspecialchars($employee['last_name'] ?? '') ?>"
                                             data-suffix="<?= htmlspecialchars($employee['suffix'] ?? '') ?>"
-                                            data-department="<?= htmlspecialchars($employee['department'] ?? '') ?>"
-                                            data-position="<?= htmlspecialchars($employee['position'] ?? '') ?>"
+                                            data-department="<?= htmlspecialchars($employee['department_name'] ?? '') ?>"
+                                            data-position="<?= htmlspecialchars($employee['position_name'] ?? '') ?>"
                                             data-employment-type="<?= htmlspecialchars($employee['employment_type'] ?? '') ?>"
                                             data-employment-status="<?= htmlspecialchars($employee['employment_status'] ?? '') ?>"
                                             data-phone="<?= htmlspecialchars($employee['mobile_no'] ?? '') ?>"

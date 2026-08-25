@@ -29,7 +29,13 @@ MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS=itoayakingpangalan-------@gmail.com
 MAIL_FROM_NAME="HR Employee Portal"
 
-
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=itoayakingpangalan@gmail.com
+MAIL_PASSWORD=swusfcwaqoljvdyb
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=itoayakingpangalan@gmail.com
+MAIL_FROM_NAME="HR Employee Portal"
 
 } catch (\Throwable $e) {
 

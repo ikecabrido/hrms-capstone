@@ -208,7 +208,7 @@ class AuthController
         header('Location: index.php?url=admin');
         exit;
     }
-    private function handleLoginFailure(Exception $e): void
+    public function handleLoginFailure(Exception $e): void
     {
         $lockedUntil = (int) Session::get(
             'login_locked_until'

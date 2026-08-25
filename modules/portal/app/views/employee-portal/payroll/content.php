@@ -450,8 +450,16 @@
                                 <!-- Files -->
                                 <td style="padding:14px 16px; text-align:center;">
                                     <?php if (!empty($request['document_path'])): ?>
-                                        <a href="<?= htmlspecialchars($request['document_path']) ?>" target="_blank"
-                                            title="View File" style="color:#2563eb; font-size:14px;">
+                                        <a href="/hrms-capstone/modules/portal/public/<?= htmlspecialchars(
+                                            ltrim(
+                                                str_replace(
+                                                    'D:\\xampp\\htdocs\\hrms-capstone\\modules\\portal\\public\\',
+                                                    '',
+                                                    $request['document_path']
+                                                ),
+                                                '/\\'
+                                            )
+                                        ) ?>" target="_blank" title="View File" style="color:#2563eb; font-size:14px;">
                                             <i class="fas fa-file"></i>
                                         </a>
                                     <?php else: ?>
@@ -463,29 +471,28 @@
 
                                 <!-- ACTION -->
                                 <td style="
-                                padding:14px 16px;
-                                text-align:center; ">
-
+    padding:14px 16px;
+    text-align:center;
+">
                                     <button type="button" class="view-payroll-request-btn" data-bs-toggle="modal"
                                         data-bs-target="#viewPayrollRequestModal<?= (int) $request['id'] ?>" style="
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        gap:6px;
-        padding:7px 11px;
-        border:1px solid #dbeafe;
-        border-radius:8px;
-        background:#eff6ff;
-        color:#2563eb;
-        font-size:11px;
-        font-weight:600;
-        cursor:pointer;
-        white-space:nowrap;
-    ">
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:6px;
+            padding:7px 11px;
+            border:1px solid #dbeafe;
+            border-radius:8px;
+            background:#eff6ff;
+            color:#2563eb;
+            font-size:11px;
+            font-weight:600;
+            cursor:pointer;
+            white-space:nowrap;
+        ">
                                         <i class="fas fa-eye"></i>
                                         View
                                     </button>
-
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -493,7 +500,7 @@
                     </tbody>
 
                 </table>
-
+<?php require __DIR__ . '/view-payroll-request.php'; ?>
             </div>
 
 
@@ -945,3 +952,17 @@
 
     </section>
 </div>
+<script>
+    document.querySelectorAll('.modal').forEach(modal => {
+        document.body.appendChild(modal);
+    });
+</script>
+<style>
+    .modal {
+        z-index: 1055 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 1050 !important;
+    }
+</style>

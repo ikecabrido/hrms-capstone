@@ -24,7 +24,7 @@ class BenefitsAndGovernmentContribution
             CONCAT(e.first_name, ' ', e.last_name) AS employee_name
         FROM {$this->table} b
         INNER JOIN {$this->employeeTable} e
-            ON b.employee_id = e.id
+            ON b.employee_id = e.employee_id
         ORDER BY b.uploaded_at DESC
     ";
 

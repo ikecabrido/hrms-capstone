@@ -10,6 +10,9 @@ class UserAccount
     private $table = "ep_users";
     private $employeesTable = "em_employees";
     private $attendanceTable = "ta_attendance";
+    private $departmentTable = "em_departments";
+    private $positionTable = "em_positions";
+    private $userTable = "ep_users";
 
     public function __construct()
     {
@@ -28,9 +31,23 @@ class UserAccount
     public function getAllEmployees(): array
     {
         $sql = "
-        SELECT *
-        FROM {$this->employeesTable}
-        ORDER BY created_at DESC
+        SELECT
+            e.*,
+            p.position_name,
+            d.department_name,
+            u.profile_image
+        FROM {$this->employeesTable} e
+
+        LEFT JOIN {$this->positionTable} p
+            ON e.position_id = p.position_id
+
+        LEFT JOIN {$this->departmentTable} d
+            ON e.department_id = d.department_id
+
+        LEFT JOIN {$this->userTable} u
+            ON e.user_id = u.id
+
+        ORDER BY e.created_at DESC
     ";
 
         $stmt = $this->conn->prepare($sql);
@@ -87,11 +104,11 @@ class UserAccount
         $sql = "
         SELECT
             a.*,
-            e.employee_num,
+            e.employee_code,
             CONCAT(e.first_name, ' ', e.last_name) AS employee_name
         FROM {$this->attendanceTable} a
         INNER JOIN {$this->employeesTable} e
-            ON e.id = a.employee_id
+            ON e.employee_id = a.employee_id
         ORDER BY a.attendance_date DESC, a.time_in DESC
     ";
 
@@ -109,7 +126,7 @@ class UserAccount
             u.email,
             u.role,
             u.is_active,
-            e.id AS employee_id,
+            e.employee_id,
             e.first_name,
             e.middle_name,
             e.last_name
@@ -128,7 +145,7 @@ class UserAccount
     public function setActive(int $userId): bool
     {
         $sql = "
-        UPDATE ep_users
+        UPDATE {$this->userTable}
         SET is_active = 1
         WHERE id = :user_id
     ";

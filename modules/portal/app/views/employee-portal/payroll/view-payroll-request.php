@@ -1,3 +1,4 @@
+<?php foreach ($payrollRequests as $request): ?>
 <div class="modal fade" id="viewPayrollRequestModal<?= (int) $request['id'] ?>" tabindex="-1"
     aria-labelledby="viewPayrollRequestModalLabel<?= (int) $request['id'] ?>" aria-hidden="true">
 
@@ -494,8 +495,17 @@
                     </div>
 
                     <?php if (!empty($request['document_path'])): ?>
+                        <?php
+                        $documentPath = str_replace(
+                            'D:\\xampp\\htdocs\\hrms-capstone\\modules\\portal\\public\\',
+                            '',
+                            $request['document_path']
+                        );
 
-                        <a href="<?= htmlspecialchars($request['document_path']) ?>" target="_blank" style="
+                        $documentUrl = '/hrms-capstone/modules/portal/public/' .
+                            ltrim(str_replace('\\', '/', $documentPath), '/');
+                        ?>
+                        <a href="<?= htmlspecialchars($documentUrl) ?>" target="_blank" style="
                 display:inline-flex;
                 align-items:center;
                 gap:7px;
@@ -561,3 +571,4 @@
     </div>
 
 </div>
+<?php endforeach; ?>

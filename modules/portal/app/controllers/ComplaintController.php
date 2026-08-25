@@ -19,12 +19,9 @@ class ComplaintController
     public function index()
     {
         $userId = $_SESSION['user_id'];
-
         $employee = $this->employeeModel->getByUserId($userId);
-
-        $employees = $this->employeeModel->getAllExcept($employee['id']);
-
-        $complaintHistory = $this->complaintModel->getComplaint($employee['id']);
+        $employees = $this->employeeModel->getAllExcept($employee['employee_id']);
+        $complaintHistory = $this->complaintModel->getComplaint($employee['employee_id']);
 
         $title = "Employee Complaint";
         $content = __DIR__ . '/../views/employee-portal/complaint/content.php';
@@ -36,61 +33,129 @@ class ComplaintController
     {
         try {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Get Logged-in User
+            |--------------------------------------------------------------------------
+            */
             $userId = $_SESSION['user_id'] ?? null;
 
             if (!$userId) {
                 throw new Exception('User session not found.');
             }
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Get Employee Profile
+            |--------------------------------------------------------------------------
+            */
             $employee = $this->employeeModel->getByUserId($userId);
 
-            $incidentType = $_POST['incident_type'] ?? '';
-
-            if (empty($incidentType)) {
-                throw new Exception('Incident type is required.');
+            if (!$employee) {
+                throw new Exception('Employee profile not found.');
             }
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Validate Incident Type
+            |--------------------------------------------------------------------------
+            */
+            $incidentType = trim($_POST['incident_type'] ?? '');
+
+            if ($incidentType === '') {
+                throw new Exception('Incident type is required.');
+            }
             $title = ucfirst(str_replace('_', ' ', $incidentType));
 
+            /*
+            |--------------------------------------------------------------------------
+            | Reporter Employee ID
+            |--------------------------------------------------------------------------
+            |
+            | Your employee table uses employee_id.
+            |
+            */
+            $reporterId = $employee['employee_id'] ?? null;
+
+            if (!$reporterId) {
+                throw new Exception('Reporter employee ID not found.');
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Respondent
+            |--------------------------------------------------------------------------
+            */
+            $respondentId = $_POST['respondent_employee_id'] ?? null;
+
+            if (!$respondentId) {
+                throw new Exception('Respondent employee is required.');
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Complaint Data
+            |--------------------------------------------------------------------------
+            */
             $data = [
+
                 // Reporter
-                'reporter_employee_id' => $employee['id'],
+                'reporter_id' => $reporterId,
 
                 // Respondent
-                'respondent_employee_id' => !empty($_POST['respondent_employee_id'])
-                    ? (int) $_POST['respondent_employee_id']
+                'respondent_employee_id' => $respondentId,
+
+                // Incident information
+                'type' =>
+                    !empty($_POST['type'])
+                    ? trim($_POST['type'])
                     : null,
 
-                'respondent_relationship' =>
-                    $_POST['respondent_relationship'] ?? null,
+                'incident_type' =>
+                    $incidentType,
 
-                // Incident
-                'incident_type' => $incidentType,
-
-                'type' => $_POST['type'] ?? 'other',
-
-                'severity' => $_POST['severity'] ?? 'medium',
+                'severity' =>
+                    $_POST['severity'] ?? 'medium',
 
                 'title' => $title,
-
-                'incident_date' =>
-                    $_POST['incident_date'] ?? null,
-
-                'incident_time' =>
-                    $_POST['incident_time'] ?? null,
-
-                'location' =>
-                    trim($_POST['location'] ?? ''),
 
                 'description' =>
                     trim($_POST['description'] ?? ''),
 
-                'status' => 'submitted',
+                'incident_date' =>
+                    $_POST['incident_date'] ?? null,
 
-                'reporter_role' => 'reporter',
+                'location' =>
+                    !empty($_POST['location'])
+                    ? trim($_POST['location'])
+                    : null,
 
-                'reporter_type' => 'employee'
+                // Privacy
+                'is_confidential' =>
+                    isset($_POST['is_confidential'])
+                    ? 1
+                    : 0,
+
+                // Deadlines
+                'nte_deadline' =>
+                    !empty($_POST['nte_deadline'])
+                    ? $_POST['nte_deadline']
+                    : null,
+
+                'explanation_deadline' =>
+                    !empty($_POST['explanation_deadline'])
+                    ? $_POST['explanation_deadline']
+                    : null,
+
+                // User who created the complaint
+                'created_by' =>
+                    $userId
             ];
+
 
             /*
             |--------------------------------------------------------------------------
@@ -100,22 +165,43 @@ class ComplaintController
             $success = $this->complaintModel->create($data);
 
             if (!$success) {
-                throw new Exception('Complaint could not be created.');
+                throw new Exception(
+                    'Complaint could not be created.'
+                );
             }
-            $_SESSION['success'] = 'Complaint submitted successfully.';
 
-            header('Location: index.php?url=complaint');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Success
+            |--------------------------------------------------------------------------
+            */
+            $_SESSION['success'] =
+                'Complaint submitted successfully.';
+
+            header(
+                'Location: index.php?url=complaint'
+            );
+
             exit;
+
 
         } catch (\Throwable $e) {
 
             echo '<pre>';
+
             echo "Complaint submission error:\n\n";
+
             echo $e->getMessage();
+
             echo "\n\nFile: ";
+
             echo $e->getFile();
+
             echo "\nLine: ";
+
             echo $e->getLine();
+
             echo '</pre>';
 
             exit;

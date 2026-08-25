@@ -25,7 +25,7 @@ class Resignation
             CONCAT(e.first_name, ' ', e.last_name) AS employee_name
         FROM {$this->table} r
         INNER JOIN {$this->employeeTable} e
-            ON r.employee_id = e.id
+            ON r.employee_id = e.employee_id
         ORDER BY r.created_at DESC
     ";
 

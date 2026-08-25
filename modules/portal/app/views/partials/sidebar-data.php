@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Employee;
+use App\Models\Users;
 use App\Models\NotificationRecipient;
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -8,9 +9,18 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $employeeModel = new Employee();
+$usersModel = new Users();
 
 $userId = $_SESSION['user_id'] ?? null;
 
+/*
+|--------------------------------------------------------------------------
+| Employee Image
+|--------------------------------------------------------------------------
+*/
+$employeeImage = $userId
+    ? $usersModel->findById($userId)
+    : [];
 
 /*
 |--------------------------------------------------------------------------

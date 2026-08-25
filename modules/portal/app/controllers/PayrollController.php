@@ -23,9 +23,9 @@ class PayrollController
         $userId = $_SESSION['user_id'];
         $employeeAttendance = $this->employeeModel->getByUserId($userId);
 
-        $payrollHistory = $this->payrollModel->getPayroll($employeeAttendance['id']);
-        $payrollRequests = $this->payrollModel->getPayrollRequests($employeeAttendance['id']);
-
+        $payrollHistory = $this->payrollModel->getPayroll($employeeAttendance['employee_id']);
+        $payrollRequests = $this->payrollModel->getPayrollRequests($employeeAttendance['employee_id']);
+        
         $title = "Employee Payroll";
         $content = __DIR__ . '/../views/employee-portal/payroll/content.php';
         require __DIR__ . '/../views/employee-portal/index.php';
@@ -44,7 +44,7 @@ class PayrollController
         $userId = (int) $_SESSION['user_id'];
         $employee = $this->employeeModel->getByUserId($userId);
 
-        $employee_id = (int) $employee['id'];
+        $employee_id = (int) $employee['employee_id'];
 
         $data = [
             'request_type' => trim($_POST['request_type'] ?? ''),

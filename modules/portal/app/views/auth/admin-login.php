@@ -16,7 +16,20 @@
 <body>
     <div class="login-container">
         <div class="login-contents" style="flex:auto; justify-content: center ;">
-            <h1 style="flex: auto; justify-content: center; font-weight: 900; margin-left: 20px;">Admin Portal</h1>
+                        <h1 style="
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-weight:900;
+">
+                Admin Port<a href="index.php" style="
+            color:inherit;
+            text-decoration:none;
+            font-size:inherit;
+            font-weight:inherit;
+            cursor:default;
+        ">a</a>l
+            </h1>
             <div class="school-logo" style="flex:auto; justify-content: center ;">
                 <img src="/hrms-capstone/modules/portal/public/assets/images/bcp-logo.png" alt="School Logo">
             </div>

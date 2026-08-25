@@ -215,7 +215,7 @@
                                     <td class="px-4 py-4 sm:px-5">
 
                                         <span class="block max-w-[130px] truncate text-xs font-medium text-slate-700">
-                                            <?= htmlspecialchars($employee['department'] ?? '-') ?>
+                                            <?= htmlspecialchars($employee['department_name'] ?? '-') ?>
                                         </span>
 
                                     </td>
@@ -225,7 +225,7 @@
                                     <td class="px-4 py-4 sm:px-5">
 
                                         <span class="block max-w-[130px] truncate text-xs text-slate-500">
-                                            <?= htmlspecialchars($employee['position'] ?? '-') ?>
+                                            <?= htmlspecialchars($employee['position_name'] ?? '-') ?>
                                         </span>
 
                                     </td>
@@ -255,7 +255,7 @@
            hover:bg-indigo-700 hover:shadow-md
            focus:outline-none focus:ring-2 focus:ring-indigo-500/30
            active:scale-[0.97]" data-bs-toggle="modal"
-                                            data-bs-target="#createAccountModal<?= (int) $employee['id'] ?>">
+                                            data-bs-target="#createAccountModal<?= (int) $employee['employee_id'] ?>">
 
                                             <i class="fa-solid fa-user-plus text-[10px]"></i>
                                             <span>Create Account</span>
