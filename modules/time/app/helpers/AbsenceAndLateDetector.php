@@ -45,12 +45,13 @@ class AbsenceAndLateDetector
             return ['message' => 'Today is a weekend, no absence detection'];
         }
 
-        $query = "SELECT 
-                    e.employee_id,
-                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                    e.department
-                  FROM {$this->employees_table} e
-                  WHERE e.employment_status = 'Active'";
+                $query = "SELECT 
+                                        e.employee_id,
+                                        CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                                        COALESCE(d.department_name, '') AS department
+                                    FROM {$this->employees_table} e
+                                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                    WHERE e.employment_status = 'Active'";
 
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -100,18 +101,19 @@ class AbsenceAndLateDetector
         }
 
         // Get all employees who checked in late today
-        $query = "SELECT 
-                    a.attendance_id,
-                    a.employee_id,
-                    a.time_in,
-                    e.full_name,
-                    e.department,
-                    s.shift_id,
-                    s.start_time
-                  FROM {$this->attendance_table} a
-                  JOIN {$this->employees_table} e ON a.employee_id = e.employee_id
-                  JOIN {$this->shift_assignments_table} sa ON a.employee_id = sa.employee_id
-                  JOIN {$this->shifts_table} s ON sa.shift_id = s.shift_id
+                $query = "SELECT 
+                                        a.attendance_id,
+                                        a.employee_id,
+                                        a.time_in,
+                                        e.full_name,
+                                        COALESCE(d.department_name, '') AS department,
+                                        s.shift_id,
+                                        s.start_time
+                                    FROM {$this->attendance_table} a
+                                    JOIN {$this->employees_table} e ON a.employee_id = e.employee_id
+                                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                    JOIN {$this->shift_assignments_table} sa ON a.employee_id = sa.employee_id
+                                    JOIN {$this->shifts_table} s ON sa.shift_id = s.shift_id
                   WHERE a.attendance_date = :date
                   AND a.time_in IS NOT NULL
                   AND a.status != 'LATE'
@@ -241,9 +243,12 @@ class AbsenceAndLateDetector
      */
     public function announceAbsence($employee_id, $absence_date)
     {
-        // Get employee details
-        $empQuery = "SELECT full_name, department FROM {$this->employees_table}
-                    WHERE employee_id = :employee_id LIMIT 1";
+        // Get employee details (resolve department name via em_departments)
+        $empQuery = "SELECT CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                COALESCE(d.department_name, '') AS department
+                FROM {$this->employees_table} e
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                WHERE e.employee_id = :employee_id LIMIT 1";
         $empStmt = $this->conn->prepare($empQuery);
         $empStmt->bindParam(':employee_id', $employee_id, \PDO::PARAM_INT);
         $empStmt->execute();
@@ -271,9 +276,12 @@ class AbsenceAndLateDetector
      */
     public function announceLate($employee_id, $absence_date, $minutes_late)
     {
-        // Get employee details
-        $empQuery = "SELECT full_name, department FROM {$this->employees_table}
-                    WHERE employee_id = :employee_id LIMIT 1";
+        // Get employee details (resolve department name via em_departments)
+        $empQuery = "SELECT CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                COALESCE(d.department_name, '') AS department
+                FROM {$this->employees_table} e
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                WHERE e.employee_id = :employee_id LIMIT 1";
         $empStmt = $this->conn->prepare($empQuery);
         $empStmt->bindParam(':employee_id', $employee_id, \PDO::PARAM_INT);
         $empStmt->execute();

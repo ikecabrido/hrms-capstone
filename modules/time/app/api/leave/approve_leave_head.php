@@ -123,9 +123,10 @@ if ($isDeptHead) {
     $database = TimeDatabase::getInstance();
     $conn = $database->getConnection();
     
-    $query = "SELECT e.department 
-              FROM employees e 
-              WHERE e.employee_id = :employee_id AND e.status = 'ACTIVE'";
+    $query = "SELECT COALESCE(d.department_name, e.department) AS department
+              FROM em_employees e
+              LEFT JOIN em_departments d ON e.department_id = d.department_id
+              WHERE e.employee_id = :employee_id AND (e.employment_status = 'Active' OR e.employment_status = 'ACTIVE')";
     
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':employee_id', $leaveRequest['employee_id'], PDO::PARAM_INT);

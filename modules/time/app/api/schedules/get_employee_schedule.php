@@ -26,16 +26,18 @@ try {
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
-    // Get employee info from the canonical Time module employee table
-    $employee_query = "SELECT employee_id,
-                            CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
-                            first_name,
-                            last_name,
-                            department,
-                            position,
-                            employment_status
-                       FROM em_employees
-                       WHERE employee_id = ? AND employment_status = 'Active'";
+        // Get employee info from the canonical Time module employee table
+        $employee_query = "SELECT e.employee_id,
+                           CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                           e.first_name,
+                           e.last_name,
+                           COALESCE(d.department_name, '') AS department,
+                           COALESCE(p.position_name, '') AS position,
+                           e.employment_status
+                       FROM em_employees e
+                       LEFT JOIN em_departments d ON e.department_id = d.department_id
+                       LEFT JOIN em_positions p ON e.position_id = p.position_id
+                       WHERE e.employee_id = ? AND e.employment_status = 'Active'";
     $stmt = $conn->prepare($employee_query);
     $stmt->execute([$employee_id]);
     $employee = $stmt->fetch(PDO::FETCH_ASSOC);

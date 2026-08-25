@@ -36,8 +36,8 @@ class Attendance
                     ' ',
                     COALESCE(e.last_name, '')
                 ) AS full_name,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, '') AS department,
+                COALESCE(p.position_name, '') AS position,
                 COALESCE(
                     (
                         SELECT s.start_time
@@ -113,6 +113,8 @@ class Attendance
                 a.updated_at
 
               FROM em_employees e
+              LEFT JOIN em_departments d ON e.department_id = d.department_id
+              LEFT JOIN em_positions p ON e.position_id = p.position_id
 
               INNER JOIN (
                   SELECT DISTINCT employee_id
@@ -259,10 +261,14 @@ class Attendance
      */
     public function getByDateRange($start_date, $end_date, $employee_id = null, $limit = 500, $offset = 0)
     {
-        $query = "SELECT a.*, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, e.position
-                  FROM $this->table a
-                  JOIN em_employees e ON a.employee_id = e.employee_id
-                  WHERE a.attendance_date BETWEEN :start_date AND :end_date";
+        $query = "SELECT a.*, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                 COALESCE(d.department_name, '') AS department,
+                 COALESCE(p.position_name, '') AS position
+              FROM $this->table a
+              JOIN em_employees e ON a.employee_id = e.employee_id
+              LEFT JOIN em_departments d ON e.department_id = d.department_id
+              LEFT JOIN em_positions p ON e.position_id = p.position_id
+              WHERE a.attendance_date BETWEEN :start_date AND :end_date";
 
         if (!is_null($employee_id)) {
             $query .= " AND a.employee_id = :employee_id";
@@ -347,12 +353,14 @@ class Attendance
      */
     public function getPendingApprovals($limit = 50, $offset = 0)
     {
-        $query = "SELECT a.*, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department
-                  FROM $this->table a
-                  JOIN em_employees e ON a.employee_id = e.employee_id
-                  WHERE a.is_approved = 0
-                  ORDER BY a.created_at DESC
-                  LIMIT :limit OFFSET :offset";
+        $query = "SELECT a.*, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                 COALESCE(d.department_name, '') AS department
+              FROM $this->table a
+              JOIN em_employees e ON a.employee_id = e.employee_id
+              LEFT JOIN em_departments d ON e.department_id = d.department_id
+              WHERE a.is_approved = 0
+              ORDER BY a.created_at DESC
+              LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);

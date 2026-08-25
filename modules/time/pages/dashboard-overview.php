@@ -132,21 +132,68 @@ $shortCount = $shortRow ? (int)$shortRow['cnt'] : 0;
 $shortPercent = $allEmployees > 0 ? round(($shortCount / $allEmployees) * 100, 1) : 0;
 
 // Top active employees (by present count in last 7 days)
+// Top employees: build query dynamically depending on whether profile tables exist
 $topEmployees = [];
-$topSql = "SELECT e.employee_id, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, COALESCE(u.profile_pic, eu.profile_pic) AS profile_pic, COUNT(a.attendance_id) AS present_count
+$start = date('Y-m-d', strtotime('-6 days'));
+$end = date('Y-m-d');
+
+// helper: check if a table exists in current database
+function tableExists($db, $tableName) {
+    try {
+        $s = $db->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = :t");
+        $s->execute([':t' => $tableName]);
+        return (int)$s->fetchColumn() > 0;
+    } catch (Exception $e) {
+        return false;
+    }
+}
+
+$hasEmUsers = tableExists($db, 'em_users');
+$hasUsers = tableExists($db, 'users');
+
+$profileSelect = "'' AS profile_pic";
+$extraJoins = "";
+if ($hasEmUsers && $hasUsers) {
+    $extraJoins = "LEFT JOIN em_users eu ON eu.employee_id = e.employee_id\n           LEFT JOIN users u ON u.employee_id = e.employee_id";
+    $profileSelect = "COALESCE(u.profile_pic, eu.profile_pic, '') AS profile_pic";
+} elseif ($hasEmUsers) {
+    $extraJoins = "LEFT JOIN em_users eu ON eu.employee_id = e.employee_id";
+    $profileSelect = "COALESCE(eu.profile_pic, '') AS profile_pic";
+} elseif ($hasUsers) {
+    $extraJoins = "LEFT JOIN users u ON u.employee_id = e.employee_id";
+    $profileSelect = "COALESCE(u.profile_pic, '') AS profile_pic";
+}
+
+$topSql = "SELECT e.employee_id, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, COALESCE(d.department_name, '') AS department, " . $profileSelect . " , COUNT(a.attendance_id) AS present_count
            FROM em_employees e
-           LEFT JOIN ta_attendance a ON a.employee_id = e.employee_id AND a.time_in IS NOT NULL AND a.attendance_date BETWEEN :start AND :end
-           LEFT JOIN users u ON u.employee_id = e.employee_id
-           LEFT JOIN em_users eu ON eu.employee_id = e.employee_id
-           WHERE LOWER(e.employment_status) = 'active'
+           LEFT JOIN em_departments d ON e.department_id = d.department_id
+           LEFT JOIN ta_attendance a ON a.employee_id = e.employee_id AND a.time_in IS NOT NULL AND a.attendance_date BETWEEN :start AND :end\n           " . $extraJoins . "\n           WHERE LOWER(e.employment_status) = 'active'
            GROUP BY e.employee_id
            ORDER BY present_count DESC
            LIMIT 5";
-$ts = $db->prepare($topSql);
-$start = date('Y-m-d', strtotime('-6 days'));
-$end = date('Y-m-d');
-$ts->execute([':start' => $start, ':end' => $end]);
-$topEmployees = $ts->fetchAll(PDO::FETCH_ASSOC);
+
+try {
+    $ts = $db->prepare($topSql);
+    $ts->execute([':start' => $start, ':end' => $end]);
+    $topEmployees = $ts->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    // On error (missing tables or other issues), fall back to a minimal query without joins
+    try {
+        $fallbackSql = "SELECT e.employee_id, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, '' AS department, '' AS profile_pic, COUNT(a.attendance_id) AS present_count
+                        FROM em_employees e
+                        LEFT JOIN ta_attendance a ON a.employee_id = e.employee_id AND a.time_in IS NOT NULL AND a.attendance_date BETWEEN :start AND :end
+                        WHERE LOWER(e.employment_status) = 'active'
+                        GROUP BY e.employee_id
+                        ORDER BY present_count DESC
+                        LIMIT 5";
+        $fts = $db->prepare($fallbackSql);
+        $fts->execute([':start' => $start, ':end' => $end]);
+        $topEmployees = $fts->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e2) {
+        // give up and leave $topEmployees empty
+        $topEmployees = [];
+    }
+}
 
 
 $current_page = 'dashboard-overview';

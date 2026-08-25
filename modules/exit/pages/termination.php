@@ -78,17 +78,20 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
     <div id="customToastContainer" style="position: fixed; top: 1rem; right: 1rem; z-index: 11000; display: flex; flex-direction: column; gap: .75rem;"></div>
 
     <!-- Termination Modal -->
-    <div class="modal fade exit-modal" id="terminationModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-danger">
-                    <h5 class="modal-title" id="terminationModalTitle">Initiate Termination</h5>
-                    <button type="button" class="close" data-dismiss="modal">
+    <div id="terminationModal" class="termination-custom-modal" aria-hidden="true" role="dialog" aria-modal="true">
+        <div class="termination-modal-backdrop" data-close="termination-modal"></div>
+
+        <div class="termination-modal-dialog" role="document">
+            <div class="termination-modal-content">
+                <div class="termination-modal-header">
+                    <h5 class="termination-modal-title" id="terminationModalTitle">Initiate Termination</h5>
+                    <button type="button" class="termination-modal-close" data-close="termination-modal" aria-label="Close">
                         <span>&times;</span>
                     </button>
                 </div>
+
                 <form id="terminationForm">
-                    <div class="modal-body">
+                    <div class="termination-modal-body">
                         <input type="hidden" id="terminationId" name="termination_id">
 
                         <div class="row">
@@ -121,8 +124,10 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
                         <div class="form-group" id="terminationLetterSection" style="display: none;">
                             <label>Termination Letter</label>
-                            <div class="border rounded p-3 bg-light" id="terminationLetterContent" style="white-space: pre-line; line-height: 1.7;">
-                                Generated termination letter preview appears here.
+                            <div id="terminationLetterPreviewWrapper" class="termination-letter-preview-wrapper">
+                                <div id="terminationLetterContent" class="termination-letter-content">
+                                    Generated termination letter preview appears here.
+                                </div>
                             </div>
                         </div>
 
@@ -144,8 +149,9 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+
+                    <div class="termination-modal-footer">
+                        <button type="button" class="btn btn-secondary" data-close="termination-modal">Cancel</button>
                         <button type="submit" class="btn btn-danger" id="terminationSubmitBtn">Submit Termination</button>
                     </div>
                 </form>

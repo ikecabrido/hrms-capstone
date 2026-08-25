@@ -297,8 +297,8 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, e.department) AS department,
+                COALESCE(p.position_name, e.position) AS position,
                 e.hire_date,
                 e.employment_status,
                 '' AS manager_name,
@@ -312,6 +312,8 @@ class ExitManagementModel
                 " . $resignationSubtypeSelect . "
             FROM exit_resignations r
             JOIN em_employees e ON r.employee_id = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             LEFT JOIN hrms_employee approver ON r.approved_by = approver.employee_id
             WHERE r.status IN ($placeholders){$employeeClause}
             ORDER BY e.first_name, e.last_name";
@@ -328,8 +330,8 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, e.department) AS department,
+                COALESCE(p.position_name, e.position) AS position,
                 e.hire_date,
                 e.employment_status,
                 '' AS manager_name,
@@ -343,6 +345,8 @@ class ExitManagementModel
                 NULL AS exit_subtype
             FROM exit_terminations t
             JOIN em_employees e ON t.employee_id = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             LEFT JOIN hrms_employee approver ON t.approved_by = approver.employee_id
             WHERE t.status IN ($placeholders){$employeeClause}
             ORDER BY e.first_name, e.last_name";
@@ -369,8 +373,8 @@ class ExitManagementModel
                 r.id AS exit_case_id,
                 e.employee_id AS employee_id,
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, e.department) AS department,
+                COALESCE(p.position_name, e.position) AS position,
                 e.hire_date,
                 e.employment_status,
                 '' AS manager_name,
@@ -383,6 +387,8 @@ class ExitManagementModel
                 r.approved_at
             FROM exit_resignations r
             JOIN em_employees e ON r.employee_id = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             LEFT JOIN hrms_employee approver ON r.approved_by = approver.employee_id
             WHERE r.id = ?");
         } elseif ($exitCaseType === 'termination') {
@@ -391,8 +397,8 @@ class ExitManagementModel
                 t.id AS exit_case_id,
                 e.employee_id AS employee_id,
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, e.department) AS department,
+                COALESCE(p.position_name, e.position) AS position,
                 e.hire_date,
                 e.employment_status,
                 '' AS manager_name,
@@ -405,6 +411,8 @@ class ExitManagementModel
                 t.approved_at
             FROM exit_terminations t
             JOIN em_employees e ON t.employee_id = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             LEFT JOIN hrms_employee approver ON t.approved_by = approver.employee_id
             WHERE t.id = ?");
         } else {
@@ -498,10 +506,12 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, e.department) AS department,
+                COALESCE(p.position_name, e.position) AS position,
                 e.employment_status AS employee_status
             FROM em_employees e
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             WHERE LOWER(TRIM(e.employment_status)) = 'active'
             ORDER BY e.first_name, e.last_name ASC
         ");
@@ -765,13 +775,15 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, e.department) AS department,
+                COALESCE(p.position_name, e.position) AS position,
                 {$resTypeSelect},
                 r.status as resignation_status,
                 r.notice_date,
                 r.last_working_date
             FROM em_employees e
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             INNER JOIN exit_resignations r ON e.employee_id = r.employee_id
             WHERE r.status = 'approved'
             ORDER BY e.first_name, e.last_name";
@@ -794,8 +806,8 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, e.department) AS department,
+                COALESCE(p.position_name, e.position) AS position,
                 ei.exit_case_type,
                 ei.exit_case_id,
                 COALESCE(r.last_working_date, t.effective_date) AS last_working_date,
@@ -803,6 +815,8 @@ class ExitManagementModel
             FROM exit_interviews ei
             JOIN exit_interview_hr_assessments hra ON hra.interview_id = ei.id AND hra.knowledge_transfer_required = 1
             JOIN em_employees e ON ei.employee_id = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             LEFT JOIN exit_resignations r ON ei.exit_case_type = 'resignation' AND ei.exit_case_id = r.id AND r.status = 'approved'
             LEFT JOIN exit_terminations t ON ei.exit_case_type = 'termination' AND ei.exit_case_id = t.id AND t.status = 'approved'
             LEFT JOIN exit_knowledge_transfer_plans ktp ON ktp.employee_id = e.employee_id AND ktp.status = 'active'

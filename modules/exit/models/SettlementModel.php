@@ -394,8 +394,8 @@ class SettlementModel extends ExitManagementModel
             's.id',
             's.employee_id',
             "CONCAT(e.first_name, ' ', e.last_name) AS employee_name",
-            'e.department',
-            'e.position',
+            "COALESCE(d.department_name, e.department, '') AS department",
+            "COALESCE(p.position_name, e.position, '') AS position",
             's.resignation_id',
             'r.last_working_date',
             's.settlement_date'
@@ -424,13 +424,15 @@ class SettlementModel extends ExitManagementModel
 
         $selectList = implode(",\n                ", $baseSelect);
 
-        $sql = "\n            SELECT\n                {$selectList}\n            FROM exit_employee_settlements s\n            JOIN em_employees e ON s.employee_id = e.employee_id\n            LEFT JOIN exit_resignations r ON s.resignation_id = r.id\n        ";
+        $sql = "\n            SELECT\n                {$selectList}\n            FROM exit_employee_settlements s\n            JOIN em_employees e ON s.employee_id = e.employee_id\n            LEFT JOIN exit_resignations r ON s.resignation_id = r.id\n            LEFT JOIN em_departments d ON e.department_id = d.department_id\n            LEFT JOIN em_positions p ON e.position_id = p.position_id\n        ";
 
         $countSql = "
             SELECT COUNT(*) as total
             FROM exit_employee_settlements s
             JOIN em_employees e ON s.employee_id = e.employee_id
             LEFT JOIN exit_resignations r ON s.resignation_id = r.id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
         ";
 
         $params = [];
@@ -441,7 +443,6 @@ class SettlementModel extends ExitManagementModel
             $params['status'] = $status;
         }
 
-        // Add search condition if provided
         if (!empty($search)) {
             $searchCondition = $whereClause ? " AND" : " WHERE";
             $searchCondition .= " (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR s.settlement_date LIKE :search1 OR e.employee_id LIKE :search2 OR r.last_working_date LIKE :search3)";

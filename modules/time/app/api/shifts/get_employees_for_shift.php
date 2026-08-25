@@ -15,13 +15,15 @@ try {
     $query = "SELECT 
                 e.employee_id,
                 CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, '') AS department,
+                COALESCE(p.position_name, '') AS position,
                 CASE 
                     WHEN es.employee_shift_id IS NOT NULL THEN 1
                     ELSE 0
                 END AS has_shift
               FROM em_employees e
+              LEFT JOIN em_departments d ON e.department_id = d.department_id
+              LEFT JOIN em_positions p ON e.position_id = p.position_id
               LEFT JOIN ta_employee_shifts es ON e.employee_id = es.employee_id
                   AND es.is_active = 1
                   AND es.effective_from <= CURDATE()

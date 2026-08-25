@@ -243,9 +243,11 @@ class TerminationModel extends ExitManagementModel
         }
 
         $stmt = $this->db->prepare(" 
-            SELECT t.*, CONCAT(e.first_name, ' ', e.last_name) AS employee_name, e.email, e.department, e.position
+            SELECT t.*, CONCAT(e.first_name, ' ', e.last_name) AS employee_name, e.email, COALESCE(d.department_name, '') AS department, COALESCE(p.position_name, '') AS position
             FROM exit_terminations t
             LEFT JOIN em_employees e ON t.employee_id = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             WHERE t.id = ?
         ");
         $stmt->execute([$terminationId]);
@@ -278,11 +280,13 @@ class TerminationModel extends ExitManagementModel
                     t.created_at,
                     t.updated_at,
                     CONCAT(e.first_name, ' ', e.last_name) as employee_name,
-                    e.email,
-                    e.department,
-                    e.position
-                FROM exit_terminations t
-                LEFT JOIN em_employees e ON t.employee_id = e.employee_id
+                        e.email,
+                        COALESCE(d.department_name, '') AS department,
+                        COALESCE(p.position_name, '') AS position
+                    FROM exit_terminations t
+                    LEFT JOIN em_employees e ON t.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                    LEFT JOIN em_positions p ON e.position_id = p.position_id
             ";
 
             $baseCount = "
@@ -367,11 +371,13 @@ class TerminationModel extends ExitManagementModel
                 a.archived_at AS updated_at,
                 CONCAT(e.first_name, ' ', e.last_name) AS employee_name,
                 e.email,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, '') AS department,
+                COALESCE(p.position_name, '') AS position,
                 a.archive_reason
             FROM exit_archive a
             LEFT JOIN em_employees e ON JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.employee_id')) = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             WHERE a.archive_type = 'termination' AND a.restored = 0
         ";
 

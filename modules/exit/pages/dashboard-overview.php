@@ -24,26 +24,40 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
         <div id="dashboard-section" class="exit-dashboard">
             <h2 class="dashboard-title">Dashboard</h2>
 
-            <div class="dashboard-kpi-grid">
-                <div class="dashboard-kpi-card dashboard-kpi-blue">
-                    <div class="dashboard-kpi-icon"><i class="fas fa-arrow-right"></i></div>
-                    <div class="dashboard-kpi-value" id="active-exits">0</div>
-                    <div class="dashboard-kpi-label">Total exited (this year)</div>
+            <div class="dashboard-top-grid">
+                <div class="dashboard-panel alert-panel-wide">
+                    <div class="dashboard-panel-header">
+                        <span>Alerts</span>
+                    </div>
+                    <div class="dashboard-panel-body alert-panel-body">
+                        <div id="upcoming-exit-activities-summary" class="alert-summary-row"></div>
+                        <ul id="upcoming-exit-activities-list" class="dashboard-list alert-list">
+                            <li class="empty-state">No alerts to review.</li>
+                        </ul>
+                    </div>
                 </div>
-                <div class="dashboard-kpi-card dashboard-kpi-blue">
-                    <div class="dashboard-kpi-icon"><i class="fas fa-calendar-alt"></i></div>
-                    <div class="dashboard-kpi-value" id="pending-approval">0</div>
-                    <div class="dashboard-kpi-label">Avg notice period (days)</div>
-                </div>
-                <div class="dashboard-kpi-card dashboard-kpi-blue">
-                    <div class="dashboard-kpi-icon"><i class="fas fa-chart-pie"></i></div>
-                    <div class="dashboard-kpi-value" id="approved-preclearances">0</div>
-                    <div class="dashboard-kpi-label">Top resignation reason</div>
-                </div>
-                <div class="dashboard-kpi-card dashboard-kpi-green">
-                    <div class="dashboard-kpi-icon"><i class="fas fa-dollar-sign"></i></div>
-                    <div class="dashboard-kpi-value" id="upcoming-exits">0</div>
-                    <div class="dashboard-kpi-label">Settlements pending</div>
+
+                <div class="dashboard-kpi-grid">
+                    <div class="dashboard-kpi-card dashboard-kpi-blue">
+                        <div class="dashboard-kpi-icon"><i class="fas fa-arrow-right"></i></div>
+                        <div class="dashboard-kpi-value" id="active-exits">0</div>
+                        <div class="dashboard-kpi-label">Total exited (this year)</div>
+                    </div>
+                    <div class="dashboard-kpi-card dashboard-kpi-blue">
+                        <div class="dashboard-kpi-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="dashboard-kpi-value" id="pending-approval">0</div>
+                        <div class="dashboard-kpi-label">Avg notice period (days)</div>
+                    </div>
+                    <div class="dashboard-kpi-card dashboard-kpi-blue">
+                        <div class="dashboard-kpi-icon"><i class="fas fa-chart-pie"></i></div>
+                        <div class="dashboard-kpi-value" id="approved-preclearances">0</div>
+                        <div class="dashboard-kpi-label">Top resignation reason</div>
+                    </div>
+                    <div class="dashboard-kpi-card dashboard-kpi-green">
+                        <div class="dashboard-kpi-icon"><i class="fas fa-dollar-sign"></i></div>
+                        <div class="dashboard-kpi-value" id="upcoming-exits">0</div>
+                        <div class="dashboard-kpi-label">Settlements pending</div>
+                    </div>
                 </div>
             </div>
 
@@ -51,6 +65,17 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                 <div class="dashboard-panel-header">Exit Process Pipeline</div>
                 <div class="dashboard-panel-body chart-container">
                     <canvas id="exitPipelineChart" height="260"></canvas>
+                </div>
+            </div>
+
+            <div class="dashboard-panel upcoming-activities-panel">
+                <div class="dashboard-panel-header">
+                    <span>Upcoming Exit Activities</span>
+                </div>
+                <div class="dashboard-panel-body alert-panel-body">
+                    <ul id="upcoming-exit-activities-bottom-list" class="dashboard-list alert-list">
+                        <li class="empty-state">No upcoming exit activities.</li>
+                    </ul>
                 </div>
             </div>
 
@@ -106,5 +131,6 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
 <script src="assets/vendor/jquery/jquery.min.js"></script>
 <script src="assets/vendor/chartjs/chart.umd.js"></script>
-<script src="assets/vendor/flatpickr/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script src="assets/js/custom.js"></script>

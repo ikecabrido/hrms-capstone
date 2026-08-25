@@ -15,8 +15,8 @@ try {
     $query = "SELECT 
                 e.employee_id,
                 CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, '') AS department,
+                COALESCE(p.position_name, '') AS position,
                 CASE 
                     WHEN fs.id IS NOT NULL THEN 1
                     ELSE 0
@@ -39,6 +39,8 @@ try {
                     ELSE 0
                 END AS has_flexible_schedule
               FROM em_employees e
+              LEFT JOIN em_departments d ON e.department_id = d.department_id
+              LEFT JOIN em_positions p ON e.position_id = p.position_id
               LEFT JOIN ta_flexible_schedules fs ON e.employee_id = fs.employee_id
                   AND (
                       fs.schedule_date = CURDATE()
@@ -54,7 +56,7 @@ try {
                   AND es.effective_from <= CURDATE()
                   AND (es.effective_to IS NULL OR es.effective_to >= CURDATE())
               WHERE e.employment_status = 'Active'
-              GROUP BY e.employee_id, e.first_name, e.middle_name, e.last_name, e.department, e.position
+              GROUP BY e.employee_id, e.first_name, e.middle_name, e.last_name, d.department_name, p.position_name
               ORDER BY full_name ASC";
 
     $stmt = $db->query($query);

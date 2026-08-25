@@ -80,7 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
     $data = $_POST;
     unset($data['ajax_action'], $data['controller']);
 
-    switch ($controller) {
+    try {
+        switch ($controller) {
         case 'resignation':
             $resignationController = $resignationController ?? new ResignationController();
             $response = $resignationController->handleAjaxRequest($action, $data);
@@ -112,10 +113,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
         default:
             $exitController = $exitController ?? new ExitManagementController();
             $response = $exitController->handleAjaxRequest($action, $data);
-    }
+        }
+        echo json_encode($response);
+        exit;
+    } catch (Throwable $t) {
+        // Log the full exception stack to a module-scoped debug file for investigation
+        $logPath = __DIR__ . '/error_debug.log';
+        $msg = '[' . date('Y-m-d H:i:s') . '] AJAX exception: ' . $t->getMessage() . "\n" . $t->getTraceAsString() . "\n";
+        error_log($msg, 3, $logPath);
 
-    echo json_encode($response);
-    exit;
+        // Return a safe JSON error to the client (avoid leaking internals in production)
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Server error (see logs)']);
+        exit;
+    }
 }
 
 // Not a recognized AJAX request

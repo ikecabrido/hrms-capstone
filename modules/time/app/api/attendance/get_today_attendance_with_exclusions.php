@@ -33,13 +33,15 @@ try {
     $query = "SELECT 
                 e.employee_id,
                 e.full_name,
-                e.department,
-                e.position,
+                COALESCE(d.department_name, '') AS department,
+                COALESCE(p.position_name, '') AS position,
                 ta.attendance_id,
                 ta.time_in,
                 ta.time_out,
                 ta.attendance_date
             FROM employees e
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             LEFT JOIN ta_attendance ta ON e.employee_id = ta.employee_id 
                 AND ta.attendance_date = :today
             WHERE e.status = 'ACTIVE'

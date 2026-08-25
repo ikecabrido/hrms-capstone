@@ -13,9 +13,11 @@ try {
         exit;
     }
 
-    $sql = "SELECT e.employee_id, e.employee_no, e.full_name, e.department, e.position, u.profile_pic
+        $sql = "SELECT e.employee_id, e.employee_no, e.full_name, COALESCE(d.department_name, '') AS department, COALESCE(p.position_name, '') AS position, u.profile_pic
             FROM employees e
-            LEFT JOIN users u ON u.employee_id = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
+            LEFT JOIN em_users u ON u.employee_id = e.employee_id
             WHERE e.employee_id = :id OR e.employee_no = :id
             LIMIT 1";
 

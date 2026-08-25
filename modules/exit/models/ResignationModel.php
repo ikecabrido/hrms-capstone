@@ -8,74 +8,14 @@ class ResignationModel extends ExitManagementModel
     public function __construct()
     {
         parent::__construct();
-        $this->ensureExitResignationsAutoIncrement();
-        $this->ensureResignationSchema();
-        $this->ensurePayrollClearancesTable();
-    }
-
-    private function ensureExitResignationsAutoIncrement(): void
-    {
-        $stmt = $this->db->prepare("SHOW COLUMNS FROM exit_resignations LIKE 'id'");
-        $stmt->execute();
-        $column = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($column && stripos($column['Extra'] ?? '', 'auto_increment') === false) {
-            $zeroRows = $this->db->query("SELECT id FROM exit_resignations WHERE id = 0")->fetchAll(PDO::FETCH_ASSOC);
-            if ($zeroRows) {
-                $maxId = (int)$this->db->query("SELECT MAX(id) as max_id FROM exit_resignations")->fetchColumn();
-                $nextId = $maxId + 1;
-                foreach ($zeroRows as $row) {
-                    $this->db->exec("UPDATE exit_resignations SET id = $nextId WHERE id = 0 LIMIT 1");
-                    $nextId++;
-                }
-            }
-            $this->db->exec("ALTER TABLE exit_resignations MODIFY id int(11) NOT NULL AUTO_INCREMENT");
-        }
-    }
-
-    private function ensureResignationSchema(): void
-    {
         try {
-            $stmt = $this->db->query("SHOW TABLES LIKE 'exit_resignations'");
-            if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
-                return;
-            }
-
-            $desiredStatusEnum = "'pending_review','pending_legal_review','approved','rejected','rejected_by_legal','withdrawn'";
-            $statusStmt = $this->db->prepare("SHOW COLUMNS FROM exit_resignations LIKE 'status'");
-            $statusStmt->execute();
-            $statusColumn = $statusStmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($statusColumn && stripos($statusColumn['Type'], 'pending_review') === false) {
-                $this->db->exec("UPDATE exit_resignations SET status = 'pending_review' WHERE status = 'pending_hr_review'");
-                $this->db->exec("UPDATE exit_resignations SET status = 'rejected' WHERE status = 'rejected_by_hr'");
-                $this->db->exec("ALTER TABLE exit_resignations MODIFY status ENUM($desiredStatusEnum) NOT NULL DEFAULT 'pending_review'");
-            }
-
-            $requiredColumns = [
-                'resignation_letter_path' => 'varchar(500) DEFAULT NULL',
-                'hr_approved_by' => 'int(11) DEFAULT NULL',
-                'hr_approved_at' => 'datetime DEFAULT NULL',
-                'hr_approval_comments' => 'text DEFAULT NULL',
-                'reviewed_by' => 'int(11) DEFAULT NULL',
-                'reviewed_at' => 'datetime DEFAULT NULL',
-                'review_remarks' => 'text DEFAULT NULL',
-                'legal_approved_by' => 'int(11) DEFAULT NULL',
-                'legal_approved_at' => 'datetime DEFAULT NULL',
-                'legal_approval_comments' => 'text DEFAULT NULL'
-            ];
-
-            foreach ($requiredColumns as $column => $definition) {
-                $columnStmt = $this->db->prepare("SHOW COLUMNS FROM exit_resignations LIKE ?");
-                $columnStmt->execute([$column]);
-                if (!$columnStmt->fetch(PDO::FETCH_ASSOC)) {
-                    $this->db->exec("ALTER TABLE exit_resignations ADD COLUMN $column $definition");
-                }
-            }
+            $this->ensurePayrollClearancesTable();
         } catch (Exception $e) {
             // Ignore schema migration errors and preserve existing table behavior
         }
     }
+
+    
 
     private function ensurePayrollClearancesTable(): void
     {
@@ -204,7 +144,9 @@ class ResignationModel extends ExitManagementModel
                                      CONCAT(p.first_name, ' ', p.last_name) AS preclearance_desk_person_name
             FROM exit_resignations r
             LEFT JOIN em_employees e ON r.employee_id = e.employee_id
-            LEFT JOIN hrms_employee p ON r.preclearance_desk_person = p.employee_id
+            LEFT JOIN em_employees p ON r.preclearance_desk_person = p.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions pos ON e.position_id = pos.position_id
             WHERE r.id = ?
         ");
         $stmt->execute([$resignationId]);
@@ -297,14 +239,16 @@ class ResignationModel extends ExitManagementModel
                     a.archived_at as updated_at,
                     CONCAT(e.first_name, ' ', e.last_name) as employee_name,
                     e.email,
-                    e.department,
-                    e.position,
+                        COALESCE(d.department_name, '') AS department,
+                        COALESCE(pos.position_name, '') AS position,
                     CONCAT(p.first_name, ' ', p.last_name) AS preclearance_desk_person_name,
                     a.archived_at,
                     a.archive_reason
                 FROM exit_archive a
                 LEFT JOIN em_employees e ON JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.employee_id')) = e.employee_id
-                LEFT JOIN hrms_employee p ON JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.preclearance_desk_person')) = p.employee_id
+                LEFT JOIN em_employees p ON JSON_UNQUOTE(JSON_EXTRACT(a.archive_data, '$.preclearance_desk_person')) = p.employee_id
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                LEFT JOIN em_positions pos ON e.position_id = pos.position_id
                 WHERE a.archive_type = 'resignation' AND a.restored = 0
             ";
 
@@ -350,18 +294,22 @@ class ResignationModel extends ExitManagementModel
                     r.updated_at,
                     CONCAT(e.first_name, ' ', e.last_name) as employee_name,
                     e.email,
-                    e.department,
-                    e.position,
+                        COALESCE(d.department_name, '') AS department,
+                        COALESCE(pos.position_name, '') AS position,
                     CONCAT(p.first_name, ' ', p.last_name) AS preclearance_desk_person_name
                 FROM exit_resignations r
                 LEFT JOIN em_employees e ON r.employee_id = e.employee_id
-                LEFT JOIN hrms_employee p ON r.preclearance_desk_person = p.employee_id
+                LEFT JOIN em_employees p ON r.preclearance_desk_person = p.employee_id
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                LEFT JOIN em_positions pos ON e.position_id = pos.position_id
             ";
 
             $countSql = "
                 SELECT COUNT(*) as total
                 FROM exit_resignations r
                 LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                LEFT JOIN em_positions pos ON e.position_id = pos.position_id
             ";
 
             $params = [];
@@ -744,7 +692,9 @@ class ResignationModel extends ExitManagementModel
             $this->db->commit();
             return true;
         } catch (Exception $e) {
-            $this->db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             error_log("Unarchive error: " . $e->getMessage());
             return false;
         }

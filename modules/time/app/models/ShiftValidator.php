@@ -84,14 +84,16 @@ class ShiftValidator
         try {
             $today = date('Y-m-d');
             
-            $query = "SELECT
-                        e.employee_id,
-                        CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                        e.department,
-                        e.position,
-                        e.employment_status
-                      FROM {$this->employees_table} e
-                      WHERE e.employment_status = 'Active'
+                        $query = "SELECT
+                                                e.employee_id,
+                                                CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                                                COALESCE(d.department_name, '') AS department,
+                                                COALESCE(p.position_name, '') AS position,
+                                                e.employment_status
+                                            FROM {$this->employees_table} e
+                                            LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                            LEFT JOIN em_positions p ON e.position_id = p.position_id
+                                            WHERE e.employment_status = 'Active'
                       AND NOT EXISTS (
                           SELECT 1 FROM ta_employee_shifts es
                           WHERE es.employee_id = e.employee_id

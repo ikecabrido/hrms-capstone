@@ -170,8 +170,8 @@ class ExitInterviewModel extends ExitManagementModel
                 ei.*,
                 COALESCE(e.employee_id, ei.employee_id) AS employee_id,
                 COALESCE(CONCAT(e.first_name, ' ', e.last_name), '') AS employee_full_name,
-                e.department AS employee_department,
-                e.position AS employee_position,
+                COALESCE(d.department_name, e.department) AS employee_department,
+                COALESCE(p.position_name, e.position) AS employee_position,
                 e.hire_date AS employee_date_hired,
                 e.employment_status AS employee_employment_status,
                 '' AS manager_name,
@@ -184,6 +184,8 @@ class ExitInterviewModel extends ExitManagementModel
                 COALESCE(r.approved_at, t.approved_at) AS case_approved_at
             FROM exit_interviews ei
             LEFT JOIN em_employees e ON ei.employee_id = e.employee_id
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
             LEFT JOIN hrms_employee iu ON ei.interviewer_id = iu.employee_id
             LEFT JOIN exit_resignations r ON ei.exit_case_type = 'resignation' AND ei.exit_case_id = r.id
             LEFT JOIN exit_terminations t ON ei.exit_case_type = 'termination' AND ei.exit_case_id = t.id

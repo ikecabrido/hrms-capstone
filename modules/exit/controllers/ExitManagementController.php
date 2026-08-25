@@ -75,9 +75,10 @@ class ExitManagementController
             $days = max(1, (int)$days);
             $limit = max(1, (int)$limit);
 
-            $query = "SELECT r.id AS resignation_id, r.employee_id, CONCAT(e.first_name, ' ', e.last_name) AS full_name, e.department, e.email, r.notice_date, r.last_working_date, DATEDIFF(r.last_working_date, CURDATE()) AS days_left, r.status
+            $query = "SELECT r.id AS resignation_id, r.employee_id, CONCAT(e.first_name, ' ', e.last_name) AS full_name, COALESCE(d.department_name, e.department) AS department, e.email, r.notice_date, r.last_working_date, DATEDIFF(r.last_working_date, CURDATE()) AS days_left, r.status
                       FROM exit_resignations r
                       LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                      LEFT JOIN em_departments d ON e.department_id = d.department_id
                       WHERE r.last_working_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY)
                       ORDER BY r.last_working_date ASC
                       LIMIT {$limit}";
@@ -93,6 +94,339 @@ class ExitManagementController
         } catch (Exception $e) {
             return ['data' => [], 'total' => 0, 'error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Aggregate upcoming and overdue exit activities from the active exit workflow tables.
+     * This is a centralized HR reminder feed; module-specific logic remains in each model.
+     */
+    public function getUpcomingExitActivities(int $days = 30, int $limit = 20): array
+    {
+        try {
+            $db = $this->model->getConnection();
+            $days = max(7, (int)$days);
+            $limit = max(1, (int)$limit);
+            $activities = [];
+            $seen = [];
+
+            $addActivity = function (array $activity) use (&$activities, &$seen) {
+                if (empty($activity['scheduled_date'])) {
+                    return;
+                }
+
+                $employeeId = $activity['employee_id'] ?? null;
+                $exitCaseType = $activity['exit_case_type'] ?? null;
+                $exitCaseId = $activity['exit_case_id'] ?? null;
+                $activityType = $activity['activity_type'] ?? 'alert';
+                $dateValue = $activity['scheduled_date'];
+                $key = md5((string)$employeeId . '|' . (string)$exitCaseType . '|' . (string)$exitCaseId . '|' . (string)$activityType . '|' . (string)$dateValue);
+                if (isset($seen[$key])) {
+                    return;
+                }
+                $seen[$key] = true;
+
+                $status = trim((string)($activity['status'] ?? 'scheduled'));
+                $daysRemaining = isset($activity['days_remaining']) ? (int)$activity['days_remaining'] : null;
+                $priority = $activity['priority'] ?? $this->resolveActivityPriority($status, $daysRemaining, (bool)($activity['is_action_required'] ?? false));
+
+                $activities[] = [
+                    'employee_id' => $employeeId,
+                    'employee_name' => $activity['employee_name'] ?? 'Unknown Employee',
+                    'exit_case_type' => $exitCaseType,
+                    'exit_case_id' => $exitCaseId,
+                    'activity_type' => $activityType,
+                    'activity_label' => $activity['activity_label'] ?? 'Exit activity',
+                    'scheduled_date' => $dateValue,
+                    'status' => $status ?: 'scheduled',
+                    'priority' => $priority,
+                    'days_remaining' => $daysRemaining,
+                    'action' => $activity['action'] ?? null,
+                    'is_action_required' => (bool)($activity['is_action_required'] ?? false),
+                ];
+            };
+
+            $windowStart = date('Y-m-d', strtotime('-30 days'));
+            $windowEnd = date('Y-m-d', strtotime('+' . $days . ' days'));
+
+            $resignationSql = "SELECT
+                r.id AS exit_case_id,
+                r.employee_id,
+                CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                'resignation' AS exit_case_type,
+                r.last_working_date AS scheduled_date,
+                r.status,
+                DATEDIFF(r.last_working_date, CURDATE()) AS days_remaining,
+                'resignation' AS activity_type,
+                'Last Working Date' AS activity_label,
+                'resignation_detail' AS action,
+                0 AS is_action_required
+            FROM exit_resignations r
+            LEFT JOIN em_employees e ON e.employee_id = r.employee_id
+            WHERE r.last_working_date IS NOT NULL
+              AND r.status NOT IN ('archived', 'withdrawn', 'rejected', 'rejected_by_legal')
+              AND r.last_working_date BETWEEN ? AND ?";
+            $resignationStmt = $db->prepare($resignationSql);
+            $resignationStmt->execute([$windowStart, $windowEnd]);
+            foreach ($resignationStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $addActivity($row);
+            }
+
+            if ($this->model->tableExists('exit_terminations')) {
+                $terminationSql = "SELECT
+                    t.id AS exit_case_id,
+                    t.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                    'termination' AS exit_case_type,
+                    t.effective_date AS scheduled_date,
+                    t.status,
+                    DATEDIFF(t.effective_date, CURDATE()) AS days_remaining,
+                    'termination' AS activity_type,
+                    'Termination Effective Date' AS activity_label,
+                    'termination_detail' AS action,
+                    0 AS is_action_required
+                FROM exit_terminations t
+                LEFT JOIN em_employees e ON e.employee_id = t.employee_id
+                WHERE t.effective_date IS NOT NULL
+                  AND t.status NOT IN ('archived', 'withdrawn', 'rejected', 'rejected_by_legal')
+                  AND t.effective_date BETWEEN ? AND ?";
+                $terminationStmt = $db->prepare($terminationSql);
+                $terminationStmt->execute([$windowStart, $windowEnd]);
+                foreach ($terminationStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $addActivity($row);
+                }
+            }
+
+            if ($this->model->tableExists('exit_interviews') && $this->model->columnExists('exit_interviews', 'scheduled_date')) {
+                $interviewSql = "SELECT
+                    ei.id AS exit_case_id,
+                    ei.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                    COALESCE(ei.exit_case_type, 'resignation') AS exit_case_type,
+                    ei.scheduled_date AS scheduled_date,
+                    ei.status,
+                    DATEDIFF(ei.scheduled_date, CURDATE()) AS days_remaining,
+                    'interview' AS activity_type,
+                    'Exit Interview' AS activity_label,
+                    'interview_detail' AS action,
+                    0 AS is_action_required
+                FROM exit_interviews ei
+                LEFT JOIN em_employees e ON e.employee_id = ei.employee_id
+                WHERE ei.status IN ('scheduled', 'pending', 'in_progress')
+                  AND ei.scheduled_date IS NOT NULL
+                  AND ei.scheduled_date BETWEEN ? AND ?";
+                $interviewStmt = $db->prepare($interviewSql);
+                $interviewStmt->execute([$windowStart, $windowEnd]);
+                foreach ($interviewStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $addActivity($row);
+                }
+            }
+
+            if ($this->model->tableExists('exit_knowledge_transfer_plans') && $this->model->columnExists('exit_knowledge_transfer_plans', 'end_date')) {
+                $ktSql = "SELECT
+                    ktp.id AS exit_case_id,
+                    ktp.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                    'knowledge_transfer' AS exit_case_type,
+                    ktp.end_date AS scheduled_date,
+                    ktp.status,
+                    DATEDIFF(ktp.end_date, CURDATE()) AS days_remaining,
+                    'knowledge_transfer' AS activity_type,
+                    'Knowledge Transfer' AS activity_label,
+                    'knowledge_transfer_detail' AS action,
+                    0 AS is_action_required
+                FROM exit_knowledge_transfer_plans ktp
+                LEFT JOIN em_employees e ON e.employee_id = ktp.employee_id
+                WHERE ktp.status IN ('active', 'in_progress')
+                  AND ktp.end_date IS NOT NULL
+                  AND ktp.end_date BETWEEN ? AND ?";
+                $ktStmt = $db->prepare($ktSql);
+                $ktStmt->execute([$windowStart, $windowEnd]);
+                foreach ($ktStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $addActivity($row);
+                }
+            }
+
+            if ($this->model->tableExists('exit_employee_settlements') && $this->model->columnExists('exit_employee_settlements', 'settlement_date')) {
+                $settlementSql = "SELECT
+                    s.id AS exit_case_id,
+                    s.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                    COALESCE(s.exit_case_type, 'resignation') AS exit_case_type,
+                    s.settlement_date AS scheduled_date,
+                    s.status,
+                    DATEDIFF(s.settlement_date, CURDATE()) AS days_remaining,
+                    'settlement' AS activity_type,
+                    'Settlement' AS activity_label,
+                    'settlement_detail' AS action,
+                    0 AS is_action_required
+                FROM exit_employee_settlements s
+                LEFT JOIN em_employees e ON e.employee_id = s.employee_id
+                WHERE s.status IN ('pending', 'pending_approval', 'approved')
+                  AND s.settlement_date IS NOT NULL
+                  AND s.settlement_date BETWEEN ? AND ?";
+                $settlementStmt = $db->prepare($settlementSql);
+                $settlementStmt->execute([$windowStart, $windowEnd]);
+                foreach ($settlementStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $addActivity($row);
+                }
+            }
+
+            if ($this->model->tableExists('exit_surveys') && $this->model->columnExists('exit_surveys', 'scheduled_date')) {
+                $surveySql = "SELECT
+                    s.id AS exit_case_id,
+                    s.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                    COALESCE(s.exit_case_type, 'resignation') AS exit_case_type,
+                    s.scheduled_date AS scheduled_date,
+                    s.approval_status AS status,
+                    DATEDIFF(s.scheduled_date, CURDATE()) AS days_remaining,
+                    'survey' AS activity_type,
+                    'Post-Exit Survey' AS activity_label,
+                    'survey_detail' AS action,
+                    0 AS is_action_required
+                FROM exit_surveys s
+                LEFT JOIN em_employees e ON e.employee_id = s.employee_id
+                LEFT JOIN exit_resignations r ON s.exit_case_type = 'resignation' AND s.exit_case_id = r.id
+                LEFT JOIN exit_terminations t ON s.exit_case_type = 'termination' AND s.exit_case_id = t.id
+                WHERE s.approval_status IN ('draft', 'scheduled')
+                  AND s.scheduled_date IS NOT NULL
+                  AND s.scheduled_date BETWEEN ? AND ?
+                  AND (
+                    (s.exit_case_type = 'resignation' AND r.id IS NOT NULL AND r.status = 'approved')
+                    OR (s.exit_case_type = 'termination' AND t.id IS NOT NULL AND t.status = 'approved')
+                    OR (s.exit_case_type IS NULL)
+                  )";
+                $surveyStmt = $db->prepare($surveySql);
+                $surveyStmt->execute([$windowStart, $windowEnd]);
+                foreach ($surveyStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $addActivity($row);
+                }
+            }
+
+            if ($this->model->tableExists('exit_resignations') && $this->model->columnExists('exit_resignations', 'documentation_complete')) {
+                $documentationSql = "SELECT
+                    r.id AS exit_case_id,
+                    r.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                    'resignation' AS exit_case_type,
+                    r.last_working_date AS scheduled_date,
+                    r.status,
+                    DATEDIFF(r.last_working_date, CURDATE()) AS days_remaining,
+                    'documentation' AS activity_type,
+                    'Documentation Incomplete' AS activity_label,
+                    'documentation_detail' AS action,
+                    1 AS is_action_required
+                FROM exit_resignations r
+                LEFT JOIN em_employees e ON e.employee_id = r.employee_id
+                WHERE r.documentation_complete = 0
+                  AND r.status NOT IN ('archived', 'withdrawn', 'rejected', 'rejected_by_legal')
+                  AND r.last_working_date IS NOT NULL
+                  AND r.last_working_date BETWEEN ? AND ?";
+                $documentationStmt = $db->prepare($documentationSql);
+                $documentationStmt->execute([$windowStart, $windowEnd]);
+                foreach ($documentationStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $addActivity($row);
+                }
+            }
+
+            if ($this->model->tableExists('exit_terminations') && $this->model->columnExists('exit_terminations', 'documentation_complete')) {
+                $documentationTerminationSql = "SELECT
+                    t.id AS exit_case_id,
+                    t.employee_id,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                    'termination' AS exit_case_type,
+                    t.effective_date AS scheduled_date,
+                    t.status,
+                    DATEDIFF(t.effective_date, CURDATE()) AS days_remaining,
+                    'documentation' AS activity_type,
+                    'Documentation Incomplete' AS activity_label,
+                    'documentation_detail' AS action,
+                    1 AS is_action_required
+                FROM exit_terminations t
+                LEFT JOIN em_employees e ON e.employee_id = t.employee_id
+                WHERE t.documentation_complete = 0
+                  AND t.status NOT IN ('archived', 'withdrawn', 'rejected', 'rejected_by_legal')
+                  AND t.effective_date IS NOT NULL
+                  AND t.effective_date BETWEEN ? AND ?";
+                $documentationTerminationStmt = $db->prepare($documentationTerminationSql);
+                $documentationTerminationStmt->execute([$windowStart, $windowEnd]);
+                foreach ($documentationTerminationStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $addActivity($row);
+                }
+            }
+
+            usort($activities, function (array $a, array $b) {
+                $priorityRank = ['URGENT' => 0, 'DUE SOON' => 1, 'UPCOMING' => 2, 'SCHEDULED' => 3, 'ACTION REQUIRED' => 4];
+                $aPriority = strtoupper((string)($a['priority'] ?? 'SCHEDULED'));
+                $bPriority = strtoupper((string)($b['priority'] ?? 'SCHEDULED'));
+
+                $aRank = $priorityRank[$aPriority] ?? 99;
+                $bRank = $priorityRank[$bPriority] ?? 99;
+                if ($aRank !== $bRank) {
+                    return $aRank <=> $bRank;
+                }
+
+                $aDate = $a['scheduled_date'] ?? '9999-12-31';
+                $bDate = $b['scheduled_date'] ?? '9999-12-31';
+                return strcmp($aDate, $bDate);
+            });
+
+            $summary = [
+                'total' => count($activities),
+                'urgent' => 0,
+                'due_soon' => 0,
+                'upcoming' => 0,
+                'action_required' => 0,
+            ];
+
+            foreach ($activities as $activity) {
+                $priority = strtoupper((string)($activity['priority'] ?? 'SCHEDULED'));
+                if ($priority === 'URGENT') {
+                    $summary['urgent']++;
+                } elseif ($priority === 'DUE SOON') {
+                    $summary['due_soon']++;
+                } elseif ($priority === 'UPCOMING') {
+                    $summary['upcoming']++;
+                } elseif ($priority === 'ACTION REQUIRED') {
+                    $summary['action_required']++;
+                }
+            }
+
+            return [
+                'data' => array_slice($activities, 0, $limit),
+                'total' => count($activities),
+                'summary' => $summary,
+                'days' => $days,
+            ];
+        } catch (Exception $e) {
+            return ['data' => [], 'total' => 0, 'summary' => ['total' => 0, 'urgent' => 0, 'due_soon' => 0, 'upcoming' => 0, 'action_required' => 0], 'days' => $days, 'error' => $e->getMessage()];
+        }
+    }
+
+    private function resolveActivityPriority(string $status, ?int $daysRemaining, bool $actionRequired = false): string
+    {
+        if ($actionRequired) {
+            return 'ACTION REQUIRED';
+        }
+
+        $normalizedStatus = strtolower(trim($status));
+        if ($normalizedStatus === 'overdue' || $daysRemaining === null) {
+            return 'SCHEDULED';
+        }
+
+        if ($daysRemaining <= 0) {
+            return 'URGENT';
+        }
+
+        if ($daysRemaining <= 3) {
+            return 'DUE SOON';
+        }
+
+        if ($daysRemaining <= 7) {
+            return 'UPCOMING';
+        }
+
+        return 'SCHEDULED';
     }
 
     /**
@@ -352,17 +686,18 @@ class ExitManagementController
     {
         try {
             $db = $this->model->getConnection();
-            $query = "SELECT r.*, 
-                             CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                             e.department AS department,
-                             e.email AS employee_email,
-                             CONCAT(p.first_name, ' ', p.last_name) AS preclearance_desk_person_name,
-                             DATEDIFF(r.last_working_date, CURDATE()) AS days_left
-                      FROM exit_resignations r
-                      LEFT JOIN em_employees e ON r.employee_id = e.employee_id
-                      LEFT JOIN hrms_employee p ON r.preclearance_desk_person = p.employee_id
-                      ORDER BY r.created_at DESC -- Default sorting: newest first
-                      LIMIT ?";
+                 $query = "SELECT r.*, 
+                         CONCAT(e.first_name, ' ', e.last_name) AS full_name,
+                         COALESCE(d.department_name, e.department) AS department,
+                         e.email AS employee_email,
+                         CONCAT(p.first_name, ' ', p.last_name) AS preclearance_desk_person_name,
+                         DATEDIFF(r.last_working_date, CURDATE()) AS days_left
+                     FROM exit_resignations r
+                     LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                     LEFT JOIN em_departments d ON e.department_id = d.department_id
+                     LEFT JOIN hrms_employee p ON r.preclearance_desk_person = p.employee_id
+                     ORDER BY r.created_at DESC -- Default sorting: newest first
+                     LIMIT ?";
 
             $stmt = $db->prepare($query);
             $stmt->bindValue(1, $limit, PDO::PARAM_INT);
@@ -371,15 +706,16 @@ class ExitManagementController
         } catch (Exception $e) {
             // Fallback for databases that do not have preclearance_desk_person
             try {
-                $query = "SELECT r.*, 
-                                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                                 e.department,
-                                 e.email,
-                                 DATEDIFF(r.last_working_date, CURDATE()) AS days_left
-                          FROM exit_resignations r
-                          LEFT JOIN em_employees e ON r.employee_id = e.employee_id
-                          ORDER BY r.created_at DESC -- Default sorting: newest first
-                          LIMIT ?";
+                  $query = "SELECT r.*, 
+                             CONCAT(e.first_name, ' ', e.last_name) AS full_name,
+                             COALESCE(d.department_name, e.department) AS department,
+                             e.email,
+                             DATEDIFF(r.last_working_date, CURDATE()) AS days_left
+                         FROM exit_resignations r
+                         LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                         LEFT JOIN em_departments d ON e.department_id = d.department_id
+                         ORDER BY r.created_at DESC -- Default sorting: newest first
+                         LIMIT ?";
 
                 // ensure we have a DB connection in fallback
                 $db = $this->model->getConnection();
@@ -535,9 +871,10 @@ class ExitManagementController
             // Group exits by the employee's department to show which departments
             // have the most exit cases. Use LEFT JOIN in case employee record
             // is missing; fallback to 'Unknown'.
-            $query = "SELECT COALESCE(e.department, 'Unknown') AS department, COUNT(*) AS count
+            $query = "SELECT COALESCE(d.department_name, e.department, 'Unknown') AS department, COUNT(*) AS count
                       FROM exit_resignations r
                       LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                      LEFT JOIN em_departments d ON e.department_id = d.department_id
                       GROUP BY department
                       ORDER BY count DESC";
 
@@ -655,9 +992,10 @@ class ExitManagementController
             }
 
             // Department distribution (reuse department grouping)
-            $deptStmt = $db->query("SELECT COALESCE(e.department, 'Unknown') AS department, COUNT(*) AS count
+            $deptStmt = $db->query("SELECT COALESCE(d.department_name, e.department, 'Unknown') AS department, COUNT(*) AS count
                                       FROM exit_resignations r
                                       LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                                      LEFT JOIN em_departments d ON e.department_id = d.department_id
                                       GROUP BY department
                                       ORDER BY count DESC");
             $deptResults = $deptStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -685,9 +1023,10 @@ class ExitManagementController
         try {
             $db = $this->model->getConnection();
             $stmt = $db->prepare(
-                "SELECT r.*, COALESCE(e.department, 'Unknown') AS department, CONCAT(e.first_name, ' ', e.last_name) AS full_name
+                "SELECT r.*, COALESCE(d.department_name, e.department, 'Unknown') AS department, CONCAT(e.first_name, ' ', e.last_name) AS full_name
                  FROM exit_resignations r
                  LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                 LEFT JOIN em_departments d ON e.department_id = d.department_id
                  ORDER BY r.id DESC
                  LIMIT 20"
             );
@@ -959,6 +1298,11 @@ class ExitManagementController
                     $days = isset($data['days']) ? (int)$data['days'] : 14;
                     $limit = isset($data['limit']) ? (int)$data['limit'] : 6;
                     return $this->getUpcomingExits($days, $limit);
+
+                case 'get_upcoming_exit_activities':
+                    $days = isset($data['days']) ? (int)$data['days'] : 14;
+                    $limit = isset($data['limit']) ? (int)$data['limit'] : 8;
+                    return $this->getUpcomingExitActivities($days, $limit);
 
                 case 'get_action_items':
                     return $this->getActionItems();

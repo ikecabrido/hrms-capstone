@@ -294,6 +294,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
 <script src="assets/vendor/jquery/jquery.min.js"></script>
 <script src="assets/vendor/flatpickr/flatpickr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/custom.js"></script>
 <script>
     if (typeof loadSettlementsTable === 'function') {

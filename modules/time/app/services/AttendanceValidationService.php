@@ -415,24 +415,25 @@ class AttendanceValidationService
     {
         $date = $date ?? date('Y-m-d');
 
-        $query = "SELECT 
-            a.attendance_id,
-            a.employee_id,
-            a.time_in,
-            CONCAT(
-                COALESCE(e.first_name, ''),
-                ' ',
-                COALESCE(e.last_name, '')
-            ) AS full_name,
-            e.department
-          FROM ta_attendance a
-          JOIN {$this->employees_table} e 
-            ON a.employee_id = e.employee_id
-          WHERE a.attendance_date = :date
-          AND a.time_in IS NOT NULL
-          AND (a.status IS NULL OR a.status = 'PRESENT')
-          AND e.employment_status = 'Active'
-          ORDER BY full_name";
+                        $query = "SELECT 
+                        a.attendance_id,
+                        a.employee_id,
+                        a.time_in,
+                        CONCAT(
+                                COALESCE(e.first_name, ''),
+                                ' ',
+                                COALESCE(e.last_name, '')
+                        ) AS full_name,
+                        COALESCE(d.department_name, '') AS department
+                    FROM ta_attendance a
+                    JOIN {$this->employees_table} e 
+                        ON a.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                    WHERE a.attendance_date = :date
+                    AND a.time_in IS NOT NULL
+                    AND (a.status IS NULL OR a.status = 'PRESENT')
+                    AND e.employment_status = 'Active'
+                    ORDER BY full_name";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':date', $date);
@@ -484,17 +485,18 @@ class AttendanceValidationService
             return [];
         }
 
-        $employeeQuery = "SELECT 
-                    employee_id,
-                    CONCAT(
-                        COALESCE(first_name, ''),
-                        ' ',
-                        COALESCE(last_name, '')
-                    ) AS full_name,
-                    department
-                  FROM {$this->employees_table}
-                  WHERE employment_status = 'Active'
-                  ORDER BY full_name";
+                $employeeQuery = "SELECT 
+                                        e.employee_id,
+                                        CONCAT(
+                                                COALESCE(e.first_name, ''),
+                                                ' ',
+                                                COALESCE(e.last_name, '')
+                                        ) AS full_name,
+                                        COALESCE(d.department_name, '') AS department
+                                    FROM {$this->employees_table} e
+                                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                    WHERE e.employment_status = 'Active'
+                                    ORDER BY full_name";
 
         $stmt = $this->conn->prepare($employeeQuery);
         $stmt->execute();

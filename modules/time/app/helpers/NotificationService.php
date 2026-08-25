@@ -282,15 +282,43 @@ class NotificationService {
      * Send approval notification
      */
     public function notifyApproval($user_id, $type, $details) {
-        $query = "SELECT users.email, users.phone, employees.full_name 
-                  FROM users 
-                  JOIN employees ON users.id = employees.user_id
-                  WHERE users.id = ?";
-        
         $conn = $this->db->getConnection();
-        $stmt = $conn->prepare($query);
-        $stmt->execute([$user_id]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $user = null;
+
+        // Try to resolve employee via user_account mapping (preferred)
+        try {
+            $mapStmt = $conn->prepare("SELECT employee_id FROM user_account WHERE user_id = ? LIMIT 1");
+            $mapStmt->execute([$user_id]);
+            $map = $mapStmt->fetch(PDO::FETCH_ASSOC);
+            if ($map && !empty($map['employee_id'])) {
+                $employeeId = $map['employee_id'];
+                $profStmt = $conn->prepare("SELECT COALESCE(u.email, '') AS email, COALESCE(u.phone, '') AS phone, CONCAT(COALESCE(e.first_name,''), ' ', COALESCE(e.last_name,'')) AS full_name
+                                            FROM em_employees e
+                                            LEFT JOIN em_users u ON u.employee_id = e.employee_id
+                                            WHERE e.employee_id = ? LIMIT 1");
+                $profStmt->execute([$employeeId]);
+                $user = $profStmt->fetch(PDO::FETCH_ASSOC);
+            }
+        } catch (Exception $e) {
+            // ignore and try fallback
+            $user = null;
+        }
+
+        // Fallback: try legacy users + employees tables if present
+        if (empty($user)) {
+            try {
+                $query = "SELECT users.email, users.phone, employees.full_name 
+                          FROM users 
+                          JOIN employees ON users.id = employees.user_id
+                          WHERE users.id = ?";
+                $stmt = $conn->prepare($query);
+                $stmt->execute([$user_id]);
+                $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                // last resort: empty user record to avoid exceptions
+                $user = ['email' => '', 'phone' => '', 'full_name' => 'User'];
+            }
+        }
         
         if ($type === 'leave_approved') {
             $subject = "Your Leave Request Has Been Approved";

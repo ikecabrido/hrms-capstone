@@ -1,0 +1,2 @@
+[processStaticQR] 2026-08-24 17:08:17 {"employee_id":37,"get":{"id":"37"},"post":[],"request_method":"GET","request_uri":"/hrms/hrms-capstone/modules/time/processStaticQR.php?id=37"}
+[processStaticQR] 2026-08-24 17:08:17 {"employee_id":37,"todayRecord":false,"selected_branch":"TIME_IN"}

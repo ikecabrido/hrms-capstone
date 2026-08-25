@@ -41,10 +41,11 @@ class AbsenceLateMgmt
                         NULL AS regular_hours,
                         NULL AS overtime_hours,
                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                        CAST(e.department AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS department,
+                        COALESCE(d.department_name, '') AS department,
                         CAST('legacy' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->records_table} r
                     JOIN em_employees e ON r.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
                     WHERE 1=1
 
                     UNION ALL
@@ -73,10 +74,11 @@ class AbsenceLateMgmt
                         a.regular_hours,
                         a.overtime_hours,
                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                        CAST(e.department AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS department,
+                        COALESCE(d.department_name, '') AS department,
                         CAST('attendance' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->attendance_table} a
                     JOIN em_employees e ON a.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
                     WHERE a.status IN ('ABSENT', 'LATE')
                 ) AS combined
                 WHERE 1=1";
@@ -148,11 +150,12 @@ class AbsenceLateMgmt
                     NULL AS total_hours_worked,
                     NULL AS regular_hours,
                     NULL AS overtime_hours,
-                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                    e.department,
+                                        CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                                        COALESCE(d.department_name, '') AS department,
                     'legacy' AS source
                   FROM {$this->records_table} r
-                  JOIN em_employees e ON r.employee_id = e.employee_id
+                                    JOIN em_employees e ON r.employee_id = e.employee_id
+                                    LEFT JOIN em_departments d ON e.department_id = d.department_id
                   WHERE r.record_id = :record_id";
 
         $stmt = $this->conn->prepare($query);
@@ -187,11 +190,12 @@ class AbsenceLateMgmt
                     a.total_hours_worked,
                     a.regular_hours,
                     a.overtime_hours,
-                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                    e.department,
+                                        CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                                        COALESCE(d.department_name, '') AS department,
                     'attendance' AS source
                   FROM {$this->attendance_table} a
-                  JOIN em_employees e ON a.employee_id = e.employee_id
+                                    JOIN em_employees e ON a.employee_id = e.employee_id
+                                    LEFT JOIN em_departments d ON e.department_id = d.department_id
                   WHERE a.attendance_id = :record_id
                   AND a.status IN ('ABSENT', 'LATE')";
 
@@ -439,7 +443,7 @@ class AbsenceLateMgmt
                         r.record_id,
                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
                         e.employee_id,
-                        CAST(e.department AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS department,
+                        COALESCE(d.department_name, '') AS department,
                         CAST(r.type AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS type,
                         r.absence_date,
                         CAST(r.excuse_status AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS excuse_status,
@@ -448,6 +452,7 @@ class AbsenceLateMgmt
                         CAST('legacy' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->records_table} r
                     JOIN em_employees e ON r.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
                     WHERE 1=1
 
                     UNION ALL
@@ -456,7 +461,7 @@ class AbsenceLateMgmt
                         a.attendance_id AS record_id,
                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
                         e.employee_id,
-                        CAST(e.department AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS department,
+                        COALESCE(d.department_name, '') AS department,
                         CAST(CASE WHEN a.status = 'ABSENT' THEN 'ABSENT' WHEN a.status = 'LATE' THEN 'LATE' ELSE 'ABSENT' END AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS type,
                         a.attendance_date AS absence_date,
                         CAST('PENDING' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS excuse_status,
@@ -470,6 +475,7 @@ class AbsenceLateMgmt
                         CAST('attendance' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->attendance_table} a
                     JOIN em_employees e ON a.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
                     WHERE a.status IN ('ABSENT', 'LATE')
                 ) AS combined
                 WHERE 1=1";
@@ -561,7 +567,7 @@ class AbsenceLateMgmt
                         r.record_id,
                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
                         e.employee_id,
-                        CAST(e.department AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS department,
+                        COALESCE(d.department_name, '') AS department,
                         CAST(r.type AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS type,
                         r.absence_date,
                         CAST(r.reason AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS reason,
@@ -569,6 +575,7 @@ class AbsenceLateMgmt
                         CAST('legacy' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->records_table} r
                     JOIN em_employees e ON r.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
                     WHERE r.excuse_status = 'PENDING'
 
                     UNION ALL
@@ -577,7 +584,7 @@ class AbsenceLateMgmt
                         a.attendance_id AS record_id,
                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
                         e.employee_id,
-                        CAST(e.department AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS department,
+                        COALESCE(d.department_name, '') AS department,
                         CAST(CASE WHEN a.status = 'ABSENT' THEN 'ABSENT' WHEN a.status = 'LATE' THEN 'LATE' ELSE 'ABSENT' END AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS type,
                         a.attendance_date AS absence_date,
                         CAST(CASE 
@@ -590,6 +597,7 @@ class AbsenceLateMgmt
                         CAST('attendance' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_general_ci AS source
                     FROM {$this->attendance_table} a
                     JOIN em_employees e ON a.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
                     WHERE a.status IN ('ABSENT', 'LATE')
                 ) AS combined
                 ORDER BY combined.created_at ASC

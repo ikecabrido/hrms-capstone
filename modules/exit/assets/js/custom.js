@@ -1,5 +1,6 @@
 // Exit Management JavaScript
-let interviewModalViewOnlyMode = false;
+// Ensure the global flag is defined without re-declaring with `let` on repeated loads
+window.interviewModalViewOnlyMode = typeof window.interviewModalViewOnlyMode !== 'undefined' ? window.interviewModalViewOnlyMode : false;
 let transferModalViewOnlyMode = false;
 
 $(document).ready(function() {
@@ -490,6 +491,26 @@ function initializeModals() {
         e.preventDefault();
         submitTerminationForm();
     });
+
+    $(document).off('click.terminationModalClose', '#terminationModal [data-close="termination-modal"]')
+        .on('click.terminationModalClose', '#terminationModal [data-close="termination-modal"]', function(e) {
+            e.preventDefault();
+            closeTerminationModal();
+        });
+
+    $(document).off('click.terminationModalBackdrop', '#terminationModal .termination-modal-backdrop')
+        .on('click.terminationModalBackdrop', '#terminationModal .termination-modal-backdrop', function(e) {
+            if (e.target === this) {
+                closeTerminationModal();
+            }
+        });
+
+    $(document).off('keydown.terminationModalEscape')
+        .on('keydown.terminationModalEscape', function(e) {
+            if (e.key === 'Escape' && $('#terminationModal').hasClass('is-open')) {
+                closeTerminationModal();
+            }
+        });
 
     $('#terminationEmployeeSelect').on('change', function() {
         const employeeId = $(this).val();
@@ -2811,7 +2832,7 @@ function buildTerminationLetterPreview(data = {}) {
     const commentsHtml = comments ? `<div style="margin-top: 18px;"><strong>Additional Notes:</strong> ${escapeHtml(comments)}</div>` : '';
 
     return `
-        <div style="background:#fff; border:1px solid #dfe5ec; box-shadow:0 2px 10px rgba(15,23,42,0.06); width:100%; min-height:760px; padding:34px 40px; color:#212529; font-family:'Segoe UI', Arial, sans-serif; box-sizing:border-box;">
+        <div style="background:#fff; border:1px solid #dfe5ec; box-shadow:0 2px 10px rgba(15,23,42,0.06); width:100%; max-width:794px; min-height:1123px; padding:34px 40px; color:#212529; font-family:'Segoe UI', Arial, sans-serif; box-sizing:border-box; margin:0 auto;">
             <div style="display:flex; align-items:center; border-bottom:2px solid #1f5fbf; padding-bottom:14px; margin-bottom:20px;">
                 <img src="/capstone_hr_management_system2/assets/pics/bcpLogo.png" alt="Bestlink College of the Philippines logo" style="width:86px; height:86px; object-fit:contain; margin-right:18px;">
                 <div>
@@ -2846,6 +2867,39 @@ function escapeHtml(value) {
         .replace(/'/g, '&#039;');
 }
 
+function openTerminationModal() {
+    const $modal = $('#terminationModal');
+    if (!$modal.length) {
+        return;
+    }
+
+    $modal.addClass('is-open').attr('aria-hidden', 'false');
+    $('body').css('overflow', 'hidden');
+    document.documentElement.style.overflow = 'hidden';
+}
+
+function closeTerminationModal() {
+    const $modal = $('#terminationModal');
+    if (!$modal.length) {
+        return;
+    }
+
+    $modal.removeClass('is-open').attr('aria-hidden', 'true');
+    $('body').css('overflow', '');
+    document.documentElement.style.overflow = '';
+}
+
+function resetTerminationModal() {
+    $('#terminationForm')[0].reset();
+    $('#terminationId').val('');
+    $('#terminationApprovalSection').hide();
+    $('#terminationLetterSection').hide();
+    $('#terminationEligibilityMessage').hide();
+    $('#terminationSubmitBtn').prop('disabled', false).text('Submit Termination');
+    $('#terminationLetterContent').html('Generated termination letter preview appears here.');
+    $('#terminationModalTitle').text('Initiate Termination');
+}
+
 function updateTerminationLetterPreview() {
     const employeeName = $('#terminationEmployeeSelect option:selected').text() || 'Employee';
     const previewData = {
@@ -2859,17 +2913,21 @@ function updateTerminationLetterPreview() {
 }
 
 function showTerminationModal(terminationId = null) {
-    $('#terminationForm')[0].reset();
-    $('#terminationId').val('');
-    $('#terminationApprovalSection').hide();
-    $('#terminationLetterSection').hide();
-    $('#terminationEligibilityMessage').hide();
-    $('#terminationSubmitBtn').prop('disabled', false).text('Submit Termination');
+    resetTerminationModal();
 
     $('#terminationReason').off('input.terminationLetter').on('input.terminationLetter', updateTerminationLetterPreview);
     $('#terminationEffectiveDate').off('change.terminationLetter').on('change.terminationLetter', updateTerminationLetterPreview);
     $('#terminationComments').off('input.terminationLetter').on('input.terminationLetter', updateTerminationLetterPreview);
-    $('#terminationEmployeeSelect').off('change.terminationLetter').on('change.terminationLetter', updateTerminationLetterPreview);
+    $('#terminationEmployeeSelect').off('change.terminationLetter').on('change.terminationLetter', function() {
+        updateTerminationLetterPreview();
+        const employeeId = $(this).val();
+        if (employeeId) {
+            checkTerminationEligibility(employeeId);
+        } else {
+            $('#terminationEligibilityMessage').hide();
+            $('#terminationSubmitBtn').prop('disabled', false);
+        }
+    });
 
     if (terminationId) {
         $('#terminationModalTitle').text('Review Termination');
@@ -2892,7 +2950,7 @@ function showTerminationModal(terminationId = null) {
                 $('#terminationApprovalComments').val('');
                 $('#terminationLetterContent').html(buildTerminationLetterPreview(response.data));
                 $('#terminationLetterSection').show();
-                $('#terminationModal').modal('show');
+                openTerminationModal();
             } else {
                 showToast('error', response.message || 'Unable to load termination details.');
             }
@@ -2902,9 +2960,9 @@ function showTerminationModal(terminationId = null) {
         });
     } else {
         $('#terminationModalTitle').text('Initiate Termination');
-        $('#terminationLetterSection').show();
         updateTerminationLetterPreview();
-        $('#terminationModal').modal('show');
+        $('#terminationLetterSection').show();
+        openTerminationModal();
     }
 }
 
@@ -2938,7 +2996,7 @@ function submitTerminationForm() {
     $.post('exit_management.php', payload, function(response) {
         if (response.success) {
             showToast('success', response.message || 'Termination saved successfully.');
-            $('#terminationModal').modal('hide');
+            closeTerminationModal();
             loadTerminationsTable();
         } else {
             showToast('error', response.message || 'Failed to save termination.');
@@ -4231,6 +4289,7 @@ function loadDashboardData() {
     loadTerminationStatusChart();
     loadDashboardMetrics();
     loadUpcomingExits();
+    loadUpcomingExitActivities();
     loadActionRequiredList();
     loadRecentActiveCases();
 }
@@ -7203,6 +7262,312 @@ function loadUpcomingExits(days = 14, limit = 6) {
         if (list.length) list.empty().append('<li class="text-danger">Failed to load</li>');
         if (tbody.length) tbody.empty().append('<tr><td colspan="5">Failed to load</td></tr>');
     });
+}
+
+function loadUpcomingExitActivities(days = 30, limit = 50) {
+    $.post('exit_management.php', { ajax_action: 'get_upcoming_exit_activities', days: days, limit: limit }, function(response) {
+        const list = $('#upcoming-exit-activities-list');
+        const summary = $('#upcoming-exit-activities-summary');
+        const filters = $('#upcoming-exit-activities-filters');
+        const bottomList = $('#upcoming-exit-activities-bottom-list');
+        if (!list.length && !bottomList.length) return;
+
+        const items = response && Array.isArray(response.data) ? response.data : [];
+        const summaryData = response && response.summary ? response.summary : {
+            total: items.length,
+            urgent: 0,
+            due_soon: 0,
+            upcoming: 0,
+            action_required: 0
+        };
+
+        if (summary.length) {
+            summary.empty();
+            summary.append(`
+                <span class="alert-summary-badge"><strong>${escapeHtml(summaryData.total || 0)}</strong> Total</span>
+                <span class="alert-summary-badge"><strong>${escapeHtml(summaryData.urgent || 0)}</strong> Urgent</span>
+                <span class="alert-summary-badge"><strong>${escapeHtml(summaryData.due_soon || 0)}</strong> Due Soon</span>
+                <span class="alert-summary-badge"><strong>${escapeHtml(summaryData.upcoming || 0)}</strong> Upcoming</span>
+                <span class="alert-summary-badge"><strong>${escapeHtml(summaryData.action_required || 0)}</strong> Action Required</span>
+            `);
+        }
+
+        if (filters.length) {
+            const filterOptions = [
+                { key: 'all', label: 'All' },
+                { key: 'urgent', label: 'Urgent' },
+                { key: 'due_soon', label: 'Due Soon' },
+                { key: 'upcoming', label: 'Upcoming' },
+                { key: 'action_required', label: 'Action Required' },
+                { key: 'resignation', label: 'Resignation' },
+                { key: 'termination', label: 'Termination' },
+                { key: 'exit_interview', label: 'Exit Interview' },
+                { key: 'knowledge_transfer', label: 'Knowledge Transfer' },
+                { key: 'settlement', label: 'Settlement' },
+                { key: 'documentation', label: 'Documentation' },
+                { key: 'post_exit_survey', label: 'Post-Exit Survey' }
+            ];
+
+            filters.empty();
+            filterOptions.forEach(function(option) {
+                const isActive = (window.exitActivityFilter || 'all') === option.key;
+                const button = $('<button/>')
+                    .addClass('alert-filter-btn')
+                    .toggleClass('active', isActive)
+                    .attr('type', 'button')
+                    .attr('data-filter', option.key)
+                    .text(option.label)
+                    .on('click', function() {
+                        window.exitActivityFilter = option.key;
+                        renderExitActivityList(items);
+                        $('.alert-filter-btn').removeClass('active');
+                        $(this).addClass('active');
+                    });
+                filters.append(button);
+            });
+        }
+
+        renderExitActivityList(items);
+        renderUpcomingActivitiesList(items);
+    }, 'json').fail(function(xhr, status, err) {
+        console.error('[loadUpcomingExitActivities] AJAX fail:', status, err, xhr.responseText);
+        const alertList = $('#upcoming-exit-activities-list');
+        if (alertList.length) {
+            alertList.empty().append('<li class="text-danger">Failed to load alerts</li>');
+        }
+        const upcomingList = $('#upcoming-exit-activities-bottom-list');
+        if (upcomingList.length) {
+            upcomingList.empty().append('<li class="text-danger">Failed to load upcoming activities</li>');
+        }
+    });
+}
+
+function renderUpcomingActivitiesList(items) {
+    const list = $('#upcoming-exit-activities-bottom-list');
+    if (!list.length) return;
+
+    const sorted = Array.isArray(items) ? items.slice().sort(function(a, b) {
+        const ordering = { URGENT: 0, 'DUE SOON': 1, UPCOMING: 2, SCHEDULED: 3, 'ACTION REQUIRED': 4 };
+        const aPriority = (a.priority || 'SCHEDULED').toUpperCase();
+        const bPriority = (b.priority || 'SCHEDULED').toUpperCase();
+        const aRank = ordering[aPriority] !== undefined ? ordering[aPriority] : 99;
+        const bRank = ordering[bPriority] !== undefined ? ordering[bPriority] : 99;
+        if (aRank !== bRank) return aRank - bRank;
+        const aDate = a.scheduled_date || '9999-12-31';
+        const bDate = b.scheduled_date || '9999-12-31';
+        return new Date(aDate) - new Date(bDate);
+    }) : [];
+
+    list.empty();
+    if (!sorted.length) {
+        list.append('<li class="empty-state">No upcoming exit activities.</li>');
+        return;
+    }
+
+    sorted.forEach(function(item) {
+        const employee = item.employee_name || 'Unknown Employee';
+        const activityLabel = item.activity_label || 'Exit Activity';
+        const scheduledDate = item.scheduled_date || 'N/A';
+        const priority = (item.priority || 'SCHEDULED').toUpperCase();
+        const daysRemaining = item.days_remaining !== null && typeof item.days_remaining !== 'undefined' ? item.days_remaining : 0;
+        const dayText = daysRemaining < 0 ? `${Math.abs(daysRemaining)} days overdue` : daysRemaining === 0 ? 'Due today' : `${daysRemaining} days left`;
+
+        const row = $(document.createElement('li')).addClass('alert-list-item');
+        const content = $(document.createElement('div')).addClass('alert-main');
+        const titleRow = $(document.createElement('div')).addClass('alert-title-row');
+        titleRow.append(document.createTextNode(activityLabel));
+        titleRow.append($(document.createElement('span')).addClass('priority-badge ' + (
+            priority === 'URGENT' ? 'priority-urgent' :
+            priority === 'DUE SOON' ? 'priority-due-soon' :
+            priority === 'UPCOMING' ? 'priority-upcoming' :
+            priority === 'ACTION REQUIRED' ? 'priority-action-required' :
+            'priority-scheduled'
+        )).text(priority));
+
+        const meta = $(document.createElement('div')).addClass('alert-meta');
+        meta.html('<strong>' + escapeHtml(employee) + '</strong> • ' + escapeHtml(scheduledDate) + ' • ' + escapeHtml(dayText));
+
+        const actionButton = $(document.createElement('button'))
+            .addClass('btn btn-sm btn-outline-primary')
+            .attr('type', 'button')
+            .text('View')
+            .on('click', function() {
+                const caseId = item.exit_case_id || item.id || 0;
+                openExitActivityDetails(item.action || 'resignation_detail', caseId, item.exit_case_type || 'resignation', item.activity_type || 'resignation');
+            });
+
+        content.append(titleRow, meta);
+        row.append(content, actionButton);
+        list.append(row);
+    });
+}
+
+function renderExitActivityList(items) {
+    const list = $('#upcoming-exit-activities-list');
+    if (!list.length) return;
+
+    const filter = window.exitActivityFilter || 'all';
+    let filtered = Array.isArray(items) ? items.slice() : [];
+
+    if (filter !== 'all') {
+        filtered = filtered.filter(function(item) {
+            const type = (item.activity_type || '').toLowerCase();
+            const priority = (item.priority || 'SCHEDULED').toUpperCase();
+            const exitCaseType = (item.exit_case_type || '').toLowerCase();
+
+            if (filter === 'urgent') return priority === 'URGENT';
+            if (filter === 'due_soon') return priority === 'DUE SOON';
+            if (filter === 'upcoming') return priority === 'UPCOMING';
+            if (filter === 'action_required') return priority === 'ACTION REQUIRED' || !!item.is_action_required;
+            if (filter === 'resignation') return exitCaseType === 'resignation';
+            if (filter === 'termination') return exitCaseType === 'termination';
+            if (filter === 'exit_interview') return type === 'interview';
+            if (filter === 'knowledge_transfer') return type === 'knowledge_transfer';
+            if (filter === 'settlement') return type === 'settlement';
+            if (filter === 'documentation') return type === 'documentation';
+            if (filter === 'post_exit_survey') return type === 'survey';
+            return true;
+        });
+    }
+
+    filtered.sort(function(a, b) {
+        const ordering = { URGENT: 0, 'DUE SOON': 1, UPCOMING: 2, SCHEDULED: 3, 'ACTION REQUIRED': 4 };
+        const aPriority = (a.priority || 'SCHEDULED').toUpperCase();
+        const bPriority = (b.priority || 'SCHEDULED').toUpperCase();
+        const aRank = ordering[aPriority] !== undefined ? ordering[aPriority] : 99;
+        const bRank = ordering[bPriority] !== undefined ? ordering[bPriority] : 99;
+        if (aRank !== bRank) {
+            return aRank - bRank;
+        }
+
+        const aDate = a.scheduled_date || '9999-12-31';
+        const bDate = b.scheduled_date || '9999-12-31';
+        return new Date(aDate) - new Date(bDate);
+    });
+
+    list.empty();
+    if (!filtered.length) {
+        list.append('<li class="empty-state">No upcoming or overdue exit activities.</li>');
+        return;
+    }
+
+    filtered.forEach(function(item) {
+        const employee = item.employee_name || 'Unknown Employee';
+        const caseType = item.exit_case_type || 'resignation';
+        const caseId = item.exit_case_id || item.id || 0;
+        const activityLabel = item.activity_label || 'Exit Activity';
+        const activityType = (item.activity_type || 'alert').toLowerCase();
+        const scheduledDate = item.scheduled_date || 'N/A';
+        const priority = (item.priority || 'SCHEDULED').toUpperCase();
+        const daysRemaining = item.days_remaining !== null && typeof item.days_remaining !== 'undefined' ? item.days_remaining : 0;
+        const dayText = daysRemaining < 0 ? `${Math.abs(daysRemaining)} days overdue` : daysRemaining === 0 ? 'Due today' : `${daysRemaining} days left`;
+        const actionKey = item.action || 'resignation_detail';
+        const badgeClass = {
+            URGENT: 'priority-urgent',
+            'DUE SOON': 'priority-due-soon',
+            UPCOMING: 'priority-upcoming',
+            SCHEDULED: 'priority-scheduled',
+            'ACTION REQUIRED': 'priority-action-required'
+        }[priority] || 'priority-scheduled';
+
+        const row = $(document.createElement('li'))
+            .addClass('alert-list-item');
+
+        const content = $(document.createElement('div')).addClass('alert-main');
+        const titleRow = $(document.createElement('div')).addClass('alert-title-row');
+        titleRow.append(document.createTextNode(activityLabel));
+        const badge = $(document.createElement('span')).addClass('priority-badge ' + badgeClass).text(priority);
+        titleRow.append(badge);
+
+        const meta = $(document.createElement('div')).addClass('alert-meta');
+        const caseLabel = caseType === 'resignation' ? 'Resignation' : caseType === 'termination' ? 'Termination' : caseType;
+        meta.html(
+            '<strong>' + escapeHtml(employee) + '</strong> • ' + escapeHtml(caseLabel) + ' • Case: ' + escapeHtml(caseId || 'N/A') + '<br>' +
+            'Date: ' + escapeHtml(scheduledDate) + ' • Status: ' + escapeHtml(item.status || 'Scheduled') + ' • ' + escapeHtml(dayText)
+        );
+
+        content.append(titleRow, meta);
+
+        const actionButton = $(document.createElement('button'))
+            .addClass('btn btn-sm btn-outline-primary')
+            .attr('type', 'button')
+            .text('View')
+            .on('click', function() {
+                openExitActivityDetails(actionKey, caseId, caseType, activityType);
+            });
+
+        row.append(content, actionButton);
+        list.append(row);
+    });
+}
+
+function openExitActivityDetails(action, id, caseType, activityType) {
+    const normalizedAction = action || 'resignation_detail';
+    const caseId = id || 0;
+    const normalizedCaseType = caseType || 'resignation';
+    const normalizedActivityType = (activityType || '').toLowerCase();
+
+    switch (normalizedAction) {
+        case 'resignation_detail':
+            openResignationDetails(caseId);
+            break;
+        case 'termination_detail':
+            openResignationDetails(caseId);
+            break;
+        case 'interview_detail':
+            if (typeof showInterviewModal === 'function') {
+                showInterviewModal(caseId);
+            } else {
+                openResignationDetails(caseId);
+            }
+            break;
+        case 'knowledge_transfer_detail':
+            if (typeof openTransferFromDocumentation === 'function') {
+                openTransferFromDocumentation(caseId);
+            } else {
+                openResignationDetails(caseId);
+            }
+            break;
+        case 'settlement_detail':
+            if (typeof openSettlementFromDocumentation === 'function') {
+                openSettlementFromDocumentation(caseId);
+            } else {
+                openResignationDetails(caseId);
+            }
+            break;
+        case 'documentation_detail':
+            if (typeof viewExitCaseDocumentation === 'function') {
+                viewExitCaseDocumentation(caseId, normalizedCaseType);
+            } else {
+                openResignationDetails(caseId);
+            }
+            break;
+        case 'survey_detail':
+            if (typeof showSurveyModal === 'function') {
+                if (caseId) {
+                    try { preselectSurveyCase(caseId); } catch (e) {}
+                }
+                showSurveyModal();
+            } else {
+                openResignationDetails(caseId);
+            }
+            break;
+        default:
+            if (normalizedActivityType === 'interview' && typeof showInterviewModal === 'function') {
+                showInterviewModal(caseId);
+            } else if (normalizedActivityType === 'knowledge_transfer' && typeof openTransferFromDocumentation === 'function') {
+                openTransferFromDocumentation(caseId);
+            } else if (normalizedActivityType === 'settlement' && typeof openSettlementFromDocumentation === 'function') {
+                openSettlementFromDocumentation(caseId);
+            } else if (normalizedActivityType === 'survey' && typeof showSurveyModal === 'function') {
+                showSurveyModal();
+            } else if (normalizedActivityType === 'documentation' && typeof viewExitCaseDocumentation === 'function') {
+                viewExitCaseDocumentation(caseId, normalizedCaseType);
+            } else {
+                openResignationDetails(caseId);
+            }
+            break;
+    }
 }
 
 // Small helper to escape HTML

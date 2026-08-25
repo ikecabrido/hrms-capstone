@@ -153,11 +153,15 @@ class EmployeeShift {
      */
     public function getAllAssignments($shift_id = null) {
         $query = "SELECT es.*, s.shift_name, s.start_time, s.end_time,
-                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department
-                  FROM " . $this->table . " es
-                  INNER JOIN ta_shifts s ON es.shift_id = s.shift_id
-                  INNER JOIN em_employees e ON es.employee_id = e.employee_id
-                  WHERE es.is_active = 1";
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                    COALESCE(d.department_name, '') AS department,
+                    COALESCE(p.position_name, '') AS position
+                FROM " . $this->table . " es
+                INNER JOIN ta_shifts s ON es.shift_id = s.shift_id
+                INNER JOIN em_employees e ON es.employee_id = e.employee_id
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                LEFT JOIN em_positions p ON e.position_id = p.position_id
+                WHERE es.is_active = 1";
 
         if ($shift_id) {
             $query .= " AND es.shift_id = ?";
@@ -244,8 +248,13 @@ class EmployeeShift {
         $today = date('Y-m-d');
         $dayOfWeek = date('w', strtotime($today));
 
-        $query = "SELECT DISTINCT e.employee_id, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, e.position
-                  FROM em_employees e
+                $query = "SELECT DISTINCT e.employee_id,
+                                                 CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                                                 COALESCE(d.department_name, '') AS department,
+                                                 COALESCE(p.position_name, '') AS position
+                                    FROM em_employees e
+                                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                    LEFT JOIN em_positions p ON e.position_id = p.position_id
                   LEFT JOIN " . $this->table . " es ON e.employee_id = es.employee_id
                     AND es.is_active = 1
                     AND es.effective_from <= :today
@@ -295,20 +304,22 @@ class EmployeeShift {
         $query = "SELECT
                     e.employee_id,
                     CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                    e.department,
-                    e.position,
+                                        COALESCE(d.department_name, '') AS department,
+                                        COALESCE(p.position_name, '') AS position,
                     COUNT(a.attendance_id) AS missed_shift_days,
                     MAX(a.attendance_date) AS last_missed_shift
                   FROM em_employees e
-                  INNER JOIN " . $this->table . " es ON e.employee_id = es.employee_id
+                                    INNER JOIN " . $this->table . " es ON e.employee_id = es.employee_id
                     AND es.is_active = 1
                     AND es.effective_from <= CURDATE()
                     AND (es.effective_to IS NULL OR es.effective_to >= CURDATE())
+                                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                    LEFT JOIN em_positions p ON e.position_id = p.position_id
                   LEFT JOIN ta_attendance a ON a.employee_id = e.employee_id
                     AND a.status = 'ABSENT'
                     AND a.attendance_date >= DATE_SUB(CURDATE(), INTERVAL :days_back DAY)
                   WHERE LOWER(e.employment_status) = 'active'
-                  GROUP BY e.employee_id, e.first_name, e.last_name, e.department, e.position
+                                    GROUP BY e.employee_id, e.first_name, e.last_name, d.department_name, p.position_name
                   HAVING COUNT(a.attendance_id) >= 1
                   ORDER BY missed_shift_days DESC, last_missed_shift DESC
                   LIMIT :limit";

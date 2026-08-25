@@ -40,9 +40,11 @@ try {
                 ' ',
                 COALESCE(e.last_name, '')
             ) AS full_name,
-            e.department,
-            e.position
+            COALESCE(d.department_name, '') AS department,
+            COALESCE(p.position_name, '') AS position
         FROM em_employees e
+        LEFT JOIN em_departments d ON e.department_id = d.department_id
+        LEFT JOIN em_positions p ON e.position_id = p.position_id
         WHERE e.employee_id = :id
         LIMIT 1
     ");

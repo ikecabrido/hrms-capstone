@@ -77,15 +77,18 @@ class Leave
      */
     public function getPendingByDepartmentHead($deptHeadUserId, $limit = null, $offset = null)
     {
-        $query = "SELECT lr.id, lr.employee_id, lr.leave_type_id, lr.start_date, lr.end_date, lr.details, lr.status, lr.date_submitted,
-                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, e.department, lt.leave_type_name,
-                         DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days
-                  FROM ta_leave_requests lr
-                  INNER JOIN em_employees e ON lr.employee_id = e.employee_id
-                  INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
-                  INNER JOIN department_heads dh ON dh.department = e.department
-                  WHERE dh.user_id = :user_id AND lr.status IN ('Pending', 'PENDING')
-                  ORDER BY lr.date_submitted DESC";
+         $query = "SELECT lr.id, lr.employee_id, lr.leave_type_id, lr.start_date, lr.end_date, lr.details, lr.status, lr.date_submitted,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                    COALESCE(d.department_name, '') AS department,
+                    lt.leave_type_name,
+                    DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days
+                FROM ta_leave_requests lr
+                INNER JOIN em_employees e ON lr.employee_id = e.employee_id
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
+                INNER JOIN department_heads dh ON dh.department = COALESCE(d.department_name, e.department)
+                WHERE dh.user_id = :user_id AND lr.status IN ('Pending', 'PENDING')
+                ORDER BY lr.date_submitted DESC";
 
         if ($limit !== null) {
             $query .= " LIMIT :limit";
@@ -115,7 +118,8 @@ class Leave
         $query = "SELECT COUNT(*) AS total
                   FROM ta_leave_requests lr
                   INNER JOIN em_employees e ON lr.employee_id = e.employee_id
-                  INNER JOIN department_heads dh ON dh.department = e.department
+                  LEFT JOIN em_departments d ON e.department_id = d.department_id
+                  INNER JOIN department_heads dh ON dh.department = COALESCE(d.department_name, e.department)
                   WHERE dh.user_id = :user_id AND lr.status IN ('Pending', 'PENDING')";
 
         $stmt = $this->conn->prepare($query);
@@ -131,23 +135,24 @@ class Leave
      */
     public function getForHRApproval($limit = null, $offset = null)
     {
-        $query = "SELECT lr.id,
-                         lr.employee_id,
-                         lr.leave_type_id,
-                         lr.start_date,
-                         lr.end_date,
-                         lr.details,
-                         lr.status,
-                         lr.date_submitted,
-                         CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name, 
-                         e.department, 
-                         lt.leave_type_name,
-                         DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days
-                  FROM ta_leave_requests lr
-                  INNER JOIN em_employees e ON lr.employee_id = e.employee_id
-                  INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
-                  WHERE lr.status IN ('Pending', 'PENDING', 'APPROVED_BY_HEAD')
-                  ORDER BY lr.date_submitted DESC";
+         $query = "SELECT lr.id,
+                    lr.employee_id,
+                    lr.leave_type_id,
+                    lr.start_date,
+                    lr.end_date,
+                    lr.details,
+                    lr.status,
+                    lr.date_submitted,
+                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                    COALESCE(d.department_name, '') AS department,
+                    lt.leave_type_name,
+                    DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days
+                FROM ta_leave_requests lr
+                INNER JOIN em_employees e ON lr.employee_id = e.employee_id
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
+                WHERE lr.status IN ('Pending', 'PENDING', 'APPROVED_BY_HEAD')
+                ORDER BY lr.date_submitted DESC";
 
         if ($limit !== null) {
             $query .= " LIMIT :limit";
@@ -267,12 +272,11 @@ class Leave
                 $leaveType = $leaveRequest['leave_type_name'] ?? $leaveRequest['details'] ?? 'Leave';
                 $sDate = $leaveRequest['start_date'];
                 $eDate = $leaveRequest['end_date'];
-                $reason = $leaveRequest['details'] ?? '';
+                $reason = $leaveRequest['details'] ?? $leaveRequest['reason'] ?? 'Leave';
                 $checkedBy = $user_id;
                 $hrComments = $remarks;
-                
+
                 error_log('Transfer data - Leave Type: ' . $leaveType . ', Reason: ' . $reason);
-                
                 $lcStmt->bindParam(':employee_id', $empId, PDO::PARAM_INT);
                 $lcStmt->bindParam(':leave_type', $leaveType);
                 $lcStmt->bindParam(':start_date', $sDate);

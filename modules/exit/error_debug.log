@@ -1,0 +1,5 @@
+[2026-08-25 11:02:38] AJAX exception: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'hrms.hrms_employee' doesn't exist
+#0 C:\xampp\htdocs\hrms\hrms-capstone\modules\exit\models\ResignationModel.php(361): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms\hrms-capstone\modules\exit\controllers\ResignationController.php(328): ResignationModel->getResignations('active', 1, 10, '')
+#2 C:\xampp\htdocs\hrms\hrms-capstone\modules\exit\exit_management.php(87): ResignationController->handleAjaxRequest('get_resignation...', Array)
+#3 {main}

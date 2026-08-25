@@ -40,13 +40,14 @@ class EnhancedAbsenceDetector
         $today = date('Y-m-d');
 
         // Find attendance records with time_in and status null or PRESENT
-        $query = "SELECT a.attendance_id, a.employee_id, a.time_in, e.full_name, e.department
-                  FROM {$this->attendance_table} a
-                  JOIN {$this->employees_table} e ON a.employee_id = e.employee_id
-                  WHERE a.attendance_date = :date
-                  AND a.time_in IS NOT NULL
-                  AND (a.status IS NULL OR a.status = 'PRESENT')
-                  AND e.employment_status = 'Active'";
+        $query = "SELECT a.attendance_id, a.employee_id, a.time_in, e.full_name, COALESCE(d.department_name, '') AS department
+              FROM {$this->attendance_table} a
+              JOIN {$this->employees_table} e ON a.employee_id = e.employee_id
+              LEFT JOIN em_departments d ON e.department_id = d.department_id
+              WHERE a.attendance_date = :date
+              AND a.time_in IS NOT NULL
+              AND (a.status IS NULL OR a.status = 'PRESENT')
+              AND e.employment_status = 'Active'";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':date', $today);
@@ -92,12 +93,13 @@ class EnhancedAbsenceDetector
             }
 
             // Get active employees
-            $employeesQuery = "SELECT 
-                                employee_id,
-                                CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
-                                department
-                              FROM {$this->employees_table}
-                              WHERE employment_status = 'Active'";
+                        $employeesQuery = "SELECT 
+                                                                employee_id,
+                                                                CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, '')) AS full_name,
+                                                                COALESCE(d.department_name, '') AS department
+                                                            FROM {$this->employees_table} e
+                                                            LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                                            WHERE e.employment_status = 'Active'";
             $stmt = $this->conn->prepare($employeesQuery);
             $stmt->execute();
             $employees = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -199,20 +201,21 @@ class EnhancedAbsenceDetector
     public function getTodayAllEmployeesWithStatus($limit = 100, $offset = 0)
     {
         $today = date('Y-m-d');
-        $query = "SELECT 
-                    COALESCE(a.attendance_id, 0) as attendance_id,
-                    e.employee_id,
-                    e.full_name,
-                    e.department,
-                    COALESCE(a.time_in, '-') as time_in,
-                    COALESCE(a.time_out, '-') as time_out,
-                    COALESCE(a.status, 'ABSENT') as status,
-                    a.attendance_date
-                  FROM {$this->employees_table} e
-                  LEFT JOIN {$this->attendance_table} a ON e.employee_id = a.employee_id AND a.attendance_date = :today
-                  WHERE e.employment_status = 'Active'
-                  ORDER BY e.full_name
-                  LIMIT :limit OFFSET :offset";
+                $query = "SELECT 
+                                        COALESCE(a.attendance_id, 0) as attendance_id,
+                                        e.employee_id,
+                                        e.full_name,
+                                        COALESCE(d.department_name, '') AS department,
+                                        COALESCE(a.time_in, '-') as time_in,
+                                        COALESCE(a.time_out, '-') as time_out,
+                                        COALESCE(a.status, 'ABSENT') as status,
+                                        a.attendance_date
+                                    FROM {$this->employees_table} e
+                                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                    LEFT JOIN {$this->attendance_table} a ON e.employee_id = a.employee_id AND a.attendance_date = :today
+                                    WHERE e.employment_status = 'Active'
+                                    ORDER BY e.full_name
+                                    LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':today', $today);
