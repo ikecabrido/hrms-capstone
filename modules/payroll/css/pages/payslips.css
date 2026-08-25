@@ -1,0 +1,865 @@
+/* ==========================================================================
+   Payslips — page-specific styles
+   Reuses the existing Payroll theme variables (base/variables.css):
+   --color1 (deep purple), --color3 (white), --color9 (light gray), etc.
+   Follows the same structure/conventions as pages/period-manager.css.
+   ========================================================================== */
+
+.ps-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.ps-subtitle {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--color5);
+}
+
+/* ---------- Alert ---------- */
+.ps-alert {
+  padding: 0.85rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.ps-alert.ps-alert-success {
+  background: #e6f7ee;
+  color: #1e7e4d;
+  border: 1px solid #b7e4c7;
+}
+
+.ps-alert.ps-alert-error {
+  background: #fdecec;
+  color: var(--color10);
+  border: 1px solid #f5c2c2;
+}
+
+/* ---------- Summary cards ---------- */
+.ps-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  min-width: 0;
+}
+
+.ps-summary-card {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.ps-summary-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--color3);
+  background: var(--color1);
+}
+
+.ps-icon-gross {
+  background: #1e9e64;
+}
+.ps-icon-deductions {
+  background: var(--color10);
+}
+.ps-icon-net {
+  background: var(--color7);
+}
+
+.ps-summary-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ps-summary-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color8);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ps-summary-label {
+  font-size: 0.78rem;
+  color: var(--color5);
+}
+
+/* ---------- Toolbar ---------- */
+.ps-toolbar {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ps-toolbar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.ps-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 200px;
+}
+
+.ps-filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color5);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ps-combobox {
+  position: relative;
+  min-width: 240px;
+}
+
+.ps-combobox-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ps-combobox-icon {
+  position: absolute;
+  left: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--color5);
+  pointer-events: none;
+}
+
+.ps-combobox-input {
+  width: 100%;
+  padding: 0.55rem 2.1rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: var(--color3);
+  color: var(--color8);
+  outline: none;
+}
+
+.ps-combobox-input::placeholder {
+  color: var(--color5);
+}
+
+.ps-combobox-input:focus {
+  border-color: var(--color7);
+}
+
+.ps-combobox-clear {
+  position: absolute;
+  right: 0.55rem;
+  background: none;
+  border: none;
+  color: var(--color5);
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+}
+
+.ps-combobox-clear.ps-combobox-clear-visible {
+  display: inline-flex;
+}
+
+.ps-combobox-clear:hover {
+  color: var(--color10);
+}
+
+.ps-combobox-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--color3);
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+  z-index: 20;
+}
+
+.ps-combobox-options.ps-combobox-open {
+  display: block;
+}
+
+.ps-combobox-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color8);
+}
+
+.ps-combobox-option:hover,
+.ps-combobox-option.ps-combobox-highlighted {
+  background: var(--color9);
+}
+
+.ps-combobox-option-label {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ps-combobox-option-sub {
+  font-size: 0.75rem;
+  color: var(--color5);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ps-combobox-empty {
+  padding: 0.75rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--color5);
+  text-align: center;
+}
+
+.ps-toolbar-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- Buttons ---------- */
+.ps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.ps-btn i {
+  font-size: 0.85rem;
+}
+
+.ps-btn-primary {
+  background: var(--color1);
+  color: var(--color3);
+}
+
+.ps-btn-primary:hover {
+  filter: brightness(1.12);
+}
+
+.ps-btn-outline {
+  background: var(--color3);
+  color: var(--color1);
+  border: 1px solid var(--color1);
+}
+
+.ps-btn-outline:hover {
+  background: rgba(32, 0, 130, 0.06);
+}
+
+.ps-btn-secondary {
+  background: var(--color9);
+  color: var(--color2);
+}
+
+.ps-btn-secondary:hover {
+  background: var(--color4);
+}
+
+.ps-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Table card ---------- */
+.ps-table-card {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.ps-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ps-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1080px;
+}
+
+.ps-table thead th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color5);
+  background: var(--color9);
+  padding: 0.85rem 1.1rem;
+  white-space: nowrap;
+}
+
+.ps-table tbody td {
+  padding: 0.85rem 1.1rem;
+  font-size: 0.87rem;
+  color: var(--color8);
+  border-top: 1px solid var(--color9);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.ps-table tbody tr:hover {
+  background: rgba(240, 240, 240, 0.6);
+}
+
+.ps-actions-col {
+  width: 1%;
+}
+
+.ps-employee-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ps-employee-sub {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--color5);
+  font-weight: 400;
+}
+
+.ps-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.ps-amount-net {
+  font-weight: 700;
+  color: var(--color1);
+}
+
+.ps-loading-row,
+.ps-error-row {
+  text-align: center;
+  padding: 2.5rem 1rem !important;
+  color: var(--color5);
+  font-size: 0.9rem;
+  white-space: normal !important;
+}
+
+.ps-error-row {
+  color: var(--color10);
+}
+
+/* ---------- Status badges ---------- */
+.ps-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.ps-badge-finalized,
+.ps-badge-closed {
+  background: #e6f7ee;
+  color: #1e7e4d;
+}
+
+.ps-badge-draft,
+.ps-badge-open,
+.ps-badge-processing {
+  background: #fff4e0;
+  color: #a35b00;
+}
+
+.ps-badge-default {
+  background: var(--color9);
+  color: var(--color2);
+}
+
+.ps-badge-settlement {
+  background: rgba(32, 0, 130, 0.08);
+  color: var(--color1);
+}
+
+/* ---------- Row actions ---------- */
+.ps-row-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.ps-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--color4);
+  background: var(--color3);
+  color: var(--color2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ps-icon-btn:hover {
+  background: var(--color9);
+}
+
+.ps-icon-btn-primary:hover {
+  background: rgba(32, 0, 130, 0.08);
+  color: var(--color1);
+  border-color: var(--color1);
+}
+
+/* ---------- Empty state ---------- */
+.ps-empty-state {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  color: var(--color5);
+}
+
+.ps-empty-state i {
+  font-size: 2.2rem;
+  color: var(--color4);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.ps-empty-state p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.ps-empty-state p.ps-empty-sub {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  color: var(--color4);
+}
+
+/* ---------- Modal ---------- */
+.ps-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.ps-modal {
+  background: var(--color3);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.ps-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.3rem;
+  border-bottom: 1px solid var(--color9);
+  position: sticky;
+  top: 0;
+  background: var(--color3);
+  z-index: 1;
+}
+
+.ps-modal-header h2 {
+  font-size: 1.05rem;
+  color: var(--color8);
+  margin: 0;
+}
+
+.ps-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--color5);
+  cursor: pointer;
+}
+
+.ps-modal-body {
+  padding: 1.3rem;
+}
+
+.ps-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.3rem;
+  border-top: 1px solid var(--color9);
+  position: sticky;
+  bottom: 0;
+  background: var(--color3);
+}
+
+.ps-modal-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color5);
+}
+
+.ps-modal-error {
+  padding: 0.9rem 1.1rem;
+  background: #fdecec;
+  color: var(--color10);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   Payslip document — shared by the View modal body and the print sheet
+   ========================================================================== */
+
+.ps-doc-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1.1rem;
+  border-bottom: 2px solid var(--color8);
+}
+
+.ps-doc-header img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.ps-doc-header-text h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color8);
+}
+
+.ps-doc-header-text span {
+  font-size: 0.78rem;
+  color: var(--color5);
+}
+
+.ps-doc-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.ps-doc-title-row h4 {
+  margin: 0 0 0.2rem;
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+  color: var(--color1);
+}
+
+.ps-doc-period {
+  font-size: 0.85rem;
+  color: var(--color5);
+}
+
+.ps-doc-section {
+  margin-bottom: 1.35rem;
+}
+
+.ps-doc-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color5);
+  margin-bottom: 0.6rem;
+}
+
+.ps-doc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1.5rem;
+}
+
+.ps-doc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ps-doc-field span {
+  font-size: 0.72rem;
+  color: var(--color5);
+}
+
+.ps-doc-field strong {
+  font-size: 0.88rem;
+  color: var(--color8);
+  font-weight: 600;
+}
+
+.ps-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ps-doc-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color5);
+  background: var(--color9);
+  padding: 0.55rem 0.75rem;
+}
+
+.ps-doc-table th:last-child,
+.ps-doc-table td:last-child {
+  text-align: right;
+}
+
+.ps-doc-table td {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.86rem;
+  color: var(--color8);
+  border-bottom: 1px solid var(--color9);
+}
+
+.ps-doc-table tfoot td {
+  font-weight: 700;
+  border-top: 2px solid var(--color9);
+  border-bottom: none;
+}
+
+.ps-doc-empty-row td {
+  color: var(--color5);
+  font-style: italic;
+}
+
+.ps-doc-net {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color1);
+  color: var(--color3);
+  border-radius: 10px;
+  padding: 1rem 1.3rem;
+  margin: 1.35rem 0;
+}
+
+.ps-doc-net span {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
+.ps-doc-net strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.ps-doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  font-size: 0.78rem;
+  color: var(--color5);
+  border-top: 1px dashed var(--color4);
+  padding-top: 0.9rem;
+}
+
+.ps-doc-meta strong {
+  color: var(--color8);
+}
+
+.ps-doc-settlement-note {
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--color1);
+  background: rgba(32, 0, 130, 0.06);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  display: inline-block;
+}
+
+/* ---------- Print sheet (hidden on screen) ---------- */
+#psPrintSheet {
+  display: none;
+}
+
+/* ==========================================================================
+   Print output
+   ========================================================================== */
+@media print {
+  .sidebar,
+  header,
+  footer,
+  .hamburger,
+  .module-header,
+  .module-content,
+  .ps-alert,
+  .ps-summary-cards,
+  .ps-toolbar,
+  .ps-table-card,
+  .ps-modal-overlay {
+    display: none !important;
+  }
+
+  body,
+  .main-content,
+  .container {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  #psPrintSheet {
+    display: block !important;
+  }
+
+  #psPrintSheet .ps-doc-net {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+    border: 1px solid #000;
+  }
+
+  #psPrintSheet .ps-doc-table th {
+    background: #eee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Keep each section (header, employee info, earnings, deductions,
+     net pay, meta) intact — never let the browser split a block
+     across two pages, and never split a table header from its rows
+     or one row across a page break. */
+  #psPrintSheet .ps-doc-header,
+  #psPrintSheet .ps-doc-title-row,
+  #psPrintSheet .ps-doc-section,
+  #psPrintSheet .ps-doc-table,
+  #psPrintSheet .ps-doc-table tr,
+  #psPrintSheet .ps-doc-net,
+  #psPrintSheet .ps-doc-meta {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  #psPrintSheet .ps-doc-table thead {
+    display: table-header-group;
+  }
+
+  /* Tighten spacing slightly so a typical payslip comfortably
+     fits a single A4/Letter page. */
+  #psPrintSheet .ps-doc-section {
+    margin-bottom: 1rem;
+  }
+
+  #psPrintSheet .ps-doc-net {
+    margin: 1rem 0;
+  }
+
+  @page {
+    margin: 0.4in;
+  }
+}
+
+/* ==========================================================================
+   Responsiveness
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .ps-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .ps-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ps-toolbar-actions {
+    justify-content: stretch;
+  }
+
+  .ps-toolbar-actions .ps-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .ps-filter-group,
+  .ps-filter-group select {
+    min-width: 0;
+  }
+
+  .ps-doc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .ps-summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-modal {
+    max-width: 100%;
+  }
+}

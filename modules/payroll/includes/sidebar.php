@@ -13,6 +13,9 @@ $employeeClass = new Employee();
             <!-- Bell Icon + Notification Dropdown -->
             <div class="icon-wrapper" id="bellWrapper">
                 <i class="fa-regular fa-bell" id="bellBtn"></i>
+                <span class="notification-badge" id="notificationBadge">
+                    3
+                </span>
                 <div class="icon-dropdown" id="bellDropdown">
                     <div class="dropdown-header">
                         <span>Notifications</span>

@@ -10,7 +10,13 @@
 @import url("layout/module-container.css");
 
 /*Pages CSS*/
-@import url("pages/payroll.css");
+@import url("pages/dashboard.css");
+@import url("pages/period-manager.css");
+@import url("pages/payroll-processing.css");
+@import url("pages/payslips.css");
+@import url("pages/deduction.css");
+@import url("pages/reports.css");
+@import url("pages/final-settlement.css");
 
 /*Base CSS*/
 @import url("base/variables.css");
