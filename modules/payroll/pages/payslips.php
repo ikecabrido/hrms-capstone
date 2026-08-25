@@ -105,7 +105,6 @@
                     <thead>
                         <tr>
                             <th>Employee</th>
-                            <th>Employee Code</th>
                             <th>Payroll Period</th>
                             <th>Gross Pay</th>
                             <th>Deductions</th>

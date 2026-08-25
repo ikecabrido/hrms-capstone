@@ -423,7 +423,6 @@ function initPayslips() {
                     <span class="ps-employee-name">${esc(p.employee_name)}</span>
                     <span class="ps-employee-sub">${esc(p.employment_type || "")}</span>
                 </td>
-                <td>${esc(p.employee_code)}</td>
                 <td>${esc(p.period_name)}</td>
                 <td class="ps-amount">${formatCurrency(p.gross_pay)}</td>
                 <td class="ps-amount">${formatCurrency(p.total_deductions)}</td>
@@ -505,7 +504,7 @@ function initPayslips() {
         <div class="ps-doc-title-row">
             <div>
                 <h4>EMPLOYEE PAYSLIP</h4>
-                <div class="ps-doc-period">${esc(p.period_name)} &middot; ${formatDate(p.start_date)} &ndash; ${formatDate(p.end_date)}</div>
+                <div class="ps-doc-period">${formatDate(p.start_date)} &ndash; ${formatDate(p.end_date)}</div>
             </div>
         </div>
 

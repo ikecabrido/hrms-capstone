@@ -15,7 +15,7 @@ class SalaryController
     public function __construct()
     {
         // Correct connection
-        $this->db = Database::getInstance()->getConnection();
+        $this->db = (new Database())->getConnection();
         $this->payslipModel = new PayslipModel($this->db);
         $this->payrollModel = new PayrollModel($this->db);
         $this->employeeModel = new EmployeeModel($this->db);

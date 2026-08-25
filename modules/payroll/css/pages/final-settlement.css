@@ -71,6 +71,82 @@
   font-weight: 700;
 }
 
+/* ---------- Main workflow tabs (Settlement Requests / Processing &
+   Calculation / Approval & Release) ---------- */
+.fs-main-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.fs-main-tab-list {
+  border-bottom: 1px solid var(--color9);
+  background: var(--color3);
+  border-radius: 10px 10px 0 0;
+  padding: 0 0.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.fs-main-tab-list .tab-item {
+  padding: 0.9rem 1.1rem;
+  font-size: 0.9rem;
+}
+
+.fs-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.4rem;
+  margin-left: 0.4rem;
+  border-radius: 999px;
+  background: var(--color9);
+  color: var(--color5);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.fs-main-tab-list .tab-item.active .fs-tab-count {
+  background: var(--color1);
+  color: var(--color3);
+}
+
+.fs-tab-intro {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  color: var(--color5);
+}
+
+/* ---------- Misc small labels ---------- */
+.fs-optional-label {
+  font-weight: 400;
+  color: var(--color5);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.pm-icon-btn-success:hover {
+  background: #e6f7ee;
+  color: #1e7e4d;
+  border-color: #9fd9bb;
+}
+
+/* ---------- Toolbar filter row alignment ----------
+   .pm-toolbar-filters (shared) has no align-items of its own, so it falls
+   back to the flex default (stretch). That's invisible on pages like
+   Period Manager where every filter is a bare, single-line control the
+   same height as the search input. This page adds .fs-filter-group
+   (a <label> stacked above its <select>), which is taller than the bare
+   .pm-search-wrap sitting next to it — under "stretch" the search wrap
+   gets stretched to match, but the <input> inside doesn't grow to fill
+   it, so the input stays pinned to the top while the selects sit lower,
+   under their labels. Aligning to the bottom edge instead lines up the
+   input with the selects regardless of the label row above them. */
+#finalSettlementPage .pm-toolbar-filters {
+  align-items: flex-end;
+}
+
 /* ---------- Filter group (label + select) ---------- */
 .fs-filter-group {
   display: flex;
@@ -126,11 +202,24 @@
   letter-spacing: 0.03em;
 }
 
-.fs-status-draft {
+.fs-status-draft,
+.fs-status-pending {
   background: var(--color9);
   color: var(--color2);
 }
-.fs-status-for_review {
+.fs-status-requested {
+  background: #e6f0fd;
+  color: #1d5fbf;
+}
+.fs-status-processing {
+  background: #fdf3e0;
+  color: #b7791f;
+}
+.fs-status-calculated {
+  background: #eaf1ff;
+  color: #2f4fa8;
+}
+.fs-status-for_approval {
   background: #fdf3e0;
   color: #b7791f;
 }
@@ -138,114 +227,13 @@
   background: rgba(81, 70, 183, 0.12);
   color: var(--color7);
 }
-.fs-status-released {
+.fs-status-paid {
   background: #e6f7ee;
   color: #1e7e4d;
 }
 .fs-status-cancelled {
   background: #fdecec;
   color: var(--color10);
-}
-
-/* ---------- Employee combobox (Create Settlement modal) ----------
-   Mirrors .dd-combobox in css/pages/deduction.css. */
-.fs-combobox {
-  position: relative;
-}
-
-.fs-combobox-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.fs-combobox-icon {
-  position: absolute;
-  left: 0.75rem;
-  font-size: 0.78rem;
-  color: var(--color5);
-  pointer-events: none;
-}
-
-.fs-combobox-input {
-  width: 100%;
-  padding: 0.6rem 0.8rem 0.6rem 2.1rem;
-  border: 1px solid var(--color4);
-  border-radius: 8px;
-  font-size: 0.88rem;
-  background: var(--color3);
-  color: var(--color8);
-  outline: none;
-}
-
-.fs-combobox-input:focus {
-  border-color: var(--color7);
-}
-
-.fs-combobox-options {
-  display: none;
-  position: absolute;
-  top: calc(100% + 0.35rem);
-  left: 0;
-  right: 0;
-  max-height: 220px;
-  overflow-y: auto;
-  background: var(--color3);
-  border: 1px solid var(--color4);
-  border-radius: 8px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
-  z-index: 20;
-}
-
-.fs-combobox-options.fs-combobox-open {
-  display: block;
-}
-
-.fs-combobox-option {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: 0.6rem 0.85rem;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--color8);
-}
-
-.fs-combobox-option:hover,
-.fs-combobox-option.fs-combobox-highlighted {
-  background: var(--color9);
-}
-
-.fs-combobox-option-label {
-  font-weight: 600;
-}
-
-.fs-combobox-option-sub {
-  font-size: 0.75rem;
-  color: var(--color5);
-}
-
-.fs-combobox-empty {
-  padding: 0.75rem 0.85rem;
-  font-size: 0.82rem;
-  color: var(--color5);
-  text-align: center;
-}
-
-/* ---------- Create modal: exit detail readout + preview ---------- */
-.fs-create-details {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px dashed var(--color4);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.fs-create-details-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.85rem;
 }
 
 .fs-detail-label {
@@ -264,11 +252,7 @@
   color: var(--color8);
 }
 
-.fs-settlement-preview .pm-preview-row strong {
-  font-weight: 700;
-}
-
-/* ---------- Amount input (Add Adjustment modal) ---------- */
+/* ---------- Amount input (Add Settlement Item modal) ---------- */
 .fs-amount-input-wrap {
   position: relative;
 }
@@ -581,11 +565,16 @@
    Modal fixes — center in viewport, sit above the fixed header, scroll
    instead of clipping. Scoped to the Final Settlement modals.
    ========================================================================== */
-#fsCreateModalOverlay,
+#fsRequestModalOverlay,
+#fsAcceptModalOverlay,
 #fsDetailModalOverlay,
-#fsAdjustModalOverlay,
+#fsItemModalOverlay,
+#fsDeleteItemModalOverlay,
+#fsCalculateModalOverlay,
+#fsSubmitApprovalModalOverlay,
 #fsApproveModalOverlay,
-#fsReleaseModalOverlay {
+#fsReleaseModalOverlay,
+#fsCancelModalOverlay {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -599,19 +588,29 @@
   overflow-y: auto;
 }
 
-#fsCreateModalOverlay[style*="flex"],
+#fsRequestModalOverlay[style*="flex"],
+#fsAcceptModalOverlay[style*="flex"],
 #fsDetailModalOverlay[style*="flex"],
-#fsAdjustModalOverlay[style*="flex"],
+#fsItemModalOverlay[style*="flex"],
+#fsDeleteItemModalOverlay[style*="flex"],
+#fsCalculateModalOverlay[style*="flex"],
+#fsSubmitApprovalModalOverlay[style*="flex"],
 #fsApproveModalOverlay[style*="flex"],
-#fsReleaseModalOverlay[style*="flex"] {
+#fsReleaseModalOverlay[style*="flex"],
+#fsCancelModalOverlay[style*="flex"] {
   display: flex !important;
 }
 
-#fsCreateModalOverlay .pm-modal,
+#fsRequestModalOverlay .pm-modal,
+#fsAcceptModalOverlay .pm-modal,
 #fsDetailModalOverlay .pm-modal,
-#fsAdjustModalOverlay .pm-modal,
+#fsItemModalOverlay .pm-modal,
+#fsDeleteItemModalOverlay .pm-modal,
+#fsCalculateModalOverlay .pm-modal,
+#fsSubmitApprovalModalOverlay .pm-modal,
 #fsApproveModalOverlay .pm-modal,
-#fsReleaseModalOverlay .pm-modal {
+#fsReleaseModalOverlay .pm-modal,
+#fsCancelModalOverlay .pm-modal {
   position: relative;
   top: auto;
   left: auto;
@@ -627,8 +626,8 @@
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
 }
 
-#fsCreateModalOverlay .pm-modal > form,
-#fsAdjustModalOverlay .pm-modal > form {
+#fsItemModalOverlay .pm-modal > form,
+#fsReleaseModalOverlay .pm-modal > form {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -636,23 +635,34 @@
   flex: 1 1 auto;
 }
 
-#fsCreateModalOverlay .pm-modal-body,
+#fsRequestModalOverlay .pm-modal-body,
 #fsDetailModalOverlay .pm-modal-body,
-#fsAdjustModalOverlay .pm-modal-body {
+#fsItemModalOverlay .pm-modal-body,
+#fsReleaseModalOverlay .pm-modal-body {
   overflow-y: auto;
   flex: 1 1 auto;
 }
 
-#fsCreateModalOverlay .pm-modal-header,
+#fsRequestModalOverlay .pm-modal-header,
+#fsAcceptModalOverlay .pm-modal-header,
 #fsDetailModalOverlay .pm-modal-header,
-#fsAdjustModalOverlay .pm-modal-header,
+#fsItemModalOverlay .pm-modal-header,
+#fsDeleteItemModalOverlay .pm-modal-header,
+#fsCalculateModalOverlay .pm-modal-header,
+#fsSubmitApprovalModalOverlay .pm-modal-header,
 #fsApproveModalOverlay .pm-modal-header,
 #fsReleaseModalOverlay .pm-modal-header,
-#fsCreateModalOverlay .pm-modal-footer,
+#fsCancelModalOverlay .pm-modal-header,
+#fsRequestModalOverlay .pm-modal-footer,
+#fsAcceptModalOverlay .pm-modal-footer,
 #fsDetailModalOverlay .pm-modal-footer,
-#fsAdjustModalOverlay .pm-modal-footer,
+#fsItemModalOverlay .pm-modal-footer,
+#fsDeleteItemModalOverlay .pm-modal-footer,
+#fsCalculateModalOverlay .pm-modal-footer,
+#fsSubmitApprovalModalOverlay .pm-modal-footer,
 #fsApproveModalOverlay .pm-modal-footer,
-#fsReleaseModalOverlay .pm-modal-footer {
+#fsReleaseModalOverlay .pm-modal-footer,
+#fsCancelModalOverlay .pm-modal-footer {
   flex-shrink: 0;
 }
 
@@ -686,11 +696,16 @@
   transition: background-color 0.15s ease;
 }
 
-#fsCreateModalOverlay .pm-modal,
+#fsRequestModalOverlay .pm-modal,
+#fsAcceptModalOverlay .pm-modal,
 #fsDetailModalOverlay .pm-modal,
-#fsAdjustModalOverlay .pm-modal,
+#fsItemModalOverlay .pm-modal,
+#fsDeleteItemModalOverlay .pm-modal,
+#fsCalculateModalOverlay .pm-modal,
+#fsSubmitApprovalModalOverlay .pm-modal,
 #fsApproveModalOverlay .pm-modal,
-#fsReleaseModalOverlay .pm-modal {
+#fsReleaseModalOverlay .pm-modal,
+#fsCancelModalOverlay .pm-modal {
   animation: fsModalIn 0.2s ease both;
 }
 
@@ -731,11 +746,16 @@
   .pm-table-card,
   .fs-flow-strip,
   .pm-toolbar,
-  #fsCreateModalOverlay .pm-modal,
+  #fsRequestModalOverlay .pm-modal,
+  #fsAcceptModalOverlay .pm-modal,
   #fsDetailModalOverlay .pm-modal,
-  #fsAdjustModalOverlay .pm-modal,
+  #fsItemModalOverlay .pm-modal,
+  #fsDeleteItemModalOverlay .pm-modal,
+  #fsCalculateModalOverlay .pm-modal,
+  #fsSubmitApprovalModalOverlay .pm-modal,
   #fsApproveModalOverlay .pm-modal,
-  #fsReleaseModalOverlay .pm-modal {
+  #fsReleaseModalOverlay .pm-modal,
+  #fsCancelModalOverlay .pm-modal {
     animation: none;
   }
 }
@@ -1019,7 +1039,6 @@
     min-width: 0;
   }
 
-  .fs-create-details-grid,
   .fs-info-grid,
   .fs-doc-info-grid {
     grid-template-columns: 1fr;
