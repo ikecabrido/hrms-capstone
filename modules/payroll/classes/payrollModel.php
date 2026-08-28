@@ -250,6 +250,7 @@ class PayrollModel
         string $startDate,
         string $endDate
     ): array {
+
         $stmt = $this->db->prepare("
         SELECT
             attendance_id,
@@ -269,7 +270,20 @@ class PayrollModel
             ':end_date' => $endDate
         ]);
 
-        $attendanceAbsences = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $attendanceAbsences =
+            $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        /*
+     * Get approved leaves for the payroll period once.
+     * This avoids repeatedly querying the leave tables
+     * for every absence date.
+     */
+        $approvedLeaveDates =
+            $this->getApprovedLeaveDates(
+                $employeeId,
+                $startDate,
+                $endDate
+            );
 
         $unexcused = [];
 
@@ -278,20 +292,64 @@ class PayrollModel
             $date = $absence['attendance_date'];
 
             /*
-         * Approved excuse means the absence should
-         * NOT receive the ₱1,000 deduction.
+         * ========================================================
+         * 1. CHECK APPROVED LEAVE
+         * ========================================================
          */
-            if ($this->hasApprovedAbsenceExcuse(
-                $employeeId,
-                $date
-            )) {
+            if (isset($approvedLeaveDates[$date])) {
+
+                $leave = $approvedLeaveDates[$date];
+
+                /*
+             * Non-deductible approved leave means the employee
+             * was legitimately on leave and should NOT receive
+             * an absence deduction.
+             *
+             * Deductible leave is handled separately through
+             * calculateLeaveDeduction().
+             */
+                if ($leave['is_deductible'] == 0) {
+                    continue;
+                }
+
+                /*
+             * If the leave is deductible, do not add this as
+             * an ordinary absence because the leave deduction
+             * will be recorded separately.
+             */
+                if ($leave['is_deductible'] == 1) {
+                    continue;
+                }
+            }
+
+            /*
+         * ========================================================
+         * 2. CHECK APPROVED ABSENCE EXCUSE
+         * ========================================================
+         */
+            if (
+                $this->hasApprovedAbsenceExcuse(
+                    $employeeId,
+                    $date
+                )
+            ) {
                 continue;
             }
 
+            /*
+         * ========================================================
+         * 3. ORDINARY UNEXCUSED ABSENCE
+         * ========================================================
+         */
             $unexcused[] = [
-                'attendance_id' => (int)$absence['attendance_id'],
-                'date' => $date,
-                'deduction' => self::ABSENCE_DEDUCTION
+                'attendance_id' =>
+                (int)$absence['attendance_id'],
+
+                'date' =>
+                $date,
+
+                'deduction' =>
+                self::ABSENCE_DEDUCTION
             ];
         }
 
@@ -321,6 +379,183 @@ class PayrollModel
             'rate_per_absence' => self::ABSENCE_DEDUCTION,
             'total_deduction' => round($total, 2),
             'records' => $absences
+        ];
+    }
+
+    private function getApprovedLeaves(
+        int $employeeId,
+        string $startDate,
+        string $endDate
+    ): array {
+
+        $stmt = $this->db->prepare("
+        SELECT
+            lr.id AS leave_request_id,
+            lr.employee_id,
+            lr.leave_type_id,
+            lr.start_date,
+            lr.end_date,
+            lr.status,
+            lr.details,
+            lr.reason,
+            lt.leave_type_name,
+            lt.days_per_year,
+            lt.is_deductible
+        FROM ta_leave_requests lr
+        INNER JOIN ta_leave_types lt
+            ON lt.leave_type_id = lr.leave_type_id
+        WHERE lr.employee_id = :employee_id
+          AND lr.status = 'Approved'
+          AND lr.start_date <= :end_date
+          AND lr.end_date >= :start_date
+        ORDER BY lr.start_date ASC
+    ");
+
+        $stmt->execute([
+            ':employee_id' => $employeeId,
+            ':start_date' => $startDate,
+            ':end_date' => $endDate
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    /**
+     * Get approved leave dates for an employee during a payroll period.
+     *
+     * The returned dates are clipped to the payroll period so that
+     * leave outside the payroll period does not affect payroll.
+     */
+    private function getApprovedLeaveDates(
+        int $employeeId,
+        string $startDate,
+        string $endDate
+    ): array {
+
+        $leaves = $this->getApprovedLeaves(
+            $employeeId,
+            $startDate,
+            $endDate
+        );
+
+        $leaveDates = [];
+
+        foreach ($leaves as $leave) {
+
+            $leaveStart = max(
+                $leave['start_date'],
+                $startDate
+            );
+
+            $leaveEnd = min(
+                $leave['end_date'],
+                $endDate
+            );
+
+            $current = new DateTime($leaveStart);
+            $end = new DateTime($leaveEnd);
+
+            while ($current <= $end) {
+
+                $date = $current->format('Y-m-d');
+
+                $leaveDates[$date] = [
+                    'leave_request_id' =>
+                    (int)$leave['leave_request_id'],
+
+                    'leave_type_id' =>
+                    (int)$leave['leave_type_id'],
+
+                    'leave_type_name' =>
+                    $leave['leave_type_name'],
+
+                    'is_deductible' =>
+                    (int)$leave['is_deductible']
+                ];
+
+                $current->modify('+1 day');
+            }
+        }
+
+        return $leaveDates;
+    }
+
+
+    /**
+     * Calculate leave deduction during a payroll period.
+     *
+     * Only approved deductible leaves are included here.
+     *
+     * The current system uses ₱1,000 as the absence deduction rate,
+     * so deductible leave uses the same rate for now.
+     */
+    private function calculateLeaveDeduction(
+        int $employeeId,
+        string $startDate,
+        string $endDate
+    ): array {
+
+        $leaveDates = $this->getApprovedLeaveDates(
+            $employeeId,
+            $startDate,
+            $endDate
+        );
+
+        $deductibleLeaves = [];
+        $nonDeductibleLeaves = [];
+
+        foreach ($leaveDates as $date => $leave) {
+
+            if ($leave['is_deductible'] == 1) {
+
+                $deductibleLeaves[] = [
+                    'date' => $date,
+                    'leave_request_id' =>
+                    $leave['leave_request_id'],
+                    'leave_type_id' =>
+                    $leave['leave_type_id'],
+                    'leave_type_name' =>
+                    $leave['leave_type_name'],
+                    'deduction' =>
+                    self::ABSENCE_DEDUCTION
+                ];
+            } else {
+
+                $nonDeductibleLeaves[] = [
+                    'date' => $date,
+                    'leave_request_id' =>
+                    $leave['leave_request_id'],
+                    'leave_type_id' =>
+                    $leave['leave_type_id'],
+                    'leave_type_name' =>
+                    $leave['leave_type_name']
+                ];
+            }
+        }
+
+        $totalDeduction =
+            count($deductibleLeaves)
+            * self::ABSENCE_DEDUCTION;
+
+        return [
+            'deductible_leave_count' =>
+            count($deductibleLeaves),
+
+            'non_deductible_leave_count' =>
+            count($nonDeductibleLeaves),
+
+            'rate_per_leave' =>
+            self::ABSENCE_DEDUCTION,
+
+            'total_deduction' =>
+            round($totalDeduction, 2),
+
+            'deductible_records' =>
+            $deductibleLeaves,
+
+            'non_deductible_records' =>
+            $nonDeductibleLeaves
         ];
     }
 
@@ -646,7 +881,7 @@ class PayrollModel
     ): float {
         $stmt = $this->db->prepare("
             SELECT hourly_rate
-            FROM payroll_part_time_rates
+            FROM pr_part_time_rates
             WHERE employee_id = :employee_id
               AND status = 'active'
               AND effective_date <= :effective_date
@@ -678,10 +913,10 @@ class PayrollModel
         int $employeeId
     ): bool {
         $allowedTables = [
-            'sss_contributions',
-            'philhealth_contributions',
-            'pagibig_contributions',
-            'bir_contributions'
+            'lc_sss_contributions',
+            'lc_philhealth_contributions',
+            'lc_pagibig_contributions',
+            'lc_bir_contributions'
         ];
 
         if (!in_array($table, $allowedTables, true)) {
@@ -712,22 +947,22 @@ class PayrollModel
     ): array {
         return [
             'sss' => $this->hasSubmittedContribution(
-                'sss_contributions',
+                'lc_sss_contributions',
                 $employeeId
             ),
 
             'philhealth' => $this->hasSubmittedContribution(
-                'philhealth_contributions',
+                'lc_philhealth_contributions',
                 $employeeId
             ),
 
             'pagibig' => $this->hasSubmittedContribution(
-                'pagibig_contributions',
+                'lc_pagibig_contributions',
                 $employeeId
             ),
 
             'bir' => $this->hasSubmittedContribution(
-                'bir_contributions',
+                'lc_bir_contributions',
                 $employeeId
             )
         ];
@@ -1318,6 +1553,43 @@ class PayrollModel
                     self::ABSENCE_DEDUCTION;
             }
         }
+
+        $leaveDeduction = $this->calculateLeaveDeduction(
+            $employeeId,
+            $period['start_date'],
+            $period['end_date']
+        );
+
+        /*
+ * Add deductible approved leaves to deductions.
+ */
+        if ($leaveDeduction['total_deduction'] > 0) {
+
+            foreach (
+                $leaveDeduction['deductible_records']
+                as $leave
+            ) {
+
+                $deductions[] = [
+                    'description' =>
+                    'Deductible Leave - ' .
+                        $leave['leave_type_name'] .
+                        ' (' .
+                        date(
+                            'M d, Y',
+                            strtotime($leave['date'])
+                        ) .
+                        ')',
+
+                    'amount' =>
+                    self::ABSENCE_DEDUCTION
+                ];
+
+                $totalDeductions +=
+                    self::ABSENCE_DEDUCTION;
+            }
+        }
+
         /*
          * ========================================================
          * 4. LEGAL CONTRIBUTION ELIGIBILITY
@@ -1523,6 +1795,17 @@ class PayrollModel
             'deductions' =>
             $deductions,
 
+            'leave_summary' => [
+                'deductible_leave_count' =>
+                $leaveDeduction['deductible_leave_count'],
+
+                'non_deductible_leave_count' =>
+                $leaveDeduction['non_deductible_leave_count'],
+
+                'leave_deduction' =>
+                $leaveDeduction['total_deduction']
+            ],
+
             'contribution_status' =>
             $eligibility,
 
@@ -1531,6 +1814,7 @@ class PayrollModel
 
             'is_part_time' =>
             $isPartTime
+
         ];
     }
 

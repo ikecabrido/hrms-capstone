@@ -23,6 +23,8 @@ function initPayslips() {
   const PERIOD_ENDPOINT = "controllers/periodController.php";
 
   let allPayslips = [];
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
   let currentPayslip = null; // full detail of whichever payslip is open in the modal
 
   // ---- Element references -------------------------------------------------
@@ -30,6 +32,11 @@ function initPayslips() {
   const tableBody = document.getElementById("psTableBody");
   const emptyState = document.getElementById("psEmptyState");
   const tableCard = document.querySelector(".ps-table-card");
+  const paginationEl = document.getElementById("psPagination");
+  const paginationInfo = document.getElementById("psPaginationInfo");
+  const paginationPages = document.getElementById("psPaginationPages");
+  const btnPagePrev = document.getElementById("psPagePrev");
+  const btnPageNext = document.getElementById("psPageNext");
 
   const totalPayslipsEl = document.getElementById("psTotalPayslips");
   const totalGrossEl = document.getElementById("psTotalGross");
@@ -397,9 +404,27 @@ function initPayslips() {
     totalNetEl.textContent = formatCurrency(summary.total_net_pay);
   }
 
+  function renderPagination(totalPages) {
+    if (allPayslips.length <= PAGE_SIZE) {
+      paginationEl.style.display = "none";
+      return;
+    }
+
+    paginationEl.style.display = "flex";
+
+    const start = (currentPage - 1) * PAGE_SIZE + 1;
+    const end = Math.min(currentPage * PAGE_SIZE, allPayslips.length);
+    paginationInfo.textContent = `Showing ${start}–${end} of ${allPayslips.length}`;
+    paginationPages.textContent = `Page ${currentPage} of ${totalPages}`;
+
+    btnPagePrev.disabled = currentPage <= 1;
+    btnPageNext.disabled = currentPage >= totalPages;
+  }
+
   function renderTable() {
     if (allPayslips.length === 0) {
       tableCard.querySelector(".ps-table-wrapper").style.display = "none";
+      paginationEl.style.display = "none";
       emptyState.style.display = "block";
       return;
     }
@@ -407,7 +432,13 @@ function initPayslips() {
     tableCard.querySelector(".ps-table-wrapper").style.display = "";
     emptyState.style.display = "none";
 
-    tableBody.innerHTML = allPayslips
+    const totalPages = Math.max(1, Math.ceil(allPayslips.length / PAGE_SIZE));
+    currentPage = Math.min(currentPage, totalPages);
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = allPayslips.slice(start, start + PAGE_SIZE);
+
+    tableBody.innerHTML = pageItems
       .map(function (p) {
         const badgeClass = statusBadgeClass(p.payroll_status);
         const statusLabel = esc(
@@ -437,11 +468,30 @@ function initPayslips() {
             </tr>`;
       })
       .join("");
+
+    renderPagination(totalPages);
   }
+
+  btnPagePrev.addEventListener("click", function () {
+    if (currentPage > 1) {
+      currentPage -= 1;
+      renderTable();
+      tableCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  });
+
+  btnPageNext.addEventListener("click", function () {
+    const totalPages = Math.max(1, Math.ceil(allPayslips.length / PAGE_SIZE));
+    if (currentPage < totalPages) {
+      currentPage += 1;
+      renderTable();
+      tableCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  });
 
   async function loadPayslips() {
     tableBody.innerHTML =
-      '<tr><td colspan="10" class="ps-loading-row"><i class="fa-solid fa-spinner fa-spin"></i> Loading payslips...</td></tr>';
+      '<tr><td colspan="7" class="ps-loading-row"><i class="fa-solid fa-spinner fa-spin"></i> Loading payslips...</td></tr>';
     tableCard.querySelector(".ps-table-wrapper").style.display = "";
     emptyState.style.display = "none";
     btnApply.disabled = true;
@@ -454,7 +504,7 @@ function initPayslips() {
       const data = await apiRequest(PAYSLIP_ENDPOINT, "list", params);
 
       if (!data.success) {
-        tableBody.innerHTML = `<tr><td colspan="10" class="ps-error-row">${esc(data.message || "Unable to load payslips. Please try again.")}</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="7" class="ps-error-row">${esc(data.message || "Unable to load payslips. Please try again.")}</td></tr>`;
         renderSummary({
           payslip_count: 0,
           total_gross_pay: 0,
@@ -465,10 +515,11 @@ function initPayslips() {
       }
 
       allPayslips = data.data || [];
+      currentPage = 1;
       renderSummary(data.summary);
       renderTable();
     } catch (err) {
-      tableBody.innerHTML = `<tr><td colspan="10" class="ps-error-row">${esc(err.message || "Unable to load payslips. Please try again.")}</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="7" class="ps-error-row">${esc(err.message || "Unable to load payslips. Please try again.")}</td></tr>`;
     } finally {
       btnApply.disabled = false;
     }
