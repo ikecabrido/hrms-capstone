@@ -68,11 +68,45 @@
                         </p>
                     </div>
                 </div>
+                <div style="
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:18px;
+">
 
+                    <button type="button" onclick="openCreateCourseModal()" style="
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:8px;
+            height:44px;
+            padding:0 18px;
+            border:none;
+            border-radius:11px;
+            background:#2563eb;
+            color:#ffffff;
+            font-size:14px;
+            font-weight:600;
+            cursor:pointer;
+            box-shadow:0 4px 10px rgba(37,99,235,.20);
+            transition:all .2s ease;
+        " onmouseover="
+            this.style.background='#1d4ed8';
+            this.style.transform='translateY(-1px)';
+        " onmouseout="
+            this.style.background='#2563eb';
+            this.style.transform='translateY(0)';
+        ">
+                        <i class="fa-solid fa-plus"></i>
+                        Create Course
+                    </button>
+
+                </div>
             </div>
 
         </div>
 
+        <?php require __DIR__ . '/../../partials/notification.php'; ?>
 
         <!-- Search / Filter Bar -->
         <div style="
@@ -219,7 +253,6 @@
 
         </div>
 
-
         <!-- Courses -->
         <div class="max-w-7xl mx-auto">
 
@@ -236,6 +269,12 @@
                         $category = $course['category'] ?? 'General';
                         $status = $course['status'] ?? 'draft';
                         $thumbnail = $course['thumbnail_path'] ?? '';
+
+                        if (!empty($thumbnail)) {
+                            $thumbnailUrl = '/hrms-capstone/modules/portal/public/' . ltrim($thumbnail, '/');
+                        } else {
+                            $thumbnailUrl = '';
+                        }
 
                         $instructors = $course['instructors'] ?? [];
                         $skills = $course['skills'] ?? [];
@@ -261,17 +300,15 @@
                             <!-- Thumbnail -->
                             <div class="relative h-48 overflow-hidden bg-slate-100">
 
-                                <?php if (!empty($thumbnail)): ?>
+                                <?php if (!empty($thumbnailUrl)): ?>
 
-                                    <img src="<?= htmlspecialchars($thumbnail) ?>" alt="<?= htmlspecialchars($title) ?>" class="w-full h-full object-cover
-                                           group-hover:scale-105 transition-transform
-                                           duration-500">
+                                    <img src="<?= htmlspecialchars($thumbnailUrl) ?>" alt="<?= htmlspecialchars($title) ?>"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
 
                                 <?php else: ?>
 
-                                    <div class="w-full h-full flex items-center justify-center
-                                            bg-gradient-to-br from-blue-600 to-indigo-700">
-                                        <i class="fa-solid fa-graduation-cap text-5xl text-white/80"></i>
+                                    <div class="w-full h-full flex items-center justify-center bg-slate-100">
+                                        <i class="fa-solid fa-book-open text-3xl text-slate-400"></i>
                                     </div>
 
                                 <?php endif; ?>
@@ -572,52 +609,66 @@
         </div>
 
     </section>
-
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-
-            const searchInput = document.getElementById('courseSearch');
-            const categorySelect = document.getElementById('courseCategory');
-            const cards = document.querySelectorAll('.course-card');
-            const noResults = document.getElementById('noCoursesFound');
-
-            function filterCourses() {
-
-                const search = (searchInput?.value || '').toLowerCase().trim();
-                const category = (categorySelect?.value || '').toLowerCase();
-
-                let visible = 0;
-
-                cards.forEach(card => {
-
-                    const title = card.dataset.title || '';
-                    const cardCategory = card.dataset.category || '';
-
-                    const matchesSearch =
-                        !search || title.includes(search);
-
-                    const matchesCategory =
-                        !category || cardCategory === category;
-
-                    if (matchesSearch && matchesCategory) {
-                        card.classList.remove('hidden');
-                        visible++;
-                    } else {
-                        card.classList.add('hidden');
-                    }
-
-                });
-
-                if (noResults) {
-                    noResults.classList.toggle('hidden', visible !== 0);
-                }
-            }
-
-            searchInput?.addEventListener('input', filterCourses);
-            categorySelect?.addEventListener('change', filterCourses);
-
-        });
-    </script>
-
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const searchInput = document.getElementById('courseSearch');
+        const categorySelect = document.getElementById('courseCategory');
+        const cards = document.querySelectorAll('.course-card');
+        const noResults = document.getElementById('noCoursesFound');
+
+        function filterCourses() {
+
+            const search = (searchInput?.value || '').toLowerCase().trim();
+            const category = (categorySelect?.value || '').toLowerCase();
+
+            let visible = 0;
+
+            cards.forEach(card => {
+
+                const title = card.dataset.title || '';
+                const cardCategory = card.dataset.category || '';
+
+                const matchesSearch =
+                    !search || title.includes(search);
+
+                const matchesCategory =
+                    !category || cardCategory === category;
+
+                if (matchesSearch && matchesCategory) {
+                    card.classList.remove('hidden');
+                    visible++;
+                } else {
+                    card.classList.add('hidden');
+                }
+
+            });
+
+            if (noResults) {
+                noResults.classList.toggle('hidden', visible !== 0);
+            }
+        }
+
+        searchInput?.addEventListener('input', filterCourses);
+        categorySelect?.addEventListener('change', filterCourses);
+
+    });
+</script>
+<?php require __DIR__ . '/create-course.php'; ?>
+
+<div id="courseValidationMessage" style="
+        display:none;
+        align-items:center;
+        gap:8px;
+        padding:9px 12px;
+        border:1px solid #fecaca;
+        border-radius:9px;
+        background:#fef2f2;
+        color:#b91c1c;
+        font-size:12px;
+        font-weight:500;
+    ">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    <span>Please complete all required fields before creating the course.</span>
+</div>>

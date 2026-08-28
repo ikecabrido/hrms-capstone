@@ -6,6 +6,7 @@ use App\Middleware\SessionTimeout;
 use App\Controllers\AuthController;
 use App\Controllers\LeaveController;
 use App\Controllers\PortalController;
+use App\Controllers\CourseController;
 use App\Controllers\PayrollController;
 use App\Controllers\ProfileController;
 use App\Controllers\TrainingController;
@@ -102,8 +103,10 @@ $routes = [
     // Performance
     'performance' => [PerformanceController::class, 'index'],
 
-    // Training
+    // Training and Course
     'training' => [TrainingController::class, 'index'],
+    'admin-learning-index' => [TrainingController::class, 'adminIndex'],
+    'admin-store-course' => [CourseController::class, 'store'],
 
     // Complaint
     'complaint' => [ComplaintController::class, 'index'],

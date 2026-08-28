@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 23, 2026 at 12:28 PM
+-- Generation Time: Aug 26, 2026 at 03:52 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -88,7 +88,8 @@ CREATE TABLE `eer_grievances` (
 --
 
 INSERT INTO `eer_grievances` (`eer_grievance_id`, `employee_id`, `subject`, `description`, `status`, `resolution_of_complaint`, `created_at`, `priority`, `category`, `anonymous`, `attachment_path`, `confidential`, `action_taken`, `satisfaction_rating`, `satisfaction_comment`, `resolved_at`, `escalation_level`, `escalation_reason`, `updated_at`, `created_by_employee_id`, `payslip_id`, `gross_pay`, `total_deductions`, `net_pay`, `payslip_information`) VALUES
-(10, 1, 'Workplace Conflict', 'conflict', 'pending', NULL, '2026-08-17 09:01:59', 'low', 'Harassment', 1, 'uploads/grievance/grievance_9568e1aa7e005c63a7d17fbe96362e0e.pdf', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-17 01:01:59', NULL, NULL, NULL, NULL, NULL, NULL);
+(10, 1, 'Workplace Conflict', 'conflict', 'pending', NULL, '2026-08-17 09:01:59', 'low', 'Harassment', 1, 'uploads/grievance/grievance_9568e1aa7e005c63a7d17fbe96362e0e.pdf', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-17 01:01:59', NULL, NULL, NULL, NULL, NULL, NULL),
+(11, 1, 'Workplace Safety Concern', 'safety', 'pending', NULL, '2026-08-26 01:47:43', 'low', 'Workplace Safety', 1, 'uploads/grievance/grievance_b10ba87be3a245005d4cc33a27449e7f.jpeg', 1, NULL, NULL, NULL, NULL, NULL, NULL, '2026-08-25 17:47:43', NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -168,7 +169,7 @@ CREATE TABLE `em_employees` (
 --
 
 INSERT INTO `em_employees` (`employee_id`, `employee_code`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `email`, `mobile_no`, `phone_no`, `current_address`, `permanent_address`, `department_id`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
-(1, 'EMP-000001', 4, 'Ronaldo', 'G.', 'Raymundo', NULL, 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 3, 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 13:47:35', '2026-08-13 15:17:40', 0, NULL, NULL),
+(1, 'EMP-000001', 4, 'Ronaldo', 'G.', 'Raymundo', '', 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 3, 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 13:47:35', '2026-08-25 15:33:06', 0, NULL, NULL),
 (2, 'EMP-000002', NULL, 'Juan', 'Dela', 'Cruz', NULL, 'Male', '1990-05-15', NULL, NULL, NULL, NULL, 'juan.delacruz@bcp.edu.ph', '09123456789', '021234567', '123 Main St, Manila', NULL, 3, 2, '2023-01-15', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 14:54:48', '2026-08-13 15:17:40', 0, NULL, NULL),
 (3, 'EMP-000003', NULL, 'Erwin', 'M.', 'De Guzman', NULL, NULL, '1995-09-18', NULL, NULL, NULL, NULL, 'erwindeguzman@gmail.com', '09123456789', '0987654321', '', NULL, 3, 6, '2026-08-11', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-11 19:09:33', '2026-08-13 15:17:40', 0, NULL, NULL),
 (4, 'EMP-000004', NULL, 'Roberto', 'J', 'Albert', NULL, NULL, '1998-02-12', NULL, NULL, NULL, NULL, 'robert@gmail.com', '09123456789', '987654321', '', NULL, 3, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-13 11:01:36', '2026-08-13 15:17:40', 0, NULL, NULL),
@@ -187,7 +188,7 @@ INSERT INTO `em_employees` (`employee_id`, `employee_code`, `user_id`, `first_na
 (17, 'EMP-000017', NULL, 'Hugo', '', 'Villanueva', NULL, NULL, '1999-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Part-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:16:41', '2026-08-13 15:17:40', 0, NULL, NULL),
 (18, 'EMP-000018', NULL, 'Ian', '', 'Fernandez', NULL, NULL, '1990-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:17:19', '2026-08-13 15:17:40', 0, NULL, NULL),
 (19, 'EMP-000019', NULL, 'Jacob', '', 'Lopez', NULL, NULL, '1999-12-15', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:18:06', '2026-08-13 15:17:40', 0, NULL, NULL),
-(20, 'EMP-000020', NULL, 'Ian', '', 'Perez', NULL, NULL, '1990-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:18:56', '2026-08-13 15:17:40', 0, NULL, NULL),
+(20, 'EMP-000020', NULL, 'Ian', '', 'Perez', NULL, NULL, '1990-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:18:56', '2026-08-25 18:22:36', 0, NULL, NULL),
 (21, 'EMP-000021', NULL, 'Gia', '', 'Valdez', NULL, NULL, '1990-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 6, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:19:35', '2026-08-13 15:17:40', 0, NULL, NULL),
 (22, 'EMP-000022', NULL, 'Aaron', '', 'Valdez', NULL, NULL, '1996-12-15', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 6, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:20:21', '2026-08-13 15:17:40', 0, NULL, NULL),
 (23, 'EMP-000023', NULL, 'Aaron', '', 'Pascual', NULL, NULL, '1999-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 6, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:21:00', '2026-08-13 15:17:40', 0, NULL, NULL),
@@ -306,7 +307,8 @@ INSERT INTO `ep_benefits_and_government_contribution` (`benefit_id`, `employee_i
 (7, 1, 'SSS', '2026-02', NULL, 'BSIS-BULACAN-BSIS-RESEARCH-FESTIVAL-2025-2026-EMPLOYEE-PORTAL-CAPSTONE.docx', 'assets/uploads/benefits/benefits1786691045_cd50b6f620.docx', 1, '2026-08-14 07:04:05', '2026-08-14 07:04:05'),
 (8, 1, 'Pag-IBIG', '2026-02', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786692021_7130abb94c.pdf', 1, '2026-08-14 07:20:21', '2026-08-14 07:20:21'),
 (9, 2, 'Pag-IBIG', '2026-06', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits_1786954963_92bdd2e8.pdf', 3, '2026-08-17 08:03:22', '2026-08-17 08:22:43'),
-(10, 3, 'BIR Form 2316', '2026-07', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786953890_74e86d6cf9.pdf', 3, '2026-08-17 08:04:50', '2026-08-17 08:04:50');
+(10, 3, 'BIR Form 2316', '2026-07', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786953890_74e86d6cf9.pdf', 3, '2026-08-17 08:04:50', '2026-08-17 08:04:50'),
+(11, 1, 'Pag-IBIG', '2026-07', 'sample', 'warehousing.jpg', 'assets/uploads/benefits/benefits1787675086_f47a4dd5a2.jpg', 4, '2026-08-25 16:24:46', '2026-08-25 16:24:46');
 
 -- --------------------------------------------------------
 
@@ -451,7 +453,9 @@ CREATE TABLE `ep_payroll_request` (
 
 INSERT INTO `ep_payroll_request` (`id`, `employee_id`, `request_type`, `purpose`, `remarks`, `payroll_period_start`, `payroll_period_end`, `status`, `requested_at`, `processed_at`, `processed_by`, `rejection_reason`, `document_path`, `created_at`, `updated_at`) VALUES
 (4, 1, 'Payroll Correction', 'Regular Payroll Processing', NULL, '2026-08-13', '2026-08-15', 'Approved', '2026-08-13 17:55:44', '2026-08-17 05:49:33', 3, NULL, 'assets/uploads/payroll/payroll_4_1786945773.pdf', '2026-08-13 17:55:44', '2026-08-17 05:49:33'),
-(5, 1, 'Incorrect Deduction', 'New Hire Payroll Onboarding', NULL, '2026-08-01', '2026-08-03', 'Rejected', '2026-08-17 06:04:20', '2026-08-17 07:12:44', 3, 'sample', NULL, '2026-08-17 06:04:20', '2026-08-17 07:12:44');
+(5, 1, 'Incorrect Deduction', 'New Hire Payroll Onboarding', NULL, '2026-08-01', '2026-08-03', 'Rejected', '2026-08-17 06:04:20', '2026-08-17 07:12:44', 3, 'sample', NULL, '2026-08-17 06:04:20', '2026-08-17 07:12:44'),
+(6, 1, 'Payroll Correction', 'Salary Advance Request', NULL, '2026-08-18', '2026-08-27', 'Approved', '2026-08-25 15:41:51', '2026-08-25 18:11:37', 3, NULL, 'assets/uploads/payroll/payroll_6_1787681497.pdf', '2026-08-25 15:41:51', '2026-08-25 18:11:37'),
+(7, 1, 'Missing Salary', 'Other / General Inquiry', NULL, '2026-08-26', '2026-08-27', 'Approved', '2026-08-25 15:44:43', '2026-08-25 16:10:53', 3, NULL, 'assets/uploads/payroll/payroll_7_1787674253.docx', '2026-08-25 15:44:43', '2026-08-25 16:10:53');
 
 -- --------------------------------------------------------
 
@@ -512,8 +516,8 @@ CREATE TABLE `ep_users` (
 INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `role`, `is_active`, `theme`, `profile_image`, `created_at`, `password_reset_token`, `password_reset_expires`) VALUES
 (1, 'Employee 1', '$2y$10$O6XSlGEzC5GCae7BrLAhneWoLgqV3P1Pi3a0czwSdmZ.6.kR8F9va', 'monstreborvinsmoke025@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
 (2, 'Employee 2', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 'employee', 1, 'light', NULL, '2026-03-24 18:06:12', NULL, NULL),
-(3, 'Admin Employee Portal', '$2y$10$3m8PF0TJNecAeYAvYUZ7ReQdHvOHlM4ATszqVK4WoQ/dnbAlpoi5O', 'crobertjanssen@gmail.com', 1, 'super_admin', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
-(4, 'Employee 3', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 'employee', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
+(3, 'Admin Employee Portal', '$2y$10$h2fzXPO1/co0hCUn/wwOnuLB4I/26hMz3hGJIqbRmujA2R1UxHIvy', 'crobertjanssen@gmail.com', 1, 'super_admin', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
+(4, 'Employee 3', '$2y$10$g17RDcYiD9hI9K6Nj5KyMehcqlAaoh0qDeGpYUn9TJI1cpfkIfv32', 'sample@gmail.com', 0, 'employee', 1, 'light', 'profile_4_1787671041.png', '2026-01-28 07:21:13', NULL, NULL),
 (5, 'sample', '$2y$10$dHzUOq6RTrujLH/eo9w4dudWV6qZD41cAhVM22kde2bl8I5KlxZuK', 'camposrobertjanssent.pdm@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-08-16 13:35:55', NULL, NULL);
 
 -- --------------------------------------------------------
@@ -555,7 +559,9 @@ INSERT INTO `lc_incidents` (`id`, `incident_id`, `type`, `incident_type`, `sever
 (2, 'INC-2024-002', NULL, 'Policy Violation', 'Medium', 'Unauthorized Use of Company Resources', 'Employee used company vehicle for personal errands without approval.', '2024-07-20', 'Branch Office - Parking Area', 8, 15, 'Maria Santos', 'under_review', 'HR Review', NULL, 0, NULL, '2024-07-25 17:00:00', 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
 (3, 'INC-2024-003', NULL, 'Safety Incident', 'Critical', 'Equipment Malfunction Near Miss', 'Heavy equipment malfunctioned during operation; no injuries reported but safety protocols breached.', '2024-07-22', 'Warehouse - Zone B', 3, 20, 'Pedro Reyes', 'submitted', 'Initial Review', NULL, 1, NULL, NULL, 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
 (4, 'INC-2024-004', NULL, 'Attendance Violation', 'Low', 'Excessive Unexcused Absences', 'Employee accumulated 15 unexcused absences in one month without prior notification.', '2024-07-18', 'Remote / Work From Home', 22, 30, 'Ana Gonzales', 'hr_evaluation', 'HR Evaluation', NULL, 0, NULL, NULL, 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
-(5, 'INC-2024-005', NULL, 'Data Breach', 'Critical', 'Unauthorized Access to Confidential Files', 'Employee accessed confidential client data outside of authorized job function.', '2024-07-25', 'IT Department - Server Room', 11, 45, 'Carlos Mendoza', 'decision_made', 'Decision', NULL, 1, NULL, NULL, 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12');
+(5, 'INC-2024-005', NULL, 'Data Breach', 'Critical', 'Unauthorized Access to Confidential Files', 'Employee accessed confidential client data outside of authorized job function.', '2024-07-25', 'IT Department - Server Room', 11, 45, 'Carlos Mendoza', 'decision_made', 'Decision', NULL, 1, NULL, NULL, 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
+(6, 'INC-2026-006', NULL, 'absenteeism', 'Medium', 'Sample', 'sample', '2026-08-25', 'HR Office', 8, 1, 'Ronaldo Raymundo', 'submitted', 'Initial Review', '2026-08-26 01:28:14', 0, NULL, NULL, 4, '2026-08-25 17:28:14', '2026-08-25 17:40:52'),
+(7, 'INC-2026-007', NULL, 'workplace_conflict', 'Medium', 'Workplace conflict', 'sample', '2026-08-25', 'Campus Grounds', 9, 1, 'Ronaldo Raymundo', 'submitted', 'Initial Review', '2026-08-26 01:41:25', 0, NULL, NULL, 4, '2026-08-25 17:41:25', '2026-08-25 17:41:25');
 
 -- --------------------------------------------------------
 
@@ -588,6 +594,13 @@ CREATE TABLE `pm_feedback_360_entries` (
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `pm_feedback_360_entries`
+--
+
+INSERT INTO `pm_feedback_360_entries` (`feedback_id`, `employee_id`, `reviewer_type`, `reviewer_name`, `reviewer_id`, `category`, `rating`, `comments`, `review_period`, `department`, `feedback_status`, `feedback_category`, `strengths`, `areas_for_improvement`, `recommendation`, `is_anonymous`, `supporting_documents`, `hr_remarks`, `overall_rating`, `competency_scores`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Supervisor', 'Juan Dela Cruz', 2, 'Performance', 4, 'Demonstrates strong performance and consistently completes assigned tasks.', '2026-Q3', 'IT DEPARTMENT', 'Submitted', 'Performance', 'Strong technical skills and good teamwork.', 'Improve documentation and time management.', 'Continue professional development and technical training.', 0, NULL, NULL, 4.00, '{\"communication\":4,\"teamwork\":5,\"technical_skills\":4,\"problem_solving\":4}', '2026-08-25 16:28:55', '2026-08-25 16:28:55');
+
 -- --------------------------------------------------------
 
 --
@@ -612,8 +625,8 @@ CREATE TABLE `pr_payslips` (
 --
 
 INSERT INTO `pr_payslips` (`payslip_id`, `run_id`, `employee_id`, `gross_pay`, `total_deductions`, `net_pay`, `generated_at`, `is_exit_settlement`, `settlement_id`, `resignation_id`) VALUES
-(1, 3, 4, 17500.00, 320.00, 17180.00, '2026-08-16 23:15:53', 0, NULL, NULL),
-(2, 3, 37, 15000.00, 0.00, 15000.00, '2026-08-16 23:15:53', 0, NULL, NULL),
+(1, 3, 1, 17500.00, 320.00, 17180.00, '2026-08-16 23:15:53', 0, NULL, NULL),
+(2, 3, 1, 15000.00, 0.00, 15000.00, '2026-08-16 23:15:53', 0, NULL, NULL),
 (3, 3, 33, 15000.00, 0.00, 15000.00, '2026-08-16 23:15:53', 0, NULL, NULL),
 (4, 3, 30, 16000.00, 1569.00, 14431.00, '2026-08-16 23:15:53', 0, NULL, NULL),
 (5, 3, 2, 12500.00, 1619.33, 10880.67, '2026-08-16 23:15:53', 0, NULL, NULL),
@@ -702,10 +715,11 @@ INSERT INTO `ta_leave_requests` (`id`, `employee_id`, `leave_type_id`, `start_da
 (8, 7, 3, '2026-07-13', '2026-07-14', '2026-07-13 05:03:25', '2026-07-30 21:22:11', 'Rejected', 'emergency', NULL, NULL, NULL, NULL, 'sample', 0),
 (9, 16, 1, '2026-07-31', '2026-08-01', '2026-07-30 20:33:27', '2026-07-30 21:20:31', 'Rejected', 'sample', NULL, NULL, NULL, NULL, 'sample', 0),
 (10, 14, 1, '2026-08-02', '2026-08-03', '2026-08-02 01:02:13', NULL, 'Pending', 'sample', NULL, NULL, NULL, NULL, NULL, 0),
-(11, 1, 2, '2026-08-18', '2026-08-20', '2026-08-17 02:26:31', NULL, 'Pending', 'sample', NULL, NULL, NULL, NULL, NULL, 0),
+(11, 1, 2, '2026-08-18', '2026-08-20', '2026-08-17 02:26:31', '2026-08-25 18:10:30', 'Rejected', 'sample', NULL, NULL, NULL, NULL, 'Conflicting Work Schedule', 0),
 (12, 1, 5, '2026-08-18', '2026-08-19', '2026-08-17 03:48:30', '2026-08-17 04:45:14', 'Rejected', 'sample', NULL, 'leave_1_20260817054830_4dde1bdbdf.pdf', NULL, NULL, 'Incomplete Leave Documentation Sample', 0),
 (13, 1, 1, '2026-08-19', '2026-08-20', '2026-08-17 03:53:55', NULL, 'Cancelled', 'sample', NULL, 'leave_1_20260817055355_b8558fb35f.pdf', NULL, NULL, NULL, 0),
-(14, 0, 6, '2026-08-19', '2026-08-20', '2026-08-18 15:50:19', NULL, 'Pending', 'sample', NULL, 'leave_0_20260818175019_8370593f5a.pdf', NULL, NULL, NULL, 0);
+(14, 0, 6, '2026-08-19', '2026-08-20', '2026-08-18 15:50:19', NULL, 'Pending', 'sample', NULL, 'leave_0_20260818175019_8370593f5a.pdf', NULL, NULL, NULL, 0),
+(15, 1, 6, '2026-08-25', '2026-08-27', '2026-08-25 15:37:39', NULL, 'Approved', 'sample', NULL, 'leave_1_20260825173739_3b74ac2f75.jpeg', NULL, NULL, NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -907,7 +921,7 @@ ALTER TABLE `eer_announcements`
 -- AUTO_INCREMENT for table `eer_grievances`
 --
 ALTER TABLE `eer_grievances`
-  MODIFY `eer_grievance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `eer_grievance_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `em_departments`
@@ -931,7 +945,7 @@ ALTER TABLE `em_positions`
 -- AUTO_INCREMENT for table `ep_benefits_and_government_contribution`
 --
 ALTER TABLE `ep_benefits_and_government_contribution`
-  MODIFY `benefit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `benefit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `ep_notifications`
@@ -955,7 +969,7 @@ ALTER TABLE `ep_online_meetings`
 -- AUTO_INCREMENT for table `ep_payroll_request`
 --
 ALTER TABLE `ep_payroll_request`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `ep_resignation_requests`
@@ -973,13 +987,13 @@ ALTER TABLE `ep_users`
 -- AUTO_INCREMENT for table `lc_incidents`
 --
 ALTER TABLE `lc_incidents`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `pm_feedback_360_entries`
 --
 ALTER TABLE `pm_feedback_360_entries`
-  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `feedback_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `pr_payslips`
@@ -997,7 +1011,7 @@ ALTER TABLE `ta_attendance`
 -- AUTO_INCREMENT for table `ta_leave_requests`
 --
 ALTER TABLE `ta_leave_requests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `ta_leave_types`

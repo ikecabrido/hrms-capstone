@@ -90,9 +90,9 @@
             </a>
         </li>
         <li>
-            <a href="" class="menu-link">
+            <a href="index.php?url=admin-learning-index" class="menu-link">
                 <i class="fa-solid fa-graduation-cap"></i>
-                Training & Seminars
+                Learning & Development
             </a>
         </li>
 
