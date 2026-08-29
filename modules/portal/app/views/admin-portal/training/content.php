@@ -29,65 +29,43 @@
     <section class="w-full min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
 
         <!-- Header -->
-        <div class="max-w-7xl mx-auto mb-8">
-
-            <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
-
-                <div>
-                    <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full
-                             bg-blue-50 text-blue-700 text-xs font-semibold mb-3">
-                        <i class="fa-solid fa-graduation-cap"></i>
-                        Learning & Development
-                    </span>
-
-                    <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">
-                        Training, Learning and Development
-                    </h1>
-
-                    <p class="mt-2 text-sm sm:text-base text-slate-500 max-w-2xl">
-                        Explore available courses, develop new skills, and continue
-                        growing professionally.
-                    </p>
-                </div>
-
-                <!-- Course count -->
-                <div class="flex items-center gap-3 text-sm text-slate-500">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-white
-                            border border-slate-200 shadow-sm">
-                        <i class="fa-solid fa-book-open text-blue-600"></i>
-                    </div>
-
-                    <div>
-                        <p class="font-semibold text-slate-800">
-                            <?= count($allTrainingCourses) ?>
-                            <?= count($allTrainingCourses) === 1 ? 'Course' : 'Courses' ?>
-                        </p>
-
-                        <p class="text-xs text-slate-400">
-                            Available for learning
-                        </p>
-                    </div>
-                </div>
-                <div style="
+        <div style="
     display:flex;
     justify-content:flex-end;
+    align-items:center;
+    gap:10px;
     margin-bottom:18px;
 ">
 
-                    <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#createCourseModal" style="
-        height:44px;
-        padding:0 18px;
-        border-radius:11px;
-        font-size:14px;
-        font-weight:600;
-    ">
-                        <i class="fa-solid fa-plus"></i>
-                        Create Course
-                    </button>
+            <!-- MANAGE COURSE CONTENT -->
+            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-2" style="
+            height:44px;
+            padding:0 18px;
+            border-radius:11px;
+            font-size:14px;
+            font-weight:600;
+        " onclick="window.location.href='index.php?url=admin-course-content'">
 
-                </div>
-            </div>
+                <i class="fa-solid fa-layer-group"></i>
+                Manage Course Content
+
+            </button>
+
+
+            <!-- CREATE COURSE -->
+            <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal"
+                data-bs-target="#createCourseModal" style="
+            height:44px;
+            padding:0 18px;
+            border-radius:11px;
+            font-size:14px;
+            font-weight:600;
+        ">
+
+                <i class="fa-solid fa-plus"></i>
+                Create Course
+
+            </button>
 
         </div>
 
@@ -394,29 +372,40 @@
                             <div class="px-4 pt-4">
 
                                 <div class="flex items-center gap-2 p-1.5
-                                   rounded-xl bg-slate-50
-                                   border border-slate-100">
+        rounded-xl bg-slate-50
+        border border-slate-100">
 
                                     <!-- EDIT -->
-
                                     <button type="button" data-bs-toggle="modal" data-bs-target="#editCourseModal"
                                         data-course-id="<?= (int) $course['id'] ?>" class="flex-1 inline-flex items-center justify-center
-                                       gap-1.5 h-9 px-3 rounded-lg
-                                       bg-white border border-slate-200
-                                       text-slate-700 text-xs font-semibold
-                                       hover:border-blue-300 hover:text-blue-600
-                                       hover:bg-blue-50
-                                       transition-all">
+            gap-1.5 h-9 px-3 rounded-lg
+            bg-white border border-slate-200
+            text-slate-700 text-xs font-semibold
+            hover:border-blue-300 hover:text-blue-600
+            hover:bg-blue-50 transition-all">
 
                                         <i class="fa-solid fa-pen-to-square"></i>
-
                                         Edit
+                                    </button>
 
+
+                                    <!-- MANAGE CONTENT -->
+                                    <button type="button" data-bs-toggle="modal" data-bs-target="#manageContentModal"
+                                        data-course-id="<?= (int) $course['id'] ?>"
+                                        data-course-title="<?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>"
+                                        class="flex-1 inline-flex items-center justify-center
+    gap-1.5 h-9 px-3 rounded-lg
+    bg-blue-50 border border-blue-100
+    text-blue-700 text-xs font-semibold
+    hover:bg-blue-100 hover:border-blue-200
+    transition-all">
+
+                                        <i class="fa-solid fa-layer-group"></i>
+                                        Manage
                                     </button>
 
 
                                     <!-- STATUS -->
-
                                     <?php if (($course['status'] ?? 'draft') === 'draft'): ?>
 
                                         <form method="POST" action="index.php?url=admin-course-toggle-status" class="flex-1 m-0">
@@ -424,16 +413,13 @@
                                             <input type="hidden" name="course_id" value="<?= (int) $course['id'] ?>">
 
                                             <button type="submit" class="w-full inline-flex items-center justify-center
-                                               gap-1.5 h-9 px-3 rounded-lg
-                                               bg-emerald-50 border border-emerald-100
-                                               text-emerald-700 text-xs font-semibold
-                                               hover:bg-emerald-100
-                                               transition-all">
+                    gap-1.5 h-9 px-3 rounded-lg
+                    bg-emerald-50 border border-emerald-100
+                    text-emerald-700 text-xs font-semibold
+                    hover:bg-emerald-100 transition-all">
 
                                                 <i class="fa-solid fa-circle-check"></i>
-
                                                 Available
-
                                             </button>
 
                                         </form>
@@ -445,16 +431,13 @@
                                             <input type="hidden" name="course_id" value="<?= (int) $course['id'] ?>">
 
                                             <button type="submit" class="w-full inline-flex items-center justify-center
-                                               gap-1.5 h-9 px-3 rounded-lg
-                                               bg-amber-50 border border-amber-100
-                                               text-amber-700 text-xs font-semibold
-                                               hover:bg-amber-100
-                                               transition-all">
+                    gap-1.5 h-9 px-3 rounded-lg
+                    bg-amber-50 border border-amber-100
+                    text-amber-700 text-xs font-semibold
+                    hover:bg-amber-100 transition-all">
 
                                                 <i class="fa-solid fa-circle-pause"></i>
-
                                                 Draft
-
                                             </button>
 
                                         </form>
@@ -463,18 +446,17 @@
 
 
                                     <!-- DELETE -->
-
                                     <form method="POST" action="index.php?url=admin-delete-course" class="m-0"
                                         onsubmit="return confirm('Are you sure you want to delete this course? This action cannot be undone.');">
 
                                         <input type="hidden" name="course_id" value="<?= (int) $course['id'] ?>">
 
                                         <button type="submit" title="Delete course" class="w-9 h-9 inline-flex items-center justify-center
-                                           rounded-lg
-                                           bg-white border border-red-100
-                                           text-red-500
-                                           hover:bg-red-50 hover:border-red-200
-                                           transition-all">
+                rounded-lg
+                bg-white border border-red-100
+                text-red-500
+                hover:bg-red-50 hover:border-red-200
+                transition-all">
 
                                             <i class="fa-solid fa-trash text-xs"></i>
 
@@ -850,6 +832,7 @@
 <?php require __DIR__ . '/create-course.php'; ?>
 <?php require __DIR__ . '/edit-course.php'; ?>
 <?php require __DIR__ . '/view-course.php'; ?>
+<?php require __DIR__ . '/course-content.php'; ?>
 
 <script src="/hrms-capstone/modules/portal/public/js/function/contentLearningAdmin.js"></script>
 

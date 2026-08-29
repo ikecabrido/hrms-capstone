@@ -21,34 +21,34 @@ class Training
         $database = new Database;
         $this->conn = $database->getConnection();
     }
-public function allCourse(): array
-{
-    try {
-        $stmt = $this->conn->prepare(
-            "SELECT * FROM {$this->courseTable}
-             ORDER BY start_date ASC, created_at DESC"
-        );
-
-        $stmt->execute();
-
-        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        foreach ($courses as &$course) {
-
-            $id = $course['id'];
-
+    public function allCourse(): array
+    {
+        try {
             $stmt = $this->conn->prepare(
-                "SELECT * FROM {$this->instructorTable}
-                 WHERE course_id = :id
-                 ORDER BY role = 'owner' DESC, id ASC"
+                "SELECT * FROM {$this->courseTable}
+             ORDER BY start_date ASC, created_at DESC"
             );
 
-            $stmt->execute([':id' => $id]);
+            $stmt->execute();
 
-            $course['instructors'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $stmt = $this->conn->prepare(
-                "SELECT
+            foreach ($courses as &$course) {
+
+                $id = $course['id'];
+
+                $stmt = $this->conn->prepare(
+                    "SELECT * FROM {$this->instructorTable}
+                 WHERE course_id = :id
+                 ORDER BY role = 'owner' DESC, id ASC"
+                );
+
+                $stmt->execute([':id' => $id]);
+
+                $course['instructors'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $stmt = $this->conn->prepare(
+                    "SELECT
                     cs.*,
                     s.name AS skill_name,
                     s.description AS skill_description,
@@ -59,29 +59,29 @@ public function allCourse(): array
                     ON s.id = cs.skill_id
                  WHERE cs.course_id = :id
                  ORDER BY cs.id ASC"
-            );
+                );
 
-            $stmt->execute([':id' => $id]);
+                $stmt->execute([':id' => $id]);
 
-            $course['skills'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $course['skills'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $stmt = $this->conn->prepare(
-                "SELECT * FROM {$this->versionTable}
+                $stmt = $this->conn->prepare(
+                    "SELECT * FROM {$this->versionTable}
                  WHERE course_id = :id
                  ORDER BY version_number ASC"
+                );
+
+                $stmt->execute([':id' => $id]);
+
+                $course['versions'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            return $courses;
+
+        } catch (Exception $e) {
+            throw new Exception(
+                "Failed to fetch courses: " . $e->getMessage()
             );
-
-            $stmt->execute([':id' => $id]);
-
-            $course['versions'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
-
-        return $courses;
-
-    } catch (Exception $e) {
-        throw new Exception(
-            "Failed to fetch courses: " . $e->getMessage()
-        );
     }
-}
 }

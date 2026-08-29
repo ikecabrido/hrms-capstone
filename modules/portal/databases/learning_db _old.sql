@@ -1,3 +1,6 @@
+/* =========================================================
+    COURSE TABLES
+========================================================= */
 CREATE TABLE `ld_course` (
   `id` int(10) UNSIGNED NOT NULL,
   `instructor_id` int(10) UNSIGNED NOT NULL,
@@ -34,7 +37,6 @@ CREATE TABLE `ld_course_version` (
   `published_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-
 CREATE TABLE `ld_skill` (
   `id` int(10) UNSIGNED NOT NULL,
   `name` varchar(150) NOT NULL,
@@ -43,4 +45,61 @@ CREATE TABLE `ld_skill` (
   `suggested` tinyint(1) NOT NULL DEFAULT 0,
   `status` enum('active','archived') NOT NULL DEFAULT 'active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+/* =========================================================
+    ENROLLMENT TABLES
+========================================================= */
+CREATE TABLE `ld_enrollment` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `learner_id` int(10) UNSIGNED NOT NULL,
+  `course_id` int(10) UNSIGNED NOT NULL,
+  `course_version_id` int(10) UNSIGNED DEFAULT NULL,
+  `status` enum('invited','enrolled','in_progress','completed','withdrawn') NOT NULL DEFAULT 'enrolled',
+  `invited_by` int(10) UNSIGNED DEFAULT NULL,
+  `enrolled_at` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `last_accessed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `ld_progress` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `enrollment_id` int(10) UNSIGNED NOT NULL,
+  `item_type` enum('module','lesson','quiz','evaluation') NOT NULL,
+  `reference_id` int(10) UNSIGNED NOT NULL,
+  `status` enum('not_started','in_progress','completed') NOT NULL DEFAULT 'not_started',
+  `completed_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `ld_module` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `course_id` int(10) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `order_index` int(10) UNSIGNED DEFAULT 0,
+  `status` enum('active','archived') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `ld_lesson` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `module_id` int(10) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `content_type` enum('video','text','file','mixed') NOT NULL DEFAULT 'text',
+  `content_body` text DEFAULT NULL,
+  `video_url` varchar(500) DEFAULT NULL,
+  `order_index` int(10) UNSIGNED DEFAULT 0,
+  `status` enum('active','archived') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE `ld_lesson_file` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `lesson_id` int(10) UNSIGNED NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

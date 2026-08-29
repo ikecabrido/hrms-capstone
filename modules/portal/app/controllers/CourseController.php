@@ -8,7 +8,6 @@ use Exception;
 class CourseController
 {
     private Course $courseModel;
-
     public function __construct()
     {
         $this->courseModel = new Course();

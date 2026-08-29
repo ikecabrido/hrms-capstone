@@ -16,6 +16,7 @@ use App\Controllers\AttendanceController;
 use App\Controllers\ResignationController;
 use App\Controllers\PerformanceController;
 use App\Controllers\EmployeeUserController;
+use App\Controllers\ManageCourseController;
 use App\Controllers\AnnouncementController;
 use App\Controllers\NotificationController;
 use App\Controllers\SendEmployeesController;
@@ -110,6 +111,7 @@ $routes = [
     'admin-update-course' => [CourseController::class, 'update'],
     'admin-course-toggle-status' => [CourseController::class, 'toggleStatus'],
     'admin-delete-course' => [CourseController::class, 'delete'],
+    'admin-course-content' => [ManageCourseController::class, 'index'],
 
     // Complaint
     'complaint' => [ComplaintController::class, 'index'],
