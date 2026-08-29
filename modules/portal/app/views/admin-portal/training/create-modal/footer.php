@@ -53,17 +53,7 @@
 
     <div style="margin-left:auto;display:flex;gap:9px;">
 
-        <button type="button" onclick="closeCreateCourseModal()" style="
-                            height:42px;
-                            padding:0 17px;
-                            border:1px solid #cbd5e1;
-                            border-radius:10px;
-                            background:#fff;
-                            color:#475569;
-                            font-size:13px;
-                            font-weight:600;
-                            cursor:pointer;
-                        ">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
             Cancel
         </button>
 

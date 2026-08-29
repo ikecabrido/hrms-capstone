@@ -29,4 +29,5 @@ class TrainingController
         $content = __DIR__ . '/../views/admin-portal/training/content.php';
         require __DIR__ . '/../views/admin-portal/index.php';
     }
+    
 }

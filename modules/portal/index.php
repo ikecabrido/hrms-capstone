@@ -107,6 +107,9 @@ $routes = [
     'training' => [TrainingController::class, 'index'],
     'admin-learning-index' => [TrainingController::class, 'adminIndex'],
     'admin-store-course' => [CourseController::class, 'store'],
+    'admin-update-course' => [CourseController::class, 'update'],
+    'admin-course-toggle-status' => [CourseController::class, 'toggleStatus'],
+    'admin-delete-course' => [CourseController::class, 'delete'],
 
     // Complaint
     'complaint' => [ComplaintController::class, 'index'],
