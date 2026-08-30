@@ -1,7 +1,205 @@
 // Exit Management JavaScript
 // Ensure the global flag is defined without re-declaring with `let` on repeated loads
 window.interviewModalViewOnlyMode = typeof window.interviewModalViewOnlyMode !== 'undefined' ? window.interviewModalViewOnlyMode : false;
-let transferModalViewOnlyMode = false;
+
+// Minimal shim for Bootstrap's modal plugin when Bootstrap JS isn't loaded.
+// Provides basic show/hide behavior and backdrop so calls to `$(...).modal('show')`
+// do not throw. Install as soon as jQuery becomes available (handles varied load order).
+(function(){
+    function installModalShim($) {
+        if (!$ || typeof $.fn.modal === 'function') return;
+        (function($){
+            var openModals = [];
+            var focusHandlerAttached = false;
+
+            function ensureBackdrop() {
+                $('.modal-backdrop').not('.modal-backdrop--active').remove();
+                $('<div class="modal-backdrop fade show modal-backdrop--active"></div>').appendTo('body');
+                $('.modal-backdrop--active').css('z-index', 1040);
+            }
+
+            function removeBackdropIfNeeded() {
+                if (openModals.length === 0) {
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open');
+                }
+            }
+
+            function getFocusable($el) {
+                return $el.find('a[href], area[href], input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex]:not([tabindex="-1"])').filter(':visible');
+            }
+
+            function onKeydown(e) {
+                if (openModals.length === 0) return;
+                var topEl = openModals[openModals.length - 1];
+                if (!topEl) return;
+                var $top = $(topEl);
+
+                if (e.key === 'Escape') {
+                    $top.modal('hide');
+                    return;
+                }
+
+                if (e.key === 'Tab') {
+                    var $focusable = getFocusable($top);
+                    if ($focusable.length === 0) {
+                        e.preventDefault();
+                        return;
+                    }
+                    var first = $focusable.first()[0];
+                    var last = $focusable.last()[0];
+                    if (e.shiftKey) {
+                        if (document.activeElement === first) {
+                            e.preventDefault();
+                            last.focus();
+                        }
+                    } else {
+                        if (document.activeElement === last) {
+                            e.preventDefault();
+                            first.focus();
+                        }
+                    }
+                }
+            }
+
+            // Force-clear all modal state. Must be called before the SPA navigation
+            // replaces .container's HTML, otherwise a modal left open when the user
+            // switches tabs leaves its backdrop (a full-screen fixed overlay) stuck
+            // in <body> forever, since the modal element that would normally remove
+            // it gets destroyed by innerHTML replacement without running .modal('hide').
+            window.exitModalShimReset = function() {
+                openModals.length = 0;
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+                if (focusHandlerAttached) {
+                    $(document).off('keydown.modalShim');
+                    focusHandlerAttached = false;
+                }
+            };
+
+            // Bootstrap-parity: clicking the dimmed backdrop area (outside the dialog)
+            // should close the topmost modal, same as clicking a [data-dismiss="modal"]
+            // button. Without this, an open modal can only be closed via its own close
+            // button, which reads as "stuck"/broken to users.
+            $(document).on('mousedown', '.modal.show', function(e) {
+                if (e.target === this) {
+                    $(this).modal('hide');
+                }
+            });
+
+            $.fn.modal = function(options) {
+                var action = 'show';
+                var config = {};
+
+                if (typeof options === 'string') {
+                    action = options;
+                } else if (options && typeof options === 'object') {
+                    config = options || {};
+                    action = config.show === false ? 'hide' : (config.hide ? 'hide' : (config.toggle ? 'toggle' : 'show'));
+                }
+
+                if (action === 'show' || action === 'toggle') {
+                    var backdropAllowed = config.backdrop !== false;
+                    this.each(function() {
+                        var $m = $(this);
+                        if ($m.data('modalOpen')) return; // already open
+                        $m.data('modalOpen', true);
+                        $m.data('modalBackdropAllowed', backdropAllowed);
+                        $m.data('previouslyFocused', document.activeElement);
+                        $m.addClass('show').css({
+                                display: 'flex',
+                                'z-index': 1060,
+                                position: 'fixed'
+                            }).attr('aria-hidden', 'false').attr('aria-modal', 'true').attr('role', 'dialog');
+                        // store raw DOM element to avoid jQuery wrapper identity issues
+                        openModals.push($m[0]);
+                        $m.trigger('show.bs.modal').trigger('shown.bs.modal');
+                    });
+
+                    if (backdropAllowed) {
+                        ensureBackdrop();
+                    }
+                    $('body').addClass('modal-open');
+
+                    // Focus management: focus first focusable element or modal itself
+                    var $top = $(openModals[openModals.length - 1]);
+                    var $focusable = getFocusable($top);
+                    if ($focusable.length) {
+                        $focusable.first().focus();
+                    } else {
+                        $top.attr('tabindex', '-1').focus();
+                    }
+
+                    if (!focusHandlerAttached) {
+                        $(document).on('keydown.modalShim', onKeydown);
+                        focusHandlerAttached = true;
+                    }
+                } else if (action === 'hide') {
+                    this.each(function() {
+                        var $m = $(this);
+                        if (!$m.data('modalOpen')) return;
+                        $m.removeClass('show').css('display', 'none').attr('aria-hidden', 'true').attr('aria-modal', 'false');
+                        $m.data('modalOpen', false);
+                        $m.data('modalBackdropAllowed', true);
+
+                        var idx = openModals.indexOf($m[0]);
+                        if (idx !== -1) openModals.splice(idx, 1);
+
+                        // restore focus
+                        var prev = $m.data('previouslyFocused');
+                        try { if (prev && typeof prev.focus === 'function') prev.focus(); } catch (e) {}
+                        $m.trigger('hidden.bs.modal');
+                    });
+
+                    removeBackdropIfNeeded();
+                    if (openModals.length === 0) {
+                        $('body').removeClass('modal-open');
+                        if (focusHandlerAttached) {
+                            $(document).off('keydown.modalShim');
+                            focusHandlerAttached = false;
+                        }
+                    }
+                }
+                return this;
+            };
+        })( $ );
+
+        // Delegate clicks on elements that use Bootstrap's `data-dismiss="modal"`
+        // to our shimmed modal implementation so close buttons work without Bootstrap.
+        (function($){
+            $(document).on('click', '[data-dismiss="modal"]', function(e){
+                e.preventDefault();
+                var $btn = $(this);
+                var $modal = $btn.closest('.modal');
+                if ($modal.length) {
+                    $modal.modal('hide');
+                }
+            });
+        })( $ );
+    }
+
+    // If jQuery is already present, install now. Otherwise poll briefly until available.
+    // Expose an installer to allow on-demand installation later if jQuery loads late.
+    window.ensureExitModalShim = function() {
+        if (typeof window.jQuery !== 'undefined') {
+            try { installModalShim(window.jQuery); } catch (e) { /* swallow */ }
+            return true;
+        }
+        return false;
+    };
+
+    if (!window.ensureExitModalShim()) {
+        var _shimInterval = setInterval(function(){
+            if (window.ensureExitModalShim()) {
+                clearInterval(_shimInterval);
+            }
+        }, 50);
+        // Stop polling after 30 seconds to avoid runaway intervals but allow slower loads
+        setTimeout(function(){ clearInterval(_shimInterval); }, 30000);
+    }
+})();
+// Ensure transfer modal flag is defined without re-declaring on repeated loads
+window.transferModalViewOnlyMode = typeof window.transferModalViewOnlyMode !== 'undefined' ? window.transferModalViewOnlyMode : false;
 
 $(document).ready(function() {
     $.ajaxSetup({
@@ -18,6 +216,23 @@ $(document).ready(function() {
     loadDashboardData();
     initExitModalPickers();
     setInterval(loadPayrollApprovalNotifications, 60000); // refresh payroll approval notifications every minute
+});
+
+// custom.js is loaded once by the shell footer and never reloaded, but the tab/
+// sidebar navigation swaps out modules/exit/js/utils/main.js's .container on every
+// click (AJAX, not a real page load). Anything that only ran inside the
+// $(document).ready() above — modal state, form bindings, employee dropdowns,
+// dashboard widgets, flatpickr instances — was only ever wired up for whichever
+// page happened to be loaded first, and silently stopped working the moment you
+// left that tab. `page:loaded` (dispatched by js/utils/page-init.js) fires on
+// every tab switch, including the very first one, so re-running init here keeps
+// things working no matter how many times you switch tabs.
+window.addEventListener('page:loaded', function() {
+    if (window.exitModalShimReset) window.exitModalShimReset();
+    initializeModals();
+    loadEmployees();
+    loadDashboardData();
+    initExitModalPickers();
 });
 
 function setInterviewModalMode(viewOnly = false) {
@@ -481,16 +696,28 @@ function renderInterviewsPagination(containerId, response, status, currentPage, 
 
 // Initialize modal event handlers
 function initializeModals() {
-    // Resignation Modal
-    $('#resignationForm').on('submit', function(e) {
-        e.preventDefault();
-        submitResignationForm();
-    });
+    // Every binding below is delegated to document with a namespaced event and
+    // .off() before .on(). This is required because initializeModals() now runs
+    // on every SPA tab switch (see the page:loaded listener near the top of this
+    // file) — direct element bindings like $('#resignationForm').on(...) would
+    // only ever attach to whichever copy of that element existed at the moment
+    // this ran, and would go dead the instant the tab content is replaced.
+    // Delegating to document means the handler keeps matching whatever element
+    // currently has that id/class, no matter how many times the DOM is swapped,
+    // and .off() first means re-running this function never double-binds.
 
-    $('#terminationForm').on('submit', function(e) {
-        e.preventDefault();
-        submitTerminationForm();
-    });
+    // Resignation Modal
+    $(document).off('submit.exitModals', '#resignationForm')
+        .on('submit.exitModals', '#resignationForm', function(e) {
+            e.preventDefault();
+            submitResignationForm();
+        });
+
+    $(document).off('submit.exitModals', '#terminationForm')
+        .on('submit.exitModals', '#terminationForm', function(e) {
+            e.preventDefault();
+            submitTerminationForm();
+        });
 
     $(document).off('click.terminationModalClose', '#terminationModal [data-close="termination-modal"]')
         .on('click.terminationModalClose', '#terminationModal [data-close="termination-modal"]', function(e) {
@@ -512,164 +739,189 @@ function initializeModals() {
             }
         });
 
-    $('#terminationEmployeeSelect').on('change', function() {
-        const employeeId = $(this).val();
-        if (employeeId) {
-            checkTerminationEligibility(employeeId);
-        } else {
-            $('#terminationEligibilityMessage').hide();
-            $('#terminationSubmitBtn').prop('disabled', false);
-        }
-    });
+    $(document).off('change.exitModals', '#terminationEmployeeSelect')
+        .on('change.exitModals', '#terminationEmployeeSelect', function() {
+            const employeeId = $(this).val();
+            if (employeeId) {
+                checkTerminationEligibility(employeeId);
+            } else {
+                $('#terminationEligibilityMessage').hide();
+                $('#terminationSubmitBtn').prop('disabled', false);
+            }
+        });
 
     // Interview Modal
-    $('#interviewForm').on('submit', function(e) {
-        e.preventDefault();
-        submitInterviewForm();
-    });
+    $(document).off('submit.exitModals', '#interviewForm')
+        .on('submit.exitModals', '#interviewForm', function(e) {
+            e.preventDefault();
+            submitInterviewForm();
+        });
 
-    $('#interviewCaseSelect, #interviewerSelect, #interviewDate, #interviewHour, #interviewMinute, #interviewMeridiem').on('change input', function() {
-        updateInterviewSubmitState();
-    });
+    $(document).off('change.exitModals input.exitModals', '#interviewCaseSelect, #interviewDate, #interviewHour, #interviewMinute, #interviewMeridiem')
+        .on('change.exitModals input.exitModals', '#interviewCaseSelect, #interviewDate, #interviewHour, #interviewMinute, #interviewMeridiem', function() {
+            updateInterviewSubmitState();
+        });
 
     // Save HR Assessment button
-    $('#saveHrAssessmentBtn').on('click', function() {
-        if (!canManageHrAssessment()) {
-            showToast('error', 'HR assessment saving is restricted to administrators.');
-            return;
-        }
+    $(document).off('click.exitModals', '#saveHrAssessmentBtn')
+        .on('click.exitModals', '#saveHrAssessmentBtn', function() {
+            if (!canManageHrAssessment()) {
+                showToast('error', 'HR assessment saving is restricted to administrators.');
+                return;
+            }
 
-        const interviewId = $('#interviewId').val();
-        if (!interviewId) {
-            showToast('error', 'Cannot save HR assessment: interview not loaded');
-            return;
-        }
-        saveHrAssessment(interviewId);
-    });
+            const interviewId = $('#interviewId').val();
+            if (!interviewId) {
+                showToast('error', 'Cannot save HR assessment: interview not loaded');
+                return;
+            }
+            saveHrAssessment(interviewId);
+        });
 
-    $('#editInterviewBtn').on('click', function() {
-        setInterviewModalMode(false);
-        $('#interviewModalTitle').text('Edit Exit Interview');
-        if (canManageHrAssessment()) {
-            $('#saveHrAssessmentBtn').show();
-        } else {
-            $('#saveHrAssessmentBtn').hide();
-        }
-        $('#interviewSubmitBtn').text($('#interviewId').val() ? 'Save Changes' : 'Schedule Interview');
-    });
+    $(document).off('click.exitModals', '#editInterviewBtn')
+        .on('click.exitModals', '#editInterviewBtn', function() {
+            setInterviewModalMode(false);
+            $('#interviewModalTitle').text('Edit Exit Interview');
+            if (canManageHrAssessment()) {
+                $('#saveHrAssessmentBtn').show();
+            } else {
+                $('#saveHrAssessmentBtn').hide();
+            }
+            $('#interviewSubmitBtn').text($('#interviewId').val() ? 'Save Changes' : 'Schedule Interview');
+        });
 
-    $('#editTransferBtn').on('click', function() {
-        setTransferModalMode(false);
-        $('#transferModalTitle').text('Edit Knowledge Transfer Plan');
-        $('#transferSubmitBtn').text($('#transferPlanId').val() ? 'Save Changes' : 'Create Transfer Plan');
-    });
+    $(document).off('click.exitModals', '#editTransferBtn')
+        .on('click.exitModals', '#editTransferBtn', function() {
+            setTransferModalMode(false);
+            $('#transferModalTitle').text('Edit Knowledge Transfer Plan');
+            $('#transferSubmitBtn').text($('#transferPlanId').val() ? 'Save Changes' : 'Create Transfer Plan');
+        });
 
     // Transfer Modal
-    $('#transferForm').on('submit', function(e) {
-        e.preventDefault();
-        submitTransferForm();
-    });
+    $(document).off('submit.exitModals', '#transferForm')
+        .on('submit.exitModals', '#transferForm', function(e) {
+            e.preventDefault();
+            submitTransferForm();
+        });
 
     // Settlement Modal
-    $('#settlementForm').on('submit', function(e) {
-        e.preventDefault();
-        submitSettlementForm();
-    });
+    $(document).off('submit.exitModals', '#settlementForm')
+        .on('submit.exitModals', '#settlementForm', function(e) {
+            e.preventDefault();
+            submitSettlementForm();
+        });
 
-    $('#calculateNetPayable').on('click', calculateSettlement);
+    $(document).off('click.exitModals', '#calculateNetPayable')
+        .on('click.exitModals', '#calculateNetPayable', calculateSettlement);
 
     // Document Modal
-    $('#documentForm').on('submit', function(e) {
-        e.preventDefault();
-        submitDocumentForm();
-    });
+    $(document).off('submit.exitModals', '#documentForm')
+        .on('submit.exitModals', '#documentForm', function(e) {
+            e.preventDefault();
+            submitDocumentForm();
+        });
 
-    $('#documentEmployeeSelect').on('change', function() {
-        const employeeId = $(this).val() || '';
-        loadDocumentCases(employeeId);
-    });
+    $(document).off('change.exitModals', '#documentEmployeeSelect')
+        .on('change.exitModals', '#documentEmployeeSelect', function() {
+            const employeeId = $(this).val() || '';
+            loadDocumentCases(employeeId);
+        });
 
-    $('#documentFile').on('change', function() {
-        const fileName = $(this).val().split('\\').pop();
-        $(this).next('.custom-file-label').html(fileName);
-    });
+    $(document).off('change.exitModals', '#documentFile')
+        .on('change.exitModals', '#documentFile', function() {
+            const fileName = $(this).val().split('\\').pop();
+            $(this).next('.custom-file-label').html(fileName);
+        });
 
     // Survey Modal
-    $('#surveyForm').on('submit', function(e) {
-        e.preventDefault();
-        submitSurveyForm();
-    });
+    $(document).off('submit.exitModals', '#surveyForm')
+        .on('submit.exitModals', '#surveyForm', function(e) {
+            e.preventDefault();
+            submitSurveyForm();
+        });
 
     // Dynamic form elements
-    $('#addTransferItem').on('click', addTransferItem);
-    $('#addSurveyQuestion').on('click', addSurveyQuestion);
+    $(document).off('click.exitModals', '#addTransferItem')
+        .on('click.exitModals', '#addTransferItem', addTransferItem);
+    $(document).off('click.exitModals', '#addSurveyQuestion')
+        .on('click.exitModals', '#addSurveyQuestion', addSurveyQuestion);
 
     // Question type change handler
-    $(document).on('change', '.question-type', function() {
-        toggleQuestionOptions($(this));
-    });
+    $(document).off('change.exitModals', '.question-type')
+        .on('change.exitModals', '.question-type', function() {
+            toggleQuestionOptions($(this));
+        });
 
     // Remove buttons
-    $(document).on('click', '.remove-item', function() {
-        $(this).closest('.transfer-item').remove();
-    });
+    $(document).off('click.exitModals', '.remove-item')
+        .on('click.exitModals', '.remove-item', function() {
+            $(this).closest('.transfer-item').remove();
+        });
 
-    $(document).on('click', '.remove-question', function() {
-        $(this).closest('.question-item').remove();
-        normalizeQuestionIndexes();
-    });
+    $(document).off('click.exitModals', '.remove-question')
+        .on('click.exitModals', '.remove-question', function() {
+            $(this).closest('.question-item').remove();
+            normalizeQuestionIndexes();
+        });
 
     // Add option button inside question
-    $(document).on('click', '.add-option', function() {
-        const questionIndex = $(this).data('question-index');
-        addOptionInput(questionIndex);
-    });
+    $(document).off('click.exitModals', '.add-option')
+        .on('click.exitModals', '.add-option', function() {
+            const questionIndex = $(this).data('question-index');
+            addOptionInput(questionIndex);
+        });
 
     // Remove a single option row
-    $(document).on('click', '.remove-option', function() {
-        $(this).closest('.option-row').remove();
-    });
+    $(document).off('click.exitModals', '.remove-option')
+        .on('click.exitModals', '.remove-option', function() {
+            $(this).closest('.option-row').remove();
+        });
 
     // Confirmation modal action
-    $('#confirmActionBtn').on('click', function() {
-        if (typeof confirmationCallback === 'function') {
-            const callback = confirmationCallback;
+    $(document).off('click.exitModals', '#confirmActionBtn')
+        .on('click.exitModals', '#confirmActionBtn', function() {
+            const callback = typeof confirmationCallback === 'function' ? confirmationCallback : null;
+            confirmationCallback = null;
+            const $modal = $('#confirmationModal');
+            $modal.modal('hide');
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+
+    $(document).off('click.exitModals', '#confirmationModal [data-dismiss="modal"]')
+        .on('click.exitModals', '#confirmationModal [data-dismiss="modal"]', function() {
             confirmationCallback = null;
             $('#confirmationModal').modal('hide');
-            callback();
-        } else {
-            $('#confirmationModal').modal('hide');
-        }
-    });
+        });
 
-    $('#confirmationModal').on('show.bs.modal', function() {
-        const currentMaxZ = Math.max(1050, ...$('.modal:visible').map(function() {
-            return Number($(this).css('z-index')) || 1050;
-        }).get());
-        const newZ = currentMaxZ + 20;
-        $(this).css('z-index', newZ);
-        setTimeout(function() {
-            $('.modal-backdrop').not('.stacked').css('z-index', newZ - 10).addClass('stacked');
-        }, 0);
-    });
+    $(document).off('show.bs.modal.exitModals', '#confirmationModal')
+        .on('show.bs.modal.exitModals', '#confirmationModal', function() {
+            $(this).css('z-index', 2200);
+            $('.modal-backdrop').not('.confirmation-stacked').css('z-index', 2190).addClass('confirmation-stacked');
+        });
 
-    $('#confirmationModal').on('hidden.bs.modal', function() {
-        confirmationCallback = null;
-        $(this).css('z-index', '');
-        $('.modal-backdrop.stacked').css('z-index', '').removeClass('stacked');
-    });
+    $(document).off('hidden.bs.modal.exitModals', '#confirmationModal')
+        .on('hidden.bs.modal.exitModals', '#confirmationModal', function() {
+            confirmationCallback = null;
+            $(this).css('z-index', '');
+            $('.modal-backdrop.confirmation-stacked').css('z-index', '').removeClass('confirmation-stacked');
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+        });
 
     // Employee eligibility check on selection change
-    $('#employeeSelect').on('change', function() {
-        const employeeId = $(this).val();
-        if (employeeId) {
-            checkEmployeeEligibility(employeeId);
-            loadEmployeeLastAttendanceDate(employeeId);
-        } else {
-            $('#eligibilityMessage').hide();
-            $('#lastWorkingDate').val('');
-        }
-    });
+    $(document).off('change.exitModals', '#employeeSelect')
+        .on('change.exitModals', '#employeeSelect', function() {
+            const employeeId = $(this).val();
+            if (employeeId) {
+                checkEmployeeEligibility(employeeId);
+                loadEmployeeLastAttendanceDate(employeeId);
+            } else {
+                $('#eligibilityMessage').hide();
+                $('#lastWorkingDate').val('');
+            }
+        });
 }
 
 // Load employee's last attendance date and auto-fill last working date
@@ -726,23 +978,102 @@ function checkTerminationEligibility(employeeId) {
         employee_id: employeeId
     }, function(response) {
         const messageDiv = $('#terminationEligibilityMessage');
-        messageDiv.removeClass('alert alert-success alert-danger').empty();
+        const employeeName = $('#terminationEmployeeSelect option:selected').text().replace(/\s*\([^)]*\)$/, '') || 'Selected employee';
+        messageDiv.removeClass('alert alert-success alert-danger alert-warning').empty();
 
         if (response.success) {
-            messageDiv.addClass('alert alert-success').html('<i class="fas fa-check-circle"></i> ' + response.message);
-            $('#terminationSubmitBtn').prop('disabled', false);
+            if (response.termination_required) {
+                const info = response.termination_info || {};
+                const missed = info.missed_shift_days ?? 'N/A';
+                const threshold = info.threshold ?? 'policy';
+                const lastMissed = info.last_missed_shift ? info.last_missed_shift : 'N/A';
+                const alertMessage = `
+                    <strong>Termination required.</strong> ${employeeName} has ${missed} absentee mark(s) in the recent lookback period against a threshold of ${threshold}. Last missed shift: ${lastMissed}. Manual review is required before submission.
+                `;
+                messageDiv.addClass('alert alert-warning').html('<i class="fas fa-exclamation-triangle"></i> ' + alertMessage);
+                messageDiv.css({ display: 'block', visibility: 'visible', opacity: 1 });
+                messageDiv.attr('role', 'alert');
+                showToast('warning', `${employeeName} is flagged for termination required (${missed}/${threshold} absences). Manual review is required.`);
+                $('#terminationSubmitBtn').prop('disabled', false);
+                showTerminationStatusBanner(employeeName, missed, threshold, lastMissed);
+            } else {
+                messageDiv.addClass('alert alert-success').html('<i class="fas fa-check-circle"></i> ' + response.message);
+                messageDiv.css({ display: 'block', visibility: 'visible', opacity: 1 });
+                $('#terminationSubmitBtn').prop('disabled', false);
+                hideTerminationStatusBanner();
+            }
         } else {
             messageDiv.addClass('alert alert-danger').html('<i class="fas fa-exclamation-triangle"></i> ' + response.message);
+            messageDiv.css({ display: 'block', visibility: 'visible', opacity: 1 });
             $('#terminationSubmitBtn').prop('disabled', true);
         }
-        messageDiv.show();
     }, 'json').fail(function(err) {
         console.error('Error checking termination eligibility:', err);
-        $('#terminationEligibilityMessage').removeClass('alert alert-success alert-danger')
+        $('#terminationEligibilityMessage').removeClass('alert alert-success alert-danger alert-warning')
             .addClass('alert alert-warning')
             .html('<i class="fas fa-exclamation-triangle"></i> Unable to check eligibility. Please try again.')
             .show();
         $('#terminationSubmitBtn').prop('disabled', false);
+    });
+}
+
+function showTerminationStatusBanner(employeeName, missed, threshold, lastMissed) {
+    const $alert = $('#terminationStatusAlert');
+    const $text = $('#terminationStatusAlertText');
+    if (!$alert.length || !$text.length) return;
+
+    const rows = [
+        `<div class="termination-warning-row"><strong>Termination required:</strong> ${employeeName} has ${missed} absentee mark(s) and is at the policy threshold of ${threshold}. Last missed shift: ${lastMissed}. Manual review is required.</div>`
+    ];
+
+    $text.html(rows.join(''));
+    $alert.removeClass('alert-success alert-info alert-danger').addClass('alert-warning');
+    $alert.css({ display: 'block', visibility: 'visible', opacity: 1 });
+}
+
+function hideTerminationStatusBanner() {
+    const $alert = $('#terminationStatusAlert');
+    if (!$alert.length) return;
+    $alert.hide();
+}
+
+function loadTerminationStatusAlert() {
+    $.ajax({
+        url: '../time/app/api/attendance/get_employees_required_for_termination.php',
+        method: 'GET',
+        dataType: 'json',
+        timeout: 15000,
+        success: function(response) {
+            const $alert = $('#terminationStatusAlert');
+            const $text = $('#terminationStatusAlertText');
+            if (!$alert.length || !$text.length) return;
+
+            if (response && response.success && Array.isArray(response.data) && response.data.length > 0) {
+                const rows = response.data.slice(0, 6).map(item => {
+                    const employeeName = item.employee_name || 'Employee';
+                    const count = item.absence_count ?? 0;
+                    const threshold = item.threshold ?? 'policy';
+                    return `<div class="termination-warning-row"><strong>Termination required:</strong> ${employeeName} has ${count} absentee mark(s) and reached the threshold of ${threshold}. Manual review is required.</div>`;
+                });
+
+                if (response.data.length > 6) {
+                    rows.push(`<div class="termination-warning-row"><strong>More flagged employees:</strong> ${response.data.length - 6} additional employee(s) require review.</div>`);
+                }
+
+                $text.html(rows.join(''));
+                $alert.removeClass('alert-success alert-info alert-danger').addClass('alert-warning');
+                $alert.css({ display: 'block', visibility: 'visible', opacity: 1 });
+                return;
+            }
+
+            $alert.hide();
+        },
+        error: function() {
+            const $alert = $('#terminationStatusAlert');
+            if ($alert.length) {
+                $alert.hide();
+            }
+        }
     });
 }
 
@@ -820,11 +1151,10 @@ function updateInterviewSubmitState() {
     syncInterviewCaseFieldsFromSelect();
 
     const selectedCase = $('#interviewCaseSelect').val();
-    const selectedInterviewer = $('#interviewerSelect').val();
     const scheduledDate = $('#interviewDate').val();
     const interviewTime = buildInterviewTimeValue();
     const hasDateTime = scheduledDate && interviewTime;
-    const canSubmit = !!selectedCase && !!selectedInterviewer && !!hasDateTime;
+    const canSubmit = !!selectedCase && !!hasDateTime;
 
     if (!selectedCase) {
         $('#interviewCaseHelpText').text('Please select an approved exit case before scheduling the interview.').show();
@@ -1124,6 +1454,16 @@ function showResignationModal(resignationId = null) {
 }
 
 function showInterviewModal(interviewId = null, viewOnly = false) {
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+
+    const $modal = $('#interviewModal').appendTo('body');
+    $modal.css({
+        'z-index': 2000,
+        position: 'fixed'
+    });
+    $modal.find('.modal-dialog').css({ 'position': 'relative', 'z-index': 2001 });
+
     if (interviewId) {
         $('#interviewModalTitle').text(viewOnly ? 'View Exit Interview' : 'Edit Exit Interview');
         $('#interviewForm')[0].reset();
@@ -1135,7 +1475,12 @@ function showInterviewModal(interviewId = null, viewOnly = false) {
         loadApprovedExitCases(function() {
             loadInterviewers(function() {
                 loadInterviewData(interviewId, viewOnly);
-                $('#interviewModal').modal('show');
+                if (typeof $.fn.modal === 'function') {
+                    $modal.modal({ backdrop: false, keyboard: true, show: true });
+                } else {
+                    $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                    $('body').addClass('modal-open');
+                }
             });
         });
     } else {
@@ -1155,13 +1500,30 @@ function showInterviewModal(interviewId = null, viewOnly = false) {
         $('#interviewSubmitBtn').prop('disabled', true).text('Schedule Interview');
         setInterviewModalMode(false);
         loadApprovedExitCases();
-        loadInterviewers();
-        $('#interviewModal').modal('show');
+        if (!$('#interviewerId').val()) {
+            $('#interviewerId').val($('#interviewerId').attr('value') || '');
+        }
+        if (typeof $.fn.modal === 'function') {
+            $modal.modal({ backdrop: false, keyboard: true, show: true });
+        } else {
+            $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+            $('body').addClass('modal-open');
+        }
     }
 }
 
 function showTransferModal(planId = null) {
     console.log('showTransferModal called with planId:', planId);
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+
+    const $modal = $('#transferModal').appendTo('body');
+    $modal.css({
+        'z-index': 2000,
+        position: 'fixed'
+    });
+    $modal.find('.modal-dialog').css({ position: 'relative', 'z-index': 2001 });
+
     let transferPlanId = planId === null || planId === undefined || planId === '' ? null : Number(planId);
     if (Number.isNaN(transferPlanId)) {
         transferPlanId = null;
@@ -1180,7 +1542,12 @@ function showTransferModal(planId = null) {
             loadSuccessors(function() {
                 loadTransferData(transferPlanId, true, function() {
                     console.log('Showing transfer modal after load for planId:', transferPlanId);
-                    $('#transferModal').modal('show');
+                    if (typeof $.fn.modal === 'function') {
+                        $modal.modal({ backdrop: false, keyboard: true, show: true });
+                    } else {
+                        $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                        $('body').addClass('modal-open');
+                    }
                 });
             });
         });
@@ -1194,7 +1561,12 @@ function showTransferModal(planId = null) {
         setTransferModalMode(false);
         loadEmployeesNeedingKnowledgeTransfer();
         loadSuccessors();
-        $('#transferModal').modal('show');
+        if (typeof $.fn.modal === 'function') {
+            $modal.modal({ backdrop: false, keyboard: true, show: true });
+        } else {
+            $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+            $('body').addClass('modal-open');
+        }
     }
 }
 
@@ -1258,13 +1630,25 @@ function showSettlementModal(settlementId = null, viewOnly = false) {
 
     if (settlementId) {
         loadSequence(function() {
-            loadSettlementData(settlementId, viewOnly, function() {
-                $('#settlementModal').appendTo('body').modal('show');
-            });
+                loadSettlementData(settlementId, viewOnly, function() {
+                    var $settModal = $('#settlementModal').appendTo('body');
+                    if (typeof $settModal.modal === 'function') {
+                        $settModal.modal('show');
+                    } else {
+                        $settModal.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                        $('body').addClass('modal-open');
+                    }
+                });
         });
     } else {
         loadSequence(function() {
-            $('#settlementModal').appendTo('body').modal('show');
+            var $settModal = $('#settlementModal').appendTo('body');
+            if (typeof $settModal.modal === 'function') {
+                $settModal.modal('show');
+            } else {
+                $settModal.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                $('body').addClass('modal-open');
+            }
         });
     }
 }
@@ -1324,6 +1708,16 @@ function showDocumentModal(documentId = null, options = {}) {
 }
 
 function showSurveyModal(surveyId = null) {
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+
+    const $modal = $('#surveyModal').appendTo('body');
+    $modal.css({
+        'z-index': 2000,
+        position: 'fixed'
+    });
+    $modal.find('.modal-dialog').css({ position: 'relative', 'z-index': 2001 });
+
     $('#surveyForm')[0].reset();
     $('#surveyId').val('');
     $('#surveyTitle').val('Post-Exit Survey');
@@ -1340,7 +1734,12 @@ function showSurveyModal(surveyId = null) {
 
     $('#surveyModalTitle').text('Schedule Post-Exit Survey');
     loadEligibleSurveyEmployees();
-    $('#surveyModal').modal('show');
+    if (typeof $.fn.modal === 'function') {
+        $modal.modal({ backdrop: false, keyboard: true, show: true });
+    } else {
+        $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
 }
 
 function loadEligibleSurveyEmployees() {
@@ -1434,7 +1833,13 @@ function submitInterviewForm() {
 
     const formData = new FormData($('#interviewForm')[0]);
     const interviewId = $('#interviewId').val();
-    
+    const assignedInterviewerId = $('#interviewerId').val() || $('#currentUserId').val() || '';
+
+    if (assignedInterviewerId) {
+        formData.set('interviewer_id', assignedInterviewerId);
+        $('#interviewerId').val(assignedInterviewerId);
+    }
+
     const interviewTime = buildInterviewTimeValue();
     if (interviewTime) {
         formData.set('scheduled_time', interviewTime);
@@ -1795,9 +2200,24 @@ function viewScheduledSurvey(surveyId) {
         `;
 
         $('body').append(modalHtml);
-        $('#scheduledSurveyViewModal').modal('show');
-        $('#scheduledSurveyViewModal').on('hidden.bs.modal', function() {
+        const $scheduledModal = $('#scheduledSurveyViewModal');
+        $scheduledModal.css({
+            'z-index': 2000,
+            position: 'fixed'
+        });
+        $scheduledModal.find('.modal-dialog').css({ position: 'relative', 'z-index': 2001 });
+
+        if (typeof $.fn.modal === 'function') {
+            $scheduledModal.modal({ backdrop: false, keyboard: true, show: true });
+        } else {
+            $scheduledModal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+            $('body').addClass('modal-open');
+        }
+
+        $scheduledModal.on('hidden.bs.modal', function() {
             $(this).remove();
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
         });
 
         $(document).off('click.surveyRating').on('click.surveyRating', '.rating-star, .rating-star-btn', function() {
@@ -2247,7 +2667,7 @@ function loadInterviewData(id, viewOnly = false) {
                 if (key === 'exit_case_type' || key === 'exit_case_id' || key === 'employee_id') {
                     return;
                 } else if (key === 'interviewer_id') {
-                    $('#interviewerSelect').val(response[key]);
+                    $('#interviewerId').val(response[key] || $('#interviewerId').val());
                 } else if (key === 'scheduled_date' || key === 'interview_date') {
                     setDateInputValue('#interviewDate', response[key]);
                 } else if (key === 'scheduled_time') {
@@ -2272,21 +2692,27 @@ function loadInterviewData(id, viewOnly = false) {
             setDateInputValue('#interviewDate', response.scheduled_date || response.interview_date || '');
 
             // Populate read-only Employee Info if present
-            if (response.employee_full_name) {
-                $('#employeeFullName').text(response.employee_full_name);
-                $('#employeeDepartment').text(response.employee_department || '');
-                $('#employeePosition').text(response.employee_position || '');
-                $('#employeeDateHired').text(response.employee_date_hired || '');
-                // calculate years of service
-                if (response.employee_date_hired) {
-                    const hired = new Date(response.employee_date_hired);
+            const employeeName = response.employee_full_name || response.employee_name || response.full_name ||
+                [response.first_name, response.last_name].filter(Boolean).join(' ') || '';
+            const employeeDepartment = response.employee_department || response.department_name || response.department || '';
+            const employeePosition = response.employee_position || response.position_name || response.position || '';
+            const employeeDateHired = response.employee_date_hired || response.hire_date || response.date_hired || '';
+            const employeeManager = response.manager_name || response.manager || '';
+
+            if (employeeName || employeeDepartment || employeePosition || employeeDateHired || employeeManager) {
+                $('#employeeFullName').text(employeeName);
+                $('#employeeDepartment').text(employeeDepartment);
+                $('#employeePosition').text(employeePosition);
+                $('#employeeDateHired').text(employeeDateHired);
+                if (employeeDateHired) {
+                    const hired = new Date(employeeDateHired);
                     const now = new Date();
                     const years = now.getFullYear() - hired.getFullYear();
                     $('#employeeYearsOfService').text(years + ' years');
                 } else {
                     $('#employeeYearsOfService').text('');
                 }
-                $('#employeeManager').text(response.manager_name || '');
+                $('#employeeManager').text(employeeManager);
                 $('#employeeInfoSection').show();
             }
 
@@ -2299,7 +2725,7 @@ function loadInterviewData(id, viewOnly = false) {
                 const approvedBy = caseDetails.approved_by_name ? `${caseDetails.approved_by_name} @ ${caseDetails.approved_at || ''}` : '';
                 $('#exitCaseApproved').text(approvedBy);
                 $('#exitCaseInfoSection').show();
-            } else if (response.exit_reason || response.exit_date || response.notice_date) {
+            } else if (response.exit_reason || response.exit_date || response.notice_date || response.termination_effective_date) {
                 $('#exitCaseReason').text(response.exit_reason || '');
                 $('#exitCaseNoticeDate').text(response.notice_date || '');
                 $('#exitCaseDate').text(response.exit_date || response.termination_effective_date || '');
@@ -2399,9 +2825,25 @@ function loadTransferData(id, viewOnly = false, callback = null) {
         const plan = response && response.success && response.data ? response.data : response;
 
         if (plan && !plan.error) {
+            const planEmployeeId = plan.employee_id || '';
+            const planSuccessorId = plan.successor_id || '';
+            const planEmployeeName = plan.employee_name || plan.full_name || plan.employee || 'Selected employee';
+            const planSuccessorName = plan.successor_name || plan.successor || 'Selected successor';
+
             $('#transferPlanId').val(plan.id || plan.plan_id || plan.planId || id);
-            $('#transferEmployeeSelect').val(plan.employee_id || '');
-            $('#successorSelect').val(plan.successor_id || '');
+
+            if (planEmployeeId && !$('#transferEmployeeSelect option[value="' + planEmployeeId + '"]').length) {
+                const employeeLabel = planEmployeeName ? `${planEmployeeName}` : 'Selected employee';
+                $('#transferEmployeeSelect').prepend(`<option value="${planEmployeeId}">${employeeLabel}</option>`);
+            }
+            $('#transferEmployeeSelect').val(planEmployeeId || '');
+
+            if (planSuccessorId && !$('#successorSelect option[value="' + planSuccessorId + '"]').length) {
+                const successorLabel = planSuccessorName ? `${planSuccessorName}` : 'Selected successor';
+                $('#successorSelect').prepend(`<option value="${planSuccessorId}">${successorLabel}</option>`);
+            }
+            $('#successorSelect').val(planSuccessorId || '');
+
             setDateInputValue('#transferStartDate', plan.start_date);
             setDateInputValue('#transferEndDate', plan.end_date);
 
@@ -2644,10 +3086,10 @@ function escapeJsString(value) {
         .replace(/\r/g, '\\r');
 }
 
-// Table loading functions
-let archivedResignationsData = [];
-let archivedResignationPage = 1;
-const archivedResignationPageSize = 10;
+// Table loading functions (idempotent across repeated script executions)
+window.archivedResignationsData = typeof window.archivedResignationsData !== 'undefined' ? window.archivedResignationsData : [];
+window.archivedResignationPage = typeof window.archivedResignationPage !== 'undefined' ? window.archivedResignationPage : 1;
+window.archivedResignationPageSize = typeof window.archivedResignationPageSize !== 'undefined' ? window.archivedResignationPageSize : 10;
 
 function loadResignationsTable(status = 'active', page = 1, searchTerm = '') {
     console.log('[loadResignationsTable] status:', status, 'page:', page, 'search:', searchTerm);
@@ -2771,7 +3213,7 @@ function loadTerminationsTable(status = 'active', page = 1, searchTerm = '') {
     };
 
     const tbody = $('#terminations-tbody');
-    showTableLoading(tbody, 9);
+    showTableLoading(tbody, 8);
 
     $.post('exit_management.php', payload, function(response) {
         tbody.empty();
@@ -2804,7 +3246,6 @@ function loadTerminationsTable(status = 'active', page = 1, searchTerm = '') {
                         <td>${termination.position || '-'}</td>
                         <td>${termination.termination_reason || '-'}</td>
                         <td>${termination.effective_date || '-'}</td>
-                        <td>${termination.comments ? termination.comments.substring(0, 50) + '...' : '-'}</td>
                         <td class="status-cell">${statusBadge}</td>
                         <td class="actions-cell">${actions}</td>
                     </tr>
@@ -2813,12 +3254,12 @@ function loadTerminationsTable(status = 'active', page = 1, searchTerm = '') {
 
             renderTerminationsPagination('terminations-pagination', response, status, page, searchTerm);
         } else {
-            tbody.append('<tr><td colspan="9" class="text-center">No terminations found</td></tr>');
+            tbody.append('<tr><td colspan="8" class="text-center">No terminations found</td></tr>');
             $('#terminations-pagination').empty();
         }
     }, 'json').fail(function(xhr, status, error) {
         console.error('[loadTerminationsTable] AJAX error:', status, error, xhr.responseText);
-        tbody.html('<tr><td colspan="9" class="text-center text-danger">Error loading terminations. Check console for details.</td></tr>');
+        tbody.html('<tr><td colspan="8" class="text-center text-danger">Error loading terminations. Check console for details.</td></tr>');
         $('#terminations-pagination').empty();
     });
 }
@@ -2995,9 +3436,34 @@ function submitTerminationForm() {
 
     $.post('exit_management.php', payload, function(response) {
         if (response.success) {
-            showToast('success', response.message || 'Termination saved successfully.');
-            closeTerminationModal();
-            loadTerminationsTable();
+                if (response.termination_required) {
+                    // Server blocked auto-submit because policy flagged this employee.
+                    showToast('warning', 'Termination flagged by Attendance policy. Please review and confirm manually.');
+                    // show details in modal for user review
+                    if (response.termination_info) {
+                        const info = response.termination_info;
+                        const detailsHtml = `<div class="alert alert-warning">Termination threshold: ${info.threshold}<br>Missed days: ${info.missed_shift_days}<br>Last missed: ${info.last_missed_shift}</div>`;
+                        $('#terminationEligibilityMessage').html(detailsHtml).show();
+                    }
+                    // enable a manual confirm action
+                    $('#terminationSubmitBtn').text('Confirm & Submit').off('click.confirm').on('click.confirm', function(e){
+                        e.preventDefault();
+                        payload.confirm_manual = 1;
+                        $.post('exit_management.php', payload, function(resp){
+                            if (resp.success) {
+                                showToast('success', resp.message || 'Termination saved.');
+                                closeTerminationModal();
+                                loadTerminationsTable();
+                            } else {
+                                showToast('error', resp.message || 'Failed to save termination.');
+                            }
+                        }, 'json');
+                    });
+                } else {
+                    showToast('success', response.message || 'Termination saved successfully.');
+                    closeTerminationModal();
+                    loadTerminationsTable();
+                }
         } else {
             showToast('error', response.message || 'Failed to save termination.');
         }
@@ -3031,7 +3497,13 @@ function archiveTermination(id) {
             $('#archiveTerminationEmployeeId').val(response.data.employee_id);
             $('#archiveTerminationEmployeeName').val(response.data.employee_name);
             $('#archiveTerminationReason').val(getAutomatedArchiveReason());
-            $('#archiveTerminationModal').appendTo('body').modal('show');
+            var $archTermModal = $('#archiveTerminationModal').appendTo('body');
+            if (typeof $archTermModal.modal === 'function') {
+                $archTermModal.modal('show');
+            } else {
+                $archTermModal.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                $('body').addClass('modal-open');
+            }
         } else {
             showToast('error', 'Failed to load termination details');
         }
@@ -3194,7 +3666,13 @@ function showArchivedResignationDetails(resignation) {
         </div>
     `);
 
-    $('#viewArchivedResignationModal').appendTo('body').modal('show');
+    var $viewArchModal = $('#viewArchivedResignationModal').appendTo('body');
+    if (typeof $viewArchModal.modal === 'function') {
+        $viewArchModal.modal('show');
+    } else {
+        $viewArchModal.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
 }
 
 
@@ -3373,6 +3851,56 @@ let archivedInterviewPage = 1;
 let archivedInterviewTotal = 0;
 const archivedInterviewPageSize = 10;
 
+function loadInterviewReadyAlert() {
+    $.ajax({
+        url: 'exit_management.php',
+        method: 'POST',
+        dataType: 'json',
+        data: {
+            ajax_action: 'get_waiting_interview_cases',
+            controller: 'exit_management'
+        },
+        success: function(response) {
+            const $alert = $('#interviewQueueAlert');
+            const $text = $('#interviewQueueAlertText');
+            if (!$alert.length || !$text.length) return;
+
+            const cases = Array.isArray(response)
+                ? response
+                : (response && Array.isArray(response.data)
+                    ? response.data
+                    : []);
+
+            if (Array.isArray(cases) && cases.length > 0) {
+                const rows = cases.slice(0, 6).map(item => {
+                    const employeeName = item.full_name || item.employee_name || 'Employee';
+                    const exitType = (item.exit_case_type || 'case').charAt(0).toUpperCase() + (item.exit_case_type || 'case').slice(1);
+                    const exitDate = item.exit_date || item.last_working_date || item.effective_date || 'N/A';
+                    return `<div class="interview-ready-row"><i class="fas fa-exclamation-circle text-primary"></i><span><strong>${employeeName}</strong> has a ${exitType} case approved and waiting for an exit interview schedule (${exitDate}).</span></div>`;
+                });
+
+                if (cases.length > 6) {
+                    rows.push(`<div class="interview-ready-row"><i class="fas fa-info-circle text-primary"></i><span><strong>${cases.length - 6}</strong> additional approved cases are also waiting for an interview.</span></div>`);
+                }
+
+                $text.html(rows.join(''));
+                $alert.removeClass('alert-success alert-warning alert-danger').addClass('alert-info');
+                $alert.css({ display: 'block', visibility: 'visible', opacity: 1 });
+                return;
+            }
+
+            $alert.hide();
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading interview-ready cases:', status, error, xhr.responseText);
+            const $alert = $('#interviewQueueAlert');
+            if ($alert.length) {
+                $alert.hide();
+            }
+        }
+    });
+}
+
 function loadArchivedInterviewSummary() {
     $.post('exit_management.php', {
         ajax_action: 'get_archived_interviews',
@@ -3475,7 +4003,22 @@ function goToArchivedInterviewPage(page) {
 }
 
 function openArchiveModal() {
-    $('#archivedInterviewsModal').modal('show');
+    // Match the working archive modal pattern already used elsewhere in this codebase.
+    // Do not force a manual backdrop here; it overrides Bootstrap's modal behavior and
+    // causes the whole page to look greyed out even while the archive popup is open.
+    var $modal = $('#archivedInterviewsModal').appendTo('body');
+
+    if (typeof $.fn.modal === 'function') {
+        $modal.modal({ backdrop: false, keyboard: true, show: true });
+    } else {
+        $modal.addClass('show').css({
+            display: 'block',
+            position: 'fixed',
+            'z-index': 1055
+        }).attr('aria-hidden', 'false').attr('aria-modal', 'true').attr('role', 'dialog');
+        $('body').addClass('modal-open');
+    }
+
     loadArchivedInterviewsTable(1);
 }
 
@@ -3540,7 +4083,22 @@ function loadTransfersTable(status = 'all', page = 1, limit = 10, searchTerm = '
 let archivedTransferPage = 1;
 
 function archiveTransfers() {
-    $('#archivedTransfersModal').modal('show');
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+
+    const $modal = $('#archivedTransfersModal').appendTo('body');
+    $modal.css({
+        'z-index': 2000,
+        position: 'fixed'
+    });
+    $modal.find('.modal-dialog').css({ position: 'relative', 'z-index': 2001 });
+
+    if (typeof $.fn.modal === 'function') {
+        $modal.modal({ backdrop: false, keyboard: true, show: true });
+    } else {
+        $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
     loadArchivedTransfersTable(1);
 }
 
@@ -3915,8 +4473,8 @@ function viewExitCaseDocumentation(exitCaseId, exitCaseType) {
         `;
 
         const modalHtml = `
-            <div class="modal fade exit-modal" id="exitCaseDocumentationModal" tabindex="-1" role="dialog">
-                <div class="modal-dialog modal-xl" role="document">
+            <div class="modal fade exit-modal exit-case-documentation-modal" id="exitCaseDocumentationModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-dialog-centered modal-xl" role="document" style="max-width: 96vw; width: 96vw;">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Exit Case Documentation</h5>
@@ -3929,8 +4487,28 @@ function viewExitCaseDocumentation(exitCaseId, exitCaseType) {
         `;
 
         $('body').append(modalHtml);
-        $('#exitCaseDocumentationModal').modal('show');
-        $('#exitCaseDocumentationModal').on('hidden.bs.modal', function() {
+
+        const $documentationModal = $('#exitCaseDocumentationModal');
+        $documentationModal.css({
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'z-index': 1050
+        });
+        $documentationModal.find('.modal-dialog').css({
+            'margin-left': 'auto',
+            'margin-right': 'auto',
+            'width': 'min(96vw, 1600px)',
+            'max-width': '96vw'
+        });
+
+        $documentationModal.modal('show');
+        $documentationModal.on('hidden.bs.modal', function() {
             $(this).remove();
         });
     }, 'json').fail(function(xhr, status, error) {
@@ -4006,13 +4584,13 @@ function showPreviewModal(html) {
     $('#exitPreviewModal').remove();
         const modal = `
         <div class="modal fade" id="exitPreviewModal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-xl" role="document" style="max-width:1100px;">
+            <div class="modal-dialog modal-xl" role="document" style="width:min(92vw, 1300px); max-width:min(92vw, 1300px);">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Preview</h5>
                         <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
                     </div>
-                    <div class="modal-body p-0" style="height:80vh;">
+                    <div class="modal-body p-0" style="height:85vh;">
                         <iframe id="exitPreviewIframe" sandbox="allow-same-origin allow-forms allow-scripts allow-downloads" style="width:100%;height:100%;border:0;" ></iframe>
                     </div>
                 </div>
@@ -4020,8 +4598,9 @@ function showPreviewModal(html) {
         </div>`;
 
         $('body').append(modal);
-        // show modal then set srcdoc to avoid issues with HTML containing </script> etc.
-        $('#exitPreviewModal').modal({ backdrop: 'static' }).modal('show');
+        // Attach the listener BEFORE opening the modal — the shim fires
+        // show.bs.modal/shown.bs.modal synchronously as soon as .modal() is called,
+        // so a listener attached after that call misses the event entirely.
         $('#exitPreviewModal').on('shown.bs.modal', function() {
             const iframe = document.getElementById('exitPreviewIframe');
             try {
@@ -4045,6 +4624,8 @@ function showPreviewModal(html) {
             // for cases where the iframe attempts to download instead of render,
             // modern browsers may prevent download if sandbox lacks allow-downloads.
         }).on('hidden.bs.modal', function() { $(this).remove(); });
+        // show modal after listener is attached
+        $('#exitPreviewModal').modal({ backdrop: 'static' });
 }
 
 function loadSurveysTable(status = 'all', page = 1, limit = 10, searchTerm = '') {
@@ -4233,7 +4814,30 @@ function showConfirmation(message, callback, options = {}) {
         .removeClass('btn-success btn-danger btn-warning btn-primary btn-info')
         .addClass(buttonClass);
 
-    $('#confirmationModal').modal('show');
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+
+    const $modal = $('#confirmationModal').appendTo('body');
+    $modal.css({
+        'z-index': 2200,
+        position: 'fixed'
+    });
+    $modal.find('.modal-dialog').css({ position: 'relative', 'z-index': 2201 });
+
+    $modal.off('hidden.bs.modal.confirmation')
+        .on('hidden.bs.modal.confirmation', function() {
+            confirmationCallback = null;
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+            $modal.css('z-index', '');
+        });
+
+    if (typeof $.fn.modal === 'function') {
+        $modal.modal({ backdrop: false, keyboard: true, show: true });
+    } else {
+        $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
 }
 
 let lastPayrollApprovalCount = 0;
@@ -4425,7 +5029,13 @@ function archiveResignation(id) {
             $('#archiveNotes').val('');
 
             // Ensure modal is appended to body and show it
-            $('#archiveResignationModal').appendTo('body').modal('show');
+            var $archModal = $('#archiveResignationModal').appendTo('body');
+            if (typeof $archModal.modal === 'function') {
+                $archModal.modal('show');
+            } else {
+                $archModal.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                $('body').addClass('modal-open');
+            }
             console.log('[archiveResignation] modal shown for id=', id);
         } else {
             showToast('error', 'Failed to load resignation details');
@@ -4445,8 +5055,15 @@ function openArchivedResignationsModal(page = 1) {
 
     $('#modal-archived-resignations-tbody').html('<tr><td colspan="10" class="text-center text-muted">Loading archived resignations...</td></tr>');
     $('#modal-archived-resignations-pagination').empty();
-    // ensure modal is appended to body so Bootstrap places it above other containers
-    $('#archivedResignationsModal').appendTo('body').modal('show');
+    // ensure modal is appended to body so it is placed above other containers
+    var $archModal = $('#archivedResignationsModal').appendTo('body');
+    if (typeof $archModal.modal === 'function') {
+        $archModal.modal('show');
+    } else {
+        // fallback: use shim to show
+        $archModal.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
     loadArchivedResignationsTable(page, true);
 }
 
@@ -4617,6 +5234,8 @@ $(document).ready(function() {
             if (response.success) {
                 showToast('success', response.message);
                 $('#archiveSurveyModal').modal('hide');
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
                 loadSurveysTable();
                 loadDashboardData();
             } else {
@@ -5968,7 +6587,13 @@ function onSettlementSearchChange() {
 function openArchivedSettlementsModal(page = 1) {
     $('#modal-archived-settlements-tbody').html('<tr><td colspan="6" class="text-center text-muted">Loading archived settlements...</td></tr>');
     $('#modal-archived-settlements-pagination').empty();
-    $('#archivedSettlementsModal').appendTo('body').modal('show');
+    var $archSettModal = $('#archivedSettlementsModal').appendTo('body');
+    if (typeof $archSettModal.modal === 'function') {
+        $archSettModal.modal('show');
+    } else {
+        $archSettModal.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
     loadArchivedSettlementsTable(page);
 }
 
@@ -6064,7 +6689,13 @@ function showArchivedSettlementDetails(settlement) {
         </div>
     `);
 
-    $('#viewArchivedSettlementModal').appendTo('body').modal('show');
+    var $viewArchSett = $('#viewArchivedSettlementModal').appendTo('body');
+    if (typeof $viewArchSett.modal === 'function') {
+        $viewArchSett.modal('show');
+    } else {
+        $viewArchSett.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
 }
 
 function onDocumentSearchChange() {
@@ -6097,7 +6728,13 @@ function archiveSettlement(id, triggerElement = null) {
             $('#archiveSettlementId').val(id);
             $('#archiveSettlementEmployeeName').val(employeeName);
             $('#archiveSettlementReason').val(getAutomatedArchiveReason());
-            $('#archiveSettlementModal').appendTo('body').modal('show');
+            var $archSettModal2 = $('#archiveSettlementModal').appendTo('body');
+            if (typeof $archSettModal2.modal === 'function') {
+                $archSettModal2.modal('show');
+            } else {
+                $archSettModal2.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                $('body').addClass('modal-open');
+            }
         } else {
             showToast('error', response.message || 'This settlement cannot be archived yet.');
         }
@@ -6242,8 +6879,26 @@ function archiveSurvey(id) {
             $('#archiveSurveyReason').val(getAutomatedArchiveReason());
             $('#archiveSurveyNotes').val('');
 
-            // Show modal
-            $('#archiveSurveyModal').modal('show');
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+
+            const $modal = $('#archiveSurveyModal').appendTo('body');
+            $modal.css({
+                'z-index': 2000,
+                position: 'fixed'
+            });
+            $modal.find('.modal-dialog').css({ position: 'relative', 'z-index': 2001 });
+            $modal.off('hidden.bs.modal.archiveSurvey').on('hidden.bs.modal.archiveSurvey', function() {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open');
+            });
+
+            if (typeof $.fn.modal === 'function') {
+                $modal.modal({ backdrop: false, keyboard: true, show: true });
+            } else {
+                $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                $('body').addClass('modal-open');
+            }
         } else {
             showToast('error', 'Failed to load survey details');
         }
@@ -6495,7 +7150,13 @@ $(document).ready(function() {
 function openArchivedTerminationsModal(page = 1) {
     $('#modal-archived-terminations-tbody').html('<tr><td colspan="7" class="text-center text-muted">Loading archived terminations...</td></tr>');
     $('#modal-archived-terminations-pagination').empty();
-    $('#archivedTerminationsModal').appendTo('body').modal('show');
+    var $archTerms = $('#archivedTerminationsModal').appendTo('body');
+    if (typeof $archTerms.modal === 'function') {
+        $archTerms.modal('show');
+    } else {
+        $archTerms.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
     loadArchivedTerminationsTable(page, true);
 }
 
@@ -7106,7 +7767,13 @@ function previewDocument(id, title) {
 function archiveDocuments(page = 1) {
     $('#modal-archived-documents-tbody').html('<tr><td colspan="6" class="text-center text-muted">Loading archived documents...</td></tr>');
     $('#modal-archived-documents-pagination').empty();
-    $('#archivedDocumentsModal').appendTo('body').modal('show');
+    var $archDocs = $('#archivedDocumentsModal').appendTo('body');
+    if (typeof $archDocs.modal === 'function') {
+        $archDocs.modal('show');
+    } else {
+        $archDocs.addClass('show').css('display', 'flex').attr('aria-hidden', 'false').attr('aria-modal', 'true');
+        $('body').addClass('modal-open');
+    }
     loadArchivedDocumentsTable(page);
 }
 

@@ -695,7 +695,7 @@ class ExitManagementController
                      FROM exit_resignations r
                      LEFT JOIN em_employees e ON r.employee_id = e.employee_id
                      LEFT JOIN em_departments d ON e.department_id = d.department_id
-                     LEFT JOIN hrms_employee p ON r.preclearance_desk_person = p.employee_id
+                     LEFT JOIN em_employees p ON r.preclearance_desk_person = p.employee_id
                      ORDER BY r.created_at DESC -- Default sorting: newest first
                      LIMIT ?";
 
@@ -1262,6 +1262,8 @@ class ExitManagementController
 
                 case 'get_approved_exit_cases':
                     return $this->model->getApprovedExitCases();
+                case 'get_waiting_interview_cases':
+                    return $this->model->getApprovedCasesAwaitingInterview();
                 case 'get_eligible_post_exit_cases':
                     return $this->model->getEligiblePostExitFeedbackCases();
                 case 'get_active_exit_cases':

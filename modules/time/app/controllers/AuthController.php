@@ -12,7 +12,10 @@ class AuthController
             session_start();
         }
 
-        return !empty($_SESSION['employee_id']) && !empty($_SESSION['role']);
+        $hasEmployee = !empty($_SESSION['employee_id']);
+        $hasRoleValue = !empty($_SESSION['role']) || !empty($_SESSION['role_name']) || !empty($_SESSION['role_id']);
+
+        return $hasEmployee && $hasRoleValue;
     }
 
     public static function hasRole($role)
@@ -24,32 +27,60 @@ class AuthController
         $requestedRole = strtolower(trim((string) $role));
         $sessionRole = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? null;
         $sessionRoleName = $_SESSION['role_name'] ?? $_SESSION['user']['role_name'] ?? null;
+        $sessionRoleId = $_SESSION['role_id'] ?? $_SESSION['user']['role_id'] ?? null;
 
-        $matches = function ($candidate) use ($requestedRole) {
-            if ($candidate === null) {
-                return false;
+        $normalize = function ($value) {
+            if ($value === null) {
+                return '';
             }
 
-            $normalized = strtolower(trim((string) $candidate));
-            return $normalized === $requestedRole
-                || $normalized === str_replace('_', '', $requestedRole)
-                || str_replace('_', '', $normalized) === str_replace('_', '', $requestedRole);
+            return preg_replace('/[^a-z0-9]+/i', '', strtolower(trim((string) $value)));
         };
 
-        if ($matches($sessionRole) || $matches($sessionRoleName)) {
-            return true;
+        $requestedNormalized = $normalize($requestedRole);
+        $candidateValues = [
+            $sessionRole,
+            $sessionRoleName,
+            $sessionRoleId,
+        ];
+
+        foreach ($candidateValues as $candidate) {
+            if ($normalize($candidate) === $requestedNormalized) {
+                return true;
+            }
         }
 
         // Compat layer for the app-wide HRMS login session, where role IDs are stored as ints.
         $roleIdMap = [
-            'time' => ['4'],
+            'time' => ['4', '5'],
             'hr' => ['2', '3', '7'],
+            'exit' => ['10'],
             'employee' => ['2'],
         ];
 
         $roleAliases = $roleIdMap[$requestedRole] ?? [];
-        $sessionRoleValue = (string) ($sessionRole ?? '');
-        return in_array($sessionRoleValue, $roleAliases, true);
+        foreach ($candidateValues as $candidate) {
+            $sessionRoleValue = (string) $candidate;
+            if (in_array($sessionRoleValue, $roleAliases, true)) {
+                return true;
+            }
+        }
+
+        // Additional aliases for legacy role names like "HR Staff" or "Time Management".
+        $roleNameAliases = [
+            'time' => ['time', 'timemanagement', 'attendance', 'timekeeping', 'timekeeper', 'timezone'],
+            'hr' => ['hr', 'hrstaff', 'hrofficer', 'humanresources', 'hradmin'],
+        ];
+
+        $nameAliases = $roleNameAliases[$requestedRole] ?? [];
+        foreach ($candidateValues as $candidate) {
+            $normalizedCandidate = $normalize($candidate);
+            if (in_array($normalizedCandidate, $nameAliases, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function getCurrentUserId()

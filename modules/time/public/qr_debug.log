@@ -1,2 +1,4 @@
 [processStaticQR] 2026-08-24 17:08:17 {"employee_id":37,"get":{"id":"37"},"post":[],"request_method":"GET","request_uri":"/hrms/hrms-capstone/modules/time/processStaticQR.php?id=37"}
 [processStaticQR] 2026-08-24 17:08:17 {"employee_id":37,"todayRecord":false,"selected_branch":"TIME_IN"}
+[processStaticQR] 2026-08-28 14:20:33 {"employee_id":13,"get":{"id":"13"},"post":[],"request_method":"GET","request_uri":"/hrms/hrms-capstone/modules/time/processStaticQR.php?id=13"}
+[processStaticQR] 2026-08-28 14:20:33 {"employee_id":13,"todayRecord":false,"selected_branch":"TIME_IN"}

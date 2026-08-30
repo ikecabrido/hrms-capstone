@@ -96,7 +96,7 @@ html, body {
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-left: 5px solid #3498db;
+            border-left: 5px solid #2b6cb0; /* base blue */
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
@@ -117,7 +117,7 @@ html, body {
         .card-value {
             font-size: 36px;
             font-weight: bold;
-            color: #2c3e50;
+            color: #0b3d91; /* blue value color */
             margin-bottom: 8px;
         }
 
@@ -127,9 +127,10 @@ html, body {
             margin-top: 0;
         }
 
-        .card.present { border-left-color: #27ae60; }
-        .card.absent { border-left-color: #e74c3c; }
-        .card.pending { border-left-color: #f39c12; }
+        /* use blue shades instead of mixed colors */
+        .card.present { border-left-color: #2b6cb0; }
+        .card.absent { border-left-color: #1e90ff; }
+        .card.pending { border-left-color: #4f83cc; }
         .card.employees { border-left-color: #3498db; }
         
         body.dark-mode .card {
@@ -345,6 +346,31 @@ body.dark-mode [style*="background: #ffffff"] {
             flex: 1;
             min-width: 150px;
         }
+
+/* KPI card classes (replaces inline gradients in template) */
+.kpi-cards { display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px; }
+.kpi-card {
+    flex:1;min-width:200px;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(16,24,40,0.06);color:#fff;
+}
+.kpi-card .kpi-icon { width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px; }
+.kpi-total { background: linear-gradient(90deg,#0b5cab,#0b7bd6); }
+.kpi-present { background: linear-gradient(90deg,#0b79d0,#1e90ff); }
+.kpi-absent { background: linear-gradient(90deg,#08306b,#2b6cb0); }
+.kpi-pending { background: linear-gradient(90deg,#026aa7,#0585d6); }
+
+/* Today's attendance panel */
+.attendance-panel { background:#f6fbff;border:1px solid #e6f0ff;padding:16px;border-radius:10px;margin-top:6px; }
+.attendance-legend { display:flex;gap:6px;align-items:center;flex-direction:column; }
+.legend-dot { width:10px;height:10px;border-radius:2px;display:inline-block; }
+.legend-present { background:#0b79d0; }
+.legend-late { background:#1e90ff; }
+.legend-absent { background:#2b6cb0; }
+.legend-leave { background:#0fb1ff; }
+
+/* Right column stat cards */
+.right-stat { color:#fff;padding:14px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 10px rgba(16,24,40,0.06); }
+.right-stat.avg { background: linear-gradient(90deg,#1976d2,#4f83cc); }
+.right-stat.below { background: linear-gradient(90deg,#08306b,#1659a1); }
 
 
         .container h2 {

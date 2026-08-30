@@ -541,6 +541,48 @@ class Attendance
     }
 
     /**
+     * Get total late minutes/hours per employee for a date range.
+     * Used by the payroll module to calculate late-based deductions.
+     * Covers LATE records only - does not include absences or leave.
+     *
+     * @param string $start_date 'Y-m-d'
+     * @param string $end_date 'Y-m-d'
+     * @param int|null $employee_id Optional. If omitted, returns totals for all active employees who have at least one LATE record in range.
+     * @return array List of ['employee_id', 'name', 'total_late_minutes', 'total_late_hours', 'late_occurrences']
+     */
+    public function getLateHoursSummary($start_date, $end_date, $employee_id = null)
+    {
+        $query = "SELECT
+                a.employee_id,
+                CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS name,
+                SUM(a.late_minutes) AS total_late_minutes,
+                ROUND(SUM(a.late_minutes) / 60, 2) AS total_late_hours,
+                COUNT(*) AS late_occurrences
+              FROM {$this->table} a
+              JOIN em_employees e ON e.employee_id = a.employee_id
+              WHERE a.status = 'LATE'
+                AND a.attendance_date BETWEEN :start_date AND :end_date
+                AND a.late_minutes > 0";
+
+        if ($employee_id !== null) {
+            $query .= " AND a.employee_id = :employee_id";
+        }
+
+        $query .= " GROUP BY a.employee_id, name
+                ORDER BY name ASC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':start_date', $start_date);
+        $stmt->bindParam(':end_date', $end_date);
+        if ($employee_id !== null) {
+            $stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Update attendance record with hours data
      */
     public function updateHours($attendance_id, $hoursData)

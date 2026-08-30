@@ -60,6 +60,15 @@
             })
             .then(function (result) {
             if (!result) return; // was a redirect, bail
+
+            // Force-clear any open modal before the DOM under it is destroyed.
+            // Without this, a modal left open when the user clicks another tab
+            // leaves its full-screen backdrop stuck in <body> forever (the
+            // backdrop lives outside .container, so replacing .container's HTML
+            // never removes it), which is what causes the screen to look
+            // permanently greyed out afterwards.
+            if (window.exitModalShimReset) window.exitModalShimReset();
+
             container.innerHTML = result.html;
             updateActiveLink(result.rendered);
 

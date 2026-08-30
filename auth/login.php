@@ -92,7 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user['first_name'] . ' ' . $user['last_name']
         );
         $_SESSION['role_id']        = $user['role_id'];
+        $_SESSION['role']           = $user['role_name'];
         $_SESSION['role_name']      = $user['role_name'];
+        $_SESSION['user']['role']   = $user['role_name'];
+        $_SESSION['user']['role_id'] = $user['role_id'];
         $_SESSION['position_id']    = $user['position_id'];
         $_SESSION['position_name']  = $user['position_name'];
         $_SESSION['department_id']   = $user['department_id'];

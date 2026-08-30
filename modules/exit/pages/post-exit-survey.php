@@ -2,7 +2,7 @@
 $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 ?>
 <link rel="stylesheet" href="assets/vendor/flatpickr/flatpickr.min.css">
-<link rel="stylesheet" href="assets/css/custom.css">
+<link rel="stylesheet" href="assets/css/custom.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/custom.css'); ?>">
 <script>
     window.exitManagementUserRole = <?php echo json_encode($currentRoleName); ?>;
     window.exitManagementUserId = <?php echo json_encode($_SESSION['employee_id'] ?? null); ?>;
@@ -293,9 +293,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
         </div>
     </div>
 
-<script src="assets/vendor/jquery/jquery.min.js"></script>
 <script src="assets/vendor/flatpickr/flatpickr.min.js"></script>
-<script src="assets/js/custom.js"></script>
 <script>
     if (typeof loadSurveysTable === 'function') {
         loadSurveysTable('all', 1, 10, '');

@@ -170,8 +170,8 @@ class ExitInterviewModel extends ExitManagementModel
                 ei.*,
                 COALESCE(e.employee_id, ei.employee_id) AS employee_id,
                 COALESCE(CONCAT(e.first_name, ' ', e.last_name), '') AS employee_full_name,
-                COALESCE(d.department_name, e.department) AS employee_department,
-                COALESCE(p.position_name, e.position) AS employee_position,
+                COALESCE(d.department_name, '') AS employee_department,
+                COALESCE(p.position_name, '') AS employee_position,
                 e.hire_date AS employee_date_hired,
                 e.employment_status AS employee_employment_status,
                 '' AS manager_name,
@@ -186,7 +186,7 @@ class ExitInterviewModel extends ExitManagementModel
             LEFT JOIN em_employees e ON ei.employee_id = e.employee_id
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             LEFT JOIN em_positions p ON e.position_id = p.position_id
-            LEFT JOIN hrms_employee iu ON ei.interviewer_id = iu.employee_id
+            LEFT JOIN em_employees iu ON ei.interviewer_id = iu.employee_id
             LEFT JOIN exit_resignations r ON ei.exit_case_type = 'resignation' AND ei.exit_case_id = r.id
             LEFT JOIN exit_terminations t ON ei.exit_case_type = 'termination' AND ei.exit_case_id = t.id
             WHERE ei.id = ?
@@ -261,7 +261,7 @@ class ExitInterviewModel extends ExitManagementModel
         $stmt = $this->db->prepare("
             SELECT ei.*, CONCAT(i.first_name, ' ', i.last_name) as interviewer_name
             FROM exit_interviews ei
-            LEFT JOIN hrms_employee i ON ei.interviewer_id = i.employee_id
+            LEFT JOIN em_employees i ON ei.interviewer_id = i.employee_id
             WHERE ei.employee_id = ?
             ORDER BY ei.scheduled_date DESC
         ");
@@ -295,7 +295,7 @@ class ExitInterviewModel extends ExitManagementModel
                 CASE WHEN h.id IS NOT NULL THEN 1 ELSE 0 END AS has_hr_assessment
             FROM exit_interviews ei
             JOIN em_employees e ON ei.employee_id = e.employee_id
-            LEFT JOIN hrms_employee u ON ei.interviewer_id = u.employee_id
+            LEFT JOIN em_employees u ON ei.interviewer_id = u.employee_id
             LEFT JOIN exit_interview_hr_assessments h ON ei.id = h.interview_id
         ";
 
@@ -303,7 +303,7 @@ class ExitInterviewModel extends ExitManagementModel
             SELECT COUNT(*) as total
             FROM exit_interviews ei
             JOIN em_employees e ON ei.employee_id = e.employee_id
-            LEFT JOIN hrms_employee u ON ei.interviewer_id = u.employee_id
+            LEFT JOIN em_employees u ON ei.interviewer_id = u.employee_id
         ";
 
         $params = [];
@@ -431,7 +431,7 @@ class ExitInterviewModel extends ExitManagementModel
                    ei.exit_case_id
             FROM exit_interviews ei
             JOIN em_employees e ON ei.employee_id = e.employee_id
-            LEFT JOIN hrms_employee u ON ei.interviewer_id = u.employee_id
+            LEFT JOIN em_employees u ON ei.interviewer_id = u.employee_id
             WHERE ei.status = 'scheduled'
             ORDER BY ei.scheduled_date ASC
         ");
@@ -552,7 +552,7 @@ class ExitInterviewModel extends ExitManagementModel
                 IF(a.archived_at >= DATE_SUB(NOW(), INTERVAL 1 DAY), 1, 0) as is_new
             FROM exit_archive a
             LEFT JOIN em_employees e ON a.employee_id = e.employee_id
-            LEFT JOIN hrms_employee u ON a.archived_by = u.employee_id
+            LEFT JOIN em_employees u ON a.archived_by = u.employee_id
             WHERE a.archive_type = 'interview' AND a.restored = 0
         ";
 

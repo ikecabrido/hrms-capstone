@@ -102,6 +102,47 @@ class ExitManagementModel
     }
 
     /**
+     * Get approved exit cases that are waiting for a scheduled interview.
+     * These are cases that have already passed the exit/HR/legal approval flow
+     * but do not yet have an active interview record.
+     */
+    public function getApprovedCasesAwaitingInterview(): array
+    {
+        $waitingCases = [];
+
+        foreach ($this->getApprovedExitCases() as $case) {
+            $exitCaseType = $case['exit_case_type'] ?? '';
+            $exitCaseId = (int)($case['exit_case_id'] ?? 0);
+            $employeeId = (int)($case['employee_id'] ?? 0);
+
+            if ($exitCaseType === '' || $exitCaseId <= 0) {
+                continue;
+            }
+
+            if ($this->tableExists('exit_interviews') && $this->columnExists('exit_interviews', 'exit_case_type') && $this->columnExists('exit_interviews', 'exit_case_id')) {
+                $stmt = $this->db->prepare(
+                    "SELECT id FROM exit_interviews WHERE exit_case_type = ? AND exit_case_id = ? AND status IN ('scheduled','completed','pending') LIMIT 1"
+                );
+                $stmt->execute([$exitCaseType, $exitCaseId]);
+                if ($stmt->fetch(PDO::FETCH_ASSOC)) {
+                    continue;
+                }
+            }
+
+            $case['case_ready_for_interview'] = true;
+            $waitingCases[] = $case;
+        }
+
+        usort($waitingCases, function ($a, $b) {
+            $aName = strtolower((string)($a['full_name'] ?? ''));
+            $bName = strtolower((string)($b['full_name'] ?? ''));
+            return strcmp($aName, $bName);
+        });
+
+        return $waitingCases;
+    }
+
+    /**
      * Get exit cases that are approved and have completed the full exit workflow required
      * before post-exit feedback can be recorded.
      */
@@ -289,6 +330,8 @@ class ExitManagementModel
             // include resignation_type column only if it exists in the table to avoid SQL errors on older schemas
             $includeResignationType = $this->columnExists('exit_resignations', 'resignation_type');
             $resignationSubtypeSelect = $includeResignationType ? "r.resignation_type AS exit_subtype" : "NULL AS exit_subtype";
+            $departmentSelect = $this->tableExists('em_departments') ? "COALESCE(d.department_name, '') AS department" : 'NULL AS department';
+            $positionSelect = $this->tableExists('em_positions') ? "COALESCE(p.position_name, '') AS position" : 'NULL AS position';
 
             $sql = "SELECT
                 'resignation' AS exit_case_type,
@@ -297,8 +340,8 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                COALESCE(d.department_name, e.department) AS department,
-                COALESCE(p.position_name, e.position) AS position,
+                {$departmentSelect},
+                {$positionSelect},
                 e.hire_date,
                 e.employment_status,
                 '' AS manager_name,
@@ -314,7 +357,7 @@ class ExitManagementModel
             JOIN em_employees e ON r.employee_id = e.employee_id
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             LEFT JOIN em_positions p ON e.position_id = p.position_id
-            LEFT JOIN hrms_employee approver ON r.approved_by = approver.employee_id
+            LEFT JOIN em_employees approver ON r.approved_by = approver.employee_id
             WHERE r.status IN ($placeholders){$employeeClause}
             ORDER BY e.first_name, e.last_name";
             $stmt = $this->db->prepare($sql);
@@ -323,6 +366,9 @@ class ExitManagementModel
         }
 
         if ($this->tableExists('exit_terminations')) {
+            $departmentSelect = $this->tableExists('em_departments') ? "COALESCE(d.department_name, '') AS department" : 'NULL AS department';
+            $positionSelect = $this->tableExists('em_positions') ? "COALESCE(p.position_name, '') AS position" : 'NULL AS position';
+
             $sql = "SELECT
                 'termination' AS exit_case_type,
                 t.id AS exit_case_id,
@@ -330,8 +376,8 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                COALESCE(d.department_name, e.department) AS department,
-                COALESCE(p.position_name, e.position) AS position,
+                {$departmentSelect},
+                {$positionSelect},
                 e.hire_date,
                 e.employment_status,
                 '' AS manager_name,
@@ -347,7 +393,7 @@ class ExitManagementModel
             JOIN em_employees e ON t.employee_id = e.employee_id
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             LEFT JOIN em_positions p ON e.position_id = p.position_id
-            LEFT JOIN hrms_employee approver ON t.approved_by = approver.employee_id
+            LEFT JOIN em_employees approver ON t.approved_by = approver.employee_id
             WHERE t.status IN ($placeholders){$employeeClause}
             ORDER BY e.first_name, e.last_name";
             $stmt = $this->db->prepare($sql);
@@ -367,14 +413,17 @@ class ExitManagementModel
      */
     public function getExitCaseDetails(string $exitCaseType, int $exitCaseId): ?array
     {
+        $departmentSelect = $this->tableExists('em_departments') ? "COALESCE(d.department_name, '') AS department" : 'NULL AS department';
+        $positionSelect = $this->tableExists('em_positions') ? "COALESCE(p.position_name, '') AS position" : 'NULL AS position';
+
         if ($exitCaseType === 'resignation') {
             $stmt = $this->db->prepare("SELECT
                 'resignation' AS exit_case_type,
                 r.id AS exit_case_id,
                 e.employee_id AS employee_id,
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                COALESCE(d.department_name, e.department) AS department,
-                COALESCE(p.position_name, e.position) AS position,
+                {$departmentSelect},
+                {$positionSelect},
                 e.hire_date,
                 e.employment_status,
                 '' AS manager_name,
@@ -389,7 +438,7 @@ class ExitManagementModel
             JOIN em_employees e ON r.employee_id = e.employee_id
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             LEFT JOIN em_positions p ON e.position_id = p.position_id
-            LEFT JOIN hrms_employee approver ON r.approved_by = approver.employee_id
+            LEFT JOIN em_employees approver ON r.approved_by = approver.employee_id
             WHERE r.id = ?");
         } elseif ($exitCaseType === 'termination') {
             $stmt = $this->db->prepare("SELECT
@@ -397,8 +446,8 @@ class ExitManagementModel
                 t.id AS exit_case_id,
                 e.employee_id AS employee_id,
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                COALESCE(d.department_name, e.department) AS department,
-                COALESCE(p.position_name, e.position) AS position,
+                {$departmentSelect},
+                {$positionSelect},
                 e.hire_date,
                 e.employment_status,
                 '' AS manager_name,
@@ -413,7 +462,7 @@ class ExitManagementModel
             JOIN em_employees e ON t.employee_id = e.employee_id
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             LEFT JOIN em_positions p ON e.position_id = p.position_id
-            LEFT JOIN hrms_employee approver ON t.approved_by = approver.employee_id
+            LEFT JOIN em_employees approver ON t.approved_by = approver.employee_id
             WHERE t.id = ?");
         } else {
             return null;
@@ -460,7 +509,7 @@ class ExitManagementModel
                 g.updated_at,
                 COALESCE(CONCAT(u.first_name, ' ', u.last_name), '') AS assigned_to_name
             FROM grievances g
-            LEFT JOIN hrms_employee u ON g.assigned_to = u.employee_id
+            LEFT JOIN em_employees u ON g.assigned_to = u.employee_id
             WHERE g.employee_id = ?
             ORDER BY g.created_at DESC");
             $stmt->execute([$employeeId]);
@@ -506,8 +555,8 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                COALESCE(d.department_name, e.department) AS department,
-                COALESCE(p.position_name, e.position) AS position,
+                COALESCE(d.department_name, 'Unknown') AS department,
+                COALESCE(p.position_name, 'Unknown') AS position,
                 e.employment_status AS employee_status
             FROM em_employees e
             LEFT JOIN em_departments d ON e.department_id = d.department_id
@@ -706,9 +755,9 @@ class ExitManagementModel
                 he.employee_id AS username,
                 hr.role_name AS role,
                 'admin' AS type
-            FROM hrms_employee he
+            FROM em_employees he
             JOIN hrms_roles hr ON he.role = hr.role_id
-            WHERE he.status = 'active'
+            WHERE LOWER(COALESCE(he.employment_status, '')) = 'active'
             ORDER BY he.first_name, he.last_name
         ");
 
@@ -744,7 +793,7 @@ class ExitManagementModel
                 employee_id,
                 CONCAT(first_name, ' ', last_name) AS full_name,
                 status
-            FROM hrms_employee WHERE employee_id = ? LIMIT 1");
+            FROM em_employees WHERE employee_id = ? LIMIT 1");
         $stmt->execute([$userId]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
@@ -806,8 +855,8 @@ class ExitManagementModel
                 CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                 e.employee_code AS username,
                 e.email,
-                COALESCE(d.department_name, e.department) AS department,
-                COALESCE(p.position_name, e.position) AS position,
+                d.department_name AS department,
+                p.position_name AS position,
                 ei.exit_case_type,
                 ei.exit_case_id,
                 COALESCE(r.last_working_date, t.effective_date) AS last_working_date,
@@ -820,7 +869,8 @@ class ExitManagementModel
             LEFT JOIN exit_resignations r ON ei.exit_case_type = 'resignation' AND ei.exit_case_id = r.id AND r.status = 'approved'
             LEFT JOIN exit_terminations t ON ei.exit_case_type = 'termination' AND ei.exit_case_id = t.id AND t.status = 'approved'
             LEFT JOIN exit_knowledge_transfer_plans ktp ON ktp.employee_id = e.employee_id AND ktp.status = 'active'
-            WHERE ei.status IN ('scheduled', 'completed')
+            WHERE ei.status = 'completed'
+              AND hra.knowledge_transfer_required = 1
               AND ktp.id IS NULL
               AND ((ei.exit_case_type = 'resignation' AND r.id IS NOT NULL)
                    OR (ei.exit_case_type = 'termination' AND t.id IS NOT NULL))

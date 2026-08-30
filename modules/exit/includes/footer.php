@@ -26,6 +26,8 @@
 </div>
 
     <script type="module" src="js/script.js"></script>
+    <script src="assets/vendor/jquery/jquery.min.js"></script>
+    <script src="assets/js/custom.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/custom.js'); ?>"></script>
     <?php if (!empty($page_footer_extra)) { echo $page_footer_extra; } ?>
 </body>
 </html>

@@ -2,7 +2,48 @@
 $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 ?>
 <link rel="stylesheet" href="assets/vendor/flatpickr/flatpickr.min.css">
-<link rel="stylesheet" href="assets/css/custom.css">
+<link rel="stylesheet" href="assets/css/custom.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/custom.css'); ?>">
+<style>
+    .termination-warning-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 12px;
+        margin: 4px 0;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.15);
+        border-left: 3px solid #d39e00;
+        line-height: 1.5;
+    }
+
+    .termination-warning-row i {
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .termination-warning-row strong {
+        font-weight: 700;
+    }
+
+    #terminationStatusAlert {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        margin: 0;
+        width: 100%;
+        min-height: 72px;
+        font-weight: 600;
+        border-left: 5px solid #d39e00;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    #terminationStatusAlertText {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
+    }
+</style>
 <script>
     window.exitManagementUserRole = <?php echo json_encode($currentRoleName); ?>;
     window.exitManagementUserId = <?php echo json_encode($_SESSION['employee_id'] ?? null); ?>;
@@ -45,12 +86,18 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     </div>
                 </div>
                 <div class="card-body">
+                    <div id="terminationStatusAlertWrapper" style="margin-bottom: 16px; min-height: 120px; max-height: 220px; overflow-y: auto; border: 1px solid #f0d36d; background: #fffaf0; border-radius: 6px; padding: 8px; position: relative;">
+                        <div id="terminationStatusAlert" class="alert alert-warning" role="alert" style="display:none; margin: 0; font-weight: 600; border-left: 5px solid #d39e00; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; min-height: 72px; display: flex; align-items: center;">
+                            <i class="fas fa-exclamation-triangle"></i>Termination Alert: <span id="terminationStatusAlertCount" style="font-weight: 700; margin-left: 4px;"></span>
+                            <span id="terminationStatusAlertText">Termination status checks will appear here.</span>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table id="terminations-table" class="table table-bordered table-striped table-sm">
                             <colgroup>
                                 <col style="width: 14%;"><col style="width: 10%;"><col style="width: 14%;">
-                                <col style="width: 10%;"><col style="width: 10%;"><col style="width: 10%;">
-                                <col style="width: 16%;"><col style="width: 8%;">
+                                <col style="width: 10%;"><col style="width: 12%;"><col style="width: 12%;">
+                                <col style="width: 8%;"><col style="width: 10%;">
                             </colgroup>
                             <thead>
                                 <tr>
@@ -60,7 +107,6 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                     <th>Position</th>
                                     <th>Reason</th>
                                     <th>Effective Date</th>
-                                    <th>Comments</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -250,12 +296,13 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
         </div>
     </div>
 
-<script src="assets/vendor/jquery/jquery.min.js"></script>
 <script src="assets/vendor/flatpickr/flatpickr.min.js"></script>
-<script src="assets/js/custom.js"></script>
 <script>
     if (typeof loadTerminationsTable === 'function') {
         loadTerminationsTable('active', 1, '');
+    }
+    if (typeof loadTerminationStatusAlert === 'function') {
+        loadTerminationStatusAlert();
     }
     if (typeof loadEmployees === 'function') {
         loadEmployees();

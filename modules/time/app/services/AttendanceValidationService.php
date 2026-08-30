@@ -22,8 +22,8 @@ class AttendanceValidationService
     private $flexible_schedules_table = "ta_flexible_schedules";
 
     // Configuration: Late detection threshold (minutes after shift start)
-    // Business rule: any time_in after shift start is considered LATE, so default to 0
-    private $late_threshold_minutes = 30;
+    // Business rule: any time_in after shift start is considered LATE.
+    private $late_threshold_minutes = 0;
 
     public function __construct()
     {
@@ -207,12 +207,15 @@ class AttendanceValidationService
             }
         }
 
-        if ($dayOfWeek == 0) {
-            return ['status' => null, 'reason' => 'weekend'];
-        }
-
         $shift = $this->getEmployeeShiftForDate($employee_id, $date);
+
         if (!$shift) {
+            // Only treat Sunday as a default non-working day when the employee has
+            // no actual shift assigned - an employee genuinely scheduled to work
+            // on a Sunday must still be checked normally.
+            if ($dayOfWeek == 0) {
+                return ['status' => null, 'reason' => 'weekend'];
+            }
             return ['status' => 'WAITING_FOR_ASSIGNMENT', 'shift' => null, 'reason' => 'No shift assigned'];
         }
 

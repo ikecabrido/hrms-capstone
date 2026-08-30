@@ -36,10 +36,20 @@ class OpenAttendanceFinalizer
         }
 
         $shiftEnd = new DateTime($attendanceDate . ' ' . $evaluation['shift']['end_time'], new DateTimeZone('Asia/Manila'));
-        if ($now < $shiftEnd) {
+
+        // Only finalize once the attendance day has fully ended (midnight of the next
+        // day) - not merely once shift end has passed - so employees legitimately
+        // working past their scheduled shift end (overtime) aren't auto-timed-out
+        // while still on the clock.
+        $nextMidnight = new DateTime($attendanceDate, new DateTimeZone('Asia/Manila'));
+        $nextMidnight->modify('+1 day')->setTime(0, 0, 0);
+        if ($now < $nextMidnight) {
             return false;
         }
 
+        // The recorded time-out is still the employee's scheduled shift end time
+        // (the hours they were expected to work), even though the finalization
+        // action itself only runs once midnight has passed.
         $timeoutAt = $shiftEnd->format('Y-m-d H:i:s');
         if ($attendanceModel->timeOutAt($record['attendance_id'], $timeoutAt)) {
             $updatedRecord = $attendanceModel->getTodayAttendance($employee_id, $attendanceDate);

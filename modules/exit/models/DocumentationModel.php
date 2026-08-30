@@ -135,7 +135,7 @@ class DocumentationModel extends ExitManagementModel
         $stmt = $this->db->prepare("SELECT d.*, CONCAT(e.first_name, ' ', e.last_name) as employee_name, CONCAT(u.first_name, ' ', u.last_name) as uploaded_by_name
             FROM exit_documents d
             LEFT JOIN em_employees e ON d.employee_id = e.employee_id
-            LEFT JOIN hrms_employee u ON d.uploaded_by = u.employee_id
+            LEFT JOIN em_employees u ON d.uploaded_by = u.employee_id
             WHERE d.exit_case_type = ? AND d.exit_case_id = ? AND d.status = 'active'
             ORDER BY d.created_at DESC");
         $stmt->execute([$exitCaseType, $exitCaseId]);
@@ -151,7 +151,7 @@ class DocumentationModel extends ExitManagementModel
             SELECT d.*, CONCAT(e.first_name, ' ', e.last_name) as employee_name, CONCAT(u.first_name, ' ', u.last_name) as uploaded_by_name
             FROM exit_documents d
             LEFT JOIN em_employees e ON d.employee_id = e.employee_id
-            LEFT JOIN hrms_employee u ON d.uploaded_by = u.employee_id
+            LEFT JOIN em_employees u ON d.uploaded_by = u.employee_id
             WHERE d.id = ? AND d.status = 'active'
         ");
         $stmt->execute([$documentId]);
@@ -210,13 +210,13 @@ class DocumentationModel extends ExitManagementModel
                 "CONCAT(u.first_name, ' ', u.last_name) as uploaded_by_name"
             ]);
 
-            $sql = "SELECT\n                " . implode(",\n                    ", $selectFields) . "\n                FROM exit_documents d\n                LEFT JOIN em_employees e ON d.employee_id = e.employee_id\n                LEFT JOIN hrms_employee u ON d.uploaded_by = u.employee_id\n            ";
+            $sql = "SELECT\n                " . implode(",\n                    ", $selectFields) . "\n                FROM exit_documents d\n                LEFT JOIN em_employees e ON d.employee_id = e.employee_id\n                LEFT JOIN em_employees u ON d.uploaded_by = u.employee_id\n            ";
 
             $countSql = "
                 SELECT COUNT(*) as total
                 FROM exit_documents d
                 LEFT JOIN em_employees e ON d.employee_id = e.employee_id
-                LEFT JOIN hrms_employee u ON d.uploaded_by = u.employee_id
+                LEFT JOIN em_employees u ON d.uploaded_by = u.employee_id
             ";
 
             $params = [];

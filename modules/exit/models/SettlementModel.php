@@ -390,15 +390,21 @@ class SettlementModel extends ExitManagementModel
     {
         $offset = ($page - 1) * $limit;
         // Build a schema-aware select list: include column if present, otherwise return NULL AS column
+        // Select resignation id defensively: prefer explicit resignation_id column when present,
+        // otherwise fall back to exit_case_id (some schemas use exit_case_id instead).
+        $resignationIdSelect = $this->columnExists('exit_employee_settlements', 'resignation_id')
+            ? 's.resignation_id'
+            : ($this->columnExists('exit_employee_settlements', 'exit_case_id') ? 's.exit_case_id AS resignation_id' : 'NULL AS resignation_id');
+
         $baseSelect = [
-            's.id',
+            's.settlement_id AS id',
             's.employee_id',
             "CONCAT(e.first_name, ' ', e.last_name) AS employee_name",
-            "COALESCE(d.department_name, e.department, '') AS department",
-            "COALESCE(p.position_name, e.position, '') AS position",
-            's.resignation_id',
+            "COALESCE(d.department_name, '') AS department",
+            "COALESCE(p.position_name, '') AS position",
+            $resignationIdSelect,
             'r.last_working_date',
-            's.settlement_date'
+            "COALESCE(s.requested_at, s.completed_at, s.last_working_date) AS settlement_date"
         ];
 
         $settlementCols = [
@@ -424,13 +430,26 @@ class SettlementModel extends ExitManagementModel
 
         $selectList = implode(",\n                ", $baseSelect);
 
-        $sql = "\n            SELECT\n                {$selectList}\n            FROM exit_employee_settlements s\n            JOIN em_employees e ON s.employee_id = e.employee_id\n            LEFT JOIN exit_resignations r ON s.resignation_id = r.id\n            LEFT JOIN em_departments d ON e.department_id = d.department_id\n            LEFT JOIN em_positions p ON e.position_id = p.position_id\n        ";
+        // Join to exit_resignations using whichever linkage column exists to avoid referencing
+        // a non-existent column (older/newer schema variants may differ).
+        $resignationJoin = '';
+        if ($this->columnExists('exit_employee_settlements', 'resignation_id')) {
+            $resignationJoin = "LEFT JOIN exit_resignations r ON s.resignation_id = r.id";
+        } elseif ($this->columnExists('exit_employee_settlements', 'exit_case_id')) {
+            $resignationJoin = "LEFT JOIN exit_resignations r ON s.exit_case_id = r.id";
+        } else {
+            // safe no-op join if neither column exists
+            $resignationJoin = "LEFT JOIN exit_resignations r ON 1=0";
+        }
 
+        $sql = "\n            SELECT\n                {$selectList}\n            FROM exit_employee_settlements s\n            JOIN em_employees e ON s.employee_id = e.employee_id\n            {$resignationJoin}\n            LEFT JOIN em_departments d ON e.department_id = d.department_id\n            LEFT JOIN em_positions p ON e.position_id = p.position_id\n        ";
+
+        // Build a matching count query using the same resignation join logic
         $countSql = "
             SELECT COUNT(*) as total
             FROM exit_employee_settlements s
             JOIN em_employees e ON s.employee_id = e.employee_id
-            LEFT JOIN exit_resignations r ON s.resignation_id = r.id
+            {$resignationJoin}
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             LEFT JOIN em_positions p ON e.position_id = p.position_id
         ";
@@ -445,7 +464,7 @@ class SettlementModel extends ExitManagementModel
 
         if (!empty($search)) {
             $searchCondition = $whereClause ? " AND" : " WHERE";
-            $searchCondition .= " (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR s.settlement_date LIKE :search1 OR e.employee_id LIKE :search2 OR r.last_working_date LIKE :search3)";
+            $searchCondition .= " (CONCAT(e.first_name, ' ', e.last_name) LIKE :search0 OR COALESCE(s.requested_at, s.completed_at, s.last_working_date) LIKE :search1 OR e.employee_id LIKE :search2 OR r.last_working_date LIKE :search3)";
             $whereClause .= $searchCondition;
             $searchParam = "%$search%";
             $params['search0'] = $searchParam;

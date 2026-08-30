@@ -147,9 +147,18 @@
             padding: 10px 0;
         }
 
+        /* Make calendar controls and headings more blue */
         .fc-button {
             padding: 4px 8px !important;
             font-size: 0.85em !important;
+            background: #1976d2 !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 6px !important;
+        }
+        .fc-button:hover {
+            background: #145ea8 !important;
+            color: #fff !important;
         }
 
         .fc-daygrid-day-frame {
@@ -163,11 +172,15 @@
         .fc-col-header-cell {
             padding: 4px 1px !important;
             font-size: 0.75em !important;
+            color: #0d47a1 !important;
+            font-weight: 600 !important;
         }
 
         .fc-daygrid-day-number {
             padding: 2px !important;
             font-size: 0.7em !important;
+            color: #0d47a1 !important;
+            font-weight: 600;
         }
 
         .fc-event {
@@ -176,12 +189,16 @@
         }
 
         .fc-daygrid-day.holiday {
-            background-color: #fff3cd !important;
+            background-color: #e8f4ff !important; /* light blue */
         }
 
         .fc-event {
             border: none !important;
-            padding: 2px 4px !important;
+            padding: 2px 6px !important;
+            background: #1976d2 !important;
+            color: #fff !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 6px rgba(25,118,210,0.18) !important;
         }
 
         @media (max-width: 1024px) {

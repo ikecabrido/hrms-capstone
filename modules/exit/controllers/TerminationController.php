@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../models/TerminationModel.php';
+// Attendance termination service used to detect policy-driven termination flags
+require_once __DIR__ . '/../../time/app/services/AttendanceTerminationService.php';
 
 class TerminationController extends ExitManagementController
 {
@@ -25,6 +27,24 @@ class TerminationController extends ExitManagementController
             $eligibility = $this->terminationModel->checkEmployeeEligibility($data['employee_id']);
             if (!$eligibility['eligible']) {
                 return ['success' => false, 'message' => $eligibility['reason']];
+            }
+
+            // Prevent automated/add-from-service submissions when attendance-based termination
+            // threshold is reached. Require explicit manual confirmation via 'confirm_manual'.
+            try {
+                $svc = new \App\Services\AttendanceTerminationService();
+                $termInfo = $svc->isTerminationActionRequired($data['employee_id']);
+            } catch (Exception $e) {
+                $termInfo = null;
+            }
+
+            if ($termInfo && empty($data['confirm_manual'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Employee flagged by Attendance policy. Please review termination details before submitting (manual confirmation required).',
+                    'termination_required' => true,
+                    'termination_info' => $termInfo
+                ];
             }
 
             $data['submitted_by'] = $_SESSION['employee_id'] ?? 0;
@@ -110,7 +130,25 @@ class TerminationController extends ExitManagementController
             }
 
             $eligibility = $this->terminationModel->checkEmployeeEligibility($employeeId);
-            return ['success' => $eligibility['eligible'], 'message' => $eligibility['reason']];
+            $response = ['success' => $eligibility['eligible'], 'message' => $eligibility['reason']];
+
+            try {
+                $svc = new \App\Services\AttendanceTerminationService();
+                $terminationInfo = $svc->isTerminationActionRequired((int)$employeeId);
+                if ($terminationInfo) {
+                    $response['termination_required'] = true;
+                    $response['termination_info'] = $terminationInfo;
+                    $response['message'] = 'Termination required: employee has reached the attendance policy threshold.';
+                    $response['status'] = 'TERMINATION_REQUIRED';
+                } else {
+                    $response['termination_required'] = false;
+                    $response['status'] = 'OK';
+                }
+            } catch (Exception $e) {
+                $response['termination_required'] = false;
+            }
+
+            return $response;
         } catch (Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }

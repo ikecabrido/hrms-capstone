@@ -147,6 +147,7 @@
         // --- Attendance Display Logic ---
         let attendanceCurrentPage = 1;
         const attendancePageSize = 20;
+        let attendanceFilteredRecords = [];
 
         function getStatus(record) {
             if (isHolidayToday) {
@@ -158,6 +159,11 @@
                 return (record.status && String(record.status).toUpperCase() === 'LATE') || time.getHours() > 9 ? 'LATE' : 'PRESENT';
             }
 
+            // Respect an explicitly stored ABSENT status from the backend first.
+            if (record.status && String(record.status).toUpperCase() === 'ABSENT') {
+                return 'ABSENT';
+            }
+
             if (record.has_shift_today || record.employee_id) {
                 return 'WAITING FOR TIME IN';
             }
@@ -165,6 +171,7 @@
             if (record.status) {
                 return record.status;
             }
+
             return 'ABSENT';
         }
 
@@ -324,6 +331,9 @@
             if (pageInfo) pageInfo.textContent = `Showing ${start + 1} to ${Math.min(start + attendancePageSize, records.length)} of ${records.length} records`;
             if (prevBtn) prevBtn.disabled = attendanceCurrentPage === 1;
             if (nextBtn) nextBtn.disabled = attendanceCurrentPage === totalPages;
+
+            // Render numeric page buttons
+            renderAttendancePageNumbers(totalPages);
         }
 
         function filterAndSort() {
@@ -358,7 +368,75 @@
                 }
             });
 
-            renderAttendancePage(filtered);
+            // keep filtered set available for page button clicks
+            attendanceFilteredRecords = filtered;
+            renderAttendancePage(attendanceFilteredRecords);
+        }
+
+        function renderAttendancePageNumbers(totalPages) {
+            const paginationWrap = document.getElementById('attendancePagination');
+            if (!paginationWrap) return;
+
+            let numbersContainer = document.getElementById('attendancePageNumbers');
+            if (!numbersContainer) {
+                numbersContainer = document.createElement('div');
+                numbersContainer.id = 'attendancePageNumbers';
+                numbersContainer.style.display = 'flex';
+                numbersContainer.style.gap = '6px';
+                numbersContainer.style.alignItems = 'center';
+                // insert numbers between page info and prev/next if possible
+                paginationWrap.appendChild(numbersContainer);
+            }
+
+            numbersContainer.innerHTML = '';
+
+            const addPageButton = (p) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-sm btn-outline-secondary';
+                btn.textContent = p;
+                if (p === attendanceCurrentPage) {
+                    btn.className = 'btn btn-sm btn-secondary';
+                }
+                btn.addEventListener('click', function() {
+                    if (attendanceCurrentPage === p) return;
+                    attendanceCurrentPage = p;
+                    if (!attendanceFilteredRecords || !Array.isArray(attendanceFilteredRecords)) {
+                        filterAndSort();
+                    } else {
+                        renderAttendancePage(attendanceFilteredRecords);
+                    }
+                });
+                numbersContainer.appendChild(btn);
+            };
+
+            // simple windowed pagination: show up to 7 page buttons with first/last and ellipsis
+            if (totalPages <= 10) {
+                for (let i = 1; i <= totalPages; i++) addPageButton(i);
+                return;
+            }
+
+            let start = Math.max(1, attendanceCurrentPage - 3);
+            let end = Math.min(totalPages, start + 6);
+            start = Math.max(1, end - 6);
+
+            if (start > 1) {
+                addPageButton(1);
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.padding = '0 6px';
+                numbersContainer.appendChild(dots);
+            }
+
+            for (let i = start; i <= end; i++) addPageButton(i);
+
+            if (end < totalPages) {
+                const dots = document.createElement('span');
+                dots.textContent = '...';
+                dots.style.padding = '0 6px';
+                numbersContainer.appendChild(dots);
+                addPageButton(totalPages);
+            }
         }
 
         function escapeHtml(text) {

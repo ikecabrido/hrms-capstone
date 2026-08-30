@@ -2,7 +2,44 @@
 $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 ?>
 <link rel="stylesheet" href="assets/vendor/flatpickr/flatpickr.min.css">
-<link rel="stylesheet" href="assets/css/custom.css">
+<link rel="stylesheet" href="assets/css/custom.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/custom.css'); ?>">
+<style>
+    #interviewQueueAlertWrapper {
+        margin-bottom: 16px;
+        min-height: 120px;
+        max-height: 240px;
+        overflow-y: auto;
+        border: 1px solid #b9d9ff;
+        background: #f4f9ff;
+        border-radius: 6px;
+        padding: 10px;
+        position: relative;
+        box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.08);
+    }
+
+    #interviewQueueAlert {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin: 0;
+        width: 100%;
+        min-height: 90px;
+        border-left: 5px solid #0d6efd;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .interview-ready-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 9px 12px;
+        margin: 4px 0;
+        border-radius: 4px;
+        background: rgba(255,255,255,0.22);
+        border-left: 3px solid #0d6efd;
+        line-height: 1.45;
+    }
+</style>
 <script>
     window.exitManagementUserRole = <?php echo json_encode($currentRoleName); ?>;
     window.exitManagementUserId = <?php echo json_encode($_SESSION['employee_id'] ?? null); ?>;
@@ -40,6 +77,12 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     </div>
                 </div>
                 <div class="card-body">
+                    <div id="interviewQueueAlertWrapper" style="margin-bottom: 16px; min-height: 120px; max-height: 240px; overflow-y: auto; border: 1px solid #b9d9ff; background: #f4f9ff; border-radius: 6px; padding: 10px; position: relative;">
+                        <div id="interviewQueueAlert" class="alert alert-info" role="alert" style="display:none; margin: 0; font-weight: 600; border-left: 5px solid #0d6efd; box-shadow: 0 2px 8px rgba(0,0,0,0.06); width: 100%; min-height: 90px; display: flex; align-items: center;">
+                            <div class="d-flex align-items-center gap-2 mb-1"><i class="fas fa-bell"></i><strong>Exit Interview Queue</strong></div>
+                            <div id="interviewQueueAlertText">No approved exit cases are waiting for a scheduled interview.</div>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table id="interviews-table" class="table table-bordered table-striped">
                             <thead>
@@ -77,7 +120,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <input type="hidden" id="interviewId" name="interview_id">
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <div class="form-group">
                                     <label for="interviewCaseSelect">Approved Exit Case *</label>
                                     <select class="form-control" id="interviewCaseSelect" required>
@@ -88,14 +131,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                     <input type="hidden" id="interviewExitCaseType" name="exit_case_type" />
                                     <input type="hidden" id="interviewExitCaseId" name="exit_case_id" />
                                     <input type="hidden" id="interviewEmployeeId" name="employee_id" />
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="interviewerSelect">Interviewer *</label>
-                                    <select class="form-control" id="interviewerSelect" name="interviewer_id" required>
-                                        <option value="">Select Interviewer</option>
-                                    </select>
+                                    <input type="hidden" id="interviewerId" name="interviewer_id" value="<?php echo htmlspecialchars((string)($_SESSION['employee_id'] ?? ''), ENT_QUOTES); ?>">
                                 </div>
                             </div>
                         </div>
@@ -388,10 +424,11 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
         </div>
     </div>
 
-<script src="assets/vendor/jquery/jquery.min.js"></script>
 <script src="assets/vendor/flatpickr/flatpickr.min.js"></script>
-<script src="assets/js/custom.js"></script>
 <script>
+    if (typeof loadInterviewReadyAlert === 'function') {
+        loadInterviewReadyAlert();
+    }
     if (typeof loadInterviewsTable === 'function') {
         loadInterviewsTable('all', 1, '');
     }

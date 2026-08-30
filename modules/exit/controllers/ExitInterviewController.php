@@ -18,13 +18,19 @@ class ExitInterviewController extends ExitManagementController
     public function scheduleInterview(array $data): array
     {
         try {
-            // Validate required fields
-            $required = ['exit_case_type', 'exit_case_id', 'employee_id', 'interviewer_id', 'scheduled_date', 'scheduled_time'];
+            $assignedInterviewerId = (int)($data['interviewer_id'] ?? $_SESSION['employee_id'] ?? 0);
+            if ($assignedInterviewerId <= 0) {
+                return ['success' => false, 'message' => 'Exit HR staff is required to schedule the interview'];
+            }
+
+            $required = ['exit_case_type', 'exit_case_id', 'employee_id', 'scheduled_date', 'scheduled_time'];
             foreach ($required as $field) {
                 if (empty($data[$field])) {
                     return ['success' => false, 'message' => "Field '$field' is required"];
                 }
             }
+
+            $data['interviewer_id'] = $assignedInterviewerId;
 
             $exitCaseType = $data['exit_case_type'];
             $exitCaseId = (int)$data['exit_case_id'];
@@ -317,12 +323,19 @@ class ExitInterviewController extends ExitManagementController
                     return ['success' => false, 'message' => 'Interview ID is required for update'];
                 }
 
-                $required = ['exit_case_type', 'exit_case_id', 'employee_id', 'interviewer_id', 'scheduled_date', 'scheduled_time'];
+                $assignedInterviewerId = (int)($data['interviewer_id'] ?? $_SESSION['employee_id'] ?? 0);
+                if ($assignedInterviewerId <= 0) {
+                    return ['success' => false, 'message' => 'Exit HR staff is required to update the interview'];
+                }
+
+                $required = ['exit_case_type', 'exit_case_id', 'employee_id', 'scheduled_date', 'scheduled_time'];
                 foreach ($required as $field) {
                     if (empty($data[$field])) {
                         return ['success' => false, 'message' => "Field '$field' is required for update"];
                     }
                 }
+
+                $data['interviewer_id'] = $assignedInterviewerId;
 
                 $exitCaseType = $data['exit_case_type'];
                 $exitCaseId = (int)$data['exit_case_id'];

@@ -209,67 +209,11 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
     </div>
 
     
-
-    <div class="module-content">
-        <div class="ta-dashboard absence-late-container glass-panel">
             <!-- Top controls -->
             <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
                 <!-- Button moved into Near Termination alert -->
             </div>
-            <!-- Alerts side-by-side -->
-            <div class="alerts-row" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
-                <!-- Left: Shift Assignment -->
-                <div style="flex:1;min-width:300px;">
-                    <?php if ($employeesWithoutShiftCount > 0): ?>
-                    <div style="background:#fff8e1;border:1px solid #ffe0b2;padding:12px;border-radius:6px;">
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <i class="fas fa-user-clock" style="font-size:22px;color:#ff9800;"></i>
-                            <div>
-                                <div style="font-weight:700;color:#8a4b00;">Shift Assignment Required</div>
-                                <div style="color:#6b4a07;font-size:13px;margin-top:6px;"><strong><?php echo $employeesWithoutShiftCount; ?></strong> employee<?php echo $employeesWithoutShiftCount > 1 ? 's' : ''; ?> need shift assignment.</div>
-                            </div>
-                        </div>
-                        <div style="margin-top:10px;text-align:right;"><a href="?page=shifts" class="btn btn-sm btn-warning" style="background:linear-gradient(90deg,#ff9800,#ffb74d);border:0;color:#fff;padding:8px 12px;border-radius:6px;text-decoration:none;">Manage Shifts</a></div>
-                    </div>
-                    <?php else: ?>
-                    <div style="background:#f8f9fa;border:1px solid #e9ecef;padding:12px;border-radius:6px;">All employees have active shift assignments.</div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Right: Near Termination -->
-                <div style="flex:1;min-width:300px;">
-                    <div style="background:<?php echo $employeesNearTerminationCount > 0 ? '#ffebee' : '#f8f9fa'; ?>;border-left:4px solid <?php echo $employeesNearTerminationCount > 0 ? '#d32f2f' : '#6c757d'; ?>;padding:12px;border-radius:6px;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-                            <div style="display:flex;align-items:center;gap:8px;"><i class="fas fa-user-slash" style="font-size:18px;color:<?php echo $employeesNearTerminationCount > 0 ? '#d32f2f' : '#6c757d'; ?>;"></i><strong style="color:<?php echo $employeesNearTerminationCount > 0 ? '#b71c1c' : '#495057'; ?>;">Near Termination</strong></div>
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <div style="font-size:13px;color:#495057;"><?php echo $employeesNearTerminationCount; ?> flagged</div>
-                                <?php if ($employeesNearTerminationCount > 0): ?>
-                                    <a href="?page=absence_late_management" class="btn btn-sm" style="background:linear-gradient(90deg,#0b5cab,#0b7bd6);color:#fff;padding:6px 10px;border-radius:6px;text-decoration:none;font-weight:700;">Check It</a>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <?php if ($employeesNearTerminationCount > 0): ?>
-                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:10px;">
-                            <?php foreach ($employeesNearTermination as $employee): ?>
-                                <div style="background:#fff;border:1px solid #f0d7d7;padding:8px;border-radius:6px;display:flex;flex-direction:column;gap:8px;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <div style="font-weight:700;color:#2d3748;font-size:13px;"><?php echo htmlspecialchars($employee['full_name']); ?></div>
-                                        <div style="background:#fde8e8;color:#b42318;padding:3px 7px;border-radius:999px;font-weight:700;font-size:12px;"><?php echo (int)($employee['missed_shift_days'] ?? 0); ?> missed</div>
-                                    </div>
-                                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <div style="color:#5f6368;font-size:12px;">Last: <?php echo !empty($employee['last_missed_shift']) ? date('M d, Y', strtotime($employee['last_missed_shift'])) : 'N/A'; ?></div>
-                                        <div><a href="?page=absence_late_management&employee_id=<?php echo urlencode($employee['employee_id']); ?>" class="btn" style="background:#d32f2f;color:#fff;padding:6px 10px;border-radius:5px;text-decoration:none;font-weight:700;">Review</a></div>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <?php else: ?>
-                            <div style="color:#495057;font-size:13px;margin-top:10px;">No employees flagged for termination review.</div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
+            <!-- Alerts removed per request -->
 
             <!-- Holiday Alert -->
             <?php if ($isHolidayToday && $todayHolidayInfo): ?>
@@ -327,7 +271,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                 <!-- Middle column: KPI cards on top, then Today's Attendance -->
                 <div>
                     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-                        <div style="flex:1;min-width:200px;background:linear-gradient(90deg,#0b5cab,#0b7bd6);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(16,24,40,0.06);color:#fff;">
+                        <div class="kpi-card kpi-total">
                             <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">
                                 <i class="fas fa-users"></i>
                             </div>
@@ -338,7 +282,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         </div>
 
-                        <div style="flex:1;min-width:200px;background:linear-gradient(90deg,#059669,#10b981);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(16,24,40,0.06);color:#fff;">
+                        <div class="kpi-card kpi-present">
                             <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">
                                 <i class="fas fa-user-check"></i>
                             </div>
@@ -349,7 +293,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         </div>
 
-                        <div style="flex:1;min-width:200px;background:linear-gradient(90deg,#f97316,#fb923c);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(16,24,40,0.06);color:#fff;">
+                        <div class="kpi-card kpi-absent">
                             <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">
                                 <i class="fas fa-user-times"></i>
                             </div>
@@ -360,7 +304,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         </div>
 
-                        <div style="flex:1;min-width:200px;background:linear-gradient(90deg,#0891b2,#06b6d4);border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(16,24,40,0.06);color:#fff;">
+                        <div class="kpi-card kpi-pending">
                             <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">
                                 <i class="fas fa-clipboard-list"></i>
                             </div>
@@ -398,7 +342,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                 <!-- Right column: stacked Avg & Short, then Attendance Trend below -->
                 <div>
                     <div style="display:flex;flex-direction:column;gap:12px;">
-                        <div style="background:linear-gradient(90deg,#16a34a,#34d399);color:#ffffff;padding:14px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 10px rgba(16,24,40,0.06);">
+                        <div class="right-stat avg">
                             <div>
                                 <div style="font-size:13px;opacity:0.95;">Average Working Hours (7 days)</div>
                                 <div style="font-size:26px;font-weight:800;margin-top:6px;"><?php echo $avg7Label; ?></div>
@@ -409,7 +353,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         </div>
 
-                        <div style="background:linear-gradient(90deg,#f97373,#fb7185);color:#fff;padding:14px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 10px rgba(16,24,40,0.06);">
+                        <div class="right-stat below">
                             <div>
                                 <div style="font-size:13px;opacity:0.95;">Employees Below Threshold (7 days)</div>
                                 <div style="font-size:26px;font-weight:800;margin-top:6px;"><?php echo number_format($shortCount); ?></div>
@@ -534,7 +478,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                     (function(){
                         const donutCtx = document.getElementById('attendanceDonut');
                         if (donutCtx) {
-                            const dChart = new Chart(donutCtx, {
+                            new Chart(donutCtx, {
                                 type: 'doughnut',
                                 data: {
                                     labels: ['Present','Late','Absent','On Leave'],
@@ -547,18 +491,86 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             });
                         }
 
-                        const trendCtx = document.getElementById('attendanceTrend');
-                        if (trendCtx) {
-                            const tChart = new Chart(trendCtx, {
+                        const trendCanvas = document.getElementById('attendanceTrend');
+                        if (trendCanvas) {
+                            const presentData = <?php echo json_encode($trendPresent); ?> || [];
+                            const expectedBaseline = <?php echo json_encode($expectedPresentBaseline); ?> || 0;
+
+                            const rawMax = Math.max.apply(null, presentData.map(v => (v === null || v === undefined) ? 0 : v).concat([expectedBaseline]));
+                            const padding = Math.max(1, Math.ceil(rawMax * 0.2));
+                            const suggestedMax = rawMax + padding;
+
+                            const lineShadowPlugin = {
+                                id: 'lineShadow',
+                                afterDatasetsDraw(chart) {
+                                    const ctx = chart.ctx;
+                                    const meta = chart.getDatasetMeta(0);
+                                    if (!meta || !meta.data) return;
+                                    ctx.save();
+                                    ctx.globalCompositeOperation = 'destination-over';
+                                    ctx.shadowColor = 'rgba(11,92,171,0.28)';
+                                    ctx.shadowBlur = 18;
+                                    ctx.lineWidth = 0;
+                                    ctx.beginPath();
+                                    meta.data.forEach((pt, i) => {
+                                        if (i === 0) ctx.moveTo(pt.x, pt.y);
+                                        else ctx.lineTo(pt.x, pt.y);
+                                    });
+                                    ctx.strokeStyle = 'rgba(11,92,171,0.0)';
+                                    ctx.stroke();
+                                    ctx.restore();
+                                }
+                            };
+
+                            Chart.register(lineShadowPlugin);
+
+                            new Chart(trendCanvas, {
                                 type: 'line',
                                 data: {
                                     labels: <?php echo json_encode($trendLabels); ?>,
                                     datasets: [
-                                        {label:'Present',data:<?php echo json_encode($trendPresent); ?>,borderColor:'#0b5cab',tension:0.3,fill:false},
-                                        {label:'Expected',data:Array(<?php echo count($trendPresent); ?>).fill(<?php echo $expectedPresentBaseline; ?>),borderColor:'#90a4ae',borderDash:[6,4],tension:0.1,fill:false}
+                                        {
+                                            label: 'Present',
+                                            data: presentData,
+                                            borderColor: '#0b5cab',
+                                            borderWidth: 2,
+                                            tension: 0.4,
+                                            fill: true,
+                                            pointRadius: 2,
+                                            pointHoverRadius: 4,
+                                            backgroundColor: function(context) {
+                                                const chart = context.chart;
+                                                const {ctx, chartArea} = chart;
+                                                if (!chartArea) {
+                                                    return 'rgba(11,92,171,0.12)';
+                                                }
+                                                const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                                                gradient.addColorStop(0, 'rgba(11,92,171,0.36)');
+                                                gradient.addColorStop(0.18, 'rgba(11,92,171,0.26)');
+                                                gradient.addColorStop(0.35, 'rgba(11,92,171,0.18)');
+                                                gradient.addColorStop(0.55, 'rgba(11,92,171,0.10)');
+                                                gradient.addColorStop(1, 'rgba(11,92,171,0.02)');
+                                                return gradient;
+                                            }
+                                        },
+                                        {
+                                            label: 'Expected',
+                                            data: Array(<?php echo count($trendPresent); ?>).fill(expectedBaseline),
+                                            borderColor: '#90a4ae',
+                                            borderDash: [6,4],
+                                            tension: 0.1,
+                                            fill: false
+                                        }
                                     ]
                                 },
-                                options:{scales:{y:{beginAtZero:true}},plugins:{legend:{position:'bottom'}}}
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    scales: {
+                                        y: { beginAtZero: true, suggestedMax: suggestedMax }
+                                    },
+                                    plugins: { legend: { position: 'bottom' } }
+                                }
                             });
                         }
 
@@ -586,8 +598,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                     })();
                 </script>
             </div>
-        </div>
-    </div>
+
 
     <script>
         window.__TA_CONFIG = {
