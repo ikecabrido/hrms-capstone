@@ -74,17 +74,29 @@
     margin-bottom:18px;
 ">
 
-                    <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2"
-                        data-bs-toggle="modal" data-bs-target="#createCourseModal" style="
-        height:44px;
-        padding:0 18px;
-        border-radius:11px;
-        font-size:14px;
-        font-weight:600;
-    ">
-                        <i class="fa-solid fa-plus"></i>
-                        Create Course
-                    </button>
+                <button type="button" data-bs-toggle="modal" data-bs-target="#submitTrainingModal" style="
+                display:inline-flex;
+                align-items:center;
+                justify-content:center;
+                gap:7px;
+                padding:8px 13px;
+                border:0;
+                border-radius:9px;
+                background:#2563eb;
+                color:#fff;
+                font-size:11px;
+                font-weight:600;
+                line-height:1;
+                white-space:nowrap;
+                cursor:pointer;
+                box-shadow:0 2px 5px rgba(37,99,235,.20);
+                transition:all .2s ease;
+            ">
+                    <span class="text-[14px]">
+                        <i class="fas fa-plus"></i>
+                        Create Training Request
+                    </span>
+                </button>
 
                 </div>
             </div>
@@ -746,7 +758,7 @@
 
     </section>
     <?php require __DIR__ . '/view-course.php'; ?>
-    <script src="/hrms-capstone/modules/portal/public/js/function/contentLearningAdmin.js"></script>
+    <?php require __DIR__ . '/request.php'; ?>
     <script>
         document.querySelectorAll('.modal').forEach(modal => {
             document.body.appendChild(modal);

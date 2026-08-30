@@ -10,7 +10,7 @@
                 TRAINING & DEVELOPMENT
             </span>
             <h1 class="welcome-title">
-                Training
+                Course Management
             </h1>
             <p class="welcome-description">
                 View available training programs, track your training requests,
@@ -36,21 +36,19 @@
     gap:10px;
     margin-bottom:18px;
 ">
-
-            <!-- MANAGE COURSE CONTENT -->
-            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-2" style="
+            
+            <!-- VIEW TRAINING REQUEST -->
+            <a href="index.php?url=view-training-request" class="btn btn-primary d-inline-flex align-items-center gap-2"  style="
             height:44px;
             padding:0 18px;
             border-radius:11px;
             font-size:14px;
             font-weight:600;
-        " onclick="window.location.href='index.php?url=admin-course-content'">
+        ">
 
-                <i class="fa-solid fa-layer-group"></i>
-                Manage Course Content
-
-            </button>
-
+                <i class="fa-solid fa-plus"></i>
+                View Training Request
+            </a>
 
             <!-- CREATE COURSE -->
             <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" data-bs-toggle="modal"
@@ -388,22 +386,19 @@
                                         Edit
                                     </button>
 
-
                                     <!-- MANAGE CONTENT -->
-                                    <button type="button" data-bs-toggle="modal" data-bs-target="#manageContentModal"
-                                        data-course-id="<?= (int) $course['id'] ?>"
-                                        data-course-title="<?= htmlspecialchars($course['title'], ENT_QUOTES, 'UTF-8') ?>"
-                                        class="flex-1 inline-flex items-center justify-center
-    gap-1.5 h-9 px-3 rounded-lg
-    bg-blue-50 border border-blue-100
-    text-blue-700 text-xs font-semibold
-    hover:bg-blue-100 hover:border-blue-200
-    transition-all">
-
-                                        <i class="fa-solid fa-layer-group"></i>
-                                        Manage
-                                    </button>
-
+                                    <form action="index.php?url=manage-course-module" method="POST">
+                                        <input type="hidden" value="<?= (int) $course['id'] ?>" name="course_id">
+                                        <button type="submit" class="flex-1 inline-flex items-center justify-center
+                                            gap-1.5 h-9 px-3 rounded-lg
+                                            bg-blue-50 border border-blue-100
+                                            text-blue-700 text-xs font-semibold
+                                            hover:bg-blue-100 hover:border-blue-200
+                                            transition-all">
+                                            <i class="fa-solid fa-layer-group"></i>
+                                            Manage
+                                        </button>
+                                    </form>
 
                                     <!-- STATUS -->
                                     <?php if (($course['status'] ?? 'draft') === 'draft'): ?>
@@ -832,7 +827,6 @@
 <?php require __DIR__ . '/create-course.php'; ?>
 <?php require __DIR__ . '/edit-course.php'; ?>
 <?php require __DIR__ . '/view-course.php'; ?>
-<?php require __DIR__ . '/course-content.php'; ?>
 
 <script src="/hrms-capstone/modules/portal/public/js/function/contentLearningAdmin.js"></script>
 

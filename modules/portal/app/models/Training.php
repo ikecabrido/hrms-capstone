@@ -15,6 +15,7 @@ class Training
     private string $courseSkillTable = 'ld_course_skill';
     private string $skillTable = 'ld_skill';
     private string $versionTable = 'ld_course_version';
+    private string $requestTable = 'ld_request';
 
     public function __construct()
     {
@@ -83,5 +84,75 @@ class Training
                 "Failed to fetch courses: " . $e->getMessage()
             );
         }
+    }
+    public function createTrainingRequest(int $learner_id, array $data): bool
+    {
+        $query = "
+            INSERT INTO {$this->requestTable} (
+                learner_id,
+                requested_title,
+                description,
+                status,
+                created_at
+            )
+            VALUES (
+                :learner_id,
+                :requested_title,
+                :description,
+                :status,
+                NOW()
+            )
+        ";
+
+        $stmt = $this->conn->prepare($query);
+
+        return $stmt->execute([
+            ':learner_id' => $learner_id,
+            ':requested_title' => $data['requested_title'],
+            ':description' => $data['description'],
+            ':status' => 'pending'
+        ]);
+    }
+    public function updateTrainingRequestStatus(int $requestId, string $status): bool
+    {
+        $sql = "UPDATE {$this->requestTable}
+            SET status = :status
+            WHERE id = :id
+            LIMIT 1";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $requestId, PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+    public function getPaginatedRequests(int $page = 1, int $perPage = 5): array
+    {
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $sql = "SELECT *
+            FROM {$this->requestTable}
+            ORDER BY created_at DESC
+            LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function countTrainingRequests(): int
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->requestTable}";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
     }
 }

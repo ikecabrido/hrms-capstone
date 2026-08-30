@@ -1,4 +1,3 @@
-<!-- SUBMIT LEAVE REQUEST MODAL -->
 <div class="modal fade" id="submitLeaveModal" tabindex="-1" aria-labelledby="submitLeaveModalLabel" aria-hidden="true"
     style="z-index: index 1045;">
     <div class="modal-dialog modal-dialog-centered modal-lg">

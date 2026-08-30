@@ -106,12 +106,22 @@ $routes = [
 
     // Training and Course
     'training' => [TrainingController::class, 'index'],
+    'store-training-request' => [TrainingController::class, 'store'],
     'admin-learning-index' => [TrainingController::class, 'adminIndex'],
+    'view-training-request' => [TrainingController::class, 'viewRequest'],
+    'toggle-training-request' => [TrainingController::class, 'toggleRequest'],
     'admin-store-course' => [CourseController::class, 'store'],
     'admin-update-course' => [CourseController::class, 'update'],
     'admin-course-toggle-status' => [CourseController::class, 'toggleStatus'],
     'admin-delete-course' => [CourseController::class, 'delete'],
-    'admin-course-content' => [ManageCourseController::class, 'index'],
+    'manage-course-module' => [ManageCourseController::class, 'index'],
+    'create-course-module' => [ManageCourseController::class, 'createModule'],
+    'create-course-lesson' => [ManageCourseController::class, 'createLesson'],
+    'create-course-file' => [ManageCourseController::class, 'createFile'],
+    'delete-course-module' => [ManageCourseController::class, 'deleteModule'],
+    'delete-course-lesson' => [ManageCourseController::class, 'deleteLesson'],
+    'delete-course-file' => [ManageCourseController::class, 'deleteFile'],
+
 
     // Complaint
     'complaint' => [ComplaintController::class, 'index'],

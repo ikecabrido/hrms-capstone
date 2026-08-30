@@ -94,7 +94,6 @@ CREATE TABLE `ld_learning_path_item` (
   `status` enum('active','archived') NOT NULL DEFAULT 'active'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-
 CREATE TABLE `ld_message` (
   `id` int(10) UNSIGNED NOT NULL,
   `sender_id` int(10) UNSIGNED NOT NULL,
@@ -137,7 +136,6 @@ CREATE TABLE `ld_program` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 
 CREATE TABLE `ld_quiz` (
   `id` int(10) UNSIGNED NOT NULL,

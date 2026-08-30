@@ -983,5 +983,25 @@ class Course
             );
         }
     }
+    public function find(int $id): ?array
+    {
+        $sql = "SELECT *
+            FROM {$this->courseTable}
+            WHERE id = :id
+            LIMIT 1";
 
+        $stmt = $this->conn->prepare($sql);
+
+        $stmt->bindValue(
+            ':id',
+            $id,
+            PDO::PARAM_INT
+        );
+
+        $stmt->execute();
+
+        $course = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $course ?: null;
+    }
 }

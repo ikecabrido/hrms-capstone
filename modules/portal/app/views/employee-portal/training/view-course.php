@@ -432,14 +432,6 @@
 
                 let imagePath = course.thumbnail_path;
 
-                /*
-                 * Database stores:
-                 * assets/uploads/learning/filename.jpg
-                 *
-                 * Physical/public URL is:
-                 * /hrms-capstone/modules/portal/public/assets/uploads/learning/filename.jpg
-                 */
-
                 if (!imagePath.startsWith('/')) {
 
                     imagePath =
