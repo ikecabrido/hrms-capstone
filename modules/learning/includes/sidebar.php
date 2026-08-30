@@ -66,7 +66,6 @@ $employeeClass = new Employee();
         <h1 class="employee_name"><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></h1>
         <p class="employee_position"><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></p>
     </div>
-    <h2>Recruitment Dashboard</h2>
     <ul>
         <?php $pageController->renderNav(); ?>
     </ul>

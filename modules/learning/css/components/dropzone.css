@@ -1,0 +1,213 @@
+/* DropZone Component Styles */
+.dz-wrapper {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+.dz-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.5);
+}
+
+[data-theme="dark"] .dz-zone {
+    background: rgba(30,41,59,0.5);
+    border-color: var(--border);
+}
+
+.dz-zone:hover {
+    border-color: var(--primary);
+    background: rgba(32,0,130,0.03);
+}
+
+[data-theme="dark"] .dz-zone:hover {
+    background: rgba(99,102,241,0.08);
+}
+
+.dz-zone.dz-dragover {
+    border-color: var(--primary);
+    background: rgba(32,0,130,0.06);
+    transform: scale(1.01);
+    box-shadow: 0 0 0 4px rgba(32,0,130,0.08);
+}
+
+[data-theme="dark"] .dz-zone.dz-dragover {
+    background: rgba(99,102,241,0.12);
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
+}
+
+.dz-icon {
+    font-size: 2.5rem;
+    color: var(--border);
+    margin-bottom: 0.75rem;
+    transition: color 0.3s;
+}
+
+.dz-zone:hover .dz-icon,
+.dz-zone.dz-dragover .dz-icon {
+    color: var(--primary);
+}
+
+.dz-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.dz-sublabel {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+}
+
+.dz-browse {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: opacity 0.2s;
+}
+
+.dz-browse:hover {
+    opacity: 0.9;
+}
+
+.dz-input {
+    display: none;
+}
+
+/* Preview */
+.dz-preview {
+    margin-top: 0.75rem;
+}
+
+.dz-thumb {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-subtle);
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+[data-theme="dark"] .dz-thumb {
+    background: var(--surface);
+    border-color: var(--border);
+}
+
+.dz-thumb img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+.dz-file-icon {
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(99,102,241,0.1);
+    border-radius: 8px;
+    color: var(--primary);
+    font-size: 1.5rem;
+}
+
+.dz-filename {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dz-filesize {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+.dz-remove {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(239,68,68,0.1);
+    color: var(--danger);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.dz-remove:hover {
+    background: rgba(239,68,68,0.2);
+}
+
+/* Progress */
+.dz-progress {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.dz-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-subtle);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .dz-progress-bar {
+    background: var(--border);
+}
+
+.dz-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary), #10b981);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.dz-progress-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    min-width: 35px;
+    text-align: right;
+}
+
+/* Status */
+.dz-status {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .dz-zone {
+        padding: 1.5rem 1rem;
+    }
+    .dz-icon {
+        font-size: 2rem;
+    }
+}

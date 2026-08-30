@@ -1,5 +1,5 @@
 body {
-    background: var(--color9);
+    background: #ffffff;
 }
 
 .main-content {
@@ -10,6 +10,7 @@ body {
     transition: margin-left 0.3s ease;
     position: relative;
     z-index: 1;
+    background: #ffffff;
 }
 
 .container {
@@ -28,12 +29,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--color4);
+    background: var(--border);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--color5);
+    background: var(--muted);
 }
 
 @media (max-width: 1024px) {

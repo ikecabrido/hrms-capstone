@@ -4,6 +4,18 @@
 
     // ─── Page Fetching ───────────────────────────────────────────────────────────
 
+    function executePageScripts(container) {
+        const scripts = Array.from(container.querySelectorAll('script'));
+        scripts.forEach(function (script) {
+            const replacement = document.createElement('script');
+            Array.from(script.attributes).forEach(function (attribute) {
+                replacement.setAttribute(attribute.name, attribute.value);
+            });
+            replacement.textContent = script.textContent;
+            script.parentNode.replaceChild(replacement, script);
+        });
+    }
+
     function fetchPage(page, push = true) {
         const container = document.querySelector('.container');
         if (!container) return;
@@ -25,7 +37,11 @@
             })
             .then(function (result) {
             if (!result) return; // was a redirect, bail
+            // Fully clear container before inserting new page
+            while (container.firstChild) container.removeChild(container.firstChild);
             container.innerHTML = result.html;
+            container.setAttribute('data-page', result.rendered);
+            executePageScripts(container);
             updateActiveLink(result.rendered);
 
             if (push) {
@@ -45,17 +61,55 @@
         document.querySelectorAll('.menu-link, .active-menu-link').forEach(function (el) {
         el.className = 'menu-link';
         });
-        var a = document.querySelector('[data-page="' + page + '"]');
+        var a = document.querySelector('.sidebar a[data-page="' + page + '"]');
         if (a) a.className = 'active-menu-link';
     }
 
     // ─── Sidebar Click Intercept ──────────────────────────────────────────────────
+    // Guard: skip if the inline fallback script in index.php already handled this click.
 
     document.body.addEventListener('click', function (e) {
         var a = e.target.closest('a[data-page]');
         if (!a) return;
+        if (a.dataset.navHandled) { a.dataset.navHandled = ''; return; }
         e.preventDefault();
         fetchPage(a.getAttribute('data-page'));
+    });
+
+    // ─── Keyboard shortcuts ──────────────────────────────────────────────────────
+
+    document.addEventListener('keydown', function (event) {
+        if (!event.shiftKey) return;
+
+        const code = event.code;
+
+        // Skip if typing in an input
+        const activeTag = document.activeElement && document.activeElement.tagName;
+        if (activeTag && ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) return;
+
+        // Shift+Q → toggle nav sidebar
+        if (code === 'KeyQ') {
+            event.preventDefault();
+            var hamburger = document.querySelector('.hamburger');
+            if (hamburger) hamburger.click();
+            return;
+        }
+
+        // Shift+W → toggle course panel
+        if (code === 'KeyW') {
+            event.preventDefault();
+            if (typeof studyToggleSidebar === 'function') studyToggleSidebar();
+            return;
+        }
+
+        // Shift+1-9 → switch nav tab
+        var digitMatch = code.match(/^Digit([1-9])$/);
+        if (digitMatch) {
+            var navLink = document.querySelector('a[data-shortcut="' + digitMatch[1] + '"]');
+            if (!navLink) return;
+            event.preventDefault();
+            navLink.click();
+        }
     });
 
     // ─── Back / Forward ───────────────────────────────────────────────────────────
@@ -68,6 +122,8 @@
     // ─── Initial Load ─────────────────────────────────────────────────────────────
 
     var initial = new URL(location).searchParams.get('page') || 'dashboard-overview';
+    var initContainer = document.querySelector('.container');
+    if (initContainer) initContainer.setAttribute('data-page', initial);
     updateActiveLink(initial);
     reinitPage(initial);
 

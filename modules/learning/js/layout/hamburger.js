@@ -18,35 +18,38 @@ document.addEventListener('DOMContentLoaded', function() {
         return window.innerWidth <= 768;
     }
     
-    // Toggle sidebar
-    hamburger?.addEventListener('click', function() {
+    function toggleSidebar() {
         const mobile = isMobile();
-        
-        // Toggle hamburger animation
-        this.classList.toggle('active');
-        
+
+        if (hamburger) {
+            hamburger.classList.toggle('active');
+        }
+
         if (mobile) {
-            // Mobile behavior: show overlay
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
-        } else {
-            // Desktop behavior: hide sidebar and adjust layout
-            sidebar.classList.toggle('hidden');
-            
-            // Adjust main content, footer, and header
-            if (sidebar.classList.contains('hidden')) {
-                mainContent.style.marginLeft = '0';
-                footer.style.marginLeft = '0';
-                header.style.left = '0';
-                header.style.width = '100%';
-            } else {
-                mainContent.style.marginLeft = '252px';
-                footer.style.marginLeft = '252px';
-                header.style.left = '252px';
-                header.style.width = 'calc(100% - 252px)';
-            }
+            return;
         }
-    });
+
+        sidebar.classList.toggle('hidden');
+
+        if (sidebar.classList.contains('hidden')) {
+            mainContent.style.marginLeft = '0';
+            footer.style.marginLeft = '0';
+            header.style.left = '0';
+            header.style.width = '100%';
+        } else {
+            mainContent.style.marginLeft = '252px';
+            footer.style.marginLeft = '252px';
+            header.style.left = '252px';
+            header.style.width = 'calc(100% - 252px)';
+        }
+    }
+
+    // Toggle sidebar
+    hamburger?.addEventListener('click', toggleSidebar);
+
+
     
     // Close sidebar when clicking overlay (mobile only)
     overlay?.addEventListener('click', function() {

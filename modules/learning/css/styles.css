@@ -2,6 +2,7 @@
 
 /*Components CSS*/
 @import url('components/dropdown.css');
+@import url('components/dropzone.css');
 
 /*Layout CSS*/
 @import url('layout/sidebar.css');

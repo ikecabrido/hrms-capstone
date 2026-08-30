@@ -1,8 +1,8 @@
 footer {
     text-align: center;
     padding: 1rem;
-    background: var(--color3);
-    color: var(--color2);
+    background: var(--surface);
+    color: var(--text);
     margin-left: var(--sidebar-width);
     transition: margin-left 0.3s ease;
 }

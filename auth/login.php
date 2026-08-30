@@ -46,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── Authentication ────────────────────────────────────────────────────────
     $stmt = $conn->prepare("
+<<<<<<< Updated upstream
         SELECT
             user_account.user_id,
             user_account.employee_id,
@@ -60,9 +61,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         LEFT  JOIN hrms_department ON hrms_department.department_id = hrms_employee.department
         WHERE user_account.employee_id = :employeeid
         AND   hrms_employee.status      = 'active'
+=======
+        SELECT 
+            u.user_id, 
+            u.employee_id, 
+            u.role_id,
+            u.password,
+            u.account_status,
+            e.employee_code,
+            e.first_name,
+            e.middle_name,
+            e.last_name,
+            e.position_id,
+            e.department_id,
+            e.employment_status,
+            p.position_name,
+            r.role_name,
+            d.department_name
+        FROM user_account u
+        INNER JOIN em_employees e
+            ON e.employee_id = u.employee_id
+        INNER JOIN em_roles r
+            ON r.role_id = u.role_id
+        INNER JOIN em_positions p
+            ON p.position_id = e.position_id
+        LEFT JOIN em_departments d
+            ON d.department_id = e.department_id
+        WHERE (e.employee_code = :employeeid OR e.employee_id = :employeeid_num)
+        AND e.employment_status = 'Active'
+>>>>>>> Stashed changes
         LIMIT 1
     ");
     $stmt->bindParam(':employeeid', $employeeid);
+    $stmt->bindValue(':employeeid_num', (int) $employeeid, PDO::PARAM_INT);
     $stmt->execute();
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
