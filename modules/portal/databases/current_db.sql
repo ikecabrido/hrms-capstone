@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 29, 2026 at 01:01 PM
+-- Generation Time: Aug 30, 2026 at 12:40 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -731,6 +731,156 @@ INSERT INTO `ld_course_version` (`id`, `course_id`, `version_number`, `snapshot`
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `ld_enrollment`
+--
+
+CREATE TABLE `ld_enrollment` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `learner_id` int(10) UNSIGNED NOT NULL,
+  `course_id` int(10) UNSIGNED NOT NULL,
+  `course_version_id` int(10) UNSIGNED DEFAULT NULL,
+  `status` enum('invited','enrolled','in_progress','completed','withdrawn') NOT NULL DEFAULT 'enrolled',
+  `invited_by` int(10) UNSIGNED DEFAULT NULL,
+  `enrolled_at` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `last_accessed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ld_lesson`
+--
+
+CREATE TABLE `ld_lesson` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `module_id` int(10) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `content_type` enum('video','text','file','mixed') NOT NULL DEFAULT 'text',
+  `content_body` text DEFAULT NULL,
+  `video_url` varchar(500) DEFAULT NULL,
+  `order_index` int(10) UNSIGNED DEFAULT 0,
+  `status` enum('active','archived') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ld_lesson`
+--
+
+INSERT INTO `ld_lesson` (`id`, `module_id`, `title`, `content_type`, `content_body`, `video_url`, `order_index`, `status`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Getting Started with Excel', 'text', 'Introduction to Microsoft Excel and its basic features.', NULL, 1, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(2, 1, 'Excel Interface', 'mixed', 'Learn about the Ribbon, Formula Bar, Name Box, worksheets, rows, and columns.', 'https://www.youtube.com/watch?v=example1', 2, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(3, 1, 'Creating a Workbook', 'text', 'Learn how to create, save, open, and manage Excel workbooks.', NULL, 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(4, 2, 'Data Entry', 'text', 'Learn how to enter text, numbers, dates, and other information into Excel.', NULL, 1, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(5, 2, 'Formatting Data', 'mixed', 'Learn how to format cells, fonts, borders, colors, and number formats.', 'https://www.youtube.com/watch?v=example2', 2, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(6, 2, 'Sorting and Filtering', 'text', 'Learn how to sort information and filter data to find specific records.', NULL, 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(7, 3, 'Basic Formulas', 'text', 'Learn how to create basic Excel formulas using cell references and operators.', NULL, 1, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(8, 3, 'SUM and AVERAGE', 'mixed', 'Learn how to calculate totals and averages using Excel functions.', 'https://www.youtube.com/watch?v=example3', 2, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(9, 3, 'IF Functions', 'text', 'Learn how to use IF statements to perform logical tests in Excel.', NULL, 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(10, 4, 'Creating Charts', 'video', NULL, 'https://www.youtube.com/watch?v=example4', 1, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(11, 4, 'Chart Types', 'text', 'Learn about column, bar, line, pie, and other commonly used chart types.', NULL, 2, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(12, 4, 'Customizing Charts', 'mixed', 'Learn how to modify chart titles, labels, colors, legends, and layouts.', 'https://www.youtube.com/watch?v=example5', 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(13, 5, 'Employee Data Exercise', 'file', 'Practice organizing and formatting employee information.', NULL, 1, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(14, 5, 'Payroll Calculation Exercise', 'mixed', 'Practice using formulas to calculate basic payroll-related values.', 'https://www.youtube.com/watch?v=example6', 2, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(15, 5, 'Final Excel Challenge', 'text', 'Complete a practical Excel activity using the skills learned throughout the course.', NULL, 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ld_lesson_file`
+--
+
+CREATE TABLE `ld_lesson_file` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `lesson_id` int(10) UNSIGNED NOT NULL,
+  `file_path` varchar(255) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ld_lesson_file`
+--
+
+INSERT INTO `ld_lesson_file` (`id`, `lesson_id`, `file_path`, `title`, `uploaded_at`) VALUES
+(1, 1, 'uploads/lessons/excel-formatting-guide.pdf', 'Excel Formatting Guide.pdf', '2026-08-29 12:50:52'),
+(2, 1, 'uploads/lessons/employee-data-exercise.xlsx', 'Employee Data Exercise.xlsx', '2026-08-29 12:50:52'),
+(3, 1, 'uploads/lessons/payroll-calculation-exercise.xlsx', 'Payroll Calculation Exercise.xlsx', '2026-08-29 12:50:52'),
+(4, 1, 'uploads/lessons/final-excel-challenge.xlsx', 'Final Excel Challenge.xlsx', '2026-08-29 12:50:52'),
+(5, 3, 'uploads/lessons/excel-workbook-practice.xlsx', 'Workbook Practice File.xlsx', '2026-08-29 12:50:52');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ld_module`
+--
+
+CREATE TABLE `ld_module` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `course_id` int(10) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `order_index` int(10) UNSIGNED DEFAULT 0,
+  `status` enum('active','archived') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ld_module`
+--
+
+INSERT INTO `ld_module` (`id`, `course_id`, `title`, `description`, `order_index`, `status`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Introduction to Excel', 'Learn the Excel interface, workspace, and basic workbook operations.', 1, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(2, 1, 'Working with Data', 'Learn how to enter, organize, format, sort, and filter data.', 2, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(3, 1, 'Excel Formulas', 'Learn the fundamentals of Excel formulas and commonly used functions.', 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(4, 1, 'Charts and Visualization', 'Learn how to create and customize charts to visualize data.', 4, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(5, 1, 'Practical Excel Exercises', 'Apply Excel skills through practical workplace exercises.', 5, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ld_progress`
+--
+
+CREATE TABLE `ld_progress` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `enrollment_id` int(10) UNSIGNED NOT NULL,
+  `item_type` enum('module','lesson','quiz','evaluation') NOT NULL,
+  `reference_id` int(10) UNSIGNED NOT NULL,
+  `status` enum('not_started','in_progress','completed') NOT NULL DEFAULT 'not_started',
+  `completed_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ld_request`
+--
+
+CREATE TABLE `ld_request` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `learner_id` int(10) UNSIGNED NOT NULL,
+  `requested_title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `status` enum('pending','reviewed','archived') NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ld_request`
+--
+
+INSERT INTO `ld_request` (`id`, `learner_id`, `requested_title`, `description`, `status`, `created_at`) VALUES
+(1, 1, 'sample', 'sample', 'reviewed', '2026-08-30 06:05:29'),
+(2, 1, 'sample', 'sample', 'pending', '2026-08-30 07:32:49');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `ld_skill`
 --
 
@@ -1098,6 +1248,42 @@ ALTER TABLE `ld_course_version`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `ld_enrollment`
+--
+ALTER TABLE `ld_enrollment`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ld_lesson`
+--
+ALTER TABLE `ld_lesson`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ld_lesson_file`
+--
+ALTER TABLE `ld_lesson_file`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ld_module`
+--
+ALTER TABLE `ld_module`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ld_progress`
+--
+ALTER TABLE `ld_progress`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `ld_request`
+--
+ALTER TABLE `ld_request`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `ld_skill`
 --
 ALTER TABLE `ld_skill`
@@ -1244,6 +1430,42 @@ ALTER TABLE `ld_course_skill`
 --
 ALTER TABLE `ld_course_version`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT for table `ld_enrollment`
+--
+ALTER TABLE `ld_enrollment`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `ld_lesson`
+--
+ALTER TABLE `ld_lesson`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT for table `ld_lesson_file`
+--
+ALTER TABLE `ld_lesson_file`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `ld_module`
+--
+ALTER TABLE `ld_module`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+
+--
+-- AUTO_INCREMENT for table `ld_progress`
+--
+ALTER TABLE `ld_progress`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `ld_request`
+--
+ALTER TABLE `ld_request`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `ld_skill`
