@@ -15,6 +15,7 @@ class Course
     private string $courseSkillTable = 'ld_course_skill';
     private string $skillTable = 'ld_skill';
     private string $versionTable = 'ld_course_version';
+    private string $employeeTable = 'em_employees';
 
     public function __construct()
     {
@@ -196,15 +197,6 @@ class Course
                 }
             }
 
-
-            /* =====================================================
-               COURSE SKILLS
-
-               IMPORTANT:
-               ld_skill = master skill table
-               ld_course_skill = course/skill relationship table
-            ===================================================== */
-
             $skills = $data['skills'] ?? [];
 
             if (is_array($skills)) {
@@ -286,8 +278,6 @@ class Course
                 'co_instructors' => $coInstructors,
 
                 'skills' => $skills,
-
-                'lessons' => $data['lessons'] ?? []
             ];
 
             $snapshotJson = json_encode(
@@ -474,88 +464,104 @@ class Course
             ]);
 
 
-            /* =====================================================
-               UPDATE INSTRUCTORS
-            ===================================================== */
+/* =====================================================
+   UPDATE INSTRUCTORS
+===================================================== */
 
-            $stmt = $this->conn->prepare(
-                "DELETE FROM {$this->instructorTable}
-             WHERE course_id = :course_id"
-            );
+$stmt = $this->conn->prepare(
+    "DELETE FROM {$this->instructorTable}
+     WHERE course_id = :course_id"
+);
 
-            $stmt->execute([
-                ':course_id' => $courseId
-            ]);
-
-
-            /* =====================================================
-               COURSE OWNER
-            ===================================================== */
-
-            $stmt = $this->conn->prepare(
-                "INSERT INTO {$this->instructorTable}
-             (
-                course_id,
-                instructor_id,
-                role
-             )
-             VALUES
-             (
-                :course_id,
-                :instructor_id,
-                'owner'
-             )"
-            );
-
-            $stmt->execute([
-                ':course_id' => $courseId,
-                ':instructor_id' => $instructorId
-            ]);
+$stmt->execute([
+    ':course_id' => $courseId
+]);
 
 
-            /* =====================================================
-               CO-INSTRUCTORS
-            ===================================================== */
+/* =====================================================
+   INSERT COURSE OWNER
+===================================================== */
 
-            $coInstructors = $data['co_instructors'] ?? [];
+$stmt = $this->conn->prepare(
+    "INSERT INTO {$this->instructorTable}
+    (
+        course_id,
+        instructor_id,
+        role
+    )
+    VALUES
+    (
+        :course_id,
+        :instructor_id,
+        'owner'
+    )"
+);
 
-            if (is_array($coInstructors)) {
+$stmt->execute([
+    ':course_id' => $courseId,
+    ':instructor_id' => $instructorId
+]);
 
-                foreach ($coInstructors as $coInstructorId) {
 
-                    $coInstructorId = (int) $coInstructorId;
+/* =====================================================
+   INSERT CO-INSTRUCTORS
+===================================================== */
 
-                    if ($coInstructorId <= 0) {
-                        continue;
-                    }
+$coInstructors =
+    $data['co_instructors'] ?? [];
 
-                    // Prevent owner from being added twice
-                    if ($coInstructorId === $instructorId) {
-                        continue;
-                    }
+if (!is_array($coInstructors)) {
+    $coInstructors = [];
+}
 
-                    $stmt = $this->conn->prepare(
-                        "INSERT INTO {$this->instructorTable}
-                     (
-                        course_id,
-                        instructor_id,
-                        role
-                     )
-                     VALUES
-                     (
-                        :course_id,
-                        :instructor_id,
-                        'co-instructor'
-                     )"
-                    );
 
-                    $stmt->execute([
-                        ':course_id' => $courseId,
-                        ':instructor_id' => $coInstructorId
-                    ]);
-                }
-            }
+/*
+ * Remove duplicates and owner
+ */
+$coInstructors = array_unique(
+    array_map(
+        'intval',
+        $coInstructors
+    )
+);
 
+
+foreach ($coInstructors as $coInstructorId) {
+
+    if ($coInstructorId <= 0) {
+        continue;
+    }
+
+    /*
+     * Owner cannot also be co-instructor
+     */
+    if ($coInstructorId === $instructorId) {
+        continue;
+    }
+
+    $stmt = $this->conn->prepare(
+        "INSERT INTO {$this->instructorTable}
+        (
+            course_id,
+            instructor_id,
+            role
+        )
+        VALUES
+        (
+            :course_id,
+            :instructor_id,
+            'co-instructor'
+        )"
+    );
+
+    $stmt->execute([
+        ':course_id' =>
+            $courseId,
+
+        ':instructor_id' =>
+            $coInstructorId
+    ]);
+}
 
             /* =====================================================
                UPDATE COURSE SKILLS
@@ -1004,4 +1010,39 @@ class Course
 
         return $course ?: null;
     }
+    public function getInstructors(): array
+    {
+        $sql = "
+        SELECT
+            e.employee_id,
+            CONCAT(e.first_name, ' ', e.last_name) AS instructor_name
+        FROM {$this->employeeTable} AS e
+        ORDER BY e.last_name ASC, e.first_name ASC
+    ";
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute();
+
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $result;
+    }
+    public function getSkills(): array
+{
+    $stmt = $this->conn->prepare("
+        SELECT
+            id,
+            name,
+            description,
+            suggested,
+            status
+        FROM {$this->skillTable}
+        WHERE status = 'active'
+        ORDER BY name ASC
+    ");
+
+    $stmt->execute();
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 }

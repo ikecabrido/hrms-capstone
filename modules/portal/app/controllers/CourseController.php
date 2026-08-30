@@ -37,7 +37,6 @@ class CourseController
                 // Child tables
                 'co_instructors' => $_POST['co_instructors'] ?? [],
                 'skills' => $_POST['skills'] ?? [],
-                'lessons' => $_POST['lessons'] ?? [],
             ];
 
 
@@ -85,27 +84,10 @@ class CourseController
                 }
 
 
-                /* ---------------------------------------------
-                   Correct upload directory
-
-                   CourseController.php:
-                   modules/portal/app/Controllers/
-
-                   dirname(__DIR__, 2):
-                   modules/portal/
-
-                   Final:
-                   modules/portal/public/assets/uploads/learning/
-                --------------------------------------------- */
-
                 $uploadDirectory =
                     dirname(__DIR__, 2) .
                     '/public/assets/uploads/learning/';
 
-
-                /* ---------------------------------------------
-                   Create directory if it does not exist
-                --------------------------------------------- */
 
                 if (!is_dir($uploadDirectory)) {
 
@@ -118,10 +100,6 @@ class CourseController
                 }
 
 
-                /* ---------------------------------------------
-                   Validate uploaded file
-                --------------------------------------------- */
-
                 $tmpFile = $_FILES['thumbnail']['tmp_name'];
 
                 if (!is_uploaded_file($tmpFile)) {
@@ -131,9 +109,6 @@ class CourseController
                 }
 
 
-                /* ---------------------------------------------
-                   Validate MIME type
-                --------------------------------------------- */
 
                 $mimeType = mime_content_type($tmpFile);
 
@@ -150,20 +125,12 @@ class CourseController
                 }
 
 
-                /* ---------------------------------------------
-                   File size — maximum 5 MB
-                --------------------------------------------- */
-
                 if ($_FILES['thumbnail']['size'] > 5 * 1024 * 1024) {
                     throw new Exception(
                         'Thumbnail must not exceed 5 MB.'
                     );
                 }
 
-
-                /* ---------------------------------------------
-                   Generate unique filename
-                --------------------------------------------- */
 
                 $extension = $allowedMimeTypes[$mimeType];
 
@@ -176,17 +143,9 @@ class CourseController
                     $extension;
 
 
-                /* ---------------------------------------------
-                   Final physical file location
-                --------------------------------------------- */
-
                 $destination =
                     $uploadDirectory . $filename;
 
-
-                /* ---------------------------------------------
-                   Move uploaded file
-                --------------------------------------------- */
 
                 if (!move_uploaded_file($tmpFile, $destination)) {
                     throw new Exception(
@@ -195,39 +154,16 @@ class CourseController
                     );
                 }
 
-
-                /* ---------------------------------------------
-                   Database path
-
-                   DO NOT store:
-                   D:\xampp\htdocs\...
-
-                   Store only:
-                   assets/uploads/learning/filename.jpg
-                --------------------------------------------- */
-
                 $thumbnailPath =
                     'assets/uploads/learning/' . $filename;
             }
 
 
-            /* =====================================================
-               ADD THUMBNAIL PATH TO COURSE DATA
-            ===================================================== */
-
             $data['thumbnail_path'] = $thumbnailPath;
 
 
-            /* =====================================================
-               STORE COURSE + CHILD TABLES
-            ===================================================== */
-
             $courseId = $this->courseModel->store($data);
 
-
-            /* =====================================================
-               SUCCESS
-            ===================================================== */
 
             $_SESSION['success'] =
                 'Course created successfully.';
@@ -251,258 +187,320 @@ class CourseController
             exit;
         }
     }
-    public function update()
-    {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            throw new Exception('Invalid request method.');
+public function update()
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        throw new Exception('Invalid request method.');
+    }
+
+    try {
+
+        $courseId = (int) ($_POST['course_id'] ?? 0);
+
+        if ($courseId <= 0) {
+            throw new Exception('Invalid course ID.');
         }
 
-        try {
+        /*
+         * =====================================================
+         * COURSE OWNER
+         * =====================================================
+         */
 
-            /* =====================================================
-               COURSE ID
-            ===================================================== */
+        $instructorId = (int) ($_POST['instructor_id'] ?? 0);
 
-            $courseId = (int) ($_POST['course_id'] ?? 0);
+        if ($instructorId <= 0) {
+            throw new Exception('Please select a course owner.');
+        }
 
-            if ($courseId <= 0) {
-                throw new Exception('Invalid course ID.');
+
+        /*
+         * =====================================================
+         * CO-INSTRUCTORS
+         * =====================================================
+         */
+
+        $coInstructors = $_POST['co_instructors'] ?? [];
+
+        if (!is_array($coInstructors)) {
+            $coInstructors = [];
+        }
+
+        /*
+         * Convert to integers
+         * Remove empty values
+         * Remove duplicates
+         * Remove owner
+         */
+        $coInstructors = array_map(
+            'intval',
+            $coInstructors
+        );
+
+        $coInstructors = array_filter(
+            $coInstructors,
+            function ($id) use ($instructorId) {
+                return $id > 0 && $id !== $instructorId;
             }
+        );
+
+        $coInstructors = array_values(
+            array_unique($coInstructors)
+        );
 
 
-            /* =====================================================
-               FORM DATA
-            ===================================================== */
+        /*
+         * =====================================================
+         * SKILLS
+         * =====================================================
+         */
 
-            $data = [
-                'title' => trim($_POST['title'] ?? ''),
-                'description' => trim($_POST['description'] ?? ''),
-                'category' => trim($_POST['category'] ?? ''),
-                'status' => $_POST['status'] ?? 'draft',
+        $skills = $_POST['skills'] ?? [];
 
-                'start_date' => $_POST['start_date'] ?? null,
-                'enrollment_deadline' => $_POST['enrollment_deadline'] ?? null,
+        if (!is_array($skills)) {
+            $skills = [];
+        }
 
-                // Course owner
-                'instructor_id' => (int) ($_POST['instructor_id'] ?? 0),
+        $skills = array_map(
+            'intval',
+            $skills
+        );
 
-                // Child tables
-                'co_instructors' => $_POST['co_instructors'] ?? [],
-                'skills' => $_POST['skills'] ?? [],
-                'lessons' => $_POST['lessons'] ?? [],
-            ];
-
-
-            /* =====================================================
-               BASIC VALIDATION
-            ===================================================== */
-
-            if ($data['title'] === '') {
-                throw new Exception('Course title is required.');
-            }
-
-            if ($data['category'] === '') {
-                throw new Exception('Course category is required.');
-            }
-
-            if ($data['description'] === '') {
-                throw new Exception('Course description is required.');
-            }
-
-            if ($data['instructor_id'] <= 0) {
-                throw new Exception('Please select a course owner.');
-            }
-
-            if (
-                !in_array(
-                    $data['status'],
-                    ['draft', 'active', 'archived'],
-                    true
+        $skills = array_values(
+            array_unique(
+                array_filter(
+                    $skills,
+                    fn($id) => $id > 0
                 )
-            ) {
-                throw new Exception('Invalid course status.');
-            }
+            )
+        );
 
 
-            /* =====================================================
-               THUMBNAIL
-            ===================================================== */
+        /*
+         * =====================================================
+         * FORM DATA
+         * =====================================================
+         */
 
-            $thumbnailPath = null;
+        $data = [
+
+            'title' =>
+                trim($_POST['title'] ?? ''),
+
+            'description' =>
+                trim($_POST['description'] ?? ''),
+
+            'category' =>
+                trim($_POST['category'] ?? ''),
+
+            'status' =>
+                $_POST['status'] ?? 'draft',
+
+            'start_date' =>
+                !empty($_POST['start_date'])
+                    ? $_POST['start_date']
+                    : null,
+
+            'enrollment_deadline' =>
+                !empty($_POST['enrollment_deadline'])
+                    ? $_POST['enrollment_deadline']
+                    : null,
+
+            'instructor_id' =>
+                $instructorId,
+
+            'co_instructors' =>
+                $coInstructors,
+
+            'skills' =>
+                $skills,
+
+            'lessons' =>
+                $_POST['lessons'] ?? []
+        ];
+
+
+        /*
+         * =====================================================
+         * VALIDATION
+         * =====================================================
+         */
+
+        if ($data['title'] === '') {
+            throw new Exception(
+                'Course title is required.'
+            );
+        }
+
+        if ($data['category'] === '') {
+            throw new Exception(
+                'Course category is required.'
+            );
+        }
+
+        if ($data['description'] === '') {
+            throw new Exception(
+                'Course description is required.'
+            );
+        }
+
+        if (
+            !in_array(
+                $data['status'],
+                ['draft', 'active', 'archived'],
+                true
+            )
+        ) {
+            throw new Exception(
+                'Invalid course status.'
+            );
+        }
+
+
+        /*
+         * =====================================================
+         * THUMBNAIL
+         * =====================================================
+         */
+
+        $thumbnailPath = null;
+
+        if (
+            isset($_FILES['thumbnail']) &&
+            $_FILES['thumbnail']['error'] !== UPLOAD_ERR_NO_FILE
+        ) {
 
             if (
-                isset($_FILES['thumbnail']) &&
-                $_FILES['thumbnail']['error'] !== UPLOAD_ERR_NO_FILE
+                $_FILES['thumbnail']['error']
+                !== UPLOAD_ERR_OK
             ) {
+                throw new Exception(
+                    'Failed to upload course thumbnail.'
+                );
+            }
 
-                /* ---------------------------------------------
-                   Upload error
-                --------------------------------------------- */
+            $uploadDirectory =
+                dirname(__DIR__, 2) .
+                '/public/assets/uploads/learning/';
 
-                if ($_FILES['thumbnail']['error'] !== UPLOAD_ERR_OK) {
-                    throw new Exception(
-                        'Failed to upload course thumbnail. Error code: ' .
-                        $_FILES['thumbnail']['error']
-                    );
-                }
-
-
-                /* ---------------------------------------------
-                   Upload directory
-                --------------------------------------------- */
-
-                $uploadDirectory =
-                    dirname(__DIR__, 2) .
-                    '/public/assets/uploads/learning/';
-
-
-                /* ---------------------------------------------
-                   Create directory
-                --------------------------------------------- */
-
-                if (!is_dir($uploadDirectory)) {
-
-                    if (!mkdir($uploadDirectory, 0775, true)) {
-                        throw new Exception(
-                            'Unable to create thumbnail upload directory: ' .
-                            $uploadDirectory
-                        );
-                    }
-                }
-
-
-                /* ---------------------------------------------
-                   Validate uploaded file
-                --------------------------------------------- */
-
-                $tmpFile = $_FILES['thumbnail']['tmp_name'];
-
-                if (!is_uploaded_file($tmpFile)) {
-                    throw new Exception(
-                        'Invalid thumbnail upload.'
-                    );
-                }
-
-
-                /* ---------------------------------------------
-                   Validate MIME
-                --------------------------------------------- */
-
-                $mimeType = mime_content_type($tmpFile);
-
-                $allowedMimeTypes = [
-                    'image/jpeg' => 'jpg',
-                    'image/png' => 'png',
-                    'image/webp' => 'webp'
-                ];
-
-                if (!isset($allowedMimeTypes[$mimeType])) {
-                    throw new Exception(
-                        'Invalid thumbnail. Only JPG, PNG, and WEBP images are allowed.'
-                    );
-                }
-
-
-                /* ---------------------------------------------
-                   File size
-                --------------------------------------------- */
+            if (!is_dir($uploadDirectory)) {
 
                 if (
-                    $_FILES['thumbnail']['size'] >
-                    5 * 1024 * 1024
-                ) {
-                    throw new Exception(
-                        'Thumbnail must not exceed 5 MB.'
-                    );
-                }
-
-
-                /* ---------------------------------------------
-                   Generate filename
-                --------------------------------------------- */
-
-                $extension = $allowedMimeTypes[$mimeType];
-
-                $filename =
-                    'course_' .
-                    date('Ymd_His') .
-                    '_' .
-                    bin2hex(random_bytes(5)) .
-                    '.' .
-                    $extension;
-
-
-                /* ---------------------------------------------
-                   Destination
-                --------------------------------------------- */
-
-                $destination =
-                    $uploadDirectory . $filename;
-
-
-                /* ---------------------------------------------
-                   Move file
-                --------------------------------------------- */
-
-                if (
-                    !move_uploaded_file(
-                        $tmpFile,
-                        $destination
+                    !mkdir(
+                        $uploadDirectory,
+                        0775,
+                        true
                     )
                 ) {
                     throw new Exception(
-                        'Unable to save course thumbnail to: ' .
-                        $destination
+                        'Unable to create thumbnail upload directory.'
                     );
                 }
-
-
-                /* ---------------------------------------------
-                   Database path
-                --------------------------------------------- */
-
-                $thumbnailPath =
-                    'assets/uploads/learning/' . $filename;
             }
 
+            $tmpFile =
+                $_FILES['thumbnail']['tmp_name'];
 
-            /* =====================================================
-               UPDATE COURSE + CHILD TABLES
-            ===================================================== */
+            if (!is_uploaded_file($tmpFile)) {
+                throw new Exception(
+                    'Invalid thumbnail upload.'
+                );
+            }
 
-            $this->courseModel->update(
-                $courseId,
-                $data,
-                $thumbnailPath
-            );
+            $mimeType =
+                mime_content_type($tmpFile);
 
+            $allowedMimeTypes = [
+                'image/jpeg' => 'jpg',
+                'image/png' => 'png',
+                'image/webp' => 'webp'
+            ];
 
-            /* =====================================================
-               SUCCESS
-            ===================================================== */
+            if (
+                !isset(
+                    $allowedMimeTypes[$mimeType]
+                )
+            ) {
+                throw new Exception(
+                    'Invalid thumbnail.'
+                );
+            }
 
-            $_SESSION['success'] =
-                'Course updated successfully.';
+            if (
+                $_FILES['thumbnail']['size']
+                > 5 * 1024 * 1024
+            ) {
+                throw new Exception(
+                    'Thumbnail must not exceed 5 MB.'
+                );
+            }
 
-            header(
-                'Location: index.php?url=admin-learning-index'
-            );
+            $extension =
+                $allowedMimeTypes[$mimeType];
 
-            exit;
+            $filename =
+                'course_' .
+                date('Ymd_His') .
+                '_' .
+                bin2hex(random_bytes(5)) .
+                '.' .
+                $extension;
 
+            $destination =
+                $uploadDirectory .
+                $filename;
 
-        } catch (Exception $e) {
+            if (
+                !move_uploaded_file(
+                    $tmpFile,
+                    $destination
+                )
+            ) {
+                throw new Exception(
+                    'Unable to save course thumbnail.'
+                );
+            }
 
-            $_SESSION['error'] =
-                $e->getMessage();
-
-            header(
-                'Location: index.php?url=admin-learning-index'
-            );
-
-            exit;
+            $thumbnailPath =
+                'assets/uploads/learning/' .
+                $filename;
         }
+
+
+        /*
+         * =====================================================
+         * UPDATE
+         * =====================================================
+         */
+
+        $this->courseModel->update(
+            $courseId,
+            $data,
+            $thumbnailPath
+        );
+
+
+        $_SESSION['success'] =
+            'Course updated successfully.';
+
+        header(
+            'Location: index.php?url=admin-learning-index'
+        );
+
+        exit;
+
+    } catch (Exception $e) {
+
+        $_SESSION['error'] =
+            $e->getMessage();
+
+        header(
+            'Location: index.php?url=admin-learning-index'
+        );
+
+        exit;
     }
+}
     public function toggleStatus()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

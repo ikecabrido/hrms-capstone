@@ -277,10 +277,8 @@
                         <div class="mb-3">
 
                             <label for="editCourseOwner" class="form-label fw-semibold">
-
                                 Course Owner
                                 <span class="text-danger">*</span>
-
                             </label>
 
                             <select class="form-select" name="instructor_id" id="editCourseOwner" required>
@@ -289,13 +287,31 @@
                                     Select course owner
                                 </option>
 
-                                <?php for ($i = 1; $i <= 10; $i++): ?>
+                                <?php foreach ($showInstructorsCourse as $instructor): ?>
 
-                                    <option value="<?= $i ?>">
-                                        Instructor <?= $i ?>
-                                    </option>
+                                    <?php
+                                    $id =
+                                        $instructor['instructor_id']
+                                        ?? $instructor['employee_id']
+                                        ?? $instructor['id']
+                                        ?? null;
 
-                                <?php endfor; ?>
+                                    $name =
+                                        $instructor['instructor_name']
+                                        ?? $instructor['employee_name']
+                                        ?? $instructor['name']
+                                        ?? 'Unknown Instructor';
+                                    ?>
+
+                                    <?php if ($id): ?>
+
+                                        <option value="<?= (int) $id ?>">
+                                            <?= htmlspecialchars($name) ?>
+                                        </option>
+
+                                    <?php endif; ?>
+
+                                <?php endforeach; ?>
 
                             </select>
 
@@ -378,45 +394,6 @@
 
 
                     <hr class="my-4">
-
-
-                    <!-- =================================================
-                         LESSONS
-                    ================================================== -->
-
-                    <div class="mb-3">
-
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-
-                            <div>
-
-                                <h6 class="fw-bold text-dark mb-1">
-                                    Course Lessons
-                                </h6>
-
-                                <p class="text-muted small mb-0">
-                                    Manage the lessons included in this course.
-                                </p>
-
-                            </div>
-
-
-                            <button type="button" class="btn btn-sm btn-outline-primary"
-                                onclick="addEditCourseLesson()">
-
-                                <i class="fa-solid fa-plus me-1"></i>
-                                Add Lesson
-
-                            </button>
-
-                        </div>
-
-
-                        <div id="editCourseLessons">
-                        </div>
-
-                    </div>
-
                 </div>
 
 
@@ -452,7 +429,6 @@
 </div>
 
 <script>
-
     /* =========================================================
        COURSE DATA
     ========================================================= */
@@ -465,15 +441,9 @@
         JSON_HEX_AMP
     ) ?>;
 
-
     console.log('Edit Course Data:', editCourseData);
 
 
-    /* =========================================================
-       LESSON INDEX
-    ========================================================= */
-
-    let editLessonIndex = 0;
 
 
     /* =========================================================
@@ -492,17 +462,29 @@
             }
 
 
+            /* =====================================================
+               GET COURSE ID
+            ===================================================== */
+
             const courseId = Number(
                 button.getAttribute('data-course-id')
             );
 
-
-            console.log('Editing Course ID:', courseId);
-
-
-            const course = editCourseData.find(
-                item => Number(item.id) === courseId
+            console.log(
+                'Editing Course ID:',
+                courseId
             );
+
+
+            /* =====================================================
+               FIND COURSE
+            ===================================================== */
+
+            const course = editCourseData.find(function (item) {
+
+                return Number(item.id) === courseId;
+
+            });
 
 
             if (!course) {
@@ -516,7 +498,10 @@
             }
 
 
-            console.log('Selected Course:', course);
+            console.log(
+                'Selected Course:',
+                course
+            );
 
 
             /* =====================================================
@@ -550,25 +535,35 @@
             ===================================================== */
 
             const thumbnailPreview =
-                document.getElementById('editThumbnailPreview');
+                document.getElementById(
+                    'editThumbnailPreview'
+                );
 
             const thumbnailImage =
-                document.getElementById('editThumbnailImage');
+                document.getElementById(
+                    'editThumbnailImage'
+                );
 
 
-            if (course.thumbnail_path) {
+            if (
+                course.thumbnail_path &&
+                course.thumbnail_path !== ''
+            ) {
 
                 thumbnailImage.src =
                     course.thumbnail_path;
 
-                thumbnailPreview.classList.remove('d-none');
+                thumbnailPreview.classList.remove(
+                    'd-none'
+                );
 
             } else {
 
                 thumbnailImage.src = '';
 
-                thumbnailPreview.classList.add('d-none');
-
+                thumbnailPreview.classList.add(
+                    'd-none'
+                );
             }
 
 
@@ -576,8 +571,7 @@
                OWNER
             ===================================================== */
 
-            document.getElementById('editCourseOwner').value =
-                course.instructor_id ?? '';
+            populateEditOwner(course);
 
 
             /* =====================================================
@@ -593,14 +587,136 @@
 
             populateEditSkills(course);
 
-
-            /* =====================================================
-               LESSONS
-            ===================================================== */
-
-            populateEditLessons(course);
-
         });
+
+
+    /* =========================================================
+       POPULATE COURSE OWNER
+    ========================================================= */
+
+    function populateEditOwner(course) {
+
+        const ownerSelect =
+            document.getElementById(
+                'editCourseOwner'
+            );
+
+
+        if (!ownerSelect) {
+
+            console.error(
+                'editCourseOwner element not found.'
+            );
+
+            return;
+        }
+
+
+        /* ---------------------------------------------------------
+           RESET
+        --------------------------------------------------------- */
+
+        ownerSelect.value = '';
+
+
+        /* ---------------------------------------------------------
+           FIRST: DIRECT COURSE OWNER
+        --------------------------------------------------------- */
+
+        const directOwnerId =
+            course.instructor_id ??
+            course.owner_id ??
+            '';
+
+
+        if (
+            Number(directOwnerId) > 0
+        ) {
+
+            ownerSelect.value =
+                String(directOwnerId);
+
+            console.log(
+                'Owner loaded from course:',
+                directOwnerId
+            );
+
+            return;
+        }
+
+
+        /* ---------------------------------------------------------
+           SECOND: SEARCH COURSE INSTRUCTORS
+        --------------------------------------------------------- */
+
+        const instructors =
+            Array.isArray(course.instructors)
+                ? course.instructors
+                : [];
+
+
+        const owner =
+            instructors.find(function (instructor) {
+
+                const role =
+                    String(
+                        instructor.role ?? ''
+                    )
+                        .toLowerCase()
+                        .trim();
+
+
+                return (
+                    role === 'owner' ||
+                    role === 'course owner' ||
+                    role === 'course_owner'
+                );
+
+            });
+
+
+        if (!owner) {
+
+            console.warn(
+                'No course owner found.',
+                instructors
+            );
+
+            return;
+        }
+
+
+        /* ---------------------------------------------------------
+           GET OWNER ID
+        --------------------------------------------------------- */
+
+        const ownerId =
+            owner.instructor_id ??
+            owner.employee_id ??
+            owner.id ??
+            '';
+
+
+        if (
+            Number(ownerId) > 0
+        ) {
+
+            ownerSelect.value =
+                String(ownerId);
+
+            console.log(
+                'Owner loaded from instructors:',
+                ownerId
+            );
+
+        } else {
+
+            console.warn(
+                'Owner found but no valid ID:',
+                owner
+            );
+        }
+    }
 
 
     /* =========================================================
@@ -609,52 +725,107 @@
 
     function populateEditCoInstructors(course) {
 
-        const container =
-            document.getElementById('editCoInstructorList');
+        const container = document.getElementById(
+            'editCoInstructorList'
+        );
 
+        if (!container) {
+            console.error('editCoInstructorList not found.');
+            return;
+        }
 
         container.innerHTML = '';
 
+        const instructors = Array.isArray(course.instructors)
+            ? course.instructors
+            : [];
 
-        const instructors =
-            course.instructors ?? [];
-
+        console.log('========== CO-INSTRUCTORS ==========');
+        console.log('All instructors:', instructors);
 
         instructors.forEach(function (instructor) {
 
+            const role = String(
+                instructor.role ?? ''
+            ).toLowerCase().trim();
+
+            /*
+             * Only load co-instructors.
+             */
             if (
-                instructor.role !== 'co-instructor'
+                role !== 'co-instructor' &&
+                role !== 'co_instructor' &&
+                role !== 'co instructor'
             ) {
                 return;
             }
 
+            /*
+             * IMPORTANT:
+             * Try every possible ID field.
+             */
+            const instructorId =
+                instructor.instructor_id ??
+                instructor.employee_id ??
+                instructor.user_id ??
+                instructor.id ??
+                '';
 
-            addEditCoInstructor(
-                instructor.instructor_id
+            console.log(
+                'Co-instructor object:',
+                instructor
             );
 
+            console.log(
+                'Resolved co-instructor ID:',
+                instructorId
+            );
+
+            if (
+                instructorId === '' ||
+                Number(instructorId) <= 0
+            ) {
+                console.warn(
+                    'Invalid co-instructor ID:',
+                    instructor
+                );
+
+                return;
+            }
+
+            addEditCoInstructor(
+                String(instructorId)
+            );
         });
 
+        console.log(
+            'Loaded co-instructor selects:',
+            container.querySelectorAll(
+                'select[name="co_instructors[]"]'
+            ).length
+        );
     }
-
 
     /* =========================================================
        ADD CO-INSTRUCTOR
     ========================================================= */
-
     function addEditCoInstructor(selectedId = '') {
 
-        const container =
-            document.getElementById('editCoInstructorList');
+        const container = document.getElementById(
+            'editCoInstructorList'
+        );
 
+        if (!container) {
+            console.error(
+                'editCoInstructorList not found.'
+            );
+            return;
+        }
 
-        const wrapper =
-            document.createElement('div');
-
+        const wrapper = document.createElement('div');
 
         wrapper.className =
             'd-flex gap-2 mb-2 edit-co-instructor-item';
-
 
         wrapper.innerHTML = `
 
@@ -666,25 +837,49 @@
                 Select co-instructor
             </option>
 
-            <?php for ($i = 1; $i <= 10; $i++): ?>
+            <?php foreach ($showInstructorsCourse as $instructor): ?>
 
-                <option
-                    value="<?= $i ?>"
-                    ${Number(selectedId) === <?= $i ?> ? 'selected' : ''}>
+                <?php
 
-                    Instructor <?= $i ?>
+                $id =
+                    $instructor['instructor_id']
+                    ?? $instructor['employee_id']
+                    ?? $instructor['user_id']
+                    ?? $instructor['id']
+                    ?? null;
 
-                </option>
+                $name =
+                    $instructor['instructor_name']
+                    ?? $instructor['employee_name']
+                    ?? $instructor['name']
+                    ?? 'Unknown Instructor';
 
-            <?php endfor; ?>
+                ?>
+
+                <?php if ($id !== null): ?>
+
+                    <option value="<?= (int) $id ?>">
+                        <?= htmlspecialchars(
+                            $name,
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </option>
+
+                <?php endif; ?>
+
+            <?php endforeach; ?>
 
         </select>
-
 
         <button
             type="button"
             class="btn btn-outline-danger"
-            onclick="this.closest('.edit-co-instructor-item').remove()">
+            onclick="
+                this
+                    .closest('.edit-co-instructor-item')
+                    .remove()
+            ">
 
             <i class="fa-solid fa-trash"></i>
 
@@ -692,20 +887,68 @@
 
     `;
 
+        const select = wrapper.querySelector(
+            'select[name="co_instructors[]"]'
+        );
+
+        if (select) {
+
+            const wantedId = String(
+                selectedId
+            );
+
+            /*
+             * Find the actual option.
+             */
+            const matchingOption =
+                Array.from(select.options).find(
+                    function (option) {
+                        return String(option.value) === wantedId;
+                    }
+                );
+
+            if (matchingOption) {
+
+                matchingOption.selected = true;
+
+                console.log(
+                    'Co-instructor selected:',
+                    wantedId,
+                    matchingOption.text
+                );
+
+            } else {
+
+                console.warn(
+                    'Co-instructor ID does not exist in select options:',
+                    wantedId
+                );
+
+                console.log(
+                    'Available instructor IDs:',
+                    Array.from(select.options).map(
+                        option => option.value
+                    )
+                );
+            }
+        }
 
         container.appendChild(wrapper);
-
     }
-
-
     /* =========================================================
        POPULATE SKILLS
     ========================================================= */
 
     function populateEditSkills(course) {
 
+        /*
+         * Uncheck everything first.
+         */
+
         document
-            .querySelectorAll('.edit-course-skill')
+            .querySelectorAll(
+                '.edit-course-skill'
+            )
             .forEach(function (checkbox) {
 
                 checkbox.checked = false;
@@ -714,17 +957,49 @@
 
 
         const skills =
-            course.skills ?? [];
+            Array.isArray(course.skills)
+                ? course.skills
+                : [];
+
+
+        console.log(
+            'Course skills:',
+            skills
+        );
 
 
         skills.forEach(function (skill) {
 
-            const skillId =
-                Number(
+            let skillId;
+
+
+            if (
+                typeof skill === 'object' &&
+                skill !== null
+            ) {
+
+                skillId =
                     skill.skill_id ??
                     skill.id ??
-                    skill
-                );
+                    '';
+
+            } else {
+
+                skillId =
+                    skill;
+            }
+
+
+            skillId =
+                Number(skillId);
+
+
+            if (
+                skillId <= 0
+            ) {
+
+                return;
+            }
 
 
             const checkbox =
@@ -734,293 +1009,13 @@
 
 
             if (checkbox) {
+
                 checkbox.checked = true;
+
             }
 
         });
-
     }
-
-
-    /* =========================================================
-       POPULATE LESSONS
-    ========================================================= */
-
-    function populateEditLessons(course) {
-
-        const container =
-            document.getElementById('editCourseLessons');
-
-        container.innerHTML = '';
-
-        editLessonIndex = 0;
-
-        let lessons = [];
-
-        const versions =
-            Array.isArray(course.versions)
-                ? course.versions
-                : [];
-
-        console.log('Course versions:', versions);
-
-        if (versions.length > 0) {
-
-            /*
-             * Sort versions by version number.
-             * This guarantees that the newest snapshot
-             * is selected regardless of database order.
-             */
-            const sortedVersions = [...versions].sort(function (a, b) {
-
-                return Number(a.version_number ?? 0) -
-                    Number(b.version_number ?? 0);
-
-            });
-
-            const latestVersion =
-                sortedVersions[sortedVersions.length - 1];
-
-            console.log(
-                'Latest course version:',
-                latestVersion
-            );
-
-            let snapshot =
-                latestVersion.snapshot;
-
-            if (typeof snapshot === 'string') {
-
-                try {
-
-                    snapshot =
-                        JSON.parse(snapshot);
-
-                } catch (error) {
-
-                    console.error(
-                        'Unable to decode course snapshot:',
-                        error
-                    );
-
-                    snapshot = {};
-                }
-            }
-
-            if (
-                snapshot &&
-                typeof snapshot === 'object'
-            ) {
-
-                lessons =
-                    Array.isArray(snapshot.lessons)
-                        ? snapshot.lessons
-                        : [];
-
-            }
-        }
-
-        console.log(
-            'Lessons loaded into edit modal:',
-            lessons
-        );
-
-        if (lessons.length === 0) {
-
-            container.innerHTML = `
-            <div class="border rounded-3 p-3 text-muted small">
-                No lessons have been added to this course.
-            </div>
-        `;
-
-            return;
-        }
-
-        lessons.forEach(function (lesson) {
-
-            addEditCourseLesson(
-                lesson.title ?? '',
-                lesson.duration_minutes ?? ''
-            );
-
-        });
-    }
-
-
-    /* =========================================================
-       ADD LESSON
-    ========================================================= */
-
-    function addEditCourseLesson(
-        title = '',
-        duration = ''
-    ) {
-
-        const container =
-            document.getElementById('editCourseLessons');
-
-
-        const lesson =
-            document.createElement('div');
-
-
-        lesson.className =
-            'edit-course-lesson border rounded-3 p-3 mb-2';
-
-
-        lesson.innerHTML = `
-
-        <div class="row align-items-end g-2">
-
-
-            <!-- LESSON TITLE -->
-
-            <div class="col-md">
-
-                <label class="form-label small fw-semibold">
-
-                    Lesson Title
-
-                </label>
-
-                <input
-                    type="text"
-                    class="form-control"
-                    name="lessons[${editLessonIndex}][title]"
-                    value="${escapeHtml(title)}"
-                    placeholder="Lesson title"
-                    required>
-
-            </div>
-
-
-            <!-- DURATION -->
-
-            <div class="col-md-3">
-
-                <label class="form-label small fw-semibold">
-
-                    Duration
-
-                </label>
-
-                <select
-                    class="form-select"
-                    name="lessons[${editLessonIndex}][duration_minutes]"
-                    required>
-
-                    <option value="">
-                        Select duration
-                    </option>
-
-                    <option value="5">
-                        5 minutes
-                    </option>
-
-                    <option value="10">
-                        10 minutes
-                    </option>
-
-                    <option value="15">
-                        15 minutes
-                    </option>
-
-                    <option value="20">
-                        20 minutes
-                    </option>
-
-                    <option value="30">
-                        30 minutes
-                    </option>
-
-                    <option value="45">
-                        45 minutes
-                    </option>
-
-                    <option value="60">
-                        1 hour
-                    </option>
-
-                    <option value="90">
-                        1 hour 30 minutes
-                    </option>
-
-                    <option value="120">
-                        2 hours
-                    </option>
-
-                    <option value="150">
-                        2 hours 30 minutes
-                    </option>
-
-                    <option value="180">
-                        3 hours
-                    </option>
-
-                    <option value="240">
-                        4 hours
-                    </option>
-
-                    <option value="300">
-                        5 hours
-                    </option>
-
-                    <option value="360">
-                        6 hours
-                    </option>
-
-                    <option value="480">
-                        8 hours
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <!-- REMOVE -->
-
-            <div class="col-auto">
-
-                <button
-                    type="button"
-                    class="btn btn-outline-danger"
-                    onclick="
-                        this.closest('.edit-course-lesson').remove()
-                    ">
-
-                    <i class="fa-solid fa-trash"></i>
-
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
-
-
-        /*
-         * Select the duration after inserting
-         */
-
-        const durationSelect =
-            lesson.querySelector(
-                'select[name^="lessons"]'
-            );
-
-
-        durationSelect.value =
-            duration;
-
-
-        container.appendChild(lesson);
-
-
-        editLessonIndex++;
-
-    }
-
 
     /* =========================================================
        ESCAPE HTML
@@ -1028,13 +1023,26 @@
 
     function escapeHtml(value) {
 
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-
+        return String(value ?? '')
+            .replace(
+                /&/g,
+                '&amp;'
+            )
+            .replace(
+                /</g,
+                '&lt;'
+            )
+            .replace(
+                />/g,
+                '&gt;'
+            )
+            .replace(
+                /"/g,
+                '&quot;'
+            )
+            .replace(
+                /'/g,
+                '&#039;'
+            );
     }
-
 </script>

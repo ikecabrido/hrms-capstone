@@ -3,17 +3,20 @@
 namespace App\Controllers;
 
 use App\Models\Training;
+use App\Models\Course;
 use App\Models\Employee;
 
 class TrainingController
 {
     private Training $trainingModel;
     private Employee $employeeModel;
+    private Course $courseModel;
 
     public function __construct()
     {
         $this->trainingModel = new Training();
         $this->employeeModel = new Employee();
+        $this->courseModel = new Course();
     }
 
     public function index()
@@ -61,9 +64,28 @@ class TrainingController
     public function adminIndex()
     {
         $allTrainingCourses = $this->trainingModel->allCourse();
+        $showInstructorsCourse = $this->courseModel->getInstructors();
+        $skills = $this->courseModel->getSkills();
+        foreach ($allTrainingCourses as &$course) {
+
+            $course['instructors'] = [];
+
+            foreach ($showInstructorsCourse as $instructor) {
+
+                if (
+                    isset($instructor['course_id']) &&
+                    (int) $instructor['course_id'] === (int) $course['id']
+                ) {
+                    $course['instructors'][] = $instructor;
+                }
+            }
+        }
+
+        unset($course);
 
         $title = "Training, Learning and Development";
         $content = __DIR__ . '/../views/admin-portal/training/content.php';
+
         require __DIR__ . '/../views/admin-portal/index.php';
     }
     public function viewRequest()
