@@ -28,9 +28,6 @@ class Course
         try {
 
             $this->conn->beginTransaction();
-            /* =====================================================
-               BASIC COURSE DATA
-            ===================================================== */
 
             $title = trim($data['title'] ?? '');
             $description = trim($data['description'] ?? '');
@@ -50,11 +47,6 @@ class Course
                 ? $data['enrollment_deadline']
                 : null;
 
-
-            /* =====================================================
-               VALIDATION
-            ===================================================== */
-
             if ($title === '') {
                 throw new Exception('Course title is required.');
             }
@@ -70,11 +62,6 @@ class Course
             if ($instructorId <= 0) {
                 throw new Exception('Course owner is required.');
             }
-
-
-            /* =====================================================
-               INSERT COURSE
-            ===================================================== */
 
             $sql = "
             INSERT INTO {$this->courseTable}
@@ -114,21 +101,11 @@ class Course
                 ':enrollment_deadline' => $enrollmentDeadline
             ]);
 
-
-            /* =====================================================
-               GET COURSE ID
-            ===================================================== */
-
             $courseId = (int) $this->conn->lastInsertId();
 
             if ($courseId <= 0) {
                 throw new Exception('Failed to create course.');
             }
-
-
-            /* =====================================================
-               COURSE OWNER
-            ===================================================== */
 
             $sql = "
             INSERT INTO {$this->instructorTable}
@@ -151,11 +128,6 @@ class Course
                 ':course_id' => $courseId,
                 ':instructor_id' => $instructorId
             ]);
-
-
-            /* =====================================================
-               CO-INSTRUCTORS
-            ===================================================== */
 
             $coInstructors = $data['co_instructors'] ?? [];
 
@@ -209,11 +181,6 @@ class Course
                         continue;
                     }
 
-
-                    /* ---------------------------------------------
-                       Make sure the skill actually exists
-                    --------------------------------------------- */
-
                     $sql = "
                     SELECT id
                     FROM {$this->skillTable}
@@ -232,11 +199,6 @@ class Course
                             "Skill ID {$skillId} does not exist."
                         );
                     }
-
-
-                    /* ---------------------------------------------
-                       Insert course-skill relationship
-                    --------------------------------------------- */
 
                     $sql = "
                     INSERT INTO {$this->courseSkillTable}
@@ -259,11 +221,6 @@ class Course
                     ]);
                 }
             }
-
-
-            /* =====================================================
-               COURSE VERSION
-            ===================================================== */
 
             $snapshot = [
                 'title' => $title,
@@ -291,11 +248,6 @@ class Course
                 );
             }
 
-
-            /* =====================================================
-               INSERT INITIAL VERSION
-            ===================================================== */
-
             $sql = "
             INSERT INTO {$this->versionTable}
             (
@@ -318,11 +270,6 @@ class Course
                 ':version_number' => 1,
                 ':snapshot' => $snapshotJson
             ]);
-
-
-            /* =====================================================
-               COMMIT
-            ===================================================== */
 
             $this->conn->commit();
 
@@ -348,10 +295,6 @@ class Course
 
             $this->conn->beginTransaction();
 
-            /* =====================================================
-               GET EXISTING COURSE
-            ===================================================== */
-
             $stmt = $this->conn->prepare(
                 "SELECT *
              FROM {$this->courseTable}
@@ -369,11 +312,6 @@ class Course
                 throw new Exception('Course not found.');
             }
 
-
-            /* =====================================================
-               BASIC DATA
-            ===================================================== */
-
             $title = trim($data['title'] ?? '');
             $description = trim($data['description'] ?? '');
             $category = trim($data['category'] ?? '');
@@ -389,11 +327,6 @@ class Course
             $enrollmentDeadline = !empty($data['enrollment_deadline'])
                 ? $data['enrollment_deadline']
                 : null;
-
-
-            /* =====================================================
-               VALIDATION
-            ===================================================== */
 
             if ($title === '') {
                 throw new Exception('Course title is required.');
@@ -421,21 +354,11 @@ class Course
                 throw new Exception('Invalid course status.');
             }
 
-
-            /* =====================================================
-               THUMBNAIL
-            ===================================================== */
-
             $thumbnailPath = $existingCourse['thumbnail_path'] ?? null;
 
             if ($newThumbnailPath !== null) {
                 $thumbnailPath = $newThumbnailPath;
             }
-
-
-            /* =====================================================
-               UPDATE MAIN COURSE
-            ===================================================== */
 
             $stmt = $this->conn->prepare(
                 "UPDATE {$this->courseTable}
@@ -464,26 +387,17 @@ class Course
             ]);
 
 
-/* =====================================================
-   UPDATE INSTRUCTORS
-===================================================== */
-
-$stmt = $this->conn->prepare(
-    "DELETE FROM {$this->instructorTable}
+            $stmt = $this->conn->prepare(
+                "DELETE FROM {$this->instructorTable}
      WHERE course_id = :course_id"
-);
+            );
 
-$stmt->execute([
-    ':course_id' => $courseId
-]);
+            $stmt->execute([
+                ':course_id' => $courseId
+            ]);
 
-
-/* =====================================================
-   INSERT COURSE OWNER
-===================================================== */
-
-$stmt = $this->conn->prepare(
-    "INSERT INTO {$this->instructorTable}
+            $stmt = $this->conn->prepare(
+                "INSERT INTO {$this->instructorTable}
     (
         course_id,
         instructor_id,
@@ -495,52 +409,40 @@ $stmt = $this->conn->prepare(
         :instructor_id,
         'owner'
     )"
-);
+            );
 
-$stmt->execute([
-    ':course_id' => $courseId,
-    ':instructor_id' => $instructorId
-]);
+            $stmt->execute([
+                ':course_id' => $courseId,
+                ':instructor_id' => $instructorId
+            ]);
 
+            $coInstructors =
+                $data['co_instructors'] ?? [];
 
-/* =====================================================
-   INSERT CO-INSTRUCTORS
-===================================================== */
+            if (!is_array($coInstructors)) {
+                $coInstructors = [];
+            }
 
-$coInstructors =
-    $data['co_instructors'] ?? [];
-
-if (!is_array($coInstructors)) {
-    $coInstructors = [];
-}
-
-
-/*
- * Remove duplicates and owner
- */
-$coInstructors = array_unique(
-    array_map(
-        'intval',
-        $coInstructors
-    )
-);
+            $coInstructors = array_unique(
+                array_map(
+                    'intval',
+                    $coInstructors
+                )
+            );
 
 
-foreach ($coInstructors as $coInstructorId) {
+            foreach ($coInstructors as $coInstructorId) {
 
-    if ($coInstructorId <= 0) {
-        continue;
-    }
+                if ($coInstructorId <= 0) {
+                    continue;
+                }
 
-    /*
-     * Owner cannot also be co-instructor
-     */
-    if ($coInstructorId === $instructorId) {
-        continue;
-    }
+                if ($coInstructorId === $instructorId) {
+                    continue;
+                }
 
-    $stmt = $this->conn->prepare(
-        "INSERT INTO {$this->instructorTable}
+                $stmt = $this->conn->prepare(
+                    "INSERT INTO {$this->instructorTable}
         (
             course_id,
             instructor_id,
@@ -552,20 +454,16 @@ foreach ($coInstructors as $coInstructorId) {
             :instructor_id,
             'co-instructor'
         )"
-    );
+                );
 
-    $stmt->execute([
-        ':course_id' =>
-            $courseId,
+                $stmt->execute([
+                    ':course_id' =>
+                        $courseId,
 
-        ':instructor_id' =>
-            $coInstructorId
-    ]);
-}
-
-            /* =====================================================
-               UPDATE COURSE SKILLS
-            ===================================================== */
+                    ':instructor_id' =>
+                        $coInstructorId
+                ]);
+            }
 
             $stmt = $this->conn->prepare(
                 "DELETE FROM {$this->courseSkillTable}
@@ -575,11 +473,6 @@ foreach ($coInstructors as $coInstructorId) {
             $stmt->execute([
                 ':course_id' => $courseId
             ]);
-
-
-            /* =====================================================
-               INSERT NEW COURSE SKILLS
-            ===================================================== */
 
             $skills = $data['skills'] ?? [];
 
@@ -613,11 +506,6 @@ foreach ($coInstructors as $coInstructorId) {
                 }
             }
 
-
-            /* =====================================================
-               CREATE VERSION SNAPSHOT
-            ===================================================== */
-
             $snapshot = [
                 'title' => $title,
                 'description' => $description,
@@ -648,11 +536,6 @@ foreach ($coInstructors as $coInstructorId) {
                 );
             }
 
-
-            /* =====================================================
-               GET NEXT VERSION NUMBER
-            ===================================================== */
-
             $stmt = $this->conn->prepare(
                 "SELECT COALESCE(
                 MAX(version_number),
@@ -667,11 +550,6 @@ foreach ($coInstructors as $coInstructorId) {
             ]);
 
             $versionNumber = (int) $stmt->fetchColumn();
-
-
-            /* =====================================================
-               INSERT VERSION
-            ===================================================== */
 
             $stmt = $this->conn->prepare(
                 "INSERT INTO {$this->versionTable}
@@ -694,17 +572,7 @@ foreach ($coInstructors as $coInstructorId) {
                 ':snapshot' => $snapshotJson
             ]);
 
-
-            /* =====================================================
-               COMMIT
-            ===================================================== */
-
             $this->conn->commit();
-
-
-            /* =====================================================
-               DELETE OLD THUMBNAIL
-            ===================================================== */
 
             if (
                 $newThumbnailPath !== null &&
@@ -731,18 +599,9 @@ foreach ($coInstructors as $coInstructorId) {
 
         } catch (Exception $e) {
 
-            /* =====================================================
-               ROLLBACK
-            ===================================================== */
-
             if ($this->conn->inTransaction()) {
                 $this->conn->rollBack();
             }
-
-
-            /* =====================================================
-               REMOVE NEW THUMBNAIL IF UPDATE FAILED
-            ===================================================== */
 
             if ($newThumbnailPath !== null) {
 
@@ -840,11 +699,6 @@ foreach ($coInstructors as $coInstructorId) {
 
             $this->conn->beginTransaction();
 
-
-            /* =====================================================
-               GET COURSE
-            ===================================================== */
-
             $sql = "
             SELECT thumbnail_path
             FROM {$this->courseTable}
@@ -866,11 +720,6 @@ foreach ($coInstructors as $coInstructorId) {
 
             $thumbnailPath = $course['thumbnail_path'] ?? null;
 
-
-            /* =====================================================
-               DELETE COURSE INSTRUCTORS
-            ===================================================== */
-
             $sql = "
             DELETE FROM {$this->instructorTable}
             WHERE course_id = :course_id
@@ -881,15 +730,6 @@ foreach ($coInstructors as $coInstructorId) {
             $stmt->execute([
                 ':course_id' => $courseId
             ]);
-
-
-            /* =====================================================
-               DELETE COURSE SKILLS
-
-               IMPORTANT:
-               Delete from ld_course_skill,
-               NOT ld_skill.
-            ===================================================== */
 
             $sql = "
             DELETE FROM {$this->courseSkillTable}
@@ -902,11 +742,6 @@ foreach ($coInstructors as $coInstructorId) {
                 ':course_id' => $courseId
             ]);
 
-
-            /* =====================================================
-               DELETE COURSE VERSIONS
-            ===================================================== */
-
             $sql = "
             DELETE FROM {$this->versionTable}
             WHERE course_id = :course_id
@@ -917,11 +752,6 @@ foreach ($coInstructors as $coInstructorId) {
             $stmt->execute([
                 ':course_id' => $courseId
             ]);
-
-
-            /* =====================================================
-               DELETE COURSE
-            ===================================================== */
 
             $sql = "
             DELETE FROM {$this->courseTable}
@@ -935,31 +765,13 @@ foreach ($coInstructors as $coInstructorId) {
                 ':course_id' => $courseId
             ]);
 
-
-            /* =====================================================
-               VERIFY DELETE
-            ===================================================== */
-
             if ($stmt->rowCount() === 0) {
                 throw new Exception(
                     'Failed to delete course.'
                 );
             }
 
-
-            /* =====================================================
-               COMMIT
-            ===================================================== */
-
             $this->conn->commit();
-
-
-            /* =====================================================
-               DELETE THUMBNAIL FILE
-
-               Only delete the file AFTER the database
-               transaction has successfully committed.
-            ===================================================== */
 
             if (!empty($thumbnailPath)) {
 
@@ -1028,8 +840,8 @@ foreach ($coInstructors as $coInstructorId) {
         return $result;
     }
     public function getSkills(): array
-{
-    $stmt = $this->conn->prepare("
+    {
+        $stmt = $this->conn->prepare("
         SELECT
             id,
             name,
@@ -1041,8 +853,8 @@ foreach ($coInstructors as $coInstructorId) {
         ORDER BY name ASC
     ");
 
-    $stmt->execute();
+        $stmt->execute();
 
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

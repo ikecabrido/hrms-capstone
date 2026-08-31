@@ -46,76 +46,6 @@
 
     </div>
 
-
-    <!-- CO-INSTRUCTORS -->
-    <div style="margin-top:18px;padding:18px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;">
-
-        <div style="
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:12px;
-            margin-bottom:12px;
-        ">
-
-            <div>
-                <div style="font-size:13px;font-weight:700;color:#334155;">
-                    Co-Instructors
-                </div>
-
-                <div style="margin-top:3px;font-size:11px;color:#94a3b8;">
-                    Optional additional instructors
-                </div>
-            </div>
-
-            <button
-                type="button"
-                id="addCoInstructorButton"
-                style="
-                    height:36px;
-                    padding:0 12px;
-                    border:1px solid #bfdbfe;
-                    border-radius:9px;
-                    background:#eff6ff;
-                    color:#2563eb;
-                    font-size:12px;
-                    font-weight:600;
-                    cursor:pointer;
-                    display:inline-flex;
-                    align-items:center;
-                    gap:6px;
-                    white-space:nowrap;
-                "
-            >
-                <i class="fa-solid fa-plus"></i>
-                Add Instructor
-            </button>
-
-        </div>
-
-
-        <div id="coInstructorList">
-
-            <div
-                id="noCoInstructorMessage"
-                style="
-                    padding:12px;
-                    border:1px dashed #cbd5e1;
-                    border-radius:10px;
-                    background:#f8fafc;
-                    color:#94a3b8;
-                    font-size:12px;
-                    text-align:center;
-                "
-            >
-                No co-instructors added.
-            </div>
-
-        </div>
-
-    </div>
-
-
     <!-- INFO -->
     <div
         style="
@@ -135,8 +65,7 @@
 
         <span>
             The selected course owner will be saved with the
-            <strong>owner</strong> role. Additional instructors will be
-            saved as <strong>co-instructors</strong>.
+            <strong>owner</strong> role.
         </span>
     </div>
 

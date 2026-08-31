@@ -1,43 +1,33 @@
+
+4. The simpler approach: load one level at a time
+
+I recommend not loading the entire tree immediately.
+
+Instead:
+
+Course page
+
+Load:
+
 Course
-──────────────────────────────────────────────
-Microsoft Excel Fundamentals
+ └── Modules
 
-[Edit] [Manage Content] [Status] [Delete]
+Then when the administrator clicks:
 
+Manage Lessons
 
-Course: Microsoft Excel Fundamentals
+load:
 
-[← Back to Courses]
+Module
+ └── Lessons
 
-Course Content                          [+ Add Module]
+Then when they click:
 
-────────────────────────────────────────────────────
+Manage Files
 
-▾ Module 1 — Introduction to Excel
-  Introduction to Excel and the workspace
+load:
 
-  ├── 01  Getting Started with Excel       [Edit] [...]
-  ├── 02  Excel Interface                  [Edit] [...]
-  └── 03  Creating a Workbook              [Edit] [...]
+Lesson
+ └── Files
 
-  [+ Add Lesson]
-
-
-▾ Module 2 — Working with Data
-  Learn how to enter, organize and manage data.
-
-  ├── 01  Data Entry                       [Edit] [...]
-  ├── 02  Formatting Data                  [Edit] [...]
-  └── 03  Sorting and Filtering            [Edit] [...]
-
-  [+ Add Lesson]
-
-
-▾ Module 3 — Excel Formulas
-  Learn the fundamentals of Excel formulas.
-
-  ├── 01  Basic Formulas                   [Edit] [...]
-  ├── 02  SUM and AVERAGE                  [Edit] [...]
-  └── 03  IF Functions                     [Edit] [...]
-
-  [+ Add Lesson]
+This is much easier.

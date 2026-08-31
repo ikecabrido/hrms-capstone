@@ -5,27 +5,53 @@ namespace App\Controllers;
 use App\Models\Training;
 use App\Models\Course;
 use App\Models\Employee;
+use App\Models\CourseEnrolled;
+use Exception;
 
 class TrainingController
 {
     private Training $trainingModel;
     private Employee $employeeModel;
     private Course $courseModel;
+    private CourseEnrolled $courseEnrolledModel;
 
     public function __construct()
     {
         $this->trainingModel = new Training();
         $this->employeeModel = new Employee();
         $this->courseModel = new Course();
+        $this->courseEnrolledModel = new CourseEnrolled();
     }
 
     public function index()
     {
-        $allTrainingCourses = $this->trainingModel->allCourse();
+        $userId = $_SESSION['user_id'] ?? null;
+        if (!$userId) {
+            throw new Exception('User session not found.');
+        }
+        $employee = $this->employeeModel->getByUserId($userId);
+
+        if (!$employee) {
+            throw new Exception('Employee profile not found.');
+        }
+        $employeeId = (int) $employee['employee_id'];
+
+        $hasEnrollment = $this->courseEnrolledModel->hasEnrollment($employeeId);
 
         $title = "Training, Learning and Development";
-        $content = __DIR__ . '/../views/employee-portal/training/content.php';
-        require __DIR__ . '/../views/employee-portal/index.php';
+
+        if ($hasEnrollment) {
+            header('Location: index.php?url=is-enroll');
+            exit;
+        } else {
+
+            $allTrainingCourses = $this->trainingModel->allCourse();
+
+            $content = __DIR__ .
+                '/../views/employee-portal/training/content.php';
+        }
+        require __DIR__ .
+            '/../views/employee-portal/index.php';
     }
     public function store()
     {
@@ -80,7 +106,6 @@ class TrainingController
                 }
             }
         }
-
         unset($course);
 
         $title = "Training, Learning and Development";

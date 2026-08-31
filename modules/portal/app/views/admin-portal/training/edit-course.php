@@ -222,7 +222,6 @@
 
                     </div>
 
-
                     <!-- THUMBNAIL -->
 
                     <div class="mb-4">
@@ -256,11 +255,6 @@
 
                     <hr class="my-4">
 
-
-                    <!-- =================================================
-                         INSTRUCTORS
-                    ================================================== -->
-
                     <div class="mb-4">
 
                         <h6 class="fw-bold text-dark mb-1">
@@ -270,9 +264,6 @@
                         <p class="text-muted small mb-3">
                             Manage the course owner and co-instructors.
                         </p>
-
-
-                        <!-- COURSE OWNER -->
 
                         <div class="mb-3">
 
@@ -317,42 +308,9 @@
 
                         </div>
 
-
-                        <!-- CO-INSTRUCTORS -->
-
-                        <div class="mb-4">
-
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-
-                                <label class="form-label fw-semibold mb-0">
-                                    Co-Instructors
-                                </label>
-
-                                <button type="button" class="btn btn-sm btn-outline-primary"
-                                    onclick="addEditCoInstructor()">
-
-                                    <i class="fa-solid fa-plus me-1"></i>
-                                    Add Instructor
-
-                                </button>
-
-                            </div>
-
-
-                            <div id="editCoInstructorList">
-                            </div>
-
-                        </div>
-
                     </div>
 
-
                     <hr class="my-4">
-
-
-                    <!-- =================================================
-                         SKILLS
-                    ================================================== -->
 
                     <div class="mb-4">
 
@@ -396,11 +354,6 @@
                     <hr class="my-4">
                 </div>
 
-
-                <!-- =================================================
-                     FOOTER
-                ================================================== -->
-
                 <div class="modal-footer px-4 py-3 border-top">
 
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -429,9 +382,6 @@
 </div>
 
 <script>
-    /* =========================================================
-       COURSE DATA
-    ========================================================= */
 
     const editCourseData = <?= json_encode(
         $allTrainingCourses,
@@ -442,13 +392,6 @@
     ) ?>;
 
     console.log('Edit Course Data:', editCourseData);
-
-
-
-
-    /* =========================================================
-       OPEN EDIT MODAL
-    ========================================================= */
 
     document
         .getElementById('editCourseModal')
@@ -461,11 +404,6 @@
                 return;
             }
 
-
-            /* =====================================================
-               GET COURSE ID
-            ===================================================== */
-
             const courseId = Number(
                 button.getAttribute('data-course-id')
             );
@@ -474,11 +412,6 @@
                 'Editing Course ID:',
                 courseId
             );
-
-
-            /* =====================================================
-               FIND COURSE
-            ===================================================== */
 
             const course = editCourseData.find(function (item) {
 
@@ -503,11 +436,6 @@
                 course
             );
 
-
-            /* =====================================================
-               BASIC INFORMATION
-            ===================================================== */
-
             document.getElementById('editCourseId').value =
                 course.id ?? '';
 
@@ -528,11 +456,6 @@
 
             document.getElementById('editEnrollmentDeadline').value =
                 course.enrollment_deadline ?? '';
-
-
-            /* =====================================================
-               THUMBNAIL
-            ===================================================== */
 
             const thumbnailPreview =
                 document.getElementById(
@@ -566,33 +489,13 @@
                 );
             }
 
-
-            /* =====================================================
-               OWNER
-            ===================================================== */
-
             populateEditOwner(course);
 
-
-            /* =====================================================
-               CO-INSTRUCTORS
-            ===================================================== */
-
             populateEditCoInstructors(course);
-
-
-            /* =====================================================
-               SKILLS
-            ===================================================== */
 
             populateEditSkills(course);
 
         });
-
-
-    /* =========================================================
-       POPULATE COURSE OWNER
-    ========================================================= */
 
     function populateEditOwner(course) {
 
@@ -611,17 +514,7 @@
             return;
         }
 
-
-        /* ---------------------------------------------------------
-           RESET
-        --------------------------------------------------------- */
-
         ownerSelect.value = '';
-
-
-        /* ---------------------------------------------------------
-           FIRST: DIRECT COURSE OWNER
-        --------------------------------------------------------- */
 
         const directOwnerId =
             course.instructor_id ??
@@ -643,11 +536,6 @@
 
             return;
         }
-
-
-        /* ---------------------------------------------------------
-           SECOND: SEARCH COURSE INSTRUCTORS
-        --------------------------------------------------------- */
 
         const instructors =
             Array.isArray(course.instructors)
@@ -685,11 +573,6 @@
             return;
         }
 
-
-        /* ---------------------------------------------------------
-           GET OWNER ID
-        --------------------------------------------------------- */
-
         const ownerId =
             owner.instructor_id ??
             owner.employee_id ??
@@ -718,11 +601,7 @@
         }
     }
 
-
-    /* =========================================================
-       POPULATE CO-INSTRUCTORS
-    ========================================================= */
-
+    
     function populateEditCoInstructors(course) {
 
         const container = document.getElementById(
@@ -749,9 +628,6 @@
                 instructor.role ?? ''
             ).toLowerCase().trim();
 
-            /*
-             * Only load co-instructors.
-             */
             if (
                 role !== 'co-instructor' &&
                 role !== 'co_instructor' &&
@@ -760,10 +636,6 @@
                 return;
             }
 
-            /*
-             * IMPORTANT:
-             * Try every possible ID field.
-             */
             const instructorId =
                 instructor.instructor_id ??
                 instructor.employee_id ??
@@ -806,9 +678,6 @@
         );
     }
 
-    /* =========================================================
-       ADD CO-INSTRUCTOR
-    ========================================================= */
     function addEditCoInstructor(selectedId = '') {
 
         const container = document.getElementById(
@@ -897,9 +766,6 @@
                 selectedId
             );
 
-            /*
-             * Find the actual option.
-             */
             const matchingOption =
                 Array.from(select.options).find(
                     function (option) {
@@ -935,9 +801,6 @@
 
         container.appendChild(wrapper);
     }
-    /* =========================================================
-       POPULATE SKILLS
-    ========================================================= */
 
     function populateEditSkills(course) {
 
@@ -1016,10 +879,6 @@
 
         });
     }
-
-    /* =========================================================
-       ESCAPE HTML
-    ========================================================= */
 
     function escapeHtml(value) {
 

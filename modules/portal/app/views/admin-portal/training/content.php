@@ -36,9 +36,10 @@
     gap:10px;
     margin-bottom:18px;
 ">
-            
+
             <!-- VIEW TRAINING REQUEST -->
-            <a href="index.php?url=view-training-request" class="btn btn-primary d-inline-flex align-items-center gap-2"  style="
+            <a href="index.php?url=view-training-request" class="btn btn-primary d-inline-flex align-items-center gap-2"
+                style="
             height:44px;
             padding:0 18px;
             border-radius:11px;
@@ -484,39 +485,6 @@
                                     </p>
                                 </div>
 
-
-                                <!-- ================================================= -->
-                                <!-- INSTRUCTOR -->
-                                <!-- ================================================= -->
-
-                                <div class="mt-3 flex items-center gap-2.5">
-
-                                    <div class="w-8 h-8 shrink-0 rounded-lg
-                bg-blue-50
-                flex items-center justify-center">
-
-                                        <i class="fa-solid fa-user text-xs text-blue-600"></i>
-
-                                    </div>
-
-                                    <div class="min-w-0">
-
-                                        <p class="text-[9px] text-slate-400
-                  uppercase tracking-wider font-semibold">
-                                            Course Instructor
-                                        </p>
-
-                                        <p class="text-xs font-semibold text-slate-700 truncate">
-                                            Instructor #<?= htmlspecialchars(
-                                                $owner['instructor_id'] ?? $course['instructor_id']
-                                            ) ?>
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-
                                 <!-- DIVIDER -->
 
                                 <div class="my-3 border-t border-slate-100"></div>
@@ -568,27 +536,32 @@
                                     <!-- INSTRUCTORS -->
 
                                     <div class="flex items-center gap-2
-                rounded-lg bg-slate-50
-                border border-slate-100
-                px-2.5 py-2">
+            rounded-lg bg-slate-50
+            border border-slate-100
+            px-2.5 py-2">
 
                                         <div class="w-7 h-7 shrink-0 rounded-md
-                    bg-white
-                    flex items-center justify-center">
+                bg-white
+                flex items-center justify-center">
 
                                             <i class="fa-solid fa-users
-                      text-[10px] text-slate-500"></i>
+                  text-[10px] text-slate-500"></i>
 
                                         </div>
 
-                                        <div>
+                                        <div class="min-w-0">
 
                                             <p class="text-[9px] text-slate-400">
-                                                Instructors
+                                                Instructor
                                             </p>
 
-                                            <p class="text-[11px] font-semibold text-slate-700">
-                                                <?= count($instructors) ?>
+                                            <p class="text-xs font-semibold text-slate-700 truncate">
+                                                <?= htmlspecialchars(
+                                                    $course['instructor_name']
+                                                    ?? 'No instructor assigned',
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>
                                             </p>
 
                                         </div>

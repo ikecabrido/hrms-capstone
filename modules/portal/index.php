@@ -22,6 +22,7 @@ use App\Controllers\NotificationController;
 use App\Controllers\SendEmployeesController;
 use App\Controllers\ResetPasswordController;
 use App\Controllers\OnlineMeetingController;
+use App\Controllers\CourseEnrollmentController;
 use App\Controllers\BenefitsAndGovernmentContributionController;
 
 require_once __DIR__ . '/vendor/autoload.php';
@@ -121,6 +122,12 @@ $routes = [
     'delete-course-module' => [ManageCourseController::class, 'deleteModule'],
     'delete-course-lesson' => [ManageCourseController::class, 'deleteLesson'],
     'delete-course-file' => [ManageCourseController::class, 'deleteFile'],
+
+    // Enrollment
+    'enroll-course' => [CourseEnrollmentController::class, 'enroll'],
+    'is-enroll' => [CourseEnrollmentController::class, 'index'],
+    'complete-module' => [CourseEnrollmentController::class, 'completeModule'],
+    'complete-enrollment' => [CourseEnrollmentController::class, 'completeEnrollment'],
 
 
     // Complaint
