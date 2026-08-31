@@ -20,8 +20,13 @@ class AnnouncementController
 
         $title = "Employee Announcements";
         $content = __DIR__ . '/../views/employee-portal/announcement/content.php';
-
         require __DIR__ . '/../views/employee-portal/index.php';
+    }
+    public function adminIndex()
+    {
+        $title = "Admin Announcements";
+        $content = __DIR__ . '/../views/admin-portal/announcement/content.php';
+        require __DIR__ . '/../views/admin-portal/index.php';
     }
     public function view()
     {

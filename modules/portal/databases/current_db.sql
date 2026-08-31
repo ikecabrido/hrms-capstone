@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 31, 2026 at 12:07 PM
+-- Generation Time: Aug 31, 2026 at 05:28 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -523,45 +523,36 @@ INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `role
 -- --------------------------------------------------------
 
 --
--- Table structure for table `lc_incidents`
+-- Table structure for table `lc_complaints`
 --
 
-CREATE TABLE `lc_incidents` (
+CREATE TABLE `lc_complaints` (
   `id` int(11) NOT NULL,
-  `incident_id` varchar(50) DEFAULT NULL,
-  `type` varchar(100) DEFAULT NULL,
-  `incident_type` varchar(100) DEFAULT NULL,
-  `severity` enum('Low','Medium','High','Critical') NOT NULL DEFAULT 'Medium',
-  `title` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
+  `type` varchar(150) DEFAULT NULL,
+  `severity` varchar(20) DEFAULT 'medium',
+  `status` enum('under_initial_review','under_investigation','pending_employee_response','for_decision','closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved','closed') DEFAULT 'under_initial_review',
+  `employee_id` int(11) DEFAULT NULL,
+  `reporter_name` varchar(150) DEFAULT NULL,
+  `reporter_department` varchar(150) DEFAULT NULL,
   `incident_date` date DEFAULT NULL,
+  `incident_time` time DEFAULT NULL,
   `location` varchar(255) DEFAULT NULL,
-  `respondent_id` int(11) DEFAULT NULL,
-  `reporter_id` int(11) DEFAULT NULL,
-  `reporter_name` varchar(100) DEFAULT NULL,
-  `status` enum('submitted','under_review','investigation','nte_issued','explanation_received','hr_evaluation','decision_made','final_action','resolved','closed') NOT NULL DEFAULT 'submitted',
-  `current_workflow_step` varchar(50) DEFAULT NULL,
-  `status_changed_at` datetime DEFAULT NULL,
-  `is_confidential` tinyint(1) NOT NULL DEFAULT 0,
-  `nte_deadline` datetime DEFAULT NULL,
-  `explanation_deadline` datetime DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
+  `title` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `assigned_to` int(11) DEFAULT NULL,
+  `assigned_name` varchar(150) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `employee_response` text DEFAULT NULL,
+  `employee_response_date` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dumping data for table `lc_incidents`
+-- Dumping data for table `lc_complaints`
 --
 
-INSERT INTO `lc_incidents` (`id`, `incident_id`, `type`, `incident_type`, `severity`, `title`, `description`, `incident_date`, `location`, `respondent_id`, `reporter_id`, `reporter_name`, `status`, `current_workflow_step`, `status_changed_at`, `is_confidential`, `nte_deadline`, `explanation_deadline`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'INC-2024-001', NULL, 'Harassment', 'High', 'Workplace Harassment Complaint', 'Employee reported repeated inappropriate comments from supervisor during team meetings.', '2024-07-15', 'Main Office - 3rd Floor', 5, 12, 'Juan Dela Cruz', 'investigation', 'Investigation', NULL, 0, '2024-07-22 17:00:00', '2024-07-18 17:00:00', 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
-(2, 'INC-2024-002', NULL, 'Policy Violation', 'Medium', 'Unauthorized Use of Company Resources', 'Employee used company vehicle for personal errands without approval.', '2024-07-20', 'Branch Office - Parking Area', 8, 15, 'Maria Santos', 'under_review', 'HR Review', NULL, 0, NULL, '2024-07-25 17:00:00', 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
-(3, 'INC-2024-003', NULL, 'Safety Incident', 'Critical', 'Equipment Malfunction Near Miss', 'Heavy equipment malfunctioned during operation; no injuries reported but safety protocols breached.', '2024-07-22', 'Warehouse - Zone B', 3, 20, 'Pedro Reyes', 'submitted', 'Initial Review', NULL, 1, NULL, NULL, 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
-(4, 'INC-2024-004', NULL, 'Attendance Violation', 'Low', 'Excessive Unexcused Absences', 'Employee accumulated 15 unexcused absences in one month without prior notification.', '2024-07-18', 'Remote / Work From Home', 22, 30, 'Ana Gonzales', 'hr_evaluation', 'HR Evaluation', NULL, 0, NULL, NULL, 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
-(5, 'INC-2024-005', NULL, 'Data Breach', 'Critical', 'Unauthorized Access to Confidential Files', 'Employee accessed confidential client data outside of authorized job function.', '2024-07-25', 'IT Department - Server Room', 11, 45, 'Carlos Mendoza', 'decision_made', 'Decision', NULL, 1, NULL, NULL, 1, '2026-08-04 01:23:12', '2026-08-04 01:23:12'),
-(6, 'INC-2026-006', NULL, 'absenteeism', 'Medium', 'Sample', 'sample', '2026-08-25', 'HR Office', 8, 1, 'Ronaldo Raymundo', 'submitted', 'Initial Review', '2026-08-26 01:28:14', 0, NULL, NULL, 4, '2026-08-25 17:28:14', '2026-08-25 17:40:52'),
-(7, 'INC-2026-007', NULL, 'workplace_conflict', 'Medium', 'Workplace conflict', 'sample', '2026-08-25', 'Campus Grounds', 9, 1, 'Ronaldo Raymundo', 'submitted', 'Initial Review', '2026-08-26 01:41:25', 0, NULL, NULL, 4, '2026-08-25 17:41:25', '2026-08-25 17:41:25');
+INSERT INTO `lc_complaints` (`id`, `type`, `severity`, `status`, `employee_id`, `reporter_name`, `reporter_department`, `incident_date`, `incident_time`, `location`, `title`, `description`, `assigned_to`, `assigned_name`, `created_at`, `updated_at`, `employee_response`, `employee_response_date`) VALUES
+(1, 'Workplace Conflict', 'Medium', 'under_initial_review', 14, 'Ronaldo G. Raymundo', NULL, '2026-08-31', '18:21:00', 'HR Office', 'sample', 'sample', NULL, NULL, '2026-08-31 10:25:03', '2026-08-31 10:25:03', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -592,7 +583,7 @@ INSERT INTO `ld_course` (`id`, `instructor_id`, `title`, `description`, `thumbna
 (2, 2, 'Time Management and Productivity', 'Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.', 'assets/uploads/learning/course_20260829_115529_1ed358fae5.png', 'Productivity', 'active', '2026-09-09', '2026-09-06', '2026-08-28 14:00:22', '2026-08-31 04:41:42'),
 (3, 3, 'Leadership Essentials', 'Learn the fundamentals of effective leadership including decision-making, delegation, motivation, accountability, and team management.', 'assets/uploads/learning/course_20260829_120838_6b5ceb7e3e.png', 'Leadership', 'active', '2026-09-14', '2026-09-11', '2026-08-28 14:00:22', '2026-08-29 10:08:38'),
 (4, 4, 'Workplace Ethics and Professional Conduct', 'Understand professional ethics, workplace behavior, accountability, confidentiality, and responsible decision-making.', 'uploads/courses/workplace-ethics.jpg', 'Compliance', 'active', '2026-09-16', '2026-09-13', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
-(5, 5, 'Microsoft Excel for Office Productivity', 'Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.', 'uploads/courses/excel-productivity.jpg', 'Technical Skills', 'active', '2026-09-21', '2026-09-18', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
+(5, 5, 'Microsoft Excel for Office Productivity', 'Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.', 'assets/uploads/learning/course_20260831_152555_4da469d476.png', 'Technical Skills', 'active', '2026-09-21', '2026-09-18', '2026-08-28 14:00:22', '2026-08-31 13:25:55'),
 (6, 6, 'Customer Service Excellence', 'Improve customer service skills through effective listening, problem solving, professional communication, and handling difficult situations.', 'uploads/courses/customer-service.jpg', 'Customer Service', 'active', '2026-09-23', '2026-09-20', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
 (7, 7, 'Teamwork and Collaboration', 'Build stronger teamwork skills through collaboration strategies, conflict management, trust building, and effective team participation.', 'uploads/courses/teamwork-collaboration.jpg', 'Team Development', 'active', '2026-09-28', '2026-09-25', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
 (9, 9, 'Workplace Well-Being and Stress Management', 'Learn practical strategies for managing workplace stress, maintaining work-life balance, and developing healthy professional habits.', 'uploads/courses/stress-management.jpg', 'Well-Being', 'active', '2026-10-05', '2026-10-02', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
@@ -621,8 +612,6 @@ CREATE TABLE `ld_course_instructor` (
 INSERT INTO `ld_course_instructor` (`id`, `course_id`, `instructor_id`, `role`, `created_at`) VALUES
 (7, 4, 4, 'owner', '2026-08-28 14:00:31'),
 (8, 4, 5, 'co-instructor', '2026-08-28 14:00:31'),
-(9, 5, 5, 'owner', '2026-08-28 14:00:31'),
-(10, 5, 6, 'co-instructor', '2026-08-28 14:00:31'),
 (11, 6, 6, 'owner', '2026-08-28 14:00:31'),
 (12, 6, 7, 'co-instructor', '2026-08-28 14:00:31'),
 (13, 7, 7, 'owner', '2026-08-28 14:00:31'),
@@ -645,7 +634,8 @@ INSERT INTO `ld_course_instructor` (`id`, `course_id`, `instructor_id`, `role`, 
 (57, 17, 3, 'co-instructor', '2026-08-30 12:38:32'),
 (58, 17, 5, 'co-instructor', '2026-08-30 12:38:32'),
 (74, 1, 18, 'owner', '2026-08-31 04:26:21'),
-(78, 2, 2, 'owner', '2026-08-31 04:41:42');
+(78, 2, 2, 'owner', '2026-08-31 04:41:42'),
+(79, 5, 5, 'owner', '2026-08-31 13:25:55');
 
 -- --------------------------------------------------------
 
@@ -667,9 +657,6 @@ INSERT INTO `ld_course_skill` (`id`, `course_id`, `skill_id`) VALUES
 (10, 4, 10),
 (11, 4, 11),
 (12, 4, 12),
-(13, 5, 13),
-(14, 5, 14),
-(15, 5, 15),
 (16, 6, 1),
 (17, 6, 16),
 (18, 6, 17),
@@ -753,7 +740,8 @@ INSERT INTO `ld_course_version` (`id`, `course_id`, `version_number`, `snapshot`
 (33, 1, 10, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":31,\"co_instructors\":[],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:06:58'),
 (34, 1, 11, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":18,\"co_instructors\":[],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:26:21'),
 (37, 2, 8, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity. nigger\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[],\"skills\":[2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:41:30'),
-(38, 2, 9, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[],\"skills\":[2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:41:42');
+(38, 2, 9, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[],\"skills\":[2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:41:42'),
+(39, 5, 2, '{\"title\":\"Microsoft Excel for Office Productivity\",\"description\":\"Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260831_152555_4da469d476.png\",\"category\":\"Technical Skills\",\"status\":\"active\",\"start_date\":\"2026-09-21\",\"enrollment_deadline\":\"2026-09-18\",\"instructor_id\":5,\"co_instructors\":[],\"skills\":[],\"lessons\":[]}', '2026-08-31 13:25:55');
 
 -- --------------------------------------------------------
 
@@ -1269,9 +1257,9 @@ ALTER TABLE `ep_users`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `lc_incidents`
+-- Indexes for table `lc_complaints`
 --
-ALTER TABLE `lc_incidents`
+ALTER TABLE `lc_complaints`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -1453,10 +1441,10 @@ ALTER TABLE `ep_users`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT for table `lc_incidents`
+-- AUTO_INCREMENT for table `lc_complaints`
 --
-ALTER TABLE `lc_incidents`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+ALTER TABLE `lc_complaints`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `ld_course`
@@ -1468,7 +1456,7 @@ ALTER TABLE `ld_course`
 -- AUTO_INCREMENT for table `ld_course_instructor`
 --
 ALTER TABLE `ld_course_instructor`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- AUTO_INCREMENT for table `ld_course_skill`
@@ -1480,7 +1468,7 @@ ALTER TABLE `ld_course_skill`
 -- AUTO_INCREMENT for table `ld_course_version`
 --
 ALTER TABLE `ld_course_version`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `ld_enrollment`

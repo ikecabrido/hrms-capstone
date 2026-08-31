@@ -1,2 +1,0 @@
-Notification 
-- The target URL when user clicks open button it goes to where the url of the module place.

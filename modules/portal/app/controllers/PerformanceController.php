@@ -26,4 +26,13 @@ class PerformanceController
         $content = __DIR__ . '/../views/employee-portal/performance/content.php';
         require __DIR__ . '/../views/employee-portal/index.php';
     }
+
+    public function adminIndex()
+    {
+        $allPerformance = $this->performanceModel->all();
+
+        $title = "Admin Performance Evaluation";
+        $content = __DIR__ . '/../views/admin-portal/performance/content.php';
+        require __DIR__ . '/../views/admin-portal/index.php';
+    }
 }

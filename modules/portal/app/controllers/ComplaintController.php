@@ -48,10 +48,16 @@ class ComplaintController
 
         $title = "Employee Complaint";
         $content = __DIR__ . '/../views/employee-portal/complaint/content.php';
-
         require __DIR__ . '/../views/employee-portal/index.php';
     }
+    public function adminIndex()
+    {
+        $allComplaints = $this->complaintModel->all();
 
+        $title = "Admin Complaint Module";
+        $content = __DIR__ . '/../views/admin-portal/complaint/content.php';
+        require __DIR__ . '/../views/admin-portal/index.php';
+    }
     public function store()
     {
         try {

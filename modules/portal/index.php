@@ -23,6 +23,7 @@ use App\Controllers\SendEmployeesController;
 use App\Controllers\ResetPasswordController;
 use App\Controllers\OnlineMeetingController;
 use App\Controllers\CourseEnrollmentController;
+use App\Controllers\BackupAndRestoreController;
 use App\Controllers\BenefitsAndGovernmentContributionController;
 
 require_once __DIR__ . '/vendor/autoload.php';
@@ -95,15 +96,18 @@ $routes = [
 
     // Announcement
     'announcement' => [AnnouncementController::class, 'index'],
+    'admin-announcement' => [AnnouncementController::class, 'adminIndex'],
     'announcement-view' => [AnnouncementController::class, 'view'],
 
     // Notification
     'notification' => [NotificationController::class, 'index'],
+    'admin-notification' => [NotificationController::class, 'adminIndex'],
     'notification-mark-read' => [NotificationController::class, 'markRead'],
     'notification-mark-all-read' => [NotificationController::class, 'markAllRead'],
 
     // Performance
     'performance' => [PerformanceController::class, 'index'],
+    'admin-performance' => [PerformanceController::class, 'adminIndex'],
 
     // Training and Course
     'training' => [TrainingController::class, 'index'],
@@ -132,10 +136,12 @@ $routes = [
 
     // Complaint
     'complaint' => [ComplaintController::class, 'index'],
+    'admin-complaint' => [ComplaintController::class, 'adminIndex'],
     'employee-complaints-store' => [ComplaintController::class, 'store'],
 
     // Grievance
     'grievance' => [GrievanceController::class, 'index'],
+    'admin-grievance' => [GrievanceController::class, 'adminIndex'],
     'grievance-store' => [GrievanceController::class, 'store'],
 
     // Resignation
@@ -158,6 +164,9 @@ $routes = [
     'online-meeting-store' => [OnlineMeetingController::class, 'store'],
     'online-meeting-update-status' => [OnlineMeetingController::class, 'updateStatus'],
     'online-meeting-delete' => [OnlineMeetingController::class, 'delete'],
+
+    // Backup and Restore
+    'admin-backup-and-restore' => [BackupAndRestoreController::class, 'adminIndex'],
 
     // API
     'send-all-employees' => [SendEmployeesController::class, 'getAll'],

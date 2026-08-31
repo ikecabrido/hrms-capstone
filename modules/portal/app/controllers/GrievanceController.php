@@ -28,7 +28,13 @@ class GrievanceController
         $content = __DIR__ . '/../views/employee-portal/grievance/content.php';
         require __DIR__ . '/../views/employee-portal/index.php';
     }
-
+    public function adminIndex()
+    {
+        $allGrievance = $this->grievanceModel->all();
+        $title = "Admin Grievance";
+        $content = __DIR__ . '/../views/admin-portal/grievance/content.php';
+        require __DIR__ . '/../views/admin-portal/index.php';
+    }
     public function store()
     {
         try {

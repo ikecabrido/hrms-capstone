@@ -34,6 +34,14 @@ class NotificationController
         require __DIR__ . '/../views/employee-portal/index.php';
     }
 
+    public function adminIndex()
+    {
+
+        $title = 'Admin Notifications';
+        $content = __DIR__ . '/../views/admin-portal/notification/content.php';
+        require __DIR__ . '/../views/admin-portal/index.php';
+    }
+
 
 
 

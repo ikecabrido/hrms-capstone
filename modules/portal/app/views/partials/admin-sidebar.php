@@ -84,7 +84,7 @@
         <h3>Performance & Development</h3>
 
         <li>
-            <a href="" class="menu-link">
+            <a href="index.php?url=admin-performance" class="menu-link">
                 <i class="fa-solid fa-chart-line"></i>
                 Performance Evaluation
             </a>
@@ -102,14 +102,14 @@
         <h3>Employee Relations</h3>
 
         <li>
-            <a href="" class="menu-link">
+            <a href="index.php?url=admin-complaint" class="menu-link">
                 <i class="fa-regular fa-message"></i>
                 Complaints
             </a>
         </li>
 
         <li>
-            <a href="" class="menu-link">
+            <a href="index.php?url=admin-grievance" class="menu-link">
                 <i class="fa-solid fa-scale-balanced"></i>
                 Grievances
             </a>
@@ -128,14 +128,14 @@
         </li>
 
         <li>
-            <a href="" class="menu-link">
+            <a href="index.php?url=admin-notification" class="menu-link">
                 <i class="fa-regular fa-bell"></i>
                 Notifications
             </a>
         </li>
 
         <li>
-            <a href="" class="menu-link">
+            <a href="index.php?url=admin-announcement" class="menu-link">
                 <i class="fa-solid fa-bullhorn"></i>
                 Announcements
             </a>
@@ -147,7 +147,7 @@
         <h3>System</h3>
 
         <li>
-            <a href="" class="menu-link">
+            <a href="index.php?url=admin-backup-and-restore" class="menu-link">
                 <i class="fa-solid fa-database"></i>
                 Backup & Restore
             </a>

@@ -18,7 +18,20 @@ class Performance
 
     public function all(): array
     {
-        $sql = "SELECT * FROM {$this->table} ORDER BY created_at DESC";
+        $sql = "SELECT 
+                p.*,
+                e.employee_id AS employee_id,
+                e.employee_code,
+                CONCAT(
+                    e.first_name,
+                    ' ',
+                    COALESCE(CONCAT(e.middle_name, ' '), ''),
+                    e.last_name
+                ) AS employee_name
+            FROM {$this->table} p
+            LEFT JOIN em_employees e
+                ON p.employee_id = e.employee_id
+            ORDER BY p.created_at DESC";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
