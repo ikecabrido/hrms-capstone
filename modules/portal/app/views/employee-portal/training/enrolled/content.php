@@ -64,9 +64,7 @@
 
                     <?php if ($courseIsCompleted): ?>
 
-                        <div
-                            class="flex flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-white px-6 py-16 text-center shadow-sm">
-
+                        <div class="flex flex-col items-center justify-center rounded-2xl border border-emerald-100 bg-white px-6 py-16 text-center shadow-sm">
                             <div
                                 class="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                                 <i class="fa-solid fa-circle-check text-2xl"></i>
@@ -186,6 +184,39 @@
                                         <!-- MODULE HEADER -->
 
                                         <summary class="cursor-pointer list-none select-none">
+<?php if (!$isCompleted): ?>
+    <form
+        method="POST"
+        action="index.php?url=complete-module"
+        class="shrink-0"
+        onclick="event.stopPropagation();"
+        onsubmit="event.stopPropagation();">
+
+        <input
+            type="hidden"
+            name="module_id"
+            value="<?= (int) $module['id'] ?>">
+
+        <input
+            type="hidden"
+            name="enrollment_id"
+            value="<?= (int) ($enrollment['id'] ?? $enrollmentId ?? 0) ?>">
+
+        <button
+            type="submit"
+            class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
+
+            Mark as done
+
+        </button>
+
+    </form>
+<?php else: ?>
+    <span class="inline-flex h-10 items-center gap-2 rounded-xl bg-emerald-50 px-4 text-xs font-bold text-emerald-600">
+        <i class="fa-solid fa-circle-check text-[10px]"></i>
+        Completed
+    </span>
+<?php endif; ?>
 
                                             <div
                                                 class="flex flex-col gap-5 px-5 py-5 transition hover:bg-slate-50 sm:px-6 sm:py-6 lg:flex-row lg:items-center lg:justify-between">

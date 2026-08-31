@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 30, 2026 at 12:40 PM
+-- Generation Time: Aug 31, 2026 at 12:07 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -588,15 +588,17 @@ CREATE TABLE `ld_course` (
 --
 
 INSERT INTO `ld_course` (`id`, `instructor_id`, `title`, `description`, `thumbnail_path`, `category`, `status`, `start_date`, `enrollment_deadline`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Effective Workplace Communication', 'Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.', 'assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg', 'Communication', 'draft', '2026-09-07', '2026-09-04', '2026-08-28 14:00:22', '2026-08-29 10:42:17'),
-(2, 2, 'Time Management and Productivity', 'Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.', 'assets/uploads/learning/course_20260829_115529_1ed358fae5.png', 'Productivity', 'draft', '2026-09-09', '2026-09-06', '2026-08-28 14:00:22', '2026-08-29 10:03:32'),
+(1, 18, 'Effective Workplace Communication', 'Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.', 'assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg', 'Communication', 'draft', '2026-09-07', '2026-09-04', '2026-08-28 14:00:22', '2026-08-31 04:26:21'),
+(2, 2, 'Time Management and Productivity', 'Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.', 'assets/uploads/learning/course_20260829_115529_1ed358fae5.png', 'Productivity', 'active', '2026-09-09', '2026-09-06', '2026-08-28 14:00:22', '2026-08-31 04:41:42'),
 (3, 3, 'Leadership Essentials', 'Learn the fundamentals of effective leadership including decision-making, delegation, motivation, accountability, and team management.', 'assets/uploads/learning/course_20260829_120838_6b5ceb7e3e.png', 'Leadership', 'active', '2026-09-14', '2026-09-11', '2026-08-28 14:00:22', '2026-08-29 10:08:38'),
 (4, 4, 'Workplace Ethics and Professional Conduct', 'Understand professional ethics, workplace behavior, accountability, confidentiality, and responsible decision-making.', 'uploads/courses/workplace-ethics.jpg', 'Compliance', 'active', '2026-09-16', '2026-09-13', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
 (5, 5, 'Microsoft Excel for Office Productivity', 'Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.', 'uploads/courses/excel-productivity.jpg', 'Technical Skills', 'active', '2026-09-21', '2026-09-18', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
 (6, 6, 'Customer Service Excellence', 'Improve customer service skills through effective listening, problem solving, professional communication, and handling difficult situations.', 'uploads/courses/customer-service.jpg', 'Customer Service', 'active', '2026-09-23', '2026-09-20', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
 (7, 7, 'Teamwork and Collaboration', 'Build stronger teamwork skills through collaboration strategies, conflict management, trust building, and effective team participation.', 'uploads/courses/teamwork-collaboration.jpg', 'Team Development', 'active', '2026-09-28', '2026-09-25', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
 (9, 9, 'Workplace Well-Being and Stress Management', 'Learn practical strategies for managing workplace stress, maintaining work-life balance, and developing healthy professional habits.', 'uploads/courses/stress-management.jpg', 'Well-Being', 'active', '2026-10-05', '2026-10-02', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
-(14, 5, 'Data Analysis Fundamentals', 'sample', 'assets/uploads/learning/course_20260828_184837_0049f703db.jpg', 'Compliance', 'active', '2026-11-28', '2026-10-28', '2026-08-28 16:48:37', '2026-08-29 10:02:49');
+(14, 5, 'Data Analysis Fundamentals', 'sample', 'assets/uploads/learning/course_20260828_184837_0049f703db.jpg', 'Compliance', 'active', '2026-11-28', '2026-10-28', '2026-08-28 16:48:37', '2026-08-29 10:02:49'),
+(16, 16, 'Effective Workplace Communication', 'sample', 'assets/uploads/learning/course_20260830_135018_b9994137a9.jpg', 'Compliance', 'draft', '2026-11-30', '2026-10-30', '2026-08-30 11:50:18', '2026-08-30 11:50:18'),
+(17, 30, 'Leadership and Team Management', 'sample', 'assets/uploads/learning/course_20260830_142737_6be2c8d7c8.png', 'Compliance', 'draft', '2026-11-30', '2026-10-30', '2026-08-30 12:27:37', '2026-08-30 12:38:32');
 
 -- --------------------------------------------------------
 
@@ -634,13 +636,16 @@ INSERT INTO `ld_course_instructor` (`id`, `course_id`, `instructor_id`, `role`, 
 (25, 13, 4, 'owner', '2026-08-28 16:43:09'),
 (26, 13, 5, 'co-instructor', '2026-08-28 16:43:09'),
 (27, 14, 5, 'owner', '2026-08-28 16:48:37'),
-(30, 1, 1, 'owner', '2026-08-29 09:33:05'),
-(31, 1, 2, 'co-instructor', '2026-08-29 09:33:05'),
-(32, 1, 8, 'co-instructor', '2026-08-29 09:33:05'),
-(41, 2, 2, 'owner', '2026-08-29 10:03:32'),
-(42, 2, 3, 'co-instructor', '2026-08-29 10:03:32'),
 (43, 3, 3, 'owner', '2026-08-29 10:08:38'),
-(44, 3, 4, 'co-instructor', '2026-08-29 10:08:38');
+(44, 3, 4, 'co-instructor', '2026-08-29 10:08:38'),
+(48, 16, 16, 'owner', '2026-08-30 11:50:18'),
+(49, 16, 19, 'co-instructor', '2026-08-30 11:50:18'),
+(50, 16, 11, 'co-instructor', '2026-08-30 11:50:18'),
+(56, 17, 30, 'owner', '2026-08-30 12:38:32'),
+(57, 17, 3, 'co-instructor', '2026-08-30 12:38:32'),
+(58, 17, 5, 'co-instructor', '2026-08-30 12:38:32'),
+(74, 1, 18, 'owner', '2026-08-31 04:26:21'),
+(78, 2, 2, 'owner', '2026-08-31 04:41:42');
 
 -- --------------------------------------------------------
 
@@ -678,15 +683,23 @@ INSERT INTO `ld_course_skill` (`id`, `course_id`, `skill_id`) VALUES
 (32, 12, 2),
 (33, 13, 1),
 (34, 14, 8),
-(38, 1, 1),
-(39, 1, 2),
-(40, 1, 3),
-(53, 2, 4),
-(54, 2, 5),
-(55, 2, 6),
 (56, 3, 7),
 (57, 3, 8),
-(58, 3, 9);
+(58, 3, 9),
+(60, 16, 2),
+(68, 17, 1),
+(69, 17, 6),
+(109, 1, 1),
+(110, 1, 2),
+(111, 1, 3),
+(112, 1, 4),
+(113, 1, 5),
+(114, 1, 6),
+(140, 2, 2),
+(141, 2, 3),
+(142, 2, 4),
+(143, 2, 5),
+(144, 2, 6);
 
 -- --------------------------------------------------------
 
@@ -726,7 +739,21 @@ INSERT INTO `ld_course_version` (`id`, `course_id`, `version_number`, `snapshot`
 (19, 2, 4, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[\"3\"],\"skills\":[\"4\",\"5\",\"6\"],\"lessons\":[{\"title\":\"Understanding Time Management\",\"duration_minutes\":\"180\"},{\"title\":\"Prioritizing Tasks\",\"duration_minutes\":\"150\"},{\"title\":\"Productivity Techniques\",\"duration_minutes\":\"45\"}],\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\"}', '2026-08-29 09:55:47'),
 (20, 2, 5, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.\",\"category\":\"Productivity\",\"status\":\"archived\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[\"3\"],\"skills\":[\"4\",\"5\",\"6\"],\"lessons\":[{\"title\":\"Understanding Time Management\",\"duration_minutes\":\"30\"},{\"title\":\"Prioritizing Tasks\",\"duration_minutes\":\"180\"},{\"title\":\"Productivity Techniques\",\"duration_minutes\":\"45\"}],\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\"}', '2026-08-29 10:03:12'),
 (21, 2, 6, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.\",\"category\":\"Productivity\",\"status\":\"draft\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[\"3\"],\"skills\":[\"4\",\"5\",\"6\"],\"lessons\":[{\"title\":\"Understanding Time Management\",\"duration_minutes\":\"30\"},{\"title\":\"Prioritizing Tasks\",\"duration_minutes\":\"180\"},{\"title\":\"Productivity Techniques\",\"duration_minutes\":\"45\"}],\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\"}', '2026-08-29 10:03:32'),
-(22, 3, 2, '{\"title\":\"Leadership Essentials\",\"description\":\"Learn the fundamentals of effective leadership including decision-making, delegation, motivation, accountability, and team management.\",\"category\":\"Leadership\",\"status\":\"active\",\"start_date\":\"2026-09-14\",\"enrollment_deadline\":\"2026-09-11\",\"instructor_id\":3,\"co_instructors\":[\"4\"],\"skills\":[\"7\",\"8\",\"9\"],\"lessons\":[{\"title\":\"Introduction to Leadership\",\"duration_minutes\":\"360\"},{\"title\":\"Decision Making\",\"duration_minutes\":\"45\"},{\"title\":\"Motivating Teams\",\"duration_minutes\":\"240\"}],\"thumbnail_path\":\"assets/uploads/learning/course_20260829_120838_6b5ceb7e3e.png\"}', '2026-08-29 10:08:38');
+(22, 3, 2, '{\"title\":\"Leadership Essentials\",\"description\":\"Learn the fundamentals of effective leadership including decision-making, delegation, motivation, accountability, and team management.\",\"category\":\"Leadership\",\"status\":\"active\",\"start_date\":\"2026-09-14\",\"enrollment_deadline\":\"2026-09-11\",\"instructor_id\":3,\"co_instructors\":[\"4\"],\"skills\":[\"7\",\"8\",\"9\"],\"lessons\":[{\"title\":\"Introduction to Leadership\",\"duration_minutes\":\"360\"},{\"title\":\"Decision Making\",\"duration_minutes\":\"45\"},{\"title\":\"Motivating Teams\",\"duration_minutes\":\"240\"}],\"thumbnail_path\":\"assets/uploads/learning/course_20260829_120838_6b5ceb7e3e.png\"}', '2026-08-29 10:08:38'),
+(23, 16, 1, '{\"title\":\"Effective Workplace Communication\",\"description\":\"sample\",\"thumbnail_path\":\"assets/uploads/learning/course_20260830_135018_b9994137a9.jpg\",\"category\":\"Compliance\",\"start_date\":\"2026-11-30\",\"enrollment_deadline\":\"2026-10-30\",\"instructor_id\":16,\"co_instructors\":[19,11],\"skills\":[\"2\"],\"lessons\":{\"0\":{\"title\":\"sample\"},\"${lessonIndex}\":{\"duration_minutes\":\"180\"},\"1\":{\"title\":\"Prioritizing Tasks\",\"duration_minutes\":\"300\"},\"2\":{\"title\":\"Motivating Teams\",\"duration_minutes\":\"360\"}}}', '2026-08-30 11:50:18'),
+(24, 2, 7, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[\"3\"],\"skills\":[\"2\",\"3\",\"4\",\"5\",\"6\"],\"lessons\":[]}', '2026-08-30 12:13:43'),
+(25, 17, 1, '{\"title\":\"Leadership and Team Management\",\"description\":\"sample\",\"thumbnail_path\":\"assets/uploads/learning/course_20260830_142737_6be2c8d7c8.png\",\"category\":\"Compliance\",\"start_date\":\"2026-11-30\",\"enrollment_deadline\":\"2026-10-30\",\"instructor_id\":19,\"co_instructors\":[\"14\",\"28\"],\"skills\":[\"1\",\"6\"]}', '2026-08-30 12:27:38'),
+(26, 17, 2, '{\"title\":\"Leadership and Team Management\",\"description\":\"sample\",\"thumbnail_path\":\"assets/uploads/learning/course_20260830_142737_6be2c8d7c8.png\",\"category\":\"Compliance\",\"status\":\"draft\",\"start_date\":\"2026-11-30\",\"enrollment_deadline\":\"2026-10-30\",\"instructor_id\":30,\"co_instructors\":[\"3\",\"5\"],\"skills\":[\"1\",\"6\"],\"lessons\":[]}', '2026-08-30 12:38:32'),
+(27, 1, 4, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":19,\"co_instructors\":[\"2\",\"4\"],\"skills\":[\"1\",\"2\",\"3\"],\"lessons\":[]}', '2026-08-30 12:38:54'),
+(28, 1, 5, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":2,\"co_instructors\":[19],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-30 12:49:21'),
+(29, 1, 6, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":2,\"co_instructors\":[28,11],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-30 12:49:35'),
+(30, 1, 7, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":2,\"co_instructors\":[28,16],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-30 12:52:09'),
+(31, 1, 8, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":2,\"co_instructors\":[37],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-30 12:52:58'),
+(32, 1, 9, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":14,\"co_instructors\":[],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-31 03:24:52'),
+(33, 1, 10, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":31,\"co_instructors\":[],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:06:58'),
+(34, 1, 11, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":18,\"co_instructors\":[],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:26:21'),
+(37, 2, 8, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity. nigger\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[],\"skills\":[2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:41:30'),
+(38, 2, 9, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[],\"skills\":[2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:41:42');
 
 -- --------------------------------------------------------
 
@@ -746,6 +773,14 @@ CREATE TABLE `ld_enrollment` (
   `last_accessed_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ld_enrollment`
+--
+
+INSERT INTO `ld_enrollment` (`id`, `learner_id`, `course_id`, `course_version_id`, `status`, `invited_by`, `enrolled_at`, `completed_at`, `last_accessed_at`, `created_at`) VALUES
+(4, 1, 2, NULL, 'completed', NULL, '2026-08-31 09:19:59', '2026-08-31 10:02:34', NULL, '2026-08-31 09:19:59'),
+(5, 1, 6, NULL, 'completed', NULL, '2026-08-31 10:02:47', '2026-08-31 10:06:20', NULL, '2026-08-31 10:02:47');
 
 -- --------------------------------------------------------
 
@@ -785,7 +820,9 @@ INSERT INTO `ld_lesson` (`id`, `module_id`, `title`, `content_type`, `content_bo
 (12, 4, 'Customizing Charts', 'mixed', 'Learn how to modify chart titles, labels, colors, legends, and layouts.', 'https://www.youtube.com/watch?v=example5', 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
 (13, 5, 'Employee Data Exercise', 'file', 'Practice organizing and formatting employee information.', NULL, 1, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
 (14, 5, 'Payroll Calculation Exercise', 'mixed', 'Practice using formulas to calculate basic payroll-related values.', 'https://www.youtube.com/watch?v=example6', 2, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
-(15, 5, 'Final Excel Challenge', 'text', 'Complete a practical Excel activity using the skills learned throughout the course.', NULL, 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52');
+(15, 5, 'Final Excel Challenge', 'text', 'Complete a practical Excel activity using the skills learned throughout the course.', NULL, 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(18, 11, 'sample', 'file', 'sample', 'https://www.youtube.com/watch?v=zQCtqOhqxks', 1, 'active', '2026-08-31 06:07:55', '2026-08-31 06:07:55'),
+(19, 12, 'sample', 'video', 'sample sample sample', 'https://www.youtube.com/watch?v=Ha91m-n043E', 1, 'active', '2026-08-31 10:05:07', '2026-08-31 10:05:07');
 
 -- --------------------------------------------------------
 
@@ -810,7 +847,9 @@ INSERT INTO `ld_lesson_file` (`id`, `lesson_id`, `file_path`, `title`, `uploaded
 (2, 1, 'uploads/lessons/employee-data-exercise.xlsx', 'Employee Data Exercise.xlsx', '2026-08-29 12:50:52'),
 (3, 1, 'uploads/lessons/payroll-calculation-exercise.xlsx', 'Payroll Calculation Exercise.xlsx', '2026-08-29 12:50:52'),
 (4, 1, 'uploads/lessons/final-excel-challenge.xlsx', 'Final Excel Challenge.xlsx', '2026-08-29 12:50:52'),
-(5, 3, 'uploads/lessons/excel-workbook-practice.xlsx', 'Workbook Practice File.xlsx', '2026-08-29 12:50:52');
+(5, 3, 'uploads/lessons/excel-workbook-practice.xlsx', 'Workbook Practice File.xlsx', '2026-08-29 12:50:52'),
+(8, 18, 'assets/uploads/training/lesson_6a951a59e5dfc5.22373036.pdf', 'sample', '2026-08-31 06:08:25'),
+(9, 19, 'assets/uploads/training/lesson_6a9551ea2a4055.10559728.png', 'diagram', '2026-08-31 10:05:30');
 
 -- --------------------------------------------------------
 
@@ -838,7 +877,10 @@ INSERT INTO `ld_module` (`id`, `course_id`, `title`, `description`, `order_index
 (2, 1, 'Working with Data', 'Learn how to enter, organize, format, sort, and filter data.', 2, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
 (3, 1, 'Excel Formulas', 'Learn the fundamentals of Excel formulas and commonly used functions.', 3, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
 (4, 1, 'Charts and Visualization', 'Learn how to create and customize charts to visualize data.', 4, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
-(5, 1, 'Practical Excel Exercises', 'Apply Excel skills through practical workplace exercises.', 5, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52');
+(5, 1, 'Practical Excel Exercises', 'Apply Excel skills through practical workplace exercises.', 5, 'active', '2026-08-29 12:50:52', '2026-08-29 12:50:52'),
+(11, 2, 'sample', 'sample sample', 1, 'active', '2026-08-31 06:07:30', '2026-08-31 06:07:30'),
+(12, 6, 'SAMPLE TITLE', 'Owning a dog provides several significant benefits for a person\'s physical and mental well-being. First, having a canine companion encourages regular physical activity, as dogs require daily walks and playtime. This routine helps owners maintain a healthier lifestyle and stay active. Additionally, dogs offer emotional support and reduce stress, often comforting their owners after a long or difficult day. In conclusion, dogs are not just wonderful pets, but they also act as valuable partners in improving their owners\' overall health and happiness.', 1, 'active', '2026-08-31 10:04:28', '2026-08-31 10:04:28'),
+(13, 6, 'SAMPLE MODULE 2', 'SAMPLE SAMPLE SAMPLE', 2, 'active', '2026-08-31 10:05:48', '2026-08-31 10:05:48');
 
 -- --------------------------------------------------------
 
@@ -854,6 +896,15 @@ CREATE TABLE `ld_progress` (
   `status` enum('not_started','in_progress','completed') NOT NULL DEFAULT 'not_started',
   `completed_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `ld_progress`
+--
+
+INSERT INTO `ld_progress` (`id`, `enrollment_id`, `item_type`, `reference_id`, `status`, `completed_at`) VALUES
+(3, 4, 'module', 11, 'completed', '2026-08-31 10:02:34'),
+(4, 5, 'module', 12, 'completed', '2026-08-31 10:06:17'),
+(5, 5, 'module', 13, 'completed', '2026-08-31 10:06:20');
 
 -- --------------------------------------------------------
 
@@ -1411,55 +1462,55 @@ ALTER TABLE `lc_incidents`
 -- AUTO_INCREMENT for table `ld_course`
 --
 ALTER TABLE `ld_course`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `ld_course_instructor`
 --
 ALTER TABLE `ld_course_instructor`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=79;
 
 --
 -- AUTO_INCREMENT for table `ld_course_skill`
 --
 ALTER TABLE `ld_course_skill`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
 
 --
 -- AUTO_INCREMENT for table `ld_course_version`
 --
 ALTER TABLE `ld_course_version`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `ld_enrollment`
 --
 ALTER TABLE `ld_enrollment`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `ld_lesson`
 --
 ALTER TABLE `ld_lesson`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT for table `ld_lesson_file`
 --
 ALTER TABLE `ld_lesson_file`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `ld_module`
 --
 ALTER TABLE `ld_module`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `ld_progress`
 --
 ALTER TABLE `ld_progress`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `ld_request`

@@ -18,10 +18,33 @@ class ComplaintController
     }
     public function index()
     {
-        $userId = $_SESSION['user_id'];
+        $userId = $_SESSION['user_id'] ?? null;
+
+        if (!$userId) {
+            throw new Exception('User session not found.');
+        }
+
         $employee = $this->employeeModel->getByUserId($userId);
-        $employees = $this->employeeModel->getAllExcept($employee['employee_id']);
-        $complaintHistory = $this->complaintModel->getComplaint($employee['employee_id']);
+
+        if (!$employee) {
+            throw new Exception('Employee profile not found.');
+        }
+
+        $employees = $this->employeeModel->getAllExcept(
+            $employee['employee_id']
+        );
+
+        $reporterName = trim(
+            ($employee['first_name'] ?? '') . ' ' .
+            ($employee['middle_name'] ?? '') . ' ' .
+            ($employee['last_name'] ?? '')
+        );
+
+        $reporterName = preg_replace('/\s+/', ' ', $reporterName);
+
+        $complaintHistory = $this->complaintModel->getComplaint(
+            $reporterName
+        );
 
         $title = "Employee Complaint";
         $content = __DIR__ . '/../views/employee-portal/complaint/content.php';
@@ -32,178 +55,155 @@ class ComplaintController
     public function store()
     {
         try {
-
-            /*
-            |--------------------------------------------------------------------------
-            | Get Logged-in User
-            |--------------------------------------------------------------------------
-            */
+            // Get logged-in user
             $userId = $_SESSION['user_id'] ?? null;
 
             if (!$userId) {
                 throw new Exception('User session not found.');
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | Get Employee Profile
-            |--------------------------------------------------------------------------
-            */
+            // Get logged-in employee profile
             $employee = $this->employeeModel->getByUserId($userId);
 
             if (!$employee) {
                 throw new Exception('Employee profile not found.');
             }
 
-
-            /*
-            |--------------------------------------------------------------------------
-            | Validate Incident Type
-            |--------------------------------------------------------------------------
-            */
-            $incidentType = trim($_POST['incident_type'] ?? '');
-
-            if ($incidentType === '') {
-                throw new Exception('Incident type is required.');
-            }
-            $title = ucfirst(str_replace('_', ' ', $incidentType));
-
-            /*
-            |--------------------------------------------------------------------------
-            | Reporter Employee ID
-            |--------------------------------------------------------------------------
-            |
-            | Your employee table uses employee_id.
-            |
-            */
+            // Reporter information
             $reporterId = $employee['employee_id'] ?? null;
 
             if (!$reporterId) {
-                throw new Exception('Reporter employee ID not found.');
+                throw new Exception('Employee ID not found.');
             }
 
+            // Reporter name
+            $reporterName = trim(
+                ($employee['first_name'] ?? '') . ' ' .
+                ($employee['middle_name'] ?? '') . ' ' .
+                ($employee['last_name'] ?? '')
+            );
 
-            /*
-            |--------------------------------------------------------------------------
-            | Respondent
-            |--------------------------------------------------------------------------
-            */
-            $respondentId = $_POST['respondent_employee_id'] ?? null;
+            $reporterName = preg_replace('/\s+/', ' ', $reporterName);
+
+            if ($reporterName === '') {
+                throw new Exception('Employee name could not be determined.');
+            }
+
+            // Reporter department
+            $reporterDepartment = $employee['department_name']
+                ?? $employee['department']
+                ?? null;
+
+            // Respondent employee
+            $respondentId = $_POST['employee_id'] ?? null;
 
             if (!$respondentId) {
                 throw new Exception('Respondent employee is required.');
             }
 
+            // Complaint type
+            $type = trim($_POST['type'] ?? '');
 
-            /*
-            |--------------------------------------------------------------------------
-            | Complaint Data
-            |--------------------------------------------------------------------------
-            */
-            $data = [
+            if ($type === '') {
+                throw new Exception('Complaint type is required.');
+            }
 
-                // Reporter
-                'reporter_id' => $reporterId,
+            // Severity
+            $severity = trim($_POST['severity'] ?? '');
 
-                // Respondent
-                'respondent_employee_id' => $respondentId,
+            if ($severity === '') {
+                throw new Exception('Severity is required.');
+            }
 
-                // Incident information
-                'type' =>
-                    !empty($_POST['type'])
-                    ? trim($_POST['type'])
-                    : null,
+            $allowedSeverity = ['Low', 'Medium', 'High'];
 
-                'incident_type' =>
-                    $incidentType,
+            if (!in_array($severity, $allowedSeverity, true)) {
+                throw new Exception('Invalid complaint severity.');
+            }
 
-                'severity' =>
-                    $_POST['severity'] ?? 'medium',
+            // Incident date
+            $incidentDate = $_POST['incident_date'] ?? null;
 
-                'title' => $title,
+            if (!$incidentDate) {
+                throw new Exception('Incident date is required.');
+            }
 
-                'description' =>
-                    trim($_POST['description'] ?? ''),
+            // Incident time
+            $incidentTime = $_POST['incident_time'] ?? null;
 
-                'incident_date' =>
-                    $_POST['incident_date'] ?? null,
+            if (!$incidentTime) {
+                throw new Exception('Incident time is required.');
+            }
 
-                'location' =>
-                    !empty($_POST['location'])
-                    ? trim($_POST['location'])
-                    : null,
+            // Location
+            $location = trim($_POST['location'] ?? '');
 
-                // Privacy
-                'is_confidential' =>
-                    isset($_POST['is_confidential'])
-                    ? 1
-                    : 0,
+            if ($location === '') {
+                throw new Exception('Incident location is required.');
+            }
 
-                // Deadlines
-                'nte_deadline' =>
-                    !empty($_POST['nte_deadline'])
-                    ? $_POST['nte_deadline']
-                    : null,
+            // Complaint title
+            $title = trim($_POST['title'] ?? '');
 
-                'explanation_deadline' =>
-                    !empty($_POST['explanation_deadline'])
-                    ? $_POST['explanation_deadline']
-                    : null,
+            if ($title === '') {
+                throw new Exception('Complaint title is required.');
+            }
 
-                // User who created the complaint
-                'created_by' =>
-                    $userId
-            ];
+            // Complaint description
+            $description = trim($_POST['description'] ?? '');
 
+            if ($description === '') {
+                throw new Exception('Complaint description is required.');
+            }
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create Complaint
-            |--------------------------------------------------------------------------
-            */
-            $success = $this->complaintModel->create($data);
-
-            if (!$success) {
+            // Factual confirmation
+            if (!isset($_POST['factual_confirmation'])) {
                 throw new Exception(
-                    'Complaint could not be created.'
+                    'You must confirm that the information provided is factual.'
                 );
             }
 
+            // Complaint data
+            $data = [
+                'employee_id' => $respondentId,
+                'reporter_name' => $reporterName,
+                'reporter_department' => $reporterDepartment,
+                'type' => $type,
+                'severity' => $severity,
+                'status' => 'under_initial_review',
+                'incident_date' => $incidentDate,
+                'incident_time' => $incidentTime,
+                'location' => $location,
+                'title' => $title,
+                'description' => $description,
+                'assigned_to' => null,
+                'assigned_name' => null,
+                'employee_response' => null,
+                'employee_response_date' => null
+            ];
 
-            /*
-            |--------------------------------------------------------------------------
-            | Success
-            |--------------------------------------------------------------------------
-            */
-            $_SESSION['success'] =
-                'Complaint submitted successfully.';
+            // Create complaint
+            $success = $this->complaintModel->create($data);
 
-            header(
-                'Location: index.php?url=complaint'
-            );
+            if (!$success) {
+                throw new Exception('Complaint could not be created.');
+            }
 
+            // Success
+            $_SESSION['success'] = 'Complaint submitted successfully.';
+
+            header('Location: index.php?url=complaint');
             exit;
 
-
         } catch (\Throwable $e) {
-
             echo '<pre>';
-
             echo "Complaint submission error:\n\n";
-
-            echo $e->getMessage();
-
+            echo htmlspecialchars($e->getMessage());
             echo "\n\nFile: ";
-
-            echo $e->getFile();
-
+            echo htmlspecialchars($e->getFile());
             echo "\nLine: ";
-
-            echo $e->getLine();
-
+            echo htmlspecialchars((string) $e->getLine());
             echo '</pre>';
-
             exit;
         }
     }
