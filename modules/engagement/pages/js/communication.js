@@ -1,43 +1,109 @@
+function normalizeCommunicationTab(tabId) {
+  if (!tabId) return '';
+
+  const normalized = String(tabId).trim().toLowerCase().replace(/_/g, '-');
+  const validTabs = ['announcements', 'notifications', 'updates', 'messaging', 'policies'];
+
+  if (validTabs.includes(normalized)) {
+    return normalized;
+  }
+
+  if (normalized === 'hr-notification' || normalized === 'hr-notification-tab') {
+    return 'notifications';
+  }
+
+  return '';
+}
+
+const COMMUNICATION_STORAGE_KEY = 'engagement:communication:active-tab';
+const COMMUNICATION_LEGACY_STORAGE_KEY = 'communication-active-tab';
+
 // Handle tab navigation based on the last selected tab, with a safe fallback
 function activateTabFromHash() {
   let activeTabId = '';
 
   try {
-    activeTabId = localStorage.getItem('communication-active-tab') || '';
-  } catch (error) {
-    // Ignore storage access errors.
-  }
+    if (window.location.hash) {
+      const hashTab = normalizeCommunicationTab(window.location.hash.replace('#', ''));
+      if (hashTab) {
+        activeTabId = hashTab;
+      }
+    }
 
-  if (!activeTabId && window.location.hash) {
-    activeTabId = window.location.hash.replace('#', '');
+    if (!activeTabId) {
+      const namespacedTab = normalizeCommunicationTab(localStorage.getItem(COMMUNICATION_STORAGE_KEY));
+      const legacyTab = normalizeCommunicationTab(localStorage.getItem(COMMUNICATION_LEGACY_STORAGE_KEY));
+      const storedTab = namespacedTab || legacyTab;
+      if (storedTab) {
+        activeTabId = storedTab;
+      }
+    }
+
+    if (!activeTabId) {
+      const namespacedTab = normalizeCommunicationTab(sessionStorage.getItem(COMMUNICATION_STORAGE_KEY));
+      const legacyTab = normalizeCommunicationTab(sessionStorage.getItem(COMMUNICATION_LEGACY_STORAGE_KEY));
+      const storedTab = namespacedTab || legacyTab;
+      if (storedTab) {
+        activeTabId = storedTab;
+      }
+    }
+  } catch (error) {
+    console.warn('[Communication Tab] Storage access error:', error);
   }
 
   if (!activeTabId) {
-    activeTabId = 'policies';
+    activeTabId = 'announcements';
   }
 
-  const tabLink = document.querySelector(`a[href="#${activeTabId}"]`);
+  console.log('[Communication Tab] Activating tab:', activeTabId);
 
-  if (tabLink) {
-    switchTab(tabLink, false, true);
-  } else {
-    const firstTab = document.querySelector('.nav-link');
-    if (firstTab) {
-      switchTab(firstTab, false, true);
+  // Attempt to find and activate the tab with retry logic
+  let retryCount = 0;
+  const maxRetries = 5;
+  
+  function attemptActivateTab() {
+    const tabLink = document.querySelector(`a[href="#${activeTabId}"]`);
+    const tabPane = document.getElementById(activeTabId);
+
+    if (tabLink && tabPane) {
+      console.log('[Communication Tab] DOM ready, activating:', activeTabId);
+      switchTab(tabLink, false, true);
+    } else if (retryCount < maxRetries) {
+      retryCount++;
+      console.log('[Communication Tab] DOM not ready, retrying... (' + retryCount + '/' + maxRetries + ')');
+      setTimeout(attemptActivateTab, 100);
+    } else {
+      console.warn('[Communication Tab] Failed to find tab after', maxRetries, 'retries, using first available');
+      const firstTab = document.querySelector('.nav-link');
+      if (firstTab) {
+        switchTab(firstTab, false, true);
+      }
     }
   }
+
+  attemptActivateTab();
 }
+
 
 // Smooth tab switching function
 function switchTab(tabLink, updateHistory = true, isInitialLoad = false) {
   // Get the target pane
   const paneId = tabLink.getAttribute('href').substring(1);
-  const pane = document.getElementById(paneId);
+  const normalizedPaneId = normalizeCommunicationTab(paneId);
+  const pane = document.getElementById(normalizedPaneId || paneId);
   
   if (!pane) return;
   
-  // Save to localStorage for persistence across refreshes
-  localStorage.setItem('communication-active-tab', paneId);
+  const persistedTab = normalizedPaneId || paneId;
+  localStorage.setItem(COMMUNICATION_STORAGE_KEY, persistedTab);
+  localStorage.setItem(COMMUNICATION_LEGACY_STORAGE_KEY, persistedTab);
+  sessionStorage.setItem(COMMUNICATION_STORAGE_KEY, persistedTab);
+  sessionStorage.setItem(COMMUNICATION_LEGACY_STORAGE_KEY, persistedTab);
+  
+  // Update URL hash for better persistence
+  if (!window.location.hash || window.location.hash.replace('#', '') !== persistedTab) {
+    window.history.replaceState({}, '', window.location.pathname + window.location.search + '#' + persistedTab);
+  }
   
   // Get all tabs and panes
   const allTabs = document.querySelectorAll('.nav-link');
@@ -375,21 +441,25 @@ function initLcmPolicySharing() {
 // Initialize on page load
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Communication Tab] DOMContentLoaded fired, initializing...');
     setTimeout(function() {
       initTabClickHandlers();
       activateTabFromHash();
       initCommunicationForms();
       initPolicyFilter();
       initLcmPolicySharing();
+      console.log('[Communication Tab] Initialization complete');
     }, 100);
   });
 } else {
+  console.log('[Communication Tab] DOM already loaded, initializing...');
   setTimeout(function() {
     initTabClickHandlers();
     activateTabFromHash();
     initCommunicationForms();
     initPolicyFilter();
     initLcmPolicySharing();
+    console.log('[Communication Tab] Initialization complete');
   }, 100);
 }
 
@@ -401,13 +471,15 @@ window.addEventListener('hashchange', function() {
 // Listen for AJAX page loads
 window.addEventListener('page:loaded', function(e) {
   if (e.detail && e.detail.page === 'communication') {
-    console.log('Communication page loaded via AJAX, initializing tabs...');
+    console.log('[Communication Tab] Page loaded event fired, initializing tabs...');
+    // Increased timeout to ensure DOM is fully ready
     setTimeout(function() {
       initTabClickHandlers();
       activateTabFromHash();
       initCommunicationForms();
       initPolicyFilter();
       initLcmPolicySharing();
-    }, 100);
+      console.log('[Communication Tab] Initialization complete after page load');
+    }, 150);
   }
 });

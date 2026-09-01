@@ -898,4 +898,4 @@ function getNotificationTypeIcon($type) {
 <div id="announcement-modal-backdrop" class="modal-backdrop fade" style="display: none; z-index: 1040;"></div>
       
 
-  <script src="pages/js/communication.js"></script>
+

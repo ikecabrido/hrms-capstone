@@ -7,54 +7,53 @@ const recognitionApiBase = window.location.pathname.indexOf('/pages/') !== -1
   ? '../api/index.php'
   : 'api/index.php';
 
-function closeRecognitionModal() {
-  const recognitionModal = document.getElementById('sendRecognitionModal');
-  if (recognitionModal) {
-    recognitionModal.classList.remove('show');
-    recognitionModal.setAttribute('aria-hidden', 'true');
+function setRecognitionModalVisibility(modalId, shouldOpen) {
+  const modal = document.getElementById(modalId);
+  if (!modal) return;
+
+  modal.classList.toggle('show', shouldOpen);
+  modal.classList.toggle('d-block', shouldOpen);
+  modal.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
+  modal.setAttribute('aria-modal', shouldOpen ? 'true' : 'false');
+  modal.style.display = shouldOpen ? 'block' : 'none';
+
+  if (shouldOpen) {
+    document.body.classList.add('modal-open');
+    if (!document.querySelector('.modal-backdrop')) {
+      const backdrop = document.createElement('div');
+      backdrop.className = 'modal-backdrop fade show';
+      document.body.appendChild(backdrop);
+    }
+  } else {
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+      backdrop.remove();
+    });
   }
-  document.body.classList.remove('modal-open');
+}
+
+function closeRecognitionModal() {
+  setRecognitionModalVisibility('sendRecognitionModal', false);
 }
 
 function openRecognitionModal() {
-  const recognitionModal = document.getElementById('sendRecognitionModal');
-  if (!recognitionModal) return;
-  recognitionModal.classList.add('show');
-  recognitionModal.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('modal-open');
+  setRecognitionModalVisibility('sendRecognitionModal', true);
 }
 
 function closeNominationModal() {
-  const nominationModal = document.getElementById('nominateEmployeeModal');
-  if (nominationModal) {
-    nominationModal.classList.remove('show');
-    nominationModal.setAttribute('aria-hidden', 'true');
-  }
-  document.body.classList.remove('modal-open');
+  setRecognitionModalVisibility('nominateEmployeeModal', false);
 }
 
 function closeAssignBadgeModal() {
-  const assignBadgeModal = document.getElementById('assignBadgeModal');
-  if (!assignBadgeModal) return;
-  assignBadgeModal.classList.remove('show');
-  assignBadgeModal.setAttribute('aria-hidden', 'true');
-  document.body.classList.remove('modal-open');
+  setRecognitionModalVisibility('assignBadgeModal', false);
 }
 
 function closeAddRewardModal() {
-  const addRewardModal = document.getElementById('addRewardModal');
-  if (!addRewardModal) return;
-  addRewardModal.classList.remove('show');
-  addRewardModal.setAttribute('aria-hidden', 'true');
-  document.body.classList.remove('modal-open');
+  setRecognitionModalVisibility('addRewardModal', false);
 }
 
 function closeCreateBadgeModal() {
-  const createBadgeModal = document.getElementById('createBadgeModal');
-  if (!createBadgeModal) return;
-  createBadgeModal.classList.remove('show');
-  createBadgeModal.setAttribute('aria-hidden', 'true');
-  document.body.classList.remove('modal-open');
+  setRecognitionModalVisibility('createBadgeModal', false);
 }
 
 function closeAllRecognitionModals() {
@@ -63,18 +62,19 @@ function closeAllRecognitionModals() {
   closeAssignBadgeModal();
   closeAddRewardModal();
   closeCreateBadgeModal();
-  document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
-    backdrop.remove();
-  });
 }
 
 function openNominationModal() {
-  const nominationModal = document.getElementById('nominateEmployeeModal');
-  if (!nominationModal) return;
-  nominationModal.classList.add('show');
-  nominationModal.setAttribute('aria-hidden', 'false');
-  document.body.classList.add('modal-open');
+  setRecognitionModalVisibility('nominateEmployeeModal', true);
 }
+
+window.closeRecognitionModal = closeRecognitionModal;
+window.openRecognitionModal = openRecognitionModal;
+window.closeNominationModal = closeNominationModal;
+window.closeAssignBadgeModal = closeAssignBadgeModal;
+window.closeAddRewardModal = closeAddRewardModal;
+window.closeCreateBadgeModal = closeCreateBadgeModal;
+window.openNominationModal = openNominationModal;
 
 function getCurrentMonthYear() {
   const date = new Date();
@@ -230,15 +230,23 @@ recognitionStyle.textContent = `
 `;
 document.head.appendChild(recognitionStyle);
 
+const RECOGNITION_STORAGE_KEY = 'engagement:recognition:active-tab';
+const RECOGNITION_LEGACY_STORAGE_KEY = 'recognition-active-tab';
+
 function saveRecognitionTab(tabId) {
   if (!tabId) return;
-  localStorage.setItem('recognition-active-tab', tabId);
+  localStorage.setItem(RECOGNITION_STORAGE_KEY, tabId);
+  localStorage.setItem(RECOGNITION_LEGACY_STORAGE_KEY, tabId);
+  sessionStorage.setItem(RECOGNITION_STORAGE_KEY, tabId);
+  sessionStorage.setItem(RECOGNITION_LEGACY_STORAGE_KEY, tabId);
+  console.log('[Recognition Tab] Saved to storage:', tabId);
 
   const currentHash = (window.location.hash || '').replace('#', '');
   if (currentHash !== tabId) {
     const baseUrl = window.location.pathname + window.location.search;
     const nextUrl = tabId === 'recognition' ? baseUrl : baseUrl + '#' + tabId;
     window.history.replaceState({}, '', nextUrl);
+    console.log('[Recognition Tab] Updated URL hash to:', tabId);
   }
 }
 
@@ -279,34 +287,71 @@ function switchRecognitionTab(tabLink, isInitialLoad = false) {
 }
 
 function activateRecognitionTabFromHash(isInitialLoad = false) {
-  const urlHash = window.location.hash ? window.location.hash.replace('#', '') : '';
-  const savedHash = localStorage.getItem('recognition-active-tab');
+  const validTabIds = ['recognition', 'employee-month', 'badges', 'rewards', 'leaderboard'];
+  const legacyTabMappings = {
+    'employees-of-month': 'employee-month',
+    'points-leaderboard': 'leaderboard',
+  };
+
+  function normalizeRecognitionTabId(tabId) {
+    if (!tabId) return '';
+    const trimmed = tabId.trim();
+    return legacyTabMappings[trimmed] || trimmed;
+  }
+
+  // Priority 1: Check URL hash
+  const rawUrlHash = window.location.hash ? window.location.hash.replace('#', '') : '';
+  const urlHash = normalizeRecognitionTabId(rawUrlHash);
+  const savedHash = normalizeRecognitionTabId(
+    localStorage.getItem(RECOGNITION_STORAGE_KEY)
+      || localStorage.getItem(RECOGNITION_LEGACY_STORAGE_KEY)
+      || sessionStorage.getItem(RECOGNITION_STORAGE_KEY)
+      || sessionStorage.getItem(RECOGNITION_LEGACY_STORAGE_KEY)
+      || ''
+  );
 
   let hash = 'recognition';
-  if (urlHash && document.getElementById(urlHash)) {
+  if (urlHash && validTabIds.includes(urlHash)) {
     hash = urlHash;
-  } else if (savedHash && document.getElementById(savedHash)) {
+    console.log('[Recognition Tab] Using URL hash:', urlHash);
+  } else if (savedHash && validTabIds.includes(savedHash)) {
     hash = savedHash;
+    console.log('[Recognition Tab] Using saved storage:', savedHash);
   }
 
-  const targetTab = document.querySelector('#recognition-tabs a[href="#' + CSS.escape(hash) + '"]');
+  console.log('[Recognition Tab] Activating tab:', hash);
 
-  if (!targetTab) return;
+  // Retry logic for DOM readiness
+  let retryCount = 0;
+  const maxRetries = 5;
 
-  const currentActiveTab = document.querySelector('#recognition-tabs .nav-link.active');
-  const currentHref = currentActiveTab ? currentActiveTab.getAttribute('href') : null;
-  const nextHref = '#' + hash;
+  function attemptActivate() {
+    const targetTab = document.querySelector('#recognition-tabs a[href="#' + CSS.escape(hash) + '"]');
+    const targetPane = document.getElementById(hash);
 
-  if (currentHref === nextHref && document.getElementById(hash)?.classList.contains('active')) {
-    return;
+    if (targetTab && targetPane) {
+      console.log('[Recognition Tab] DOM ready, activating:', hash);
+      
+      const currentActiveTab = document.querySelector('#recognition-tabs .nav-link.active');
+      const currentHref = currentActiveTab ? currentActiveTab.getAttribute('href') : null;
+      const nextHref = '#' + hash;
+
+      if (currentHref === nextHref && targetPane.classList.contains('active')) {
+        return;
+      }
+
+      switchRecognitionTab(targetTab, isInitialLoad);
+      saveRecognitionTab(hash);
+    } else if (retryCount < maxRetries) {
+      retryCount++;
+      console.log('[Recognition Tab] DOM not ready, retrying... (' + retryCount + '/' + maxRetries + ')');
+      setTimeout(attemptActivate, 100);
+    } else {
+      console.warn('[Recognition Tab] Failed to find tab after', maxRetries, 'retries');
+    }
   }
 
-  if (hash !== 'recognition' && window.location.hash !== nextHref) {
-    const baseUrl = window.location.pathname + window.location.search;
-    window.history.replaceState({}, '', baseUrl + '#' + hash);
-  }
-
-  switchRecognitionTab(targetTab, isInitialLoad);
+  attemptActivate();
 }
 
 function initRecognitionTabClickHandlers() {
@@ -340,6 +385,7 @@ function bindRecognitionPageEvents() {
 
   window.addEventListener('pageshow', function(event) {
     if (event.persisted || document.visibilityState === 'visible') {
+      console.log('[Recognition Tab] Page show event fired, restoring tab...');
       closeAllRecognitionModals();
       activateRecognitionTabFromHash(true);
       resetRecognitionState();
@@ -389,22 +435,28 @@ function bindRecognitionPageEvents() {
   });
 
   window.addEventListener('page:loaded', function(e) {
-    if (e.detail && e.detail.page === 'recognition') {
-      closeAllRecognitionModals();
-      resetRecognitionState();
-      initRecognitionTabClickHandlers();
-      window.setTimeout(function() {
-        activateRecognitionTabFromHash(true);
-      }, 0);
-      loadRecognitionFeed();
-      loadBadges();
-      loadAwardHistory();
-      loadRewards();
-      loadRewardRedemptions();
-      loadEmployeeBadges();
-      loadEmployeeOfTheMonthCandidates();
-      bindNominationFormEvents();
+    if (!e.detail || e.detail.page !== 'recognition') {
+      recognitionPageInitialized = false;
+      stopRecognitionAutoRefresh();
+      return;
     }
+
+    console.log('[Recognition Tab] Page loaded event fired');
+    closeAllRecognitionModals();
+    resetRecognitionState();
+    initRecognitionTabClickHandlers();
+    window.setTimeout(function() {
+      activateRecognitionTabFromHash(true);
+      console.log('[Recognition Tab] Tab restoration complete after page load');
+    }, 100);
+    loadRecognitionFeed();
+    loadBadges();
+    loadAwardHistory();
+    loadRewards();
+    loadRewardRedemptions();
+    loadEmployeeBadges();
+    loadEmployeeOfTheMonthCandidates();
+    bindNominationFormEvents();
   });
 
   const form = document.querySelector('form');
@@ -418,7 +470,36 @@ function bindRecognitionPageEvents() {
   const addRewardModal = document.getElementById('addRewardModal');
   const createBadgeModal = document.getElementById('createBadgeModal');
 
-  if (nominationModal) {
+  const directCloseSelectors = [
+    '#nominateEmployeeModal [data-dismiss="modal"]',
+    '#assignBadgeModal [data-dismiss="modal"]',
+    '#addRewardModal [data-dismiss="modal"]',
+    '#createBadgeModal [data-dismiss="modal"]',
+    '#sendRecognitionModal [data-dismiss="modal"]'
+  ];
+
+  directCloseSelectors.forEach(function(selector) {
+    document.querySelectorAll(selector).forEach(function(closeButton) {
+      if (closeButton.dataset.recognitionCloseBound === '1') return;
+      closeButton.dataset.recognitionCloseBound = '1';
+      closeButton.addEventListener('click', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const modal = closeButton.closest('.modal');
+        if (!modal) return;
+
+        if (modal.id === 'nominateEmployeeModal') closeNominationModal();
+        else if (modal.id === 'assignBadgeModal') closeAssignBadgeModal();
+        else if (modal.id === 'addRewardModal') closeAddRewardModal();
+        else if (modal.id === 'createBadgeModal') closeCreateBadgeModal();
+        else if (modal.id === 'sendRecognitionModal') closeRecognitionModal();
+      }, true);
+    });
+  });
+
+  if (nominationModal && !nominationModal.dataset.recognitionModalCloseBound) {
+    nominationModal.dataset.recognitionModalCloseBound = '1';
     nominationModal.addEventListener('click', function(event) {
       if (event.target === nominationModal || event.target.closest('[data-dismiss="modal"]')) {
         closeNominationModal();
@@ -426,7 +507,8 @@ function bindRecognitionPageEvents() {
     });
   }
 
-  if (assignBadgeModal) {
+  if (assignBadgeModal && !assignBadgeModal.dataset.recognitionModalCloseBound) {
+    assignBadgeModal.dataset.recognitionModalCloseBound = '1';
     assignBadgeModal.addEventListener('click', function(event) {
       if (event.target === assignBadgeModal || event.target.closest('[data-dismiss="modal"]')) {
         closeAssignBadgeModal();
@@ -434,7 +516,8 @@ function bindRecognitionPageEvents() {
     });
   }
 
-  if (addRewardModal) {
+  if (addRewardModal && !addRewardModal.dataset.recognitionModalCloseBound) {
+    addRewardModal.dataset.recognitionModalCloseBound = '1';
     addRewardModal.addEventListener('click', function(event) {
       if (event.target === addRewardModal || event.target.closest('[data-dismiss="modal"]')) {
         closeAddRewardModal();
@@ -442,7 +525,8 @@ function bindRecognitionPageEvents() {
     });
   }
 
-  if (createBadgeModal) {
+  if (createBadgeModal && !createBadgeModal.dataset.recognitionModalCloseBound) {
+    createBadgeModal.dataset.recognitionModalCloseBound = '1';
     createBadgeModal.addEventListener('click', function(event) {
       if (event.target === createBadgeModal || event.target.closest('[data-dismiss="modal"]')) {
         closeCreateBadgeModal();
@@ -451,61 +535,68 @@ function bindRecognitionPageEvents() {
   }
 
   document.addEventListener('click', function(event) {
-    const openButton = event.target.closest('[data-target="#nominateEmployeeModal"]');
-    if (!openButton) return;
-    event.preventDefault();
-    openNominationModal();
-    if (nominationSel) nominationSel.focus();
-  });
-
-  document.addEventListener('click', function(event) {
-    const openButton = event.target.closest('[data-target="#assignBadgeModal"]');
-    if (!openButton) return;
-    event.preventDefault();
-    const currentAssignBadgeModal = document.getElementById('assignBadgeModal');
-    if (currentAssignBadgeModal) {
-      currentAssignBadgeModal.classList.add('show');
-      currentAssignBadgeModal.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('modal-open');
+    const openRecognitionModalTrigger = event.target.closest('[data-recognition-open]');
+    if (openRecognitionModalTrigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      const modalId = openRecognitionModalTrigger.getAttribute('data-recognition-open');
+      if (modalId === 'nominateEmployeeModal') {
+        openNominationModal();
+        if (nominationSel) nominationSel.focus();
+      } else if (modalId === 'assignBadgeModal') {
+        setRecognitionModalVisibility('assignBadgeModal', true);
+      } else if (modalId === 'addRewardModal') {
+        setRecognitionModalVisibility('addRewardModal', true);
+      } else if (modalId === 'createBadgeModal') {
+        setRecognitionModalVisibility('createBadgeModal', true);
+      }
+      return;
     }
-  });
 
-  document.addEventListener('click', function(event) {
-    const openButton = event.target.closest('[data-target="#addRewardModal"]');
-    if (!openButton) return;
-    event.preventDefault();
-    const currentAddRewardModal = document.getElementById('addRewardModal');
-    if (currentAddRewardModal) {
-      currentAddRewardModal.classList.add('show');
-      currentAddRewardModal.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('modal-open');
+    const targetModal = event.target.closest('[data-target]');
+    if (targetModal) {
+      const targetId = targetModal.getAttribute('data-target');
+      if (targetId === '#assignBadgeModal' || targetId === '#addRewardModal' || targetId === '#nominateEmployeeModal') {
+        event.preventDefault();
+        event.stopPropagation();
+        const modalKey = targetId.replace('#', '');
+        if (modalKey === 'nominateEmployeeModal') {
+          openNominationModal();
+          if (nominationSel) nominationSel.focus();
+        } else {
+          setRecognitionModalVisibility(modalKey, true);
+        }
+        return;
+      }
     }
-  });
 
-  document.addEventListener('click', function(event) {
-    const openButton = event.target.closest('[data-target="#createBadgeModal"]');
-    if (!openButton) return;
-    event.preventDefault();
-    if (createBadgeModal) {
-      createBadgeModal.classList.add('show');
-      createBadgeModal.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('modal-open');
+    const closeRecognitionModalTrigger = event.target.closest('[data-recognition-close]');
+    if (closeRecognitionModalTrigger) {
+      event.preventDefault();
+      event.stopPropagation();
+      const modalId = closeRecognitionModalTrigger.getAttribute('data-recognition-close');
+      if (modalId === 'nominateEmployeeModal') closeNominationModal();
+      else if (modalId === 'assignBadgeModal') closeAssignBadgeModal();
+      else if (modalId === 'addRewardModal') closeAddRewardModal();
+      else if (modalId === 'createBadgeModal') closeCreateBadgeModal();
+      else if (modalId === 'sendRecognitionModal') closeRecognitionModal();
+      return;
     }
-  });
 
-  document.addEventListener('click', function(event) {
-    const modal = document.getElementById('addRewardModal');
-    if (!modal || (event.target !== modal && !event.target.closest('#addRewardModal [data-dismiss="modal"]'))) return;
-    event.preventDefault();
-    closeAddRewardModal();
-  });
+    const rewardModal = document.getElementById('addRewardModal');
+    if (rewardModal && (event.target === rewardModal || event.target.closest('#addRewardModal [data-dismiss="modal"]'))) {
+      event.preventDefault();
+      closeAddRewardModal();
+      return;
+    }
 
-  document.addEventListener('click', function(event) {
-    const modal = document.getElementById('assignBadgeModal');
-    if (!modal || (event.target !== modal && !event.target.closest('#assignBadgeModal [data-dismiss="modal"]'))) return;
-    event.preventDefault();
-    closeAssignBadgeModal();
-  });
+    const assignModal = document.getElementById('assignBadgeModal');
+    if (assignModal && (event.target === assignModal || event.target.closest('#assignBadgeModal [data-dismiss="modal"]'))) {
+      event.preventDefault();
+      closeAssignBadgeModal();
+      return;
+    }
+  }, true);
 
   bindNominationFormEvents();
 
@@ -758,12 +849,14 @@ function initializeRecognitionPage() {
   if (recognitionPageInitialized) return;
   recognitionPageInitialized = true;
 
+  console.log('[Recognition Tab] Initializing recognition page');
   resetRecognitionState();
   initRecognitionTabClickHandlers();
   bindRecognitionPageEvents();
   window.setTimeout(function() {
     activateRecognitionTabFromHash(true);
-  }, 0);
+    console.log('[Recognition Tab] Initialization complete');
+  }, 50);
 
   loadRecognitionFeed();
   loadBadges();
@@ -805,12 +898,21 @@ function resetRecognitionState() {
   topPerformersData = [];
 }
 
-function startRecognitionAutoRefresh(intervalMs) {
+function stopRecognitionAutoRefresh() {
   if (recognitionRefreshTimer) {
     clearInterval(recognitionRefreshTimer);
+    recognitionRefreshTimer = null;
   }
+}
+
+function startRecognitionAutoRefresh(intervalMs) {
+  stopRecognitionAutoRefresh();
   const refreshInterval = intervalMs || 5000;
   recognitionRefreshTimer = setInterval(function() {
+    if (!document.getElementById('employee-month') && !document.getElementById('recognition-tabs')) {
+      stopRecognitionAutoRefresh();
+      return;
+    }
     refreshAllRecognitionSections();
   }, refreshInterval);
 }

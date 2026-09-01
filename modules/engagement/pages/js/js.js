@@ -1,9 +1,0 @@
-import './communication.js';
-import './JS/dashboard.js';
-import './grievance.js';
-import './social.js';
-import './survey_view.js';
-import './grievance_detail.js';
-import './grievance_manage.js';
-import './survey.js';
-import './recognition.js';

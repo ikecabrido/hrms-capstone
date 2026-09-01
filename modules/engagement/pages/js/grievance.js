@@ -1,5 +1,70 @@
 (function () {
   const grievanceTabIds = ['all-grievances', 'management', 'reports'];
+  const GRIEVANCE_STORAGE_KEY = 'engagement:grievance:active-tab';
+  const GRIEVANCE_LEGACY_STORAGE_KEY = 'grievance-active-tab';
+
+  function getSavedGrievanceTab() {
+    const candidateKeys = [GRIEVANCE_STORAGE_KEY, GRIEVANCE_LEGACY_STORAGE_KEY];
+    const validTabIds = ['all-grievances', 'management', 'reports'];
+
+    // Priority 1: Check URL hash first
+    const urlHash = window.location.hash.replace('#', '');
+    if (urlHash && validTabIds.includes(urlHash)) {
+      console.log('[Grievance Tab] Using URL hash:', urlHash);
+      return urlHash;
+    }
+
+    // Priority 2: Check sessionStorage
+    for (const key of candidateKeys) {
+      try {
+        const savedTab = sessionStorage.getItem(key);
+        if (savedTab && validTabIds.includes(savedTab)) {
+          console.log('[Grievance Tab] Using sessionStorage:', savedTab);
+          return savedTab;
+        }
+      } catch (error) {
+        // Ignore storage access issues
+      }
+    }
+
+    // Priority 3: Check localStorage
+    for (const key of candidateKeys) {
+      try {
+        const savedTab = localStorage.getItem(key);
+        if (savedTab && validTabIds.includes(savedTab)) {
+          console.log('[Grievance Tab] Using localStorage:', savedTab);
+          return savedTab;
+        }
+      } catch (error) {
+        // Ignore storage access issues
+      }
+    }
+
+    console.log('[Grievance Tab] No saved tab found, using default');
+    return null;
+  }
+
+  function persistGrievanceTab(tabId) {
+    const validTabId = String(tabId || '').replace('#', '').trim();
+    if (!grievanceTabIds.includes(validTabId)) return;
+
+    try {
+      sessionStorage.setItem(GRIEVANCE_STORAGE_KEY, validTabId);
+      sessionStorage.setItem(GRIEVANCE_LEGACY_STORAGE_KEY, validTabId);
+      localStorage.setItem(GRIEVANCE_STORAGE_KEY, validTabId);
+      localStorage.setItem(GRIEVANCE_LEGACY_STORAGE_KEY, validTabId);
+      console.log('[Grievance Tab] Persisted:', validTabId);
+      
+      // Also update URL hash
+      const currentHash = window.location.hash.replace('#', '');
+      if (currentHash !== validTabId) {
+        window.history.replaceState({}, '', window.location.pathname + window.location.search + '#' + validTabId);
+        console.log('[Grievance Tab] Updated URL hash to:', validTabId);
+      }
+    } catch (error) {
+      console.warn('Unable to save active grievance tab.', error);
+    }
+  }
 
   function setActiveGrievanceTab(tabId, updateHash = true) {
     const validTabId = String(tabId || '').replace('#', '').trim();
@@ -26,6 +91,8 @@
       pane.style.opacity = isActive ? '1' : '0';
     });
 
+    persistGrievanceTab(validTabId);
+
     if (updateHash) {
       window.history.replaceState({}, '', window.location.pathname + window.location.search + '#' + validTabId);
     }
@@ -38,7 +105,11 @@
   }
 
   function initializeGrievanceTabs() {
-    if (!document.getElementById('grievance-tabs')) return;
+    if (!document.getElementById('grievance-tabs')) {
+      console.warn('[Grievance Tab] Tab container not found');
+      return;
+    }
+    
     const reportContainer = document.getElementById('grievance-tabs-content');
     if (reportContainer && reportContainer.dataset.reportData) {
       try {
@@ -48,9 +119,35 @@
         console.error('Unable to load grievance report data', error);
       }
     }
-    const requestedTab = window.location.hash.replace('#', '').trim();
-    const activeTab = grievanceTabIds.includes(requestedTab) ? requestedTab : 'all-grievances';
-    setActiveGrievanceTab(activeTab, false);
+
+    // Retry logic for DOM readiness
+    let retryCount = 0;
+    const maxRetries = 5;
+
+    function attemptInitialize() {
+      const storedTab = getSavedGrievanceTab();
+      const requestedTab = window.location.hash.replace('#', '').trim();
+      const activeTab = grievanceTabIds.includes(requestedTab)
+        ? requestedTab
+        : (storedTab && grievanceTabIds.includes(storedTab) ? storedTab : 'all-grievances');
+      
+      const tabLink = document.querySelector('#grievance-tabs a[data-grievance-tab="' + activeTab + '"]');
+      const tabPane = document.getElementById(activeTab);
+      
+      if (tabLink && tabPane) {
+        console.log('[Grievance Tab] DOM ready, setting active tab:', activeTab);
+        setActiveGrievanceTab(activeTab, false);
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        console.log('[Grievance Tab] DOM not ready, retrying... (' + retryCount + '/' + maxRetries + ')');
+        setTimeout(attemptInitialize, 100);
+      } else {
+        console.warn('[Grievance Tab] Failed to find tabs after', maxRetries, 'retries');
+        setActiveGrievanceTab('all-grievances', false);
+      }
+    }
+
+    attemptInitialize();
   }
 
   function resetAutomaticReportFilters() {

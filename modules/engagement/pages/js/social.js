@@ -1,6 +1,7 @@
   // Persist active tab state using localStorage with smooth transitions
-  const STORAGE_KEY = 'socialPageActiveTab';
-  const LEGACY_STORAGE_KEY = 'social-active-tab';
+  const STORAGE_KEY = 'engagement:social:active-tab';
+  const LEGACY_STORAGE_KEY = 'socialPageActiveTab';
+  const LEGACY_STORAGE_KEY_2 = 'social-active-tab';
   const engagementScript = Array.from(document.scripts).find(function(script) {
     return script.src.indexOf('/modules/engagement/js/script.js') !== -1;
   });
@@ -34,19 +35,43 @@
   document.head.appendChild(style);
 
   function getSavedSocialTabId() {
-    const candidateKeys = [STORAGE_KEY, LEGACY_STORAGE_KEY];
+    const candidateKeys = [STORAGE_KEY, LEGACY_STORAGE_KEY, LEGACY_STORAGE_KEY_2];
+    const validTabIds = ['feed', 'forums', 'groups', 'projects'];
 
+    // Priority 1: Check URL hash first
+    const urlHash = window.location.hash.replace('#', '');
+    if (urlHash && validTabIds.includes(urlHash)) {
+      console.log('[Social Tab] Using URL hash:', urlHash);
+      return urlHash;
+    }
+
+    // Priority 2: Check sessionStorage
     for (const key of candidateKeys) {
       try {
-        const savedTab = localStorage.getItem(key);
-        if (savedTab && document.getElementById(savedTab)) {
+        const savedTab = sessionStorage.getItem(key);
+        if (savedTab && validTabIds.includes(savedTab)) {
+          console.log('[Social Tab] Using sessionStorage:', savedTab);
           return savedTab;
         }
       } catch (error) {
-        // Ignore storage access errors and fall back to default tab.
+        // Ignore storage access errors
       }
     }
 
+    // Priority 3: Check localStorage
+    for (const key of candidateKeys) {
+      try {
+        const savedTab = localStorage.getItem(key);
+        if (savedTab && validTabIds.includes(savedTab)) {
+          console.log('[Social Tab] Using localStorage:', savedTab);
+          return savedTab;
+        }
+      } catch (error) {
+        // Ignore storage access errors
+      }
+    }
+
+    console.log('[Social Tab] No saved tab found, using default: feed');
     return 'feed';
   }
 
@@ -56,36 +81,71 @@
   }
 
   function persistSocialTab(tabId) {
-    const validTabId = getValidSocialTabId(tabId);
+    const validTabIds = ['feed', 'forums', 'groups', 'projects'];
+    const validTabId = validTabIds.includes(tabId) ? tabId : 'feed';
 
     try {
+      sessionStorage.setItem(STORAGE_KEY, validTabId);
+      sessionStorage.setItem(LEGACY_STORAGE_KEY, validTabId);
+      sessionStorage.setItem(LEGACY_STORAGE_KEY_2, validTabId);
       localStorage.setItem(STORAGE_KEY, validTabId);
       localStorage.setItem(LEGACY_STORAGE_KEY, validTabId);
-      sessionStorage.setItem(STORAGE_KEY, validTabId);
+      localStorage.setItem(LEGACY_STORAGE_KEY_2, validTabId);
+      console.log('[Social Tab] Persisted:', validTabId);
+      
+      // Also update URL hash
+      const currentHash = window.location.hash.replace('#', '');
+      if (currentHash !== validTabId) {
+        window.history.replaceState({}, '', window.location.pathname + window.location.search + '#' + validTabId);
+        console.log('[Social Tab] Updated URL hash to:', validTabId);
+      }
     } catch (error) {
       console.warn('Unable to save active social tab.', error);
     }
   }
 
   function restoreSavedTab() {
+    const validTabIds = ['feed', 'forums', 'groups', 'projects'];
     const savedTab = getSavedSocialTabId();
-    const targetPane = document.getElementById(savedTab);
-    const targetLink = document.querySelector('#collaboration-tabs a[aria-controls="' + savedTab + '"]');
+    
+    console.log('[Social Tab] Attempting to restore tab:', savedTab);
 
-    if (!targetPane || !targetLink) return;
+    // Retry logic for DOM readiness
+    let retryCount = 0;
+    const maxRetries = 5;
 
-    document.querySelectorAll('#collaboration-tabs .nav-link').forEach(function(link) {
-      link.classList.remove('active');
-      link.setAttribute('aria-selected', 'false');
-    });
+    function attemptRestore() {
+      const targetPane = document.getElementById(savedTab);
+      const targetLink = document.querySelector('#collaboration-tabs a[aria-controls="' + savedTab + '"]');
 
-    document.querySelectorAll('.social-area .tab-pane').forEach(function(pane) {
-      pane.classList.remove('show', 'active');
-    });
+      if (targetPane && targetLink) {
+        console.log('[Social Tab] DOM ready, restoring tab:', savedTab);
+        
+        document.querySelectorAll('#collaboration-tabs .nav-link').forEach(function(link) {
+          link.classList.remove('active');
+          link.setAttribute('aria-selected', 'false');
+        });
 
-    targetPane.classList.add('show', 'active');
-    targetLink.classList.add('active');
-    targetLink.setAttribute('aria-selected', 'true');
+        document.querySelectorAll('.social-area .tab-pane').forEach(function(pane) {
+          pane.classList.remove('show', 'active');
+        });
+
+        targetPane.classList.add('show', 'active');
+        targetLink.classList.add('active');
+        targetLink.setAttribute('aria-selected', 'true');
+        
+        // Persist the restored tab
+        persistSocialTab(savedTab);
+      } else if (retryCount < maxRetries) {
+        retryCount++;
+        console.log('[Social Tab] DOM not ready, retrying... (' + retryCount + '/' + maxRetries + ')');
+        setTimeout(attemptRestore, 100);
+      } else {
+        console.warn('[Social Tab] Failed to find tab after', maxRetries, 'retries');
+      }
+    }
+
+    attemptRestore();
   }
 
   function switchSocialTab(tabLink, isInitialLoad) {
@@ -132,13 +192,30 @@
 
   function activateSocialTabFromHash(isInitialLoad = false) {
     const urlHash = window.location.hash ? window.location.hash.replace('#', '') : '';
-    const savedHash = getSavedSocialTabId();
+    const savedHash = (() => {
+      const candidateKeys = [STORAGE_KEY, LEGACY_STORAGE_KEY, LEGACY_STORAGE_KEY_2];
+      for (const key of candidateKeys) {
+        try {
+          const value = sessionStorage.getItem(key);
+          if (value && document.getElementById(value)) {
+            return value;
+          }
+        } catch (error) {
+          // Ignore storage issues and fall back to the default tab.
+        }
+      }
+      return null;
+    })();
 
     let hash = 'feed';
     if (urlHash && document.getElementById(urlHash)) {
       hash = urlHash;
-    } else if (savedHash && document.getElementById(savedHash)) {
+    } else if (savedHash) {
       hash = savedHash;
+    }
+
+    if (!urlHash && !savedHash && !isInitialLoad) {
+      hash = 'feed';
     }
 
     const targetTab = document.querySelector('#collaboration-tabs a[aria-controls="' + hash + '"]');

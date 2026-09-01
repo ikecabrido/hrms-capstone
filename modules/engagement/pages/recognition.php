@@ -439,7 +439,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card-header header-action-card-header">
                           <h3 class="card-title"><i class="fas fa-star mr-2"></i>Employee of the Month Nominations</h3>
                           <div class="card-tools">
-                            <button type="button" class="btn btn-warning btn-sm header-action-button" data-toggle="modal" data-target="#nominateEmployeeModal">
+                            <button type="button" class="btn btn-warning btn-sm header-action-button" data-recognition-open="nominateEmployeeModal">
                               <i class="fas fa-plus mr-1"></i> Add Nomination
                             </button>
                           </div>
@@ -604,7 +604,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card-header header-action-card-header">
                           <h3 class="card-title"><i class="fas fa-medal mr-2"></i>Achievement Badges</h3>
                           <div class="card-tools">
-                            <button type="button" class="btn btn-info btn-sm header-action-button" data-toggle="modal" data-target="#assignBadgeModal">
+                            <button type="button" class="btn btn-info btn-sm header-action-button mr-2" data-recognition-open="createBadgeModal">
+                              <i class="fas fa-plus mr-1"></i>Create Badge
+                            </button>
+                            <button type="button" class="btn btn-info btn-sm header-action-button" data-recognition-open="assignBadgeModal">
                               <i class="fas fa-plus mr-1"></i>Assign Badge
                             </button>
                           </div>
@@ -662,7 +665,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card-header header-action-card-header">
                           <h3 class="card-title"><i class="fas fa-gift mr-2"></i>Rewards Catalog</h3>
                           <div class="card-tools">
-                            <button type="button" class="btn btn-primary btn-sm header-action-button" data-toggle="modal" data-target="#addRewardModal">
+                            <button type="button" class="btn btn-primary btn-sm header-action-button" data-recognition-open="addRewardModal">
                               <i class="fas fa-plus mr-1"></i>Add Reward
                             </button>
                           </div>
@@ -780,13 +783,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Quick Recognition Modal -->
 <div class="modal fade" id="nominateEmployeeModal" tabindex="-1" role="dialog" aria-labelledby="nominateEmployeeModalLabel" aria-hidden="true" data-current-employee-id="<?= htmlspecialchars($_SESSION['employee_id'] ?? $_SESSION['user']['employee_id'] ?? '') ?>">
   <div class="modal-dialog" role="document"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="nominateEmployeeModalLabel"><i class="fas fa-star mr-2"></i>Add Nomination</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button></div>
+    <div class="modal-header"><h5 class="modal-title" id="nominateEmployeeModalLabel"><i class="fas fa-star mr-2"></i>Add Nomination</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="nominateEmployeeModal" aria-label="Close"><span>&times;</span></button></div>
     <form id="nomination-form" method="POST" action="" data-skip>
       <div class="modal-body">
         <div class="form-group"><label for="nominate-employee">Employee</label><select id="nominate-employee" name="nominate_employee_id" class="form-control" required><option value="">Select employee</option></select></div>
         <div class="form-group"><label for="nomination-reason">Reason for nomination</label><textarea id="nomination-reason" name="nomination_reason" class="form-control" rows="4" required placeholder="Why should this employee be nominated?"></textarea></div>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-warning"><i class="fas fa-star mr-1"></i>Submit Nomination</button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal" data-recognition-close="nominateEmployeeModal">Cancel</button><button type="submit" class="btn btn-warning"><i class="fas fa-star mr-1"></i>Submit Nomination</button></div>
+    </form>
+  </div></div>
+</div>
+
+<!-- Create Badge Modal -->
+<div class="modal fade" id="createBadgeModal" tabindex="-1" role="dialog" aria-labelledby="createBadgeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="createBadgeModalLabel"><i class="fas fa-medal mr-2"></i>Create Badge</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="createBadgeModal" aria-label="Close"><span>&times;</span></button></div>
+    <form id="create-badge-form">
+      <div class="modal-body">
+        <div class="form-group"><label for="create-badge-name">Badge Name</label><input type="text" id="create-badge-name" name="name" class="form-control" required maxlength="100" placeholder="Enter badge name"></div>
+        <div class="form-group"><label for="create-badge-description">Description</label><textarea id="create-badge-description" name="description" class="form-control" rows="3" maxlength="500" placeholder="Describe the badge"></textarea></div>
+        <div class="form-group"><label for="create-badge-category">Category</label><select id="create-badge-category" name="category" class="form-control" required>
+          <option value="achievement">Achievement</option>
+          <option value="performance">Performance</option>
+          <option value="teamwork">Teamwork</option>
+          <option value="service">Service</option>
+        </select></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal" data-recognition-close="createBadgeModal">Cancel</button><button type="submit" class="btn btn-primary"><i class="fas fa-medal mr-1"></i>Create Badge</button></div>
     </form>
   </div></div>
 </div>
@@ -794,13 +817,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Quick Recognition Modal -->
 <div class="modal fade" id="assignBadgeModal" tabindex="-1" role="dialog" aria-labelledby="assignBadgeModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="assignBadgeModalLabel"><i class="fas fa-medal mr-2"></i>Assign Badge</h5><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button></div>
+    <div class="modal-header"><h5 class="modal-title" id="assignBadgeModalLabel"><i class="fas fa-medal mr-2"></i>Assign Badge</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="assignBadgeModal" aria-label="Close"><span>&times;</span></button></div>
     <form id="assign-badge-form">
       <div class="modal-body">
         <div class="form-group"><label for="badge_employee_id">Employee</label><select id="badge_employee_id" class="form-control" required><option value="">Select employee</option></select></div>
         <div class="form-group"><label for="badge_id">Badge</label><select id="badge_id" class="form-control" required><option value="">Select badge</option></select></div>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-info"><i class="fas fa-medal mr-1"></i>Assign Badge</button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal" data-recognition-close="assignBadgeModal">Cancel</button><button type="submit" class="btn btn-info"><i class="fas fa-medal mr-1"></i>Assign Badge</button></div>
     </form>
   </div></div>
 </div>
@@ -811,7 +834,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="addRewardModalLabel"><i class="fas fa-gift mr-2"></i>Add Reward</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+        <button type="button" class="close" data-dismiss="modal" data-recognition-close="addRewardModal" aria-label="Close"><span>&times;</span></button>
       </div>
       <form id="add-reward-form" method="POST" action="">
         <input type="hidden" name="action" value="add_reward">
@@ -830,7 +853,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" data-recognition-close="addRewardModal">Cancel</button>
           <button type="submit" class="btn btn-primary"><i class="fas fa-plus mr-1"></i>Add Reward</button>
         </div>
       </form>
@@ -841,20 +864,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Quick Recognition Modal -->
 <div class="modal fade" id="sendRecognitionModal" tabindex="-1" role="dialog" aria-labelledby="sendRecognitionModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="sendRecognitionModalLabel"><i class="fas fa-award mr-2"></i>Recognize Employee</h5><button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>
+    <div class="modal-header"><h5 class="modal-title" id="sendRecognitionModalLabel"><i class="fas fa-award mr-2"></i>Recognize Employee</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="sendRecognitionModal"><span>&times;</span></button></div>
     <form>
       <div class="modal-body">
         <div class="form-group"><label for="rec-receiver">Employee</label><select id="rec-receiver" class="form-control" required><option value="">Select employee</option></select></div>
         <div class="form-group"><label for="rec-message">Message</label><textarea id="rec-message" class="form-control" rows="4" required placeholder="Why are you recognizing this employee?"></textarea></div>
         <div class="form-group"><label for="rec-points">Points</label><input id="rec-points" class="form-control" type="number" min="1" value="10" required></div>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" id="send-recognition-btn" class="btn btn-success"><i class="fas fa-paper-plane mr-1"></i>Send Recognition</button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal" data-recognition-close="sendRecognitionModal">Cancel</button><button type="submit" id="send-recognition-btn" class="btn btn-success"><i class="fas fa-paper-plane mr-1"></i>Send Recognition</button></div>
     </form>
   </div></div>
 </div>
 
     </div>
-  <script src="pages/js/survey.js"></script>
+
 
 </body>
 

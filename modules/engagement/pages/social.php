@@ -134,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="createForumModalLabel"><i class="fas fa-comments mr-2"></i>Create Forum</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #6c757d; font-size: 1.8rem; padding: 0; border: none; background: none; cursor: pointer; transition: color 0.3s ease; margin-left: auto;" onmouseover="this.style.color='#495057'" onmouseout="this.style.color='#6c757d'"><span aria-hidden="true">×</span></button>
       </div>
       <form id="createForumForm">
         <div class="modal-body">
@@ -350,13 +350,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <ul class="nav nav-tabs" id="collaboration-tabs" role="tablist">
 
           <li class="nav-item">
-            <a class="nav-link active"
+            <a class="nav-link"
                id="feed-tab"
                data-toggle="tab"
                href="#feed"
                role="tab"
                aria-controls="feed"
-               aria-selected="true">
+               aria-selected="false">
               <i class="fas fa-rss mr-2"></i>
               Employee Interaction Feed
             </a>
@@ -407,7 +407,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="tab-content" id="collaboration-tab-content">
 
           <!-- Employee Interaction Feed Tab -->
-          <div class="tab-pane fade show active"
+          <div class="tab-pane fade"
                id="feed"
                role="tabpanel"
                aria-labelledby="feed-tab">
@@ -832,9 +832,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="modal fade" id="createProjectModal" tabindex="-1" role="dialog" aria-labelledby="createProjectModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
-      <div class="modal-header">
+      <div class="modal-header" style="display: flex; align-items: center;">
         <h5 class="modal-title" id="createProjectModalLabel"><i class="fas fa-project-diagram mr-2"></i>Create Project Space</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #6c757d; font-size: 1.8rem; padding: 0; border: none; background: none; cursor: pointer; transition: color 0.3s ease; margin-left: auto;" onmouseover="this.style.color='#495057'" onmouseout="this.style.color='#6c757d'"><span aria-hidden="true">×</span></button>
       </div>
       <form id="createProjectForm">
         <div class="modal-body">

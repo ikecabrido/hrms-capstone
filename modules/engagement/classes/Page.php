@@ -36,9 +36,26 @@ class Page
 
     public function getPage()
     {
+        // First, check if there's a page parameter in the URL
         if (!empty($_GET['page']) && in_array($_GET['page'], $this->allowed)) {
             return $_GET['page'];
         }
+        
+        // If user just logged in, always go to dashboard (ignore saved page)
+        if (!empty($_SESSION['freshly_logged_in'])) {
+            unset($_SESSION['freshly_logged_in']);
+            return $this->default;
+        }
+        
+        // If no URL parameter, check if there's a saved page from the last visit
+        if (!empty($_COOKIE['lastEngagementPage'])) {
+            $savedPage = urldecode($_COOKIE['lastEngagementPage']);
+            if (in_array($savedPage, $this->allowed)) {
+                return $savedPage;
+            }
+        }
+        
+        // Fall back to default
         return $this->default;
     }
 

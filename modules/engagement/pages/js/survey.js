@@ -1,11 +1,144 @@
 (function() {
-  if (window.__engagementSurveyPageInit) {
-    return;
+  const SURVEY_STORAGE_KEY = 'engagement:survey:active-tab';
+  const SURVEY_LEGACY_STORAGE_KEY = 'survey-active-tab';
+  const validTabIds = ['satisfaction', 'pulse', 'hr-feedback', 'suggestions'];
+
+  function getStoredSurveyTab() {
+    const storageKeys = [SURVEY_STORAGE_KEY, SURVEY_LEGACY_STORAGE_KEY];
+
+    for (const key of storageKeys) {
+      try {
+        const savedTab = sessionStorage.getItem(key);
+        if (savedTab && validTabIds.includes(savedTab)) {
+          return savedTab;
+        }
+      } catch (error) {
+        // ignore storage errors
+      }
+    }
+
+    for (const key of storageKeys) {
+      try {
+        const savedTab = localStorage.getItem(key);
+        if (savedTab && validTabIds.includes(savedTab)) {
+          return savedTab;
+        }
+      } catch (error) {
+        // ignore storage errors
+      }
+    }
+
+    const hashFromUrl = window.location.hash ? window.location.hash.replace('#', '') : '';
+    if (hashFromUrl && validTabIds.includes(hashFromUrl)) {
+      return hashFromUrl;
+    }
+
+    return 'satisfaction';
   }
-  window.__engagementSurveyPageInit = true;
+
+  function persistSurveyTab(tabId) {
+    const validTabId = validTabIds.includes(tabId) ? tabId : 'satisfaction';
+
+    try {
+      sessionStorage.setItem(SURVEY_STORAGE_KEY, validTabId);
+      sessionStorage.setItem(SURVEY_LEGACY_STORAGE_KEY, validTabId);
+      localStorage.setItem(SURVEY_STORAGE_KEY, validTabId);
+      localStorage.setItem(SURVEY_LEGACY_STORAGE_KEY, validTabId);
+
+      const nextHash = '#' + validTabId;
+      if (window.location.hash !== nextHash) {
+        window.history.replaceState({}, '', window.location.pathname + window.location.search + nextHash);
+      }
+    } catch (error) {
+      console.warn('Unable to save active survey tab.', error);
+    }
+  }
+
+  function applySurveyTab(tabId) {
+    const validTabId = validTabIds.includes(tabId) ? tabId : 'satisfaction';
+    const targetTab = document.querySelector('#survey-tabs a[href="#' + validTabId + '"]');
+    const targetPane = document.getElementById(validTabId);
+
+    if (!targetTab || !targetPane) {
+      return;
+    }
+
+    document.querySelectorAll('#survey-tabs .nav-link').forEach(function(tab) {
+      const isActive = tab === targetTab;
+      tab.classList.toggle('active', isActive);
+      tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('#survey-tab-content .tab-pane').forEach(function(pane) {
+      const isActive = pane === targetPane;
+      pane.classList.toggle('show', isActive);
+      pane.classList.toggle('active', isActive);
+    });
+
+    persistSurveyTab(validTabId);
+  }
+
+  function restoreSurveyTab() {
+    const savedTab = getStoredSurveyTab();
+    const targetTab = document.querySelector('#survey-tabs a[href="#' + savedTab + '"]');
+    const targetPane = document.getElementById(savedTab);
+
+    if (targetTab && targetPane) {
+      applySurveyTab(savedTab);
+      return;
+    }
+
+    let retryCount = 0;
+    const maxRetries = 8;
+
+    function retry() {
+      const retryTab = document.querySelector('#survey-tabs a[href="#' + savedTab + '"]');
+      const retryPane = document.getElementById(savedTab);
+
+      if (retryTab && retryPane) {
+        applySurveyTab(savedTab);
+        return;
+      }
+
+      if (retryCount < maxRetries) {
+        retryCount += 1;
+        setTimeout(retry, 120);
+      } else {
+        applySurveyTab('satisfaction');
+      }
+    }
+
+    retry();
+  }
+
+  function initTabClickHandlers() {
+    document.querySelectorAll('#survey-tabs .nav-link').forEach(function(tabLink) {
+      if (tabLink.dataset.surveyTabBound === 'true') {
+        return;
+      }
+
+      tabLink.dataset.surveyTabBound = 'true';
+      tabLink.addEventListener('click', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const href = this.getAttribute('href');
+        if (!href || !href.startsWith('#')) {
+          return;
+        }
+
+        const tabId = href.replace('#', '');
+        if (!validTabIds.includes(tabId)) {
+          return;
+        }
+
+        persistSurveyTab(tabId);
+        applySurveyTab(tabId);
+      });
+    });
+  }
 
   function initSurveyPage() {
-    // Auto-switch to Analytics tab when viewing survey results
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'view_results') {
       const analyticsTab = document.getElementById('analytics-tab');
@@ -20,119 +153,40 @@
       }
     }
 
-    function switchTab(tabLink, isInitialLoad = false) {
-      const href = tabLink.getAttribute('href');
-      if (!href || !href.startsWith('#')) return;
-      
-      const tabId = href.replace('#', '');
-      const targetPane = document.getElementById(tabId);
-      
-      if (!targetPane) return;
-      
-      localStorage.setItem('survey-active-tab', tabId);
-      if (window.location.hash !== '#' + tabId) {
-        window.history.replaceState({}, '', window.location.pathname + window.location.search + '#' + tabId);
-      }
-      
-      const allTabs = document.querySelectorAll('#survey-tabs .nav-link');
-      const allPanes = document.querySelectorAll('.survey-area .tab-pane');
-      
-      if (isInitialLoad) {
-        allTabs.forEach(tab => {
-          tab.classList.remove('active');
-          tab.setAttribute('aria-selected', 'false');
-        });
-        
-        allPanes.forEach(pane => {
-          pane.classList.remove('show', 'active');
-        });
-        
-        tabLink.classList.add('active');
-        tabLink.setAttribute('aria-selected', 'true');
-        targetPane.classList.add('show', 'active');
-      } else {
-        const activePanes = document.querySelectorAll('.survey-area .tab-pane.active');
-        activePanes.forEach(pane => {
-          pane.style.opacity = '1';
-          pane.style.transition = 'opacity 0.3s ease-out';
-          pane.style.opacity = '0';
-        });
-        
-        setTimeout(function() {
-          allTabs.forEach(tab => {
-            tab.classList.remove('active');
-            tab.setAttribute('aria-selected', 'false');
-          });
-          
-          allPanes.forEach(pane => {
-            pane.classList.remove('show', 'active');
-            pane.style.opacity = '1';
-            pane.style.transition = 'none';
-          });
-          
-          tabLink.classList.add('active');
-          tabLink.setAttribute('aria-selected', 'true');
-          targetPane.classList.add('show', 'active');
-          targetPane.style.opacity = '0';
-          targetPane.style.transition = 'opacity 0.3s ease-in';
-          
-          void targetPane.offsetWidth;
-          targetPane.style.opacity = '1';
-        }, 150);
-      }
-    }
-
-    function activateSurveyTabFromHash(isInitialLoad = false) {
-      const urlHash = window.location.hash ? window.location.hash.replace('#', '') : '';
-      const savedHash = localStorage.getItem('survey-active-tab');
-      const hash = urlHash && document.querySelector('#' + CSS.escape(urlHash)) ? urlHash : (savedHash && document.querySelector('#' + CSS.escape(savedHash)) ? savedHash : 'satisfaction');
-      const targetTab = document.querySelector('#survey-tabs a[href="#' + CSS.escape(hash) + '"]');
-
-      if (targetTab) {
-        switchTab(targetTab, isInitialLoad);
-      }
-    }
-
-    function initTabClickHandlers() {
-      document.querySelectorAll('#survey-tabs .nav-link').forEach(function(tabLink) {
-        const isAlreadyBound = tabLink.dataset.surveyTabBound === 'true';
-        if (isAlreadyBound) {
-          return;
-        }
-        tabLink.dataset.surveyTabBound = 'true';
-
-        tabLink.addEventListener('click', function(event) {
-          event.preventDefault();
-          event.stopPropagation();
-          switchTab(this, false);
-        });
-      });
-    }
-
     initTabClickHandlers();
-    activateSurveyTabFromHash(true);
+    restoreSurveyTab();
 
     window.addEventListener('hashchange', function() {
-      activateSurveyTabFromHash(false);
-    }, { once: false });
-    
-    window.addEventListener('popstate', function() {
-      activateSurveyTabFromHash(false);
-    }, { once: false });
-
-    window.addEventListener('load', function() {
-      var preloader = document.querySelector('.preloader');
-      if (preloader) {
-        preloader.style.display = 'none';
+      const hashTab = window.location.hash ? window.location.hash.replace('#', '') : '';
+      if (hashTab && validTabIds.includes(hashTab)) {
+        applySurveyTab(hashTab);
       }
-    }, { once: true });
+    }, { once: false });
 
-    document.querySelectorAll('.sort-btn').forEach(btn => {
+    window.addEventListener('popstate', function() {
+      const hashTab = window.location.hash ? window.location.hash.replace('#', '') : '';
+      if (hashTab && validTabIds.includes(hashTab)) {
+        applySurveyTab(hashTab);
+      } else {
+        restoreSurveyTab();
+      }
+    }, { once: false });
+
+    window.addEventListener('page:loaded', function(e) {
+      if (e.detail && e.detail.page === 'survey') {
+        setTimeout(function() {
+          initTabClickHandlers();
+          restoreSurveyTab();
+        }, 100);
+      }
+    }, { once: false });
+
+    document.querySelectorAll('.sort-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const sortType = this.dataset.sort;
         const suggestions = Array.from(document.querySelectorAll('.suggestion-item'));
 
-        suggestions.sort((a, b) => {
+        suggestions.sort(function(a, b) {
           switch (sortType) {
             case 'newest':
               return 0;
@@ -147,10 +201,14 @@
 
         const container = document.querySelector('.suggestions-container');
         if (container) {
-          suggestions.forEach(s => container.appendChild(s));
+          suggestions.forEach(function(item) {
+            container.appendChild(item);
+          });
         }
 
-        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.sort-btn').forEach(function(button) {
+          button.classList.remove('active');
+        });
         this.classList.add('active');
       });
     });
@@ -159,7 +217,7 @@
     if (categoryFilter) {
       categoryFilter.addEventListener('change', function() {
         const filterValue = this.value;
-        document.querySelectorAll('.suggestion-item').forEach(item => {
+        document.querySelectorAll('.suggestion-item').forEach(function(item) {
           if (!filterValue || item.dataset.category === filterValue) {
             item.style.display = 'block';
           } else {
@@ -168,15 +226,6 @@
         });
       });
     }
-
-    window.addEventListener('page:loaded', function(e) {
-      if (e.detail && e.detail.page === 'survey') {
-        setTimeout(function() {
-          initTabClickHandlers();
-          activateSurveyTabFromHash(true);
-        }, 50);
-      }
-    }, { once: false });
   }
 
   if (document.readyState === 'loading') {

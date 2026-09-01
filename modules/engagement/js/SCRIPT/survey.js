@@ -5,6 +5,48 @@
   window.__engagementSurveyPageInit = true;
 
   document.addEventListener('DOMContentLoaded', function() {
+    const SURVEY_STORAGE_KEY = 'survey-active-tab';
+    const SURVEY_LEGACY_STORAGE_KEY = 'engagement:survey:active-tab';
+    const validTabIds = ['satisfaction', 'pulse', 'hr-feedback', 'suggestions'];
+
+    function getStoredSurveyTab() {
+      for (const key of [SURVEY_STORAGE_KEY, SURVEY_LEGACY_STORAGE_KEY]) {
+        try {
+          const savedTab = sessionStorage.getItem(key);
+          if (savedTab && validTabIds.includes(savedTab) && document.getElementById(savedTab)) {
+            return savedTab;
+          }
+        } catch (error) {
+          // Ignore storage errors.
+        }
+      }
+
+      for (const key of [SURVEY_STORAGE_KEY, SURVEY_LEGACY_STORAGE_KEY]) {
+        try {
+          const savedTab = localStorage.getItem(key);
+          if (savedTab && validTabIds.includes(savedTab) && document.getElementById(savedTab)) {
+            return savedTab;
+          }
+        } catch (error) {
+          // Ignore storage errors.
+        }
+      }
+
+      return 'satisfaction';
+    }
+
+    function persistSurveyTab(tabId) {
+      const validTabId = validTabIds.includes(tabId) ? tabId : 'satisfaction';
+      try {
+        sessionStorage.setItem(SURVEY_STORAGE_KEY, validTabId);
+        sessionStorage.setItem(SURVEY_LEGACY_STORAGE_KEY, validTabId);
+        localStorage.setItem(SURVEY_STORAGE_KEY, validTabId);
+        localStorage.setItem(SURVEY_LEGACY_STORAGE_KEY, validTabId);
+      } catch (error) {
+        console.warn('Unable to save active survey tab.', error);
+      }
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'view_results') {
       const analyticsTab = document.getElementById('analytics-tab');
@@ -20,14 +62,13 @@
     }
 
     function activateSurveyTabFromHash() {
-      const savedTabId = localStorage.getItem('survey-active-tab');
       const hash = (window.location.hash || '').replace('#', '');
       let tabId = 'satisfaction';
-
-      if (hash && document.getElementById(hash)) {
+      const storedTab = getStoredSurveyTab();
+      if (hash && validTabIds.includes(hash) && document.getElementById(hash)) {
         tabId = hash;
-      } else if (savedTabId && document.getElementById(savedTabId)) {
-        tabId = savedTabId;
+      } else if (storedTab && validTabIds.includes(storedTab) && document.getElementById(storedTab)) {
+        tabId = storedTab;
       }
 
       const targetTab = document.querySelector('#survey-tabs a[href="#' + CSS.escape(tabId) + '"]');
@@ -40,7 +81,7 @@
         history.replaceState(null, null, '#' + tabId);
       }
 
-      localStorage.setItem('survey-active-tab', tabId);
+      persistSurveyTab(tabId);
 
       document.querySelectorAll('#survey-tabs .nav-link').forEach(function(navLink) {
         navLink.classList.remove('active');
@@ -53,6 +94,27 @@
       targetTab.classList.add('active');
       targetTab.setAttribute('aria-selected', 'true');
       targetPane.classList.add('show', 'active');
+    }
+
+    const savedTab = getStoredSurveyTab();
+    if (savedTab && savedTab !== 'satisfaction') {
+      const targetTab = document.querySelector('#survey-tabs a[href="#' + CSS.escape(savedTab) + '"]');
+      const targetPane = document.getElementById(savedTab);
+      if (targetTab && targetPane) {
+        targetTab.classList.add('active');
+        targetTab.setAttribute('aria-selected', 'true');
+        document.querySelectorAll('#survey-tabs .nav-link').forEach(function(navLink) {
+          if (navLink !== targetTab) {
+            navLink.classList.remove('active');
+            navLink.setAttribute('aria-selected', 'false');
+          }
+        });
+        document.querySelectorAll('.survey-area .tab-pane').forEach(function(tabPane) {
+          const isActive = tabPane === targetPane;
+          tabPane.classList.toggle('show', isActive);
+          tabPane.classList.toggle('active', isActive);
+        });
+      }
     }
 
     document.querySelectorAll('form.survey-form[data-skip="true"], form.pulse-survey-form[data-skip="true"]').forEach(function(form) {
@@ -113,7 +175,7 @@
           event.preventDefault();
           event.stopPropagation();
           const tabId = href.replace('#', '');
-          localStorage.setItem('survey-active-tab', tabId);
+          persistSurveyTab(tabId);
           history.pushState(null, null, href);
           activateSurveyTabFromHash();
         }

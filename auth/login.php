@@ -98,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['department_id']   = $user['department_id'];
         $_SESSION['department_name'] = $user['department_name'];
         $_SESSION['last_activity'] = time();
+        $_SESSION['freshly_logged_in'] = true;  // Flag to indicate fresh login
 
         $updateLogin = $conn->prepare("
             UPDATE user_account
