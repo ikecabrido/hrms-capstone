@@ -1,0 +1,36 @@
+-- Install the existing Legal & Compliance employee-document table only when it
+-- is missing from the runtime database. This does not create an EER duplicate.
+
+CREATE TABLE IF NOT EXISTS lc_employee_documents (
+  id INT NOT NULL,
+  document_uuid VARCHAR(64) DEFAULT NULL,
+  employee_id INT DEFAULT NULL,
+  document_name VARCHAR(255) DEFAULT NULL,
+  document_type VARCHAR(255) DEFAULT NULL,
+  document_number VARCHAR(100) DEFAULT NULL,
+  category VARCHAR(100) DEFAULT NULL,
+  verification_status VARCHAR(50) DEFAULT 'Pending Upload',
+  compliance_status VARCHAR(50) DEFAULT 'Missing',
+  status VARCHAR(50) DEFAULT 'Valid',
+  file_path VARCHAR(500) DEFAULT NULL,
+  mime_type VARCHAR(100) DEFAULT NULL,
+  issued_date DATE DEFAULT NULL,
+  expiry_date DATE DEFAULT NULL,
+  flag_reason VARCHAR(255) DEFAULT NULL,
+  flag_notes TEXT DEFAULT NULL,
+  flagged_at TIMESTAMP NULL DEFAULT NULL,
+  reminder_sent_at TIMESTAMP NULL DEFAULT NULL,
+  verified_by INT DEFAULT NULL,
+  verified_at TIMESTAMP NULL DEFAULT NULL,
+  rejection_reason TEXT DEFAULT NULL,
+  uploaded_by INT DEFAULT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_employee_id (employee_id),
+  KEY idx_verification_status (verification_status),
+  KEY idx_compliance_status (compliance_status),
+  KEY idx_expiry_date (expiry_date),
+  KEY idx_document_type (document_type),
+  KEY idx_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

@@ -1,0 +1,23 @@
+.survey-view-area {
+  background: transparent;
+}
+
+.survey-view-area .survey-view-module {
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.survey-view-area .survey-view-module:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.12);
+}
+
+.survey-view-area .survey-view-module .card-header {
+  background: rgba(255, 255, 255, 0.65);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+}

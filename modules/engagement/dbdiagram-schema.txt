@@ -1,0 +1,652 @@
+// dbdiagram.io schema for engagement / communication / grievance / survey integration
+
+Table hrms_department {
+  int department_id [pk]
+  varchar department_name
+  int department_head
+}
+
+Table hrms_position {
+  int position_id [pk]
+  varchar position_name
+  int department
+}
+
+Table hrms_roles {
+  int role_id [pk]
+  varchar role_name
+  int department
+}
+
+Table hrms_employee {
+  int employee_id [pk]
+  varchar first_name
+  varchar middle_name
+  varchar last_name
+  int role
+  enum status
+  date date_hired
+  int user_id
+  int department
+  int position
+}
+
+Table eer_announcements {
+  int eer_announcements_id [pk]
+  varchar title
+  text content
+  int created_by_employee_id
+  datetime created_at
+  varchar target_audience
+  enum type
+  varchar department
+  varchar priority
+  varchar category
+}
+
+Table eer_notifications {
+  int id [pk]
+  int employee_id
+  text message
+  varchar type
+  tinyint is_read
+  datetime created_at
+}
+
+Table eer_policies {
+  int eer_policy_id [pk]
+  varchar title
+  text content
+  int created_by_employee_id
+  datetime created_at
+  varchar target_audience
+  varchar category
+  date effective_date
+  varchar attachment_path
+}
+
+Table lc_acknowledgment_log {
+  int acknowledgment_id [pk]
+  int employee_id
+  int policy_id
+  datetime acknowledged_at
+  enum status
+}
+
+Table lc_notifications {
+  int id [pk]
+  int employee_id
+  int user_id
+  int recipient_id
+  varchar email
+  varchar title
+  text message
+  varchar type
+  varchar notification_type
+  varchar status
+  tinyint is_read
+  varchar module
+  varchar sender_email
+  datetime created_at
+  timestamp updated_at
+}
+
+Table lc_philippine_laws {
+  int id [pk]
+  varchar code
+  varchar title
+  text description
+  varchar category
+  date effective_date
+  enum status
+  timestamp created_at
+  timestamp updated_at
+}
+
+// LC incidents are investigative/legal workflow records and should not be connected to grievance tracking.
+Table lc_incidents {
+  int id [pk]
+  varchar incident_id
+  varchar type
+  varchar incident_type
+  enum severity
+  varchar title
+  text description
+  date incident_date
+  varchar location
+  int respondent_id
+  int reporter_id
+  varchar reporter_name
+  enum status
+  varchar current_workflow_step
+  datetime status_changed_at
+  tinyint is_confidential
+  datetime nte_deadline
+  datetime explanation_deadline
+  int created_by
+  timestamp created_at
+  timestamp updated_at
+}
+
+Table eer_messages {
+  int eer_message_id [pk]
+  int sender_id
+  int receiver_id
+  text message
+  datetime timestamp
+}
+
+// Grievance tracking is separate from legal investigation records.
+// eer_grievances should remain a tracking-only table and not be linked to lc_incidents.
+Table eer_grievances {
+  int eer_grievance_id [pk]
+  int employee_id
+  varchar subject
+  text description
+  enum status
+  text resolution_of_complaint
+  datetime created_at
+  enum priority
+  varchar category
+  tinyint anonymous
+  varchar attachment_path
+  tinyint confidential
+  text action_taken
+  int satisfaction_rating
+  text satisfaction_comment
+  datetime resolved_at
+  varchar escalation_level
+  text escalation_reason
+  timestamp updated_at
+  int created_by_employee_id
+  int payslip_id
+  decimal gross_pay
+  decimal total_deductions
+  decimal net_pay
+  text payslip_information
+  int compliance_record_id
+}
+
+Table eer_grievance_attendance_links {
+  int id [pk]
+  int grievance_id
+  int employee_id
+  int attendance_id
+  date attendance_date
+  varchar attendance_status
+  int late_minutes
+  int early_out_minutes
+  datetime linked_at
+}
+
+Table eer_grievance_updates {
+  int id [pk]
+  int grievance_id
+  text update_text
+  int updated_by_employee_id
+  datetime updated_at
+}
+
+Ref: eer_grievances.compliance_record_id > lc_compliance_records.record_id
+
+Table grievance_payroll {
+  int grievance_id [pk]
+  int employee_id
+  int payslip_id
+  enum payroll_module
+  int reference_id
+  varchar complaint_title
+  text complaint_details
+  varchar attachment
+  enum status
+  timestamp created_at
+  timestamp resolved_at
+}
+
+Table eer_surveys {
+  int eer_survey_id [pk]
+  varchar title
+  tinyint is_anonymous
+  varchar survey_type
+  int created_by_employee_id
+  text description
+  datetime created_at
+  int feedback_id
+}
+
+Table eer_survey_questions {
+  int eer_survey_question_id [pk]
+  int survey_id
+  text question_text
+  varchar type
+}
+
+Table eer_survey_responses {
+  int eer_survey_response_id [pk]
+  int survey_id
+  int employee_id
+  longtext answers
+  int target_employee_id
+}
+
+Table eer_survey_targets {
+  int eer_survey_target_id [pk]
+  int survey_id
+  int employee_id
+  enum status
+}
+
+Table eer_survey_answers {
+  int eer_survey_answer_id [pk]
+  int response_id
+  int question_id
+  text answer
+}
+
+Table eer_survey_feedback {
+  int eer_survey_feedback_id [pk]
+  int survey_id
+  varchar employee_id
+  text comment
+  tinyint rating
+}
+
+Table eer_survey_feedback_id {
+  int eer_survey_feedback_id_id [pk]
+  int survey_id
+  varchar employee_id
+  text comment
+  tinyint rating
+  varchar evaluator_type
+  varchar category
+  tinyint is_anonymous
+  datetime evaluation_date
+}
+
+Table eer_award_history {
+  int eer_award_history_id [pk]
+  int employee_id
+  varchar award_name
+  timestamp created_at
+  text reason
+  int nominated_by
+  timestamp updated_at
+  enum award_type
+  int points
+  enum status
+  int vote_count
+  decimal performance_score
+  varchar month_year
+  varchar award_icon
+}
+
+Table eer_award_votes {
+  int eer_award_vote_id [pk]
+  int award_history_id
+  int voter_user_id
+  int nominee_employee_id
+  datetime created_at
+}
+
+Table eer_badges {
+  int eer_badge_id [pk]
+  varchar name
+  text description
+  varchar icon
+  enum tier
+  int points_value
+  varchar category
+  varchar requirement_type
+  int requirement_value
+  enum status
+  datetime created_at
+  timestamp updated_at
+}
+
+Table employee_badges {
+  int employee_badge_id [pk]
+  int employee_id
+  int badge_id
+  datetime awarded_at
+  int awarded_by
+  text reason
+  tinyint performance_linked
+  decimal performance_score
+  timestamp updated_at
+}
+
+Table eer_projects {
+  int eer_project_id [pk]
+  varchar name
+  text description
+  date deadline
+  varchar status
+  int created_by_employee_id
+  datetime created_at
+  timestamp updated_at
+}
+
+Table eer_forums {
+  int eer_forum_id [pk]
+  varchar title
+  text description
+  varchar category
+  int created_by_employee_id
+  datetime created_at
+}
+
+Table eer_groups {
+  int eer_group_id [pk]
+  varchar name
+  int created_by_employee_id
+  datetime created_at
+}
+
+Table eer_group_members {
+  int eer_group_member_id [pk]
+  int group_id
+  int employee_id
+}
+
+Table eer_comments {
+  int eer_comment_id [pk]
+  int post_id
+  int employee_id
+  text comment
+  datetime created_at
+  int user_id
+  enum user_type
+}
+
+Table eer_replies {
+  int eer_reply_id [pk]
+  int comment_id
+  int post_id
+  int parent_reply_id
+  int employee_id
+  int user_id
+  enum user_type
+  text content
+  int mentioned_user_id
+  datetime created_at
+}
+
+Table eer_social_posts {
+  int eer_social_post_id [pk]
+  int employee_id
+  int user_id
+  enum author_type
+  enum item_type
+  text content
+  varchar file_name
+  varchar file_path
+  int file_size
+  varchar file_type
+  text description
+  datetime created_at
+}
+
+Table eer_reactions {
+  int eer_reaction_id [pk]
+  int post_id
+  int employee_id
+  int user_id
+  enum user_type
+  enum type
+  datetime created_at
+}
+
+Table eer_recognitions {
+  int eer_recognition_id [pk]
+  int sender_id
+  int receiver_id
+  text message
+  int points
+  datetime created_at
+  varchar category
+  enum source
+  int performance_report_id
+  enum status
+  int leaderboard_position
+  varchar department
+  timestamp updated_at
+}
+
+Table eer_rewards {
+  int eer_reward_id [pk]
+  varchar name
+  varchar description
+  int points_required
+  varchar category
+  varchar icon
+  enum tier
+  decimal performance_requirement
+  enum status
+  datetime created_at
+  timestamp updated_at
+}
+
+Table eer_reward_redemptions {
+  int eer_reward_redemption_id [pk]
+  int employee_id
+  int reward_id
+  int points_used
+  datetime redeemed_at
+  enum status
+  int approved_by
+  datetime approved_at
+  text rejection_reason
+  text notes
+  timestamp updated_at
+}
+
+Table pm_360_feedback {
+  int feedback_id [pk]
+  int employee_id
+  enum evaluator_type
+  int rating
+  enum category
+  text comments
+  tinyint is_anonymous
+  date evaluation_date
+  timestamp created_at
+  timestamp updated_at
+}
+
+Table pm_appraisals {
+  int appraisal_id [pk]
+  int employee_id
+  enum review_period
+  text goals_kpis
+  text performance_ratings
+  text manager_evaluation
+  decimal overall_score
+  text comments
+  date review_date
+  timestamp created_at
+  timestamp updated_at
+}
+
+Table pm_reports {
+  int report_id [pk]
+  int employee_id
+  enum evaluation_period
+  date period_start
+  date period_end
+  decimal kpi_score
+  decimal attendance_score
+  text attendance_impact_notes
+  decimal overall_rating_percent
+  tinyint overall_rating_5
+  decimal final_rating_percent
+  varchar final_grade
+  text remarks
+  varchar created_by
+  timestamp created_at
+  timestamp updated_at
+}
+
+Table pr_deductions {
+  int deduction_id [pk]
+  varchar name
+  enum type
+  decimal amount
+  tinyint is_statutory
+}
+
+Table pr_employee_adjustments {
+  int adjustment_id [pk]
+  int employee_id
+  int payroll_period_id
+  enum type
+  varchar description
+  decimal amount
+  timestamp created_at
+  varchar file_path
+  enum deduction_subtype
+}
+
+Table pr_employee_benefits {
+  int id [pk]
+  int employee_id
+  tinyint has_sss
+  tinyint has_philhealth
+  tinyint has_pagibig
+  decimal sss_amount_override
+  decimal philhealth_amount_override
+  decimal pagibig_amount_override
+  tinyint is_active
+  timestamp created_at
+  timestamp updated_at
+}
+
+Table pr_payslips {
+  int payslip_id [pk]
+  int payroll_run_id
+  int employee_id
+  decimal gross_pay
+  decimal total_deductions
+  decimal net_pay
+  timestamp generated_at
+  tinyint is_exit_settlement
+  int settlement_id
+  int resignation_id
+}
+
+Table pr_payslip_items {
+  int payslip_item_id [pk]
+  int payslip_id
+  enum item_type
+  varchar description
+  decimal amount
+}
+
+Table pr_runs {
+  int run_id [pk]
+  int payroll_period_id
+  timestamp processed_at
+  enum status
+  int finalized_by
+}
+
+Table pr_tax_tables {
+  int tax_id [pk]
+  decimal min_income
+  decimal max_income
+  decimal tax_rate
+  decimal fixed_tax
+}
+
+Table ta_attendance {
+  int attendance_id [pk]
+  int employee_id
+  int shift_id
+  date attendance_date
+  datetime time_in
+  datetime time_out
+  enum recorded_by
+  enum status
+  int leave_request_id
+  tinyint is_approved
+  int approved_by
+  varchar approval_remarks
+  datetime approved_at
+  timestamp created_at
+  timestamp updated_at
+  decimal total_hours_worked
+  decimal regular_hours
+  decimal overtime_hours
+  tinyint is_within_time_window
+  tinyint is_within_timeout_window
+  tinyint is_within_shift_hours
+  int late_minutes
+  int early_out_minutes
+  int shift_minutes
+  int employee_id_new
+}
+
+Table user_account {
+  int user_id [pk]
+  varchar password
+  int employee_id
+  varchar email
+  timestamp created_at
+  int remember_token
+}
+
+Ref: hrms_department.department_id > hrms_employee.department
+Ref: hrms_position.position_id > hrms_employee.position
+Ref: hrms_roles.role_id > hrms_employee.role
+Ref: hrms_employee.employee_id > eer_announcements.created_by_employee_id
+Ref: hrms_employee.employee_id > eer_notifications.employee_id
+Ref: hrms_employee.employee_id > eer_policies.created_by_employee_id
+Ref: hrms_employee.employee_id > eer_messages.sender_id
+Ref: hrms_employee.employee_id > eer_messages.receiver_id
+Ref: hrms_employee.employee_id > eer_grievances.employee_id
+Ref: hrms_employee.employee_id > eer_grievances.created_by_employee_id
+Ref: eer_grievances.eer_grievance_id > eer_grievance_updates.grievance_id
+Ref: eer_grievances.eer_grievance_id > eer_grievance_attendance_links.grievance_id
+Ref: eer_grievances.eer_grievance_id > grievance_payroll.grievance_id
+Ref: hrms_employee.employee_id > eer_survey_responses.employee_id
+Ref: hrms_employee.employee_id > eer_surveys.created_by_employee_id
+Ref: eer_surveys.eer_survey_id > eer_survey_questions.survey_id
+Ref: eer_surveys.eer_survey_id > eer_survey_responses.survey_id
+Ref: eer_surveys.eer_survey_id > eer_survey_targets.survey_id
+Ref: eer_survey_responses.eer_survey_response_id > eer_survey_answers.response_id
+Ref: eer_survey_questions.eer_survey_question_id > eer_survey_answers.question_id
+Ref: lc_philippine_laws.id > lc_acknowledgment_log.policy_id
+Ref: hrms_employee.employee_id > lc_acknowledgment_log.employee_id
+Ref: hrms_employee.employee_id > lc_notifications.employee_id
+Ref: hrms_employee.employee_id > lc_incidents.reporter_id
+Ref: hrms_employee.employee_id > lc_incidents.respondent_id
+Ref: hrms_employee.employee_id > lc_incidents.created_by
+Ref: hrms_employee.employee_id > eer_grievance_attendance_links.employee_id
+Ref: hrms_employee.employee_id > eer_grievance_updates.updated_by_employee_id
+Ref: hrms_employee.employee_id > eer_award_history.employee_id
+Ref: hrms_employee.employee_id > eer_award_history.nominated_by
+Ref: eer_award_history.eer_award_history_id > eer_award_votes.award_history_id
+Ref: eer_badges.eer_badge_id > employee_badges.badge_id
+Ref: hrms_employee.employee_id > employee_badges.employee_id
+Ref: hrms_employee.employee_id > eer_projects.created_by_employee_id
+Ref: hrms_employee.employee_id > eer_groups.created_by_employee_id
+Ref: hrms_employee.employee_id > eer_forums.created_by_employee_id
+Ref: hrms_employee.employee_id > eer_comments.employee_id
+Ref: eer_groups.eer_group_id > eer_group_members.group_id
+Ref: hrms_employee.employee_id > eer_group_members.employee_id
+Ref: eer_social_posts.eer_social_post_id > eer_reactions.post_id
+Ref: eer_social_posts.eer_social_post_id > eer_replies.post_id
+Ref: eer_comments.eer_comment_id > eer_replies.comment_id
+Ref: eer_rewards.eer_reward_id > eer_reward_redemptions.reward_id
+Ref: hrms_employee.employee_id > eer_reward_redemptions.employee_id
+Ref: hrms_employee.employee_id > eer_social_posts.employee_id
+Ref: hrms_employee.employee_id > eer_reactions.employee_id
+Ref: hrms_employee.employee_id > eer_recognitions.sender_id
+Ref: hrms_employee.employee_id > eer_recognitions.receiver_id
+Ref: hrms_employee.employee_id > pm_360_feedback.employee_id
+Ref: hrms_employee.employee_id > pm_appraisals.employee_id
+Ref: hrms_employee.employee_id > pm_reports.employee_id
+Ref: hrms_employee.employee_id > pr_employee_adjustments.employee_id
+Ref: hrms_employee.employee_id > pr_employee_benefits.employee_id
+Ref: hrms_employee.employee_id > pr_payslips.employee_id
+Ref: hrms_employee.employee_id > ta_attendance.employee_id
+Ref: hrms_employee.employee_id > user_account.employee_id

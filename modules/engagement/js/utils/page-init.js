@@ -28,7 +28,7 @@
     // ─── Form Submissions ─────────────────────────────────────────────────────────
 
     export function initForms() {
-    const forms = document.querySelectorAll('form:not([data-skip]):not(#approval-upload-form)');
+    const forms = document.querySelectorAll('form:not([data-skip]):not(#approval-upload-form):not(#management-update-form)');
 
     forms.forEach(function (form) {
         const fresh = form.cloneNode(true);

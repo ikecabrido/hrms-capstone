@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <title>School Management System</title>
+    <title>Human Resource Management Systemm</title>
 </head>
 <body>
     <header>

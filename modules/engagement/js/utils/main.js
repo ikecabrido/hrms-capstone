@@ -52,11 +52,81 @@
     // ─── Sidebar Click Intercept ──────────────────────────────────────────────────
 
     document.body.addEventListener('click', function (e) {
+        var grievanceView = e.target.closest('[data-grievance-view], a[href*="grievance_detail.php"]');
+        if (grievanceView) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            var grievanceId = Number(grievanceView.getAttribute('data-grievance-view'));
+            if (!grievanceId && grievanceView.href) {
+                grievanceId = Number(new URL(grievanceView.href, window.location.href).searchParams.get('id'));
+            }
+            if (grievanceId <= 0) return;
+
+            if (typeof window.viewGrievanceDetails === 'function') {
+                try {
+                    window.viewGrievanceDetails(grievanceId);
+                    return;
+                } catch (error) {
+                    console.warn('Grievance modal handler failed; using loader fallback.', error);
+                }
+            }
+
+            import('../../pages/js/grievance.js')
+                .then(function () {
+                    if (typeof window.viewGrievanceDetails === 'function') {
+                        window.viewGrievanceDetails(grievanceId);
+                    } else {
+                        openGrievanceDetailsFallback(grievanceId);
+                    }
+                })
+                .catch(function (error) {
+                    console.error('Unable to load grievance details module', error);
+                    openGrievanceDetailsFallback(grievanceId);
+                });
+            return;
+        }
+
         var a = e.target.closest('a[data-page]');
         if (!a) return;
         e.preventDefault();
         fetchPage(a.getAttribute('data-page'));
     });
+
+    function openGrievanceDetailsFallback(grievanceId) {
+        var existing = document.getElementById('global-grievance-modal');
+        if (existing) existing.remove();
+
+        var root = window.location.pathname.split('/modules/engagement/')[0] + '/modules/engagement/';
+        var detailUrl = new URL('pages/grievance_detail.php', window.location.origin + root);
+        detailUrl.searchParams.set('id', String(grievanceId));
+
+        var modal = document.createElement('div');
+        modal.id = 'global-grievance-modal';
+        modal.className = 'global-grievance-modal grievance-area';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.innerHTML = '<div class="global-grievance-modal-dialog">' +
+            '<div class="global-grievance-modal-header"><h2>Grievance Details</h2><button type="button" class="global-grievance-modal-close" aria-label="Close">&times;</button></div>' +
+            '<div class="global-grievance-modal-body"><div class="text-muted text-center p-4">Loading details...</div></div></div>';
+        var styleLink = document.createElement('link');
+        styleLink.rel = 'stylesheet';
+        styleLink.href = new URL('css/style/grievance.css', detailUrl).href;
+        modal.appendChild(styleLink);
+        document.body.appendChild(modal);
+        modal.querySelector('.global-grievance-modal-close').addEventListener('click', function () { modal.remove(); });
+        modal.addEventListener('click', function (event) { if (event.target === modal) modal.remove(); });
+
+        fetch(detailUrl.href, { credentials: 'same-origin' })
+            .then(function (response) { if (!response.ok) throw new Error('Unable to load grievance details.'); return response.text(); })
+            .then(function (html) {
+                var content = new DOMParser().parseFromString(html, 'text/html').querySelector('.grievance-detail-content');
+                modal.querySelector('div > div:last-child').innerHTML = content ? content.outerHTML : '<div class="alert alert-danger">Grievance details not found.</div>';
+            })
+            .catch(function (error) {
+                modal.querySelector('div > div:last-child').innerHTML = '<div class="alert alert-danger">' + error.message + '</div>';
+            });
+    }
 
     // ─── Back / Forward ───────────────────────────────────────────────────────────
 

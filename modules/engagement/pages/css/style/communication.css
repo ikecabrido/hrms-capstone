@@ -1,0 +1,874 @@
+/* Communication Page Modern Smooth Theme */
+.communication-area {
+  background: transparent;
+  padding: 20px 0 30px;
+}
+
+.communication-area .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -0.75rem;
+  margin-right: -0.75rem;
+}
+
+.communication-area .row > [class*="col-"] {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.communication-area .card-header h3,
+.communication-area .card-header .card-title {
+  font-weight: 700;
+  color: #212529;
+  margin: 0;
+  font-size: 1.05rem;
+  margin-left: 20px;
+  margin-top: 20px;
+}
+
+.communication-area .card {
+  border: 1px solid rgba(222, 226, 230, 0.9);
+  border-radius: 1.5rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  background: #ffffff;
+  margin: 0;
+  min-height: 100%;
+}
+
+.communication-area .card .card-title {
+  font-weight: 700;
+  color: #0b78d0;
+}
+
+.communication-area .card-title {
+  color: #16407c !important;
+  font-weight: 700 !important;
+}
+
+.communication-area .card:hover {
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
+}
+
+.communication-area .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(222, 226, 230, 0.85);
+  padding: 1.5rem 1.75rem;
+}
+
+.communication-area .card-body p {
+  line-height: 1.6;
+  color: gray;
+}
+
+.communication-area .card-body label {
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+/* Typography */
+.communication-area h1,
+.communication-area h2,
+.communication-area h3,
+.communication-area h4,
+.communication-area h5,
+.communication-area h6 {
+  font-weight: 700;
+  color: #212529;
+}
+
+.communication-area .text-muted {
+  font-size: 0.9rem;
+  color: gray;
+}
+
+.communication-area .badge {
+  padding: 0.4rem 0.8rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.communication-area .badge-info {
+  background-color: #16407c;
+  color: rgb(255, 255, 255);
+}
+
+.communication-area .form-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.communication-area .form-group {
+  width: 100%;
+  max-width: 350px;
+  margin-bottom: 14px;
+}
+
+.communication-area .form-group label {
+  font-weight: 600;
+  color: #1a5f9f;
+}
+
+.communication-area .form-control {
+  width: 100%;
+  max-width: 350px;
+  border: 1px solid #d0d8e6;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.communication-area .form-control:focus {
+  border-color: #4987dc;
+  box-shadow: 0 0 0 0.15rem rgba(73, 135, 220, 0.25);
+}
+
+.communication-area #policy-filter {
+  width: 200px;
+  max-width: 100%;
+  border: 1px solid #3d8bfd;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #212529;
+  font-weight: 600;
+  padding-right: 2.25rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.communication-area #policy-filter option {
+  background: #ffffff;
+  color: #212529;
+}
+
+.communication-area #policy-filter option:checked,
+.communication-area #policy-filter option[selected="selected"] {
+  background: #ffffff !important;
+  color: #212529 !important;
+}
+
+.communication-area .card {
+	margin-bottom: 1.25rem;
+	border: 1px solid #dfe7f1 !important;
+	border-radius: 14px !important;
+	box-shadow: none !important;
+	background: #ffffff;
+	transition: none;
+}
+
+.communication-area .card-body {
+	padding: 18px 20px !important;
+}
+
+.communication-area .card-header {
+	padding: 16px 20px !important;
+	background: transparent !important;
+	border-bottom: 1px solid #edf2f8 !important;
+}
+
+.communication-area .tab-pane > .row {
+	margin: 0;
+	align-items: stretch;
+}
+
+.communication-area .tab-pane > .row > [class*="col-"] {
+	padding: 0 0.75rem 1rem;
+	width: 100%;
+}
+
+.communication-area .tab-pane > .row > .col-md-4 .card,
+.communication-area .tab-pane > .row > .col-md-8 .card {
+	height: auto;
+	min-height: 220px;
+	width: 100%;
+	box-sizing: border-box;
+	margin: 5px;
+}
+
+.communication-area .tab-pane > .row > .col-md-4 .card,
+.communication-area .tab-pane > .row > .col-md-8 .card {
+	background: linear-gradient(135deg, #f8fbff 0%, #ffffff 100%);
+	position: relative;
+	font-size: 20px;
+}
+
+/* Make right column wider (approx 72%) and left column narrower (approx 28%) */
+.communication-area .tab-pane > .row > .col-md-4 {
+	flex: 0 0 28%;
+	max-width: 28%;
+}
+.communication-area .tab-pane > .row > .col-md-8 {
+	flex: 0 0 72%;
+	max-width: 72%;
+}
+
+@media (max-width: 992px) {
+	.communication-area .tab-pane > .row > .col-md-4,
+	.communication-area .tab-pane > .row > .col-md-8 {
+		flex: unset;
+		max-width: 100%;
+	}
+}
+
+.communication-area .announcement-card,
+.communication-area .dept-update-item,
+.communication-area .policy-card,
+.communication-area .notification-item {
+	position: relative;
+}
+
+.communication-area .announcement-card .badge,
+.communication-area .dept-update-item .badge,
+.communication-area .policy-card .badge {
+	position: absolute;
+	top: 10px;
+	right: 20px;
+	margin-top: 0;
+	margin-right: 0;
+	background-color: #16407c;
+	color: #ffffff;
+}
+
+
+
+/* Make the Recent Announcements card larger and more prominent */
+
+
+/* Make HR Notifications item text match Recent Announcements sizing */
+.communication-area .notification-item h6,
+.communication-area .notification-item .card-title {
+	font-size: 1.08rem;
+	font-weight: 700;
+	color: #1a4a8a;
+}
+.communication-area .notification-item p,
+.communication-area .notification-item .card-text,
+.communication-area .notification-item small {
+	font-size: 1rem;
+	color: #3a4a5a;
+}
+
+/* Make message thread text slightly larger to match announcements */
+.communication-area .message-thread .message-bubble p {
+	font-size: 1rem;
+	color: #243447;
+}
+.communication-area .message-thread .message-bubble small.text-muted {
+	font-size: 0.95rem;
+}
+
+/* Enlarge HR Notifications right column and its items */
+#notifications .col-md-8 .card {
+	min-height: 470px;
+	padding: 1.35rem;
+
+}
+.communication-area #notifications .notification-item {
+	max-width: 100%;
+	margin: 1rem 0;
+	min-height: 220px;
+	padding: 1.25rem 1.5rem;
+	border: 1px solid #e5eff8;
+	border-radius: 14px;
+	background: #f7fbff;
+}
+
+.communication-area #notifications .notification-item > .d-flex {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.communication-area #notifications .notification-item .flex-grow-1 {
+	min-width: 0;
+}
+
+.communication-area #notifications .notification-item .flex-grow-1 > .d-flex {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	margin-bottom: 0.55rem !important;
+}
+
+.communication-area #notifications .notification-item .notification-type-badge,
+.communication-area #notifications .notification-item .badge-warning {
+	position: static;
+	margin: 0 !important;
+}
+
+.communication-area #notifications .notification-item h6 {
+	flex: 1 1 100%;
+	order: 2;
+	margin: 0 !important;
+}
+
+.communication-area #notifications .notification-item .flex-grow-1 > .d-flex > i {
+	order: 1;
+}
+
+.communication-area #notifications .notification-item .flex-grow-1 > .d-flex > .badge-primary {
+	position: static;
+	order: 3;
+	margin: 0 0 0 auto !important;
+	    background: #16407c;
+    color: white;
+}
+
+.communication-area #notifications .notification-item .flex-grow-1 > p.text-muted {
+	margin: 0 0 0.6rem !important;
+	line-height: 1.5;
+}
+
+.communication-area #notifications .notification-item .flex-grow-1 > p.mb-2 {
+	margin: 0 !important;
+}
+
+.communication-area #notifications .notification-item > .d-flex > .ml-3 {
+	flex: 0 0 auto;
+	margin-left: 0 !important;
+}
+
+.communication-area #notifications .notification-actions {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 0.5rem;
+}
+
+.communication-area #notifications .notification-new-badge {
+	position: static;
+	margin: 0 !important;
+	background: #16407c;
+	color: #ffffff;
+}
+
+.communication-area #notifications .notification-item > .d-flex > .ml-3 .btn {
+	white-space: nowrap;
+}
+
+.communication-area #notifications .notification-item .d-flex {
+	align-items: flex-start;
+}
+.communication-area #notifications .notification-item .card-body {
+	padding: 1rem 1.25rem;
+}
+
+/* Enlarge HR-Employee Messaging right column and message thread area */
+#messaging .col-md-8 .card {
+	min-height: 520px;
+	padding: 1.35rem;
+}
+.communication-area #messaging .message-thread {
+	min-height: 300px;
+}
+.communication-area #messaging .message-bubble {
+	max-width: 88%;
+	margin: 0.5rem 0;
+	padding: 0.6rem 0.9rem;
+	border-radius: 12px;
+}
+
+.communication-area .form-group {
+	margin-bottom: 1.1rem;
+	width: 100%;
+}
+.communication-area .form-control {
+	border: 1px solid #cdd9e8;
+	border-radius: 8px;
+	padding: .58rem .75rem;
+	box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
+	transition: border-color 0.2s, box-shadow 0.2s;
+}
+.communication-area .form-control:focus {
+	border-color: #3c8dbc;
+	box-shadow: 0 0 0 .2rem rgba(60, 141, 188, 0.2);
+}
+
+.communication-area .form-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.communication-area .form-group {
+  width: 100%;
+  max-width: 350px;
+  margin-bottom: 14px;
+}
+
+.communication-area .form-group label {
+  font-weight: 600;
+  color: #1a5f9f;
+}
+
+.communication-area .form-control {
+  width: 100%;
+  max-width: 350px;
+  border: 1px solid #d0d8e6;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.communication-area .form-control:focus {
+  border-color: #4987dc;
+  box-shadow: 0 0 0 0.15rem rgba(73, 135, 220, 0.25);
+}
+
+@media (max-width: 992px) {
+  .communication-area .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .communication-area .form-group,
+  .communication-area .form-control {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+.communication-area .card-tools .form-control-sm {
+	min-width: 220px;
+	max-width: 320px;
+	width: auto;
+	height: auto;
+	margin-top: 20px;
+	margin-right: 20px;
+
+}
+.communication-area .card-tools .form-control-sm#dept-filter {
+	min-width: 240px;
+	height: auto;
+	margin-top: 20px;
+	margin-right: 20px;
+}
+.communication-area .btn {
+	border-radius: 999px;
+	padding: 0.75rem 1.45rem;
+	font-weight: 700;
+	transition: transform .2s, box-shadow .2s;
+	background-color: #14355e;
+	color: #ffffff;
+	text-decoration: none;
+}
+.communication-area .btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 7px 16px rgba(0,0,0,0.12);
+}
+.communication-area .announcement-list {
+	margin-top: 1.5rem;
+}
+.communication-area .announcement-item {
+	background: #f7fbff;
+	border: 1px solid #e5eff8 !important;
+	border-radius: 14px !important;
+	margin-bottom: 1rem;
+	padding: 1.25rem 1.5rem;
+	box-shadow: 0 2px 8px rgba(20, 41, 78, 0.04);
+	transition: box-shadow 0.2s, transform 0.2s;
+}
+.communication-area .announcement-item:hover {
+	box-shadow: 0 8px 24px rgba(11, 120, 208, 0.10);
+	transform: translateY(-2px);
+}
+.communication-area .announcement-card {
+	position: relative;
+	max-width: 98%;
+	margin: 0.4rem auto;
+	min-height: 90px;
+}
+.communication-area .announcement-card .card-body {
+	padding: 0.6rem 1rem;
+
+	margin-top: 20px;
+}
+.communication-area .announcement-card .badge {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+	margin-top: 0;
+	margin-right: 0;
+}
+.communication-area .communication-post-scroll {
+	max-height: 460px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding-right: 8px;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+.communication-area .communication-post-scroll::-webkit-scrollbar {
+	display: none;
+	width: 0;
+	height: 0;
+}
+.communication-area .announcement-title {
+	color: #1a4a8a;
+	font-weight: 700;
+	font-size: 1.08rem;
+	margin-bottom: 0.35rem;
+}
+.communication-area .announcement-meta {
+	color: #6c7a94;
+	font-size: 0.92rem;
+	margin-bottom: 0.5rem;
+}
+.communication-area .announcement-body {
+	color: #3a4a5a;
+	line-height: 1.6;
+	font-size: 0.97rem;
+}
+.communication-area .alert {
+	border-radius: 14px;
+}
+
+/* Success banner: green background, white text, no close button */
+.communication-area .alert.success-banner {
+	background-color: #28a745;
+	color: #ffffff;
+	border: none;
+	padding: 0.85rem 1rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.6rem;
+	font-weight: 700;
+	box-shadow: 0 6px 18px rgba(40,167,69,0.12);
+}
+.communication-area .alert.success-banner i {
+	color: #ffffff;
+	font-size: 1.05rem;
+}
+.communication-area .card,
+.communication-area .card.card-warning,
+.communication-area .card.card-success,
+.communication-area .card.card-secondary {
+	border: 1px solid rgba(255, 255, 255, 0.55);
+	border-radius: 24px !important;
+	background: rgba(255, 255, 255, 0.72);
+	backdrop-filter: blur(18px);
+	-webkit-backdrop-filter: blur(18px);
+	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
+	transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.communication-area .card:hover,
+.communication-area .card.card-warning:hover,
+.communication-area .card.card-success:hover,
+.communication-area .card.card-secondary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 32px 100px rgba(0, 0, 0, 0.12);
+}
+
+.communication-area .card.card-secondary .card-header,
+.communication-area .card .card-header {
+	background: rgba(255, 255, 255, 0.72) !important;
+
+}
+@media (max-width: 992px) {
+	.communication-area .card-body {
+		padding: 18px !important;
+	}
+}
+
+/* Smooth Tab Transitions */
+	
+
+
+@keyframes slideDown {
+	from {
+		opacity: 0.7;
+		transform: translateY(-5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.communication-area .tab-pane {
+	animation: fadeIn 0.3s ease-in;
+}
+
+/* Compliance summaries use a compact, scannable table instead of raw bordered cells. */
+.communication-area .compliance-summary-card {
+	background: #ffffff;
+	border: 1px solid #dbe6f2 !important;
+	box-shadow: 0 12px 28px rgba(27, 67, 112, 0.08);
+	overflow: hidden;
+}
+
+.communication-area .compliance-summary-card .card-header {
+	background: #f4f8fc !important;
+	border-bottom: 1px solid #dbe6f2 !important;
+	padding: 1rem 1.25rem !important;
+}
+
+.communication-area .compliance-summary-card .card-body {
+	padding: 0.5rem 1.25rem 1rem !important;
+}
+
+.communication-area .compliance-summary-table {
+	margin: 0;
+	min-width: 520px;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.communication-area .compliance-summary-table thead th {
+	padding: 0.8rem 0.75rem;
+	border: 0;
+	border-bottom: 2px solid #e6eef7;
+	color: #55708f;
+	font-size: 0.72rem;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.communication-area .compliance-summary-table tbody td {
+	padding: 0.78rem 0.75rem;
+	border: 0;
+	border-bottom: 1px solid #edf2f7;
+	color: #263c55;
+	font-size: 0.88rem;
+	vertical-align: middle;
+}
+
+.communication-area .compliance-summary-table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+.communication-area .compliance-summary-table tbody tr:hover td {
+	background: #f8fbff;
+}
+
+.communication-area .compliance-employee {
+	font-weight: 700;
+	color: #183f70 !important;
+}
+
+.communication-area .compliance-policy-id {
+	font-weight: 800;
+	color: #58708d !important;
+}
+
+.communication-area .compliance-date {
+	white-space: nowrap;
+	color: #60758d !important;
+}
+
+.communication-area .compliance-summary-table .badge {
+	min-width: 88px;
+	padding: 0.35rem 0.6rem;
+	font-size: 0.7rem;
+	text-align: center;
+}
+
+@media (max-width: 640px) {
+	.communication-area .compliance-summary-card .card-body {
+		padding: 0.5rem 0.75rem 0.9rem !important;
+	}
+
+	.communication-area .compliance-summary-table {
+		min-width: 480px;
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.communication-area .tab-content {
+	border-top: 2px solid rgba(11, 120, 208, 0.1);
+	padding-top: 1.5rem;
+	border-radius: 0 0 8px 8px;
+}
+
+/* Loading state for tabs */
+.communication-area .tab-pane.loading {
+	position: relative;
+	pointer-events: none;
+	opacity: 0.6;
+}
+
+.communication-area .tab-pane.loading::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 40px;
+	height: 40px;
+	border: 3px solid rgba(11, 120, 208, 0.2);
+	border-top: 3px solid #0b78d0;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: translate(-50%, -50%) rotate(360deg);
+	}
+}
+
+@media (max-width: 767px) {
+	.communication-area .tab-pane > .row > .col-md-4,
+	.communication-area .tab-pane > .row > .col-md-8 {
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	.communication-area .tab-pane > .row > .col-md-4 .card,
+	.communication-area .tab-pane > .row > .col-md-8 .card {
+		min-height: auto;
+	}
+}
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.communication-area .nav-tabs {
+  display: flex;
+  gap: 0;
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.communication-area .nav-tabs .nav-item {
+  margin: 0;
+}
+
+
+.communication-area .nav-tabs .nav-link {
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  margin: 18px;
+  padding: 0.9rem 1.2rem !important;
+  font-weight: 700;
+  color: #4a5d73;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  text-decoration: none;
+  border-radius: 0;
+}
+
+.communication-area .nav-link:hover {
+	color: #0b78d0 !important;
+	background: transparent;
+}
+
+.communication-area .nav-tabs .nav-link.active {
+    color: #0e5ca8 !important;
+    background: transparent !important;
+    border-bottom: 3px solid #0e5ca8 !important;
+    box-shadow: none;
+}
+.communication-area .tab-content {
+  padding: 1.5rem 0;
+}
+
+.communication-area .tab-pane {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.communication-area .btn-primary,
+.communication-area .btn-info {
+  background-color: #1a4a8a;
+  border-color: #1a4a8a;
+  color: #ffffff;
+}
+
+.communication-area .btn-primary:hover,
+.communication-area .btn-info:hover,
+.communication-area .btn-primary:focus,
+.communication-area .btn-info:focus {
+  background-color: #14355e;
+  border-color: #14355e;
+  color: #ffffff;
+}
+
+.communication-area .btn-outline-primary {
+  color: #1a4a8a;
+  border-color: #1a4a8a;
+}
+
+.communication-area .btn-outline-primary:hover,
+.communication-area .btn-outline-primary:focus {
+  background-color: #1a4a8a;
+  color: #ffffff;
+}
+
+/* Make each tab-pane behave like its own page: hide non-active panes */
+.communication-area .tab-content .tab-pane {
+	display: none;
+}
+.communication-area .tab-content .tab-pane.show,
+.communication-area .tab-content .tab-pane.active {
+	display: block;
+	animation: fadeIn 0.28s ease both;
+}
+
+.communication-area .communication-tabs-body {
+	padding: 24px 20px;
+	min-height: 360px; /* reduced to allow shorter cards */
+}
+
+/* Make the nav persist above content and feel like page navigation */
+.communication-area .communication-tabs-card .card-header {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+}
+
+/* Inline styles moved to CSS */
+.communication-area .communication-tabs-card {
+  border-radius: 24px;
+}
+
+.communication-area .communication-tabs-card .card-header {
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(180deg, #eef7ff 0%, #fdfdff 100%) !important;
+  border-bottom: 1px solid rgba(30, 105, 176, 0.12) !important;
+}
+
+.communication-area .card-header.p-0 {
+	padding: 0 !important;
+}
+
+.communication-area .communication-tabs-body {
+  padding: 32px 24px;
+}
+
+.communication-area .card-title .h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #16407c;
+}

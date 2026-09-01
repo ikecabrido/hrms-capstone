@@ -1,0 +1,408 @@
+/* Dashboard CSS - Clean & Modern Design */
+
+:root {
+  --primary-color: #0d6efd;
+  --success-color: #198754;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #0dcaf0;
+  --light-bg: #f8f9fa;
+  --border-color: #dee2e6;
+  --text-dark: #212529;
+  --text-light: #6c757d;
+  --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Minimal responsive grid support for dashboard cards */
+.dashboard-area {
+  display: block;
+}
+
+.dashboard-area .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -0.75rem;
+  margin-right: -0.75rem;
+}
+.dashboard-area .row > [class*="col-"] {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-area .col-sm-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+.dashboard-area .col-md-6 {
+  flex: 0 0 50%;
+  max-width: 50%;
+}
+.dashboard-area .col-md-4 {
+  flex: 0 0 33.3333%;
+  max-width: 33.3333%;
+}
+.dashboard-area .col-lg-3 {
+  flex: 0 0 25%;
+  max-width: 25%;
+}
+.dashboard-area .col-lg-2 {
+  flex: 0 0 16.6667%;
+  max-width: 16.6667%;
+}
+
+/* Overview Cards */
+.dashboard-area .small-box {
+  position: relative;
+  border-radius: 1rem;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.14);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  min-height: 120px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+}
+
+.dashboard-area .small-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.03));
+  pointer-events: none;
+  opacity: 0.85;
+  z-index: 0;
+}
+
+.dashboard-area .small-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.18);
+}
+
+.dashboard-area .small-box .inner {
+  position: relative;
+  z-index: 1;
+  padding: 1.5rem;
+}
+.dashboard-area .small-box .inner h3 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+  color: white;
+}
+
+.dashboard-area .small-box .inner p {
+  margin: 0.5rem 0 0 0;
+  font-weight: 600;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.dashboard-area .small-box .icon {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  font-size: 3.5rem;
+  opacity: 0.2;
+  color: rgba(255, 255, 255, 0.92);
+  z-index: 1;
+}
+
+/* Color Variants */
+.dashboard-area .bg-primary {
+  background: rgb(13, 110, 253) !important;
+  color: white;
+}
+
+.dashboard-area .bg-info {
+  background: rgb(13, 202, 240) !important;
+  color: white;
+}
+
+.dashboard-area .bg-danger {
+  background: rgb(220, 53, 69) !important;
+  color: white;
+}
+
+.dashboard-area .bg-success {
+  background: rgb(25, 135, 84) !important;
+  color: white;
+}
+
+.dashboard-area .bg-warning {
+  background: rgb(255, 193, 7) !important;
+  color: white;
+}
+
+.dashboard-area .bg-secondary {
+  background: rgb(108, 117, 125) !important;
+  color: white;
+}
+
+.dashboard-area .bg-indigo {
+  background: rgb(88, 101, 242) !important;
+  color: white;
+}
+
+.dashboard-area .bg-teal {
+  background: rgb(20, 184, 166) !important;
+  color: white;
+}
+
+.dashboard-area .bg-purple {
+  background: rgb(108, 57, 174) !important;
+  color: white;
+}
+
+/* Dashboard Content */
+.dashboard-area section.content {
+  padding: 2rem 1rem 3rem;
+}
+
+.dashboard-area.container-fluid {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.dashboard-area .dashboard-header {
+  padding: 1.5rem 0 1rem;
+  border-bottom: 2px solid var(--border-color);
+  margin: 0 auto 2rem;
+  max-width: 1320px;
+}
+
+.dashboard-area .row > [class*="col-"] {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-area .card {
+  border: 1px solid rgba(222, 226, 230, 0.9);
+  border-radius: 1.5rem;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  background: #ffffff;
+  margin: 0;
+  min-height: auto;
+
+}
+
+.dashboard-area .dashboard-area .card:hover {
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.12);
+  transform: translateY(-2px);
+}
+
+.dashboard-area .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid rgba(222, 226, 230, 0.85);
+  padding: 1.5rem 1.75rem;
+
+}
+
+.dashboard-area .card-header h5,
+.dashboard-area .card-header .card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  margin-left: 20px;
+}
+
+.dashboard-area .card-header .badge {
+  margin-left: auto;
+  padding: 0.5rem 0.9rem;
+  margin-right: 20px;
+  margin-top: 20px;
+}
+
+.dashboard-area .card-body ul.list-group-flush {
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-area .card-body .list-group-item {
+  border: none;
+  padding: 1.2rem 1.5rem;
+  border-radius: 0.85rem;
+  margin-bottom: 0.85rem;
+  background: #f7f9fc;
+}
+
+.dashboard-area .card-body .list-group-item:last-child {
+  margin-bottom: 0;
+}
+
+.dashboard-area .dashboard-header h1,
+.dashboard-area .dashboard-header h2 {
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.dashboard-area .dashboard-header p {
+  color: var(--text-light);
+  margin: 0.5rem 0 0 0;
+  font-size: 0.95rem;
+}
+
+/* Cards */
+.dashboard-area .card:hover {
+  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.16);
+  transform: translateY(-3px);
+}
+
+.dashboard-area .card-header h3,
+.dashboard-area .card-header .card-title {
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+  font-size: 1.05rem;
+  margin-left: 20px;
+  margin-top: 20px;
+}
+
+.dashboard-area .card-body {
+  padding: 1.75rem;
+}
+
+.dashboard-area .communication-summary-card .card-header,
+.dashboard-area .feedback-summary-card .card-header,
+.dashboard-area .survey-summary-card .card-header {
+  border-bottom-color: var(--border-color);
+}
+
+.dashboard-area .communication-summary-card,
+.dashboard-area .feedback-summary-card,
+.dashboard-area .survey-summary-card {
+  border-top: none;
+}
+
+.dashboard-area .card-body ul.list-group-flush {
+  margin: 0 -1.25rem;
+}
+
+.dashboard-area .card-body .list-group-item {
+  border: none;
+  padding: 0.9rem 1.25rem;
+  border-radius: 0.45rem;
+  margin-bottom: 0.5rem;
+  background: #f8f9fa;
+}
+
+.dashboard-area .card-body .list-group-item:last-child {
+  margin-bottom: 0;
+}
+
+.dashboard-area .card-body .list-group-item small {
+  color: var(--text-light);
+}
+
+.dashboard-area .badge-primary,
+.dashboard-area .badge-success,
+.dashboard-area .badge-warning,
+.dashboard-area .badge-danger,
+.dashboard-area .badge-info,
+.dashboard-area .badge-secondary,
+.dashboard-area .badge-indigo,
+.dashboard-area .badge-teal,
+.dashboard-area .badge-purple {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.dashboard-area .card-body p {
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+.dashboard-area .card-body label {
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+/* Typography */
+.dashboard-area h1,
+.dashboard-area h2,
+.dashboard-area h3,
+.dashboard-area h4,
+.dashboard-area h5,
+.dashboard-area h6 {
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.dashboard-area .text-muted {
+  color: var(--text-light) !important;
+  font-size: 0.9rem;
+}
+
+/* Badges */
+.dashboard-area .badge {
+  padding: 0.4rem 0.8rem;
+  font-weight: 600;
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+
+.dashboard-area .badge-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.dashboard-area .badge-success {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.dashboard-area .badge-warning {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.dashboard-area .badge-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.dashboard-area .badge-info {
+  background-color: var(--info-color);
+  color: white;
+}
+
+/* List Items */
+.dashboard-area .list-unstyled li {
+  margin-bottom: 0.75rem;
+  padding-left: 1.75rem;
+  position: relative;
+}
+
+.dashboard-area .list-unstyled li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success-color);
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .small-box .inner {
+    padding: 0.75rem;
+  }
+
+  .small-box .inner h3 {
+    font-size: 1.4rem;
+  }
+
+  .small-box .icon {
+    font-size: 1.6rem;
+  }
+}

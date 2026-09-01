@@ -7,7 +7,7 @@ $employeeClass = new Employee();
 
 <aside class="sidebar">
     <div class="school-logo">
-        <img src="assets/bcp-logo.png" alt="School Logo">
+        <img src="/hrms-capstone/assets/bcp-logo.png" alt="School Logo">
         <div class="sidebar-icons">
 
             <!-- Bell Icon + Notification Dropdown -->
@@ -19,11 +19,11 @@ $employeeClass = new Employee();
                         <button class="mark-all-read">Mark all as read</button>
                     </div>
                     <ul class="notif-list">
-                        <li class="notif-item">
-                        </li>
-                        <div class="dropdown-footer">
-                            <a href="#">View all notifications</a>
-                        </div>
+                        <li class="notif-item"></li>
+                    </ul>
+                    <div class="dropdown-footer">
+                        <a href="#">View all notifications</a>
+                    </div>
                 </div>
             </div>
 

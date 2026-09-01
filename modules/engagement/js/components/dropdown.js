@@ -8,43 +8,52 @@ const bellBtn      = document.getElementById('bellBtn');
     const markAllRead  = document.querySelector('.mark-all-read');
 
     function closeAll() {
-        bellDropdown.classList.remove('open');
-        userDropdown.classList.remove('open');
+        if (bellDropdown) bellDropdown.classList.remove('open');
+        if (userDropdown) userDropdown.classList.remove('open');
     }
 
     function openDropdown(dropdown, triggerEl) {
+        if (!dropdown || !triggerEl) return;
         const sidebar  = document.querySelector('.sidebar');
         const rect     = triggerEl.getBoundingClientRect();
-        const sidebarRect = sidebar.getBoundingClientRect();
+        const sidebarRect = sidebar ? sidebar.getBoundingClientRect() : { right: rect.right };
 
         dropdown.style.top  = rect.top + 'px';
         dropdown.style.left = (sidebarRect.right + 8) + 'px';
         dropdown.classList.add('open');
     }
 
-    bellBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        const isOpen = bellDropdown.classList.contains('open');
-        closeAll();
-        if (!isOpen) openDropdown(bellDropdown, bellBtn);
-    });
+    if (bellBtn && bellDropdown) {
+        bellBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const isOpen = bellDropdown.classList.contains('open');
+            closeAll();
+            if (!isOpen) openDropdown(bellDropdown, bellBtn);
+        });
+    }
 
-    userBtn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        const isOpen = userDropdown.classList.contains('open');
-        closeAll();
-        if (!isOpen) openDropdown(userDropdown, userBtn);
-    });
+    if (userBtn && userDropdown) {
+        userBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            const isOpen = userDropdown.classList.contains('open');
+            closeAll();
+            if (!isOpen) openDropdown(userDropdown, userBtn);
+        });
+    }
 
     document.addEventListener('click', function (e) {
-        if (!bellWrapper.contains(e.target) && !userWrapper.contains(e.target)) {
+        const target = e.target;
+        if (!bellWrapper || !userWrapper) return;
+        if (!bellWrapper.contains(target) && !userWrapper.contains(target)) {
             closeAll();
         }
     });
 
-    markAllRead.addEventListener('click', function () {
-        document.querySelectorAll('.notif-item.unread').forEach(item => {
-            item.classList.remove('unread');
+    if (markAllRead) {
+        markAllRead.addEventListener('click', function () {
+            document.querySelectorAll('.notif-item.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            if (notifBadge) notifBadge.classList.add('hidden');
         });
-        notifBadge.classList.add('hidden');
-    });
+    }

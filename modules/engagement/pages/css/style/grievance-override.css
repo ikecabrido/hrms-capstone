@@ -1,0 +1,45 @@
+/* CRITICAL OVERRIDE: Ensure tab pane content displays */
+
+.grievance-area .tab-pane {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.grievance-area .tab-pane.show,
+.grievance-area .tab-pane.active {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+#grievance-tabs-content .tab-pane {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+#grievance-tabs-content .tab-pane.show,
+#grievance-tabs-content .tab-pane.active {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.tab-pane.show,
+.tab-pane.active {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.grievance-area .tab-pane.fade.show,
+.grievance-area .tab-pane.fade.active {
+  animation: grievanceFadeIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}

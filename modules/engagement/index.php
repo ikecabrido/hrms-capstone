@@ -1,4 +1,6 @@
 <?php
+// Start output buffering early so pages can safely send headers after includes
+if (!ob_get_level()) ob_start();
 require_once 'classes/Page.php';
 
 $pageController = new Page();
