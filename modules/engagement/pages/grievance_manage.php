@@ -86,7 +86,7 @@ $isFinalized = in_array($grievance['status'], ['Resolved', 'Closed'], true);
     </div>
   </div>
 
-  <form id="management-form" method="POST" action="grievances.php" enctype="multipart/form-data">
+  <form id="management-form" method="POST" action="/hrms-capstone/modules/engagement/api/grievance.php?action=update_management" enctype="multipart/form-data" data-skip="true">
     <input type="hidden" name="management_action" value="1">
     <input type="hidden" name="grievance_id" value="<?= $grievance['id'] ?>">
 

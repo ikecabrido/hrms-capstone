@@ -220,9 +220,82 @@
     filterGrievances();
   }
 
+  function initGrievanceApiForms() {
+    if (window.__grievanceApiFormsBound) return;
+    window.__grievanceApiFormsBound = true;
+
+    document.addEventListener('submit', function (event) {
+      const form = event.target.closest('#management-update-form, #management-form');
+      if (!form) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      if (form.dataset.submitting === '1') return;
+      form.dataset.submitting = '1';
+
+      const submitButton = form.querySelector('button[type="submit"]');
+      const originalText = submitButton ? submitButton.innerHTML : '';
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      }
+
+      const apiUrl = '/hrms-capstone/modules/engagement/api/grievance.php?action=update_management';
+      fetch(apiUrl, {
+        method: 'POST',
+        body: new FormData(form),
+        credentials: 'same-origin'
+      })
+        .then(function (response) {
+          return response.text().then(function (text) {
+            let data = {};
+            try {
+              data = text ? JSON.parse(text) : {};
+            } catch (error) {
+              throw new Error('Invalid response from grievance API.');
+            }
+            if (!response.ok || data.success === false || data.error) {
+              throw new Error(data.message || data.error || 'Unable to save management update.');
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          const alertBox = document.getElementById('management-form-alert');
+          if (alertBox) {
+            alertBox.className = 'alert alert-success';
+            alertBox.textContent = data.message || 'Grievance management updated successfully.';
+            alertBox.classList.remove('d-none');
+          }
+          setTimeout(function () {
+            window.location.reload();
+          }, 500);
+        })
+        .catch(function (error) {
+          const alertBox = document.getElementById('management-form-alert');
+          if (alertBox) {
+            alertBox.className = 'alert alert-danger';
+            alertBox.textContent = error.message;
+            alertBox.classList.remove('d-none');
+          } else {
+            window.alert(error.message);
+          }
+        })
+        .finally(function () {
+          form.dataset.submitting = '0';
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalText;
+          }
+        });
+    }, true);
+  }
+
   window.addEventListener('page:loaded', function (event) {
     if (event && event.detail && event.detail.page === 'grievances') {
       setTimeout(function () {
+        initGrievanceApiForms();
         initializeGrievanceTabs();
         initGrievanceFilters();
       }, 0);
@@ -230,10 +303,12 @@
   });
 
   if (document.readyState !== 'loading') {
+    initGrievanceApiForms();
     initializeGrievanceTabs();
     initGrievanceFilters();
   } else {
     document.addEventListener('DOMContentLoaded', function () {
+      initGrievanceApiForms();
       initializeGrievanceTabs();
       initGrievanceFilters();
     }, { once: true });

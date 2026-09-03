@@ -144,10 +144,10 @@ function getStatusProgress($status) {
           <?php
             $displayPayslipId = $grievance['payslip_id'] ?? $grievance['payroll_reference_id'] ?? null;
           ?>
-          <?php if ($isPayrollRelated && (!empty($displayPayslipId) || !empty($grievance['gross_pay']) || !empty($grievance['total_deductions']) || !empty($grievance['net_pay']) || !empty($grievance['payslip_information']))): ?>
+          <?php if ($isPayrollRelated): ?>
             <hr>
-            <h5><strong>Payslip Details:</strong></h5>
-            <div class="bg-light p-3 rounded">
+            <h5><strong>Payroll Evidence:</strong></h5>
+            <div class="bg-light p-3 rounded payroll-evidence-panel">
               <?php if (!empty($displayPayslipId)): ?>
                 <p class="mb-1"><strong>Payslip ID:</strong> <?= (int)($displayPayslipId) ?></p>
               <?php endif; ?>
@@ -333,12 +333,27 @@ function getStatusProgress($status) {
                   </ul>
                 <?php endif; ?>
 
-          <?php if (!$isPayrollRelated && !empty($grievance['attachment_path'])): ?>
-            <hr>
-            <h5><strong>Attachment:</strong></h5>
-            <p><a href="../../<?= htmlspecialchars($grievance['attachment_path']) ?>" target="_blank" class="btn btn-sm btn-info">
-              <i class="fas fa-download"></i> View Attachment
-            </a></p>
+          <?php if (!empty($grievance['attachment_path'])): ?>
+            <?php
+              $attachmentPath = ltrim(str_replace('\\', '/', (string)$grievance['attachment_path']), '/');
+              $attachmentUrl = '/hrms-capstone/modules/engagement/' . implode('/', array_map('rawurlencode', explode('/', $attachmentPath)));
+              $attachmentName = basename($attachmentPath);
+            ?>
+            <div class="grievance-attachment-panel">
+              <div class="grievance-attachment-heading">
+                <i class="fas fa-paperclip" aria-hidden="true"></i>
+                <strong>Supporting Document</strong>
+              </div>
+              <div class="grievance-attachment-file">
+                <i class="far fa-file-alt" aria-hidden="true"></i>
+                <span><?= htmlspecialchars($attachmentName) ?></span>
+              </div>
+              <a href="<?= htmlspecialchars($attachmentUrl) ?>" target="_blank" rel="noopener" class="grievance-attachment-link">
+                <i class="fas fa-eye" aria-hidden="true"></i>
+                <span>View attachment</span>
+                <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+              </a>
+            </div>
           <?php endif; ?>
 
           <!-- Progress Bar -->

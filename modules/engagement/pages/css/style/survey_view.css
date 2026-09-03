@@ -1,23 +1,121 @@
-.survey-view-area {
-  background: transparent;
-}
-
-.survey-view-area .survey-view-module {
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.survey-view-area .survey-view-module:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.12);
-}
-
-.survey-view-area .survey-view-module .card-header {
-  background: rgba(255, 255, 255, 0.65);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.55);
-}
+        body {
+            background: linear-gradient(135deg, #edf5ff 0%, #f9fbff 100%);
+            font-family: 'Segoe UI', sans-serif;
+            color: #1e293b;
+        }
+        .survey-shell {
+            max-width: 980px;
+            margin: 32px auto;
+            padding: 0 18px 40px;
+        }
+        .survey-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+        .survey-header {
+            background: linear-gradient(135deg, #0f4c81 0%, #1e6bb8 100%);
+            color: #fff;
+            padding: 28px 30px;
+        }
+        .survey-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .survey-header p {
+            margin: 10px 0 0;
+            color: rgba(255,255,255,0.84);
+        }
+        .survey-body {
+            padding: 28px 30px 18px;
+        }
+        .survey-question {
+            background: #f8fbff;
+            border: 1px solid #e2ecf7;
+            border-radius: 14px;
+            padding: 18px 18px 14px;
+            margin-bottom: 18px;
+        }
+        .survey-question label {
+            display: block;
+            font-weight: 700;
+            color: #1f2d3d;
+            margin-bottom: 12px;
+        }
+        .survey-question textarea,
+        .survey-question input {
+            width: 100%;
+            border: 1px solid #cfe0f5;
+            border-radius: 12px;
+            padding: 12px 14px;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+        .survey-question textarea:focus,
+        .survey-question input:focus {
+            outline: none;
+            border-color: #3d8bfd;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+        }
+        .survey-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            font-size: 0.92rem;
+            color: #475569;
+        }
+        .survey-badge {
+            display: inline-block;
+            background: #eaf3ff;
+            color: #0f4c81;
+            border: 1px solid #cfe0f5;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-weight: 600;
+        }
+        .survey-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 1px solid #edf2f7;
+        }
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #0f4c81 0%, #1b6eb5 100%);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 22px;
+            font-weight: 700;
+            box-shadow: 0 10px 18px rgba(31, 92, 165, 0.2);
+        }
+        .btn-secondary-custom {
+            background: #edf2f8;
+            color: #1e293b;
+            border: 1px solid #dfe8f5;
+            border-radius: 12px;
+            padding: 11px 18px;
+            font-weight: 600;
+        }
+        .alert {
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+        }
+        @media (max-width: 640px) {
+            .survey-header,
+            .survey-body {
+                padding-left: 18px;
+                padding-right: 18px;
+            }
+            .survey-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }

@@ -738,6 +738,72 @@
   background: linear-gradient(to bottom, #fafbfc, #ffffff);
 }
 
+.grievance-attachment-panel {
+  margin: 24px 0;
+  padding: 18px 20px;
+  border: 1px solid #d8e5f0;
+  border-left: 4px solid #0b78d0;
+  border-radius: 10px;
+  background: #f5f9fd;
+}
+
+.grievance-attachment-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+  color: #16407c;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.grievance-attachment-heading i {
+  color: #0b78d0;
+  font-size: 1rem;
+}
+
+.grievance-attachment-file {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+  color: #526579;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.grievance-attachment-file i {
+  color: #72879b;
+  flex-shrink: 0;
+}
+
+.grievance-attachment-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 6px;
+  background: #0b78d0;
+  color: #ffffff !important;
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.grievance-attachment-link:hover,
+.grievance-attachment-link:focus {
+  background: #095f9f;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.grievance-attachment-link i:last-child {
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
 /* Print styles: hide non-essential UI and the status timeline */
 @media print {
 	/* Hide right column (status timeline & quick actions) */

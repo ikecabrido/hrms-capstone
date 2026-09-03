@@ -516,7 +516,7 @@ function getStatusProgress($status) {
                         <div class="col-md-6"></div>
                       </div>
                       <div id="management-form-alert" class="alert d-none" role="alert"></div>
-                      <form id="management-update-form" method="POST" action="" enctype="multipart/form-data">
+                      <form id="management-update-form" method="POST" action="/hrms-capstone/modules/engagement/api/grievance.php?action=update_management" enctype="multipart/form-data" data-skip="true">
                         <input type="hidden" name="management_action" value="1">
                         <input type="hidden" name="grievance_id" id="management-grievance-id" value="">
                         <div class="row">
