@@ -1,0 +1,863 @@
+/* Employee Management module — page-level UI styles.
+   Uses the existing CSS custom properties from base/variables.css.
+   New file only; does not modify any other module's styles. */
+
+/* ── Stat cards (dashboard) ── */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+}
+
+.stat-card {
+    background: var(--color3);
+    border-radius: 10px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--color3);
+    background: var(--color1);
+}
+
+.stat-icon-blue { background: #2563eb; }
+.stat-icon-green { background: #16a34a; }
+.stat-icon-orange { background: #ea580c; }
+.stat-icon-gray { background: var(--color5); }
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--color5);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--color2);
+}
+
+.dashboard-secondary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.dashboard-chart-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .dashboard-chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.widget-card-wide {
+    min-width: 0; /* allow bar labels to truncate instead of overflowing */
+}
+
+.widget-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.widget-card-header h3 {
+    margin: 0;
+}
+
+.view-all-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color1);
+    text-decoration: none;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Horizontal bar chart (Employees by Department) ── */
+.bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.bar-chart-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 32px;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bar-chart-label {
+    font-size: 0.82rem;
+    color: var(--color2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bar-chart-track {
+    background: var(--color9);
+    border-radius: 999px;
+    height: 14px;
+    overflow: hidden;
+}
+
+.bar-chart-fill {
+    background: var(--color1);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.bar-chart-count {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color2);
+    text-align: right;
+}
+
+@media (max-width: 600px) {
+    .bar-chart-row {
+        grid-template-columns: 90px 1fr 28px;
+    }
+}
+
+/* ── Doughnut chart (Employees by Status) — pure CSS conic-gradient, no library ── */
+.doughnut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.doughnut-chart {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.doughnut-center {
+    position: absolute;
+    inset: 18px;
+    background: var(--color3);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.doughnut-center strong {
+    font-size: 1.3rem;
+    color: var(--color2);
+    line-height: 1.1;
+}
+
+.doughnut-center span {
+    font-size: 0.7rem;
+    color: var(--color5);
+    text-transform: uppercase;
+}
+
+.doughnut-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.doughnut-legend li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.legend-label {
+    color: var(--color2);
+}
+
+.legend-count {
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--color5);
+}
+
+/* ── Recently Hired hierarchy ── */
+.recent-hires-list li {
+    align-items: center;
+}
+
+.recent-hire-name {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.recent-hire-name strong {
+    font-size: 0.9rem;
+    color: var(--color2);
+}
+
+.recent-hire-name small {
+    font-size: 0.75rem;
+    color: var(--color5);
+}
+
+.recent-hire-date {
+    font-size: 0.8rem;
+    color: var(--color5);
+    white-space: nowrap;
+}
+
+.widget-card {
+    background: var(--color3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.widget-card h3 {
+    margin-top: 0;
+    color: var(--color2);
+}
+
+/* ── Simple lists (department/status breakdowns, sub-records) ── */
+.simple-list {
+    list-style: none;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+.simple-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--color9);
+    font-size: 0.9rem;
+}
+
+.simple-list li:last-child {
+    border-bottom: none;
+}
+
+.simple-list .empty-item {
+    color: var(--color5);
+    font-style: italic;
+    justify-content: flex-start;
+}
+
+.simple-list-deletable li span {
+    flex: 1;
+}
+
+.badge {
+    background: var(--color9);
+    color: var(--color2);
+    border-radius: 999px;
+    padding: 0.15rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-muted {
+    background: transparent;
+    color: var(--color5);
+}
+
+/* ── Forms & inputs ── */
+.form-section {
+    background: var(--color3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.form-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.form-grid textarea {
+    grid-column: 1 / -1;
+    min-height: 70px;
+}
+
+.inline-add-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+input, select, textarea {
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--color4);
+    border-radius: 6px;
+    background: var(--color3);
+    color: var(--color2);
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color7);
+}
+
+.btn-primary, .btn-secondary, .register-btn {
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-primary, .register-btn {
+    background: var(--color1);
+    color: var(--color3);
+}
+
+.btn-secondary {
+    background: var(--color9);
+    color: var(--color2);
+}
+
+.btn-edit-employee, .btn-archive-employee {
+    border: none;
+    border-radius: 5px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-right: 0.35rem;
+}
+
+.btn-edit-employee {
+    background: var(--color7);
+    color: var(--color3);
+}
+
+.btn-archive-employee {
+    background: var(--color10);
+    color: var(--color3);
+}
+
+.btn-delete-item {
+    border: none;
+    background: transparent;
+    color: var(--color10);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 0.4rem;
+}
+
+/* ── Alerts ── */
+.alert {
+    padding: 0.65rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+}
+
+.alert-success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+/* ── Employee filters row ── */
+.employee-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+/* ── Tables ── */
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.user-table th, .user-table td {
+    text-align: left;
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid var(--color9);
+}
+
+.user-table th {
+    color: var(--color5);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.user-table tbody tr:hover {
+    background: var(--color9);
+}
+
+.status-active { background: #dcfce7; color: #15803d; }
+.status-probationary { background: #dbeafe; color: #1d4ed8; }
+.status-resigned { background: #f1f5f9; color: #475569; }
+.status-terminated { background: #fee2e2; color: #b91c1c; }
+.status-unspecified { background: var(--color9); color: var(--color5); }
+
+/* ── Employee summary card (Documents Management) ── */
+.employee-summary-card {
+    margin-bottom: 1.5rem;
+}
+
+.employee-summary-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+.employee-summary-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color1);
+    color: var(--color3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.employee-summary-name {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--color2);
+}
+
+.employee-summary-code {
+    font-size: 0.8rem;
+    color: var(--color5);
+}
+
+.employee-summary-meta {
+    font-size: 0.85rem;
+    color: var(--color5);
+    margin-bottom: 1rem;
+}
+
+.employee-summary-stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color9);
+}
+
+.employee-summary-stats div {
+    display: flex;
+    flex-direction: column;
+}
+
+.employee-summary-stats strong {
+    font-size: 1.1rem;
+    color: var(--color2);
+}
+
+.employee-summary-stats span {
+    font-size: 0.75rem;
+    color: var(--color5);
+    text-transform: uppercase;
+}
+
+/* ── Document cards ── */
+.document-card-list {
+    list-style: none;
+    margin: 0 0 1rem 0;
+    padding: 0;
+}
+
+.document-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color9);
+    flex-wrap: wrap;
+}
+
+.document-card:last-child {
+    border-bottom: none;
+}
+
+.document-card-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--color2);
+}
+
+.document-card-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.document-card-meta {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--color5);
+    margin-top: 0.2rem;
+}
+
+.document-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.btn-small {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.75rem;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 5px;
+}
+
+/* ── Progress bar (requirements completion) ── */
+.progress-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color5);
+}
+
+.progress-bar-track {
+    background: var(--color9);
+    border-radius: 999px;
+    height: 10px;
+    overflow: hidden;
+    margin: 0.5rem 0 1rem 0;
+}
+
+.progress-bar-fill {
+    background: #16a34a;
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.requirement-icon {
+    margin-right: 0.35rem;
+}
+
+.requirement-icon-ok { color: #16a34a; }
+.requirement-icon-missing { color: #dc2626; }
+
+/* ── Form subheading + file drop area ── */
+.form-subheading {
+    font-size: 0.85rem;
+    color: var(--color5);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 1rem 0 0.6rem 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color9);
+}
+
+.file-drop-label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px dashed var(--color4);
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--color5);
+    margin-bottom: 0.75rem;
+}
+
+.file-drop-label i {
+    font-size: 1.1rem;
+    color: var(--color1);
+}
+
+.file-drop-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.btn-view-employee {
+    border: none;
+    border-radius: 5px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-right: 0.35rem;
+    background: var(--color9);
+    color: var(--color2);
+}
+
+.employee-name-cell {
+    font-weight: 600;
+    color: var(--color2);
+}
+
+/* ── Pagination ── */
+.pagination-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color9);
+    font-size: 0.85rem;
+    color: var(--color5);
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pagination-controls button {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+}
+
+.pagination-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ── Compact stat grid variant (Employee Database summary cards) ── */
+.stat-grid-compact .stat-card {
+    padding: 1rem;
+}
+
+.stat-grid-compact .stat-value {
+    font-size: 1.25rem;
+}
+
+/* ── Read-only employee detail view (View modal) ── */
+.view-detail-list {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    row-gap: 0.65rem;
+    column-gap: 1rem;
+    margin: 0;
+}
+
+.view-detail-list dt {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color5);
+    text-transform: uppercase;
+}
+
+.view-detail-list dd {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color2);
+}
+.status-badge {
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-submitted { background: #dcfce7; color: #15803d; }
+.status-missing { background: #fee2e2; color: #b91c1c; }
+.status-for-follow-up { background: #fef9c3; color: #854d0e; }
+
+/* ── Employee History: change-type badges & table cells ── */
+.history-badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.history-badge-green { background: #dcfce7; color: #15803d; }
+.history-badge-blue { background: #dbeafe; color: #1d4ed8; }
+.history-badge-teal { background: #ccfbf1; color: #0f766e; }
+.history-badge-red { background: #fee2e2; color: #b91c1c; }
+.history-badge-neutral { background: var(--color9); color: var(--color5); }
+
+.history-field-label {
+    font-size: 0.72rem;
+    color: var(--color5);
+    margin-top: 0.2rem;
+}
+
+.history-value-cell {
+    max-width: 260px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.82rem;
+}
+
+.filter-date-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--color5);
+}
+
+.filter-date-label input {
+    padding: 0.45rem 0.6rem;
+}
+.tab-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+    border-bottom: 1px solid var(--color9);
+}
+
+.tab-item {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color5);
+    border-bottom: 2px solid transparent;
+}
+
+.tab-item.active {
+    color: var(--color1);
+    border-bottom-color: var(--color1);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* ── Modals ── */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.open {
+    display: flex;
+}
+
+.modal-dialog {
+    background: var(--color3);
+    border-radius: 10px;
+    padding: 1.5rem;
+    max-width: 720px;
+    width: 92%;
+    max-height: 88vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color5);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .employee-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

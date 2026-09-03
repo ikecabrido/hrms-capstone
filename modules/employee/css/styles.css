@@ -10,10 +10,9 @@
 @import url('layout/module-container.css');
 
 /*Pages CSS*/
-
+@import url('employee.css');
 
 /*Base CSS*/
 @import url('base/variables.css');
 @import url('base/reset.css');
 @import url('base/global.css');
-

@@ -10,14 +10,15 @@ class Page
         'employee-database'             => 'Employee Database',
         'personal-information'  => 'Personal Information',
         'employee-history'   => 'Employee History',
-        'documents-management' => 'Document Mangement'
+        'documents-management' => 'Document Mangement',
+        'document-requests'    => 'Document Requests',
     ];
 
     private $sections = [
         'top'             => ['dashboard-overview'],
         'employee-management'  => ['employee-database', 'personal-information'],
         'employee-records'      => ['employee-history'],
-        'documents'       => ['documents-management']
+        'documents'       => ['documents-management', 'document-requests']
     ];
 
     public function __construct($pagesDir = null)
