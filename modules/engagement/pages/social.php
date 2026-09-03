@@ -23,6 +23,10 @@ $groupMemberCtrl = new GroupMemberController();
 
 $payload = $ctrl->getPageData();
 
+$validSocialTabs = ['feed', 'forums', 'groups', 'projects'];
+$savedSocialTab = strtolower(trim((string)($_COOKIE['engagement_social_tab'] ?? '')));
+$activeSocialTab = in_array($savedSocialTab, $validSocialTabs, true) ? $savedSocialTab : 'feed';
+
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 $flashError = $_SESSION['flash_error'] ?? null;
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
@@ -90,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $reactionCtrl->addReaction($postId, null, $authorId, $reactionType);
         }
-        $_SESSION['flash_success'] = 'Reaction added successfully.';
     }
 
     if ($action === 'create_group' && !empty($_POST['group_name'])) {
@@ -113,17 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 ?>
-    <link rel="stylesheet" href="pages/css/style/social.css">
-    <style>
-      #forums-list .forum-card + .forum-card {
-        margin-top: 1rem;
-      }
-
-      #projects-list .project-card + .project-card {
-        margin-top: 1rem;
-      }
-    </style>
-
 <div class="module-header">
         <h1>Social</h1>
     </div>   
@@ -166,169 +158,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
   </div>
 </div>
-<script>
-(function () {
-  function initializeSocialActions() {
-    var apiBase = 'api/index.php';
-    var feed = document.getElementById('social-feed');
-    if (!feed) return;
-    if (feed.dataset.socialInlineBound === '1') return;
-    feed.dataset.socialInlineBound = '1';
-
-  function readResponse(response) {
-    return response.text().then(function (text) {
-      var data;
-      try {
-        data = JSON.parse(text);
-      } catch (error) {
-        throw new Error('Invalid server response.');
-      }
-      if (!response.ok || data.success === false) {
-        throw new Error(data.error || data.message || 'Request failed.');
-      }
-      return data;
-    });
-  }
-
-  function escapeHtml(value) {
-    var element = document.createElement('div');
-    element.textContent = value == null ? '' : String(value);
-    return element.innerHTML;
-  }
-
-  function setBusy(form, busy) {
-    var button = form.querySelector('button[type="submit"]');
-    if (!button) return;
-    if (busy) {
-      button.dataset.label = button.textContent;
-      button.textContent = 'Sending...';
-      button.disabled = true;
-    } else {
-      button.textContent = button.dataset.label || 'Submit';
-      button.disabled = false;
-    }
-  }
-
-  function addPost(content) {
-    var card = document.createElement('div');
-    card.className = 'card mb-3 social-post-card';
-    card.style.borderLeft = '4px solid #007bff';
-    card.innerHTML = '<div class="card-body">' +
-      '<div class="post-header"><div><h6 class="card-title mb-1">You</h6><small class="text-muted">Just now</small></div></div>' +
-      '<p class="card-text mb-3">' + escapeHtml(content).replace(/\n/g, '<br>') + '</p>' +
-      '<div class="reaction-summary"><small class="text-muted"><i class="fas fa-thumbs-up text-primary mr-1"></i>0 <i class="fas fa-heart text-danger mr-1 ml-2"></i>0 <i class="fas fa-star text-warning mr-1 ml-2"></i>0</small></div>' +
-      '<details class="social-comments-panel"><summary><span><i class="fas fa-comments mr-1"></i> Comments</span><span class="comment-count">0</span></summary><div class="comments-section"><p class="text-muted font-italic small mb-0">No comments yet.</p></div></details>' +
-      '</div>';
-    feed.insertBefore(card, feed.firstChild);
-  }
-
-  function addComment(form, text) {
-    var panel = form.closest('.social-comments-panel');
-    if (!panel) return;
-    var comments = panel.querySelector('.comments-section');
-    var empty = comments.querySelector('.text-muted.font-italic');
-    if (empty) empty.remove();
-    var item = document.createElement('div');
-    item.className = 'comment-item';
-    item.innerHTML = '<div><strong class="small">You:</strong> <span class="small">' + escapeHtml(text) + '</span></div>' +
-      '<small class="text-muted d-block mb-2">Just now</small>';
-    comments.appendChild(item);
-    panel.open = true;
-    var count = panel.querySelector('.comment-count');
-    if (count) count.textContent = String(parseInt(count.textContent || '0', 10) + 1);
-  }
-
-  document.querySelectorAll('.comment-form').forEach(function (form) {
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      var text = form.querySelector('[name="comment"]').value.trim();
-      var postId = form.querySelector('[name="post_id"]').value;
-      if (!text) return;
-      setBusy(form, true);
-      fetch(apiBase + '?resource=social&action=comment', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({post_id: postId, comment: text})
-      }).then(readResponse).then(function () {
-        addComment(form, text);
-        form.reset();
-      }).catch(function (error) {
-        alert(error.message);
-      }).finally(function () {
-        setBusy(form, false);
-      });
-    });
-  });
-
-  document.querySelectorAll('.reply-form').forEach(function (form) {
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      var text = form.querySelector('[name="content"]').value.trim();
-      if (!text) return;
-      setBusy(form, true);
-      fetch(apiBase + '?resource=reply&action=add', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          comment_id: form.querySelector('[name="comment_id"]').value,
-          post_id: form.querySelector('[name="post_id"]').value,
-          content: text
-        })
-      }).then(readResponse).then(function () {
-        var item = document.createElement('div');
-        item.className = 'reply-item';
-        item.innerHTML = '<strong class="small">You:</strong> <span class="small">' + escapeHtml(text) + '</span><small class="text-muted d-block">Just now</small>';
-        form.closest('.comment-item').insertBefore(item, form.closest('.reply-panel'));
-        form.reset();
-      }).catch(function (error) {
-        alert(error.message);
-      }).finally(function () {
-        setBusy(form, false);
-      });
-    });
-  });
-
-  document.querySelectorAll('.reaction-buttons form').forEach(function (form) {
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      var button = form.querySelector('button');
-      var count = button ? button.querySelector('.reaction-count') : null;
-      setBusy(form, true);
-      fetch(apiBase + '?resource=reaction', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          post_id: form.querySelector('[name="post_id"]').value,
-          type: form.querySelector('[name="reaction_type"]').value
-        })
-      }).then(readResponse).then(function (data) {
-        var status = data.result && data.result.status;
-        if (count) {
-          var current = parseInt(count.textContent || '0', 10);
-          if (status === 'removed') current = Math.max(0, current - 1);
-          if (status === 'added') current += 1;
-          count.textContent = String(current);
-        }
-        if (typeof window.fetchSocialFeed === 'function') {
-          window.fetchSocialFeed();
-        }
-        window.location.reload();
-      }).catch(function (error) {
-        alert(error.message);
-      }).finally(function () {
-        setBusy(form, false);
-      });
-    });
-  });
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeSocialActions, {once: true});
-  } else {
-    initializeSocialActions();
-  }
-})();
-</script>
     <div class="social-area">
       <div class="row">
         <div class="col-12">
@@ -345,57 +174,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <!-- Social Collaboration Tools Tabs -->
 <div class="row">
   <div class="col-12">
-    <div class="card">
+    <div class="card" id="collaboration-tabs-card" style="visibility:hidden">
       <div class="card-header p-0">
         <ul class="nav nav-tabs" id="collaboration-tabs" role="tablist">
 
           <li class="nav-item">
-            <a class="nav-link"
+            <a class="nav-link<?= $activeSocialTab === 'feed' ? ' active' : '' ?>"
                id="feed-tab"
                data-toggle="tab"
                href="#feed"
                role="tab"
                aria-controls="feed"
-               aria-selected="false">
+               aria-selected="<?= $activeSocialTab === 'feed' ? 'true' : 'false' ?>">
               <i class="fas fa-rss mr-2"></i>
               Employee Interaction Feed
             </a>
           </li>
 
           <li class="nav-item">
-            <a class="nav-link"
+            <a class="nav-link<?= $activeSocialTab === 'forums' ? ' active' : '' ?>"
                id="forums-tab"
                data-toggle="tab"
                href="#forums"
                role="tab"
                aria-controls="forums"
-               aria-selected="false">
+               aria-selected="<?= $activeSocialTab === 'forums' ? 'true' : 'false' ?>">
               <i class="fas fa-comments mr-2"></i>
               Discussion Forums
             </a>
           </li>
 
           <li class="nav-item">
-            <a class="nav-link"
+            <a class="nav-link<?= $activeSocialTab === 'groups' ? ' active' : '' ?>"
                id="groups-tab"
                data-toggle="tab"
                href="#groups"
                role="tab"
                aria-controls="groups"
-               aria-selected="false">
+               aria-selected="<?= $activeSocialTab === 'groups' ? 'true' : 'false' ?>">
               <i class="fas fa-users mr-2"></i>
               Team Groups
             </a>
           </li>
 
           <li class="nav-item">
-            <a class="nav-link"
+            <a class="nav-link<?= $activeSocialTab === 'projects' ? ' active' : '' ?>"
                id="projects-tab"
                data-toggle="tab"
                href="#projects"
                role="tab"
                aria-controls="projects"
-               aria-selected="false">
+               aria-selected="<?= $activeSocialTab === 'projects' ? 'true' : 'false' ?>">
               <i class="fas fa-project-diagram mr-2"></i>
               Project Collaboration Spaces
             </a>
@@ -407,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="tab-content" id="collaboration-tab-content">
 
           <!-- Employee Interaction Feed Tab -->
-          <div class="tab-pane fade"
+          <div class="tab-pane fade<?= $activeSocialTab === 'feed' ? ' show active' : '' ?>"
                id="feed"
                role="tabpanel"
                aria-labelledby="feed-tab">
@@ -598,7 +427,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Discussion Forums Tab -->
-          <div class="tab-pane fade"
+          <div class="tab-pane fade<?= $activeSocialTab === 'forums' ? ' show active' : '' ?>"
                id="forums"
                role="tabpanel"
                aria-labelledby="forums-tab">
@@ -651,7 +480,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- Team Groups Tab -->
           <!-- Team Groups Tab -->
-          <div class="tab-pane fade"
+          <div class="tab-pane fade<?= $activeSocialTab === 'groups' ? ' show active' : '' ?>"
                id="groups"
                role="tabpanel"
                aria-labelledby="groups-tab">                  <div class="row">
@@ -760,7 +589,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Project Collaboration Spaces Tab -->
-                <div class="tab-pane fade" id="projects" role="tabpanel" aria-labelledby="projects-tab">                  
+                <div class="tab-pane fade<?= $activeSocialTab === 'projects' ? ' show active' : '' ?>" id="projects" role="tabpanel" aria-labelledby="projects-tab">
                   <div class="row">
                     <div class="col-12">
                       <div class="card card-success card-outline">

@@ -42,7 +42,6 @@ $payload['notifications'] = $communicationCtrl->getNotifications();
 // var_dump($payload);
 ?>  
 
-<link rel="stylesheet" href="pages/css/style.css"> 
 <div class="module-header">
       <h1>Dashboard Overview</h1>
 </div>

@@ -164,8 +164,7 @@ class Recognition extends BaseModel
             'points' => $points
         ]);
         
-        $db = \Database::getInstance()->getConnection();
-        $recognitionId = (int)$db->lastInsertId();
+        $recognitionId = (int)$this->db->lastInsertId();
 
         $notification = new Notification();
         $notification->notifyEmployees([(int)$receiver_id], 'You received a recognition: ' . $message, 'recognition');
@@ -212,8 +211,7 @@ class Recognition extends BaseModel
         ]);
         
         // Get the inserted ID
-        $db = \Database::getInstance()->getConnection();
-        return $db->lastInsertId();
+        return $this->db->lastInsertId();
     }
 
     public function getHistoryByEmployee($employeeId)

@@ -3,6 +3,10 @@
 	padding: 12px 0 30px;
 }
 
+.recognition-card.recognition-tabs-pending .tab-pane {
+  display: none !important;
+}
+
 .recognition-area .nav-tabs {
   list-style: none;
   display: flex;

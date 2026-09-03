@@ -1,4 +1,4 @@
-  // Persist active tab state using localStorage with smooth transitions
+// Persist active tab state using localStorage with smooth transitions
   const STORAGE_KEY = 'engagement:social:active-tab';
   const LEGACY_STORAGE_KEY = 'socialPageActiveTab';
   const LEGACY_STORAGE_KEY_2 = 'social-active-tab';
@@ -10,7 +10,8 @@
     : 'api/index.php';
   const socialTabState = {
     initialized: false,
-    clickHandlersBound: false
+    clickHandlersBound: false,
+    activeTabObserver: null
   };
 
   // Add smooth transition styles
@@ -35,17 +36,23 @@
   document.head.appendChild(style);
 
   function getSavedSocialTabId() {
-    const candidateKeys = [STORAGE_KEY, LEGACY_STORAGE_KEY, LEGACY_STORAGE_KEY_2];
     const validTabIds = ['feed', 'forums', 'groups', 'projects'];
 
-    // Priority 1: Check URL hash first
-    const urlHash = window.location.hash.replace('#', '');
-    if (urlHash && validTabIds.includes(urlHash)) {
-      console.log('[Social Tab] Using URL hash:', urlHash);
-      return urlHash;
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)engagement_social_tab=([^;]*)/);
+    if (cookieMatch) {
+      const cookieTab = decodeURIComponent(cookieMatch[1]);
+      if (validTabIds.includes(cookieTab)) {
+        console.log('[Social Tab] Using cookie:', cookieTab);
+        return cookieTab;
+      }
     }
 
-    // Priority 2: Check sessionStorage
+    const candidateKeys = [STORAGE_KEY, LEGACY_STORAGE_KEY, LEGACY_STORAGE_KEY_2];
+
+    // Priority 1: Check sessionStorage / localStorage. Storage is checked
+    // before the URL hash on purpose - if anything else on the page resets
+    // or overwrites window.location.hash (e.g. an outer page router), the
+    // saved tab should still win rather than silently falling back to feed.
     for (const key of candidateKeys) {
       try {
         const savedTab = sessionStorage.getItem(key);
@@ -58,7 +65,6 @@
       }
     }
 
-    // Priority 3: Check localStorage
     for (const key of candidateKeys) {
       try {
         const savedTab = localStorage.getItem(key);
@@ -69,6 +75,14 @@
       } catch (error) {
         // Ignore storage access errors
       }
+    }
+
+    // Priority 2: Fall back to the URL hash (e.g. a bookmarked #forums link)
+    // only when nothing has been saved yet.
+    const urlHash = window.location.hash.replace('#', '');
+    if (urlHash && validTabIds.includes(urlHash)) {
+      console.log('[Social Tab] Using URL hash:', urlHash);
+      return urlHash;
     }
 
     console.log('[Social Tab] No saved tab found, using default: feed');
@@ -85,6 +99,7 @@
     const validTabId = validTabIds.includes(tabId) ? tabId : 'feed';
 
     try {
+      document.cookie = 'engagement_social_tab=' + encodeURIComponent(validTabId) + '; max-age=604800; path=/hrms-capstone/modules/engagement/';
       sessionStorage.setItem(STORAGE_KEY, validTabId);
       sessionStorage.setItem(LEGACY_STORAGE_KEY, validTabId);
       sessionStorage.setItem(LEGACY_STORAGE_KEY_2, validTabId);
@@ -104,21 +119,29 @@
     }
   }
 
+  // The collaboration tabs card starts hidden (inline style in the HTML)
+  // so nothing flashes on screen before the correct tab is selected.
+  function revealCollaborationTabsCard() {
+    const card = document.getElementById('collaboration-tabs-card');
+    if (card) {
+      card.style.visibility = '';
+    }
+  }
+
+  // Absolute safety net: never leave the card hidden for more than a moment,
+  // no matter what happens during restore.
+  setTimeout(revealCollaborationTabsCard, 2000);
+
   function restoreSavedTab() {
     const validTabIds = ['feed', 'forums', 'groups', 'projects'];
     const savedTab = getSavedSocialTabId();
     
     console.log('[Social Tab] Attempting to restore tab:', savedTab);
 
-    // Retry logic for DOM readiness
-    let retryCount = 0;
-    const maxRetries = 5;
+    const targetPane = document.getElementById(savedTab);
+    const targetLink = document.querySelector('#collaboration-tabs a[aria-controls="' + savedTab + '"]');
 
-    function attemptRestore() {
-      const targetPane = document.getElementById(savedTab);
-      const targetLink = document.querySelector('#collaboration-tabs a[aria-controls="' + savedTab + '"]');
-
-      if (targetPane && targetLink) {
+    if (targetPane && targetLink) {
         console.log('[Social Tab] DOM ready, restoring tab:', savedTab);
         
         document.querySelectorAll('#collaboration-tabs .nav-link').forEach(function(link) {
@@ -136,16 +159,40 @@
         
         // Persist the restored tab
         persistSocialTab(savedTab);
-      } else if (retryCount < maxRetries) {
-        retryCount++;
-        console.log('[Social Tab] DOM not ready, retrying... (' + retryCount + '/' + maxRetries + ')');
-        setTimeout(attemptRestore, 100);
-      } else {
-        console.warn('[Social Tab] Failed to find tab after', maxRetries, 'retries');
-      }
+        revealCollaborationTabsCard();
+        protectSavedSocialTab();
+    } else {
+      revealCollaborationTabsCard();
     }
+  }
 
-    attemptRestore();
+  function protectSavedSocialTab() {
+    const tabs = document.getElementById('collaboration-tabs');
+    if (!tabs || socialTabState.activeTabObserver) return;
+
+    socialTabState.activeTabObserver = new MutationObserver(function() {
+      const savedTab = getSavedSocialTabId();
+      const activeTab = tabs.querySelector('.nav-link.active');
+      const activeTabId = activeTab ? activeTab.getAttribute('aria-controls') : '';
+      const activePane = document.getElementById(savedTab);
+
+      if (savedTab !== activeTabId || !activePane || !activePane.classList.contains('active')) {
+        restoreSavedTab();
+      }
+    });
+
+    socialTabState.activeTabObserver.observe(tabs, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'aria-selected']
+    });
+  }
+
+  function resetSocialTabObserver() {
+    if (socialTabState.activeTabObserver) {
+      socialTabState.activeTabObserver.disconnect();
+      socialTabState.activeTabObserver = null;
+    }
   }
 
   function switchSocialTab(tabLink, isInitialLoad) {
@@ -192,30 +239,16 @@
 
   function activateSocialTabFromHash(isInitialLoad = false) {
     const urlHash = window.location.hash ? window.location.hash.replace('#', '') : '';
-    const savedHash = (() => {
-      const candidateKeys = [STORAGE_KEY, LEGACY_STORAGE_KEY, LEGACY_STORAGE_KEY_2];
-      for (const key of candidateKeys) {
-        try {
-          const value = sessionStorage.getItem(key);
-          if (value && document.getElementById(value)) {
-            return value;
-          }
-        } catch (error) {
-          // Ignore storage issues and fall back to the default tab.
-        }
-      }
-      return null;
-    })();
+    const savedHash = getSavedSocialTabId();
 
+    // Saved state takes priority over the URL hash for the same reason as
+    // getSavedSocialTabId(): the hash can be reset by something else on the
+    // page, but the saved tab reflects what the person actually chose.
     let hash = 'feed';
-    if (urlHash && document.getElementById(urlHash)) {
-      hash = urlHash;
-    } else if (savedHash) {
+    if (savedHash && document.getElementById(savedHash)) {
       hash = savedHash;
-    }
-
-    if (!urlHash && !savedHash && !isInitialLoad) {
-      hash = 'feed';
+    } else if (urlHash && document.getElementById(urlHash)) {
+      hash = urlHash;
     }
 
     const targetTab = document.querySelector('#collaboration-tabs a[aria-controls="' + hash + '"]');
@@ -272,13 +305,20 @@
       }
     });
 
+    window.addEventListener('pageshow', function() {
+      if (document.getElementById('collaboration-tabs')) {
+        restoreSavedTab();
+        activateSocialTabFromHash(true);
+      }
+    });
+
     window.addEventListener('page:loaded', function(event) {
       if (event && event.detail && event.detail.page === 'social') {
         initializeForumModal();
         initializeProjectModal();
-        setTimeout(function() {
-          activateSocialTabFromHash(true);
-        }, 20);
+        resetSocialTabObserver();
+        restoreSavedTab();
+        activateSocialTabFromHash(true);
       }
     });
   }
@@ -375,7 +415,7 @@
       
       const tabId = tabLink.getAttribute('aria-controls');
       if (tabId) {
-        localStorage.setItem(STORAGE_KEY, tabId);
+        persistSocialTab(tabId);
       }
     }, true);
     
@@ -384,7 +424,7 @@
       $(document).on('shown.bs.tab', '#collaboration-tabs a[data-toggle="tab"]', function() {
         const tabId = this.getAttribute('aria-controls');
         if (tabId) {
-          localStorage.setItem(STORAGE_KEY, tabId);
+          persistSocialTab(tabId);
         }
       });
     }

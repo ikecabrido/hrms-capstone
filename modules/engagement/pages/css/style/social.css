@@ -3,6 +3,11 @@
 
 }
 
+#forums-list .forum-card + .forum-card,
+#projects-list .project-card + .project-card {
+  margin-top: 1rem;
+}
+
 /* Keep the forum form inside its modal even when Bootstrap CSS loads late. */
 #createForumModal {
   display: none;

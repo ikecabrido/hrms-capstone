@@ -28,7 +28,9 @@ class CommunicationController
     {
         $data = [
             'announcements' => $this->getAnnouncements(),
-            'notifications' => $this->getNotifications(),
+            'notifications' => $employeeId !== null && $employeeId !== ''
+                ? $this->getNotificationsForEmployee($employeeId)
+                : $this->getNotifications(),
             'department_updates' => $this->getDepartmentUpdates(),
             'departments' => $this->lcm->getDepartments(),
             'policies' => $this->getSharedLcmPolicies(),
@@ -220,8 +222,23 @@ class CommunicationController
         return $this->notification->getAll();
     }
 
+    public function getNotificationsForEmployee($employeeId)
+    {
+        return $this->notification->getForEmployee($employeeId);
+    }
+
+    public function countUnreadNotifications($employeeId)
+    {
+        return $this->notification->countUnreadForEmployee($employeeId);
+    }
+
     public function markNotificationAsRead($notification_id)
     {
         return $this->notification->markAsRead($notification_id);
+    }
+
+    public function markAllNotificationsAsRead($employeeId)
+    {
+        return $this->notification->markAllAsReadForEmployee($employeeId);
     }
 }

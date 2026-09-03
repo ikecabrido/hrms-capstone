@@ -1,11 +1,12 @@
 let recognitionPageInitialized = false;
 let recognitionPageBindingsInitialized = false;
 let recognitionTabClickHandlersBound = false;
+let recognitionTabObserver = null;
+let recognitionTabGuardTimer = null;
 let employeeMonthCandidatesRequestId = 0;
 let pendingNomination = null;
-const recognitionApiBase = window.location.pathname.indexOf('/pages/') !== -1
-  ? '../api/index.php'
-  : 'api/index.php';
+const recognitionApiBase = window.location.pathname.split('/modules/engagement/')[0]
+  + '/modules/engagement/api/index.php';
 
 function setRecognitionModalVisibility(modalId, shouldOpen) {
   const modal = document.getElementById(modalId);
@@ -232,9 +233,34 @@ document.head.appendChild(recognitionStyle);
 
 const RECOGNITION_STORAGE_KEY = 'engagement:recognition:active-tab';
 const RECOGNITION_LEGACY_STORAGE_KEY = 'recognition-active-tab';
+const RECOGNITION_COOKIE_KEY = 'engagement_recognition_tab';
+
+function clearRecognitionTabCookies() {
+  ['/hrms-capstone/modules/engagement/', '/'].forEach(function (cookiePath) {
+    document.cookie = RECOGNITION_COOKIE_KEY + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' + cookiePath + ';';
+  });
+}
+
+function getRecognitionCookieValue() {
+  const matches = Array.from(document.cookie.split(';'))
+    .map(function (cookiePart) {
+      const [name, ...valueParts] = cookiePart.split('=');
+      return { name: name.trim(), value: valueParts.join('=').trim() };
+    })
+    .filter(function (cookieItem) {
+      return cookieItem.name === RECOGNITION_COOKIE_KEY;
+    });
+
+  if (!matches.length) return '';
+  return decodeURIComponent(matches[matches.length - 1].value || '');
+}
 
 function saveRecognitionTab(tabId) {
   if (!tabId) return;
+
+  clearRecognitionTabCookies();
+  document.cookie = RECOGNITION_COOKIE_KEY + '=' + encodeURIComponent(tabId) + '; max-age=604800; path=/hrms-capstone/modules/engagement/;';
+
   localStorage.setItem(RECOGNITION_STORAGE_KEY, tabId);
   localStorage.setItem(RECOGNITION_LEGACY_STORAGE_KEY, tabId);
   sessionStorage.setItem(RECOGNITION_STORAGE_KEY, tabId);
@@ -261,6 +287,7 @@ function switchRecognitionTab(tabLink, isInitialLoad = false) {
   const currentActiveTab = document.querySelector('#recognition-tabs .nav-link.active');
   const currentHref = currentActiveTab ? currentActiveTab.getAttribute('href') : null;
   if (currentHref === href && targetPane.classList.contains('active')) {
+    protectRecognitionTab();
     return;
   }
 
@@ -283,7 +310,87 @@ function switchRecognitionTab(tabLink, isInitialLoad = false) {
   tabLink.classList.add('active');
   tabLink.setAttribute('aria-selected', 'true');
   targetPane.classList.add('show', 'active');
+  const recognitionCard = document.querySelector('.recognition-card');
+  if (recognitionCard) recognitionCard.classList.remove('recognition-tabs-pending');
   saveRecognitionTab(tabId);
+  protectRecognitionTab();
+}
+
+function protectRecognitionTab() {
+  const tabs = document.getElementById('recognition-tabs');
+  const recognitionCard = tabs ? tabs.closest('.recognition-card') : null;
+  if (!tabs || recognitionTabObserver) return;
+
+  recognitionTabObserver = new MutationObserver(function() {
+    const savedTab = getSavedRecognitionTabId();
+    const activeTab = tabs.querySelector('.nav-link.active');
+    const activeTabId = activeTab ? (activeTab.getAttribute('href') || '').replace('#', '') : '';
+    const activePane = document.getElementById(savedTab);
+
+    if (savedTab !== activeTabId || !activePane || !activePane.classList.contains('active')) {
+      activateRecognitionTabFromHash(true);
+    }
+  });
+
+  recognitionTabObserver.observe(tabs, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'aria-selected']
+  });
+
+  if (recognitionCard) {
+    recognitionTabObserver.observe(recognitionCard, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden', 'aria-selected']
+    });
+  }
+}
+
+function getSavedRecognitionTabId() {
+  const validTabIds = ['recognition', 'employee-month', 'badges', 'rewards', 'leaderboard'];
+  const savedTab =
+    sessionStorage.getItem(RECOGNITION_STORAGE_KEY)
+    || sessionStorage.getItem(RECOGNITION_LEGACY_STORAGE_KEY)
+    || localStorage.getItem(RECOGNITION_STORAGE_KEY)
+    || localStorage.getItem(RECOGNITION_LEGACY_STORAGE_KEY)
+    || '';
+  if (validTabIds.includes(savedTab)) return savedTab;
+
+  const decodedCookieTab = getRecognitionCookieValue();
+  if (validTabIds.includes(decodedCookieTab)) return decodedCookieTab;
+
+  const hashTab = (window.location.hash || '').replace('#', '');
+  return validTabIds.includes(hashTab) ? hashTab : 'recognition';
+}
+
+function resetRecognitionTabObserver() {
+  if (recognitionTabObserver) {
+    recognitionTabObserver.disconnect();
+    recognitionTabObserver = null;
+  }
+}
+
+function startRecognitionTabGuard() {
+  if (recognitionTabGuardTimer) return;
+
+  recognitionTabGuardTimer = window.setInterval(function() {
+    const tabs = document.getElementById('recognition-tabs');
+    if (!tabs) return;
+
+    const savedTab = getSavedRecognitionTabId();
+    const activeTab = tabs.querySelector('.nav-link.active');
+    const activeTabId = activeTab ? (activeTab.getAttribute('href') || '').replace('#', '') : '';
+    const activePane = document.querySelector('.recognition-area .tab-pane.show.active');
+    const currentHash = (window.location.hash || '').replace('#', '');
+
+    if (savedTab && (activeTabId !== savedTab || !activePane || activePane.id !== savedTab || currentHash !== savedTab)) {
+      const targetTab = tabs.querySelector('a[href="#' + CSS.escape(savedTab) + '"]');
+      if (targetTab) switchRecognitionTab(targetTab, true);
+      saveRecognitionTab(savedTab);
+    }
+  }, 300);
 }
 
 function activateRecognitionTabFromHash(isInitialLoad = false) {
@@ -299,25 +406,26 @@ function activateRecognitionTabFromHash(isInitialLoad = false) {
     return legacyTabMappings[trimmed] || trimmed;
   }
 
-  // Priority 1: Check URL hash
   const rawUrlHash = window.location.hash ? window.location.hash.replace('#', '') : '';
   const urlHash = normalizeRecognitionTabId(rawUrlHash);
+  const savedCookie = getRecognitionCookieValue();
   const savedHash = normalizeRecognitionTabId(
-    localStorage.getItem(RECOGNITION_STORAGE_KEY)
-      || localStorage.getItem(RECOGNITION_LEGACY_STORAGE_KEY)
-      || sessionStorage.getItem(RECOGNITION_STORAGE_KEY)
+    sessionStorage.getItem(RECOGNITION_STORAGE_KEY)
       || sessionStorage.getItem(RECOGNITION_LEGACY_STORAGE_KEY)
+      || localStorage.getItem(RECOGNITION_STORAGE_KEY)
+      || localStorage.getItem(RECOGNITION_LEGACY_STORAGE_KEY)
+      || savedCookie
       || ''
   );
 
-  let hash = 'recognition';
-  if (urlHash && validTabIds.includes(urlHash)) {
-    hash = urlHash;
-    console.log('[Recognition Tab] Using URL hash:', urlHash);
-  } else if (savedHash && validTabIds.includes(savedHash)) {
-    hash = savedHash;
-    console.log('[Recognition Tab] Using saved storage:', savedHash);
+  const hash = savedHash && validTabIds.includes(savedHash)
+    ? savedHash
+    : (urlHash && validTabIds.includes(urlHash) ? urlHash : 'recognition');
+  if (hash !== urlHash) {
+    window.history.replaceState({}, '', window.location.pathname + window.location.search + '#' + hash);
+    console.log('[Recognition Tab] Synchronized URL hash with active tab:', hash);
   }
+  console.log('[Recognition Tab] Using active tab:', hash);
 
   console.log('[Recognition Tab] Activating tab:', hash);
 
@@ -337,6 +445,9 @@ function activateRecognitionTabFromHash(isInitialLoad = false) {
       const nextHref = '#' + hash;
 
       if (currentHref === nextHref && targetPane.classList.contains('active')) {
+        const recognitionCard = document.querySelector('.recognition-card');
+        if (recognitionCard) recognitionCard.classList.remove('recognition-tabs-pending');
+        saveRecognitionTab(hash);
         return;
       }
 
@@ -355,6 +466,24 @@ function activateRecognitionTabFromHash(isInitialLoad = false) {
 }
 
 function initRecognitionTabClickHandlers() {
+  document.querySelectorAll('#recognition-tabs .nav-link').forEach(function(tabLink) {
+    tabLink.removeAttribute('data-toggle');
+
+    if (tabLink.dataset.recognitionTabBound === '1') return;
+    tabLink.dataset.recognitionTabBound = '1';
+    tabLink.addEventListener('click', function(event) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      const href = tabLink.getAttribute('href') || '';
+      const tabId = href.startsWith('#') ? href.slice(1) : '';
+      if (!tabId) return;
+
+      saveRecognitionTab(tabId);
+      switchRecognitionTab(tabLink, false);
+    }, true);
+  });
+
   if (recognitionTabClickHandlersBound) return;
   recognitionTabClickHandlersBound = true;
 
@@ -444,11 +573,10 @@ function bindRecognitionPageEvents() {
     console.log('[Recognition Tab] Page loaded event fired');
     closeAllRecognitionModals();
     resetRecognitionState();
+    resetRecognitionTabObserver();
     initRecognitionTabClickHandlers();
-    window.setTimeout(function() {
-      activateRecognitionTabFromHash(true);
-      console.log('[Recognition Tab] Tab restoration complete after page load');
-    }, 100);
+    activateRecognitionTabFromHash(true);
+    console.log('[Recognition Tab] Tab restoration complete after page load');
     loadRecognitionFeed();
     loadBadges();
     loadAwardHistory();
@@ -459,7 +587,7 @@ function bindRecognitionPageEvents() {
     bindNominationFormEvents();
   });
 
-  const form = document.querySelector('form');
+  const form = document.querySelector('#sendRecognitionModal form');
   const sel = document.getElementById('rec-receiver');
   const nominationSel = document.getElementById('nominate-employee');
   const nominationForm = document.getElementById('nomination-form');
@@ -688,6 +816,7 @@ function bindRecognitionPageEvents() {
       fetch(recognitionApiBase + '?resource=recognition&action=send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ receiver_id: receiverId, message: message, points: points })
       })
       .then(async response => {
@@ -853,10 +982,9 @@ function initializeRecognitionPage() {
   resetRecognitionState();
   initRecognitionTabClickHandlers();
   bindRecognitionPageEvents();
-  window.setTimeout(function() {
-    activateRecognitionTabFromHash(true);
-    console.log('[Recognition Tab] Initialization complete');
-  }, 50);
+  activateRecognitionTabFromHash(true);
+  startRecognitionTabGuard();
+  console.log('[Recognition Tab] Initialization complete');
 
   loadRecognitionFeed();
   loadBadges();

@@ -2,19 +2,19 @@
   const grievanceTabIds = ['all-grievances', 'management', 'reports'];
   const GRIEVANCE_STORAGE_KEY = 'engagement:grievance:active-tab';
   const GRIEVANCE_LEGACY_STORAGE_KEY = 'grievance-active-tab';
+  const GRIEVANCE_COOKIE_KEY = 'engagement_grievance_tab';
 
   function getSavedGrievanceTab() {
     const candidateKeys = [GRIEVANCE_STORAGE_KEY, GRIEVANCE_LEGACY_STORAGE_KEY];
     const validTabIds = ['all-grievances', 'management', 'reports'];
 
-    // Priority 1: Check URL hash first
-    const urlHash = window.location.hash.replace('#', '');
-    if (urlHash && validTabIds.includes(urlHash)) {
-      console.log('[Grievance Tab] Using URL hash:', urlHash);
-      return urlHash;
+    const cookieMatch = document.cookie.match(/(?:^|;\s*)engagement_grievance_tab=([^;]*)/);
+    if (cookieMatch) {
+      const cookieTab = decodeURIComponent(cookieMatch[1]);
+      if (validTabIds.includes(cookieTab)) return cookieTab;
     }
 
-    // Priority 2: Check sessionStorage
+    // Use saved state first so another script cannot reset the selected tab.
     for (const key of candidateKeys) {
       try {
         const savedTab = sessionStorage.getItem(key);
@@ -27,7 +27,6 @@
       }
     }
 
-    // Priority 3: Check localStorage
     for (const key of candidateKeys) {
       try {
         const savedTab = localStorage.getItem(key);
@@ -40,8 +39,14 @@
       }
     }
 
-    console.log('[Grievance Tab] No saved tab found, using default');
-    return null;
+    const urlHash = window.location.hash.replace('#', '');
+    if (urlHash && validTabIds.includes(urlHash)) {
+      console.log('[Grievance Tab] Using URL hash:', urlHash);
+      return urlHash;
+    }
+
+    console.log('[Grievance Tab] No saved tab found, using default: all-grievances');
+    return 'all-grievances';
   }
 
   function persistGrievanceTab(tabId) {
@@ -53,6 +58,7 @@
       sessionStorage.setItem(GRIEVANCE_LEGACY_STORAGE_KEY, validTabId);
       localStorage.setItem(GRIEVANCE_STORAGE_KEY, validTabId);
       localStorage.setItem(GRIEVANCE_LEGACY_STORAGE_KEY, validTabId);
+      document.cookie = GRIEVANCE_COOKIE_KEY + '=' + encodeURIComponent(validTabId) + '; max-age=604800; path=/hrms-capstone/modules/engagement/';
       console.log('[Grievance Tab] Persisted:', validTabId);
       
       // Also update URL hash
@@ -104,6 +110,33 @@
     }
   }
 
+  function protectSavedGrievanceTab() {
+    const tabContainer = document.getElementById('grievance-tabs');
+    const contentContainer = document.getElementById('grievance-tabs-content');
+    if (!tabContainer || !contentContainer || window.__grievanceTabObserver) return;
+
+    window.__grievanceTabObserver = new MutationObserver(function () {
+      const savedTab = getSavedGrievanceTab();
+      const activeLink = tabContainer.querySelector('a[data-grievance-tab].active');
+      const activePane = contentContainer.querySelector('.tab-pane.active');
+      const activeId = activeLink ? activeLink.dataset.grievanceTab : '';
+      if (savedTab && (activeId !== savedTab || !activePane || activePane.id !== savedTab)) {
+        setActiveGrievanceTab(savedTab, true);
+      }
+    });
+
+    window.__grievanceTabObserver.observe(tabContainer, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'aria-selected']
+    });
+    window.__grievanceTabObserver.observe(contentContainer, {
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style', 'hidden', 'aria-hidden']
+    });
+  }
+
   function initializeGrievanceTabs() {
     if (!document.getElementById('grievance-tabs')) {
       console.warn('[Grievance Tab] Tab container not found');
@@ -125,18 +158,17 @@
     const maxRetries = 5;
 
     function attemptInitialize() {
-      const storedTab = getSavedGrievanceTab();
-      const requestedTab = window.location.hash.replace('#', '').trim();
-      const activeTab = grievanceTabIds.includes(requestedTab)
-        ? requestedTab
-        : (storedTab && grievanceTabIds.includes(storedTab) ? storedTab : 'all-grievances');
+      const activeTab = getSavedGrievanceTab();
       
       const tabLink = document.querySelector('#grievance-tabs a[data-grievance-tab="' + activeTab + '"]');
       const tabPane = document.getElementById(activeTab);
       
       if (tabLink && tabPane) {
         console.log('[Grievance Tab] DOM ready, setting active tab:', activeTab);
-        setActiveGrievanceTab(activeTab, false);
+        setActiveGrievanceTab(activeTab, true);
+        protectSavedGrievanceTab();
+        setTimeout(function () { setActiveGrievanceTab(getSavedGrievanceTab(), true); }, 250);
+        setTimeout(function () { setActiveGrievanceTab(getSavedGrievanceTab(), true); }, 1000);
       } else if (retryCount < maxRetries) {
         retryCount++;
         console.log('[Grievance Tab] DOM not ready, retrying... (' + retryCount + '/' + maxRetries + ')');

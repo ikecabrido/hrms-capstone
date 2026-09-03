@@ -3,51 +3,21 @@ require_once __DIR__ . '/../../../auth/session.php';
 require_once __DIR__ . '/../autoload.php';
 
 use App\Controllers\SurveyController;
-use App\Controllers\GrievanceController;
-use App\Controllers\RecognitionController;
-use App\Controllers\SocialController;
 use App\Controllers\FeedbackController;
-use App\Controllers\CommunicationController;
 use App\Controllers\SurveyAnswerController;
 
-$theme = $_SESSION['user']['theme'] ?? 'light';
-
 $surveyCtrl = new SurveyController();
-$grievanceCtrl = new GrievanceController();
-$recognitionCtrl = new RecognitionController();
-$socialCtrl = new SocialController();
 $feedbackCtrl = new FeedbackController();
-$communicationCtrl = new CommunicationController();
 $surveyAnswerCtrl = new SurveyAnswerController();
 
 $payload = $payload ?? [];
 $payload['surveys'] = $surveyCtrl->index();
-$payload['grievances'] = $grievanceCtrl->getGrievances();
-$payload['recognitions'] = $recognitionCtrl->getRecognitions();
-$payload['social'] = $socialCtrl->getPosts();
 $payload['feedback'] = $feedbackCtrl->index();
-$payload['announcements'] = $communicationCtrl->getAnnouncements();
 $payload['survey_answers'] = $payload['survey_answers'] ?? [];
-
-$userRole = strtolower(trim($_SESSION['user']['role'] ?? ''));
-$userName = strtolower(trim($_SESSION['user']['name'] ?? ''));
-$username = strtolower(trim($_SESSION['user']['username'] ?? ''));
-$showHrFeedbackTab = preg_match('/\b(hr|human resources|hr manager|admin|administrator|default_admin)\b/i', $userRole)
-    || stripos($userRole, 'default_admin') !== false
-    || in_array($username, ['admin', 'hr_engagement'], true)
-    || stripos($userName, 'admin') !== false;
-
-
-// Debug log to verify the structure of survey_answers data
-error_log('Survey Answers Data: ' . print_r($payload['survey_answers'], true));
-
-// Debug log to verify survey_answers data
-error_log('Survey Answers Payload: ' . print_r($payload['survey_answers'], true));
 
 // Fetch survey answers for a specific survey or response
 $surveyId = null;
 $responseId = null;
-$apiUrl = '';
 if (isset($_GET['response_id']) && is_numeric($_GET['response_id'])) {
     $responseId = (int)$_GET['response_id'];
 } elseif (isset($_GET['survey_id']) && is_numeric($_GET['survey_id'])) {
@@ -56,8 +26,6 @@ if (isset($_GET['response_id']) && is_numeric($_GET['response_id'])) {
     $surveyId = (int)$_GET['id'];
 }
 
-$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 if ($responseId !== null) {
     $payload['survey_answers'] = $surveyAnswerCtrl->getByResponse($responseId);
 } elseif ($surveyId !== null) {
@@ -141,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $_SESSION['flash_error'] = 'Invalid survey ID for deletion.';
         }
-    } elseif (!empty($_POST['title']) && !empty($_POST['questions_raw'])) {
+    } elseif (!empty($_POST['action']) && $_POST['action'] === 'create_survey') {
         $submittedToken = $_POST['survey_form_token'] ?? '';
         $expectedToken = $_SESSION['survey_form_token'] ?? '';
 
@@ -151,33 +119,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             unset($_SESSION['survey_form_token']);
 
             // Handle survey creation
-            $questions = array_map('trim', explode("\n", $_POST['questions_raw']));
-            $formatted = array_map(function ($q) {
-                return ['question_text' => $q];
-            }, array_filter($questions));
+            $title = trim($_POST['title'] ?? '');
+            $questions = array_map('trim', explode("\n", $_POST['questions_raw'] ?? ''));
+            $questions = array_filter($questions, static function ($question) {
+              return $question !== '';
+            });
 
-            $surveyData = [
-                'title' => $_POST['title'],
+            if ($title === '' || empty($questions)) {
+              $_SESSION['flash_error'] = 'Title and at least one question are required.';
+            } else {
+              $formatted = array_map(function ($q) {
+                return ['question_text' => $q];
+              }, $questions);
+
+              $surveyData = [
+                'title' => $title,
                 'description' => $_POST['description'] ?? '',
                 'survey_type' => $_POST['survey_type'] ?? 'satisfaction',
                 'is_anonymous' => isset($_POST['is_anonymous']) ? 1 : 0
-            ];
+              ];
 
-            $employeeId = (int)($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? 0);
-            if ($employeeId > 0) {
+              $employeeId = (int)($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? 0);
+              if ($employeeId > 0) {
                 try {
-                    $surveyCtrl->store($surveyData, $formatted, $employeeId);
-                    $payload['surveys'] = $surveyCtrl->index();
-                    $surveyTypeName = $surveyData['survey_type'] === 'pulse' ? 'Pulse Survey' : 'Satisfaction Survey';
-                    $_SESSION['flash_success'] = $surveyTypeName . ' created successfully.';
+                  $surveyCtrl->store($surveyData, $formatted, $employeeId);
+                  $payload['surveys'] = $surveyCtrl->index();
+                  $surveyTypeName = $surveyData['survey_type'] === 'pulse' ? 'Pulse Survey' : 'Satisfaction Survey';
+                  $_SESSION['flash_success'] = $surveyTypeName . ' created successfully.';
                 } catch (Exception $e) {
-                    $_SESSION['flash_error'] = 'Error creating survey: ' . $e->getMessage();
+                  $_SESSION['flash_error'] = 'Error creating survey: ' . $e->getMessage();
                 }
-            } else {
+              } else {
                 $_SESSION['flash_error'] = 'User authentication required. Employee ID was not found in the current session.';
+              }
             }
         }
-    } else {
+    } elseif (!empty($_POST['title']) && !empty($_POST['questions_raw'])) {
         $_SESSION['flash_error'] = 'Title and at least one question are required.';
     }
 
@@ -189,22 +166,30 @@ $flashSuccess = $_SESSION['flash_success'] ?? null;
 $flashError = $_SESSION['flash_error'] ?? null;
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-$surveyFormToken = bin2hex(random_bytes(16));
-$_SESSION['survey_form_token'] = $surveyFormToken;
+$surveyFormToken = $_SESSION['survey_form_token'] ?? '';
+if ($surveyFormToken === '') {
+  $surveyFormToken = bin2hex(random_bytes(16));
+  $_SESSION['survey_form_token'] = $surveyFormToken;
+}
 
 ?>
-<link rel="stylesheet" href="pages/css/style/survey.css">
 <div class="survey-area container-fluid">
   <div class="module-header">
         <h1>Survey</h1>
     </div>
 
     <div class="module-content">
+      <?php if (!empty($flashSuccess)): ?>
+        <div class="alert alert-success" role="alert"><?= htmlspecialchars($flashSuccess) ?></div>
+      <?php endif; ?>
+      <?php if (!empty($flashError)): ?>
+        <div class="alert alert-danger" role="alert"><?= htmlspecialchars($flashError) ?></div>
+      <?php endif; ?>
 
       <!-- Main survey tab navigation and content -->
       <div class="row">
         <div class="col-12">
-          <div class="card shadow-sm border-0">
+          <div class="card shadow-sm border-0" id="survey-tabs-card" style="visibility:hidden">
             <div class="card-header p-0">
               <ul class="nav nav-tabs survey-nav-tabs" id="survey-tabs" role="tablist">
                 <li class="nav-item">
@@ -246,7 +231,8 @@ $_SESSION['survey_form_token'] = $surveyFormToken;
                           </div>
                         </div>
                         <div class="card-body">
-                          <form method="post" class="survey-form" data-skip="true">
+                          <form method="post" action="?page=survey" class="survey-form" data-skip="true">
+                            <input type="hidden" name="action" value="create_survey">
                             <input type="hidden" name="survey_type" value="satisfaction">
                             <input type="hidden" name="survey_form_token" value="<?= htmlspecialchars($surveyFormToken) ?>">
                             <div class="form-group">
@@ -330,7 +316,8 @@ What improvements would you suggest?" required></textarea>
                             <strong>Pulse Surveys</strong> are short, frequent surveys designed to quickly gauge employee sentiment on specific topics.
                           </div>
 
-                          <form method="post" class="pulse-survey-form" data-skip="true">
+                          <form method="post" action="?page=survey" class="pulse-survey-form" data-skip="true">
+                            <input type="hidden" name="action" value="create_survey">
                             <input type="hidden" name="survey_type" value="pulse">
                             <input type="hidden" name="survey_form_token" value="<?= htmlspecialchars($surveyFormToken) ?>">
                             <div class="form-group">

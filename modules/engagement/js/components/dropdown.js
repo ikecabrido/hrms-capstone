@@ -51,9 +51,21 @@ const bellBtn      = document.getElementById('bellBtn');
 
     if (markAllRead) {
         markAllRead.addEventListener('click', function () {
-            document.querySelectorAll('.notif-item.unread').forEach(item => {
-                item.classList.remove('unread');
-            });
-            if (notifBadge) notifBadge.classList.add('hidden');
+            fetch('/hrms-capstone/modules/engagement/api/communication.php?action=mark_all_notifications_read', {
+                method: 'POST',
+                credentials: 'same-origin'
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Unable to mark notifications as read.');
+                    return response.json();
+                })
+                .then(() => {
+                    document.querySelectorAll('.notif-item.unread').forEach(item => {
+                        item.classList.remove('unread');
+                    });
+                    if (notifBadge) notifBadge.classList.add('hidden');
+                    window.dispatchEvent(new CustomEvent('notifications:all-read'));
+                })
+                .catch(error => console.error(error));
         });
     }

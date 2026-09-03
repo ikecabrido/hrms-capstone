@@ -5,7 +5,8 @@
         cursor: pointer;
     }
 
-    .notif-badge {
+    .notif-badge,
+    .notification-badge {
         position: absolute;
         top: -6px;
         right: -6px;
@@ -22,7 +23,8 @@
         pointer-events: none;
     }
 
-    .notif-badge.hidden {
+    .notif-badge.hidden,
+    .notification-badge.hidden {
         display: none;
     }
 
@@ -75,11 +77,38 @@
 
     .notif-item {
         display: flex;
+        flex-direction: column;
         gap: 12px;
         align-items: flex-start;
         padding: 12px 16px;
         transition: background 0.15s;
         cursor: pointer;
+        color: #1f2937;
+    }
+
+    .notif-item strong {
+        display: block;
+        color: #1d4ed8;
+        font-size: 0.78rem;
+        font-weight: 700;
+        line-height: 1.2;
+        text-transform: capitalize;
+    }
+
+    .notif-item span {
+        display: block;
+        color: #1f2937;
+        font-size: 0.84rem;
+        font-weight: 500;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .notif-item small {
+        display: block;
+        color: #6b7280;
+        font-size: 0.72rem;
+        line-height: 1.2;
     }
 
     .notif-item:hover {

@@ -1,7 +1,18 @@
 <?php
 include_once __DIR__ . '/../../../auth/session.php';
 include __DIR__ . '/../classes/Employee.php';
+require_once __DIR__ . '/../autoload.php';
+
+use App\Models\Notification;
+
 $employeeClass = new Employee();
+$sidebarEmployeeId = (int)($_SESSION['employee_id'] ?? $_SESSION['user']['employee_id'] ?? 0);
+$sidebarNotifications = $sidebarEmployeeId > 0
+    ? (new Notification())->getForEmployee($sidebarEmployeeId)
+    : [];
+$sidebarUnreadCount = count(array_filter($sidebarNotifications, static function ($notification) {
+    return empty($notification['is_read']);
+}));
 
 ?>
 
@@ -13,16 +24,27 @@ $employeeClass = new Employee();
             <!-- Bell Icon + Notification Dropdown -->
             <div class="icon-wrapper" id="bellWrapper">
                 <i class="fa-regular fa-bell" id="bellBtn"></i>
+                <span id="notifBadge" class="notification-badge<?= $sidebarUnreadCount ? '' : ' hidden' ?>"><?= $sidebarUnreadCount ?></span>
                 <div class="icon-dropdown" id="bellDropdown">
                     <div class="dropdown-header">
                         <span>Notifications</span>
                         <button class="mark-all-read">Mark all as read</button>
                     </div>
                     <ul class="notif-list">
-                        <li class="notif-item"></li>
+                        <?php if ($sidebarNotifications): ?>
+                            <?php foreach (array_slice($sidebarNotifications, 0, 10) as $notification): ?>
+                                <li class="notif-item<?= empty($notification['is_read']) ? ' unread' : '' ?>" data-notification-id="<?= (int)$notification['id'] ?>">
+                                    <strong><?= htmlspecialchars(ucfirst($notification['type'] ?? 'notification')) ?></strong>
+                                    <span><?= htmlspecialchars($notification['message'] ?? '') ?></span>
+                                    <small><?= htmlspecialchars($notification['created_at'] ?? '') ?></small>
+                                </li>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <li class="notif-item">No notifications yet.</li>
+                        <?php endif; ?>
                     </ul>
                     <div class="dropdown-footer">
-                        <a href="#">View all notifications</a>
+                        <a href="?page=communication#notifications">View all notifications</a>
                     </div>
                 </div>
             </div>

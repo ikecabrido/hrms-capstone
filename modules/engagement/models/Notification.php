@@ -48,10 +48,38 @@ class Notification extends BaseModel
         return $this->execute($sql)->fetchAll();
     }
 
+    public function getForEmployee($employeeId)
+    {
+        $nameSql = $this->getEmployeeNameSql('he', 'employee_name');
+        $sql = "SELECT n.*, he.employee_id AS hr_employee_id, $nameSql
+            FROM eer_notifications n
+            LEFT JOIN em_employees he ON he.employee_id = n.employee_id
+            WHERE n.employee_id = :employee_id
+            ORDER BY n.created_at DESC";
+        return $this->execute($sql, ['employee_id' => (int)$employeeId])->fetchAll();
+    }
+
+    public function countUnreadForEmployee($employeeId)
+    {
+        $stmt = $this->execute(
+            'SELECT COUNT(*) FROM eer_notifications WHERE employee_id = :employee_id AND is_read = 0',
+            ['employee_id' => (int)$employeeId]
+        );
+        return (int)$stmt->fetchColumn();
+    }
+
     public function markAsRead($notification_id)
     {
         $sql = 'UPDATE eer_notifications SET is_read = 1 WHERE id = :id';
         $this->execute($sql, ['id' => $notification_id]);
+    }
+
+    public function markAllAsReadForEmployee($employeeId)
+    {
+        return $this->execute(
+            'UPDATE eer_notifications SET is_read = 1 WHERE employee_id = :employee_id AND is_read = 0',
+            ['employee_id' => (int)$employeeId]
+        )->rowCount();
     }
 
     public function postHRNotification($title, $content, $notificationType, $targetEmployees)

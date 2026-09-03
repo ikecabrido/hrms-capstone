@@ -264,6 +264,16 @@ function initCommunicationForms() {
   });
 }
 
+window.addEventListener('notifications:all-read', function () {
+  document.querySelectorAll('#notifications-container .notification-item').forEach(function (item) {
+    item.classList.remove('notification-unread');
+    item.classList.add('notification-read');
+    item.querySelectorAll('.notification-new-badge, .notification-actions form').forEach(function (element) {
+      element.remove();
+    });
+  });
+});
+
 function initPolicyFilter() {
   const filterSelect = document.getElementById('policy-filter');
   const policyCards = document.querySelectorAll('.policy-card');

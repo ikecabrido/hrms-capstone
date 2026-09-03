@@ -225,6 +225,14 @@ try {
             $ctrl->markNotificationAsRead($data['notification_id']);
             jsonResponse(['success' => true], 200);
             break;
+        case 'mark_all_notifications_read':
+            $employeeId = resolveCommunicationEmployeeId();
+            if (empty($employeeId)) {
+                jsonResponse(['error' => 'Current user is not linked to an employee record'], 400);
+            }
+            $updated = $ctrl->markAllNotificationsAsRead($employeeId);
+            jsonResponse(['success' => true, 'updated' => $updated], 200);
+            break;
         default:
             jsonResponse(['error' => 'unknown action'], 400);
     }

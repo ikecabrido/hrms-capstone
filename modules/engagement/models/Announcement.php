@@ -37,9 +37,10 @@ class Announcement extends BaseModel
 
     public function getAnnouncements($type = 'announcement')
     {
-        // Removed JOIN since created_by_employee_id column doesn't exist
-        $sql = "SELECT ea.*
+        $nameSql = $this->getEmployeeNameSql('e', 'created_by_name');
+        $sql = "SELECT ea.*, $nameSql
             FROM $this->table ea
+            LEFT JOIN em_employees e ON ea.created_by_employee_id = e.employee_id
             WHERE ea.type = :type
             ORDER BY ea.created_at DESC";
         return $this->execute($sql, ['type' => $type])->fetchAll(\PDO::FETCH_ASSOC);

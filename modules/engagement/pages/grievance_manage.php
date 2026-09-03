@@ -153,4 +153,3 @@ $isFinalized = in_array($grievance['status'], ['Resolved', 'Closed'], true);
   </form>
 </div>
 
-<link rel="stylesheet" href="pages/css/style/grievance.css" />

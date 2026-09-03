@@ -4,9 +4,40 @@
     </footer>
 </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3"></script>
-    <script type="module" src="js/script.js"></script>
+    <script type="module" src="js/script.js?v=<?php echo filemtime(__DIR__ . '/../js/script.js'); ?>"></script>
     <script>
-        // Save current page to cookie for persistence across page refreshes and tab changes
+        (function() {
+            function syncRecognitionUrl() {
+                const page = new URLSearchParams(window.location.search).get('page');
+                if (page !== 'recognition') return;
+
+                const validTabs = ['employee-month', 'badges', 'rewards', 'leaderboard'];
+                const currentHash = (window.location.hash || '').replace('#', '');
+                if (currentHash && currentHash !== 'recognition') return;
+
+                let savedTab = '';
+                try {
+                    savedTab = localStorage.getItem('engagement:recognition:active-tab')
+                        || sessionStorage.getItem('engagement:recognition:active-tab')
+                        || localStorage.getItem('recognition-active-tab')
+                        || sessionStorage.getItem('recognition-active-tab')
+                        || '';
+                } catch (error) {
+                    savedTab = '';
+                }
+
+                if (!validTabs.includes(savedTab)) return;
+                const baseUrl = window.location.pathname + window.location.search;
+                window.history.replaceState({}, '', baseUrl + '#' + savedTab);
+            }
+
+            syncRecognitionUrl();
+            window.addEventListener('pageshow', syncRecognitionUrl);
+            window.addEventListener('page:loaded', function(event) {
+                if (event.detail && event.detail.page === 'recognition') syncRecognitionUrl();
+            });
+        })();
+
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
             let currentPage = urlParams.get('page');
@@ -46,10 +77,42 @@
             }
             
             // Check if user just logged in (PHP will output this)
-            const isFreshlyLoggedIn = <?php echo isset($_SESSION['freshly_logged_in']) && $_SESSION['freshly_logged_in'] ? 'true' : 'false'; ?>;
+            const isFreshlyLoggedIn = <?php echo !empty($_SESSION['reset_engagement_tabs']) ? 'true' : 'false'; ?>;
+            <?php unset($_SESSION['reset_engagement_tabs']); ?>
             if (isFreshlyLoggedIn) {
                 try {
                     sessionStorage.setItem('freshly_logged_in', 'true');
+                    [
+                        'communication-tabs',
+                        'survey-tabs',
+                        'collaboration-tabs',
+                        'recognition-tabs',
+                        'grievance-tabs'
+                    ].forEach(function(containerId) {
+                        const sharedKey = 'engagement:active-tab:' + containerId;
+                        localStorage.removeItem(sharedKey);
+                        sessionStorage.removeItem(sharedKey);
+                    });
+
+                    [
+                        'engagement:communication:active-tab', 'communication-active-tab',
+                        'engagement:survey:active-tab', 'survey-active-tab',
+                        'engagement:social:active-tab', 'socialPageActiveTab', 'social-active-tab',
+                        'engagement:recognition:active-tab', 'recognition-active-tab',
+                        'engagement:grievance:active-tab', 'grievance-active-tab'
+                    ].forEach(function(key) {
+                        localStorage.removeItem(key);
+                        sessionStorage.removeItem(key);
+                    });
+
+                    document.cookie = 'engagement_survey_tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
+                    document.cookie = 'engagement_social_tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
+                    document.cookie = 'engagement_recognition_tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
+                    document.cookie = 'engagement_grievance_tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
+
+                    if (window.location.hash) {
+                        window.history.replaceState({}, '', window.location.pathname + window.location.search);
+                    }
                 } catch (e) {
                     // Ignore storage errors
                 }

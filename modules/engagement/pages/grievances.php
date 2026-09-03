@@ -30,6 +30,12 @@ if (empty($_SESSION['employee_id']) || !$isHrAdmin) {
     exit;
 }
 
+  $validGrievanceTabs = ['all-grievances', 'management', 'reports'];
+  $savedGrievanceTab = strtolower(trim((string)($_COOKIE['engagement_grievance_tab'] ?? '')));
+  $activeGrievanceTab = in_array($savedGrievanceTab, $validGrievanceTabs, true)
+    ? $savedGrievanceTab
+    : 'all-grievances';
+
 $grievanceCtrl = new GrievanceController();
 $employeeCtrl = new EmployeeController();
 $userCtrl = new UserController();
@@ -291,7 +297,6 @@ function getStatusProgress($status) {
     }
 }
 ?>
-<link rel="stylesheet" href="pages/css/style/grievance.css?v=<?= filemtime(__DIR__ . '/css/style/grievance.css') ?>" />
 <div class="module-header">
         <h1>Grievances</h1>
     </div>
@@ -325,17 +330,17 @@ function getStatusProgress($status) {
             <div class="card-header p-0 border-0">
               <ul class="nav nav-tabs grievance-nav-tabs" id="grievance-tabs" role="tablist">
                 <li class="nav-item">
-                  <a class="nav-link active" id="all-grievances-tab" href="#all-grievances" data-grievance-tab="all-grievances" role="tab" aria-selected="true">
+                  <a class="nav-link<?= $activeGrievanceTab === 'all-grievances' ? ' active' : '' ?>" id="all-grievances-tab" href="#all-grievances" data-grievance-tab="all-grievances" role="tab" aria-selected="<?= $activeGrievanceTab === 'all-grievances' ? 'true' : 'false' ?>">
                     <i class="fas fa-list"></i> All Grievances
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" id="management-tab" href="#management" data-grievance-tab="management" role="tab" aria-selected="false">
+                  <a class="nav-link<?= $activeGrievanceTab === 'management' ? ' active' : '' ?>" id="management-tab" href="#management" data-grievance-tab="management" role="tab" aria-selected="<?= $activeGrievanceTab === 'management' ? 'true' : 'false' ?>">
                     <i class="fas fa-cogs"></i> Manage Grievance
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" id="reports-tab" href="#reports" data-grievance-tab="reports" role="tab" aria-selected="false">
+                  <a class="nav-link<?= $activeGrievanceTab === 'reports' ? ' active' : '' ?>" id="reports-tab" href="#reports" data-grievance-tab="reports" role="tab" aria-selected="<?= $activeGrievanceTab === 'reports' ? 'true' : 'false' ?>">
                     <i class="fas fa-file-alt"></i> Reports
                   </a>
                 </li>
@@ -344,7 +349,7 @@ function getStatusProgress($status) {
 
             <div class="card-body">
               <div class="tab-content grievance-tab-content-visible" id="grievance-tabs-content" data-report-data="<?= htmlspecialchars(json_encode($payload['grievances'] ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8') ?>">
-                <div class="tab-pane fade show active" id="all-grievances" role="tabpanel" aria-labelledby="all-grievances-tab">
+                <div class="tab-pane fade<?= $activeGrievanceTab === 'all-grievances' ? ' show active' : '' ?>" id="all-grievances" role="tabpanel" aria-labelledby="all-grievances-tab">
                   <!-- Record Employee Grievance form removed per request -->
 
                   <div class="row mb-3">
@@ -484,7 +489,7 @@ function getStatusProgress($status) {
                   </div>
                 </div>
 
-                <div class="tab-pane fade" id="management" role="tabpanel" aria-labelledby="management-tab">
+                <div class="tab-pane fade<?= $activeGrievanceTab === 'management' ? ' show active' : '' ?>" id="management" role="tabpanel" aria-labelledby="management-tab">
                   <div class="card card-success">
                     <div class="card-header">
                       <h3 class="card-title"><i class="fas fa-user-shield"></i> Grievance</h3>
@@ -563,7 +568,7 @@ function getStatusProgress($status) {
 
                 
 
-                <div class="tab-pane fade" id="reports" role="tabpanel" aria-labelledby="reports-tab">
+                <div class="tab-pane fade<?= $activeGrievanceTab === 'reports' ? ' show active' : '' ?>" id="reports" role="tabpanel" aria-labelledby="reports-tab">
                   <p class="text-muted mb-3">Grievance Reports & Exports – generate and export reports derived from grievance records (not directly from payroll tables).</p>
                   <div class="row">
                     <div class="col-md-4">

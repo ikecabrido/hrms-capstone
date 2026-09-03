@@ -842,7 +842,7 @@ INSERT INTO `eer_social_posts` (`eer_social_post_id`, `employee_id`, `user_id`, 
 --
 
 CREATE TABLE `eer_surveys` (
-  `eer_survey_id` int(11) NOT NULL,
+  `eer_survey_id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(255) DEFAULT NULL,
   `is_anonymous` tinyint(1) DEFAULT 0,
   `survey_type` varchar(100) DEFAULT 'engagement',
@@ -938,7 +938,7 @@ INSERT INTO `eer_survey_feedback_id` (`eer_survey_feedback_id_id`, `survey_id`, 
 --
 
 CREATE TABLE `eer_survey_questions` (
-  `eer_survey_question_id` int(11) NOT NULL,
+  `eer_survey_question_id` int(11) NOT NULL AUTO_INCREMENT,
   `survey_id` int(11) DEFAULT NULL,
   `question_text` text DEFAULT NULL,
   `type` varchar(50) DEFAULT NULL

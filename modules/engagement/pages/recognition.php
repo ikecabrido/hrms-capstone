@@ -54,6 +54,13 @@ $payload['performance_candidates'] = $rewardCtrl->getPerformanceBasedCandidates(
 $payload['top_performers'] = $rewardCtrl->getTopPerformers();
 $payload['improvement_candidates'] = $rewardCtrl->getImprovementCandidates();
 
+$validRecognitionTabs = ['recognition', 'employee-month', 'badges', 'rewards', 'leaderboard'];
+$savedRecognitionTab = strtolower(trim((string)($_COOKIE['engagement_recognition_tab'] ?? $_COOKIE['engagement:recognition:active-tab'] ?? '')));
+if ($savedRecognitionTab === '') {
+  $savedRecognitionTab = strtolower(trim((string)($_SESSION['engagement_recognition_tab'] ?? '')));
+}
+$activeRecognitionTab = in_array($savedRecognitionTab, $validRecognitionTabs, true) ? $savedRecognitionTab : 'recognition';
+
 $currentEmployeeId = $_SESSION['user']['employee_id'] ?? null;
 $currentUserId = $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? null;
 if ($currentEmployeeId) {
@@ -189,7 +196,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       return 'Bronze';
     }
     ?> 
-    <link rel="stylesheet" href="pages/css/style/recognition.css">
+  
     
 </body>
  <div class="module-header">
@@ -214,33 +221,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
       <!-- Main content -->
 
-          <div class="card shadow-sm border-0 recognition-card">
+          <div class="card shadow-sm border-0 recognition-card recognition-tabs-pending">
             <div class="card-header p-0 border-0">
               <ul class="nav nav-tabs recognition-nav-tabs" id="recognition-tabs" role="tablist">
                 <li class="nav-item">
-                  <a class="nav-link active" id="recognition-tab" data-toggle="pill" href="#recognition" role="tab">
+                  <a class="nav-link<?= $activeRecognitionTab === 'recognition' ? ' active' : '' ?>" id="recognition-tab" href="#recognition" role="tab" aria-selected="<?= $activeRecognitionTab === 'recognition' ? 'true' : 'false' ?>">
                     <i class="fas fa-heart mr-2"></i>Recognition Feed
                   </a>
                 </li>
                                 <li class="nav-item">
-                                  <a class="nav-link" id="employee-month-tab" data-toggle="pill" href="#employee-month" role="tab">
+                                  <a class="nav-link<?= $activeRecognitionTab === 'employee-month' ? ' active' : '' ?>" id="employee-month-tab" href="#employee-month" role="tab" aria-selected="<?= $activeRecognitionTab === 'employee-month' ? 'true' : 'false' ?>">
                                     <i class="fas fa-star mr-2"></i>Employee of the Month
                                   </a>
                                 </li>
 
                 <li class="nav-item">
-                  <a class="nav-link" id="badges-tab" data-toggle="pill" href="#badges" role="tab">
+                  <a class="nav-link<?= $activeRecognitionTab === 'badges' ? ' active' : '' ?>" id="badges-tab" href="#badges" role="tab" aria-selected="<?= $activeRecognitionTab === 'badges' ? 'true' : 'false' ?>">
                     <i class="fas fa-medal mr-2"></i>Achievement Badges
                   </a>
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" id="rewards-tab" data-toggle="pill" href="#rewards" role="tab">
+                  <a class="nav-link<?= $activeRecognitionTab === 'rewards' ? ' active' : '' ?>" id="rewards-tab" href="#rewards" role="tab" aria-selected="<?= $activeRecognitionTab === 'rewards' ? 'true' : 'false' ?>">
                     <i class="fas fa-gift mr-2"></i>Rewards & Incentives
                   </a>
                 </li>
 
                 <li class="nav-item">
-                  <a class="nav-link" id="leaderboard-tab" data-toggle="pill" href="#leaderboard" role="tab">
+                  <a class="nav-link<?= $activeRecognitionTab === 'leaderboard' ? ' active' : '' ?>" id="leaderboard-tab" href="#leaderboard" role="tab" aria-selected="<?= $activeRecognitionTab === 'leaderboard' ? 'true' : 'false' ?>">
                     <i class="fas fa-trophy mr-2"></i>Points & Leaderboard
                   </a>
                 </li>
@@ -251,7 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <div class="tab-content" id="recognition-tabs-content">
 
                 <!-- Recognition Feed Tab -->
-                <div class="tab-pane fade show active" id="recognition" role="tabpanel" aria-labelledby="recognition-tab">
+                <div class="tab-pane fade<?= $activeRecognitionTab === 'recognition' ? ' show active' : '' ?>" id="recognition" role="tabpanel" aria-labelledby="recognition-tab">
                   <div class="recognition-main-grid">
                     <div class="recognition-left-column">
                       <div class="card card-success card-outline shadow-sm border-0 recognition-feed">
@@ -432,7 +439,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Employee of the Month Tab -->
-                <div class="tab-pane fade" id="employee-month" role="tabpanel" aria-labelledby="employee-month-tab">
+                <div class="tab-pane fade<?= $activeRecognitionTab === 'employee-month' ? ' show active' : '' ?>" id="employee-month" role="tabpanel" aria-labelledby="employee-month-tab">
                   <div class="row">
                     <div class="col-md-8">
                       <div class="card card-warning card-outline">
@@ -597,7 +604,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Achievement Badges Tab -->
-                <div class="tab-pane fade" id="badges" role="tabpanel" aria-labelledby="badges-tab">
+                <div class="tab-pane fade<?= $activeRecognitionTab === 'badges' ? ' show active' : '' ?>" id="badges" role="tabpanel" aria-labelledby="badges-tab">
                   <div class="row">
                     <div class="col-md-8">
                       <div class="card card-info card-outline">
@@ -658,7 +665,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Rewards & Incentives Tab -->
-                <div class="tab-pane fade" id="rewards" role="tabpanel" aria-labelledby="rewards-tab">
+                <div class="tab-pane fade<?= $activeRecognitionTab === 'rewards' ? ' show active' : '' ?>" id="rewards" role="tabpanel" aria-labelledby="rewards-tab">
                   <div class="row">
                     <div class="col-md-8">
                       <div class="card card-primary card-outline">
@@ -691,7 +698,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Points & Leaderboard Tab -->
-                <div class="tab-pane fade" id="leaderboard" role="tabpanel" aria-labelledby="leaderboard-tab">
+                <div class="tab-pane fade<?= $activeRecognitionTab === 'leaderboard' ? ' show active' : '' ?>" id="leaderboard" role="tabpanel" aria-labelledby="leaderboard-tab">
                   <div class="row">
                     <div class="col-md-8">
                       <div class="card card-warning card-outline">

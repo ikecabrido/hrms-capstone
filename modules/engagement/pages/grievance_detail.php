@@ -472,4 +472,3 @@ function getStatusProgress($status) {
 
 
 <script src="pages/js/grievance_detail.js"></script>
-<link rel="stylesheet" href="pages/css/style/grievance.css" />

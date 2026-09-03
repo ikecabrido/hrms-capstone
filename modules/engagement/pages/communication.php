@@ -161,7 +161,6 @@ function getNotificationTypeIcon($type) {
   }
 ?>
 
-<link rel="stylesheet" href="pages/css/style/communication.css"> 
 
 <div class="communication-area">
    <div class="module-header">
@@ -231,7 +230,7 @@ function getNotificationTypeIcon($type) {
                           <h3 class="card-title"><i class="fas fa-plus-circle"></i> Post Announcement</h3>
                         </div>
                         <div class="card-body">
-                          <form method="POST" action="">
+                          <form method="POST" action="" data-skip="true">
                             <input type="hidden" name="form_type" value="announcement">
                             <div class="form-group">
                               <label>Title <span class="text-danger">*</span></label>
@@ -412,7 +411,7 @@ function getNotificationTypeIcon($type) {
                           <h3 class="card-title"><i class="fas fa-plus-circle"></i> Post Update</h3>
                         </div>
                         <div class="card-body">
-                          <form method="POST" action="">
+                          <form method="POST" action="" data-skip="true">
                             <input type="hidden" name="form_type" value="department_update">
                             <div class="form-group">
                               <label>Title <span class="text-danger">*</span></label>
@@ -521,7 +520,7 @@ function getNotificationTypeIcon($type) {
                         </div>
                         <div class="card-body">
                           <?php if (!empty($payload['lcm_policies'])): ?>
-                            <form method="POST" action="" enctype="multipart/form-data" autocomplete="off">
+                            <form method="POST" action="" enctype="multipart/form-data" autocomplete="off" data-skip="true">
                               <input type="hidden" name="form_type" value="share_from_lcm">
                               <div class="form-group">
                                 <label>Select Policy</label>
@@ -790,7 +789,7 @@ function getNotificationTypeIcon($type) {
                           <h3 class="card-title"><i class="fas fa-comments"></i> Send Message</h3>
                         </div>
                         <div class="card-body">
-                          <form method="POST" action="">
+                          <form method="POST" action="" data-skip="true">
                             <input type="hidden" name="form_type" value="message">
                             <div class="form-group">
                               <label>To <span class="text-danger">*</span></label>

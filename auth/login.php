@@ -99,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['department_name'] = $user['department_name'];
         $_SESSION['last_activity'] = time();
         $_SESSION['freshly_logged_in'] = true;  // Flag to indicate fresh login
+            $_SESSION['reset_engagement_tabs'] = true; // Set flag to reset engagement tabs
 
         $updateLogin = $conn->prepare("
             UPDATE user_account
@@ -121,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             9 => 'modules/workforce/index.php',
             10 => 'modules/exit/index.php',
             11 => 'modules/clinic/index.php',
-            12 => 'modules/engagement/index.php',
+            12 => 'modules/engagement/index.php?page=dashboard-overview',
             13 => 'modules/portal/index.php'
 
         ];

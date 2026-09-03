@@ -50,7 +50,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Take Survey</title>
-    <link rel="stylesheet" href="pages/css/style.css" />
     <style>
         body {
             background: linear-gradient(135deg, #edf5ff 0%, #f9fbff 100%);
