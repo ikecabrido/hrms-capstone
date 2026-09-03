@@ -1,13 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="shortcut icon" href="assets/bcp-logo.png" type="image/png">
     <title>Login Page</title>
 </head>
+
 <body>
     <div class="login-container">
         <div class="login-contents">
@@ -26,7 +28,7 @@
                 </div>
                 <div class="input-group">
                     <label for="password">Password *</label>
-                    <input type="password" id="password" name="password"  required>
+                    <input type="password" id="password" name="password" required>
                 </div>
                 <div class="forgot">Forgotten User ID or Password</div>
                 <button type="submit" id="loginBtn">Login</button>
@@ -35,4 +37,5 @@
     </div>
     <script src="login.js"></script>
 </body>
+
 </html>
