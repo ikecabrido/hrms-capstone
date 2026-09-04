@@ -2757,8 +2757,8 @@ function loadInterviewData(id, viewOnly = false) {
                 engagementHtml = '<div class="list-group">';
                 engagementRecords.grievances.slice(0, 3).forEach(grievance => {
                     engagementHtml += `<div class="list-group-item py-2">
-                        <div class="font-weight-bold">${grievance.subject || 'Grievance'}</div>
-                        <div class="text-muted small">Status: ${grievance.status || 'N/A'} · Updated ${grievance.updated_at || grievance.created_at || ''}</div>
+                        <div class="font-weight-bold">${escapeHtml(grievance.subject || 'Grievance')}</div>
+                        <div class="text-muted small">Status: ${escapeHtml(formatStatus(grievance.status || 'N/A'))} · Updated ${escapeHtml(grievance.updated_at || grievance.created_at || '')}</div>
                     </div>`;
                 });
                 if (engagementRecords.grievances.length > 3) {
@@ -2769,9 +2769,9 @@ function loadInterviewData(id, viewOnly = false) {
                 engagementHtml = '<div class="list-group">';
                 engagementRecords.feedback_history.slice(0, 3).forEach(feedback => {
                     engagementHtml += `<div class="list-group-item py-2">
-                        <div class="font-weight-bold">Interview ${feedback.interview_id} (${feedback.status || ''})</div>
-                        <div class="text-muted small">Rating: ${feedback.overall_satisfaction || 'N/A'} · ${feedback.submitted_at || ''}</div>
-                    </div>`;
+                            <div class="font-weight-bold">Interview ${escapeHtml(feedback.interview_id)} (${escapeHtml(formatStatus(feedback.status || ''))})</div>
+                            <div class="text-muted small">Rating: ${escapeHtml(feedback.overall_satisfaction || 'N/A')} · ${escapeHtml(feedback.submitted_at || '')}</div>
+                        </div>`;
                 });
                 if (engagementRecords.feedback_history.length > 3) {
                     engagementHtml += `<div class="list-group-item text-center text-muted py-2">And ${engagementRecords.feedback_history.length - 3} more feedback record(s)</div>`;
@@ -3339,6 +3339,8 @@ function resetTerminationModal() {
     $('#terminationSubmitBtn').prop('disabled', false).text('Submit Termination');
     $('#terminationLetterContent').html('Generated termination letter preview appears here.');
     $('#terminationModalTitle').text('Initiate Termination');
+    $('#terminationEmployeeSelect').show();
+    $('#terminationEmployeeDisplay').hide().text('');
 }
 
 function updateTerminationLetterPreview() {
@@ -3374,25 +3376,27 @@ function showTerminationModal(terminationId = null) {
         $('#terminationModalTitle').text('Review Termination');
         $('#terminationApprovalSection').show();
         $('#terminationForm input, #terminationForm textarea, #terminationForm select').prop('disabled', false);
-        $('#terminationEmployeeSelect').prop('disabled', true);
+        $('#terminationEmployeeSelect').prop('disabled', true).hide();
+        $('#terminationEmployeeDisplay').show();
 
         $.post('exit_management.php', {
             ajax_action: 'get_termination_details',
             controller: 'termination',
             termination_id: terminationId
         }, function(response) {
-            if (response.success) {
-                $('#terminationId').val(response.data.id);
-                $('#terminationEmployeeSelect').val(response.data.employee_id);
-                $('#terminationEffectiveDate').val(response.data.effective_date);
-                $('#terminationReason').val(response.data.termination_reason);
-                $('#terminationComments').val(response.data.comments || '');
-                $('#terminationApprovalStatus').val(response.data.status || 'pending_review');
-                $('#terminationApprovalComments').val('');
-                $('#terminationLetterContent').html(buildTerminationLetterPreview(response.data));
-                $('#terminationLetterSection').show();
-                openTerminationModal();
-            } else {
+                if (response.success) {
+                    $('#terminationId').val(response.data.id);
+                    $('#terminationEmployeeSelect').val(response.data.employee_id);
+                    $('#terminationEmployeeDisplay').text(response.data.employee_name || ('Employee #' + response.data.employee_id));
+                    $('#terminationEffectiveDate').val(response.data.effective_date);
+                    $('#terminationReason').val(response.data.termination_reason);
+                    $('#terminationComments').val(response.data.comments || '');
+                    $('#terminationApprovalStatus').val(response.data.status || 'pending_review');
+                    $('#terminationApprovalComments').val('');
+                    $('#terminationLetterContent').html(buildTerminationLetterPreview(response.data));
+                    $('#terminationLetterSection').show();
+                    openTerminationModal();
+                } else {
                 showToast('error', response.message || 'Unable to load termination details.');
             }
         }, 'json').fail(function(xhr, status, error) {
@@ -3974,7 +3978,7 @@ function renderArchivedInterviewsPage() {
                 <td>${interview.employee_name || 'Unknown'}</td>
                 <td>${interview.interviewer_name || 'Unknown'}</td>
                 <td>${interview.scheduled_date || ''}</td>
-                <td>${interview.status || ''}</td>
+                <td class="status-column">${escapeHtml(formatStatus(interview.status || ''))}</td>
                 <td>${interview.archived_at || ''}</td>
                 <td>${interview.archive_reason || ''}</td>
                 <td>
@@ -4252,7 +4256,20 @@ function loadDocumentsTable(status = 'all', page = 1, limit = 10, searchTerm = '
         if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
             console.log('Found ' + response.data.length + ' exit cases');
             response.data.forEach(function(caseRecord) {
-                const statusBadge = getStatusBadge(caseRecord.case_status);
+                let statusBadge = getStatusBadge(caseRecord.case_status);
+                // If the server returned per-case documents_check, show completed/total instead of 'Unknown'
+                if (caseRecord.documents_check) {
+                    try {
+                        const completed = Array.isArray(caseRecord.documents_check.completed) ? caseRecord.documents_check.completed.length : (caseRecord.documents_check.completed ? caseRecord.documents_check.completed.length || 0 : 0);
+                        const missing = Array.isArray(caseRecord.documents_check.missing) ? caseRecord.documents_check.missing.length : (caseRecord.documents_check.missing ? caseRecord.documents_check.missing.length || 0 : 0);
+                        const total = completed + missing;
+                        if (total > 0) {
+                            statusBadge = `<span class="text-muted small">${completed}/${total}</span>`;
+                        }
+                    } catch (e) {
+                        // fallback: keep original status badge
+                    }
+                }
                 const caseTypeLabel = caseRecord.exit_case_type ? caseRecord.exit_case_type.charAt(0).toUpperCase() + caseRecord.exit_case_type.slice(1) : 'Case';
                 const actions = `
                     <button class="btn btn-sm btn-info" onclick="viewExitCaseDocumentation(${caseRecord.exit_case_id}, '${caseRecord.exit_case_type}')" title="View Case Documentation">
@@ -4342,10 +4359,23 @@ function viewExitCaseDocumentation(exitCaseId, exitCaseType) {
             ? `Settlement ${normalizeLabel(response.settlement.status || 'Pending')}`
             : 'Not Started';
 
-        const buildStatusItem = (done, label) => `
+        // Document progress: use documents_check returned from server where available
+        let documentsProgressText = '';
+        if (response.documents_check) {
+            try {
+                const completed = Array.isArray(response.documents_check.completed) ? response.documents_check.completed.length : (response.documents_check.completed ? response.documents_check.completed.length || 0 : 0);
+                const missing = Array.isArray(response.documents_check.missing) ? response.documents_check.missing.length : (response.documents_check.missing ? response.documents_check.missing.length || 0 : 0);
+                const total = completed + missing;
+                documentsProgressText = total > 0 ? `${completed}/${total}` : '';
+            } catch (e) {
+                documentsProgressText = '';
+            }
+        }
+
+        const buildStatusItem = (done, label, progressText = '') => `
             <div class="exit-status-item">
                 <span class="status-icon">${done ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="far fa-circle text-muted"></i>'}</span>
-                <span>${label}</span>
+                <span>${label} ${progressText ? '<span class="text-muted small ml-2">(' + progressText + ')</span>' : ''}</span>
             </div>
         `;
 
@@ -4387,7 +4417,7 @@ function viewExitCaseDocumentation(exitCaseId, exitCaseType) {
                 <div class="card-body">
                     <div class="exit-record-group mb-4">
                         <div class="exit-record-title">${caseRecordSectionTitle}</div>
-                        ${buildStatusItem(caseRecordCompleted, caseRecordEntryLabel)}
+                        ${buildStatusItem(caseRecordCompleted, caseRecordEntryLabel, documentsProgressText)}
                         ${caseRecordCompleted && caseLetterUploaded ? `
                             <div class="exit-status-item" style="cursor:pointer;" onclick="openCaseLetterPreview(${exitCaseId}, '${exitCaseType}');">
                                 <span class="status-icon"><i class="fas fa-check-circle text-success"></i></span>
@@ -6627,7 +6657,7 @@ function loadArchivedSettlementsTable(page = 1) {
                         <td>${settlement.employee_name || 'Unknown'}</td>
                         <td>${settlement.settlement_date || '-'}</td>
                         <td>${settlement.net_payable ? '$' + parseFloat(settlement.net_payable).toFixed(2) : '-'}</td>
-                        <td>${settlement.status || '-'}</td>
+                        <td class="status-column">${escapeHtml(formatStatus(settlement.status || '-'))}</td>
                         <td>${settlement.archived_at || '-'}</td>
                         <td>${actions}</td>
                     </tr>
@@ -6669,7 +6699,7 @@ function showArchivedSettlementDetails(settlement) {
             <div class="col-md-6">
                 <div class="form-group">
                     <label>Status</label>
-                    <input type="text" class="form-control" value="${(settlement.status || '-').replace(/"/g, '&quot;')}" readonly>
+                    <input type="text" class="form-control" value="${escapeHtml(formatStatus(settlement.status || '-'))}" readonly>
                 </div>
             </div>
             <div class="col-md-6">
@@ -8150,7 +8180,7 @@ function renderExitActivityList(items) {
         const caseLabel = caseType === 'resignation' ? 'Resignation' : caseType === 'termination' ? 'Termination' : caseType;
         meta.html(
             '<strong>' + escapeHtml(employee) + '</strong> • ' + escapeHtml(caseLabel) + ' • Case: ' + escapeHtml(caseId || 'N/A') + '<br>' +
-            'Date: ' + escapeHtml(scheduledDate) + ' • Status: ' + escapeHtml(item.status || 'Scheduled') + ' • ' + escapeHtml(dayText)
+            'Date: ' + escapeHtml(scheduledDate) + ' • Status: ' + escapeHtml(formatStatus(item.status || 'Scheduled')) + ' • ' + escapeHtml(dayText)
         );
 
         content.append(titleRow, meta);
@@ -8244,29 +8274,78 @@ function escapeHtml(unsafe) {
     });
 }
 
+// Format status identifiers for display (replace underscores with spaces)
+function formatStatus(status) {
+    if (status == null) return '';
+    try {
+        // Replace underscores with spaces and title-case each word
+        return String(status)
+            .replace(/_/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+    } catch (e) {
+        return String(status || '');
+    }
+}
+
 function openResignationDetails(resignationId) {
     if (!resignationId) return;
     // Set global target so rendering can mark the row when it appears
     window._targetResignationId = resignationId;
 
-    // Navigate to resignations section
-    try { showSection('resignations', event); } catch (e) { console.warn(e); }
-
-    // Start by asking the server to search for the ID (server-side search may match id/employee)
-    findAndDisplayResignationById(resignationId).then(found => {
-        if (!found) {
-            // Not found by search -> try iterating pages to locate the record
-            locateResignationByPaging(resignationId).then(locatedPage => {
-                if (locatedPage) {
-                    // Render the page that contains the record
-                    try { loadResignationsTable('all', locatedPage, ''); } catch (e) { console.warn(e); }
-                } else {
-                    // As a last resort open the modal directly
-                    try { showResignationModal(resignationId); } catch (e) { console.error(e); }
-                }
-            });
-        }
+    // Navigate to the Resignations page first so its modal markup is present
+    navigateThenOpenModal('resignation', '#resignationForm', function() {
+        // Start by asking the server to search for the ID (server-side search may match id/employee)
+        findAndDisplayResignationById(resignationId).then(found => {
+            if (!found) {
+                // Not found by search -> try iterating pages to locate the record
+                locateResignationByPaging(resignationId).then(locatedPage => {
+                    if (locatedPage) {
+                        // Render the page that contains the record
+                        try { loadResignationsTable('all', locatedPage, ''); } catch (e) { console.warn(e); }
+                    } else {
+                        // As a last resort open the modal directly
+                        try { showResignationModal(resignationId); } catch (e) { console.error(e); }
+                    }
+                });
+            }
+        });
     });
+}
+
+/**
+ * Ensures the target page's content (and therefore its modal markup) is
+ * actually loaded into the DOM before opening a modal that lives on that
+ * page. This app loads each page's content via AJAX (see js/utils/main.js's
+ * fetchPage()) and only ever has one page's markup in the DOM at a time, so
+ * a modal whose HTML lives on e.g. pages/termination.php cannot be opened
+ * from the Dashboard (or any other page) without first navigating there.
+ *
+ * @param {string} pageKey the data-page value of the target page (e.g. 'termination')
+ * @param {string} presenceSelector a selector that only matches once that page's content is loaded (e.g. '#terminationForm')
+ * @param {Function} openModalFn called once the page's content is confirmed present
+ */
+function navigateThenOpenModal(pageKey, presenceSelector, openModalFn) {
+    if ($(presenceSelector).length) {
+        // Already on a page that has this modal's markup - open directly.
+        openModalFn();
+        return;
+    }
+
+    const link = document.querySelector('[data-page="' + pageKey + '"]');
+    if (!link) {
+        console.error('navigateThenOpenModal: no sidebar link found for page "' + pageKey + '"');
+        return;
+    }
+
+    const onLoaded = function() {
+        window.removeEventListener('page:loaded', onLoaded);
+        // Give the newly-injected page scripts a brief moment to finish
+        // running (they execute asynchronously after page:loaded fires).
+        setTimeout(openModalFn, 50);
+    };
+    window.addEventListener('page:loaded', onLoaded);
+    link.click();
 }
 
 // Try server-side search by placing the search term as resignationId
@@ -8344,10 +8423,21 @@ function loadActionRequiredList() {
                 case 'settlement_pending': badge = '<span class="badge badge-secondary ml-2">Settle</span>'; break;
                 case 'documentation_incomplete': badge = '<span class="badge badge-secondary ml-2">Docs</span>'; break;
                 case 'post_exit_schedule': badge = '<span class="badge badge-info ml-2">Survey</span>'; break;
+                case 'termination_pending': badge = '<span class="badge badge-primary ml-2">Review</span>'; break;
+                case 'termination_overdue': badge = '<span class="badge badge-danger ml-2">Overdue</span>'; break;
                 default: badge = '<span class="badge badge-light ml-2">Action</span>';
             }
 
-            const desc = item.meta && (item.meta.reason || item.meta.status || item.meta.scheduled_at) ? (item.meta.reason || item.meta.status || item.meta.scheduled_at) : '';
+            let desc = '';
+            if (item.meta) {
+                if (item.meta.reason) {
+                    desc = item.meta.reason;
+                } else if (item.meta.status) {
+                    desc = formatStatus(item.meta.status);
+                } else if (item.meta.scheduled_at) {
+                    desc = item.meta.scheduled_at;
+                }
+            }
             const actionBtn = $('<button/>').addClass('btn btn-sm btn-outline-primary').text('View').on('click', function() { handleActionItemClick(item.type, item.id); });
 
             const el = $(
@@ -8384,6 +8474,14 @@ function handleActionItemClick(type, id) {
             openResignationDetails(id); break;
         case 'post_exit_schedule':
             try { showSurveyModal(); if (id) preselectSurveyCase(id); } catch (e) { openResignationDetails(id); } break;
+            case 'termination_pending':
+            case 'termination_overdue':
+                try {
+                    navigateThenOpenModal('termination', '#terminationForm', function() {
+                        try { if (typeof showTerminationModal === 'function') showTerminationModal(id); else console.warn('showTerminationModal not available'); } catch (e) { console.error('Failed to open termination modal', e); }
+                    });
+                } catch (e) { console.error('Failed to open termination modal', e); }
+                break;
         default:
             openResignationDetails(id);
     }
@@ -8403,6 +8501,7 @@ function loadRecentActiveCases(limit = 8) {
         }
 
         const resignations = response.recent_resignations || [];
+        const terminations = response.recent_terminations || [];
         const interviews = response.recent_interviews || [];
         const feedback = response.recent_feedback || [];
 
@@ -8413,6 +8512,9 @@ function loadRecentActiveCases(limit = 8) {
         const rows = [];
         resignations.slice(0,8).forEach(function(r) {
             rows.push({ employee: r.full_name || r.employee_name || r.employee_id || 'Unknown', type: 'Resignation', last_day: r.last_working_date ? r.last_working_date.split(' ')[0] : '-', stage: r.status || 'N/A', status: r.status || 'N/A', id: r.id });
+        });
+        terminations.slice(0,8).forEach(function(t) {
+            rows.push({ employee: t.full_name || t.employee_id || 'Unknown', type: 'Termination', last_day: t.effective_date ? t.effective_date.split(' ')[0] : '-', stage: t.status || 'N/A', status: t.status || 'N/A', id: t.id });
         });
         interviews.slice(0,8).forEach(function(i) {
             rows.push({ employee: i.full_name || i.employee_id || 'Unknown', type: 'Interview', last_day: i.scheduled_at ? i.scheduled_at.split(' ')[0] : '-', stage: i.status || 'N/A', status: i.status || 'N/A', id: i.interview_id });
@@ -8426,13 +8528,18 @@ function loadRecentActiveCases(limit = 8) {
                 tbody.append('<tr><td colspan="6" class="text-muted">No recent cases</td></tr>');
             } else {
                 rows.slice(0,10).forEach(function(r) {
-                    const viewBtn = `<button class="btn btn-sm btn-outline-primary" onclick="openResignationDetails(${r.id})">View</button>`;
+                    let viewBtn;
+                    if (r.type === 'Termination') {
+                        viewBtn = `<button class="btn btn-sm btn-outline-primary" onclick="navigateThenOpenModal('termination', '#terminationForm', function(){ try { if (typeof showTerminationModal === 'function') showTerminationModal(${r.id}); } catch(e){} });">View</button>`;
+                    } else {
+                        viewBtn = `<button class="btn btn-sm btn-outline-primary" onclick="openResignationDetails(${r.id})">View</button>`;
+                    }
                     tbody.append(`<tr>
                         <td>${escapeHtml(r.employee)}</td>
                         <td>${escapeHtml(r.type)}</td>
                         <td>${escapeHtml(r.last_day)}</td>
-                        <td>${escapeHtml(r.stage)}</td>
-                        <td>${escapeHtml(r.status)}</td>
+                        <td class="status-column">${escapeHtml(formatStatus(r.stage))}</td>
+                        <td class="status-column">${escapeHtml(formatStatus(r.status))}</td>
                         <td>${viewBtn}</td>
                     </tr>`);
                 });

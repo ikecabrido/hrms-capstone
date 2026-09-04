@@ -183,12 +183,19 @@
         :root {
             --sidebar-width: 0px;
         }
-        
-        /* Hide sidebar by default on mobile */
+
+        /* The sidebar becomes an overlay drawer on mobile, not a
+           content-pushing panel, so it needs its own fixed width here -
+           it cannot keep reading --sidebar-width for its own size, since
+           that variable is intentionally 0px on mobile (so .main-content's
+           margin collapses correctly). Without this, the sidebar slides
+           into the correct position via transform but has zero width,
+           making it invisible. */
         .sidebar {
+            width: min(280px, 80vw);
             transform: translateX(-100%);
         }
-        
+
         /* Show sidebar when active */
         .sidebar.active {
             transform: translateX(0);

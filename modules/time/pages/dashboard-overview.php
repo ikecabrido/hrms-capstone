@@ -389,6 +389,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                         </select>
                     </div>
 
+                    <div class="time-table-scroll">
                     <table id="historyTable" style="width:100%;border-collapse:collapse;table-layout:auto;">
                         <thead>
                             <tr>
@@ -404,6 +405,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                         </thead>
                         <tbody id="historyBody"></tbody>
                     </table>
+                    </div>
 
                     <div id="historyPagination" style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
                         <div id="historyPageInfo" style="color:#555;"></div>
@@ -429,6 +431,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                     </select>
                 </div>
 
+                <div class="time-table-scroll">
                 <table id="attendanceTable" style="width:100%;border-collapse:collapse;table-layout:auto;">
                     <thead>
                         <tr>
@@ -446,6 +449,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                     <tbody id="attendanceBody">
                     </tbody>
                 </table>
+                </div>
 
                 <div class="modal fade" id="attendanceInfoModal" tabindex="-1" role="dialog" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered" role="document">

@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Mozilla+Headline:wght@200..700&display=swap');
 
+/*Base CSS*/
+@import url('base/variables.css');
+@import url('base/reset.css');
+@import url('base/global.css');
+
 /*Components CSS*/
 @import url('components/dropdown.css');
 
@@ -11,9 +16,4 @@
 
 /*Pages CSS*/
 /* Time module's page-specific stylesheets are linked inline per-page from assets/css/ */
-
-/*Base CSS*/
-@import url('base/variables.css');
-@import url('base/reset.css');
-@import url('base/global.css');
 

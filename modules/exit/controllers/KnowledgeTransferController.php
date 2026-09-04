@@ -324,7 +324,7 @@ class KnowledgeTransferController extends ExitManagementController
                     '<td>' . htmlspecialchars($item['item_type'] ?? $item['type'] ?? 'N/A', ENT_QUOTES) . '</td>' .
                     '<td>' . htmlspecialchars($item['title'] ?? 'N/A', ENT_QUOTES) . '</td>' .
                     '<td>' . htmlspecialchars($item['priority'] ?? 'N/A', ENT_QUOTES) . '</td>' .
-                    '<td>' . htmlspecialchars($item['status'] ?? 'N/A', ENT_QUOTES) . '</td>' .
+                    '<td>' . htmlspecialchars(isset($item['status']) ? ucwords(str_replace('_', ' ', $item['status'])) : 'N/A', ENT_QUOTES) . '</td>' .
                     '<td>' . htmlspecialchars($item['description'] ?? '', ENT_QUOTES) . '</td>' .
                     '<td>' . htmlspecialchars($item['notes'] ?? '', ENT_QUOTES) . '</td>' .
                 '</tr>';

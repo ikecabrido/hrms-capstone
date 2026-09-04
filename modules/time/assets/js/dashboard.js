@@ -210,16 +210,38 @@
             const shiftStart = record.shift_start ? formatTimeValue(record.shift_start) : 'N/A';
             const shiftEnd = record.shift_end ? formatTimeValue(record.shift_end) : 'N/A';
 
+            // compute initials for avatar fallback
+            function getInitials(name) {
+                if (!name) return '';
+                const parts = name.trim().split(/\s+/);
+                if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+                return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+            }
+
+            const initials = getInitials(record.full_name || '');
+            // map status to themed badge class
+            const statusClass = status === 'PRESENT' ? 'ta-badge-present' : (status === 'LATE' ? 'ta-badge-late' : (status === 'WAITING FOR TIME IN' ? 'ta-badge-waiting' : (status === 'HOLIDAY' ? 'ta-badge-holiday' : 'ta-badge-absent')));
+
             modalBody.innerHTML = `
-                <div class="row">
-                    <div class="col-12 mb-2"><strong>Employee:</strong> ${escapeHtml(record.full_name || 'N/A')}</div>
-                    <div class="col-12 mb-2"><strong>ID:</strong> ${escapeHtml(record.employee_id || record.employee_no || 'N/A')}</div>
-                    <div class="col-12 mb-2"><strong>Shift Start:</strong> ${shiftStart}</div>
-                    <div class="col-12 mb-2"><strong>Shift End:</strong> ${shiftEnd}</div>
-                    <div class="col-12 mb-2"><strong>Time In:</strong> ${escapeHtml(timeIn)}</div>
-                    <div class="col-12 mb-2"><strong>Time Out:</strong> ${escapeHtml(timeOut)}</div>
-                    <div class="col-12 mb-2"><strong>Duration:</strong> ${escapeHtml(duration)}</div>
-                    <div class="col-12 mb-2"><strong>Status:</strong> <span class="badge ${status === 'PRESENT' ? 'badge-success' : status === 'LATE' ? 'badge-warning' : status === 'WAITING FOR TIME IN' ? 'badge-secondary' : status === 'HOLIDAY' ? 'badge-info' : 'badge-absent'}">${escapeHtml(status)}</span></div>
+                <div class="ta-modal-card">
+                    <div class="ta-avatar">${escapeHtml(initials)}</div>
+                    <div class="ta-details">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                            <div>
+                                <div style="font-weight:800;font-size:16px;color:#0b3d91;">${escapeHtml(record.full_name || 'N/A')}</div>
+                                <div class="muted">ID: ${escapeHtml(record.employee_id || record.employee_no || 'N/A')} &nbsp;•&nbsp; ${escapeHtml(record.department || 'N/A')}</div>
+                            </div>
+                            <div>${'<span class="'+statusClass+'">'+escapeHtml(status)+'</span>'}</div>
+                        </div>
+
+                        <div class="ta-kv">
+                            <div class="kv"><strong>Shift Start</strong><div class="muted">${shiftStart}</div></div>
+                            <div class="kv"><strong>Shift End</strong><div class="muted">${shiftEnd}</div></div>
+                            <div class="kv"><strong>Time In</strong><div class="muted">${escapeHtml(timeIn)}</div></div>
+                            <div class="kv"><strong>Time Out</strong><div class="muted">${escapeHtml(timeOut)}</div></div>
+                            <div class="kv"><strong>Duration</strong><div class="muted">${escapeHtml(duration)}</div></div>
+                        </div>
+                    </div>
                 </div>
             `;
 

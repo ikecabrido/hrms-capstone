@@ -116,7 +116,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                 <th>View</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="recent-active-tbody">
                             <tr>
                                 <td colspan="6" class="empty-row">No recent cases</td>
                             </tr>

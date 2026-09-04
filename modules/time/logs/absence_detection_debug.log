@@ -71,3 +71,63 @@
 [Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
 [Attendance::markAbsent] employee_id=4 attendance_date=2026-08-30 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
 [Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[AttendanceDetectionRunner] run_date=2026-08-31 run_time=2026-08-31 17:49:58
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-08-31 run_time=2026-08-31 20:01:15
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-09-01 run_time=2026-09-01 13:19:35
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-09-01 run_time=2026-09-01 13:40:07
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-09-01 run_time=2026-09-01 23:01:25
+[AttendanceDetectionRunner] employees_retrieved=40
+[Attendance::markAbsent] employee_id=13 attendance_date=2026-09-01 existingRecord=false time_in=NULL time_out=NULL status=NULL
+[Attendance::markAbsent] insert_new result=true rowcount=1 query=INSERT INTO ta_attendance
+                  (employee_id, attendance_date, status, recorded_by, late_minutes) VALUES (:employee_id, :attendance_date, 'ABSENT', 'SYSTEM', 0)
+[Attendance::markAbsent] employee_id=4 attendance_date=2026-09-01 existingRecord=false time_in=NULL time_out=NULL status=NULL
+[Attendance::markAbsent] insert_new result=true rowcount=1 query=INSERT INTO ta_attendance
+                  (employee_id, attendance_date, status, recorded_by, late_minutes) VALUES (:employee_id, :attendance_date, 'ABSENT', 'SYSTEM', 0)
+[AttendanceDetectionRunner] run_date=2026-09-03 run_time=2026-09-03 17:34:23
+[AttendanceDetectionRunner] employees_retrieved=40
+[Attendance::markAbsent] employee_id=13 attendance_date=2026-09-03 existingRecord=false time_in=NULL time_out=NULL status=NULL
+[Attendance::markAbsent] insert_new result=true rowcount=1 query=INSERT INTO ta_attendance
+                  (employee_id, attendance_date, status, recorded_by, late_minutes) VALUES (:employee_id, :attendance_date, 'ABSENT', 'SYSTEM', 0)
+[Attendance::markAbsent] employee_id=4 attendance_date=2026-09-03 existingRecord=false time_in=NULL time_out=NULL status=NULL
+[Attendance::markAbsent] insert_new result=true rowcount=1 query=INSERT INTO ta_attendance
+                  (employee_id, attendance_date, status, recorded_by, late_minutes) VALUES (:employee_id, :attendance_date, 'ABSENT', 'SYSTEM', 0)
+[AttendanceDetectionRunner] run_date=2026-09-03 run_time=2026-09-03 17:39:38
+[AttendanceDetectionRunner] employees_retrieved=40
+[Attendance::markAbsent] employee_id=13 attendance_date=2026-09-03 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
+[Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[Attendance::markAbsent] employee_id=4 attendance_date=2026-09-03 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
+[Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[AttendanceDetectionRunner] run_date=2026-09-03 run_time=2026-09-03 23:55:24
+[AttendanceDetectionRunner] employees_retrieved=40
+[Attendance::markAbsent] employee_id=13 attendance_date=2026-09-03 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
+[Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[Attendance::markAbsent] employee_id=4 attendance_date=2026-09-03 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
+[Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[AttendanceDetectionRunner] run_date=2026-09-03 run_time=2026-09-04 00:00:43
+[AttendanceDetectionRunner] employees_retrieved=40
+[Attendance::markAbsent] employee_id=13 attendance_date=2026-09-03 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
+[Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[Attendance::markAbsent] employee_id=4 attendance_date=2026-09-03 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
+[Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[AttendanceDetectionRunner] run_date=2026-09-03 run_time=2026-09-04 00:05:49
+[AttendanceDetectionRunner] employees_retrieved=40
+[Attendance::markAbsent] employee_id=13 attendance_date=2026-09-03 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
+[Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[Attendance::markAbsent] employee_id=4 attendance_date=2026-09-03 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
+[Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[AttendanceDetectionRunner] run_date=2026-09-04 run_time=2026-09-04 10:19:32
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-09-04 run_time=2026-09-04 10:39:58
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-09-04 run_time=2026-09-04 10:46:28
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-09-04 run_time=2026-09-04 10:51:29
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-09-04 run_time=2026-09-04 11:01:04
+[AttendanceDetectionRunner] employees_retrieved=40
+[AttendanceDetectionRunner] run_date=2026-09-04 run_time=2026-09-04 11:10:24
+[AttendanceDetectionRunner] employees_retrieved=40

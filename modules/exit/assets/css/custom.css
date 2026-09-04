@@ -259,6 +259,61 @@
   font-size: 15px;
 }
 
+/* Make status columns wider so full labels are visible */
+.status-column {
+  min-width: 180px;
+  white-space: normal;
+}
+
+/* Neutralize colored status badges inside table status columns */
+.status-column .fs-status-badge,
+.status-column span[class^="fs-status-"],
+.status-column span[class*=" fs-status-"] {
+  background: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+  padding: 0.15rem 0.35rem !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+}
+
+/* More specific: ensure terminations tables (active + archived) never show blue gradients */
+#terminations-table .status-column .fs-status-badge,
+#terminations-table .status-column span[class^="fs-status-"],
+#terminations-table .status-column span[class*=" fs-status-"],
+#modal-archived-terminations-table .status-column .fs-status-badge,
+#modal-archived-terminations-table .status-column span[class^="fs-status-"],
+#modal-archived-terminations-table .status-column span[class*=" fs-status-"] {
+  background: transparent !important;
+  background-image: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  text-transform: none !important;
+  padding: 0.15rem 0.35rem !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+}
+
+/* Also neutralize generic badge classes scoped to terminations tables */
+#terminations-table .badge-info,
+#terminations-table .badge-primary,
+#terminations-table .badge-success,
+#terminations-table .badge-warning,
+#terminations-table .badge-danger,
+#modal-archived-terminations-table .badge-info,
+#modal-archived-terminations-table .badge-primary,
+#modal-archived-terminations-table .badge-success,
+#modal-archived-terminations-table .badge-warning,
+#modal-archived-terminations-table .badge-danger {
+  background: transparent !important;
+  background-image: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+
 .alert-panel-body {
   padding: 16px 18px 18px;
 }
@@ -622,6 +677,173 @@ body.dark-mode .main-header.navbar {
 
 body.dark-mode .main-footer {
   background: linear-gradient(135deg, #122a51 0%, #081f39 100%) !important;
+}
+/* ============================================
+   MOBILE RESPONSIVENESS - PHASE 1
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Bootstrap-style row/col fallback grid (used throughout modal forms) -
+     stack every column to full width instead of side-by-side */
+  .row {
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .col-md-6,
+  .col-4,
+  .col-md-12,
+  .col-lg-3,
+  .col-lg-6,
+  .col-lg-12,
+  .col-6,
+  .col-md-4,
+  .col-md-8 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+    margin-bottom: 12px;
+  }
+
+  /* Dashboard KPI grid - single column on mobile */
+  .dashboard-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-lower-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-box-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Card header controls (search box, filter, action buttons) - stack
+     instead of forcing a single cramped row */
+  .card-header {
+    flex-wrap: wrap !important;
+  }
+
+  .card-header .d-flex {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .card-tools {
+    width: 100%;
+    justify-content: flex-start !important;
+    margin-left: 0 !important;
+    margin-top: 8px;
+  }
+
+  /* Ensure every data table scrolls horizontally instead of overflowing
+     the viewport or forcing the whole page wider than the screen */
+  .table-responsive,
+  .card-body {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #resignations-table,
+  #archived-resignations-table,
+  #recent-resignations-table,
+  #interviews-table,
+  #transfers-table,
+  #settlements-table,
+  #documents-table,
+  #surveys-table {
+    table-layout: auto !important;
+    width: auto !important;
+    min-width: 640px !important;
+  }
+
+  /* Modal dialogs - floor width so min()-based sizing never gets
+     uncomfortably cramped on small phones, and remove side padding
+     that would otherwise eat into already-limited screen width */
+  .modal-dialog {
+    width: 94vw !important;
+    max-width: 94vw !important;
+    margin: 0.75rem auto !important;
+  }
+
+  .exit-case-documentation-modal .modal-dialog {
+    width: 94vw !important;
+    max-width: 94vw !important;
+  }
+
+  .modal {
+    padding: 0.5rem !important;
+  }
+
+  .modal-body {
+    padding: 16px !important;
+  }
+
+  .modal-header {
+    padding: 14px 16px !important;
+  }
+
+  .modal-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .modal-footer .btn {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  /* Termination's custom (non-Bootstrap) modal structure */
+  #terminationModal .termination-modal-dialog {
+    width: min(94vw, 820px);
+    margin: 0 10px;
+  }
+
+  #terminationModal .termination-modal-header {
+    padding: 14px 18px;
+  }
+
+  #terminationModal .termination-modal-title {
+    font-size: 1.4rem;
+  }
+
+  #terminationModal .termination-modal-body {
+    padding: 16px 18px 0;
+  }
+
+  /* Table action buttons - allow wrapping instead of forcing a single
+     cramped row of icon buttons */
+  .table-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-title {
+    font-size: 28px;
+  }
+
+  .dashboard-kpi-value {
+    font-size: 40px;
+  }
+
+  .content-header h1 {
+    font-size: 20px !important;
+  }
+
+  #terminationModal .termination-modal-title {
+    font-size: 1.15rem;
+  }
+
+  .modal-footer .btn {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
 }
 /* ============================================
    THEME TOGGLE ANIMATION

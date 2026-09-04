@@ -1917,6 +1917,39 @@ function initShiftsPage() {
             });
         }
 
+        // Defensive binding: ensure update handler is attached even if DOMContentLoaded was missed
+        (function bindEditShiftHandlers() {
+            try {
+                const form = document.getElementById('editShiftForm');
+                if (form && !form._saveBound) {
+                    form._saveBound = true;
+                    form.addEventListener('submit', function(ev) {
+                        ev.preventDefault();
+                        console.log('[DEBUG] editShiftForm submit intercepted');
+                        saveTemplateUpdate();
+                    });
+                }
+
+                const btn = document.querySelector('#editShiftModal button[name="update_shift"]');
+                if (btn && !btn._clickBound) {
+                    btn._clickBound = true;
+                    btn.addEventListener('click', function(ev) {
+                        ev.preventDefault();
+                        console.log('[DEBUG] update shift button clicked');
+                        // Trigger the form submit flow
+                        if (form) {
+                            const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+                            form.dispatchEvent(submitEvent);
+                        } else {
+                            saveTemplateUpdate();
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('bindEditShiftHandlers error', e);
+            }
+        })();
+
         function openMultipleAssign() {
             // open assignment modal in create mode
             assignmentMode = 'create';

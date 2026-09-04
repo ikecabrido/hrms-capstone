@@ -147,6 +147,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                     <select class="form-control" id="terminationEmployeeSelect" name="employee_id" required>
                                         <option value="">Select Employee</option>
                                     </select>
+                                    <div id="terminationEmployeeDisplay" class="form-control-plaintext" style="display: none;"></div>
                                     <div id="terminationEligibilityMessage" class="mt-2" style="display: none;"></div>
                                 </div>
                             </div>

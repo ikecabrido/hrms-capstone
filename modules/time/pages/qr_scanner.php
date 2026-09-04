@@ -38,9 +38,6 @@ $current_role = $_SESSION['role'] ?? 'time';
 
       <div class="kiosk-info">
         <div class="card employee-info-card h-100">
-          <div class="card-header">
-            <h5 class="card-title mb-0">Employee Info</h5>
-          </div>
           <div class="card-body employee-info-body" id="employeeInfo"></div>
         </div>
       </div>

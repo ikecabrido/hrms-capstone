@@ -416,6 +416,71 @@ body.dark-mode [style*="background: #ffffff"] {
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
         }
 
+        /* Themed modal header to match system colors */
+        #attendanceInfoModal .modal-header {
+            padding: 16px 20px;
+            border-bottom: none;
+            background: linear-gradient(90deg,#0b5cab,#1976d2);
+            color: #fff;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        #attendanceInfoModal .modal-header .modal-title {
+            font-weight: 800;
+            font-size: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        #attendanceInfoModal .modal-header .close {
+            color: rgba(255,255,255,0.9);
+            opacity: 1;
+            text-shadow: none;
+        }
+
+        #attendanceInfoModal .modal-body {
+            padding: 18px 20px;
+            background: #fff;
+            color: #1f2937;
+        }
+
+        /* Modal content card inside body */
+        #attendanceInfoModal .ta-modal-card {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        #attendanceInfoModal .ta-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 12px;
+            display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#e6f0ff;color:#0b3d91;flex-shrink:0;overflow:hidden;
+        }
+
+        #attendanceInfoModal .ta-details { flex:1; }
+
+        #attendanceInfoModal .ta-details .muted { color: #6b7280; font-size:13px; }
+
+        #attendanceInfoModal .ta-kv { display:flex;gap:10px;flex-wrap:wrap;margin-top:12px; }
+        #attendanceInfoModal .ta-kv .kv { min-width:140px; }
+
+        /* Themed badges for statuses */
+        .ta-badge-present { background: #0b79d0; color: #fff; padding: 6px 8px; border-radius: 6px; font-weight:700; }
+        .ta-badge-late { background: #f59e0b; color:#fff;padding:6px 8px;border-radius:6px;font-weight:700; }
+        .ta-badge-absent { background: #b42318;color:#fff;padding:6px 8px;border-radius:6px;font-weight:700; }
+        .ta-badge-waiting { background: #64748b;color:#fff;padding:6px 8px;border-radius:6px;font-weight:700; }
+        .ta-badge-holiday { background: #0b9aa6;color:#fff;padding:6px 8px;border-radius:6px;font-weight:700; }
+
+        #attendanceInfoModal .modal-footer { padding: 12px 20px; border-top: none; background: transparent; }
+
+        /* Dark mode overrides for modal */
+        body.dark-mode #attendanceInfoModal .modal-body { background: rgba(30,30,30,0.96); color: #e0e0e0; }
+        body.dark-mode #attendanceInfoModal .ta-avatar { background: #0b3d91; color: #fff; }
+        body.dark-mode #attendanceInfoModal .modal-header { background: linear-gradient(90deg,#05306b,#0b5cab); }
+
         #attendanceInfoModal .modal-dialog-centered {
             display: -ms-flexbox;
             display: flex;
@@ -529,6 +594,36 @@ body.dark-mode [style*="background: #ffffff"] {
         .page-subtitle {
             color: rgba(255, 255, 255, 0.85);
             font-size: 14px;
+
+        /* ============================================
+           MOBILE RESPONSIVENESS - PHASE 1
+           ============================================ */
+
+        @media (max-width: 768px) {
+            /* Stack any multi-column KPI/summary grid to a single column */
+            .kpi-cards,
+            .dashboard-grid,
+            .summary-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            /* Ensure the Today's Attendance / history tables scroll horizontally
+               within their own container instead of squeezing to fit or overflowing
+               the page. Uses a wrapper div rather than table { display: block },
+               since changing a <table>'s display away from "table" can mismatch
+               with its <tr>/<td> children's default display values and render
+               inconsistently across browsers. */
+            .time-table-scroll {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #historyTable,
+            #attendanceTable {
+                width: auto !important;
+                min-width: 640px !important;
+            }
+        }
             margin-top: 4px;
             line-height: 1.5;
         }
@@ -665,7 +760,12 @@ body.dark-mode [style*="background: #ffffff"] {
             }
 
             .dashboard-grid {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                /* Force single-column stacking on narrow viewports to
+                   override any inline grid-template-columns set in the
+                   template. This is intentionally scoped and uses
+                   !important so it can win over inline styles on this
+                   known problematic element. */
+                grid-template-columns: 1fr !important;
                 gap: 15px;
                 margin-bottom: 30px;
             }

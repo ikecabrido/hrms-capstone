@@ -140,7 +140,7 @@ class ExitInterviewController extends ExitManagementController
         $interviewer = htmlspecialchars($interview['interviewer_name'] ?? 'N/A', ENT_QUOTES);
         $scheduledDate = htmlspecialchars($interview['scheduled_date'] ?? 'N/A', ENT_QUOTES);
         $scheduledTime = htmlspecialchars($interview['scheduled_time'] ?? 'N/A', ENT_QUOTES);
-        $status = htmlspecialchars($interview['status'] ?? 'N/A', ENT_QUOTES);
+        $status = htmlspecialchars(isset($interview['status']) ? ucwords(str_replace('_', ' ', $interview['status'])) : 'N/A', ENT_QUOTES);
         $exitCaseType = htmlspecialchars(ucfirst((string)($interview['exit_case_type'] ?? 'N/A')), ENT_QUOTES);
         $exitCaseId = htmlspecialchars((string)($interview['exit_case_id'] ?? 'N/A'), ENT_QUOTES);
         $exitReason = htmlspecialchars($interview['exit_reason'] ?? 'N/A', ENT_QUOTES);
