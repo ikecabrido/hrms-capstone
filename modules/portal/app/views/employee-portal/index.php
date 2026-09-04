@@ -24,7 +24,6 @@
 
     <main class="main-content">
         <?php require $content; ?>
-        
     </main>
     
     <?php require __DIR__ . '/../partials/footer.php'; ?>

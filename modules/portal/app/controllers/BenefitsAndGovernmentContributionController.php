@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use Exception;
-use App\Helper\Helper;
+use App\Helper\{Helper, ExceptionHelper};
 use App\Models\Employee;
 use App\Models\BenefitsAndGovernmentContribution;
 
@@ -122,12 +122,8 @@ class BenefitsAndGovernmentContributionController
             ]);
 
             $_SESSION['success'] = 'Document submitted successfully.';
-        } catch (Exception $e) {
-            if (isset($destination) && file_exists($destination)) {
-                unlink($destination);
-            }
-
-            $_SESSION['error'] = $e->getMessage();
+        } catch (\Throwable $e) {
+            ExceptionHelper::handle($e, $destination ?? null);
         }
 
         Helper::redirect('index.php?url=benefits-and-government-contribution');

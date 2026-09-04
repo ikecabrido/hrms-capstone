@@ -265,7 +265,6 @@
                             <option value="" disabled selected>Select the subject of your request</option>
                             <option value="Regular Payroll Processing">Regular Payroll Processing</option>
                             <option value="Salary Discrepancy / Correction">Salary Discrepancy / Correction</option>
-                            <option value="Overtime & Bonus Claims">Overtime & Bonus Claims</option>
                             <option value="New Hire Payroll Onboarding">New Hire Payroll Onboarding</option>
                             <option value="Salary Advance Request">Salary Advance Request</option>
                             <option value="Other / General Inquiry">Other / General Inquiry</option>

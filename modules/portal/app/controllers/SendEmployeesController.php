@@ -34,6 +34,7 @@ class SendEmployeesController
         ]);
         exit;
     }
+    //Dito ba yun men?
     public function login(): void
     {
         Session::start();

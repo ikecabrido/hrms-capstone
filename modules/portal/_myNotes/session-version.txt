@@ -1,0 +1,11 @@
+if form has file 
+
+} catch (\Throwable $e) {
+    ExceptionHelper::handle($e, $destination ?? null);
+}
+
+if form has no file 
+
+} catch (\Throwable $e) {
+    ExceptionHelper::handle($e);
+}

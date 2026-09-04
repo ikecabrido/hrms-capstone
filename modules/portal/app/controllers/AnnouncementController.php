@@ -16,8 +16,7 @@ class AnnouncementController
 
     public function index()
     {
-        $announcements = $this->announcementModel->all();
-
+        $announcements = $this->announcementModel->all(); 
         $title = "Employee Announcements";
         $content = __DIR__ . '/../views/employee-portal/announcement/content.php';
         require __DIR__ . '/../views/employee-portal/index.php';
