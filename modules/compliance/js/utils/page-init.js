@@ -2,6 +2,7 @@
     export function reinitPage(page) {
     initTabs();
     initForms();
+    initDocumentForms();
     window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: page } }));
     }
 
@@ -28,7 +29,7 @@
     // ─── Form Submissions ─────────────────────────────────────────────────────────
 
     export function initForms() {
-    const forms = document.querySelectorAll('form:not([data-skip]):not(#approval-upload-form)');
+    const forms = document.querySelectorAll('form:not([data-skip]):not(#approval-upload-form):not([method="get"]):not([method="GET"])');
 
     forms.forEach(function (form) {
         const fresh = form.cloneNode(true);
@@ -57,6 +58,25 @@
             .catch(function (err) {
             console.error('Form error', err);
             });
+        });
+    });
+    }
+
+    export function initDocumentForms() {
+        const forms = document.querySelectorAll('form.cd-date-form:not([method="POST"]):not([method="post"])');
+
+        forms.forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+        var url = new URL(form.getAttribute('action') || window.location.href);
+        var formData = new FormData(form);
+
+        formData.forEach(function (value, key) {
+            url.searchParams.set(key, value);
+        });
+
+        window.location.href = url.toString();
         });
     });
     }

@@ -1,0 +1,15 @@
+﻿@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/Poppins/pxiEyp8kv8JHgFVrFJA.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/Poppins/pxiByp8kv8JHgFVrLEj6V1s.ttf') format('truetype');
+}
+

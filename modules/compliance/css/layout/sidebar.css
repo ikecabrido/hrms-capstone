@@ -8,12 +8,36 @@
         height: 100vh;
         overflow-y: auto;
         z-index: 1000;
+        scrollbar-width: auto;
+        scrollbar-color: #1c5a8a transparent;
         transition: transform 0.3s ease;
+    }
+
+    .sidebar::-webkit-scrollbar {
+        width: 8px;
+        display: block;
+    }
+
+    .sidebar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+        background: #1c5a8a;
+        border-radius: 4px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb:hover {
+        background: #1c5a8a;
     }
 
     /* Hide sidebar on desktop when toggled */
     .sidebar.hidden {
-        transform: translateX(-100%);
+        display: none;
+    }
+
+    .sidebar.active {
+        display: block;
     }
 
     .school-logo {
@@ -30,8 +54,9 @@
 
     .sidebar-icons {
         display: flex;
-        gap: 0.5rem;
+        gap: 1rem;
         color: var(--color3);
+        margin-bottom: 0.5rem;
     }
 
     .sidebar-icons i {
@@ -94,15 +119,35 @@
 
     .sidebar h3 {
         color: var(--color3);
-        font-size: 13px;
+        font-size: 11px;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 1rem;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.75rem;
         padding-left: 0.5rem;
     }
 
     .sidebar ul {
         list-style: none;
+        padding-right: 0.5rem;
+        margin-right: -0.5rem;
+    }
+
+    .sidebar ul::-webkit-scrollbar {
+        width: 6px;
+        display: block;
+    }
+
+    .sidebar ul::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .sidebar ul::-webkit-scrollbar-thumb {
+        background: #1c5a8a;
+        border-radius: 3px;
+    }
+
+    .sidebar ul::-webkit-scrollbar-thumb:hover {
+        background: #1c5a8a;
     }
 
     .sidebar .menu-link {
@@ -114,7 +159,6 @@
         text-decoration: none;
         border-radius: 8px;
         margin-bottom: 0.5rem;
-        transition: all 0.3s ease;
         font-size: 0.95rem;
     }
 
@@ -126,13 +170,18 @@
     .sidebar .menu-link:hover {
         background: var(--color7);
         color: var(--color3);
-        transform: translateX(5px);
     }
 
     .sidebar .menu-link.active {
-        background: var(--color2);
-        color: var(--color3);
+        background: #1c5a8a;
+        color: #ffffff;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar .menu-link.prev-page-link {
+        border-left: 3px solid rgba(255, 255, 255, 0.35);
+        padding-left: calc(0.5rem - 3px);
+        background: rgba(255, 255, 255, 0.05);
     }
 
     .separator {
@@ -142,18 +191,16 @@
     }
 
     .active-menu-link {
-        background: var(--color7);
-        color: var(--color3);
+        background: #1c5a8a;
+        color: #ffffff;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
         gap: 0.8rem;
         padding: 0.8rem 0.5rem;
-        color: var(--color3);
         text-decoration: none;
         border-radius: 8px;
         margin-bottom: 0.5rem;
-        transition: all 0.3s ease;
         font-size: 0.95rem;
     }
 
@@ -166,17 +213,10 @@
         height: 100%;
         background: rgba(0, 0, 0, 0.5);
         z-index: 998;
-        opacity: 0;
-        transition: opacity 0.3s ease;
     }
 
     .sidebar-overlay.active {
         display: block;
-        opacity: 1;
-    }
-
-    .sidebar::-webkit-scrollbar {
-        display: none;
     }
 
     @media (max-width: 768px) {
@@ -184,12 +224,12 @@
             --sidebar-width: 0px;
         }
         
-        /* Hide sidebar by default on mobile */
         .sidebar {
+            display: block;
             transform: translateX(-100%);
+            width: 280px;
         }
-        
-        /* Show sidebar when active */
+
         .sidebar.active {
             transform: translateX(0);
         }
@@ -212,7 +252,6 @@
         }
 
     }
-
     @media (max-width: 360px) {
         .sidebar {
             width: 100%;
@@ -222,4 +261,5 @@
             padding: 0.6rem 0.8rem;
             font-size: 0.9rem;
         }
+
     }

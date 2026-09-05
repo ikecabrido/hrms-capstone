@@ -9,7 +9,32 @@ body {
     padding: 2rem;
     transition: margin-left 0.3s ease;
     position: relative;
-    z-index: 1;
+}
+
+.main-content.sidebar-collapsed {
+    margin-left: 0;
+}
+
+.main-content.sidebar-collapsed > .container {
+    max-width: 1600px;
+}
+
+.main-content::-webkit-scrollbar {
+    width: 8px;
+    display: block;
+}
+
+.main-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+    background: var(--color4);
+    border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color5);
 }
 
 .container {
@@ -51,6 +76,7 @@ body {
 @media (max-width: 768px) {
     .main-content {
         margin-left: 0;
+        min-height: calc(100vh - var(--header-height));
         padding: 1rem;
     }
     
@@ -63,8 +89,8 @@ body {
 @media (max-width: 480px) {
         .main-content {
         margin-top: 50px;
-        padding: 0.75rem;
         min-height: calc(100vh - 50px);
+        padding: 0.75rem;
     }
     
 }

@@ -1,0 +1,51 @@
+-- Sample lc_risks data for the past 6 months
+-- Generated for hrms database
+-- Run this in phpMyAdmin or via mysql CLI
+
+INSERT INTO `lc_risks` (
+  `employee_id`, `risk_type`, `severity`, `description`, `mitigation_plan`,
+  `status`, `monitoring_status`, `compliance_review`,
+  `archived`, `created_at`, `updated_at`,
+  `source_module`, `source_record_id`, `detection_rule`,
+  `detected_at`, `affected_record_count`, `suggested_likelihood`, `suggested_impact`
+) VALUES
+-- February 2026
+(NULL, 'Department Understaffing', 'Critical', 'Department BTVTED is critically understaffed with 35 of 80 positions filled (43.8% fill rate).', 'Initiate emergency recruitment process to fill vacant positions.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-02-15 09:23:00', '2026-02-15 09:23:00', 'em_departments', 1, 'department_understaffing', '2026-02-15 09:23:00', 45, 5, 5),
+(NULL, 'Expired Employee Document', 'High', 'Medical Clearance expired on 2026-01-15 for employee.', 'Request updated medical clearance from employee.', 'under_review', 'monitoring', 'requires_followup', 0, '2026-02-20 14:05:00', '2026-03-01 10:00:00', 'employee_documents', 45, 'expired_employee_document', '2026-02-20 14:05:00', 1, 4, 4),
+(12, 'Missing Policy Acknowledgment', 'Medium', 'Employee has not acknowledged policy: Code of Conduct 2026 (overdue by 45 days).', 'Send reminder to employee to acknowledge the required policy.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-02-28 11:30:00', '2026-02-28 11:30:00', 'lc_policy_assignments', 78, 'missing_policy_acknowledgment', '2026-02-28 11:30:00', 1, 3, 3),
+
+-- March 2026
+(45, 'Frequent Late', 'High', 'Employee has 8 late arrivals in the last 30 days with a total of 240 minutes late.', 'Conduct attendance counseling and monitor punctuality.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-03-05 08:15:00', '2026-03-05 08:15:00', 'ta_attendance', 45, 'frequent_late', '2026-03-05 08:15:00', 8, 4, 4),
+(23, 'Missing Government IDs', 'Medium', 'Employee has incomplete government ID information.', 'Update employee government ID records with valid SSS, PhilHealth, Pag-IBIG, and TIN numbers.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-03-10 13:45:00', '2026-03-10 13:45:00', 'em_government_ids', 23, 'missing_government_ids', '2026-03-10 13:45:00', 1, 3, 3),
+(NULL, 'Overdue Statutory Contribution', 'High', 'SSS contribution status is Overdue for 12 employees.', 'Process overdue SSS contribution and update status.', 'under_review', 'monitoring', 'requires_followup', 0, '2026-03-15 16:20:00', '2026-03-20 09:00:00', 'lc_sss_contributions', 156, 'overdue_contribution', '2026-03-15 16:20:00', 12, 4, 4),
+(67, 'Unresolved Grievance', 'Critical', 'Employee grievance is unresolved: Harassment complaint. Priority: Critical', 'Review and resolve employee grievance promptly.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-03-22 10:00:00', '2026-03-22 10:00:00', 'eer_grievances', 34, 'unresolved_grievance', '2026-03-22 10:00:00', 1, 5, 5),
+
+-- April 2026
+(89, 'Low Performance Rating', 'Medium', 'Employee has a low performance rating of 2.1.', 'Place employee under Performance Improvement Plan (PIP) and set measurable targets.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-04-02 09:30:00', '2026-04-02 09:30:00', 'pm_appraisals', 89, 'low_performance_rating', '2026-04-02 09:30:00', 1, 3, 3),
+(NULL, 'Unusual Payroll Adjustment', 'Critical', 'Large payroll adjustment of 75000.00 for: Salary adjustment - executive bonus.', 'Review and verify large payroll adjustments for accuracy.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-04-08 14:15:00', '2026-04-08 14:15:00', 'pr_employee_adjustments', 23, 'large_payroll_adjustment', '2026-04-08 14:15:00', 1, 5, 5),
+(34, 'Overdue Performance Goal', 'Medium', 'Performance goal "Q1 Sales Target" is overdue with only 45% completion.', 'Review goal progress and provide necessary support to complete the goal.', 'under_review', 'monitoring', 'requires_followup', 0, '2026-04-12 11:00:00', '2026-04-18 16:00:00', 'pm_goals', 34, 'overdue_performance_goal', '2026-04-12 11:00:00', 1, 3, 3),
+(56, 'Inactive Employee Account', 'Medium', 'Active employee has an inactive user account.', 'Reactivate or create user account for the employee.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-04-20 08:45:00', '2026-04-20 08:45:00', 'user_account', 56, 'inactive_user_account', '2026-04-20 08:45:00', 1, 3, 3),
+
+-- May 2026
+(78, 'Excessive Absences', 'High', 'Employee has 5 unexcused absences in the last 30 days.', 'Issue notice to explain and require medical certificates or valid justification.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-05-03 07:30:00', '2026-05-03 07:30:00', 'ta_attendance', 78, 'excessive_absences', '2026-05-03 07:30:00', 5, 4, 4),
+(91, 'Expired Medical Clearance', 'High', 'Medical certificate expired on 2026-04-15.', 'Request updated medical clearance from employee.', 'under_review', 'monitoring', 'requires_followup', 0, '2026-05-10 13:20:00', '2026-05-15 10:00:00', 'employee_documents', 91, 'expired_medical_clearance', '2026-05-10 13:20:00', 1, 4, 4),
+(NULL, 'Pending Exit Clearance', 'Medium', 'Employee resignation is pending clearance with last working date: 2026-05-30.', 'Complete exit clearance process and verify returned assets.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-05-18 09:45:00', '2026-05-18 09:45:00', 'exit_resignations', 12, 'pending_exit_clearance', '2026-05-18 09:45:00', 1, 3, 3),
+(45, 'Overdue Mandatory Training', 'Critical', 'Mandatory training is overdue by 75 days with status: In Progress.', 'Enroll employee in required training and monitor completion.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-05-25 15:10:00', '2026-05-25 15:10:00', 'pm_employee_training', 45, 'overdue_training', '2026-05-25 15:10:00', 1, 5, 5),
+
+-- June 2026
+(102, 'Failed KPI', 'High', 'KPI entry status is "Behind" indicating poor performance.', 'Review KPI performance and implement corrective action plan.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-06-02 10:30:00', '2026-06-02 10:30:00', 'kpi_entries', 102, 'failed_kpi', '2026-06-02 10:30:00', 1, 4, 4),
+(67, 'Low Engagement Score', 'Low', 'Employee submitted low engagement rating: 1/5.', 'Follow up with employee to understand concerns and improve engagement.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-06-08 14:00:00', '2026-06-08 14:00:00', 'eer_survey_feedback', 67, 'low_engagement_score', '2026-06-08 14:00:00', 1, 2, 2),
+(23, 'Missing Emergency Contact', 'Low', 'Employee has missing or incomplete emergency contact information.', 'Update employee personal information with valid emergency contact details.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-06-15 11:20:00', '2026-06-15 11:20:00', 'personal_information', 23, 'missing_emergency_contact', '2026-06-15 11:20:00', 1, 2, 2),
+(NULL, 'Open Compliance Incident', 'High', 'Open high incident: Data privacy breach.', 'Review and resolve the open incident promptly.', 'under_review', 'monitoring', 'requires_followup', 0, '2026-06-22 16:45:00', '2026-06-28 09:00:00', 'lc_incident_report', 5, 'open_incident', '2026-06-22 16:45:00', 1, 4, 4),
+
+-- July 2026
+(112, 'Incomplete Training', 'Medium', 'Employee training enrollment is incomplete with status: enrolled and no recent activity.', 'Follow up with employee to complete the required training.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-07-03 08:00:00', '2026-07-03 08:00:00', 'ld_enrollment', 112, 'incomplete_training', '2026-07-03 08:00:00', 1, 3, 3),
+(NULL, 'Pending Final Settlement', 'Medium', 'Exit settlement is in status: processing.', 'Complete final settlement processing and approve payment.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-07-10 13:30:00', '2026-07-10 13:30:00', 'exit_employee_settlements', 8, 'pending_final_settlement', '2026-07-10 13:30:00', 1, 3, 3),
+(34, 'Excessive Overtime', 'Medium', 'Employee has accumulated 25.5 overtime hours in the last 30 days.', 'Review workload distribution and ensure compliance with labor regulations.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-07-18 09:15:00', '2026-07-18 09:15:00', 'ta_attendance', 34, 'excessive_overtime', '2026-07-18 09:15:00', 1, 3, 3),
+(NULL, 'Missing Payroll Record', 'High', 'Active employee has no payslip generated in the last 60 days.', 'Verify payroll processing and generate missing payslips.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-07-25 10:45:00', '2026-07-25 10:45:00', 'pr_payslips', 67, 'missing_payslip', '2026-07-25 10:45:00', 1, 4, 4),
+
+-- August 2026 (recent)
+(45, 'Work Injury', 'Critical', 'Active critical emergency case: Workplace fall injury.', 'Monitor case status and ensure proper medical follow-up.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-08-05 07:20:00', '2026-08-05 07:20:00', 'cm_emergency_cases', 23, 'active_emergency_case', '2026-08-05 07:20:00', 1, 5, 5),
+(89, 'Unread Employee Notification', 'Low', 'Employee has unread notification: Please review your leave balance...', 'Follow up on pending employee notification or request.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-08-12 11:00:00', '2026-08-12 11:00:00', 'eer_notifications', 456, 'unread_notification', '2026-08-12 11:00:00', 1, 2, 2),
+(56, 'Incomplete Recruitment Record', 'Medium', 'Hired candidate for Marketing Manager has missing contact number.', 'Complete new hire onboarding requirements and verify contact information.', 'new_report', 'pending_review', 'pending_verification', 0, '2026-08-20 14:30:00', '2026-08-20 14:30:00', 'rao_hired', 45, 'incomplete_recruitment_record', '2026-08-20 14:30:00', 1, 3, 3),
+(NULL, 'Overdue Tax Contribution', 'High', 'BIR contribution status is Overdue for 8 employees.', 'Process overdue BIR contribution and update status.', 'under_review', 'monitoring', 'requires_followup', 0, '2026-08-25 09:00:00', '2026-08-26 15:00:00', 'lc_bir_contributions', 89, 'overdue_bir_contribution', '2026-08-25 09:00:00', 8, 4, 4);
