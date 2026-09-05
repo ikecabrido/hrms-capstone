@@ -192,7 +192,11 @@
            into the correct position via transform but has zero width,
            making it invisible. */
         .sidebar {
-            width: min(280px, 80vw);
+            width: min(280px, 80vw) !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            position: fixed !important;
+            overflow-y: auto !important;
             transform: translateX(-100%);
         }
 

@@ -314,6 +314,79 @@
   border: 1px solid rgba(0,0,0,0.06) !important;
 }
 
+/* Fix long status labels appearance in terminations tables */
+#terminations-table .status-column,
+#modal-archived-terminations-table .status-column {
+  min-width: 220px;
+}
+
+#terminations-table .badge,
+#modal-archived-terminations-table .badge,
+#terminations-table .fs-status-badge,
+#modal-archived-terminations-table .fs-status-badge,
+#terminations-table span[class^="fs-status-"],
+#modal-archived-terminations-table span[class^="fs-status-"] {
+  text-transform: none !important;
+  font-size: 12px !important;
+  padding: 6px 10px !important;
+  white-space: normal !important;
+  line-height: 1.2 !important;
+  display: inline-block !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+/* Apply same wrapping and neutral badge treatment to other exit tables */
+#resignations-table .status-column,
+#archived-resignations-table .status-column,
+#recent-resignations-table .status-column,
+#interviews-table .status-column,
+#transfers-table .status-column,
+#settlements-table .status-column,
+#documents-table .status-column,
+#surveys-table .status-column {
+  min-width: 220px;
+}
+
+#resignations-table .badge,
+#archived-resignations-table .badge,
+#recent-resignations-table .badge,
+#interviews-table .badge,
+#transfers-table .badge,
+#settlements-table .badge,
+#documents-table .badge,
+#surveys-table .badge,
+#resignations-table .fs-status-badge,
+#archived-resignations-table .fs-status-badge,
+#recent-resignations-table .fs-status-badge,
+#interviews-table .fs-status-badge,
+#transfers-table .fs-status-badge,
+#settlements-table .fs-status-badge,
+#documents-table .fs-status-badge,
+#surveys-table .fs-status-badge,
+#resignations-table span[class^="fs-status-"],
+#archived-resignations-table span[class^="fs-status-"],
+#recent-resignations-table span[class^="fs-status-"],
+#interviews-table span[class^="fs-status-"],
+#transfers-table span[class^="fs-status-"],
+#settlements-table span[class^="fs-status-"],
+#documents-table span[class^="fs-status-"],
+#surveys-table span[class^="fs-status-"] {
+  text-transform: none !important;
+  font-size: 12px !important;
+  padding: 6px 10px !important;
+  white-space: normal !important;
+  line-height: 1.2 !important;
+  display: inline-block !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  background: transparent !important;
+  background-image: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+
 .alert-panel-body {
   padding: 16px 18px 18px;
 }

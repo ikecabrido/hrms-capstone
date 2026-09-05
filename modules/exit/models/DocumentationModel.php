@@ -286,6 +286,7 @@ class DocumentationModel extends ExitManagementModel
      */
     public function checkRequiredDocuments(int $employeeId): array
     {
+        // Legacy helper retained for backward compatibility: returns list of required document types vs uploaded
         $requiredTypes = [
             'resignation_letter',
             'exit_interview_form',
@@ -297,13 +298,93 @@ class DocumentationModel extends ExitManagementModel
         $uploadedDocs = $this->getDocumentsByEmployee($employeeId);
         $uploadedTypes = array_column($uploadedDocs, 'document_type');
 
-        $missing = array_diff($requiredTypes, $uploadedTypes);
-        $completed = array_intersect($requiredTypes, $uploadedTypes);
+        $missing = array_values(array_diff($requiredTypes, $uploadedTypes));
+        $completed = array_values(array_intersect($requiredTypes, $uploadedTypes));
 
         return [
             'completed' => $completed,
             'missing' => $missing,
             'is_complete' => empty($missing)
+        ];
+    }
+
+    /**
+     * Compute exit-case progress across five canonical steps:
+     * 1) exit case record exists (resignation/termination)
+     * 2) resignation/termination letter uploaded
+     * 3) exit interview completed
+     * 4) knowledge transfer plan started/completed
+     * 5) settlement processed/approved
+     *
+     * Returns an array with 'completed_count', 'total_steps' and 'steps' details.
+     */
+    public function computeExitCaseProgress(string $exitCaseType = '', int $exitCaseId = 0, int $employeeId = 0): array
+    {
+        $steps = [
+            'case_record' => false,
+            'case_letter' => false,
+            'exit_interview' => false,
+            'knowledge_transfer' => false,
+            'settlement' => false
+        ];
+
+        $total = count($steps);
+
+        // Step 1: case record exists
+        $steps['case_record'] = !empty($exitCaseType) && !empty($exitCaseId);
+
+        // Step 2: look for resignation/termination letter linked to this case or employee
+        try {
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM exit_documents WHERE ((exit_case_type = ? AND exit_case_id = ?) OR (employee_id = ? AND document_type IN ('resignation_letter','termination_letter'))) AND status = 'active'");
+            $stmt->execute([$exitCaseType, $exitCaseId, $employeeId]);
+            $countLetter = (int)$stmt->fetchColumn();
+            $steps['case_letter'] = $countLetter > 0;
+        } catch (Exception $e) {
+            $steps['case_letter'] = false;
+        }
+
+        // Step 3: exit interview completed for this case
+        try {
+            if ($this->columnExists('exit_interviews', 'exit_case_id')) {
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM exit_interviews WHERE exit_case_type = ? AND exit_case_id = ? AND status = 'completed'");
+                $stmt->execute([$exitCaseType, $exitCaseId]);
+                $steps['exit_interview'] = ((int)$stmt->fetchColumn()) > 0;
+            }
+        } catch (Exception $e) {
+            $steps['exit_interview'] = false;
+        }
+
+        // Step 4: knowledge transfer plan exists/active/completed for this case/employee
+        try {
+            if ($this->tableExists('exit_knowledge_transfer_plans')) {
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM exit_knowledge_transfer_plans WHERE ((exit_case_type = ? AND exit_case_id = ?) OR (employee_id = ?)) AND status IN ('active','completed')");
+                $stmt->execute([$exitCaseType, $exitCaseId, $employeeId]);
+                $steps['knowledge_transfer'] = ((int)$stmt->fetchColumn()) > 0;
+            }
+        } catch (Exception $e) {
+            $steps['knowledge_transfer'] = false;
+        }
+
+        // Step 5: settlement processed/approved for this case
+        try {
+            if ($this->tableExists('exit_employee_settlements')) {
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM exit_employee_settlements WHERE exit_case_type = ? AND exit_case_id = ? AND status IN ('approved','paid')");
+                $stmt->execute([$exitCaseType, $exitCaseId]);
+                $steps['settlement'] = ((int)$stmt->fetchColumn()) > 0;
+            }
+        } catch (Exception $e) {
+            $steps['settlement'] = false;
+        }
+
+        $completedCount = 0;
+        foreach ($steps as $v) {
+            if ($v) $completedCount++;
+        }
+
+        return [
+            'completed_count' => $completedCount,
+            'total_steps' => $total,
+            'steps' => $steps
         ];
     }
 

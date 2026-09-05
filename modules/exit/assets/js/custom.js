@@ -4260,11 +4260,19 @@ function loadDocumentsTable(status = 'all', page = 1, limit = 10, searchTerm = '
                 // If the server returned per-case documents_check, show completed/total instead of 'Unknown'
                 if (caseRecord.documents_check) {
                     try {
-                        const completed = Array.isArray(caseRecord.documents_check.completed) ? caseRecord.documents_check.completed.length : (caseRecord.documents_check.completed ? caseRecord.documents_check.completed.length || 0 : 0);
-                        const missing = Array.isArray(caseRecord.documents_check.missing) ? caseRecord.documents_check.missing.length : (caseRecord.documents_check.missing ? caseRecord.documents_check.missing.length || 0 : 0);
-                        const total = completed + missing;
-                        if (total > 0) {
-                            statusBadge = `<span class="text-muted small">${completed}/${total}</span>`;
+                        // New format produced by computeExitCaseProgress
+                        if (typeof caseRecord.documents_check.completed_count !== 'undefined' && typeof caseRecord.documents_check.total_steps !== 'undefined') {
+                            const c = Number(caseRecord.documents_check.completed_count) || 0;
+                            const t = Number(caseRecord.documents_check.total_steps) || 5;
+                            statusBadge = `<span class="text-muted small">${c}/${t}</span>`;
+                        } else if (Array.isArray(caseRecord.documents_check.completed) || Array.isArray(caseRecord.documents_check.missing)) {
+                            // Legacy format
+                            const completed = Array.isArray(caseRecord.documents_check.completed) ? caseRecord.documents_check.completed.length : (caseRecord.documents_check.completed ? caseRecord.documents_check.completed.length || 0 : 0);
+                            const missing = Array.isArray(caseRecord.documents_check.missing) ? caseRecord.documents_check.missing.length : (caseRecord.documents_check.missing ? caseRecord.documents_check.missing.length || 0 : 0);
+                            const total = completed + missing;
+                            if (total > 0) {
+                                statusBadge = `<span class="text-muted small">${completed}/${total}</span>`;
+                            }
                         }
                     } catch (e) {
                         // fallback: keep original status badge
@@ -4379,6 +4387,10 @@ function viewExitCaseDocumentation(exitCaseId, exitCaseType) {
             </div>
         `;
 
+        const caseLetterPreviewButton = caseLetterUploaded
+            ? `<button type="button" class="btn btn-sm btn-outline-primary ml-3" onclick="openCaseLetterPreview(${exitCaseId}, '${exitCaseType}');">View ${caseDocumentLabel} PDF</button>`
+            : '';
+
         let content = `
             <div class="exit-case-documentation-card card mb-3">
                 <div class="card-body p-4">
@@ -4415,15 +4427,18 @@ function viewExitCaseDocumentation(exitCaseId, exitCaseType) {
                     <h5 class="mb-0">Exit Records</h5>
                 </div>
                 <div class="card-body">
-                    <div class="exit-record-group mb-4">
-                        <div class="exit-record-title">${caseRecordSectionTitle}</div>
-                        ${buildStatusItem(caseRecordCompleted, caseRecordEntryLabel, documentsProgressText)}
-                        ${caseRecordCompleted && caseLetterUploaded ? `
-                            <div class="exit-status-item" style="cursor:pointer;" onclick="openCaseLetterPreview(${exitCaseId}, '${exitCaseType}');">
-                                <span class="status-icon"><i class="fas fa-check-circle text-success"></i></span>
-                                <span>${caseDocumentEntryLabel}</span>
-                            </div>
-                        ` : buildStatusItem(caseRecordCompleted && caseLetterUploaded, caseDocumentEntryLabel)}
+                    <div class="exit-record-group mb-4 d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="exit-record-title">${caseRecordSectionTitle}</div>
+                            ${buildStatusItem(caseRecordCompleted, caseRecordEntryLabel, documentsProgressText)}
+                            ${caseRecordCompleted && caseLetterUploaded ? `
+                                <div class="exit-status-item" style="cursor:pointer;" onclick="openCaseLetterPreview(${exitCaseId}, '${exitCaseType}');">
+                                    <span class="status-icon"><i class="fas fa-check-circle text-success"></i></span>
+                                    <span>${caseDocumentEntryLabel}</span>
+                                </div>
+                            ` : buildStatusItem(caseRecordCompleted && caseLetterUploaded, caseDocumentEntryLabel)}
+                        </div>
+                        ${caseLetterPreviewButton}
                     </div>
                     <div class="exit-record-group mb-4 d-flex justify-content-between align-items-start">
                         <div>
@@ -7695,6 +7710,11 @@ function openMultiDocumentPreview(docs) {
         $('#multiDocPreviewModal').on('shown.bs.modal', function() { loadIndex(0); }).on('hidden.bs.modal', function() { $(this).remove(); });
 }
 
+function buildDocumentPreviewUrl(documentId) {
+    const base = window.location.pathname.replace(/[^\/]+$/, '');
+    return base + 'exit_management.php?ajax_action=serve_document&document_id=' + encodeURIComponent(documentId);
+}
+
 function showPdfPreview(url, title) {
     $('#exitPreviewModal').remove();
     const modal = `
@@ -7717,7 +7737,10 @@ function showPdfPreview(url, title) {
     $('#exitPreviewModal').on('shown.bs.modal', function() {
         const iframe = document.getElementById('exitPdfPreviewIframe');
         try {
-            iframe.src = url;
+            const previewUrl = (url && (url.indexOf('ajax_action=serve_document') !== -1 || /^https?:\/\//i.test(url) || /^\/|^\.\//.test(url)))
+                ? url
+                : buildDocumentPreviewUrl(url);
+            iframe.src = previewUrl;
         } catch (e) {
             const parent = document.getElementById('exitPreviewModal');
             $(parent).find('.modal-body').html('<div class="p-3 text-danger">Failed to load document preview. Check file availability and server headers.</div>');
@@ -7749,23 +7772,13 @@ function openCaseLetterPreview(exitCaseId, exitCaseType) {
             return;
         }
 
-        // Request download info (gives actual file_path)
-        $.get('exit_management.php', { ajax_action: 'download_document', document_id: letterDoc.id }, function(resp) {
-            if (resp && resp.success) {
-                showPdfPreview(resp.file_path, resp.title || 'Termination Letter');
-            } else {
-                showToast('error', resp?.message || 'Failed to load document file');
-            }
-        }, 'json').fail(function() {
-            showToast('error', 'Failed to load document file');
-        });
+        showPdfPreview(buildDocumentPreviewUrl(letterDoc.id), letterDoc.title || 'Termination Letter');
     }, 'json').fail(function() {
         showToast('error', 'Failed to load documents for preview');
     });
 }
 
 function previewDocument(id, title) {
-    // Request download info first (will return file_path)
     $.get('exit_management.php', {
         ajax_action: 'download_document',
         document_id: id
@@ -7778,16 +7791,19 @@ function previewDocument(id, title) {
         const filePath = response.file_path;
         const fileName = response.title || title || '';
 
-        // If it's clearly a PDF, open inline preview, otherwise fall back to download
+        // Prefer the server-side inline preview endpoint for PDFs so the browser loads the file through the app.
         if (filePath && /\.pdf($|\?)/i.test(filePath)) {
-            showPdfPreview(filePath, fileName || 'Document Preview');
-        } else {
-            // attempt to preview non-PDF by opening in new tab; browsers may download instead
+            showPdfPreview(buildDocumentPreviewUrl(id), fileName || 'Document Preview');
+            return;
+        }
+
+        if (filePath) {
             const win = window.open(filePath, '_blank');
             if (!win) {
-                // popup blocked, fallback to download
                 downloadFile(filePath, fileName || 'document');
             }
+        } else {
+            showToast('error', 'Document path is missing');
         }
     }, 'json').fail(function() {
         showToast('error', 'Failed to load document');

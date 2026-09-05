@@ -1232,7 +1232,13 @@ class ExitManagementController
                             foreach ($listResult['data'] as &$caseRow) {
                                 try {
                                     $empId = (int)($caseRow['employee_id'] ?? 0);
-                                    if ($empId > 0) {
+                                    $caseType = $caseRow['exit_case_type'] ?? '';
+                                    $caseId = (int)($caseRow['exit_case_id'] ?? 0);
+                                    if (!empty($caseType) && $caseId > 0) {
+                                        // compute exit-case progress across canonical 5 steps
+                                        $caseRow['documents_check'] = $docModel->computeExitCaseProgress($caseType, $caseId, $empId);
+                                    } elseif ($empId > 0) {
+                                        // fallback to legacy per-employee doc check
                                         $caseRow['documents_check'] = $docModel->checkRequiredDocuments($empId);
                                     } else {
                                         $caseRow['documents_check'] = null;

@@ -489,7 +489,7 @@ class DocumentationController extends ExitManagementController
                 ];
             }
 
-            $document = $this->documentationModel->getDocument($documentId);
+            $document = $this->documentationModel->getDocumentById($documentId);
 
             if (!$document) {
                 return [
