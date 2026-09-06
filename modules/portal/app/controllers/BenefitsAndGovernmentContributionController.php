@@ -99,7 +99,7 @@ class BenefitsAndGovernmentContributionController
             }
 
             $directory = __DIR__ . '/../../public/assets/uploads/benefits/';
-
+            
             if (!is_dir($directory)) {
                 mkdir($directory, 0775, true);
             }

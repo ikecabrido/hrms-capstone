@@ -21,20 +21,27 @@
 
             <!-- Bell -->
             <button type="button" class="btn p-0 border-0 position-relative" id="bellBtn" data-bs-toggle="dropdown"
-                aria-expanded="false">
+                aria-expanded="false" style="
+        width:38px;
+        height:38px;
+        padding:0 !important;
+        margin:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    ">
+
                 <i class="fa-regular fa-bell" style="color:aliceblue;"></i>
 
                 <?php if ($unreadCount > 0): ?>
-
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="
-                    font-size:8px;
-                    min-width:16px;
-                    height:16px;
-                    padding:3px 4px;
-                ">
+                font-size:8px;
+                min-width:16px;
+                height:16px;
+                padding:3px 4px;
+            ">
                         <?= $unreadCount > 99 ? '99+' : $unreadCount ?>
                     </span>
-
                 <?php endif; ?>
 
             </button>
@@ -338,8 +345,18 @@
         <div class="dropdown">
 
             <button type="button" class="btn p-0 border-0" id="userBtn" data-bs-toggle="dropdown"
-                data-bs-auto-close="true" aria-expanded="false">
-                <i class="fa-regular fa-circle-user" style="color: aliceblue;"></i>
+                data-bs-auto-close="true" aria-expanded="false" style="
+        width:38px;
+        height:38px;
+        padding:0 !important;
+        margin:0;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    ">
+
+                <i class="fa-regular fa-circle-user" style="color:aliceblue;"></i>
+
             </button>
 
             <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="userBtn" style="width: 350px;">
@@ -402,5 +419,184 @@
             </div>
         </div>
 
+        <!-- HAMBURGER CONTAINER -->
+        <div id="hamburgerContainer" style="
+    position:relative;
+    width:38px;
+    height:38px;
+">
+
+            <!-- HAMBURGER BUTTON -->
+            <button type="button" onclick="toggleHamburgerMenu(event)" style="
+            width:38px;
+            height:38px;
+            padding:0;
+            margin:0;
+            border:none;
+            background:transparent;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            cursor:pointer;
+        ">
+                <i class="fas fa-bars"></i>
+            </button>
+
+
+            <!-- DROPDOWN -->
+            <div id="hamburgerDropdown" style="
+        display:none;
+        position:absolute;
+        right:calc(100% + 10px);
+        top:0;
+        width:185px;
+        padding:6px;
+        background:#fff;
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+        box-shadow:0 12px 30px rgba(15,23,42,.12);
+        z-index:99999;
+        box-sizing:border-box;
+    ">
+
+                <!-- HEADER -->
+                <div style="
+            padding:9px 10px 8px;
+            border-bottom:1px solid #f1f5f9;
+            margin-bottom:4px;
+        ">
+                    <div style="
+                color:#111827;
+                font-size:10px;
+                font-weight:700;
+            ">
+                        Account
+                    </div>
+
+                    <div style="
+                margin-top:2px;
+                color:#9ca3af;
+                font-size:8px;
+            ">
+                        Manage your account
+                    </div>
+                </div>
+
+
+                <!-- SETTINGS -->
+                <a href="#" style="
+            display:flex;
+            align-items:center;
+            gap:10px;
+            width:100%;
+            padding:9px 10px;
+            border-radius:8px;
+            color:#374151;
+            background:transparent;
+            font-size:10px;
+            font-weight:600;
+            text-decoration:none;
+            box-sizing:border-box;
+        " onmouseover="
+            this.style.background='#f8fafc';
+            this.style.color='#2563eb';
+        " onmouseout="
+            this.style.background='transparent';
+            this.style.color='#374151';
+        ">
+
+                    <span style="
+                width:28px;
+                height:28px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                flex-shrink:0;
+                border-radius:7px;
+                background:#eff6ff;
+                color:#2563eb;
+            ">
+                        <i class="fa-solid fa-gear" style="font-size:11px;"></i>
+                    </span>
+
+                    <span>Settings</span>
+
+                </a>
+
+
+                <!-- SIGN OUT -->
+                <a href="/hrms-capstone/modules/portal/index.php?url=auth-logout" style="
+                display:flex;
+                align-items:center;
+                gap:10px;
+                width:100%;
+                padding:9px 10px;
+                border-radius:8px;
+                color:#dc2626;
+                background:transparent;
+                font-size:10px;
+                font-weight:600;
+                text-decoration:none;
+                box-sizing:border-box;
+            " onmouseover="
+                this.style.background='#fef2f2';
+                this.style.color='#b91c1c';
+            " onmouseout="
+                this.style.background='transparent';
+                this.style.color='#dc2626';
+            ">
+
+                    <span style="
+                width:28px;
+                height:28px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                flex-shrink:0;
+                border-radius:7px;
+                background:#fef2f2;
+                color:#dc2626;
+            ">
+                        <i class="fa-solid fa-right-from-bracket" style="font-size:11px;"></i>
+                    </span>
+
+                    <span>Sign Out</span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <script>
+            function toggleHamburgerMenu(event) {
+                event.stopPropagation();
+
+                const menu = document.getElementById('hamburgerDropdown');
+
+                if (!menu) return;
+
+                if (menu.style.display === 'block') {
+                    menu.style.display = 'none';
+                } else {
+                    menu.style.display = 'block';
+                }
+            }
+
+
+            document.addEventListener('click', function (event) {
+
+                const container = document.getElementById('hamburgerContainer');
+                const menu = document.getElementById('hamburgerDropdown');
+
+                if (!container || !menu) return;
+
+                if (!container.contains(event.target)) {
+                    menu.style.display = 'none';
+                }
+
+            });
+        </script>
     </div>
 </div>
