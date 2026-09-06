@@ -1,0 +1,606 @@
+/* ==========================================================================
+   Deductions — page-specific styles
+   Reuses the shared pm-* component classes from pages/period-manager.css
+   (alerts, buttons, summary cards, toolbar, table, badges, row actions,
+   empty state, modals, form groups) the same way payroll-processing.php
+   does. Only adds what's genuinely new to this page: the header layout,
+   the searchable period/employee combobox (mirroring the pattern in
+   payslips.css), the loans/other type badge, the amount currency input,
+   the read-only view grid, and the delete-confirmation summary.
+   ========================================================================== */
+
+/* ---------- Header ---------- */
+.dd-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dd-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color5);
+}
+
+/* ---------- Summary icon colors ---------- */
+.dd-icon-money {
+  background: #1e9e64;
+}
+.dd-icon-loans {
+  background: var(--color7);
+}
+.dd-icon-other {
+  background: var(--color2);
+}
+
+/* ---------- Filter group (label + combobox/select) ---------- */
+.dd-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 220px;
+}
+
+.dd-filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color2);
+}
+
+.dd-filter-group select {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: var(--color3);
+  color: var(--color8);
+  outline: none;
+}
+
+/* ---------- Searchable combobox (Payroll Period / Employee) ----------
+   Mirrors .ps-combobox in css/pages/payslips.css. */
+.dd-combobox {
+  position: relative;
+  min-width: 240px;
+}
+
+.dd-combobox-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.dd-combobox-icon {
+  position: absolute;
+  left: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--color5);
+  pointer-events: none;
+}
+
+.dd-combobox-input {
+  width: 100%;
+  padding: 0.55rem 2.1rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: var(--color3);
+  color: var(--color8);
+  outline: none;
+}
+
+.dd-combobox-input::placeholder {
+  color: var(--color5);
+}
+
+.dd-combobox-input:focus {
+  border-color: var(--color7);
+}
+
+.dd-combobox-clear {
+  position: absolute;
+  right: 0.55rem;
+  background: none;
+  border: none;
+  color: var(--color5);
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.15rem;
+}
+
+.dd-combobox-clear.dd-combobox-clear-visible {
+  display: inline-flex;
+}
+
+.dd-combobox-clear:hover {
+  color: var(--color10);
+}
+
+.dd-combobox-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--color3);
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+  z-index: 20;
+}
+
+.dd-combobox-options.dd-combobox-open {
+  display: block;
+}
+
+.dd-combobox-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color8);
+}
+
+.dd-combobox-option:hover,
+.dd-combobox-option.dd-combobox-highlighted {
+  background: var(--color9);
+}
+
+.dd-combobox-option-label {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dd-combobox-option-sub {
+  font-size: 0.75rem;
+  color: var(--color5);
+}
+
+.dd-combobox-empty,
+.dd-combobox-loading {
+  padding: 0.75rem 0.85rem;
+  font-size: 0.82rem;
+  color: var(--color5);
+  text-align: center;
+}
+
+/* ---------- Table cell content ---------- */
+.dd-employee-code {
+  font-weight: 600;
+  color: var(--color8);
+}
+
+.dd-employee-name,
+.dd-period-dates {
+  color: var(--color5);
+  font-size: 0.78rem;
+  margin-top: 0.1rem;
+}
+
+.dd-amount-cell {
+  font-weight: 700;
+  color: var(--color8);
+  white-space: nowrap;
+}
+
+.dd-doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color1);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dd-doc-link:hover {
+  text-decoration: underline;
+}
+
+.dd-doc-none {
+  color: var(--color5);
+  font-size: 0.8rem;
+}
+
+/* ---------- Deduction type badge (Loans / Other) ---------- */
+.dd-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: var(--color9);
+  color: var(--color2);
+}
+
+.dd-type-loans {
+  background: rgba(81, 70, 183, 0.12);
+  color: var(--color7);
+}
+
+/* ---------- Add/Edit form: hint text + amount input ---------- */
+.dd-field-hint {
+  font-size: 0.75rem;
+  color: var(--color5);
+}
+
+.dd-amount-input-wrap {
+  position: relative;
+}
+
+.dd-peso-prefix {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color5);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.dd-amount-input-wrap input {
+  width: 100%;
+  padding-left: 2rem !important;
+}
+
+.dd-current-file {
+  font-size: 0.8rem;
+  color: var(--color5);
+}
+
+.dd-current-file a {
+  color: var(--color1);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dd-current-file a:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   Modal fixes — override the shared pm-* modal so it always centers in the
+   viewport, sits above the fixed page header, and scrolls instead of
+   getting clipped at the top/bottom.
+   Scoped to the three Deductions modals by id.
+   ========================================================================== */
+
+#ddFormModalOverlay,
+#ddViewModalOverlay,
+#ddConfirmModalOverlay {
+  position: fixed;
+  inset: 0; /* full viewport: top/right/bottom/left = 0 */
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.55);
+  display: none; /* JS flips this to flex */
+  align-items: center; /* vertical centering */
+  justify-content: center; /* horizontal centering */
+  padding: 24px; /* keeps the modal off the screen edges */
+  z-index: 9999; /* must be higher than the page header */
+  overflow-y: auto; /* allow scrolling the overlay on tiny screens */
+}
+
+/* When JS sets display:flex inline, keep the centering behavior */
+#ddFormModalOverlay[style*="flex"],
+#ddViewModalOverlay[style*="flex"],
+#ddConfirmModalOverlay[style*="flex"] {
+  display: flex !important;
+}
+
+#ddFormModalOverlay .pm-modal,
+#ddViewModalOverlay .pm-modal,
+#ddConfirmModalOverlay .pm-modal {
+  position: relative; /* NOT absolute/fixed — let flexbox center it */
+  top: auto;
+  left: auto;
+  transform: none; /* clear any translate(-50%,-50%) trick */
+  margin: auto;
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 48px); /* never taller than the viewport */
+  display: flex;
+  flex-direction: column; /* header / body / footer stacking */
+  overflow: hidden; /* rounded corners clip the scroll area */
+  border-radius: 14px;
+  background: var(--color3);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+#ddConfirmModalOverlay .pm-modal-sm {
+  max-width: 420px;
+}
+
+/* Header and footer stay put; only the body scrolls */
+#ddFormModalOverlay .pm-modal-header,
+#ddViewModalOverlay .pm-modal-header,
+#ddConfirmModalOverlay .pm-modal-header,
+#ddFormModalOverlay .pm-modal-footer,
+#ddViewModalOverlay .pm-modal-footer,
+#ddConfirmModalOverlay .pm-modal-footer {
+  flex-shrink: 0;
+}
+
+#ddFormModalOverlay .pm-modal-body,
+#ddViewModalOverlay .pm-modal-body,
+#ddConfirmModalOverlay .pm-modal-body {
+  overflow-y: auto; /* the part that scrolls when content is tall */
+  flex: 1 1 auto;
+}
+
+/* The Add/Edit modal wraps body+footer in a <form>, so the form itself
+   needs to be the flex column, otherwise max-height/scroll won't apply. */
+#ddFormModalOverlay .pm-modal > form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* critical: lets the body actually shrink+scroll */
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+/* ---------- Modal look & feel polish ---------- */
+#ddFormModalOverlay .pm-modal-header,
+#ddViewModalOverlay .pm-modal-header,
+#ddConfirmModalOverlay .pm-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid var(--color9);
+}
+
+#ddFormModalOverlay .pm-modal-header h2,
+#ddViewModalOverlay .pm-modal-header h2,
+#ddConfirmModalOverlay .pm-modal-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color8);
+}
+
+#ddFormModalOverlay .pm-modal-close,
+#ddViewModalOverlay .pm-modal-close,
+#ddConfirmModalOverlay .pm-modal-close {
+  border: none;
+  background: none;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--color5);
+  cursor: pointer;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+#ddFormModalOverlay .pm-modal-close:hover,
+#ddViewModalOverlay .pm-modal-close:hover,
+#ddConfirmModalOverlay .pm-modal-close:hover {
+  background: var(--color9);
+  color: var(--color10);
+}
+
+#ddFormModalOverlay .pm-modal-body {
+  padding: 1.4rem;
+}
+
+/* Consistent spacing between form groups */
+#ddFormModalOverlay .pm-form-group {
+  margin-bottom: 1.1rem;
+}
+#ddFormModalOverlay .pm-form-group:last-of-type {
+  margin-bottom: 0;
+}
+
+#ddFormModalOverlay .pm-form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color8);
+}
+
+/* Unify all inputs / selects / textarea inside the form */
+#ddFormModalOverlay .pm-modal-body select,
+#ddFormModalOverlay .pm-modal-body textarea,
+#ddFormModalOverlay .dd-amount-input-wrap input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  background: var(--color3);
+  color: var(--color8);
+  outline: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+#ddFormModalOverlay .pm-modal-body select:focus,
+#ddFormModalOverlay .pm-modal-body textarea:focus,
+#ddFormModalOverlay .dd-amount-input-wrap input:focus {
+  border-color: var(--color7);
+  box-shadow: 0 0 0 3px rgba(81, 70, 183, 0.15);
+}
+
+#ddFormModalOverlay .pm-modal-body textarea {
+  resize: vertical;
+  min-height: 76px;
+}
+
+/* Hint text spacing */
+#ddFormModalOverlay .dd-field-hint {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+/* File input styling */
+#ddFormModalOverlay input[type="file"] {
+  width: 100%;
+  font-size: 0.82rem;
+  color: var(--color5);
+  padding: 0.4rem 0;
+}
+#ddFormModalOverlay input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  background: var(--color9);
+  color: var(--color8);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#ddFormModalOverlay input[type="file"]::file-selector-button:hover {
+  background: var(--color4);
+}
+
+/* Footer */
+#ddFormModalOverlay .pm-modal-footer,
+#ddViewModalOverlay .pm-modal-footer,
+#ddConfirmModalOverlay .pm-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.4rem;
+  border-top: 1px solid var(--color9);
+}
+
+/* ---------- View modal ---------- */
+.dd-view-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.dd-view-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--color9);
+}
+
+.dd-view-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dd-view-label {
+  color: var(--color5);
+  font-size: 0.82rem;
+  min-width: 130px;
+}
+
+.dd-view-value {
+  text-align: right;
+  color: var(--color8);
+  font-size: 0.88rem;
+}
+
+.dd-view-employee-code {
+  font-weight: 700;
+}
+
+.dd-view-subtext {
+  color: var(--color5);
+  font-size: 0.78rem;
+}
+
+.dd-view-amount {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* ---------- Delete confirmation ---------- */
+.dd-confirm-lead {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--color8);
+}
+
+.dd-confirm-summary {
+  background: var(--color9);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.dd-confirm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.87rem;
+}
+
+.dd-confirm-row span {
+  color: var(--color5);
+}
+.dd-confirm-row strong {
+  color: var(--color8);
+  text-align: right;
+}
+
+/* ==========================================================================
+   Responsiveness
+   ========================================================================== */
+@media (max-width: 768px) {
+  .dd-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dd-header-row .pm-btn {
+    justify-content: center;
+  }
+
+  .dd-filter-group,
+  .dd-combobox {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .dd-view-row {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .dd-view-value {
+    text-align: left;
+  }
+
+  .dd-confirm-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+  }
+
+  .dd-confirm-row strong {
+    text-align: left;
+  }
+}

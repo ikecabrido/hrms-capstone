@@ -1,0 +1,638 @@
+/* ==========================================================================
+   Payroll Processing — page-specific styles
+   Reuses pm-btn / pm-modal-* / pm-alert / pm-badge / pm-form-error from
+   period-manager.css (same visual language, loaded globally via styles.css)
+   plus the shared --color* variables from base/variables.css.
+   ========================================================================== */
+
+.pp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.pp-page-subtitle {
+  margin-top: -0.75rem;
+  color: var(--color5);
+  font-size: 0.9rem;
+}
+
+/* ---------- Generic card ---------- */
+.pp-card {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.pp-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--color9);
+}
+
+.pp-card-header h2 {
+  font-size: 1rem;
+  color: var(--color8);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pp-card-header h2 i {
+  color: var(--color1);
+}
+
+.pp-card-body {
+  padding: 1.2rem;
+}
+
+/* ---------- Period selector ---------- */
+.pp-period-select-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+#ppPeriodSelect {
+  flex: 1;
+  min-width: 240px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  background: var(--color3);
+  color: var(--color8);
+}
+
+.pp-period-info {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.9rem;
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--color9);
+}
+
+.pp-period-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pp-period-info-item span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color5);
+}
+
+.pp-period-info-item strong {
+  font-size: 0.92rem;
+  color: var(--color8);
+}
+
+.pp-closed-notice {
+  margin-top: 1.1rem;
+  padding: 0.8rem 1rem;
+  background: #fdecec;
+  color: var(--color10);
+  border-radius: 8px;
+  font-size: 0.86rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* ---------- Processing state ---------- */
+.pp-processing-state {
+  text-align: center;
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 2.5rem 1.5rem;
+}
+
+.pp-processing-state i {
+  font-size: 2rem;
+  color: var(--color1);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.pp-processing-state h3 {
+  color: var(--color8);
+  margin-bottom: 0.4rem;
+}
+
+.pp-processing-state p {
+  color: var(--color5);
+  font-size: 0.88rem;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ---------- Summary cards ---------- */
+.pp-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.9rem;
+}
+
+.pp-summary-card {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 0.95rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.pp-summary-label {
+  font-size: 0.72rem;
+  color: var(--color5);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pp-summary-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color8);
+}
+
+.pp-summary-card-money .pp-summary-value {
+  color: var(--color1);
+}
+
+.pp-summary-card-net {
+  background: var(--color1);
+}
+
+.pp-summary-card-net .pp-summary-label {
+  color: rgba(255, 255, 255, 0.75);
+}
+.pp-summary-card-net .pp-summary-value {
+  color: var(--color3);
+}
+
+/* ---------- Employee list ---------- */
+.pp-employee-search-wrap {
+  position: relative;
+  min-width: 220px;
+}
+
+.pp-employee-search-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color4);
+  font-size: 0.8rem;
+}
+
+.pp-employee-search-wrap input {
+  padding: 0.5rem 0.7rem 0.5rem 2rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  outline: none;
+  width: 100%;
+}
+
+.pp-employee-list-body {
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 0.6rem;
+}
+
+.pp-employee-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pp-employee-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--color9);
+  cursor: pointer;
+  background: var(--color3);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.pp-employee-row:hover {
+  background: var(--color9);
+}
+
+.pp-employee-row.pp-employee-row-active {
+  border-color: var(--color1);
+  background: rgba(32, 0, 130, 0.05);
+}
+
+.pp-employee-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pp-employee-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-employee-meta {
+  font-size: 0.76rem;
+  color: var(--color5);
+}
+
+.pp-employee-net {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color1);
+  white-space: nowrap;
+}
+
+.pp-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  background: var(--color9);
+  color: var(--color2);
+  margin-right: 0.35rem;
+}
+
+.pp-tag-faculty {
+  background: rgba(81, 70, 183, 0.12);
+  color: var(--color7);
+}
+.pp-tag-parttime {
+  background: rgba(30, 158, 100, 0.12);
+  color: #1e9e64;
+}
+
+/* ---------- Breakdown ---------- */
+.pp-breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color9);
+}
+
+.pp-breakdown-name {
+  font-size: 1.1rem;
+  color: var(--color8);
+  margin: 0 0 0.2rem;
+}
+
+.pp-breakdown-sub {
+  color: var(--color5);
+  font-size: 0.85rem;
+}
+
+.pp-section {
+  margin-bottom: 1.4rem;
+}
+
+.pp-section-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color5);
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pp-section-title i {
+  color: var(--color1);
+}
+
+.pp-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem;
+  background: var(--color9);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+}
+
+.pp-info-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.pp-info-grid span {
+  font-size: 0.7rem;
+  color: var(--color5);
+  text-transform: uppercase;
+}
+
+.pp-info-grid strong {
+  font-size: 0.87rem;
+  color: var(--color8);
+}
+
+.pp-line-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-line-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--color9);
+  font-size: 0.87rem;
+}
+
+.pp-line-item:last-child {
+  border-bottom: none;
+}
+
+.pp-line-desc {
+  color: var(--color8);
+}
+.pp-line-amount {
+  font-weight: 600;
+  color: var(--color8);
+  white-space: nowrap;
+}
+.pp-line-amount-deduction {
+  color: var(--color10);
+}
+
+.pp-empty-line {
+  color: var(--color5);
+  font-size: 0.85rem;
+  font-style: italic;
+  padding: 0.4rem 0;
+}
+
+.pp-contrib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.pp-contrib-card {
+  border: 1px solid var(--color9);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.pp-contrib-card span.pp-contrib-label {
+  font-size: 0.75rem;
+  color: var(--color5);
+  text-transform: uppercase;
+}
+
+.pp-contrib-card strong {
+  font-size: 0.95rem;
+  color: var(--color8);
+}
+
+.pp-status-pill {
+  align-self: flex-start;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.pp-status-submitted {
+  background: #e6f7ee;
+  color: #1e7e4d;
+}
+.pp-status-pending {
+  background: #fff4e0;
+  color: #a3690c;
+}
+
+/* Faculty schedule table */
+.pp-schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.pp-schedule-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--color5);
+  background: var(--color9);
+  padding: 0.6rem 0.8rem;
+}
+
+.pp-schedule-table td {
+  padding: 0.6rem 0.8rem;
+  border-top: 1px solid var(--color9);
+  color: var(--color8);
+}
+
+/* Attendance late highlight */
+.pp-late-highlight {
+  background: #fff4e0;
+  border: 1px solid #f5d999;
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  color: #a3690c;
+  margin-top: 0.6rem;
+}
+
+/* Pay summary totals */
+.pp-pay-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--color9);
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+}
+
+.pp-pay-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--color8);
+}
+
+.pp-pay-row.pp-pay-row-total {
+  border-top: 1px solid var(--color4);
+  padding-top: 0.6rem;
+  margin-top: 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color1);
+}
+
+.pp-loading-inline {
+  color: var(--color5);
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+}
+
+/* ---------- Finalize bar ---------- */
+.pp-finalize-bar {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 1rem 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pp-finalize-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-finalize-text strong {
+  color: var(--color8);
+  font-size: 0.95rem;
+}
+.pp-finalize-text span {
+  color: var(--color5);
+  font-size: 0.82rem;
+}
+
+.pp-finalize-warning {
+  color: var(--color5);
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+/* ---------- Success panel ---------- */
+.pp-success-panel {
+  text-align: center;
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 2.2rem 1.5rem;
+}
+
+.pp-success-panel i {
+  font-size: 2.3rem;
+  color: #1e9e64;
+  margin-bottom: 0.6rem;
+  display: block;
+}
+
+.pp-success-panel h3 {
+  color: var(--color8);
+  margin-bottom: 1.1rem;
+}
+
+.pp-success-grid {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.4rem;
+}
+
+.pp-success-grid div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pp-success-grid span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--color5);
+}
+
+.pp-success-grid strong {
+  font-size: 1.05rem;
+  color: var(--color8);
+}
+
+/* ==========================================================================
+   Responsiveness
+   ========================================================================== */
+@media (max-width: 1100px) {
+  .pp-summary-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .pp-period-info {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pp-period-select-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pp-card-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pp-employee-search-wrap {
+    min-width: 0;
+  }
+  .pp-finalize-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pp-finalize-bar .pm-btn {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .pp-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pp-period-info {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pp-success-grid {
+    gap: 1.4rem;
+  }
+  .pp-schedule-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
