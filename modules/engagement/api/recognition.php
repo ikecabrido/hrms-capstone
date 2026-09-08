@@ -128,7 +128,9 @@ try {
         case 'employee_of_month':
             $month = $_GET['month'] ?? null;
             $year = $_GET['year'] ?? null;
-            $currentUserId = $_SESSION['user']['id'] ?? null;
+            $currentUserId = $_SESSION['user']['id']
+                ?? $_SESSION['user_id']
+                ?? null;
             $data = $ctrl->getEmployeeOfTheMonthCandidates($month, $year, $currentUserId);
             jsonResponse(['success' => true, 'data' => $data]);
             break;
@@ -161,7 +163,8 @@ try {
         default:
             jsonResponse(['error' => 'unknown action'], 400);
     }
-} catch (Exception $e) {
-    jsonResponse(['error' => $e->getMessage()], 500);
+} catch (Throwable $e) {
+    $status = $e instanceof \RuntimeException ? 409 : 500;
+    jsonResponse(['error' => $e->getMessage()], $status);
 }
 

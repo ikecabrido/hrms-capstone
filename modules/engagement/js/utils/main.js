@@ -29,7 +29,16 @@
             updateActiveLink(result.rendered);
 
             if (push) {
-                history.pushState({ page: result.rendered }, '', '?page=' + encodeURIComponent(result.rendered));
+                var nextUrl = '?page=' + encodeURIComponent(result.rendered);
+                var currentHash = window.location.hash;
+                if (result.rendered === 'survey') {
+                    if (['#satisfaction', '#pulse', '#hr-feedback', '#suggestions'].includes(currentHash)) {
+                        nextUrl += currentHash;
+                    } else if (currentHash) {
+                        nextUrl += '#satisfaction';
+                    }
+                }
+                history.pushState({ page: result.rendered }, '', nextUrl);
             }
 
             reinitPage(result.rendered);

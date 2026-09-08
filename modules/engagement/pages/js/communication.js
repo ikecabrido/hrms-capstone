@@ -222,6 +222,11 @@ function initCommunicationForms() {
       formData.forEach(function (value, key) {
         if (key !== 'form_type') requestData[key] = value;
       });
+      if (formType === 'message') {
+        const messagesContainer = document.getElementById('messages-container');
+        const emptyState = messagesContainer ? messagesContainer.querySelector('.text-center.text-muted') : null;
+        if (emptyState) emptyState.remove();
+      }
       if (button) {
         button.disabled = true;
         button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
@@ -249,14 +254,30 @@ function initCommunicationForms() {
             if (container) container.insertAdjacentHTML('afterbegin', '<div class="announcement-card card mb-3"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><h6 class="card-title text-primary">' + escapeCommunicationHtml(formData.get('title')) + '</h6>' + priorityBadge + '</div><p class="text-muted small"><i class="fas fa-calendar"></i> ' + time + ' | <i class="fas fa-tag"></i> ' + escapeCommunicationHtml(formData.get('category') || 'general') + '</p>' + renderCommunicationContent(formData.get('content'), data.id, 'primary') + '</div></div>');
           } else if (formType === 'department_update') {
             const container = document.getElementById('updates-container');
-            if (container) container.insertAdjacentHTML('afterbegin', '<div class="dept-update-item card mb-3"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><h6 class="card-title text-success">' + escapeCommunicationHtml(formData.get('title')) + '</h6>' + priorityBadge + '</div><p class="text-muted small"><i class="fas fa-calendar"></i> ' + time + ' | <i class="fas fa-building"></i> ' + escapeCommunicationHtml(formData.get('department')) + '</p>' + renderCommunicationContent(formData.get('content'), data.id, 'success') + '</div></div>');
+            if (container) {
+              const emptyState = container.querySelector('.text-center.text-muted');
+              if (emptyState) emptyState.remove();
+              container.insertAdjacentHTML('afterbegin', '<div class="dept-update-item card mb-3"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><h6 class="card-title text-success">' + escapeCommunicationHtml(formData.get('title')) + '</h6>' + priorityBadge + '</div><p class="text-muted small"><i class="fas fa-calendar"></i> ' + time + ' | <i class="fas fa-building"></i> ' + escapeCommunicationHtml(formData.get('department')) + '</p>' + renderCommunicationContent(formData.get('content'), data.id, 'success') + '</div></div>');
+            }
           } else if (formType === 'message') {
             const container = document.getElementById('messages-container');
-            if (container) container.insertAdjacentHTML('afterbegin', '<div class="message-bubble sent"><div class="p-2"><small class="text-muted"><i class="fas fa-clock"></i> Just now</small><p class="mb-0">' + escapeCommunicationHtml(formData.get('message')) + '</p></div></div>');
+            if (container) {
+              const emptyState = container.querySelector('.text-center.text-muted');
+              if (emptyState) emptyState.remove();
+              container.insertAdjacentHTML('afterbegin', '<div class="message-bubble sent"><div class="p-2"><small class="text-muted"><i class="fas fa-clock"></i> Just now</small><p class="mb-0">' + escapeCommunicationHtml(formData.get('message')) + '</p></div></div>');
+            }
           }
           form.reset();
         })
-        .catch(function (error) { window.alert(error.message); })
+        .catch(function (error) {
+          if (formType === 'message') {
+            const container = document.getElementById('messages-container');
+            if (container && !container.querySelector('.message-bubble')) {
+              container.insertAdjacentHTML('beforeend', '<div class="text-center text-muted py-4"><i class="fas fa-comments fa-3x mb-3"></i><h5>No messages yet</h5><p>Your conversations with HR will appear here.</p></div>');
+            }
+          }
+          window.alert(error.message);
+        })
         .finally(function () {
           if (button) { button.disabled = false; button.innerHTML = originalText; }
         });

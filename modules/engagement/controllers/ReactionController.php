@@ -12,14 +12,19 @@ class ReactionController
         $this->reactionModel = new Reaction();
     }
 
-    public function addReaction($postId, $employeeId, $userId, $type)
+    public function addReaction($postId, $employeeId, $userId, $type, $targetType = 'post', $targetId = null)
     {
-        return $this->reactionModel->addReaction($postId, $employeeId, $userId, $type);
+        return $this->reactionModel->addReaction($postId, $employeeId, $userId, $type, $targetType, $targetId);
     }
 
     public function getReactionsByPost($postId)
     {
         return $this->reactionModel->getReactionsByPost($postId);
+    }
+
+    public function getReactionCounts($targetType, $targetId)
+    {
+        return $this->reactionModel->getReactionCounts($targetType, $targetId);
     }
 
     public function removeReaction($reactionId)

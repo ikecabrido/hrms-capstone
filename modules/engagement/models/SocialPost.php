@@ -17,7 +17,8 @@ class SocialPost extends BaseModel
         $sql = "SELECT p.*, $nameSql,
                 SUM(CASE WHEN r.type = 'like' THEN 1 ELSE 0 END) AS like_count,
                 SUM(CASE WHEN r.type = 'heart' THEN 1 ELSE 0 END) AS heart_count,
-                SUM(CASE WHEN r.type = 'wow' THEN 1 ELSE 0 END) AS wow_count
+                SUM(CASE WHEN r.type = 'wow' THEN 1 ELSE 0 END) AS wow_count,
+                SUM(CASE WHEN r.type = 'angry' THEN 1 ELSE 0 END) AS angry_count
                 FROM eer_social_posts p
             LEFT JOIN em_employees he ON p.employee_id = he.employee_id AND p.$typeCol = 'employee'
                 LEFT JOIN eer_reactions r ON p.eer_social_post_id = r.post_id

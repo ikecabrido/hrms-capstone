@@ -348,7 +348,7 @@ class RecognitionController
 
     public function hasVotedForEmployeeMonth($voterUserId, $awardHistoryId)
     {
-        return $this->recognition->hasVotedForEmployeeMonth($voterUserId, $monthYear);
+        return $this->recognition->hasVotedForEmployeeMonth($voterUserId, $awardHistoryId);
     }
 
     public function recordEmployeeMonthVote($awardHistoryId, $voterUserId, $nomineeEmployeeId)

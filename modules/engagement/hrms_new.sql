@@ -694,10 +694,12 @@ CREATE TABLE `eer_projects` (
 CREATE TABLE `eer_reactions` (
   `eer_reaction_id` int(11) NOT NULL,
   `post_id` int(11) DEFAULT NULL,
+  `target_type` varchar(20) NOT NULL DEFAULT 'post',
+  `target_id` int(11) DEFAULT NULL,
   `employee_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `user_type` enum('employee','user') NOT NULL DEFAULT 'employee',
-  `type` enum('like','heart','wow') DEFAULT 'like',
+  `type` enum('like','heart','wow','angry') DEFAULT 'like',
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -705,11 +707,11 @@ CREATE TABLE `eer_reactions` (
 -- Dumping data for table `eer_reactions`
 --
 
-INSERT INTO `eer_reactions` (`eer_reaction_id`, `post_id`, `employee_id`, `user_id`, `user_type`, `type`, `created_at`) VALUES
-(1, 1, 1, NULL, 'employee', 'like', '2026-04-07 10:45:00'),
-(42, 42, NULL, 9, 'user', 'like', '2026-04-08 02:13:33'),
-(54, 43, NULL, 9, 'user', 'wow', '2026-05-05 08:07:17'),
-(60, 42, 1, 9, 'employee', 'wow', '2026-07-13 11:00:01');
+INSERT INTO `eer_reactions` (`eer_reaction_id`, `post_id`, `target_type`, `target_id`, `employee_id`, `user_id`, `user_type`, `type`, `created_at`) VALUES
+(1, 1, 'post', 1, 1, NULL, 'employee', 'like', '2026-04-07 10:45:00'),
+(42, 42, 'post', 42, NULL, 9, 'user', 'like', '2026-04-08 02:13:33'),
+(54, 43, 'post', 43, NULL, 9, 'user', 'wow', '2026-05-05 08:07:17'),
+(60, 42, 'post', 42, 1, 9, 'employee', 'wow', '2026-07-13 11:00:01');
 
 -- --------------------------------------------------------
 

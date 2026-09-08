@@ -65,8 +65,8 @@
                     if (window.bootstrap?.Modal) {
                         const bsModal = window.bootstrap.Modal.getInstance(modal);
                         if (bsModal) bsModal.hide();
-                    } else if ($ && $.fn.modal) {
-                        $(modal).modal('hide');
+                    } else if (typeof window.jQuery === 'function' && window.jQuery.fn.modal) {
+                        window.jQuery(modal).modal('hide');
                     }
                 });
 
@@ -80,6 +80,7 @@
             const isFreshlyLoggedIn = <?php echo !empty($_SESSION['reset_engagement_tabs']) ? 'true' : 'false'; ?>;
             <?php unset($_SESSION['reset_engagement_tabs']); ?>
             if (isFreshlyLoggedIn) {
+                <?php unset($_SESSION['engagement_recognition_tab']); ?>
                 try {
                     sessionStorage.setItem('freshly_logged_in', 'true');
                     [
@@ -108,6 +109,7 @@
                     document.cookie = 'engagement_survey_tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
                     document.cookie = 'engagement_social_tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
                     document.cookie = 'engagement_recognition_tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
+                    document.cookie = 'engagement:recognition:active-tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
                     document.cookie = 'engagement_grievance_tab=; max-age=0; path=/hrms-capstone/modules/engagement/';
 
                     if (window.location.hash) {
@@ -136,8 +138,8 @@
                             if (window.bootstrap?.Modal) {
                                 const bsModal = window.bootstrap.Modal.getInstance(modal);
                                 if (bsModal) bsModal.hide();
-                            } else if ($ && $.fn.modal) {
-                                $(modal).modal('hide');
+                            } else if (typeof window.jQuery === 'function' && window.jQuery.fn.modal) {
+                                window.jQuery(modal).modal('hide');
                             }
                         });
 
@@ -198,8 +200,8 @@
                         setTimeout(() => {
                             if (window.bootstrap?.Modal) {
                                 new window.bootstrap.Modal(modal).show();
-                            } else if ($ && $.fn.modal) {
-                                $(modal).modal('show');
+                            } else if (typeof window.jQuery === 'function' && window.jQuery.fn.modal) {
+                                window.jQuery(modal).modal('show');
                             }
                         }, 100);
                     } else {

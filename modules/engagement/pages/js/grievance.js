@@ -1,4 +1,88 @@
 (function () {
+  function dom(selector) {
+    if (selector && selector.nodeType) return new DomCollection([selector]);
+    if (selector && selector.elements) return selector;
+    if (typeof selector !== 'string') return new DomCollection([]);
+
+    if (selector.trim().startsWith('<') && selector.trim().endsWith('>')) {
+      const template = document.createElement('template');
+      template.innerHTML = selector.trim();
+      return new DomCollection([template.content.firstElementChild]);
+    }
+
+    const normalizedSelector = selector.replace(/:selected/g, ':checked');
+    return new DomCollection(Array.from(document.querySelectorAll(normalizedSelector)));
+  }
+
+  class DomCollection {
+    constructor(elements) {
+      this.elements = elements.filter(Boolean);
+    }
+
+    get length() { return this.elements.length; }
+    val(value) {
+      if (value === undefined) return this.elements[0] ? this.elements[0].value : undefined;
+      this.elements.forEach(element => { element.value = value; });
+      return this;
+    }
+    text(value) {
+      if (value === undefined) return this.elements[0] ? this.elements[0].textContent : '';
+      this.elements.forEach(element => { element.textContent = value; });
+      return this;
+    }
+    data(name) {
+      const element = this.elements[0];
+      return element ? element.dataset[name] : undefined;
+    }
+    prop(name, value) {
+      if (value === undefined) return this.elements[0] ? this.elements[0][name] : undefined;
+      this.elements.forEach(element => { element[name] = value; });
+      return this;
+    }
+    find(selector) {
+      return new DomCollection(this.elements.flatMap(element => Array.from(element.querySelectorAll(selector.replace(/:selected/g, ':checked')))));
+    }
+    addClass(classes) {
+      this.elements.forEach(element => element.classList.add(...classes.split(/\s+/).filter(Boolean)));
+      return this;
+    }
+    removeClass(classes) {
+      this.elements.forEach(element => element.classList.remove(...classes.split(/\s+/).filter(Boolean)));
+      return this;
+    }
+    html(value) {
+      if (value === undefined) return this.elements[0] ? this.elements[0].innerHTML : '';
+      this.elements.forEach(element => { element.innerHTML = value; });
+      return this;
+    }
+    attr(name, value) {
+      if (value === undefined) return this.elements[0] ? this.elements[0].getAttribute(name) : null;
+      this.elements.forEach(element => element.setAttribute(name, value));
+      return this;
+    }
+    empty() {
+      this.elements.forEach(element => { element.innerHTML = ''; });
+      return this;
+    }
+    append(content) {
+      this.elements.forEach(element => {
+        const nodes = content && content.elements ? content.elements : [content];
+        nodes.forEach(node => element.appendChild(node.cloneNode(true)));
+      });
+      return this;
+    }
+    show() {
+      this.elements.forEach(element => { element.style.display = ''; });
+      return this;
+    }
+    hide() {
+      this.elements.forEach(element => { element.style.display = 'none'; });
+      return this;
+    }
+  }
+
+  window.dom = dom;
+
   const grievanceTabIds = ['all-grievances', 'management', 'reports'];
   const GRIEVANCE_STORAGE_KEY = 'engagement:grievance:active-tab';
   const GRIEVANCE_LEGACY_STORAGE_KEY = 'grievance-active-tab';
@@ -268,9 +352,12 @@
             alertBox.textContent = data.message || 'Grievance management updated successfully.';
             alertBox.classList.remove('d-none');
           }
-          setTimeout(function () {
-            window.location.reload();
-          }, 500);
+          const grievanceId = form.querySelector('[name="grievance_id"]')?.value;
+          const status = form.querySelector('[name="status"]')?.value;
+          if (grievanceId && status) {
+            updateGrievanceRow(grievanceId, status);
+            refreshGrievanceRow(grievanceId);
+          }
         })
         .catch(function (error) {
           const alertBox = document.getElementById('management-form-alert');
@@ -457,17 +544,17 @@ function isFinalizedStatus(status) {
 }
 
 function updateManagementFormState() {
-  const selectedOption = $('#management-grievance-select option:selected');
-  const status = String($('#management-status-select').val() || selectedOption.data('status') || '').toLowerCase().trim();
+  const selectedOption = dom('#management-grievance-select option:selected');
+  const status = String(dom('#management-status-select').val() || selectedOption.data('status') || '').toLowerCase().trim();
   const escalationLevel = selectedOption.data('escalation-level') || '';
   const escalationReason = selectedOption.data('escalation-reason') || '';
   const finalized = isFinalizedStatus(status);
-  const form = $('#management-update-form');
+  const form = dom('#management-update-form');
   const inputs = form.find('select[name="status"], textarea[name="hr_remarks"], textarea[name="final_resolution"], textarea[name="escalation_reason"], input[name="supporting_document"], input[name="confidential"], input[name="escalation_level"], button[type="submit"]');
-  const escalationFields = $('#escalation-fields');
-  const escalationLevelInput = $('#management-escalation-level');
-  const escalationReasonInput = $('#management-escalation-reason');
-  const alertBox = $('#management-form-alert');
+  const escalationFields = dom('#escalation-fields');
+  const escalationLevelInput = dom('#management-escalation-level');
+  const escalationReasonInput = dom('#management-escalation-reason');
+  const alertBox = dom('#management-form-alert');
 
   if (status === 'escalated') {
     escalationFields.removeClass('d-none');
@@ -481,8 +568,8 @@ function updateManagementFormState() {
 
   if (finalized) {
     inputs.prop('disabled', true);
-    $('#management-grievance-select').prop('disabled', false);
-    $('#management-grievance-id').prop('disabled', false);
+    dom('#management-grievance-select').prop('disabled', false);
+    dom('#management-grievance-id').prop('disabled', false);
     alertBox.removeClass('alert-success alert-danger alert-info d-none').addClass('alert-warning').html('<i class="fas fa-lock"></i> This grievance is resolved or closed and cannot be edited.');
   } else if (selectedOption.val()) {
     inputs.prop('disabled', false);
@@ -501,9 +588,9 @@ if (!window.__grievanceManagementStatusBound) {
     if (event.target.matches('#management-grievance-select')) {
       const selectedOption = event.target.options[event.target.selectedIndex];
       const status = selectedOption ? selectedOption.getAttribute('data-status') || 'Pending' : 'Pending';
-      $('#management-grievance-id').val(event.target.value || '');
-      $('#management-status-select').val(status.replace(/\b\w/g, function (letter) { return letter.toUpperCase(); }));
-      $('#management-compliance-record').val(selectedOption ? selectedOption.getAttribute('data-compliance-record-id') || '' : '');
+      dom('#management-grievance-id').val(event.target.value || '');
+      dom('#management-status-select').val(status.replace(/\b\w/g, function (letter) { return letter.toUpperCase(); }));
+      dom('#management-compliance-record').val(selectedOption ? selectedOption.getAttribute('data-compliance-record-id') || '' : '');
       updateManagementFormState();
     }
     if (event.target.matches('#management-status-select')) {
@@ -522,7 +609,7 @@ if (!window.__grievanceManagementStatusBound) {
 }
 
 function updateGrievanceRow(grievanceId, status) {
-  const row = $('#all-grievances-table tbody .grievance-row[data-id="' + grievanceId + '"]');
+  const row = dom('#all-grievances-table tbody .grievance-row[data-id="' + grievanceId + '"]');
 
   const badgeClass = (status || '').toLowerCase() === 'resolved' ? 'success'
     : (status || '').toLowerCase() === 'closed' ? 'secondary'
@@ -540,9 +627,37 @@ function updateGrievanceRow(grievanceId, status) {
     }
   });
 
-  if ($('.grievance-row').length) {
+  if (dom('.grievance-row').length) {
     filterGrievances();
   }
+}
+
+function refreshGrievanceRow(grievanceId) {
+  fetch('/hrms-capstone/modules/engagement/api/grievance.php?action=list&t=' + Date.now(), {
+    credentials: 'same-origin',
+    cache: 'no-store'
+  })
+    .then(function (response) {
+      if (!response.ok) throw new Error('Unable to refresh grievance data.');
+      return response.json();
+    })
+    .then(function (payload) {
+      const updatedGrievance = (payload.data || []).find(function (grievance) {
+        return String(grievance.id || grievance.eer_grievance_id) === String(grievanceId);
+      });
+      if (!updatedGrievance) return;
+
+      updateGrievanceRow(grievanceId, updatedGrievance.status || 'Pending');
+      if (Array.isArray(window.reportData)) {
+        const reportRecord = window.reportData.find(function (grievance) {
+          return String(grievance.id || grievance.eer_grievance_id) === String(grievanceId);
+        });
+        if (reportRecord) Object.assign(reportRecord, updatedGrievance);
+      }
+    })
+    .catch(function (error) {
+      console.warn('Unable to sync updated grievance row:', error.message);
+    });
 }
 
 function htmlspecialchars(str) {
@@ -553,11 +668,11 @@ function htmlspecialchars(str) {
 }
 
 function populatePayslips() {
-  const employeeId = String($('#grievance-employee-select').val() || '');
-  const payslipSelect = $('#grievance-payslip-select');
+  const employeeId = String(dom('#grievance-employee-select').val() || '');
+  const payslipSelect = dom('#grievance-payslip-select');
   const previousPayslipId = payslipSelect.val();
-  const summaryBox = $('#grievance-payslip-summary');
-  const hiddenField = $('#grievance-payslip-information');
+  const summaryBox = dom('#grievance-payslip-summary');
+  const hiddenField = dom('#grievance-payslip-information');
   const payslips = employeeId && window.grievancePayslipsData ? (window.grievancePayslipsData[employeeId] || []) : [];
 
   payslipSelect.empty().append('<option value="">Select payslip (optional)</option>');
@@ -578,7 +693,7 @@ function populatePayslips() {
   payslips.forEach(function(payslip) {
     const generatedDate = payslip.generated_at ? payslip.generated_at.split(' ')[0] : 'N/A';
     payslipSelect.append(
-      $('<option></option>').val(payslip.id).text('Payslip #' + payslip.id + ' - ' + generatedDate + ' | Gross ' + formatCurrency(payslip.gross_pay) + ' | Net ' + formatCurrency(payslip.net_pay))
+      dom('<option></option>').val(payslip.id).text('Payslip #' + payslip.id + ' - ' + generatedDate + ' | Gross ' + formatCurrency(payslip.gross_pay) + ' | Net ' + formatCurrency(payslip.net_pay))
     );
   });
   payslipSelect.prop('disabled', false);
@@ -591,11 +706,11 @@ function populatePayslips() {
 }
 
 function updatePayslipSummary() {
-  const payslipSelect = $('#grievance-payslip-select');
-  const summaryBox = $('#grievance-payslip-summary');
-  const hiddenField = $('#grievance-payslip-information');
+  const payslipSelect = dom('#grievance-payslip-select');
+  const summaryBox = dom('#grievance-payslip-summary');
+  const hiddenField = dom('#grievance-payslip-information');
   const selectedId = payslipSelect.val();
-  const employeeId = String($('#grievance-employee-select').val() || '');
+  const employeeId = String(dom('#grievance-employee-select').val() || '');
   const payslips = employeeId && window.grievancePayslipsData ? (window.grievancePayslipsData[employeeId] || []) : [];
   const selectedPayslip = payslips.find(function(item) { return String(item.id) === String(selectedId); });
 

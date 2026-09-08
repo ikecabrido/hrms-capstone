@@ -18,8 +18,8 @@
     if (validTabIds.includes(queryTab)) {
       explicitDeepLinkTab = queryTab;
       url.hash = '#' + queryTab;
-    } else if (!validTabIds.includes(hashTab)) {
-      return;
+    } else if (hashTab && !validTabIds.includes(hashTab)) {
+      url.hash = '#satisfaction';
     }
     url.searchParams.delete('survey_tab');
     window.history.replaceState({}, '', url.toString());
@@ -55,6 +55,13 @@
       return explicitDeepLinkTab;
     }
 
+    // A non-default URL hash is an explicit tab choice, so it must win over
+    // browser storage when the page is opened directly on that tab.
+    const hashFromUrl = window.location.hash ? window.location.hash.replace('#', '') : '';
+    if (hashFromUrl && validTabIds.includes(hashFromUrl) && hashFromUrl !== 'satisfaction') {
+      return hashFromUrl;
+    }
+
     const storageKeys = [
       SURVEY_SHARED_STORAGE_KEY,
       SURVEY_STORAGE_KEY,
@@ -88,9 +95,6 @@
       }
     }
 
-    // Only fall back to the hash (e.g. someone bookmarked #pulse directly)
-    // when there is nothing saved yet.
-    const hashFromUrl = window.location.hash ? window.location.hash.replace('#', '') : '';
     if (hashFromUrl && validTabIds.includes(hashFromUrl)) {
       return hashFromUrl;
     }
@@ -236,23 +240,31 @@
           submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         }
 
-        fetch(form.getAttribute('action') || window.location.href, {
+        const apiUrl = window.location.pathname.split('/modules/engagement/')[0]
+          + '/modules/engagement/api/survey.php?action=create';
+
+        fetch(apiUrl, {
           method: form.getAttribute('method') || 'POST',
           body: new FormData(form),
           credentials: 'same-origin'
         })
           .then(function(response) {
-            if (!response.ok) {
-              throw new Error('Survey submission failed.');
-            }
-
-            const nextUrl = new URL(window.location.href);
-            nextUrl.searchParams.set('_survey_refresh', Date.now().toString());
-            nextUrl.hash = '#' + selectedTab;
-            window.location.replace(nextUrl.toString());
+            return response.json().then(function(data) {
+              if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Survey submission failed.');
+              }
+              return data;
+            });
+          })
+          .then(function() {
+            form.reset();
+            applySurveyTab(selectedTab);
+            return refreshCreatedSurveyList(selectedTab);
           })
           .catch(function(error) {
             window.alert(error.message || 'Unable to create the survey.');
+          })
+          .finally(function() {
             if (submitButton) {
               submitButton.disabled = false;
               submitButton.innerHTML = originalText;
@@ -260,6 +272,60 @@
           });
       });
     });
+  }
+
+  function escapeSurveyHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+      return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'}[character];
+    });
+  }
+
+  function refreshCreatedSurveyList(surveyType) {
+    const list = document.getElementById(surveyType === 'pulse' ? 'pulse-surveys-list' : 'satisfaction-surveys-list');
+    if (!list) return Promise.resolve();
+
+    const apiUrl = window.location.pathname.split('/modules/engagement/')[0]
+      + '/modules/engagement/api/survey.php?action=list&t=' + Date.now();
+
+    return fetch(apiUrl, { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(response) {
+        if (!response.ok) throw new Error('Unable to refresh survey list.');
+        return response.json();
+      })
+      .then(function(surveys) {
+        const matchingSurveys = (Array.isArray(surveys) ? surveys : []).filter(function(survey) {
+          return (survey.survey_type || 'satisfaction') === surveyType;
+        });
+
+        if (!matchingSurveys.length) {
+          list.innerHTML = surveyType === 'pulse'
+            ? '<div class="text-center text-muted py-4"><i class="fas fa-bolt fa-3x mb-3 text-warning"></i><p>No active pulse surveys</p><small>Create your first pulse survey to get quick feedback from employees</small></div>'
+            : '<p class="text-muted">No satisfaction surveys yet.</p>';
+          return;
+        }
+
+        if (surveyType === 'pulse') {
+          list.innerHTML = '<div class="row">' + matchingSurveys.map(function(survey) {
+            const surveyId = Number(survey.eer_survey_id || 0);
+            return '<div class="col-md-6 mb-3"><div class="card border-warning"><div class="card-body">'
+              + '<h6 class="card-title">' + escapeSurveyHtml(survey.title) + '</h6>'
+              + '<p class="card-text small text-muted">Created: ' + escapeSurveyHtml(survey.created_at || 'N/A')
+              + '<br>Anonymous: ' + (survey.is_anonymous ? 'Yes' : 'No') + '</p>'
+              + '<div class="btn-group btn-group-sm"><a class="btn btn-outline-info" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&action=view&id=' + surveyId + '">Take Survey</a></div>'
+              + '</div></div></div>';
+          }).join('') + '</div>';
+          return;
+        }
+
+        list.innerHTML = '<div class="list-group">' + matchingSurveys.map(function(survey) {
+          const surveyId = Number(survey.eer_survey_id || 0);
+          return '<div class="list-group-item d-flex justify-content-between align-items-center">'
+            + '<div><strong>' + escapeSurveyHtml(survey.title) + '</strong><br>'
+            + '<small class="text-muted">Created: ' + escapeSurveyHtml(survey.created_at || 'N/A')
+            + ' | Anonymous: ' + (survey.is_anonymous ? 'Yes' : 'No') + '</small></div>'
+            + '<div class="btn-group" role="group"><a class="btn btn-sm btn-info" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&action=view&id=' + surveyId + '">View</a></div></div>';
+        }).join('') + '</div>';
+      });
   }
 
   function initSurveyPage() {
@@ -282,6 +348,12 @@
     restoreSurveyTab();
 
     window.addEventListener('load', function() {
+      if (document.getElementById('survey-tabs')) {
+        restoreSurveyTab();
+      }
+    });
+
+    window.addEventListener('pageshow', function() {
       if (document.getElementById('survey-tabs')) {
         restoreSurveyTab();
       }

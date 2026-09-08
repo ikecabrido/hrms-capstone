@@ -68,8 +68,14 @@ class SocialController
         foreach ($posts as &$p) {
             $p['comments'] = $this->comment->getComments($p['eer_social_post_id']);
             foreach ($p['comments'] as &$comment) {
+                $comment['reaction_counts'] = $this->reaction->getReactionCounts('comment', $comment['eer_comment_id']);
                 $comment['replies'] = $this->reply->getRepliesByComment($comment['eer_comment_id']);
+                foreach ($comment['replies'] as &$reply) {
+                    $reply['reaction_counts'] = $this->reaction->getReactionCounts('reply', $reply['eer_reply_id']);
+                }
+                unset($reply);
             }
+            unset($comment);
         }
         return $posts;
     }

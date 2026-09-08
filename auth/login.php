@@ -99,7 +99,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['department_name'] = $user['department_name'];
         $_SESSION['last_activity'] = time();
         $_SESSION['freshly_logged_in'] = true;  // Flag to indicate fresh login
-            $_SESSION['reset_engagement_tabs'] = true; // Set flag to reset engagement tabs
+        $_SESSION['reset_engagement_tabs'] = true; // Set flag to reset engagement tabs
+        $_SESSION['reset_recognition_tab_on_first_visit'] = true;
+        unset($_SESSION['engagement_recognition_tab']);
+
+        // Clear tab cookies before the next page renders after a fresh login.
+        foreach (['/hrms-capstone/modules/engagement/', '/'] as $cookiePath) {
+            setcookie('engagement_recognition_tab', '', time() - 3600, $cookiePath);
+            setcookie('engagement:recognition:active-tab', '', time() - 3600, $cookiePath);
+        }
 
         $updateLogin = $conn->prepare("
             UPDATE user_account

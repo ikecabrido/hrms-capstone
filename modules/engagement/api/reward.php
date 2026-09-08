@@ -4,35 +4,37 @@ require_once __DIR__ . '/utils.php';
 
 use App\Controllers\RewardController;
 
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
-$action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && $action !== 'list') {
-   jsonResponse(['error' => 'Unauthorized'], 401);
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-$ctrl = new RewardController();
-$action = $_GET['action'] ?? 'list';
-$data = inputData();
+if (!isset($_SESSION['user']) && empty($_SESSION['employee_id'])) {
+    jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+}
+
+$controller = new RewardController();
 
 try {
-    switch ($action) {
-        case 'list':
-            $data = $ctrl->index();
-            jsonResponse(['success' => true, 'data' => $data]);
-            break;
-        case 'view':
-            if (empty($data['id'])) jsonResponse(['error' => 'id is required'], 400);
-            jsonResponse($ctrl->show((int)$data['id']));
-            break;
-        case 'create':
-            if (empty($data['name']) || empty($data['description'])) jsonResponse(['error' => 'name and description required'], 400);
-            $id = $ctrl->store($data);
-            jsonResponse(['id' => $id], 201);
-            break;
-        default:
-            jsonResponse(['error' => 'unknown action'], 400);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $data = inputData();
+        $name = trim((string)($data['reward_name'] ?? $data['name'] ?? ''));
+        $points = (int)($data['reward_points'] ?? $data['points_required'] ?? 0);
+
+        if ($name === '' || $points < 1) {
+            jsonResponse(['success' => false, 'error' => 'Reward name and points are required.'], 422);
+        }
+
+        $id = $controller->store([
+            'name' => $name,
+            'description' => trim((string)($data['reward_description'] ?? $data['description'] ?? '')),
+            'points_required' => $points,
+        ]);
+
+        jsonResponse(['success' => true, 'id' => $id], 201);
     }
-} catch (Exception $e) {
-    jsonResponse(['error' => $e->getMessage()], 500);
+
+    jsonResponse(['success' => true, 'data' => $controller->index()]);
+} catch (Throwable $exception) {
+    jsonResponse(['success' => false, 'error' => $exception->getMessage()], 500);
 }
 

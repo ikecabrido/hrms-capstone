@@ -153,6 +153,21 @@ class Recognition extends BaseModel
 
     public function sendRecognition($sender_id, $receiver_id, $message, $points)
     {
+        $existingRecognition = $this->execute(
+            "SELECT eer_recognition_id
+             FROM eer_recognitions
+             WHERE receiver_id = :receiver_id
+               AND category = 'general'
+               AND created_at >= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
+               AND created_at < DATE_ADD(DATE_FORMAT(CURRENT_DATE, '%Y-%m-01'), INTERVAL 1 MONTH)
+             LIMIT 1",
+            ['receiver_id' => (int)$receiver_id]
+        )->fetchColumn();
+
+        if ($existingRecognition) {
+            throw new \RuntimeException('This employee has already been recognized this month.');
+        }
+
         // Insert recognition into eer_recognitions table
         $sql = "INSERT INTO eer_recognitions (sender_id, receiver_id, message, points, category, created_at) 
                 VALUES (:sender_id, :receiver_id, :message, :points, 'general', NOW())";

@@ -6,7 +6,7 @@ use App\Controllers\BadgeController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && $action !== 'list') {
+if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && $action !== 'list') {
     jsonResponse(['error' => 'Unauthorized'], 401);
 }
 
@@ -24,7 +24,9 @@ try {
             jsonResponse($ctrl->show((int)$data['id']));
             break;
         case 'create':
-            if (empty($data['name']) || empty($data['description'])) jsonResponse(['error' => 'name and description required'], 400);
+            if (empty(trim((string)($data['name'] ?? '')))) {
+                jsonResponse(['error' => 'Badge name is required'], 400);
+            }
             $id = $ctrl->store($data);
             jsonResponse(['success' => true, 'id' => $id], 201);
             break;

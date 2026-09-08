@@ -55,7 +55,16 @@ $payload['top_performers'] = $rewardCtrl->getTopPerformers();
 $payload['improvement_candidates'] = $rewardCtrl->getImprovementCandidates();
 
 $validRecognitionTabs = ['recognition', 'employee-month', 'badges', 'rewards', 'leaderboard'];
-$savedRecognitionTab = strtolower(trim((string)($_COOKIE['engagement_recognition_tab'] ?? $_COOKIE['engagement:recognition:active-tab'] ?? '')));
+$resetRecognitionTab = !empty($_SESSION['reset_recognition_tab_on_first_visit']);
+if ($resetRecognitionTab) {
+  unset($_SESSION['reset_recognition_tab_on_first_visit'], $_SESSION['engagement_recognition_tab']);
+  setcookie('engagement_recognition_tab', '', time() - 3600, '/hrms-capstone/modules/engagement/');
+  setcookie('engagement:recognition:active-tab', '', time() - 3600, '/hrms-capstone/modules/engagement/');
+}
+
+$savedRecognitionTab = $resetRecognitionTab
+  ? 'recognition'
+  : strtolower(trim((string)($_COOKIE['engagement_recognition_tab'] ?? $_COOKIE['engagement:recognition:active-tab'] ?? '')));
 if ($savedRecognitionTab === '') {
   $savedRecognitionTab = strtolower(trim((string)($_SESSION['engagement_recognition_tab'] ?? '')));
 }
@@ -85,9 +94,44 @@ $payload['nominated_employee_ids'] = $nominatedEmployeeIds;
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  $isAjaxRewardRequest = ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest'
+    && ($_POST['action'] ?? '') === 'add_reward';
   $currentEmployeeId = $_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? null;
   $currentUserId = $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? null;
   $senderId = $currentUserId ?? $currentEmployeeId;
+
+  if (!empty($_POST['action']) && $_POST['action'] === 'add_reward') {
+    if (empty($_POST['reward_name']) || empty($_POST['reward_points'])) {
+      if ($isAjaxRewardRequest) {
+        http_response_code(422);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'error' => 'Reward name and points are required.']);
+        exit;
+      }
+    } else {
+      try {
+        $rewardCtrl->store([
+          'name' => trim($_POST['reward_name']),
+          'description' => trim($_POST['reward_description'] ?? ''),
+          'points_required' => (int)$_POST['reward_points']
+        ]);
+        $_SESSION['flash_success'] = 'Reward added successfully!';
+        if ($isAjaxRewardRequest) {
+          header('Content-Type: application/json');
+          echo json_encode(['success' => true]);
+          exit;
+        }
+      } catch (Exception $e) {
+        $_SESSION['flash_error'] = 'Error adding reward: ' . $e->getMessage();
+        if ($isAjaxRewardRequest) {
+          http_response_code(500);
+          header('Content-Type: application/json');
+          echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+          exit;
+        }
+      }
+    }
+  }
 
   if ($senderId) {
     // Handle recognition submission
@@ -105,20 +149,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
       $ctrl->assignAchievementBadge($_POST['badge_employee_id'], $_POST['badge_id'], $currentUserId, $performanceScore);
       $_SESSION['flash_success'] = 'Badge assigned successfully.';
-    }
-
-    // Handle adding new reward
-    if (!empty($_POST['action']) && $_POST['action'] === 'add_reward' && !empty($_POST['reward_name']) && !empty($_POST['reward_points'])) {
-      try {
-        $rewardCtrl->store([
-          'name' => $_POST['reward_name'],
-          'description' => $_POST['reward_description'] ?? '',
-          'points_required' => (int)$_POST['reward_points']
-        ]);
-        $_SESSION['flash_success'] = 'Reward added successfully!';
-      } catch (Exception $e) {
-        $_SESSION['flash_error'] = 'Error adding reward: ' . $e->getMessage();
-      }
     }
 
     // Handle recognition announcements
@@ -223,7 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           <div class="card shadow-sm border-0 recognition-card recognition-tabs-pending">
             <div class="card-header p-0 border-0">
-              <ul class="nav nav-tabs recognition-nav-tabs" id="recognition-tabs" role="tablist">
+              <ul class="nav nav-tabs recognition-nav-tabs" id="recognition-tabs" role="tablist" data-reset-tab="<?= $resetRecognitionTab ? 'true' : 'false' ?>">
                 <li class="nav-item">
                   <a class="nav-link<?= $activeRecognitionTab === 'recognition' ? ' active' : '' ?>" id="recognition-tab" href="#recognition" role="tab" aria-selected="<?= $activeRecognitionTab === 'recognition' ? 'true' : 'false' ?>">
                     <i class="fas fa-heart mr-2"></i>Recognition Feed
@@ -468,8 +498,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <button type="submit" class="btn btn-sm btn-warning">Apply</button>
                           </form>
 
-                          <?php if (!empty($payload['employee_of_month_candidates'])): ?>
-                            <div class="list-group" id="employee-month-candidates-list">
+                          <div class="list-group" id="employee-month-candidates-list">
+                            <?php if (!empty($payload['employee_of_month_candidates'])): ?>
                               <?php foreach ($payload['employee_of_month_candidates'] as $candidate): ?>
                                 <?php
                                 $hasVoted = isset($candidate['has_voted']) ? (bool)$candidate['has_voted'] : (isset($_SESSION['employee_month_votes']) && in_array($candidate['eer_award_history_id'] ?? null, $_SESSION['employee_month_votes']));
@@ -507,10 +537,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                   </div>
                                 </div>
                               <?php endforeach; ?>
-                            </div>
-                          <?php else: ?>
-                            <p class="text-muted text-center">No nominations yet.</p>
-                          <?php endif; ?>
+                            <?php else: ?>
+                              <p class="text-muted text-center">No nominations yet.</p>
+                            <?php endif; ?>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -843,7 +873,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h5 class="modal-title" id="addRewardModalLabel"><i class="fas fa-gift mr-2"></i>Add Reward</h5>
         <button type="button" class="close" data-dismiss="modal" data-recognition-close="addRewardModal" aria-label="Close"><span>&times;</span></button>
       </div>
-      <form id="add-reward-form" method="POST" action="">
+      <form id="add-reward-form" method="POST" action="index.php?page=recognition" data-skip="true">
         <input type="hidden" name="action" value="add_reward">
         <div class="modal-body">
           <div class="form-group">
@@ -872,7 +902,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="modal fade" id="sendRecognitionModal" tabindex="-1" role="dialog" aria-labelledby="sendRecognitionModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title" id="sendRecognitionModalLabel"><i class="fas fa-award mr-2"></i>Recognize Employee</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="sendRecognitionModal"><span>&times;</span></button></div>
-    <form>
+    <form data-skip="true">
       <div class="modal-body">
         <div class="form-group"><label for="rec-receiver">Employee</label><select id="rec-receiver" class="form-control" required><option value="">Select employee</option></select></div>
         <div class="form-group"><label for="rec-message">Message</label><textarea id="rec-message" class="form-control" rows="4" required placeholder="Why are you recognizing this employee?"></textarea></div>

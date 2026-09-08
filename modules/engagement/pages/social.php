@@ -116,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 ?>
+
 <div class="module-header">
         <h1>Social</h1>
     </div>   
@@ -225,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                role="tab"
                aria-controls="projects"
                aria-selected="<?= $activeSocialTab === 'projects' ? 'true' : 'false' ?>">
-              <i class="fas fa-project-diagram mr-2"></i>
+              <i class="fas fa-sitemap mr-2"></i>
               Project Collaboration Spaces
             </a>
           </li>
@@ -270,7 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="col-lg-7 col-md-12">
                       <div class="card card-info card-outline h-100">
-                        <div class="card-header"><h3 class="card-title"><i class="fas fa-stream mr-2"></i>Social Feed</h3></div>
+                        <div class="card-header"><h3 class="card-title"><i class="fas fa-rss mr-2"></i>Social Feed</h3></div>
                         <div class="card-body">
                           <div id="social-feed" data-can-reply="true" data-employee-id="<?= htmlspecialchars((string)($currentEmployeeId ?? '')) ?>">
                             <?php if (!empty($payload['feed']) || !empty($payload['shared_files'])): ?>
@@ -300,17 +301,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <i class="fas fa-thumbs-up text-primary mr-1"></i><?= (int)($post['like_count'] ?? 0) ?>
                                         <i class="fas fa-heart text-danger mr-1 ml-2"></i><?= (int)($post['heart_count'] ?? 0) ?>
                                         <i class="fas fa-star text-warning mr-1 ml-2"></i><?= (int)($post['wow_count'] ?? 0) ?>
+                                        <i class="fas fa-frown-o text-danger mr-1 ml-2"></i><?= (int)($post['angry_count'] ?? 0) ?>
                                       </small>
                                     </div>
                                     <div class="reaction-buttons mt-3 d-flex gap-2">
                                       <?php $postId = (int)($post['eer_social_post_id'] ?? 0); ?>
-                                      <?php foreach (['like' => 'primary fa-thumbs-up', 'heart' => 'danger fa-heart', 'wow' => 'warning fa-star'] as $reactionType => $reactionStyle): ?>
+                                      <?php foreach (['like' => 'primary fa-thumbs-up', 'heart' => 'danger fa-heart', 'wow' => 'warning fa-star', 'angry' => 'danger fa-frown-o'] as $reactionType => $reactionStyle): ?>
                                         <?php [$buttonStyle, $icon] = explode(' ', $reactionStyle, 2); ?>
                                         <form method="post" class="d-inline" data-skip>
                                           <input type="hidden" name="action" value="reaction">
                                           <input type="hidden" name="post_id" value="<?= $postId ?>">
                                           <input type="hidden" name="reaction_type" value="<?= $reactionType ?>">
-                                          <button type="submit" class="btn btn-sm btn-outline-<?= $buttonStyle ?>"><i class="fas <?= $icon ?> mr-1"></i><?= ucfirst($reactionType) ?> <span class="reaction-count"><?= (int)($post[$reactionType . '_count'] ?? 0) ?></span></button>
+                                          <button type="submit" class="btn btn-sm btn-outline-<?= $buttonStyle ?>" title="<?= ucfirst($reactionType) ?>" aria-label="<?= ucfirst($reactionType) ?>"><i class="fas <?= $icon ?>"></i> <span class="reaction-count"><?= (int)($post[$reactionType . '_count'] ?? 0) ?></span></button>
                                         </form>
                                       <?php endforeach; ?>
                                     </div>
@@ -326,11 +328,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <div class="comment-item">
                                               <div><strong class="small"><?= htmlspecialchars($comment['author_name'] ?? 'Unknown') ?>:</strong> <span class="small"><?= htmlspecialchars($comment['comment'] ?? '') ?></span></div>
                                               <small class="text-muted d-block mb-2"><?= htmlspecialchars($comment['created_at'] ?? '') ?></small>
+                                              <?php $commentReactionCounts = $comment['reaction_counts'] ?? ['like' => 0, 'heart' => 0, 'wow' => 0, 'angry' => 0]; ?>
+                                              <div class="comment-reaction-buttons mt-1" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>">
+                                                <button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-reaction="like" title="Like"><i class="fas fa-thumbs-up"></i> <span><?= (int)($commentReactionCounts['like'] ?? 0) ?></span></button>
+                                                <button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn text-danger" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-reaction="heart" title="Heart"><i class="fas fa-heart"></i> <span><?= (int)($commentReactionCounts['heart'] ?? 0) ?></span></button>
+                                                <button type="button" class="btn btn-sm btn-link p-0 comment-react-btn text-warning" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-reaction="wow" title="Wow"><i class="fas fa-star"></i> <span><?= (int)($commentReactionCounts['wow'] ?? 0) ?></span></button>
+                                                <button type="button" class="btn btn-sm btn-link p-0 comment-react-btn text-danger" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-reaction="angry" title="Angry"><i class="fas fa-frown-o"></i> <span><?= (int)($commentReactionCounts['angry'] ?? 0) ?></span></button>
+                                              </div>
                                               <?php foreach ($comment['replies'] ?? [] as $reply): ?>
-                                                <div class="reply-item"><strong class="small"><?= htmlspecialchars($reply['author_name'] ?? 'Unknown') ?>:</strong> <span class="small"><?= htmlspecialchars($reply['content'] ?? '') ?></span><small class="text-muted d-block"><?= htmlspecialchars($reply['created_at'] ?? '') ?></small></div>
+                                                <?php $replyReactionCounts = $reply['reaction_counts'] ?? ['like' => 0, 'heart' => 0, 'wow' => 0, 'angry' => 0]; ?>
+                                                <div class="reply-item"><strong class="small"><?= htmlspecialchars($reply['author_name'] ?? 'Unknown') ?>:</strong> <span class="small"><?= htmlspecialchars($reply['content'] ?? '') ?></span><small class="text-muted d-block"><?= htmlspecialchars($reply['created_at'] ?? '') ?></small><div class="comment-reaction-buttons mt-1" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>"><button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>" data-reaction="like" title="Like"><i class="fas fa-thumbs-up"></i> <span><?= (int)($replyReactionCounts['like'] ?? 0) ?></span></button><button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn text-danger" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>" data-reaction="heart" title="Heart"><i class="fas fa-heart"></i> <span><?= (int)($replyReactionCounts['heart'] ?? 0) ?></span></button><button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn text-warning" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>" data-reaction="wow" title="Wow"><i class="fas fa-star"></i> <span><?= (int)($replyReactionCounts['wow'] ?? 0) ?></span></button><button type="button" class="btn btn-sm btn-link p-0 comment-react-btn text-danger" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>" data-reaction="angry" title="Angry"><i class="fas fa-frown-o"></i> <span><?= (int)($replyReactionCounts['angry'] ?? 0) ?></span></button></div></div>
                                               <?php endforeach; ?>
                                               <details class="reply-panel">
-                                                <summary><i class="fas fa-reply mr-1"></i> Reply</summary>
+                                                <summary>Reply</summary>
                                                 <form method="POST" class="reply-form" data-skip data-comment-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-post-id="<?= $postId ?>">
                                                   <input type="hidden" name="action" value="reply">
                                                   <input type="hidden" name="comment_id" value="<?= (int)($comment['eer_comment_id'] ?? 0) ?>">
@@ -594,7 +604,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="col-12">
                       <div class="card card-success card-outline">
                         <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-project-diagram mr-2"></i>Project Collaboration Spaces</h3>
+                          <h3 class="card-title"><i class="fas fa-sitemap mr-2"></i>Project Collaboration Spaces</h3>
                           <div class="card-tools">
                             <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#createProjectModal">
                               <i class="fas fa-plus mr-1"></i>Create Project Space
@@ -662,7 +672,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header" style="display: flex; align-items: center;">
-        <h5 class="modal-title" id="createProjectModalLabel"><i class="fas fa-project-diagram mr-2"></i>Create Project Space</h5>
+        <h5 class="modal-title" id="createProjectModalLabel"><i class="fas fa-sitemap mr-2"></i>Create Project Space</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #6c757d; font-size: 1.8rem; padding: 0; border: none; background: none; cursor: pointer; transition: color 0.3s ease; margin-left: auto;" onmouseover="this.style.color='#495057'" onmouseout="this.style.color='#6c757d'"><span aria-hidden="true">×</span></button>
       </div>
       <form id="createProjectForm">

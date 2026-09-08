@@ -5,7 +5,7 @@ require_once __DIR__ . '/utils.php';
 use App\Controllers\SurveyController;
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && $action !== 'list') {
+if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && empty($_SESSION['user_id']) && $action !== 'list') {
    jsonResponse(['error' => 'Unauthorized'], 401);
 }
 
@@ -24,19 +24,39 @@ try {
             jsonResponse($ctrl->show((int)$surveyId));
             break;
         case 'create':
-            if (empty($data['title'])) jsonResponse(['error' => 'title is required'], 400);
-            $questions = [];
-            if (!empty($data['questions'])) {
-                $questions = $data['questions'];
-            }
-            $id = $ctrl->store($data['title'], $_SESSION['user']['id'], $questions);
-            jsonResponse(['id' => $id], 201);
+            $title = trim((string)($data['title'] ?? ''));
+            $questionsRaw = (string)($data['questions_raw'] ?? '');
+            $questions = array_values(array_filter(array_map('trim', preg_split('/\r\n|\r|\n/', $questionsRaw)), static function ($question) {
+                return $question !== '';
+            }));
+            $employeeId = (int)($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? 0);
+
+            if ($title === '') jsonResponse(['error' => 'title is required'], 400);
+            if (empty($questions)) jsonResponse(['error' => 'At least one question is required'], 400);
+            if ($employeeId <= 0) jsonResponse(['error' => 'Employee ID was not found in the current session'], 401);
+
+            $surveyData = [
+                'title' => $title,
+                'description' => trim((string)($data['description'] ?? '')),
+                'survey_type' => ($data['survey_type'] ?? 'satisfaction') === 'pulse' ? 'pulse' : 'satisfaction',
+                'is_anonymous' => !empty($data['is_anonymous']) ? 1 : 0
+            ];
+            $formattedQuestions = array_map(static function ($question) {
+                return ['question_text' => $question];
+            }, $questions);
+            $id = $ctrl->store($surveyData, $formattedQuestions, $employeeId);
+            jsonResponse(['success' => true, 'id' => $id, 'data' => $ctrl->show($id)], 201);
             break;
         case 'submit':
             if (empty($data['survey_id']) || empty($data['answers'])) {
                 jsonResponse(['error' => 'survey_id and answers are required'], 400);
             }
-            $id = $ctrl->submit((int)$data['survey_id'], $_SESSION['user']['id'], $data['answers']);
+            $submitterId = $_SESSION['employee_id']
+                ?? $_SESSION['user']['employee_id']
+                ?? $_SESSION['user']['id']
+                ?? $_SESSION['user_id']
+                ?? 0;
+            $id = $ctrl->submit((int)$data['survey_id'], (int)$submitterId, $data['answers']);
             jsonResponse(['id' => $id], 201);
             break;
         case 'results':

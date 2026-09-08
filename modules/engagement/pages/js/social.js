@@ -14,6 +14,25 @@
     activeTabObserver: null
   };
 
+  function closeSocialModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    if (window.bootstrap && window.bootstrap.Modal) {
+      const instance = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
+      instance.hide();
+      return;
+    }
+
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+      backdrop.remove();
+    });
+  }
+
   // Add smooth transition styles
   const style = document.createElement('style');
   style.textContent = `
@@ -290,8 +309,8 @@
       switchSocialTab(tabLink, false);
     }, true);
 
-    if (typeof $ !== 'undefined') {
-      $(document).on('shown.bs.tab', '#collaboration-tabs a[data-toggle="tab"]', function() {
+    if (typeof window.jQuery === 'function') {
+      window.jQuery(document).on('shown.bs.tab', '#collaboration-tabs a[data-toggle="tab"]', function() {
         const tabId = this.getAttribute('aria-controls');
         if (tabId) {
           persistSocialTab(tabId);
@@ -420,8 +439,8 @@
     }, true);
     
     // Also listen for Bootstrap tab events if available
-    if (typeof $ !== 'undefined') {
-      $(document).on('shown.bs.tab', '#collaboration-tabs a[data-toggle="tab"]', function() {
+    if (typeof window.jQuery === 'function') {
+      window.jQuery(document).on('shown.bs.tab', '#collaboration-tabs a[data-toggle="tab"]', function() {
         const tabId = this.getAttribute('aria-controls');
         if (tabId) {
           persistSocialTab(tabId);
@@ -446,6 +465,7 @@
         form.dataset.bound = 'true';
         form.addEventListener('submit', function(event) {
           event.preventDefault();
+          event.stopImmediatePropagation();
 
           const button = form.querySelector('button[type=submit]');
           const textarea = form.querySelector('textarea[name="comment"], textarea[name="content"]');
@@ -509,7 +529,7 @@
             })
             .finally(function() {
               if (button) {
-                var resetLabel = form.querySelector('input[name="comment_id"]') ? 'Post Comment' : 'Comment';
+                var resetLabel = form.querySelector('input[name="comment_id"]') ? 'Post Reply' : 'Comment';
                 button.textContent = resetLabel;
                 button.disabled = false;
               }
@@ -521,6 +541,16 @@
     function setFeedHtml(html) {
       socialFeed.innerHTML = html;
       bindCommentForms();
+    }
+
+    function renderCommentReactionButtons(targetType, targetId, counts) {
+      counts = counts || {};
+      return '<div class="comment-reaction-buttons mt-1" data-target-type="' + targetType + '" data-target-id="' + targetId + '">' +
+        '<button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn" data-target-type="' + targetType + '" data-target-id="' + targetId + '" data-reaction="like" title="Like" aria-label="Like"><i class="fas fa-thumbs-up"></i> <span>' + (parseInt(counts.like, 10) || 0) + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn text-danger" data-target-type="' + targetType + '" data-target-id="' + targetId + '" data-reaction="heart" title="Heart" aria-label="Heart"><i class="fas fa-heart"></i> <span>' + (parseInt(counts.heart, 10) || 0) + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn text-warning" data-target-type="' + targetType + '" data-target-id="' + targetId + '" data-reaction="wow" title="Wow" aria-label="Wow"><i class="fas fa-star"></i> <span>' + (parseInt(counts.wow, 10) || 0) + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-link p-0 comment-react-btn text-danger" data-target-type="' + targetType + '" data-target-id="' + targetId + '" data-reaction="angry" title="Angry" aria-label="Angry"><i class="fas fa-angry"></i> <span>' + (parseInt(counts.angry, 10) || 0) + '</span></button>' +
+        '</div>';
     }
 
     function createPostCard(post) {
@@ -569,10 +599,12 @@
       var likeCount = post.like_count ? parseInt(post.like_count, 10) : 0;
       var heartCount = post.heart_count ? parseInt(post.heart_count, 10) : 0;
       var wowCount = post.wow_count ? parseInt(post.wow_count, 10) : 0;
+      var angryCount = post.angry_count ? parseInt(post.angry_count, 10) : 0;
 
       var reactionHtml = (likeCount > 0 ? '<i class="fas fa-thumbs-up text-primary mr-1"></i>' + likeCount + ' ' : '') +
             (heartCount > 0 ? '<i class="fas fa-heart text-danger mr-1"></i>' + heartCount + ' ' : '') +
-            (wowCount > 0 ? '<i class="fas fa-star text-warning mr-1"></i>' + wowCount + ' ' : '');
+            (wowCount > 0 ? '<i class="fas fa-star text-warning mr-1"></i>' + wowCount + ' ' : '') +
+            (angryCount > 0 ? '<i class="fas fa-angry text-danger mr-1"></i>' + angryCount + ' ' : '');
       
       if (!reactionHtml.trim()) {
         reactionHtml = '<span class="text-muted">No reactions yet</span>';
@@ -585,6 +617,7 @@
             var commentText = comment.comment ? escapeHtml(comment.comment) : '';
             var commentTime = comment.created_at ? escapeHtml(comment.created_at) : '';
             var repliesHtml = '';
+            var commentCounts = comment.reaction_counts || {};
 
             if (Array.isArray(comment.replies) && comment.replies.length > 0) {
               repliesHtml = '<div class="replies mt-2 ml-4 border-left pl-2">' +
@@ -592,7 +625,7 @@
                   var replier = reply.author_name ? escapeHtml(reply.author_name) : 'Unknown';
                   var replyText = reply.content ? escapeHtml(reply.content) : '';
                   var replyTime = reply.created_at ? escapeHtml(reply.created_at) : '';
-                  return '<div class="reply-item mb-2"><strong class="small">' + replier + ':</strong> <span class="small">' + replyText + '</span> <small class="text-muted d-block">' + replyTime + '</small></div>';
+                  return '<div class="reply-item mb-2"><strong class="small">' + replier + ':</strong> <span class="small">' + replyText + '</span> <small class="text-muted d-block">' + replyTime + '</small>' + renderCommentReactionButtons('reply', reply.eer_reply_id, reply.reaction_counts || {}) + '</div>';
                 }).join('') +
                 '</div>';
             }
@@ -600,11 +633,12 @@
             return '<div class="comment-item mb-3 pb-2 border-bottom">' +
               '<div><strong class="small">' + commenter + ':</strong> <span class="small">' + commentText + '</span> </div>' +
               '<small class="text-muted d-block mb-2">' + commentTime + '</small>' +
+              renderCommentReactionButtons('comment', comment.eer_comment_id, commentCounts) +
               repliesHtml +
               '<div class="reply-actions mt-2">' +
-                '<button type="button" class="btn btn-sm btn-link reply-action p-0" data-comment-id="' + comment.eer_comment_id + '" data-post-id="' + postId + '" style="color: #007bff;"><small>Reply</small></button>' +
+                '<button type="button" class="btn btn-sm reply-action" data-comment-id="' + comment.eer_comment_id + '" data-post-id="' + postId + '">Reply</button>' +
               '</div>' +
-              '<form method="POST" class="comment-form reply-form mt-2 p-2 bg-light rounded d-none" data-comment-id="' + comment.eer_comment_id + '" data-post-id="' + postId + '">' +
+              '<form method="POST" class="comment-form reply-form mt-2 p-2 bg-light rounded d-none" data-skip="true" style="display: none;" data-comment-id="' + comment.eer_comment_id + '" data-post-id="' + postId + '">' +
                 '<input type="hidden" name="comment_id" value="' + comment.eer_comment_id + '">' +
                 '<input type="hidden" name="post_id" value="' + postId + '">' +
                 '<div class="form-group mb-2">' +
@@ -618,7 +652,7 @@
           '</div>';
       }
 
-      var replySection = '<form method="POST" class="comment-form mt-3">' +
+      var replySection = '<form method="POST" class="comment-form mt-3" data-skip="true">' +
         '<input type="hidden" name="post_id" value="' + postId + '">' +
         '<div class="form-group mb-2">' +
           '<textarea name="comment" class="form-control form-control-sm" rows="2" placeholder="Write a comment..." required></textarea>' +
@@ -627,9 +661,10 @@
         '</form>';
 
       var reactionButtons = '<div class="reaction-buttons mt-3 d-flex gap-2">' +
-        '<button type="button" class="btn btn-sm btn-outline-primary react-btn" data-post-id="' + postId + '" data-reaction="like"><i class="fas fa-thumbs-up mr-1"></i>Like <span class="reaction-count" data-reaction="like">' + likeCount + '</span></button>' +
-        '<button type="button" class="btn btn-sm btn-outline-danger react-btn" data-post-id="' + postId + '" data-reaction="heart"><i class="fas fa-heart mr-1"></i>Heart <span class="reaction-count" data-reaction="heart">' + heartCount + '</span></button>' +
-        '<button type="button" class="btn btn-sm btn-outline-warning react-btn" data-post-id="' + postId + '" data-reaction="wow"><i class="fas fa-star mr-1"></i>Wow <span class="reaction-count" data-reaction="wow">' + wowCount + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-outline-primary react-btn" data-post-id="' + postId + '" data-reaction="like" title="Like" aria-label="Like"><i class="fas fa-thumbs-up"></i> <span class="reaction-count" data-reaction="like">' + likeCount + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-outline-danger react-btn" data-post-id="' + postId + '" data-reaction="heart" title="Heart" aria-label="Heart"><i class="fas fa-heart"></i> <span class="reaction-count" data-reaction="heart">' + heartCount + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-outline-warning react-btn" data-post-id="' + postId + '" data-reaction="wow" title="Wow" aria-label="Wow"><i class="fas fa-star"></i> <span class="reaction-count" data-reaction="wow">' + wowCount + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-outline-danger react-btn" data-post-id="' + postId + '" data-reaction="angry" title="Angry" aria-label="Angry"><i class="fas fa-angry"></i> <span class="reaction-count" data-reaction="angry">' + angryCount + '</span></button>' +
         '</div>';
 
       return '<div class="card mb-3 social-post-card" style="border-left: 4px solid #007bff;">' +
@@ -676,6 +711,7 @@
       var likeCount = file.like_count ? parseInt(file.like_count, 10) : 0;
       var heartCount = file.heart_count ? parseInt(file.heart_count, 10) : 0;
       var wowCount = file.wow_count ? parseInt(file.wow_count, 10) : 0;
+      var angryCount = file.angry_count ? parseInt(file.angry_count, 10) : 0;
 
       var reactionHtml = (likeCount > 0 ? '<i class="fas fa-thumbs-up text-primary mr-1"></i>' + likeCount + ' ' : '') +
             (heartCount > 0 ? '<i class="fas fa-heart text-danger mr-1"></i>' + heartCount + ' ' : '') +
@@ -686,9 +722,10 @@
       }
 
       var reactionButtons = '<div class="reaction-buttons mt-2 d-flex gap-2">' +
-        '<button type="button" class="btn btn-sm btn-outline-primary react-btn" data-post-id="' + fileId + '" data-reaction="like"><i class="fas fa-thumbs-up mr-1"></i>Like <span class="reaction-count" data-reaction="like">' + likeCount + '</span></button>' +
-        '<button type="button" class="btn btn-sm btn-outline-danger react-btn" data-post-id="' + fileId + '" data-reaction="heart"><i class="fas fa-heart mr-1"></i>Heart <span class="reaction-count" data-reaction="heart">' + heartCount + '</span></button>' +
-        '<button type="button" class="btn btn-sm btn-outline-warning react-btn" data-post-id="' + fileId + '" data-reaction="wow"><i class="fas fa-star mr-1"></i>Wow <span class="reaction-count" data-reaction="wow">' + wowCount + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-outline-primary react-btn" data-post-id="' + fileId + '" data-reaction="like" title="Like" aria-label="Like"><i class="fas fa-thumbs-up"></i> <span class="reaction-count" data-reaction="like">' + likeCount + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-outline-danger react-btn" data-post-id="' + fileId + '" data-reaction="heart" title="Heart" aria-label="Heart"><i class="fas fa-heart"></i> <span class="reaction-count" data-reaction="heart">' + heartCount + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-outline-warning react-btn" data-post-id="' + fileId + '" data-reaction="wow" title="Wow" aria-label="Wow"><i class="fas fa-star"></i> <span class="reaction-count" data-reaction="wow">' + wowCount + '</span></button>' +
+        '<button type="button" class="btn btn-sm btn-outline-danger react-btn" data-post-id="' + fileId + '" data-reaction="angry" title="Angry" aria-label="Angry"><i class="fas fa-angry"></i> <span class="reaction-count" data-reaction="angry">' + angryCount + '</span></button>' +
         '</div>';
 
       var commentHtml = '<form method="POST" class="comment-form mt-2">' +
@@ -838,7 +875,9 @@
         var postId = replyToggle.getAttribute('data-post-id');
         var form = socialFeed.querySelector('.reply-form[data-comment-id="' + commentId + '"][data-post-id="' + postId + '"]');
         if (form) {
-          form.classList.toggle('d-none');
+          var shouldShow = form.style.display === 'none';
+          form.style.display = shouldShow ? '' : 'none';
+          form.classList.toggle('d-none', !shouldShow);
         }
         return;
       }
@@ -850,7 +889,33 @@
         var form = cancelBtn.closest('.reply-form');
         if (form) {
           form.classList.add('d-none');
+          form.style.display = 'none';
         }
+        return;
+      }
+
+      var commentReactionButton = event.target.closest('.comment-react-btn');
+      if (commentReactionButton) {
+        event.preventDefault();
+        var commentReactionPayload = {
+          post_id: '0',
+          target_type: commentReactionButton.getAttribute('data-target-type'),
+          target_id: commentReactionButton.getAttribute('data-target-id'),
+          type: commentReactionButton.getAttribute('data-reaction')
+        };
+        if (employeeId) commentReactionPayload.employee_id = employeeId;
+
+        fetch(SOCIAL_API_BASE + '?resource=reaction', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(commentReactionPayload)
+        })
+          .then(function(response) { return response.json(); })
+          .then(function(data) {
+            if (!data.success) throw new Error(data.message || 'Failed to react.');
+            fetchSocialFeed();
+          })
+          .catch(function(error) { alert(error.message || 'Failed to send reaction.'); });
         return;
       }
 
@@ -914,11 +979,11 @@
           if (data && data.success && Array.isArray(data.data)) {
             socialPosts = data.data;
           } else {
-            socialPosts = [];
+            throw new Error('Invalid social feed response.');
           }
         })
-        .catch(function() {
-          socialPosts = [];
+        .catch(function(error) {
+          console.warn('Unable to refresh social feed:', error.message);
         });
 
       var filePromise = fetch(SOCIAL_API_BASE + '?resource=shared_files&action=list', {
@@ -937,11 +1002,11 @@
           if (data && data.success && Array.isArray(data.data)) {
             sharedFilesData = data.data;
           } else {
-            sharedFilesData = [];
+            throw new Error('Invalid shared files response.');
           }
         })
-        .catch(function() {
-          sharedFilesData = [];
+        .catch(function(error) {
+          console.warn('Unable to refresh shared files:', error.message);
         });
 
       Promise.all([feedPromise, filePromise])
@@ -993,7 +1058,7 @@
       if (Array.isArray(posts)) {
         posts.forEach(function(post) {
           totalComments += Array.isArray(post.comments) ? post.comments.length : 0;
-          totalReactions += (parseInt(post.like_count,10)||0) + (parseInt(post.heart_count,10)||0) + (parseInt(post.wow_count,10)||0);
+          totalReactions += (parseInt(post.like_count,10)||0) + (parseInt(post.heart_count,10)||0) + (parseInt(post.wow_count,10)||0) + (parseInt(post.angry_count,10)||0);
         });
       }
 
@@ -1262,7 +1327,7 @@
               if (titleInput) titleInput.value = '';
               if (descriptionInput) descriptionInput.value = '';
               if (categoryInput) categoryInput.value = '';
-              $('#createForumModal').modal('hide');
+              closeSocialModal('createForumModal');
               var forum = data.data || {title: title, description: description, category: category};
               var forumsList = document.getElementById('forums-list');
               if (forumsList) {
@@ -1329,7 +1394,7 @@
               if (descriptionInput) descriptionInput.value = '';
               if (deadlineInput) deadlineInput.value = '';
               if (statusInput) statusInput.value = 'planning';
-              $('#createProjectModal').modal('hide');
+              closeSocialModal('createProjectModal');
               window.location.reload();
             } else {
               alert(data.message || 'Failed to create project.');

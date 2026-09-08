@@ -273,6 +273,7 @@ What improvements would you suggest?" required></textarea>
                             return ($survey['survey_type'] ?? 'satisfaction') === 'satisfaction';
                           });
                           ?>
+                          <div id="satisfaction-surveys-list">
                           <?php if (!empty($satisfactionSurveys)): ?>
                             <div class="list-group">
                               <?php foreach ($satisfactionSurveys as $survey): ?>
@@ -291,8 +292,9 @@ What improvements would you suggest?" required></textarea>
                               <?php endforeach; ?>
                             </div>
                           <?php else: ?>
-                            <p class="text-muted">No satisfaction surveys yet.</p>
+                            <p class="text-muted" id="no-satisfaction-surveys">No satisfaction surveys yet.</p>
                           <?php endif; ?>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -352,6 +354,7 @@ What improvements would you suggest?" required></textarea>
                             return ($survey['survey_type'] ?? '') === 'pulse';
                           });
                           ?>
+                          <div id="pulse-surveys-list">
                           <?php if (!empty($pulseSurveys)): ?>
                             <div class="row">
                               <?php foreach ($pulseSurveys as $survey): ?>
@@ -378,6 +381,7 @@ What improvements would you suggest?" required></textarea>
                               <small>Create your first pulse survey to get quick feedback from employees</small>
                             </div>
                           <?php endif; ?>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -691,3 +695,4 @@ What improvements would you suggest?" required></textarea>
     </div>
     </div>
   <!-- Create Satisfaction Survey Modal -->
+   

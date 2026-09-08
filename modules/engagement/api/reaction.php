@@ -61,12 +61,16 @@ try {
         }
 
         $postId = $input['post_id'] ?? null;
+        $targetType = $input['target_type'] ?? 'post';
+        $targetId = $input['target_id'] ?? $postId;
         $employeeId = $input['employee_id'] ?? resolveEmployeeIdFromSession();
         $userId = $_SESSION['user']['id'] ?? $_SESSION['user']['user_id'] ?? $_SESSION['user_id'] ?? null;
         $type = $input['type'] ?? 'like';
 
-        if ($postId && $type) {
-            $result = $reactionCtrl->addReaction($postId, $employeeId, $userId, $type);
+        $hasValidTarget = $targetId && in_array($targetType, ['post', 'comment', 'reply'], true)
+            && ($targetType !== 'post' || $postId);
+        if ($hasValidTarget && in_array($type, ['like', 'heart', 'wow', 'angry'], true)) {
+            $result = $reactionCtrl->addReaction($postId, $employeeId, $userId, $type, $targetType, $targetId);
             echo json_encode(['success' => true, 'result' => $result]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid input.']);

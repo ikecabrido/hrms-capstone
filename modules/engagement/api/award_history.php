@@ -26,10 +26,21 @@ try {
         case 'create':
             if (empty($data['employee_id']) || empty($data['award_name'])) jsonResponse(['error' => 'employee_id and award_name required'], 400);
             if (empty($data['nominated_by'])) {
-                $data['nominated_by'] = $_SESSION['user']['id']
-                    ?? $_SESSION['user_id']
-                    ?? $_SESSION['employee_id']
+                $data['nominated_by'] = $_SESSION['employee_id']
+                    ?? $_SESSION['user']['employee_id']
                     ?? null;
+            }
+            if (empty($data['nominated_by'])) {
+                $userId = $_SESSION['user']['id']
+                    ?? $_SESSION['user_id']
+                    ?? $_SESSION['user']['user_id']
+                    ?? null;
+                if ($userId) {
+                    $db = \Database::getInstance()->getConnection();
+                    $stmt = $db->prepare('SELECT employee_id FROM user_account WHERE user_id = :user_id LIMIT 1');
+                    $stmt->execute(['user_id' => $userId]);
+                    $data['nominated_by'] = $stmt->fetchColumn() ?: null;
+                }
             }
             $id = $ctrl->store($data);
             jsonResponse(['id' => $id], 201);
