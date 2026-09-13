@@ -14,6 +14,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div class="module-content">
         <div id="resignations-section" class="section">
+            <?php $alertId = 'resignation-action-alert'; $alertIcon = 'fas fa-exclamation-triangle'; $alertMessage = 'Pending resignations need approval review'; $alertCount = 0; $alertViewAction = 'pending_review'; include __DIR__ . '/../includes/action-alert.php'; ?>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">
@@ -46,10 +47,10 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     <div class="table-responsive">
                         <table id="resignations-table" class="table table-bordered table-striped table-sm">
                             <colgroup>
-                                <col style="width: 15%;"><col style="width: 8%;"><col style="width: 14%;">
-                                <col style="width: 10%;"><col style="width: 11%;"><col style="width: 8%;">
-                                <col style="width: 10%;"><col style="width: 8%;"><col style="width: 10%;">
-                                <col style="width: 6%;">
+                                <col style="width: 15%;"><col style="width: 10%;"><col style="width: 12%;">
+                                <col style="width: 10%;"><col style="width: 10%;"><col style="width: 8%;">
+                                <col style="width: 9%;"><col style="width: 8%;"><col style="width: 10%;">
+                                <col style="width: 8%;">
                             </colgroup>
                             <thead>
                                 <tr>
@@ -75,10 +76,10 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <div class="table-responsive">
                             <table id="archived-resignations-table" class="table table-bordered table-striped table-sm">
                                 <colgroup>
-                                    <col style="width: 15%;"><col style="width: 8%;"><col style="width: 14%;">
-                                    <col style="width: 10%;"><col style="width: 11%;"><col style="width: 8%;">
-                                    <col style="width: 10%;"><col style="width: 8%;"><col style="width: 10%;">
-                                    <col style="width: 6%;">
+                                    <col style="width: 15%;"><col style="width: 10%;"><col style="width: 12%;">
+                                    <col style="width: 10%;"><col style="width: 10%;"><col style="width: 8%;">
+                                    <col style="width: 9%;"><col style="width: 8%;"><col style="width: 10%;">
+                                    <col style="width: 8%;">
                                 </colgroup>
                                 <thead>
                                     <tr>
@@ -109,9 +110,66 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div id="customToastContainer" style="position: fixed; top: 1rem; right: 1rem; z-index: 11000; display: flex; flex-direction: column; gap: .75rem;"></div>
 
+    <!-- Archive Resignation Modal -->
+    <div class="modal fade exit-modal" id="archiveResignationModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Archive Resignation</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form id="archiveResignationForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="archiveResignationId" name="resignation_id">
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> Archiving will move this resignation record to the archive and remove it from active lists.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="archiveEmployeeId">Employee ID</label>
+                                    <input type="text" class="form-control" id="archiveEmployeeId" readonly>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="archiveEmployeeName">Employee Name</label>
+                                    <input type="text" class="form-control" id="archiveEmployeeName" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="archiveReason" name="archive_reason" value="Process completed; archived.">
+                        <div class="form-group">
+                            <label>Archive Reason</label>
+                            <div class="form-control-plaintext">Process completed; archived.</div>
+                            <small class="form-text text-muted">This reason is generated automatically when the process completes.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="archiveNotes">Additional Notes (Optional)</label>
+                            <textarea class="form-control" id="archiveNotes" name="archive_notes" rows="2" placeholder="Any additional notes about this archive action..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-archive"></i> Archive Resignation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Resignation Review Modal -->
     <div class="modal fade exit-modal" id="resignationModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-primary">
                     <h5 class="modal-title" id="resignationModalTitle">Submit Resignation</h5>
@@ -127,9 +185,10 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="employeeSelect">Employee *</label>
-                                    <select class="form-control" id="employeeSelect" name="employee_id" required>
-                                        <option value="">Select Employee</option>
-                                    </select>
+                                        <select class="form-control" id="employeeSelect" name="employee_id" required>
+                                            <option value="">Select Employee</option>
+                                        </select>
+                                        <div id="employeeDisplay" class="form-control-plaintext" style="display:none; font-weight:600;"></div>
                                     <div id="eligibilityMessage" class="mt-2" style="display: none;"></div>
                                 </div>
                             </div>
@@ -138,6 +197,8 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <div class="form-group">
                             <label for="reason">Reason *</label>
                             <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                            <div id="reasonDisplay" class="form-control-plaintext" style="display:none; white-space:pre-wrap; padding:.375rem .75rem; border-radius:.25rem; background:#f8f9fa;">
+                            </div>
                         </div>
 
                         <div class="row">
@@ -145,12 +206,14 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                 <div class="form-group">
                                     <label for="noticeDate">Notice Date *</label>
                                     <input type="date" class="form-control" id="noticeDate" name="notice_date" required>
+                                    <div id="noticeDateDisplay" class="form-control-plaintext" style="display:none; padding:.375rem .75rem; background:#f8f9fa; border-radius:.25rem;"></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="lastWorkingDate">Last Working Date *</label>
                                     <input type="date" class="form-control" id="lastWorkingDate" name="last_working_date" required>
+                                    <div id="lastWorkingDateDisplay" class="form-control-plaintext" style="display:none; padding:.375rem .75rem; background:#f8f9fa; border-radius:.25rem;"></div>
                                 </div>
                             </div>
                         </div>
@@ -158,6 +221,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <div class="form-group">
                             <label for="comments">Additional Comments</label>
                             <textarea class="form-control" id="comments" name="comments" rows="2"></textarea>
+                            <div id="commentsDisplay" class="form-control-plaintext" style="display:none; white-space:pre-wrap; padding:.375rem .75rem; background:#f8f9fa; border-radius:.25rem;"></div>
                         </div>
 
                         <div class="form-group" id="resignationLetterSection" style="display: none;">
@@ -211,8 +275,8 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     <div class="table-responsive">
                         <table class="table table-bordered table-striped table-sm mb-0">
                             <colgroup>
-                                <col style="width: 15%;"><col style="width: 10%;"><col style="width: 18%;">
-                                <col style="width: 14%;"><col style="width: 12%;"><col style="width: 10%;">
+                                <col style="width: 15%;"><col style="width: 10%;"><col style="width: 12%;">
+                                <col style="width: 14%;"><col style="width: 10%;"><col style="width: 8%;">
                                 <col style="width: 9%;"><col style="width: 8%;"><col style="width: 14%;">
                             </colgroup>
                             <thead>

@@ -14,6 +14,14 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div class="module-content">
         <div id="settlements-section" class="section">
+            <?php $alertId = 'settlement-action-alert'; $alertIcon = 'fas fa-wallet'; $alertMessage = 'Settlement requests are pending action'; $alertCount = 0; $alertViewAction = 'requested'; include __DIR__ . '/../includes/action-alert.php'; ?>
+            <div class="settlement-progress-steps mb-3">
+                <div class="step completed"><span>Exit Management</span></div>
+                <div class="step active"><span>Settlement Request</span></div>
+                <div class="step"><span>Processing &amp; Calculation</span></div>
+                <div class="step"><span>Approval</span></div>
+                <div class="step"><span>Release / Paid</span></div>
+            </div>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">
@@ -25,9 +33,13 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         </div>
                         <select id="settlement-status-filter" class="form-control form-control-sm" onchange="onSettlementStatusFilterChange()" style="flex: 1; white-space: nowrap;">
                             <option value="all">All</option>
-                            <option value="pending_approval">Pending Approval</option>
+                            <option value="requested">Requested</option>
+                            <option value="processing">Processing</option>
+                            <option value="calculated">Calculated</option>
+                            <option value="for_approval">For Approval</option>
                             <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
+                            <option value="paid">Paid</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
                     </div>
                     <div class="card-tools d-flex align-items-center">
@@ -91,12 +103,14 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <input type="hidden" id="settlementExitCaseType" name="exit_case_type" value="">
                         <input type="hidden" id="settlementExitCaseId" name="exit_case_id" value="">
                         <input type="hidden" id="settlementResignationId" name="resignation_id" value="">
+                        <input type="hidden" id="settlementStatus" name="status" value="requested">
+                        <input type="hidden" id="settlementLastWorkingDate" name="last_working_date" value="">
 
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="settlementDate">Settlement Date *</label>
-                                    <input type="date" class="form-control" id="settlementDate" name="settlement_date" required>
+                                    <label for="settlementLastWorkingDateDisplay">Last Working Date</label>
+                                    <input type="text" class="form-control" id="settlementLastWorkingDateDisplay" readonly placeholder="Select approved exit case">
                                 </div>
                             </div>
                         </div>
@@ -105,97 +119,19 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             <div class="col-md-12">
                                 <div class="alert alert-info">
                                     <i class="fas fa-info-circle"></i>
-                                    This form submits a settlement request. Payroll will perform all financial calculations and determine the final net payable amount.
+                                    This request submits the exit case handoff details only. Payroll will calculate the final settlement separately.
                                 </div>
                             </div>
                         </div>
-                        <input type="hidden" id="settlementStatus" name="status" value="pending_approval">
-                        <input type="hidden" id="netPayable" name="net_payable" value="0">
-                        <input type="hidden" id="basicSalary" name="basic_salary" value="0">
-                        <input type="hidden" id="remainingSalary" name="remaining_salary" value="0">
-                        <input type="hidden" id="unusedLeaveConversion" name="unused_leave_conversion" value="0">
-                        <input type="hidden" id="overtimePay" name="overtime_pay" value="0">
-                        <input type="hidden" id="holidayPay" name="holiday_pay" value="0">
-                        <input type="hidden" id="bonuses" name="bonuses" value="0">
-                        <input type="hidden" id="commission" name="commission" value="0">
-                        <input type="hidden" id="hra" name="hra" value="0">
-                        <input type="hidden" id="conveyance" name="conveyance" value="0">
-                        <input type="hidden" id="lta" name="lta" value="0">
-                        <input type="hidden" id="medicalAllowance" name="medical_allowance" value="0">
-                        <input type="hidden" id="otherAllowances" name="other_allowances" value="0">
-                        <input type="hidden" id="separationPay" name="separation_pay" value="0">
-                        <input type="hidden" id="tax" name="tax" value="0">
-                        <input type="hidden" id="sss" name="sss" value="0">
-                        <input type="hidden" id="philhealth" name="philhealth" value="0">
-                        <input type="hidden" id="pagibig" name="pagibig" value="0">
-                        <input type="hidden" id="cashAdvance" name="cash_advance" value="0">
-                        <input type="hidden" id="companyLoan" name="company_loan" value="0">
-                        <input type="hidden" id="equipmentDamage" name="equipment_damage" value="0">
-                        <input type="hidden" id="missingAssets" name="missing_assets" value="0">
-                        <input type="hidden" id="lateDeductions" name="late_deductions" value="0">
-                        <input type="hidden" id="absenceDeductions" name="absence_deductions" value="0">
-                        <input type="hidden" id="providentFund" name="provident_fund" value="0">
-                        <input type="hidden" id="gratuity" name="gratuity" value="0">
-                        <input type="hidden" id="noticePay" name="notice_pay" value="0">
-                        <input type="hidden" id="outstandingLoans" name="outstanding_loans" value="0">
-                        <input type="hidden" id="otherDeductions" name="other_deductions" value="0">
 
                         <div class="card">
                             <div class="card-header">
                                 <h6 class="card-title">Request Details</h6>
                             </div>
                             <div class="card-body">
-                                <p class="mb-0">HR will only submit the employee, related resignation, and settlement date. Payroll will review the request, calculate the settlement components, and set the final net amount.</p>
-                            </div>
-                        </div>
-
-                        <div class="card mt-3 d-none" id="payrollSettlementSummaryCard">
-                            <div class="card-header">
-                                <h6 class="card-title">Payroll Settlement Details</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered mb-0">
-                                        <tbody>
-                                            <tr><th>Net Payable</th><td id="payrollSettlementSummary_net_payable">0.00</td></tr>
-                                            <tr><th>Basic Salary</th><td id="payrollSettlementSummary_basic_salary">0.00</td></tr>
-                                            <tr><th>Remaining Salary</th><td id="payrollSettlementSummary_remaining_salary">0.00</td></tr>
-                                            <tr><th>Unused Leave Conversion</th><td id="payrollSettlementSummary_unused_leave_conversion">0.00</td></tr>
-                                            <tr><th>Overtime Pay</th><td id="payrollSettlementSummary_overtime_pay">0.00</td></tr>
-                                            <tr><th>Holiday Pay</th><td id="payrollSettlementSummary_holiday_pay">0.00</td></tr>
-                                            <tr><th>Bonuses</th><td id="payrollSettlementSummary_bonuses">0.00</td></tr>
-                                            <tr><th>Commission</th><td id="payrollSettlementSummary_commission">0.00</td></tr>
-                                            <tr><th>HRA</th><td id="payrollSettlementSummary_hra">0.00</td></tr>
-                                            <tr><th>Conveyance</th><td id="payrollSettlementSummary_conveyance">0.00</td></tr>
-                                            <tr><th>LTA</th><td id="payrollSettlementSummary_lta">0.00</td></tr>
-                                            <tr><th>Medical Allowance</th><td id="payrollSettlementSummary_medical_allowance">0.00</td></tr>
-                                            <tr><th>Other Allowances</th><td id="payrollSettlementSummary_other_allowances">0.00</td></tr>
-                                            <tr><th>Separation Pay</th><td id="payrollSettlementSummary_separation_pay">0.00</td></tr>
-                                            <tr><th>Tax</th><td id="payrollSettlementSummary_tax">0.00</td></tr>
-                                            <tr><th>SSS</th><td id="payrollSettlementSummary_sss">0.00</td></tr>
-                                            <tr><th>PhilHealth</th><td id="payrollSettlementSummary_philhealth">0.00</td></tr>
-                                            <tr><th>Pag-IBIG</th><td id="payrollSettlementSummary_pagibig">0.00</td></tr>
-                                            <tr><th>Cash Advance</th><td id="payrollSettlementSummary_cash_advance">0.00</td></tr>
-                                            <tr><th>Company Loan</th><td id="payrollSettlementSummary_company_loan">0.00</td></tr>
-                                            <tr><th>Equipment Damage</th><td id="payrollSettlementSummary_equipment_damage">0.00</td></tr>
-                                            <tr><th>Missing Assets</th><td id="payrollSettlementSummary_missing_assets">0.00</td></tr>
-                                            <tr><th>Late Deductions</th><td id="payrollSettlementSummary_late_deductions">0.00</td></tr>
-                                            <tr><th>Absence Deductions</th><td id="payrollSettlementSummary_absence_deductions">0.00</td></tr>
-                                            <tr><th>Provident Fund</th><td id="payrollSettlementSummary_provident_fund">0.00</td></tr>
-                                            <tr><th>Gratuity</th><td id="payrollSettlementSummary_gratuity">0.00</td></tr>
-                                            <tr><th>Notice Pay</th><td id="payrollSettlementSummary_notice_pay">0.00</td></tr>
-                                            <tr><th>Outstanding Loans</th><td id="payrollSettlementSummary_outstanding_loans">0.00</td></tr>
-                                            <tr><th>Other Deductions</th><td id="payrollSettlementSummary_other_deductions">0.00</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card mt-3">
-                            <div class="card-body">
-                                <div class="alert alert-warning mb-0">
-                                    <strong>Payroll owns settlement calculation:</strong> No payroll financial fields are editable in this form.
+                                <div class="form-group mb-0">
+                                    <label for="settlementRemarks">Remarks</label>
+                                    <textarea class="form-control" id="settlementRemarks" name="remarks" rows="3" placeholder="Add any notes for the settlement request..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -211,6 +147,21 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
     </div>
 
     <!-- Archive Settlement Modal -->
+    <div class="modal fade exit-modal settlement-view-modal" id="settlementViewModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h5 class="modal-title" id="settlementViewModalTitle">Final Settlement</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body settlement-view-detail-body" id="settlementViewModalBody"></div>
+                <div class="modal-footer settlement-view-detail-footer" id="settlementViewModalFooter"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade exit-modal" id="archiveSettlementModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">

@@ -4,6 +4,11 @@ require_once 'ExitManagementModel.php';
 
 class TerminationModel extends ExitManagementModel
 {
+    protected function buildPdfFromText(string $outputPath, string $title, string $htmlContent): bool
+    {
+        return parent::buildPdfFromText($outputPath, $title, $htmlContent);
+    }
+
     public function __construct()
     {
         parent::__construct();
@@ -185,41 +190,14 @@ class TerminationModel extends ExitManagementModel
             @mkdir($uploadDir, 0755, true);
         }
 
-        // Prefer to generate a PDF using Dompdf if available.
-        // If the PDF library is missing, store a valid HTML fallback with the matching
-        // extension so previewing can still work in the browser.
         $pdfFileName = 'termination_' . time() . '_' . $terminationId . '.pdf';
-        $htmlFileName = 'termination_' . time() . '_' . $terminationId . '.html';
         $filePathRelative = 'uploads/documents/' . $pdfFileName;
         $fullPath = __DIR__ . '/../' . $filePathRelative;
 
-        $pdfGenerated = false;
-        // Try to load Dompdf from payroll vendor (existing installation)
-        $dompdfAutoload = __DIR__ . '/../payroll/vendor/autoload.php';
-        if (file_exists($dompdfAutoload)) {
-            try {
-                require_once $dompdfAutoload;
-                if (class_exists('\Dompdf\Dompdf')) {
-                    $dompdf = new \Dompdf\Dompdf();
-                    $dompdf->loadHtml($html);
-                    $dompdf->setPaper('A4', 'portrait');
-                    $dompdf->render();
-                    $pdfOutput = $dompdf->output();
-                    file_put_contents($fullPath, $pdfOutput);
-                    $pdfGenerated = true;
-                }
-            } catch (Exception $e) {
-                error_log('Dompdf generation failed: ' . $e->getMessage());
-                $pdfGenerated = false;
-            }
-        }
+        $pdfGenerated = $this->buildPdfFromText($fullPath, 'Termination Letter', $html);
 
-        // Fallback: save HTML if PDF couldn't be created.
         if (!$pdfGenerated) {
-            $filePathRelative = 'uploads/documents/' . $htmlFileName;
-            $fullPath = __DIR__ . '/../' . $filePathRelative;
-            file_put_contents($fullPath, $html);
-            error_log('Termination letter PDF generation unavailable; stored HTML fallback at: ' . $filePathRelative);
+            throw new Exception('Unable to generate termination letter PDF');
         }
 
         // Create document record linking to this termination

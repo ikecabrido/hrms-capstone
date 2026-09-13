@@ -6,6 +6,100 @@ class ExitManagementModel
 {
     protected PDO $db;
 
+    protected function buildPdfFromText(string $outputPath, string $title, string $htmlContent): bool
+    {
+        $autoloaderCandidates = [
+            __DIR__ . '/../../vendor/autoload.php',
+            __DIR__ . '/../../../vendor/autoload.php',
+            __DIR__ . '/../vendor/autoload.php',
+            __DIR__ . '/../../../../vendor/autoload.php',
+            __DIR__ . '/../payroll/vendor/autoload.php',
+        ];
+
+        foreach ($autoloaderCandidates as $autoloaderCandidate) {
+            if (file_exists($autoloaderCandidate)) {
+                try {
+                    require_once $autoloaderCandidate;
+                    if (class_exists('Dompdf\\Dompdf')) {
+                        $dompdf = new \Dompdf\Dompdf();
+                        $dompdf->loadHtml($htmlContent);
+                        $dompdf->setPaper('A4', 'portrait');
+                        $dompdf->render();
+                        $pdfOutput = $dompdf->output();
+                        if (file_put_contents($outputPath, $pdfOutput) !== false) {
+                            return true;
+                        }
+                    }
+                } catch (Throwable $e) {
+                    error_log('Dompdf generation failed: ' . $e->getMessage());
+                }
+            }
+        }
+
+        $plainText = preg_replace('/<br\s*\/?>/i', "\n", $htmlContent);
+        $plainText = preg_replace('/<\/?(p|div|li|h[1-6]|tr|td|th)\s*[^>]*>/i', "\n", $plainText);
+        $plainText = strip_tags($plainText);
+        $plainText = html_entity_decode($plainText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $plainText = preg_replace('/\r\n?/', "\n", $plainText);
+        $plainText = preg_replace('/[\n]{3,}/', "\n\n", $plainText);
+        $lines = array_filter(array_map('trim', preg_split('/\n/', $plainText)), static fn ($line) => $line !== '');
+
+        if (empty($lines)) {
+            $lines = [$title];
+        }
+
+        $contentStream = "BT\n/F1 12 Tf\n50 800 Td\n(" . $this->escapePdfString($title) . ") Tj\nET\n";
+        $y = 760;
+
+        foreach ($lines as $line) {
+            $safeLine = $this->escapePdfString((string)$line);
+            $contentStream .= "BT\n/F1 11 Tf\n50 {$y} Td\n({$safeLine}) Tj\nET\n";
+            $y -= 16;
+            if ($y < 50) {
+                break;
+            }
+        }
+
+        $objects = [
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+            "<< /Length " . strlen($contentStream) . " >>\nstream\n" . $contentStream . "\nendstream",
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        ];
+
+        $pdf = "%PDF-1.4\n";
+        $offsets = [0];
+
+        foreach ($objects as $index => $object) {
+            $offsets[] = strlen($pdf);
+            $pdf .= ($index + 1) . " 0 obj\n" . $object . "\nendobj\n";
+        }
+
+        $xrefPosition = strlen($pdf);
+        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
+        $pdf .= "0000000000 65535 f \n";
+        for ($index = 1; $index <= count($objects); $index++) {
+            $pdf .= sprintf("%010d 00000 n \n", $offsets[$index]);
+        }
+        $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n{$xrefPosition}\n%%EOF";
+
+        if (file_put_contents($outputPath, $pdf) === false) {
+            return false;
+        }
+
+        return file_exists($outputPath) && filesize($outputPath) > 0;
+    }
+
+    protected function escapePdfString(string $value): string
+    {
+        $value = str_replace('\\', '\\\\', $value);
+        $value = str_replace('(', '\\(', $value);
+        $value = str_replace(')', '\\)', $value);
+        $value = str_replace("\r", '', $value);
+        return $value;
+    }
+
     public function __construct()
     {
         $this->db = (new Database())->getConnection();
@@ -140,6 +234,38 @@ class ExitManagementModel
         });
 
         return $waitingCases;
+    }
+
+    /**
+     * Get recently auto-created exit interview records.
+     * Uses a combination of a notes marker ("Auto-created%") and recency
+     * (created_at within the last N hours) to identify system-generated entries.
+     */
+    public function getRecentAutoCreatedInterviews(int $hours = 48): array
+    {
+        if (!$this->tableExists('exit_interviews')) {
+            return [];
+        }
+
+        $hours = max(1, (int)$hours);
+        $cutoff = date('Y-m-d H:i:s', strtotime("-{$hours} hours"));
+        $autoPattern = 'Auto-created%';
+
+        $sql = "SELECT ei.*, CONCAT(IFNULL(e.first_name,''),' ',IFNULL(e.last_name,'')) AS full_name,
+                       CASE WHEN ei.exit_case_type = 'resignation' THEN (SELECT last_working_date FROM exit_resignations WHERE id = ei.exit_case_id)
+                            WHEN ei.exit_case_type = 'termination' THEN (SELECT effective_date FROM exit_terminations WHERE id = ei.exit_case_id)
+                            ELSE NULL END AS exit_date
+                FROM exit_interviews ei
+                LEFT JOIN em_employees e ON ei.employee_id = e.employee_id
+                WHERE (ei.notes LIKE ? OR ei.created_at >= ?)
+                ORDER BY ei.created_at DESC
+                LIMIT 10";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$autoPattern, $cutoff]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return $rows;
     }
 
     /**
@@ -543,12 +669,57 @@ class ExitManagementModel
     }
 
     /**
+     * Get employees who have at least one resignation or termination case.
+     * This is used for document and case-driven exit workflows where HR needs
+     * employees tied to an actual exit record, not the entire active roster.
+     */
+    public function getEmployeesWithExitCases(): array
+    {
+        $caseSources = [];
+
+        if ($this->tableExists('exit_resignations')) {
+            $caseSources[] = 'SELECT employee_id FROM exit_resignations';
+        }
+
+        if ($this->tableExists('exit_terminations')) {
+            $caseSources[] = 'SELECT employee_id FROM exit_terminations';
+        }
+
+        if (empty($caseSources)) {
+            return [];
+        }
+
+        $unionSql = implode(' UNION ', $caseSources);
+
+        $sql = "
+            SELECT DISTINCT
+                e.employee_id AS id,
+                CONCAT(e.first_name, ' ', e.last_name) AS full_name,
+                e.employee_code AS username,
+                e.email,
+                COALESCE(d.department_name, 'Unknown') AS department,
+                COALESCE(p.position_name, 'Unknown') AS position,
+                e.employment_status AS employee_status
+            FROM em_employees e
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
+            INNER JOIN (
+                {$unionSql}
+            ) exit_case_employees ON exit_case_employees.employee_id = e.employee_id
+            ORDER BY e.first_name, e.last_name ASC
+        ";
+
+        $stmt = $this->db->query($sql);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Get all employees eligible for exit management
      * Returns employees list, with optional user link and fallback.
      */
     public function getEligibleEmployees(): array
     {
-        // Get all active employees for exit-related operations such as document uploads
+        // Keep this as the broader active roster used by unrelated selectors.
         $stmt = $this->db->query("
             SELECT
                 e.employee_id AS id,
@@ -767,7 +938,7 @@ class ExitManagementModel
     /**
      * Get employee details by ID
      */
-    public function getEmployeeById($employeeId): ?array
+    public function getEmployeeById(int $employeeId): ?array
     {
         $stmt = $this->db->prepare("SELECT
                 e.*,

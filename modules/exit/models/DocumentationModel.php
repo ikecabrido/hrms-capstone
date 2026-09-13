@@ -4,6 +4,27 @@ require_once 'ExitManagementModel.php';
 
 class DocumentationModel extends ExitManagementModel
 {
+    private function resolveTitle(array $data): string
+    {
+        $title = trim((string)($data['title'] ?? ''));
+        if ($title !== '') {
+            return $title;
+        }
+
+        $documentType = trim((string)($data['document_type'] ?? ''));
+        $typeMap = [
+            'resignation_letter' => 'Resignation Letter',
+            'termination_letter' => 'Termination Letter',
+            'clearance_form' => 'Clearance Form',
+            'handover_document' => 'Handover Document',
+            'settlement_receipt' => 'Settlement Receipt',
+            'exit_interview' => 'Exit Interview Notes',
+            'certificate' => 'Experience Certificate',
+        ];
+
+        return $typeMap[$documentType] ?? 'Exit Document';
+    }
+
     /**
      * Create a document record
      */
@@ -13,6 +34,7 @@ class DocumentationModel extends ExitManagementModel
             error_log("=== DocumentationModel::createDocument START ===");
             error_log("Input data: " . json_encode($data));
 
+            $data['title'] = $this->resolveTitle($data);
             $hasExitCaseCols = $this->columnExists('exit_documents', 'exit_case_type') && $this->columnExists('exit_documents', 'exit_case_id');
 
             // Build insert columns/values dynamically depending on schema
@@ -86,6 +108,7 @@ class DocumentationModel extends ExitManagementModel
     {
         // Handle schema differences: include exit_case_* fields only when present
         $hasExitCaseCols = $this->columnExists('exit_documents', 'exit_case_type') && $this->columnExists('exit_documents', 'exit_case_id');
+        $data['title'] = $this->resolveTitle($data);
 
         $fields = ['employee_id = ?', 'document_type = ?', 'title = ?'];
         $values = [
@@ -94,9 +117,20 @@ class DocumentationModel extends ExitManagementModel
             $data['title']
         ];
 
+        if (array_key_exists('file_path', $data) && !empty($data['file_path'])) {
+            $fields[] = 'file_path = ?';
+            $values[] = $data['file_path'];
+        }
+
         if ($hasExitCaseCols) {
-            array_unshift($fields, 'exit_case_type = ?', 'exit_case_id = ?');
-            array_unshift($values, $data['exit_case_type'] ?? null, !empty($data['exit_case_id']) ? (int)$data['exit_case_id'] : null);
+            $fields[] = 'exit_case_type = ?';
+            $fields[] = 'exit_case_id = ?';
+            $values[] = $data['exit_case_type'] ?? null;
+            $values[] = !empty($data['exit_case_id']) ? (int)$data['exit_case_id'] : null;
+        }
+
+        if ($this->columnExists('exit_documents', 'updated_at')) {
+            $fields[] = 'updated_at = NOW()';
         }
 
         $sql = "UPDATE exit_documents SET " . implode(', ', $fields) . " WHERE id = ?";

@@ -14,6 +14,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div class="module-content">
         <div id="documents-section" class="section">
+            <?php $alertId = 'document-action-alert'; $alertIcon = 'fas fa-file-alt'; $alertMessage = 'Documentation items still need completion'; $alertCount = 0; $alertViewAction = null; include __DIR__ . '/../includes/action-alert.php'; ?>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">
@@ -30,7 +31,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         </select>
                     </div>
                     <div class="card-tools d-flex align-items-center">
-                        <button type="button" class="btn btn-info btn-sm mr-2" onclick="showDocumentModal()">
+                        <button type="button" class="btn btn-info btn-sm mr-2" onclick="showDocumentModal(null, { openUploadModal: true })">
                             <i class="fas fa-upload"></i> Upload
                         </button>
                         <button type="button" class="btn btn-warning btn-sm mr-2" onclick="archiveDocuments()">
@@ -80,43 +81,39 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <input type="hidden" id="documentExitCaseType" name="exit_case_type">
                         <input type="hidden" id="documentExitCaseId" name="exit_case_id">
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="documentEmployeeSelect">Employee *</label>
-                                    <select class="form-control" id="documentEmployeeSelect" name="employee_id" required>
-                                        <option value="">Select Employee</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="documentType">Document Type *</label>
-                                    <select class="form-control" id="documentType" name="document_type" required>
-                                        <option value="">Select Type</option>
-                                        <option value="resignation_letter">Resignation Letter</option>
-                                        <option value="clearance_form">Clearance Form</option>
-                                        <option value="handover_document">Handover Document</option>
-                                        <option value="settlement_receipt">Settlement Receipt</option>
-                                        <option value="exit_interview">Exit Interview Notes</option>
-                                        <option value="certificate">Experience Certificate</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+                        <input type="hidden" id="documentEmployeeId" name="employee_id">
 
                         <div class="form-group">
-                            <label for="documentCaseSelect">Link to Exit Case</label>
-                            <select class="form-control" id="documentCaseSelect" name="document_case_select">
-                                <option value="">No exit case linked</option>
+                            <label for="documentCaseSelect">Select Exit Case *</label>
+                            <select class="form-control" id="documentCaseSelect" name="document_case_select" required>
+                                <option value="">Loading exit cases...</option>
                             </select>
-                            <small class="form-text text-muted">Optional: link the document to a resignation or termination case.</small>
+                            <small class="form-text text-muted">The selected case automatically determines the employee and the case-linked document type.</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="documentTitle">Document Title *</label>
-                            <input type="text" class="form-control" id="documentTitle" name="title" required>
+                            <label for="documentType">Document Type *</label>
+                            <select class="form-control" id="documentType" name="document_type" required>
+                                <option value="">Select Type</option>
+                                <option value="resignation_letter">Resignation Letter</option>
+                                <option value="clearance_form">Clearance Form</option>
+                                <option value="handover_document">Handover Document</option>
+                                <option value="settlement_receipt">Settlement Receipt</option>
+                                <option value="exit_interview">Exit Interview Notes</option>
+                                <option value="certificate">Experience Certificate</option>
+                                <option value="termination_letter">Termination Letter</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="documentCaseDocumentsSection" style="display:none;">
+                            <label>Current Case Documents</label>
+                            <div id="documentCaseDocumentsHelper" class="small text-muted mb-2">View or replace an existing document for this exit case. Replacing updates the current file without keeping a separate version history.</div>
+                            <div id="documentCaseDocumentsList" class="list-group list-group-flush"></div>
+                        </div>
+
+                        <div class="form-group" id="documentCaseHint" style="display:none;">
+                            <small class="form-text text-info">Select a case above to view or replace its documents.</small>
                         </div>
 
                         <div class="form-group">

@@ -5,6 +5,11 @@ require_once 'SettlementModel.php';
 
 class ResignationModel extends ExitManagementModel
 {
+    protected function buildPdfFromText(string $outputPath, string $title, string $htmlContent): bool
+    {
+        return parent::buildPdfFromText($outputPath, $title, $htmlContent);
+    }
+
     public function __construct()
     {
         parent::__construct();
@@ -109,6 +114,13 @@ class ResignationModel extends ExitManagementModel
             $resignationId = (int)$this->db->lastInsertId();
 
             $this->db->commit();
+
+            try {
+                $this->saveResignationLetter($resignationId, $data);
+            } catch (Exception $e) {
+                error_log('Failed to auto-save resignation letter: ' . $e->getMessage());
+            }
+
             return $resignationId;
         } catch (Exception $e) {
             if ($this->db->inTransaction()) {
@@ -116,6 +128,70 @@ class ResignationModel extends ExitManagementModel
             }
             throw new Exception('Database error: ' . $e->getMessage());
         }
+    }
+
+    protected function saveResignationLetter(int $resignationId, array $data): void
+    {
+        $employeeId = $data['employee_id'] ?? '';
+        $employeeName = '';
+        try {
+            $stmt = $this->db->prepare("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM em_employees WHERE employee_id = ? LIMIT 1");
+            $stmt->execute([$employeeId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                $employeeName = $row['full_name'];
+            }
+        } catch (Exception $e) {
+            // ignore
+        }
+
+        $noticeDate = $data['notice_date'] ?? '';
+        $lastWorkingDate = $data['last_working_date'] ?? '';
+        $reason = $data['reason'] ?? '';
+        $comments = $data['comments'] ?? '';
+
+        $html = '<!doctype html><html><head><meta charset="utf-8"><title>Resignation Letter</title>' .
+            '<style>body{font-family:Arial,sans-serif;margin:24px;color:#172b4d;} .school-header{display:flex;align-items:center;border-bottom:2px solid #1f5fbf;padding-bottom:14px;margin-bottom:20px;} .school-header img{width:86px;height:86px;object-fit:contain;margin-right:18px;} .school-name{font-size:20px;font-weight:700;color:#174a8b;} .school-details{font-size:12px;line-height:1.6;color:#333;margin-top:4px;} .content{font-size:14px;line-height:1.7;color:#1f2937;}</style>' .
+            '</head><body>' .
+            '<div class="school-header"><img src="/capstone_hr_management_system2/assets/pics/bcpLogo.png" alt="BCP logo"><div><div class="school-name">Bestlink College of the Philippines - Bulacan Campus</div><div class="school-details">Lot 1 Ipo Road Brgy. Minuyan Proper, City of San Jose Del Monte, Bulacan.<br>Tel. No.: (044)792-1992</div></div></div>' .
+            '<h2>Resignation Letter</h2>' .
+            '<div class="content">' .
+            '<p>This letter serves as formal notice that <strong>' . htmlspecialchars($employeeName, ENT_QUOTES) . '</strong> (Employee ID: ' . htmlspecialchars($employeeId, ENT_QUOTES) . ') is resigning from employment.</p>' .
+            '<p><strong>Notice date:</strong> ' . htmlspecialchars($noticeDate, ENT_QUOTES) . '</p>' .
+            '<p><strong>Last working date:</strong> ' . htmlspecialchars($lastWorkingDate, ENT_QUOTES) . '</p>' .
+            '<p><strong>Reason for resignation:</strong> ' . nl2br(htmlspecialchars($reason, ENT_QUOTES)) . '</p>' .
+            ($comments ? '<p><strong>Additional notes:</strong> ' . nl2br(htmlspecialchars($comments, ENT_QUOTES)) . '</p>' : '') .
+            '<p>Issued by HR Management</p>' .
+            '</div></body></html>';
+
+        $uploadDir = __DIR__ . '/../uploads/documents/';
+        if (!is_dir($uploadDir)) {
+            @mkdir($uploadDir, 0755, true);
+        }
+
+        $fileName = 'resignation_' . time() . '_' . $resignationId . '.pdf';
+        $filePathRelative = 'uploads/documents/' . $fileName;
+        $fullPath = __DIR__ . '/../' . $filePathRelative;
+
+        $pdfGenerated = $this->buildPdfFromText($fullPath, 'Resignation Letter', $html);
+        if (!$pdfGenerated) {
+            throw new Exception('Unable to generate resignation letter PDF');
+        }
+
+        $updateStmt = $this->db->prepare('UPDATE exit_resignations SET resignation_letter_path = ? WHERE id = ?');
+        $updateStmt->execute([$filePathRelative, $resignationId]);
+
+        require_once __DIR__ . '/DocumentationModel.php';
+        $docModel = new DocumentationModel();
+        $docModel->createDocument([
+            'employee_id' => $employeeId,
+            'exit_case_type' => 'resignation',
+            'exit_case_id' => $resignationId,
+            'document_type' => 'resignation_letter',
+            'title' => 'Resignation Letter',
+            'file_path' => $filePathRelative,
+            'uploaded_by' => $_SESSION['employee_id'] ?? null,
+        ]);
     }
 
     /**
@@ -138,17 +214,7 @@ class ResignationModel extends ExitManagementModel
      */
     public function getResignationById(int $resignationId): ?array
     {
-        $stmt = $this->db->prepare("
-            SELECT r.*, CONCAT(e.first_name, ' ', e.last_name) AS employee_name, e.employee_id AS emp_id,
-                                     e.email, e.department,
-                                     CONCAT(p.first_name, ' ', p.last_name) AS preclearance_desk_person_name
-            FROM exit_resignations r
-            LEFT JOIN em_employees e ON r.employee_id = e.employee_id
-            LEFT JOIN em_employees p ON r.preclearance_desk_person = p.employee_id
-            LEFT JOIN em_departments d ON e.department_id = d.department_id
-            LEFT JOIN em_positions pos ON e.position_id = pos.position_id
-            WHERE r.id = ?
-        ");
+        $stmt = $this->db->prepare("\n            SELECT r.*, CONCAT(e.first_name, ' ', e.last_name) AS employee_name, e.employee_id AS emp_id,\n                                     e.email,\n                                     COALESCE(d.department_name, '') AS department,\n                                     COALESCE(pos.position_name, '') AS position,\n                                     CONCAT(p.first_name, ' ', p.last_name) AS preclearance_desk_person_name\n            FROM exit_resignations r\n            LEFT JOIN em_employees e ON r.employee_id = e.employee_id\n            LEFT JOIN em_employees p ON r.preclearance_desk_person = p.employee_id\n            LEFT JOIN em_departments d ON e.department_id = d.department_id\n            LEFT JOIN em_positions pos ON e.position_id = pos.position_id\n            WHERE r.id = ?\n        ");
         $stmt->execute([$resignationId]);
         $resignation = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
@@ -319,6 +385,9 @@ class ResignationModel extends ExitManagementModel
                 $whereClause = "";
             } elseif ($status === 'pending') {
                 $whereClause = " WHERE r.status IN ('pending_review', 'pending_legal_review')";
+            } elseif ($status === 'active') {
+                // Treat 'active' as records not archived (defensive mapping so UI can send 'active')
+                $whereClause = " WHERE r.status != 'archived'";
             } elseif ($status) {
                 $whereClause = " WHERE r.status = :status";
                 $params['status'] = $status;
@@ -445,12 +514,50 @@ class ResignationModel extends ExitManagementModel
         }
 
         if ($status === 'approved') {
-            $stmt = $this->db->prepare("
-                UPDATE exit_resignations
-                SET status = ?, legal_approved_by = ?, legal_approved_at = NOW(), legal_approval_comments = ?, approved_by = ?, approved_at = NOW(), updated_at = NOW()
-                WHERE id = ?
-            ");
-            return $stmt->execute([$status, $approverId, $comments, $approverId, $resignationId]);
+                $stmt = $this->db->prepare("
+                    UPDATE exit_resignations
+                    SET status = ?, legal_approved_by = ?, legal_approved_at = NOW(), legal_approval_comments = ?, approved_by = ?, approved_at = NOW(), updated_at = NOW()
+                    WHERE id = ?
+                ");
+                // Wrap update and downstream insert in a transaction to avoid partial state
+                try {
+                    $this->db->beginTransaction();
+
+                    $ok = $stmt->execute([$status, $approverId, $comments, $approverId, $resignationId]);
+
+                    if (!$ok) {
+                        $this->db->rollBack();
+                        return false;
+                    }
+
+                    // Fetch the resignation to get employee_id and ensure approved
+                    $resStmt = $this->db->prepare("SELECT id, employee_id FROM exit_resignations WHERE id = ? AND status = 'approved'");
+                    $resStmt->execute([$resignationId]);
+                    $res = $resStmt->fetch(PDO::FETCH_ASSOC);
+
+                    if ($res) {
+                        $employeeId = $res['employee_id'];
+
+                        // Check for existing scheduled interview for this exit case
+                        $chk = $this->db->prepare("SELECT COUNT(*) as c FROM exit_interviews WHERE exit_case_type = 'resignation' AND exit_case_id = ? AND status = 'scheduled'");
+                        $chk->execute([$resignationId]);
+                        $count = (int)($chk->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+
+                        if ($count === 0) {
+                            // Insert a minimal scheduled interview record so HR sees it in the next tab
+                            $ins = $this->db->prepare("INSERT INTO exit_interviews (employee_id, exit_case_type, exit_case_id, interviewer_id, scheduled_date, scheduled_time, location, notes, status, created_at) VALUES (?, 'resignation', ?, NULL, CURDATE(), CURTIME(), 'TBD', ?, 'scheduled', NOW())");
+                            $ins->execute([$employeeId, $resignationId, 'Auto-created on resignation approval']);
+                        }
+                    }
+
+                    $this->db->commit();
+                    return true;
+                } catch (Exception $e) {
+                    if ($this->db->inTransaction()) {
+                        $this->db->rollBack();
+                    }
+                    throw $e;
+                }
         }
 
         if ($status === 'rejected_by_legal') {

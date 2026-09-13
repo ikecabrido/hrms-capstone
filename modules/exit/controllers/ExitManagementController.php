@@ -285,7 +285,7 @@ class ExitManagementController
                                 FROM exit_employee_settlements s
                                 LEFT JOIN em_employees e ON e.employee_id = s.employee_id
                                 LEFT JOIN exit_resignations r ON s.resignation_id = r.id OR s.exit_case_id = r.id
-                                WHERE s.status IN ('pending', 'pending_approval', 'approved')
+                                WHERE s.status IN ('pending', 'requested', 'approved')
                                     AND COALESCE(s.settlement_date, s.requested_at, s.completed_at, r.last_working_date) IS NOT NULL
                                     AND COALESCE(s.settlement_date, s.requested_at, s.completed_at, r.last_working_date) BETWEEN ? AND ?";
                 $settlementStmt = $db->prepare($settlementSql);
@@ -544,7 +544,7 @@ class ExitManagementController
 
             // Settlements pending approval — use verified settlement columns
             if ($this->model->tableExists('exit_employee_settlements')) {
-                $stmt = $db->query("SELECT settlement_id AS id, employee_id, exit_case_type, exit_case_id, status, requested_at, completed_at, created_at FROM exit_employee_settlements WHERE status IN ('pending_approval','pending') ORDER BY created_at ASC LIMIT 20");
+                $stmt = $db->query("SELECT settlement_id AS id, employee_id, exit_case_type, exit_case_id, status, requested_at, completed_at, created_at FROM exit_employee_settlements WHERE status IN ('requested','pending') ORDER BY created_at ASC LIMIT 20");
                 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $s) {
                     $items[] = [
                         'type' => 'settlement_pending',
@@ -602,6 +602,82 @@ class ExitManagementController
     }
 
     /**
+     * Return simple counts for each exit stage used by the shared action-alert
+     */
+    public function getStagePendingCounts(): array
+    {
+        try {
+            $db = $this->model->getConnection();
+
+            $counts = [
+                'resignations' => 0,
+                'terminations' => 0,
+                'interviews' => 0,
+                'knowledge_transfer' => 0,
+                'settlements' => 0,
+                'documentation' => 0,
+                'post_exit_feedback' => 0
+            ];
+
+            // Resignations pending
+            try {
+                $stmt = $db->query("SELECT COUNT(*) as c FROM exit_resignations WHERE status IN ('pending_review','pending_legal_review','pending')");
+                $counts['resignations'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+            } catch (Exception $e) {}
+
+            // Terminations pending
+            if ($this->model->tableExists('exit_terminations')) {
+                try {
+                    $stmt = $db->query("SELECT COUNT(*) as c FROM exit_terminations WHERE status IN ('pending_review','pending_legal_review','pending')");
+                    $counts['terminations'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+                } catch (Exception $e) {}
+            }
+
+            // Interviews scheduled
+            if ($this->model->tableExists('exit_interviews')) {
+                try {
+                    $stmt = $db->query("SELECT COUNT(DISTINCT id) as c FROM exit_interviews WHERE status IN ('scheduled','pending','in_progress')");
+                    $counts['interviews'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+                } catch (Exception $e) {}
+            }
+
+            // Knowledge transfer needed (use model helper if available)
+            try {
+                $kt = $this->model->getEmployeesNeedingKnowledgeTransfer();
+                $counts['knowledge_transfer'] = is_array($kt) ? count($kt) : 0;
+            } catch (Exception $e) {
+                $counts['knowledge_transfer'] = 0;
+            }
+
+            // Settlements pending
+            if ($this->model->tableExists('exit_employee_settlements')) {
+                try {
+                    $stmt = $db->query("SELECT COUNT(*) as c FROM exit_employee_settlements WHERE status IN ('requested','pending','requested')");
+                    $counts['settlements'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+                } catch (Exception $e) {}
+            }
+
+            // Documentation incomplete
+            if ($this->model->columnExists('exit_resignations', 'documentation_complete')) {
+                try {
+                    $stmt = $db->query("SELECT COUNT(*) as c FROM exit_resignations WHERE documentation_complete = 0");
+                    $counts['documentation'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+                } catch (Exception $e) { $counts['documentation'] = 0; }
+            }
+
+            // Post-exit feedback pending
+            try {
+                $eligible = $this->model->getEligiblePostExitFeedbackCases();
+                $counts['post_exit_feedback'] = is_array($eligible) ? count($eligible) : 0;
+            } catch (Exception $e) { $counts['post_exit_feedback'] = 0; }
+
+            return $counts;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Get dashboard statistics
      */
     public function getDashboardStats(): array
@@ -623,7 +699,7 @@ class ExitManagementController
             $activeTransfers = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
 
             // Count pending settlements
-            $stmt = $db->query("SELECT COUNT(*) as count FROM exit_employee_settlements WHERE status = 'pending_approval'");
+            $stmt = $db->query("SELECT COUNT(*) as count FROM exit_employee_settlements WHERE status = 'requested'");
             $pendingSettlements = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
 
             // Count total active employees (the managed workforce, not system login accounts)
@@ -1371,6 +1447,9 @@ class ExitManagementController
                 case 'get_eligible_employees':
                     return $this->getEligibleEmployees();
 
+                case 'get_exit_case_employees':
+                    return $this->model->getEmployeesWithExitCases();
+
                 case 'get_employees_with_resignations':
                     return $this->model->getEmployeesWithResignations();
 
@@ -1380,7 +1459,10 @@ class ExitManagementController
                 case 'get_approved_exit_cases':
                     return $this->model->getApprovedExitCases();
                 case 'get_waiting_interview_cases':
-                    return $this->model->getApprovedCasesAwaitingInterview();
+                    // Banner should show recently auto-created interview records
+                    // (created by the system when an exit case is approved). Use
+                    // a 48-hour window by default.
+                    return $this->model->getRecentAutoCreatedInterviews(48);
                 case 'get_eligible_post_exit_cases':
                     return $this->model->getEligiblePostExitFeedbackCases();
                 case 'get_active_exit_cases':
@@ -1425,6 +1507,9 @@ class ExitManagementController
 
                 case 'get_action_items':
                     return $this->getActionItems();
+
+                case 'get_stage_pending_counts':
+                    return $this->getStagePendingCounts();
 
                 case 'debug_get_exit_joined':
                     return $this->getExitJoinedSample();
