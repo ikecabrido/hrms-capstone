@@ -109,4 +109,13 @@ class SendEmployeesController
 
         exit;
     }
+
+    public function genPass()
+    {
+                $employee = "employee";
+        $hashedPass = password_hash($employee, PASSWORD_DEFAULT);
+
+        var_dump($hashedPass);
+        die;
+    }
 }

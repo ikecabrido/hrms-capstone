@@ -247,6 +247,920 @@
 
     <section class="dashboard-section">
 
+        <?php
+
+        $employeePerformanceFeedback = is_array($employeePerformanceFeedback ?? null)
+            ? $employeePerformanceFeedback
+            : [];
+
+        // Sort newest evaluation first
+        usort($employeePerformanceFeedback, function ($a, $b) {
+            return strtotime($b['created_at'] ?? '1970-01-01')
+                <=> strtotime($a['created_at'] ?? '1970-01-01');
+        });
+
+        $latestEvaluation = $employeePerformanceFeedback[0] ?? null;
+
+        $latestRating = $latestEvaluation
+            ? (float) ($latestEvaluation['overall_rating']
+                ?? $latestEvaluation['rating']
+                ?? 0)
+            : 0;
+
+        $ratingPercentage = min(100, ($latestRating / 5) * 100);
+
+        $status = $latestEvaluation['feedback_status'] ?? 'No Evaluation';
+
+        $statusClass = match (strtolower(str_replace('_', ' ', $status))) {
+            'completed', 'approved', 'closed' => 'pe-status-success',
+            'pending', 'under review', 'under initial review' => 'pe-status-warning',
+            'rejected', 'cancelled' => 'pe-status-danger',
+            default => 'pe-status-neutral'
+        };
+
+        $competencyScores = [];
+
+        if ($latestEvaluation && !empty($latestEvaluation['competency_scores'])) {
+            $decodedScores = json_decode(
+                $latestEvaluation['competency_scores'],
+                true
+            );
+
+            if (is_array($decodedScores)) {
+                $competencyScores = $decodedScores;
+            }
+        }
+
+        $ratingLabel = match (true) {
+            $latestRating >= 4.5 => 'Outstanding',
+            $latestRating >= 4.0 => 'Excellent',
+            $latestRating >= 3.0 => 'Good',
+            $latestRating >= 2.0 => 'Needs Improvement',
+            $latestRating > 0 => 'Unsatisfactory',
+            default => 'Not Rated'
+        };
+        ?>
+
+        <style>
+            .performance-dashboard {
+                width: 100%;
+                margin-top: 20px;
+            }
+
+            .performance-card {
+                background: #fff;
+                border: 1px solid #e5e7eb;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 4px 16px rgba(15, 23, 42, .05);
+            }
+
+            .performance-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 16px;
+                padding: 18px 20px;
+                border-bottom: 1px solid #eef0f3;
+            }
+
+            .performance-title {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .performance-icon {
+                width: 42px;
+                height: 42px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 11px;
+                background: #eff6ff;
+                color: #2563eb;
+                font-size: 16px;
+            }
+
+            .performance-title h3 {
+                margin: 0;
+                color: #111827;
+                font-size: 15px;
+                font-weight: 750;
+            }
+
+            .performance-title p {
+                margin: 3px 0 0;
+                color: #94a3b8;
+                font-size: 10px;
+            }
+
+            .performance-view-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 12px;
+                border: 1px solid #dbe3ef;
+                border-radius: 8px;
+                background: #fff;
+                color: #2563eb;
+                font-size: 10px;
+                font-weight: 700;
+                text-decoration: none;
+                cursor: pointer;
+                transition: .2s ease;
+            }
+
+            .performance-view-btn:hover {
+                background: #eff6ff;
+                border-color: #bfdbfe;
+                color: #1d4ed8;
+            }
+
+            .performance-body {
+                padding: 20px;
+            }
+
+            .performance-main-grid {
+                display: grid;
+                grid-template-columns: 250px minmax(0, 1fr);
+                gap: 18px;
+            }
+
+            .performance-rating {
+                padding: 20px;
+                border: 1px solid #e5e7eb;
+                border-radius: 13px;
+                background: #f8fafc;
+            }
+
+            .performance-label {
+                margin-bottom: 7px;
+                color: #94a3b8;
+                font-size: 9px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: .04em;
+            }
+
+            .performance-rating-number {
+                display: flex;
+                align-items: baseline;
+                gap: 4px;
+            }
+
+            .performance-rating-number strong {
+                color: #111827;
+                font-size: 32px;
+                line-height: 1;
+                font-weight: 800;
+            }
+
+            .performance-rating-number span {
+                color: #94a3b8;
+                font-size: 12px;
+            }
+
+            .performance-stars {
+                display: flex;
+                gap: 3px;
+                margin: 10px 0;
+            }
+
+            .performance-stars i {
+                font-size: 12px;
+            }
+
+            .performance-rating-label {
+                display: inline-flex;
+                padding: 5px 8px;
+                border-radius: 6px;
+                background: #dbeafe;
+                color: #1d4ed8;
+                font-size: 9px;
+                font-weight: 750;
+            }
+
+            .performance-progress {
+                margin-top: 14px;
+            }
+
+            .performance-progress-track {
+                width: 100%;
+                height: 6px;
+                overflow: hidden;
+                border-radius: 20px;
+                background: #e5e7eb;
+            }
+
+            .performance-progress-bar {
+                height: 100%;
+                border-radius: 20px;
+                background: #2563eb;
+            }
+
+            .performance-info-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .performance-info {
+                padding: 12px;
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                background: #fff;
+            }
+
+            .performance-info-label {
+                margin-bottom: 5px;
+                color: #94a3b8;
+                font-size: 8px;
+                font-weight: 800;
+                text-transform: uppercase;
+            }
+
+            .performance-info-value {
+                color: #374151;
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .pe-status-success,
+            .pe-status-warning,
+            .pe-status-danger,
+            .pe-status-neutral {
+                display: inline-flex;
+                align-items: center;
+                padding: 4px 7px;
+                border-radius: 6px;
+                font-size: 8px;
+                font-weight: 750;
+            }
+
+            .pe-status-success {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .pe-status-warning {
+                background: #fef3c7;
+                color: #92400e;
+            }
+
+            .pe-status-danger {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .pe-status-neutral {
+                background: #f1f5f9;
+                color: #475569;
+            }
+
+            .performance-section {
+                margin-top: 20px;
+            }
+
+            .performance-section-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+
+            .performance-section-header h4 {
+                margin: 0;
+                color: #111827;
+                font-size: 11px;
+                font-weight: 750;
+            }
+
+            .performance-section-header span {
+                color: #94a3b8;
+                font-size: 9px;
+            }
+
+            .competency-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .competency-item {
+                padding: 12px;
+                border: 1px solid #e5e7eb;
+                border-radius: 10px;
+                background: #fff;
+            }
+
+            .competency-top {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                margin-bottom: 7px;
+            }
+
+            .competency-name {
+                color: #475569;
+                font-size: 9px;
+                font-weight: 650;
+            }
+
+            .competency-score {
+                color: #111827;
+                font-size: 9px;
+                font-weight: 750;
+            }
+
+            .competency-track {
+                height: 5px;
+                overflow: hidden;
+                border-radius: 20px;
+                background: #e5e7eb;
+            }
+
+            .competency-bar {
+                height: 100%;
+                border-radius: 20px;
+                background: #2563eb;
+            }
+
+            .performance-insights {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px;
+            }
+
+            .performance-insight {
+                padding: 13px;
+                border-radius: 10px;
+                border: 1px solid;
+            }
+
+            .performance-insight h5 {
+                margin: 0 0 6px;
+                font-size: 9px;
+                font-weight: 750;
+            }
+
+            .performance-insight p {
+                margin: 0;
+                font-size: 9px;
+                line-height: 1.6;
+            }
+
+            .insight-strength {
+                border-color: #bbf7d0;
+                background: #f0fdf4;
+                color: #166534;
+            }
+
+            .insight-improvement {
+                border-color: #fde68a;
+                background: #fffbeb;
+                color: #92400e;
+            }
+
+            .insight-recommendation {
+                border-color: #dbeafe;
+                background: #eff6ff;
+                color: #1e40af;
+            }
+
+            .performance-empty {
+                padding: 35px 20px;
+                text-align: center;
+            }
+
+            .performance-empty-icon {
+                width: 48px;
+                height: 48px;
+                margin: 0 auto 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                background: #eff6ff;
+                color: #2563eb;
+                font-size: 18px;
+            }
+
+            .performance-empty h4 {
+                margin: 0 0 5px;
+                color: #111827;
+                font-size: 13px;
+                font-weight: 750;
+            }
+
+            .performance-empty p {
+                margin: 0;
+                color: #94a3b8;
+                font-size: 10px;
+            }
+
+            .recent-evaluations {
+                margin-top: 20px;
+                border-top: 1px solid #eef0f3;
+                padding-top: 18px;
+            }
+
+            .evaluation-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 15px;
+                padding: 11px 0;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .evaluation-row:last-child {
+                border-bottom: 0;
+            }
+
+            .evaluation-period {
+                color: #374151;
+                font-size: 10px;
+                font-weight: 700;
+            }
+
+            .evaluation-date {
+                margin-top: 3px;
+                color: #94a3b8;
+                font-size: 8px;
+            }
+
+            .evaluation-right {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .evaluation-rating {
+                color: #111827;
+                font-size: 10px;
+                font-weight: 800;
+            }
+
+            @media (max-width: 900px) {
+                .performance-main-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .performance-insights {
+                    grid-template-columns: 1fr;
+                }
+            }
+
+            @media (max-width: 600px) {
+                .performance-header {
+                    align-items: flex-start;
+                }
+
+                .performance-info-grid,
+                .competency-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .performance-body {
+                    padding: 14px;
+                }
+
+                .evaluation-row {
+                    align-items: flex-start;
+                }
+            }
+        </style>
+
+        <div class="performance-dashboard">
+
+            <div class="performance-card">
+
+                <div class="performance-header">
+
+                    <div class="performance-title">
+
+                        <div class="performance-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+
+                        <div>
+                            <h3>Performance Evaluation</h3>
+                            <p>Your latest performance review</p>
+                        </div>
+
+                    </div>
+
+                    <?php if ($latestEvaluation): ?>
+
+                        <a href="index.php?url=performance" type="button" class="performance-view-btn">
+
+                            View Details
+
+                            <i class="fas fa-arrow-right"></i>
+
+                        </a>
+
+                    <?php endif; ?>
+
+                </div>
+
+                <?php if ($latestEvaluation): ?>
+
+                    <div class="performance-body">
+
+                        <div class="performance-main-grid">
+
+                            <div class="performance-rating">
+
+                                <div class="performance-label">
+                                    Overall Rating
+                                </div>
+
+                                <div class="performance-rating-number">
+
+                                    <strong>
+                                        <?= number_format($latestRating, 1) ?>
+                                    </strong>
+
+                                    <span>/ 5.0</span>
+
+                                </div>
+
+                                <div class="performance-stars">
+
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+
+                                        <i class="fas fa-star" style="color: <?= $i <= round($latestRating)
+                                            ? '#f59e0b'
+                                            : '#e5e7eb' ?>;">
+                                        </i>
+
+                                    <?php endfor; ?>
+
+                                </div>
+
+                                <span class="performance-rating-label">
+                                    <?= htmlspecialchars($ratingLabel) ?>
+                                </span>
+
+                                <div class="performance-progress">
+
+                                    <div class="performance-progress-track">
+
+                                        <div class="performance-progress-bar" style="width: <?= $ratingPercentage ?>%;">
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="performance-info-grid">
+
+                                <div class="performance-info">
+
+                                    <div class="performance-info-label">
+                                        Review Period
+                                    </div>
+
+                                    <div class="performance-info-value">
+                                        <?= htmlspecialchars(
+                                            $latestEvaluation['review_period'] ?? '-'
+                                        ) ?>
+                                    </div>
+
+                                </div>
+
+                                <div class="performance-info">
+
+                                    <div class="performance-info-label">
+                                        Evaluation Date
+                                    </div>
+
+                                    <div class="performance-info-value">
+
+                                        <?= !empty($latestEvaluation['created_at'])
+                                            ? htmlspecialchars(
+                                                date(
+                                                    'M d, Y',
+                                                    strtotime($latestEvaluation['created_at'])
+                                                )
+                                            )
+                                            : '-' ?>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="performance-info">
+
+                                    <div class="performance-info-label">
+                                        Reviewer Type
+                                    </div>
+
+                                    <div class="performance-info-value">
+                                        <?= htmlspecialchars(
+                                            $latestEvaluation['reviewer_type'] ?? '-'
+                                        ) ?>
+                                    </div>
+
+                                </div>
+
+                                <div class="performance-info">
+
+                                    <div class="performance-info-label">
+                                        Evaluation Status
+                                    </div>
+
+                                    <div>
+                                        <span class="<?= $statusClass ?>">
+                                            <?= htmlspecialchars(
+                                                ucwords(
+                                                    str_replace('_', ' ', $status)
+                                                )
+                                            ) ?>
+                                        </span>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <?php if (!empty($competencyScores)): ?>
+
+                            <div class="performance-section">
+
+                                <div class="performance-section-header">
+
+                                    <h4>
+                                        <i class="fas fa-bullseye"></i>
+                                        Competency Performance
+                                    </h4>
+
+                                    <span>
+                                        Latest evaluation
+                                    </span>
+
+                                </div>
+
+                                <div class="competency-grid">
+
+                                    <?php foreach ($competencyScores as $competency => $score): ?>
+
+                                        <?php
+                                        $score = (float) $score;
+                                        $percentage = min(100, ($score / 5) * 100);
+
+                                        $competencyName = ucwords(
+                                            str_replace('_', ' ', $competency)
+                                        );
+                                        ?>
+
+                                        <div class="competency-item">
+
+                                            <div class="competency-top">
+
+                                                <span class="competency-name">
+                                                    <?= htmlspecialchars($competencyName) ?>
+                                                </span>
+
+                                                <span class="competency-score">
+                                                    <?= number_format($score, 1) ?>/5
+                                                </span>
+
+                                            </div>
+
+                                            <div class="competency-track">
+
+                                                <div class="competency-bar" style="width: <?= $percentage ?>%;">
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    <?php endforeach; ?>
+
+                                </div>
+
+                            </div>
+
+                        <?php endif; ?>
+
+                        <?php
+                        $hasStrength =
+                            !empty($latestEvaluation['strengths']);
+
+                        $hasImprovement =
+                            !empty($latestEvaluation['areas_for_improvement']);
+
+                        $hasRecommendation =
+                            !empty($latestEvaluation['recommendation']);
+                        ?>
+
+                        <?php if (
+                            $hasStrength ||
+                            $hasImprovement ||
+                            $hasRecommendation
+                        ): ?>
+
+                            <div class="performance-section">
+
+                                <div class="performance-section-header">
+
+                                    <h4>
+                                        <i class="fas fa-lightbulb"></i>
+                                        Evaluation Insights
+                                    </h4>
+
+                                </div>
+
+                                <div class="performance-insights">
+
+                                    <?php if ($hasStrength): ?>
+
+                                        <div class="performance-insight insight-strength">
+
+                                            <h5>
+                                                <i class="fas fa-circle-check"></i>
+                                                Strengths
+                                            </h5>
+
+                                            <p>
+                                                <?= nl2br(
+                                                    htmlspecialchars(
+                                                        $latestEvaluation['strengths']
+                                                    )
+                                                ) ?>
+                                            </p>
+
+                                        </div>
+
+                                    <?php endif; ?>
+
+                                    <?php if ($hasImprovement): ?>
+
+                                        <div class="performance-insight insight-improvement">
+
+                                            <h5>
+                                                <i class="fas fa-arrow-trend-up"></i>
+                                                Areas for Improvement
+                                            </h5>
+
+                                            <p>
+                                                <?= nl2br(
+                                                    htmlspecialchars(
+                                                        $latestEvaluation['areas_for_improvement']
+                                                    )
+                                                ) ?>
+                                            </p>
+
+                                        </div>
+
+                                    <?php endif; ?>
+
+                                    <?php if ($hasRecommendation): ?>
+
+                                        <div class="performance-insight insight-recommendation">
+
+                                            <h5>
+                                                <i class="fas fa-lightbulb"></i>
+                                                Recommendation
+                                            </h5>
+
+                                            <p>
+                                                <?= nl2br(
+                                                    htmlspecialchars(
+                                                        $latestEvaluation['recommendation']
+                                                    )
+                                                ) ?>
+                                            </p>
+
+                                        </div>
+
+                                    <?php endif; ?>
+
+                                </div>
+
+                            </div>
+
+                        <?php endif; ?>
+
+                        <?php if (count($employeePerformanceFeedback) > 1): ?>
+
+                            <div class="recent-evaluations">
+
+                                <div class="performance-section-header">
+
+                                    <h4>
+                                        <i class="fas fa-clock-rotate-left"></i>
+                                        Previous Evaluations
+                                    </h4>
+
+                                    <span>
+                                        <?= count($employeePerformanceFeedback) ?> total
+                                    </span>
+
+                                </div>
+
+                                <?php foreach (
+                                    array_slice($employeePerformanceFeedback, 1, 3)
+                                    as $evaluation
+                                ): ?>
+
+                                    <?php
+                                    $previousRating = (float) (
+                                        $evaluation['overall_rating']
+                                        ?? $evaluation['rating']
+                                        ?? 0
+                                    );
+                                    ?>
+
+                                    <div class="evaluation-row">
+
+                                        <div>
+
+                                            <div class="evaluation-period">
+                                                <?= htmlspecialchars(
+                                                    $evaluation['review_period']
+                                                    ?? 'Evaluation'
+                                                ) ?>
+                                            </div>
+
+                                            <div class="evaluation-date">
+
+                                                <?= !empty($evaluation['created_at'])
+                                                    ? htmlspecialchars(
+                                                        date(
+                                                            'M d, Y',
+                                                            strtotime($evaluation['created_at'])
+                                                        )
+                                                    )
+                                                    : '-' ?>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="evaluation-right">
+
+                                            <div class="evaluation-rating">
+                                                <?= number_format($previousRating, 1) ?>/5
+                                            </div>
+
+                                            <button type="button" class="performance-view-btn" data-bs-toggle="modal"
+                                                data-bs-target="#feedbackModal<?= (int) ($evaluation['feedback_id'] ?? 0) ?>">
+
+                                                View
+
+                                            </button>
+
+                                        </div>
+
+                                    </div>
+
+                                <?php endforeach; ?>
+
+                            </div>
+
+                        <?php endif; ?>
+
+                    </div>
+
+                <?php else: ?>
+
+                    <div class="performance-empty">
+
+                        <div class="performance-empty-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+
+                        <h4>
+                            No Performance Evaluation Yet
+                        </h4>
+
+                        <p>
+                            Your performance evaluation will appear here once it has been completed.
+                        </p>
+
+                    </div>
+
+                <?php endif; ?>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section class="dashboard-section">
+
         <div class="dashboard-section-header">
             <div>
                 <span>QUICK ACCESS</span>

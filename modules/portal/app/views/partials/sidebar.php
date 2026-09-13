@@ -30,7 +30,7 @@
         <?php require __DIR__ . '/sidebar-employee-info.php'; ?>
 
         <!-- Navigation -->
-        <h2>Employee Portal</h2>
+        <h2 style="margin-left: 40px;">Employee Portal</h2>
 
         <ul>
 
@@ -169,14 +169,15 @@
 
             <li>
                 <a href="index.php?url=online-meeting" class="menu-link" style="
-                        display:flex;
-                        align-items:center;
-                        gap:10px;
-                    ">
-                    <i class="fa-solid fa-person-walking-arrow-right"></i>
+            display:flex;
+            align-items:center;
+            gap:10px;
+        ">
+                    <i class="fa-solid fa-video"></i>
                     <span>Online Meeting</span>
                 </a>
             </li>
+
 
         </ul>
 
@@ -185,51 +186,51 @@
 </aside>
 
 <script>
-function toggleSidebar() {
+    function toggleSidebar() {
 
-    const sidebar = document.getElementById('mainSidebar');
-    const header = document.querySelector('header');
+        const sidebar = document.getElementById('mainSidebar');
+        const header = document.querySelector('header');
 
-    if (!sidebar || !header) return;
+        if (!sidebar || !header) return;
 
-    const isCollapsed = sidebar.dataset.collapsed === 'true';
+        const isCollapsed = sidebar.dataset.collapsed === 'true';
 
-    if (isCollapsed) {
+        if (isCollapsed) {
 
-        // =========================
-        // OPEN SIDEBAR
-        // =========================
-        sidebar.style.width = '260px';
-        sidebar.style.minWidth = '260px';
-        sidebar.style.marginLeft = '0';
-        sidebar.style.padding = '';
-        sidebar.style.border = '';
-        sidebar.style.overflowY = 'auto';
-        sidebar.style.overflowX = 'hidden';
+            // =========================
+            // OPEN SIDEBAR
+            // =========================
+            sidebar.style.width = '260px';
+            sidebar.style.minWidth = '260px';
+            sidebar.style.marginLeft = '0';
+            sidebar.style.padding = '';
+            sidebar.style.border = '';
+            sidebar.style.overflowY = 'auto';
+            sidebar.style.overflowX = 'hidden';
 
-        // SHRINK HEADER BACK
-        header.style.width = '';
-        header.style.marginLeft = '';
+            // SHRINK HEADER BACK
+            header.style.width = '';
+            header.style.marginLeft = '';
 
-        sidebar.dataset.collapsed = 'false';
+            sidebar.dataset.collapsed = 'false';
 
-    } else {
+        } else {
 
-        // =========================
-        // CLOSE SIDEBAR
-        // =========================
-        sidebar.style.width = '0';
-        sidebar.style.minWidth = '0';
-        sidebar.style.marginLeft = '-260px';
-        sidebar.style.padding = '0';
-        sidebar.style.border = '0';
-        sidebar.style.overflow = 'hidden';
+            // =========================
+            // CLOSE SIDEBAR
+            // =========================
+            sidebar.style.width = '0';
+            sidebar.style.minWidth = '0';
+            sidebar.style.marginLeft = '-260px';
+            sidebar.style.padding = '0';
+            sidebar.style.border = '0';
+            sidebar.style.overflow = 'hidden';
 
-        // EXPAND HEADER INTO SIDEBAR SPACE
-        header.style.width = 'calc(100% + 260px)';
-        header.style.marginLeft = '-260px';
+            // EXPAND HEADER INTO SIDEBAR SPACE
+            header.style.width = 'calc(100% + 260px)';
+            header.style.marginLeft = '-260px';
 
-        sidebar.dataset.collapsed = 'true';
+            sidebar.dataset.collapsed = 'true';
+        }
     }
-}
 </script>

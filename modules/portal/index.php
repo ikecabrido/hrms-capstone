@@ -171,6 +171,7 @@ $routes = [
     // API
     'send-all-employees' => [SendEmployeesController::class, 'getAll'],
     'employee-api-login' => [SendEmployeesController::class, 'login'],
+    'gen-pass' => [SendEmployeesController::class, 'genPass'],
 
 
 ];
