@@ -49,7 +49,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                 <th>Case Type</th>
                                 <th>Exit Reason</th>
                                 <th>Notice / Exit Date</th>
-                                <th>Status</th>
+                                <th>Progress</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>

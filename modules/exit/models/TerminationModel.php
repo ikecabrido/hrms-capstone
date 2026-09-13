@@ -185,8 +185,11 @@ class TerminationModel extends ExitManagementModel
             @mkdir($uploadDir, 0755, true);
         }
 
-        // Prefer to generate a PDF using Dompdf if available
+        // Prefer to generate a PDF using Dompdf if available.
+        // If the PDF library is missing, store a valid HTML fallback with the matching
+        // extension so previewing can still work in the browser.
         $pdfFileName = 'termination_' . time() . '_' . $terminationId . '.pdf';
+        $htmlFileName = 'termination_' . time() . '_' . $terminationId . '.html';
         $filePathRelative = 'uploads/documents/' . $pdfFileName;
         $fullPath = __DIR__ . '/../' . $filePathRelative;
 
@@ -211,12 +214,12 @@ class TerminationModel extends ExitManagementModel
             }
         }
 
-        // Fallback: save HTML if PDF couldn't be created
+        // Fallback: save HTML if PDF couldn't be created.
         if (!$pdfGenerated) {
-            $fileName = 'termination_' . time() . '_' . $terminationId . '.html';
-            $filePathRelative = 'uploads/documents/' . $fileName;
+            $filePathRelative = 'uploads/documents/' . $htmlFileName;
             $fullPath = __DIR__ . '/../' . $filePathRelative;
             file_put_contents($fullPath, $html);
+            error_log('Termination letter PDF generation unavailable; stored HTML fallback at: ' . $filePathRelative);
         }
 
         // Create document record linking to this termination
@@ -227,7 +230,7 @@ class TerminationModel extends ExitManagementModel
             'employee_id' => $employeeId,
             'exit_case_type' => 'termination',
             'exit_case_id' => $terminationId,
-            'document_type' => 'other',
+            'document_type' => 'termination_letter',
             'title' => 'Termination Letter',
             'file_path' => $filePathRelative,
             'uploaded_by' => $_SESSION['employee_id'] ?? null
