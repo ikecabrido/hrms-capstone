@@ -236,18 +236,20 @@
                                                     ?>
 
                                                     <!-- VIEW -->
-                                                    <a href="<?= htmlspecialchars($fileUrl) ?>" target="_blank"
-                                                        rel="noopener noreferrer" title="View File" style="
-            display:inline-flex;
-            align-items:center;
-            justify-content:center;
-            width:30px;
-            height:30px;
-            border-radius:8px;
-            background:#eff6ff;
-            color:#2563eb;
-            text-decoration:none;
-        ">
+                                                    <a href="javascript:void(0);"
+                                                        onclick="viewFile('<?= htmlspecialchars($fileUrl, ENT_QUOTES, 'UTF-8') ?>')"
+                                                        title="View File" style="
+       display:inline-flex;
+       align-items:center;
+       justify-content:center;
+       width:30px;
+       height:30px;
+       border-radius:8px;
+       background:#eff6ff;
+       color:#2563eb;
+       text-decoration:none;
+       cursor:pointer;
+   ">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
 
@@ -328,3 +330,249 @@
         </div>
     <?php endforeach; ?>
 <?php endif; ?>
+
+<!-- Bootstrap 5 -->
+
+<div class="modal fade" id="fileViewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content file-view-modal">
+
+            <!-- Close -->
+            <button type="button" class="file-close-button" data-bs-dismiss="modal" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Flexbox centers the image horizontally and vertically -->
+            <div class="file-viewer-container">
+
+                <!-- Loading -->
+                <div id="fileLoading" class="file-loading">
+                    <div class="file-spinner"></div>
+                </div>
+
+                <!-- Responsive image -->
+                <img id="imageViewer" src="" alt="File Preview">
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Backdrop */
+    #fileViewModal+.modal-backdrop {
+        background: rgba(15, 23, 42, 0.72);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Modal */
+    .file-view-modal {
+        position: relative;
+        width: 100%;
+        border: 0;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Close button */
+    .file-close-button {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 10;
+
+        width: 38px;
+        height: 38px;
+        padding: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border: 0;
+        border-radius: 50%;
+
+        background: rgba(255, 255, 255, 0.92);
+        color: #374151;
+
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+    .file-close-button:hover {
+        background: #fff;
+        color: #111827;
+        transform: scale(1.05);
+    }
+
+    /* Flexbox provides perfect horizontal + vertical centering */
+    .file-viewer-container {
+        position: relative;
+
+        width: 100%;
+        height: min(80vh, 850px);
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 20px;
+
+        background: #fff;
+        overflow: hidden;
+    }
+
+    /* Image stays inside the modal without distortion */
+    #imageViewer {
+        display: none;
+
+        width: auto;
+        height: auto;
+
+        max-width: 100%;
+        max-height: 100%;
+
+        object-fit: contain;
+
+        border-radius: 8px;
+
+        opacity: 0;
+        transition: opacity 0.25s ease;
+    }
+
+    #imageViewer.loaded {
+        opacity: 1;
+    }
+
+    /* Loading overlay */
+    .file-loading {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+
+        display: none;
+        align-items: center;
+        justify-content: center;
+
+        background: #fff;
+    }
+
+    /* Spinner */
+    .file-spinner {
+        width: 36px;
+        height: 36px;
+
+        border: 3px solid #e5e7eb;
+        border-top-color: #2563eb;
+
+        border-radius: 50%;
+
+        animation: fileSpinner 0.7s linear infinite;
+    }
+
+    @keyframes fileSpinner {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+        #fileViewModal .modal-dialog {
+            margin: 10px;
+        }
+
+        .file-view-modal {
+            border-radius: 12px;
+        }
+
+        .file-viewer-container {
+            height: 80vh;
+            padding: 15px;
+        }
+
+        #imageViewer {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .file-close-button {
+            top: 8px;
+            right: 8px;
+            width: 34px;
+            height: 34px;
+        }
+    }
+
+    /* Small phones */
+    @media (max-width: 480px) {
+        #fileViewModal .modal-dialog {
+            margin: 5px;
+        }
+
+        .file-viewer-container {
+            height: 85vh;
+            padding: 10px;
+        }
+    }
+</style>
+
+<script>
+    function viewFile(fileUrl) {
+        const modalElement = document.getElementById('fileViewModal');
+        const image = document.getElementById('imageViewer');
+        const loading = document.getElementById('fileLoading');
+
+        // Reset previous image
+        image.onload = null;
+        image.onerror = null;
+        image.src = '';
+        image.classList.remove('loaded');
+        image.style.display = 'none';
+
+        // Show loading
+        loading.style.display = 'flex';
+
+        // Load new image
+        image.onload = function () {
+            loading.style.display = 'none';
+            image.style.display = 'block';
+
+            requestAnimationFrame(() => {
+                image.classList.add('loaded');
+            });
+        };
+
+        image.onerror = function () {
+            loading.style.display = 'none';
+            image.style.display = 'none';
+        };
+
+        image.src = fileUrl;
+
+        // Show Bootstrap modal
+        bootstrap.Modal
+            .getOrCreateInstance(modalElement)
+            .show();
+
+        // Cleanup after closing
+        modalElement.addEventListener(
+            'hidden.bs.modal',
+            function cleanup() {
+                image.onload = null;
+                image.onerror = null;
+                image.src = '';
+                image.classList.remove('loaded');
+                image.style.display = 'none';
+                loading.style.display = 'none';
+            },
+            { once: true }
+        );
+    }
+</script>
