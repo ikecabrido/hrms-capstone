@@ -78,7 +78,7 @@ if ($adjustmentId > 0) {
     $adjustment = $adjustment[0] ?? null;
 }
 
-$documents = sic_all($db, "SELECT * FROM lc_employee_documents WHERE employee_id = :eid ORDER BY created_at DESC", [':eid' => $employeeId]);
+$documents = sic_all($db, "SELECT * FROM employee_documents WHERE employee_id = :eid ORDER BY created_at DESC", [':eid' => $employeeId]);
 
 $fullName = htmlspecialchars((string) ($employee['full_name'] ?? 'N/A'), ENT_QUOTES);
 $employeeCode = htmlspecialchars((string) ($employee['employee_code'] ?? 'N/A'), ENT_QUOTES);

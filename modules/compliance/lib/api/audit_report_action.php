@@ -38,8 +38,8 @@ function generate_report_pdf(PDO $db, string $reportKey, string $reportCode): ?s
     $reportTables = [
         'employee_master_list' => 'em_employees',
         'employee_compliance' => 'lc_compliance_records',
-        'employee_documents' => 'lc_employee_documents',
-        'document_expiration' => 'lc_employee_documents',
+        'employee_documents' => 'employee_documents',
+        'document_expiration' => 'employee_documents',
         'training_certifications' => 'lc_trainings',
         'policy_acknowledgement' => 'lc_acknowledgment_log',
         'leave_summary' => 'leave_requests',

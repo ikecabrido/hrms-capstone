@@ -74,9 +74,9 @@ $reportCategories = [
         'reports' => [
             ['key' => 'employee_master_list', 'label' => 'Employee Master List', 'table' => 'em_employees', 'table_label' => 'Employees', 'export' => 'export_report'],
             ['key' => 'employee_compliance', 'label' => 'Employee Compliance Status', 'table' => 'lc_compliance_records', 'table_label' => 'Compliance Records', 'export' => 'export_report'],
-            ['key' => 'employee_documents', 'label' => 'Employee Documents', 'table' => 'lc_employee_documents', 'table_label' => 'Employee Documents', 'export' => 'export_report'],
+            ['key' => 'employee_documents', 'label' => 'Employee Documents', 'table' => 'employee_documents', 'table_label' => 'Employee Documents', 'export' => 'export_report'],
             ['key' => 'employment_contracts', 'label' => 'Employment Contracts', 'table' => 'lc_contracts', 'table_label' => 'Contracts', 'export' => 'export_contract_compliance'],
-            ['key' => 'document_expiration', 'label' => 'Document Expiration', 'table' => 'lc_employee_documents', 'table_label' => 'Employee Documents', 'export' => 'export_report'],
+            ['key' => 'document_expiration', 'label' => 'Document Expiration', 'table' => 'employee_documents', 'table_label' => 'Employee Documents', 'export' => 'export_report'],
             ['key' => 'training_certifications', 'label' => 'Training & Certifications', 'table' => 'lc_trainings', 'table_label' => 'Trainings', 'export' => 'export_report'],
             ['key' => 'policy_acknowledgement', 'label' => 'Policy Acknowledgement', 'table' => 'lc_acknowledgment_log', 'table_label' => 'Acknowledgement Log', 'export' => 'export_report'],
             ['key' => 'leave_summary', 'label' => 'Leave Summary', 'table' => 'leave_requests', 'table_label' => 'Leave Requests', 'export' => 'export_report'],

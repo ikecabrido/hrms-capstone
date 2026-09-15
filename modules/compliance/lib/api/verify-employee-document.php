@@ -29,7 +29,7 @@ try {
 
     if ($action === 'verify') {
         $stmt = $db->prepare("
-            UPDATE employee_documents
+            UPDATE em_documents
             SET verification_status = 'Verified',
                 verified_by = :uid,
                 verified_at = NOW(),

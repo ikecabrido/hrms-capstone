@@ -49,10 +49,10 @@ $employeeClass = new Employee();
                     </div>
                     <ul class="user-menu">
                         <li>
-                            <a href="#"><i class="fa-regular fa-user"></i> Profile Settings</a>
+                            <a href="?page=profile-settings"><i class="fa-regular fa-user"></i> Profile Settings</a>
                         </li>
                         <li>
-                            <a href="#"><i class="fa-solid fa-lock"></i> Change Password</a>
+                            <a href="?page=profile-settings#change-password"><i class="fa-solid fa-lock"></i> Change Password</a>
                         </li>
                         <li class="divider"></li>
                         <li>

@@ -56,8 +56,8 @@ try {
 
         $documentScore = 0;
         try {
-            $totalDocs = (int) $db->query("SELECT COUNT(*) FROM lc_employee_documents WHERE employee_id = {$eid}")->fetchColumn();
-            $verifiedDocs = (int) $db->query("SELECT COUNT(*) FROM lc_employee_documents WHERE employee_id = {$eid} AND verification_status = 'Verified' AND compliance_status != 'Expired'")->fetchColumn();
+            $totalDocs = (int) $db->query("SELECT COUNT(*) FROM employee_documents WHERE employee_id = {$eid}")->fetchColumn();
+            $verifiedDocs = (int) $db->query("SELECT COUNT(*) FROM employee_documents WHERE employee_id = {$eid} AND verification_status = 'Verified' AND compliance_status != 'Expired'")->fetchColumn();
             $documentScore = $totalDocs > 0 ? (int) round(($verifiedDocs / $totalDocs) * 100) : 0;
         } catch (Exception $e) {
             $documentScore = 0;

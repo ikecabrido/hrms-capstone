@@ -350,7 +350,7 @@ class Dashboard
                        ed.document_name, ed.document_type,
                        'Document Verification' as item_type,
                        'warning' as severity
-                FROM lc_employee_documents ed
+                FROM employee_documents ed
                 LEFT JOIN em_employees e ON e.employee_id = ed.employee_id
                 WHERE ed.verification_status IN ('Pending', 'Pending Upload', 'Rejected')
                 ORDER BY ed.expiry_date ASC
@@ -377,7 +377,7 @@ class Dashboard
         $alerts = [];
 
         try {
-            $expiringDocs = (int) $this->conn->query("SELECT COUNT(*) FROM lc_employee_documents WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND status != 'Expired'")->fetchColumn();
+            $expiringDocs = (int) $this->conn->query("SELECT COUNT(*) FROM employee_documents WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND verification_status != 'Expired'")->fetchColumn();
             if ($expiringDocs > 0) {
                 $alerts[] = [
                     'priority' => 'Warning',

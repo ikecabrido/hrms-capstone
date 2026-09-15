@@ -32,7 +32,7 @@ try {
     $params = [];
 
     try {
-        $stmt = $db->query("SHOW COLUMNS FROM employee_documents LIKE 'verification_status'");
+        $stmt = $db->query("SHOW COLUMNS FROM em_documents LIKE 'verification_status'");
         $hasVerificationStatus = $stmt->rowCount() > 0;
     } catch (Throwable $e) {
         $hasVerificationStatus = false;
@@ -74,7 +74,7 @@ try {
 
     $countSql = "
         SELECT COUNT(*)
-        FROM employee_documents d
+        FROM em_documents d
         INNER JOIN em_employees e ON e.employee_id = d.employee_id
         LEFT JOIN em_departments dep ON dep.department_id = e.department_id
         LEFT JOIN em_positions pos ON pos.position_id = e.position_id
@@ -104,7 +104,7 @@ try {
             dep.department_name,
             pos.position_name,
             (SELECT COUNT(*) FROM lc_notifications ln WHERE ln.type = 'document_reminder' AND ln.email = e.email AND ln.module = 'compliance' LIMIT 1) AS reminder_sent
-        FROM employee_documents d
+        FROM em_documents d
         INNER JOIN em_employees e ON e.employee_id = d.employee_id
         LEFT JOIN em_departments dep ON dep.department_id = e.department_id
         LEFT JOIN em_positions pos ON pos.position_id = e.position_id
@@ -168,16 +168,16 @@ $kpiVerified = 0;
 $kpiExpiring = 0;
 $kpiExpired = 0;
 try {
-    $kpiTotal = (int)$db->query("SELECT COUNT(*) FROM employee_documents")->fetchColumn();
+    $kpiTotal = (int)$db->query("SELECT COUNT(*) FROM em_documents")->fetchColumn();
     if ($hasVerificationStatus) {
-        $kpiPending = (int)$db->query("SELECT COUNT(*) FROM employee_documents WHERE verification_status IN ('Pending', 'Rejected') OR verification_status IS NULL")->fetchColumn();
-        $kpiVerified = (int)$db->query("SELECT COUNT(*) FROM employee_documents WHERE verification_status = 'Verified'")->fetchColumn();
+        $kpiPending = (int)$db->query("SELECT COUNT(*) FROM em_documents WHERE verification_status IN ('Pending', 'Rejected') OR verification_status IS NULL")->fetchColumn();
+        $kpiVerified = (int)$db->query("SELECT COUNT(*) FROM em_documents WHERE verification_status = 'Verified'")->fetchColumn();
     } else {
         $kpiPending = $kpiTotal;
         $kpiVerified = 0;
     }
-    $kpiExpiring = (int)$db->query("SELECT COUNT(*) FROM employee_documents WHERE expiry_date IS NOT NULL AND expiry_date >= CURDATE() AND DATEDIFF(expiry_date, CURDATE()) BETWEEN 1 AND 30")->fetchColumn();
-    $kpiExpired = (int)$db->query("SELECT COUNT(*) FROM employee_documents WHERE expiry_date IS NOT NULL AND expiry_date < CURDATE()")->fetchColumn();
+    $kpiExpiring = (int)$db->query("SELECT COUNT(*) FROM em_documents WHERE expiry_date IS NOT NULL AND expiry_date >= CURDATE() AND DATEDIFF(expiry_date, CURDATE()) BETWEEN 1 AND 30")->fetchColumn();
+    $kpiExpired = (int)$db->query("SELECT COUNT(*) FROM em_documents WHERE expiry_date IS NOT NULL AND expiry_date < CURDATE()")->fetchColumn();
 } catch (Throwable $e) {
     $kpiTotal = $kpiPending = $kpiVerified = $kpiExpiring = $kpiExpired = 0;
 }

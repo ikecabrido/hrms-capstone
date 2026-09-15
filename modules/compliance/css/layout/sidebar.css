@@ -9,7 +9,7 @@
         overflow-y: auto;
         z-index: 1000;
         scrollbar-width: auto;
-        scrollbar-color: #1c5a8a transparent;
+        scrollbar-color: var(--color7) transparent;
         transition: transform 0.3s ease;
     }
 
@@ -191,7 +191,7 @@
     }
 
     .active-menu-link {
-        background: #1c5a8a;
+        background: var(--color7);
         color: #ffffff;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         display: flex;
@@ -262,4 +262,37 @@
             font-size: 0.9rem;
         }
 
+    }
+
+    .sidebar-profile-card {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--color4);
+    }
+
+    .sidebar-profile-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--color3);
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.15s ease;
+        justify-content: center;
+    }
+
+    .sidebar-profile-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.4);
+        color: var(--color3);
+    }
+
+    .sidebar-profile-btn i {
+        font-size: 1rem;
     }

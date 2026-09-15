@@ -5,7 +5,7 @@ use App\Database\Connection;
 $conn = Connection::get();
 $tables = [
     'lc_compliance_records',
-    'lc_employee_documents', 
+    'employee_documents', 
     'lc_audits',
     'lc_audit_findings',
     'lc_audit_corrective_actions',

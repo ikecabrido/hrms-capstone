@@ -70,7 +70,7 @@ $reportConfig = [
         'title' => 'Employee Compliance Status',
     ],
     'employee_documents' => [
-        'table' => 'lc_employee_documents',
+        'table' => 'employee_documents',
         'title' => 'Employee Documents',
     ],
     'employment_contracts' => [
@@ -78,7 +78,7 @@ $reportConfig = [
         'title' => 'Employment Contracts',
     ],
     'document_expiration' => [
-        'table' => 'lc_employee_documents',
+        'table' => 'employee_documents',
         'title' => 'Document Expiration',
     ],
     'training_certifications' => [

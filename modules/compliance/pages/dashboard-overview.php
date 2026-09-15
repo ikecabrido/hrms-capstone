@@ -55,7 +55,7 @@ $govRate = $govTotal > 0 ? round(($govVerified / $govTotal) * 100) : 0;
 $pendingExits = 0;
 if ($db instanceof PDO) {
     try {
-        $pendingExits = (int) $db->query("SELECT COUNT(*) FROM lc_exit_requests WHERE overall_status != 'Completed'")->fetchColumn();
+        $pendingExits = (int) $db->query("SELECT COUNT(*) FROM exit_resignations WHERE status NOT IN ('Completed', 'Cancelled')")->fetchColumn();
     } catch (Exception $e) {}
 }
 
