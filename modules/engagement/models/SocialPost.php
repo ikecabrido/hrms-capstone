@@ -31,6 +31,7 @@ class SocialPost extends BaseModel
 
     public function createPost($author_id, $content, $author_type = 'employee', $description = '')
     {
+        $this->ensurePostIdAutoIncrement();
         $typeCol = $this->getAuthorTypeColumn();
         if ($author_type === 'user') {
             // The users table may not exist in this environment; preserve the author_type value
@@ -45,6 +46,22 @@ class SocialPost extends BaseModel
         $postId = $this->db->lastInsertId();
         (new Notification())->notifyHr('A new social post was published.', 'social', [(int)$author_id]);
         return $postId;
+    }
+
+    private function ensurePostIdAutoIncrement()
+    {
+        $column = $this->execute("SHOW COLUMNS FROM eer_social_posts LIKE 'eer_social_post_id'")->fetch();
+        if (!$column || strpos((string)($column['Extra'] ?? ''), 'auto_increment') !== false) {
+            return;
+        }
+
+        $zeroId = $this->execute('SELECT COUNT(*) FROM eer_social_posts WHERE eer_social_post_id = 0')->fetchColumn();
+        if ((int)$zeroId > 0) {
+            $nextId = (int)$this->execute('SELECT COALESCE(MAX(eer_social_post_id), 0) + 1 FROM eer_social_posts')->fetchColumn();
+            $this->execute('UPDATE eer_social_posts SET eer_social_post_id = :next_id WHERE eer_social_post_id = 0', ['next_id' => $nextId]);
+        }
+
+        $this->execute('ALTER TABLE eer_social_posts MODIFY eer_social_post_id INT(11) NOT NULL AUTO_INCREMENT');
     }
 
     public function deletePost($post_id)

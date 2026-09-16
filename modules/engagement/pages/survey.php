@@ -3,164 +3,13 @@ require_once __DIR__ . '/../../../auth/session.php';
 require_once __DIR__ . '/../autoload.php';
 
 use App\Controllers\SurveyController;
-use App\Controllers\FeedbackController;
-use App\Controllers\SurveyAnswerController;
-
-$surveyCtrl = new SurveyController();
-$feedbackCtrl = new FeedbackController();
-$surveyAnswerCtrl = new SurveyAnswerController();
+use App\Controllers\EmployeeController;
 
 $payload = $payload ?? [];
-$payload['surveys'] = $surveyCtrl->index();
-$payload['feedback'] = $feedbackCtrl->index();
-$payload['survey_answers'] = $payload['survey_answers'] ?? [];
-
-// Fetch survey answers for a specific survey or response
-$surveyId = null;
-$responseId = null;
-if (isset($_GET['response_id']) && is_numeric($_GET['response_id'])) {
-    $responseId = (int)$_GET['response_id'];
-} elseif (isset($_GET['survey_id']) && is_numeric($_GET['survey_id'])) {
-    $surveyId = (int)$_GET['survey_id'];
-} elseif (isset($_GET['id']) && is_numeric($_GET['id'])) {
-    $surveyId = (int)$_GET['id'];
-}
-
-if ($responseId !== null) {
-    $payload['survey_answers'] = $surveyAnswerCtrl->getByResponse($responseId);
-} elseif ($surveyId !== null) {
-    $payload['survey_answers'] = $surveyAnswerCtrl->getBySurvey($surveyId);
-} else {
-    $payload['survey_answers'] = $surveyAnswerCtrl->getAll();
-}
-
-// Fetch survey results for a specific survey
-if (isset($_GET['action']) && $_GET['action'] === 'view_results' && isset($_GET['survey_id'])) {
-    $surveyId = (int)$_GET['survey_id'];
-    $results = $surveyCtrl->getSurveyResults($surveyId);
-    $payload['survey_results'] = $results;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $flashSuccess = '';
-    $flashError = '';
-
-    if (!empty($_POST['action']) && $_POST['action'] === 'hr_feedback') {
-        // Handle HR feedback submission
-        $feedbackData = [
-            'employee_id' => $_POST['employee_id'] ?? null,
-            'comment' => $_POST['comments'] ?? '',
-            'category' => $_POST['category'] ?? 'general',
-            'rating' => !empty($_POST['rating']) ? (int)$_POST['rating'] : null,
-            'evaluator_type' => 'HR',
-            'is_anonymous' => 0,
-            'allow_followup' => 1
-        ];
-
-        try {
-            $feedbackCtrl->store(
-                $feedbackData['employee_id'],
-                $feedbackData['comment'],
-                $feedbackData['rating'],
-                $feedbackData['evaluator_type'],
-                $feedbackData['category'],
-                $feedbackData['is_anonymous']
-            );
-            $_SESSION['flash_success'] = 'Feedback submitted successfully to the employee.';
-        } catch (Exception $e) {
-            $_SESSION['flash_error'] = 'Error submitting feedback. Please try again.';
-        }
-    } elseif (!empty($_POST['action']) && $_POST['action'] === 'submit_suggestion') {
-        $suggestionComment = trim($_POST['comment'] ?? '');
-        $suggestionCategory = $_POST['category'] ?? 'other';
-        $suggestionRating = !empty($_POST['rating']) ? (int)$_POST['rating'] : null;
-        $isAnonymous = !empty($_POST['is_anonymous']) ? 1 : 0;
-        $employeeId = $_SESSION['user']['employee_id'] ?? $_SESSION['user']['id'] ?? null;
-
-        if ($suggestionComment === '') {
-            $_SESSION['flash_error'] = 'Please add a suggestion before submitting.';
-        } elseif (empty($employeeId)) {
-            $_SESSION['flash_error'] = 'Unable to identify the submitting employee.';
-        } else {
-            try {
-                $feedbackCtrl->store(
-                    $employeeId,
-                    $suggestionComment,
-                    $suggestionRating,
-                    'Suggestion',
-                    $suggestionCategory,
-                    $isAnonymous
-                );
-                $_SESSION['flash_success'] = 'Suggestion submitted successfully.';
-            } catch (Exception $e) {
-                $_SESSION['flash_error'] = 'Error submitting suggestion. Please try again.';
-            }
-        }
-    } elseif (!empty($_POST['action']) && $_POST['action'] === 'delete') {
-        $surveyId = (int) ($_POST['survey_id'] ?? 0);
-
-        if ($surveyId > 0) {
-            $deleted = $surveyCtrl->delete($surveyId);
-            if ($deleted) {
-                $_SESSION['flash_success'] = 'Survey deleted successfully.';
-            } else {
-                $_SESSION['flash_error'] = 'Failed to delete survey. It may not exist.';
-            }
-        } else {
-            $_SESSION['flash_error'] = 'Invalid survey ID for deletion.';
-        }
-    } elseif (!empty($_POST['action']) && $_POST['action'] === 'create_survey') {
-        $submittedToken = $_POST['survey_form_token'] ?? '';
-        $expectedToken = $_SESSION['survey_form_token'] ?? '';
-
-        if ($submittedToken === '' || !hash_equals($expectedToken, $submittedToken)) {
-            $_SESSION['flash_error'] = 'This survey submission has already been processed.';
-        } else {
-            unset($_SESSION['survey_form_token']);
-
-            // Handle survey creation
-            $title = trim($_POST['title'] ?? '');
-            $questions = array_map('trim', explode("\n", $_POST['questions_raw'] ?? ''));
-            $questions = array_filter($questions, static function ($question) {
-              return $question !== '';
-            });
-
-            if ($title === '' || empty($questions)) {
-              $_SESSION['flash_error'] = 'Title and at least one question are required.';
-            } else {
-              $formatted = array_map(function ($q) {
-                return ['question_text' => $q];
-              }, $questions);
-
-              $surveyData = [
-                'title' => $title,
-                'description' => $_POST['description'] ?? '',
-                'survey_type' => $_POST['survey_type'] ?? 'satisfaction',
-                'is_anonymous' => isset($_POST['is_anonymous']) ? 1 : 0
-              ];
-
-              $employeeId = (int)($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? 0);
-              if ($employeeId > 0) {
-                try {
-                  $surveyCtrl->store($surveyData, $formatted, $employeeId);
-                  $payload['surveys'] = $surveyCtrl->index();
-                  $surveyTypeName = $surveyData['survey_type'] === 'pulse' ? 'Pulse Survey' : 'Satisfaction Survey';
-                  $_SESSION['flash_success'] = $surveyTypeName . ' created successfully.';
-                } catch (Exception $e) {
-                  $_SESSION['flash_error'] = 'Error creating survey: ' . $e->getMessage();
-                }
-              } else {
-                $_SESSION['flash_error'] = 'User authentication required. Employee ID was not found in the current session.';
-              }
-            }
-        }
-    } elseif (!empty($_POST['title']) && !empty($_POST['questions_raw'])) {
-        $_SESSION['flash_error'] = 'Title and at least one question are required.';
-    }
-
-    // Redirects are handled client-side after successful submit so the page can
-    // reload cleanly within the engagement layout without triggering header warnings.
-}
+$surveyController = new SurveyController();
+$payload['surveys'] = $surveyController->index();
+$employeeController = new EmployeeController();
+$payload['employees'] = $employeeController->index();
 
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 $flashError = $_SESSION['flash_error'] ?? null;
@@ -189,7 +38,7 @@ if ($surveyFormToken === '') {
       <!-- Main survey tab navigation and content -->
       <div class="row">
         <div class="col-12">
-          <div class="card shadow-sm border-0" id="survey-tabs-card" style="visibility:hidden">
+          <div class="card shadow-sm border-0" id="survey-tabs-card">
             <div class="card-header p-0">
               <ul class="nav nav-tabs survey-nav-tabs" id="survey-tabs" role="tablist">
                 <li class="nav-item">
@@ -268,32 +117,27 @@ What improvements would you suggest?" required></textarea>
                       <div class="card card-info card-outline">
                         <div class="card-header"><h3 class="card-title">Available Satisfaction Surveys</h3></div>
                         <div class="card-body">
-                          <?php
-                          $satisfactionSurveys = array_filter($payload['surveys'] ?? [], function($survey) {
-                            return ($survey['survey_type'] ?? 'satisfaction') === 'satisfaction';
-                          });
-                          ?>
                           <div id="satisfaction-surveys-list">
-                          <?php if (!empty($satisfactionSurveys)): ?>
-                            <div class="list-group">
-                              <?php foreach ($satisfactionSurveys as $survey): ?>
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <strong><?=htmlspecialchars($survey['title'])?></strong><br>
-                                    <small class="text-muted">
-                                      Created: <?=htmlspecialchars($survey['created_at'] ?? 'N/A')?> |
-                                      Anonymous: <?=($survey['is_anonymous'] ?? 0) ? 'Yes' : 'No'?>
-                                    </small>
+                            <?php
+                              $satisfactionSurveys = array_filter($payload['surveys'], static function ($survey) {
+                                return strtolower((string)($survey['survey_type'] ?? 'satisfaction')) === 'satisfaction';
+                              });
+                            ?>
+                            <?php if (empty($satisfactionSurveys)): ?>
+                              <p class="text-muted">No satisfaction surveys yet.</p>
+                            <?php else: ?>
+                              <div class="list-group">
+                                <?php foreach ($satisfactionSurveys as $survey): ?>
+                                  <div class="list-group-item survey-result-row">
+                                    <div class="survey-result-details">
+                                      <strong><?= htmlspecialchars($survey['title'] ?? '') ?></strong><br>
+                                      <small class="text-muted">Created: <?= htmlspecialchars($survey['created_at'] ?? 'N/A') ?> | Anonymous: <?= !empty($survey['is_anonymous']) ? 'Yes' : 'No' ?></small>
+                                    </div>
+                                    <a class="btn btn-sm btn-info survey-result-action" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&amp;action=view&amp;id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">View</a>
                                   </div>
-                                  <div class="btn-group" role="group">
-                                    <a class="btn btn-sm btn-info" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&action=view&id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">View</a>
-                                  </div>
-                                </div>
-                              <?php endforeach; ?>
-                            </div>
-                          <?php else: ?>
-                            <p class="text-muted" id="no-satisfaction-surveys">No satisfaction surveys yet.</p>
-                          <?php endif; ?>
+                                <?php endforeach; ?>
+                              </div>
+                            <?php endif; ?>
                           </div>
                         </div>
                       </div>
@@ -349,38 +193,33 @@ What improvements would you suggest?" required></textarea>
                       <div class="card card-light card-outline">
                         <div class="card-header"><h3 class="card-title">Active Pulse Surveys</h3></div>
                         <div class="card-body">
-                          <?php
-                          $pulseSurveys = array_filter($payload['surveys'] ?? [], function($survey) {
-                            return ($survey['survey_type'] ?? '') === 'pulse';
-                          });
-                          ?>
                           <div id="pulse-surveys-list">
-                          <?php if (!empty($pulseSurveys)): ?>
-                            <div class="row">
-                              <?php foreach ($pulseSurveys as $survey): ?>
-                                <div class="col-md-6 mb-3">
-                                  <div class="card border-warning">
-                                    <div class="card-body">
-                                      <h6 class="card-title"><?=htmlspecialchars($survey['title'])?></h6>
-                                      <p class="card-text small text-muted">
-                                        Created: <?=htmlspecialchars($survey['created_at'] ?? 'N/A')?><br>
-                                        Anonymous: <?=($survey['is_anonymous'] ?? 0) ? 'Yes' : 'No'?>
-                                      </p>
-                                      <div class="btn-group btn-group-sm">
-                                        <a class="btn btn-outline-info" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&action=view&id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">Take Survey</a>
+                            <?php
+                              $pulseSurveys = array_filter($payload['surveys'], static function ($survey) {
+                                return strtolower((string)($survey['survey_type'] ?? '')) === 'pulse';
+                              });
+                            ?>
+                            <?php if (empty($pulseSurveys)): ?>
+                              <div class="text-center text-muted py-4">
+                                <i class="fas fa-bolt fa-3x mb-3 text-warning"></i>
+                                <p>No active pulse surveys</p>
+                                <small>Create your first pulse survey to get quick feedback from employees</small>
+                              </div>
+                            <?php else: ?>
+                              <div class="row">
+                                <?php foreach ($pulseSurveys as $survey): ?>
+                                  <div class="col-md-6 mb-3">
+                                    <div class="card border-warning"><div class="card-body pulse-result-row">
+                                      <div class="pulse-result-details">
+                                        <h6 class="card-title"><?= htmlspecialchars($survey['title'] ?? '') ?></h6>
+                                        <p class="card-text small text-muted">Created: <?= htmlspecialchars($survey['created_at'] ?? 'N/A') ?><br>Anonymous: <?= !empty($survey['is_anonymous']) ? 'Yes' : 'No' ?></p>
                                       </div>
-                                    </div>
+                                      <a class="btn btn-sm btn-outline-info pulse-result-action" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&amp;action=view&amp;id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">Take Survey</a>
+                                    </div></div>
                                   </div>
-                                </div>
-                              <?php endforeach; ?>
-                            </div>
-                          <?php else: ?>
-                            <div class="text-center text-muted py-4">
-                              <i class="fas fa-bolt fa-3x mb-3 text-warning"></i>
-                              <p>No active pulse surveys</p>
-                              <small>Create your first pulse survey to get quick feedback from employees</small>
-                            </div>
-                          <?php endif; ?>
+                                <?php endforeach; ?>
+                              </div>
+                            <?php endif; ?>
                           </div>
                         </div>
                       </div>
@@ -402,40 +241,23 @@ What improvements would you suggest?" required></textarea>
                             <strong>HR Feedback:</strong> This section is for the HR team to give feedback directly to selected employees.
                           </div>
 
-                          <form method="post" class="hr-feedback-form">
+                          <form method="post" class="hr-feedback-form" data-skip="true">
                             <input type="hidden" name="action" value="hr_feedback">
                             <div class="form-group">
                               <label for="feedback-employee">Select Employee</label>
                               <select id="feedback-employee" name="employee_id" class="form-control" required>
                                 <option value="">Select an employee</option>
-                                <?php
-                                use App\Controllers\EmployeeController;
-                                $employeeCtrl = new EmployeeController();
-                                $employees = $employeeCtrl->index();
-                                foreach ($employees as $employee): {
-                                  $firstName = trim((string)($employee['first_name'] ?? ''));
-                                  $middleName = trim((string)($employee['middle_name'] ?? ''));
-                                  $lastName = trim((string)($employee['last_name'] ?? ''));
-                                  $employeeCode = trim((string)($employee['employee_code'] ?? ''));
-                                  $displayName = trim((string)($employee['full_name'] ?? $employee['name'] ?? ''));
-
-                                  if ($displayName === '') {
-                                      $nameParts = array_filter([$firstName, $middleName, $lastName], function ($part) {
-                                          return $part !== '';
-                                      });
-                                      $displayName = implode(' ', $nameParts);
-                                  }
-
-                                  if ($displayName === '') {
-                                      $displayName = $employeeCode !== '' ? 'Employee ' . $employeeCode : 'Employee #' . ($employee['employee_id'] ?? 'Unknown');
-                                  }
-
-                                  $department = trim((string)($employee['department'] ?? $employee['department_name'] ?? ''));
-                                  $departmentLabel = $department !== '' ? ' (' . htmlspecialchars($department) . ')' : '';
+                                <?php foreach ($payload['employees'] as $employee): ?>
+                                  <?php
+                                    $employeeName = $employee['full_name'] ?? trim(implode(' ', array_filter([
+                                      $employee['first_name'] ?? '',
+                                      $employee['middle_name'] ?? '',
+                                      $employee['last_name'] ?? ''
+                                    ])));
+                                    $employeeName = $employeeName !== '' ? $employeeName : 'Employee #' . ($employee['employee_id'] ?? '');
                                   ?>
-                                  <option value="<?= (int)($employee['employee_id'] ?? 0) ?>"><?= htmlspecialchars($displayName) ?><?= $departmentLabel ?></option>
-                                <?php }
-                                endforeach; ?>
+                                  <option value="<?= (int)($employee['employee_id'] ?? 0) ?>"><?= htmlspecialchars($employeeName) ?></option>
+                                <?php endforeach; ?>
                               </select>
                             </div>
                             <div class="form-group">
@@ -497,7 +319,7 @@ What improvements would you suggest?" required></textarea>
                                   <h6 class="card-title mb-0">Submit a Suggestion</h6>
                                 </div>
                                 <div class="card-body">
-                                  <form method="post" class="suggestion-form">
+                                  <form method="post" class="suggestion-form" data-skip="true">
                                     <input type="hidden" name="action" value="submit_suggestion">
                                     <div class="form-group">
                                       <label for="suggestion-comment">Suggestion or Idea</label>
@@ -563,61 +385,7 @@ What improvements would you suggest?" required></textarea>
                                 </div>
                               </div>
 
-                              <?php
-                              $suggestions = array_filter($payload['feedback'] ?? [], function($feedback) {
-                                $comment = strtolower($feedback['comment'] ?? '');
-                                $category = strtolower($feedback['category'] ?? '');
-                                $evaluatorType = strtolower($feedback['evaluator_type'] ?? '');
-
-                                $suggestionCategories = [
-                                  'work_environment',
-                                  'management',
-                                  'policies',
-                                  'colleagues',
-                                  'compensation',
-                                  'work_life_balance',
-                                  'other'
-                                ];
-
-                                return in_array($category, $suggestionCategories, true)
-                                    || $evaluatorType === 'suggestion'
-                                    || strpos($comment, 'suggest') !== false
-                                    || strpos($comment, 'improve') !== false
-                                    || strpos($comment, 'better') !== false
-                                    || strpos($comment, 'recommend') !== false;
-                              });
-                              ?>
-
-                              <?php if (!empty($suggestions)): ?>
-                                <div class="suggestions-container">
-                                  <?php foreach (array_slice($suggestions, 0, 15) as $suggestion): ?>
-                                    <div class="card mb-3 suggestion-item" data-category="<?php echo htmlspecialchars($suggestion['category'] ?? 'other'); ?>" data-rating="<?php echo ($suggestion['rating'] ?? 0); ?>">
-                                      <div class="card-body pb-2">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                          <span class="badge badge-pill badge-success"><?php echo ucfirst(str_replace('_', ' ', $suggestion['category'] ?? 'general')); ?></span>
-                                          <div class="text-right">
-                                            <small class="text-muted">Rating: <?php echo ($suggestion['rating'] ?? 'N/A'); ?> ⭐</small>
-                                          </div>
-                                        </div>
-                                        <p class="mb-2"><?php echo nl2br(htmlspecialchars($suggestion['comment'] ?? '')); ?></p>
-                                        <small class="text-muted">
-                                          <i class="fas fa-user-secret mr-1"></i><?php echo ($suggestion['is_anonymous'] ?? 0) ? 'Anonymous Submission' : 'From: ' . htmlspecialchars($suggestion['employee_name'] ?? 'Unknown'); ?>
-                                          | <i class="fas fa-calendar mr-1"></i><?php echo htmlspecialchars($suggestion['evaluation_date'] ?? 'Recent'); ?>
-                                        </small>
-                                      </div>
-                                    </div>
-                                  <?php endforeach; ?>
-                                </div>
-                                <?php if (count($suggestions) > 15): ?>
-                                  <button class="btn btn-sm btn-outline-primary" id="load-more-suggestions">Load More Suggestions</button>
-                                <?php endif; ?>
-                              <?php else: ?>
-                                <div class="text-center text-muted py-4">
-                                  <i class="fas fa-lightbulb fa-3x mb-3 text-warning"></i>
-                                  <p>No suggestions collected yet</p>
-                                  <small>Suggestions will appear here as employees submit feedback with improvement ideas</small>
-                                </div>
-                              <?php endif; ?>
+                              <div class="suggestions-container" id="suggestions-list"><p class="text-muted">Loading suggestions...</p></div>
                             </div>
 
                             <div class="col-md-4">
@@ -627,25 +395,7 @@ What improvements would you suggest?" required></textarea>
                                   <h6 class="card-title mb-0">By Category</h6>
                                 </div>
                                 <div class="card-body">
-                                  <?php
-                                  $categoryCount = [];
-                                  foreach ($suggestions as $suggestion) {
-                                    $category = $suggestion['category'] ?? 'other';
-                                    $categoryCount[$category] = ($categoryCount[$category] ?? 0) + 1;
-                                  }
-                                  arsort($categoryCount);
-                                  ?>
-
-                                  <?php if (!empty($categoryCount)): ?>
-                                    <?php foreach (array_slice($categoryCount, 0, 7) as $category => $count): ?>
-                                      <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span><?php echo ucfirst(str_replace('_', ' ', $category)); ?></span>
-                                        <span class="badge badge-primary"><?php echo $count; ?></span>
-                                      </div>
-                                    <?php endforeach; ?>
-                                  <?php else: ?>
-                                    <p class="text-muted small">No categories yet</p>
-                                  <?php endif; ?>
+                                  <div id="suggestion-category-analytics"><p class="text-muted small">Loading categories...</p></div>
                                 </div>
                               </div>
 
@@ -654,26 +404,7 @@ What improvements would you suggest?" required></textarea>
                                   <h6 class="card-title mb-0">Quality Insights</h6>
                                 </div>
                                 <div class="card-body small">
-                                  <?php
-                                  $totalSuggestions = count($suggestions);
-                                  $highQualitySuggestions = count(array_filter($suggestions, function($s) {
-                                    return ($s['rating'] ?? 0) >= 4;
-                                  }));
-                                  $suggestionQuality = $totalSuggestions > 0 ? ($highQualitySuggestions / $totalSuggestions) * 100 : 0;
-                                  $avgSuggestionRating = !empty($suggestions) ? array_sum(array_column($suggestions, 'rating')) / count($suggestions) : 0;
-                                  ?>
-                                  <div class="mb-2">
-                                    <strong>Total Suggestions:</strong><br>
-                                    <span class="text-primary"><?php echo $totalSuggestions; ?></span>
-                                  </div>
-                                  <div class="mb-2">
-                                    <strong>Avg Quality Rating:</strong><br>
-                                    <span class="text-info"><?php echo number_format($avgSuggestionRating, 1); ?> ⭐</span>
-                                  </div>
-                                  <div>
-                                    <strong>Quality Suggestions:</strong><br>
-                                    <span class="text-success"><?php echo $highQualitySuggestions; ?> (<?php echo number_format($suggestionQuality, 0); ?>%)</span>
-                                  </div>
+                                  <div id="suggestion-quality-analytics"><p class="text-muted small">Loading insights...</p></div>
                                 </div>
                               </div>
                             </div>

@@ -127,6 +127,12 @@ function getStatusProgress($status) {
               $isPayrollRelated = true;
             }
             $showPayrollTab = $isPayrollRelated;
+            $attendanceLinks = [];
+            if (!empty($grievance['eer_grievance_id'])) {
+              $attendanceLinks = $grievanceCtrl->getAttendanceLinks((int)$grievance['eer_grievance_id']);
+            } elseif (!empty($grievance['id'])) {
+              $attendanceLinks = $grievanceCtrl->getAttendanceLinks((int)$grievance['id']);
+            }
           ?>
 
           <hr>
@@ -165,18 +171,10 @@ function getStatusProgress($status) {
               <?php endif; ?>
           <?php endif; ?>
 
-          <?php if (!$isPayrollRelated && $isAttendanceRelated): ?>
+          <?php if ($isAttendanceRelated || !empty($attendanceLinks)): ?>
             <hr>
             <h5><strong>Attendance Evidence:</strong></h5>
             <div class="bg-light p-3 rounded">
-              <?php
-                $attendanceLinks = [];
-                if (!empty($grievance['eer_grievance_id'])) {
-                  $attendanceLinks = $grievanceCtrl->getAttendanceLinks((int)$grievance['eer_grievance_id']);
-                } elseif (!empty($grievance['id'])) {
-                  $attendanceLinks = $grievanceCtrl->getAttendanceLinks((int)$grievance['id']);
-                }
-              ?>
               <?php if (!empty($attendanceLinks)): ?>
                 <div class="table-responsive">
                   <table class="table table-sm table-bordered mb-0">

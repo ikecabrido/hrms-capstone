@@ -370,6 +370,16 @@
 	min-height: 520px;
 	padding: 1.35rem;
 }
+.communication-area #messaging .message-search-wrap {
+	min-width: 240px;
+}
+.communication-area #messaging .message-search-wrap .input-group {
+	margin: 0;
+}
+.communication-area #messaging #message-search {
+	max-width: none;
+	padding: .35rem .65rem;
+}
 .communication-area #messaging .message-thread {
 	min-height: 300px;
 }

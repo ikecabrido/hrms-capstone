@@ -30,14 +30,6 @@
 
             if (push) {
                 var nextUrl = '?page=' + encodeURIComponent(result.rendered);
-                var currentHash = window.location.hash;
-                if (result.rendered === 'survey') {
-                    if (['#satisfaction', '#pulse', '#hr-feedback', '#suggestions'].includes(currentHash)) {
-                        nextUrl += currentHash;
-                    } else if (currentHash) {
-                        nextUrl += '#satisfaction';
-                    }
-                }
                 history.pushState({ page: result.rendered }, '', nextUrl);
             }
 

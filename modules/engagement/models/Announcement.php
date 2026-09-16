@@ -132,7 +132,9 @@ class Announcement extends BaseModel
         $sql = "SELECT sp.*, $uploaderName
             FROM eer_social_posts sp
             LEFT JOIN em_employees he ON sp.user_id = he.employee_id
-            WHERE sp.eer_social_post_id = :id AND sp.item_type = 'file'";
+            WHERE sp.eer_social_post_id = :id
+              AND sp.file_path IS NOT NULL
+              AND sp.file_path <> ''";
         return $this->execute($sql, ['id' => $id])->fetch(\PDO::FETCH_ASSOC);
     }
 

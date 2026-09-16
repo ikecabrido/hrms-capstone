@@ -47,6 +47,17 @@ if ($action === 'messages' && empty($data['employee_id'])) {
 
 try {
     switch ($action) {
+        case 'page_data':
+            $employeeId = resolveCommunicationEmployeeId();
+            $pageData = $ctrl->getPageData($employeeId, $isHrAdmin);
+            $pageData['lcm_departments'] = $ctrl->getLcmDepartments();
+            jsonResponse([
+                'success' => true,
+                'data' => $pageData,
+                'current_employee_id' => $employeeId,
+                'is_hr_admin' => $isHrAdmin,
+            ]);
+            break;
         case 'announcements':
             jsonResponse($ctrl->getAnnouncements());
             break;

@@ -14,9 +14,14 @@ try {
     if ($method === 'POST') {
         $name = $_POST['name'] ?? null;
         $description = $_POST['description'] ?? null;
+        $createdBy = $_SESSION['user']['employee_id']
+            ?? $_SESSION['employee_id']
+            ?? $_SESSION['user']['id']
+            ?? $_SESSION['user_id']
+            ?? null;
 
         if ($name) {
-            $groupId = $groupCtrl->createGroup($name, $description);
+            $groupId = $groupCtrl->createGroup($name, $description, $createdBy);
             echo json_encode(['success' => true, 'group_id' => $groupId]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Group name is required.']);

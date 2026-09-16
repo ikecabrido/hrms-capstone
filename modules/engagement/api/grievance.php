@@ -3,13 +3,17 @@ require_once __DIR__ . '/../autoload.php';
 require_once __DIR__ . '/utils.php';
 
 use App\Controllers\GrievanceController;
+use App\Controllers\EmployeeController;
+use App\Controllers\UserController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $sessionUser = $_SESSION['user'] ?? [];
 $sessionRole = strtolower(trim((string)($sessionUser['role_name'] ?? $sessionUser['role'] ?? $_SESSION['role_name'] ?? $_SESSION['role'] ?? '')));
+$sessionPosition = strtolower(trim((string)($sessionUser['position_name'] ?? $_SESSION['position_name'] ?? '')));
 $sessionRoleId = (int)($sessionUser['role_id'] ?? $_SESSION['role_id'] ?? 0);
 $isHrAdmin = in_array($sessionRoleId, [1, 12], true)
-    || preg_match('/(^|[^a-z])(admin|hr|human resources|human resource|employee relations|engagement)([^a-z]|$)/', $sessionRole) === 1;
+    || preg_match('/(^|[^a-z])(admin|hr|human resources|human resource|employee relations|engagement)([^a-z]|$)/', $sessionRole) === 1
+    || preg_match('/(^|[^a-z])(hr staff|hr officer)([^a-z]|$)/', $sessionPosition) === 1;
 $action = $_GET['action'] ?? ($_POST['action'] ?? ($_REQUEST['action'] ?? 'list'));
 $hasSessionUser = !empty($_SESSION['user']) || !empty($_SESSION['employee_id']) || !empty($_SESSION['user_id']);
 if (!$hasSessionUser && $action !== 'list') {
@@ -22,6 +26,49 @@ $data = inputData();
 
 try {
     switch ($action) {
+        case 'page_data':
+            if (!$isHrAdmin) {
+                jsonResponse(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            $employees = (new EmployeeController())->index();
+            $grievances = $ctrl->getGrievances();
+            $employeePayslips = [];
+            foreach ($employees as $employee) {
+                $employeeId = $employee['employee_id'] ?? $employee['id'] ?? null;
+                if (!empty($employeeId)) {
+                    $employeePayslips[(int)$employeeId] = $ctrl->getEmployeePayslips((int)$employeeId);
+                }
+            }
+
+            $hrUsers = array_values(array_filter((new UserController())->index(), function ($user) {
+                $role = strtolower(trim($user['role'] ?? ''));
+                return $role === 'admin' || $role === 'hr' || $role === 'hr_admin'
+                    || strpos($role, 'hr') !== false || strpos($role, 'admin') !== false;
+            }));
+
+            $attendanceLinks = [];
+            foreach ($grievances as $grievance) {
+                $grievanceId = (int)($grievance['id'] ?? 0);
+                if ($grievanceId > 0) {
+                    $attendanceLinks[$grievanceId] = $ctrl->getAttendanceLinks($grievanceId);
+                }
+            }
+
+            jsonResponse([
+                'success' => true,
+                'data' => [
+                    'grievances' => $grievances,
+                    'departments' => $ctrl->getDepartments(),
+                    'grievanceStats' => $ctrl->getGrievanceStats(),
+                    'complianceRecords' => $ctrl->getComplianceRecords(),
+                    'employees' => $employees,
+                    'employeePayslips' => $employeePayslips,
+                    'hrUsers' => $hrUsers,
+                    'attendanceLinks' => $attendanceLinks,
+                ],
+            ]);
+            break;
         case 'list':
             $grievances = $ctrl->getGrievances();
             $updates = [];

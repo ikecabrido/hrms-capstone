@@ -29,8 +29,13 @@
 .survey-area .tab-content .tab-pane {
 	min-height: auto;
 }
+.survey-area .tab-content:not(:has(> .tab-pane.active)) > .tab-pane:first-child {
+	display: block !important;
+	opacity: 1 !important;
+}
 
 .survey-area .tab-content > .tab-pane {
+	opacity: 1 !important;
 	display: none !important;
 }
 
@@ -174,6 +179,48 @@
 .survey-area .survey-list {
 	margin-top: 1.5rem;
 }
+.survey-area .survey-result-row {
+	display: flex !important;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	width: 100%;
+	margin-bottom: 0.75rem;
+	padding: 0.85rem 1rem;
+	border-radius: 10px;
+}
+.survey-area #satisfaction-surveys-list .list-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.survey-area #satisfaction-surveys-list .survey-result-row:last-child {
+	margin-bottom: 0;
+}
+.survey-area .pulse-result-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+}
+.survey-area .pulse-result-details {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+.survey-area .pulse-result-action {
+	margin-left: auto;
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
+.survey-area .survey-result-details {
+	min-width: 0;
+	flex: 1 1 auto;
+}
+.survey-area .survey-result-action {
+	margin-left: auto;
+	flex: 0 0 auto;
+	white-space: nowrap;
+}
 .survey-area .survey-item {
 	background: #f7fbff;
 	border: 1px solid #e5eff8 !important;
@@ -247,11 +294,13 @@
 /* Nav tabs styles */
 .survey-area .survey-nav-tabs {
   display: flex;
-  gap: 0;
+	align-items: center;
+	gap: 0;
   list-style: none;
-  padding-left: 0;
+	padding: 0;
   margin: 0;
   background: transparent;
+	overflow-x: auto;
 }
 
 .survey-area .survey-nav-tabs .nav-item {
@@ -260,26 +309,37 @@
 }
 
 .survey-area .survey-nav-tabs .nav-link {
-  border: none !important;
-  border-bottom: 3px solid transparent !important;
+	border: 1px solid transparent !important;
+	border-bottom: 3px solid transparent !important;
   margin: 0;
-  padding: 0.9rem 1.2rem !important;
-  font-weight: 700;
-  color: #4a5d73;
+	padding: 0.8rem 1.2rem !important;
+	font-weight: 600;
+	color: #2f4051;
   background: transparent;
   border-radius: 0;
-  transition: all 0.15s ease;
+	transition: all 0.2s ease;
   text-decoration: none;
-  display: flex;
+	display: inline-flex;
   align-items: center;
-  min-height: 48px;
+	justify-content: center;
+	gap: 0.6rem;
+	min-height: 54px;
   line-height: 1.2;
+	white-space: nowrap;
+}
+
+.survey-area .survey-nav-tabs .nav-link i {
+	display: inline-block;
+	width: 1.1rem;
+	text-align: center;
+	line-height: 1;
+	flex-shrink: 0;
 }
 
 .survey-area .survey-nav-tabs .nav-link.active {
-  color: #0e5ca8 !important;
+	color: #0d4c8a !important;
   background: transparent !important;
-  border-bottom: 3px solid #0e5ca8 !important;
+	border-bottom: 3px solid #0d4c8a !important;
   box-shadow: none;
 }
 

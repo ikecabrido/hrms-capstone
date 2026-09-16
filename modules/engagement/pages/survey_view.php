@@ -10,11 +10,12 @@ $surveyCtrl = new SurveyController();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $surveyId = (int)($_POST['survey_id'] ?? 0);
     $employeeId = (int)($_SESSION['user']['employee_id'] ?? $_SESSION['user']['id'] ?? 0);
+    $targetEmployeeId = isset($_POST['target_employee_id']) ? (int)$_POST['target_employee_id'] : $employeeId;
     $answers = $_POST['answers'] ?? [];
 
     if ($surveyId > 0 && $employeeId > 0 && !empty($answers)) {
         try {
-            $surveyCtrl->submit($surveyId, $employeeId, $answers);
+            $surveyCtrl->submit($surveyId, $employeeId, $answers, $targetEmployeeId);
             $_SESSION['flash_success'] = 'Thank you! Your survey response has been submitted.';
         } catch (Exception $e) {
             $_SESSION['flash_error'] = 'Unable to submit your survey response. Please try again.';
@@ -32,11 +33,16 @@ $surveyId = (int)($_GET['id'] ?? 0);
 $viewMode = (strtolower((string)($_GET['action'] ?? '')) === 'view');
 $survey = null;
 $questions = [];
+$savedAnswers = [];
+$currentEmployeeId = (int)($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? $_SESSION['user']['id'] ?? 0);
 
 if ($surveyId > 0) {
     $survey = $surveyCtrl->getWithQuestions($surveyId);
     if ($survey) {
         $questions = $survey['questions'] ?? [];
+        if ($currentEmployeeId > 0) {
+            $savedAnswers = $surveyCtrl->getEmployeeAnswersForSurvey($surveyId, $currentEmployeeId);
+        }
     }
 }
 
@@ -89,12 +95,15 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             <?php else: ?>
                                 <?php foreach ($questions as $index => $question): ?>
                                     <?php $fieldId = 'q_' . ($question['eer_survey_question_id'] ?? $index + 1); ?>
+                                    <?php $questionKey = (int)($question['eer_survey_question_id'] ?? ($index + 1)); ?>
+                                    <?php $answerValue = $savedAnswers[$questionKey] ?? $savedAnswers[(string)$questionKey] ?? $savedAnswers[$index + 1] ?? $savedAnswers[(string)($index + 1)] ?? ($question['answer'] ?? $question['response_answer'] ?? null); ?>
+                                    <?php $answerText = is_array($answerValue) ? json_encode($answerValue, JSON_UNESCAPED_UNICODE) : (string)($answerValue ?? 'No answer provided yet.'); ?>
                                     <div class="survey-question">
                                         <label for="<?= htmlspecialchars($fieldId) ?>">
                                             <?= htmlspecialchars($index + 1) ?>. <?= htmlspecialchars($question['question_text'] ?? 'Untitled question') ?>
                                         </label>
                                         <div class="survey-answer-readonly" style="white-space: pre-wrap; min-height: 64px; padding: 12px 14px; border: 1px solid #cfe0f5; border-radius: 12px; background: #f8fbff; color: #1e293b;">
-                                            <?= htmlspecialchars((string)($question['answer'] ?? $question['response_answer'] ?? 'No answer provided yet.')) ?>
+                                            <?= htmlspecialchars($answerText) ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>

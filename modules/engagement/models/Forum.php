@@ -16,7 +16,7 @@ class Forum extends BaseModel
                 'created_by_employee_id' => $createdBy
             ]);
 
-            return $this->db->lastInsertId();
+            return (int)$this->db->lastInsertId();
         } catch (\Exception $e) {
             error_log("Forum creation error: " . $e->getMessage());
             return false;

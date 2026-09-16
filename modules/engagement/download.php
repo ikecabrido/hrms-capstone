@@ -1,7 +1,7 @@
 <?php
 session_start();
-require_once __DIR__ . '/../auth/database.php';
-require_once __DIR__ . '/../auth/auth_check.php';
+require_once __DIR__ . '/../../database/db.php';
+require_once __DIR__ . '/../../auth/session.php';
 require_once __DIR__ . '/autoload.php';
 
 use App\Models\Announcement;
@@ -21,9 +21,24 @@ if (!$file) {
     die('File not found.');
 }
 
-$filePath = __DIR__ . '/../' . ltrim($file['file_path'], '/\\');
+$relativePath = ltrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, (string)($file['file_path'] ?? '')), DIRECTORY_SEPARATOR);
+$filePath = null;
 
-if (!file_exists($filePath)) {
+$candidatePaths = [
+    dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . $relativePath,
+    __DIR__ . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . $relativePath,
+    __DIR__ . DIRECTORY_SEPARATOR . $relativePath,
+];
+
+foreach ($candidatePaths as $candidate) {
+    $resolved = realpath($candidate);
+    if ($resolved !== false && is_file($resolved)) {
+        $filePath = $resolved;
+        break;
+    }
+}
+
+if (!$filePath || !file_exists($filePath)) {
     http_response_code(404);
     die('File does not exist on server.');
 }

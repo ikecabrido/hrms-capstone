@@ -81,13 +81,18 @@ class Recognition extends BaseModel
                         pr.evaluation_period,
                         pr.period_start,
                         pr.period_end,
-                        pr.kpi_score,
-                        pr.attendance_score,
-                        pr.overall_rating_percent,
-                        pr.overall_rating_5,
+                        NULL as kpi_score,
+                        NULL as attendance_score,
+                        pr.final_rating_percent as overall_rating_percent,
+                        CASE
+                            WHEN pr.final_rating_percent >= 95 THEN 5
+                            WHEN pr.final_rating_percent >= 80 THEN 4
+                            WHEN pr.final_rating_percent >= 70 THEN 3
+                            ELSE 2
+                        END as overall_rating_5,
                         pr.final_rating_percent,
                         pr.final_grade,
-                        pr.remarks
+                        NULL as remarks
                     FROM pm_reports pr";
         }
 
@@ -583,9 +588,9 @@ class Recognition extends BaseModel
             
             SELECT 'performance' as source,
                 CASE
-                    WHEN pr.overall_rating_5 = 5 AND pr.final_rating_percent >= 95 THEN 100
-                    WHEN pr.overall_rating_5 >= 4 AND pr.final_rating_percent >= 80 THEN 50
-                    WHEN pr.overall_rating_5 >= 3 AND pr.final_rating_percent >= 70 THEN 25
+                    WHEN pr.overall_rating >= 4.5 THEN 100
+                    WHEN pr.overall_rating >= 4.0 THEN 50
+                    WHEN pr.overall_rating >= 3.5 THEN 25
                     ELSE 0
                 END as points
             FROM pm_performance_reports pr

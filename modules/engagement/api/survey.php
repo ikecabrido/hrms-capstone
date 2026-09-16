@@ -3,18 +3,41 @@ require_once __DIR__ . '/../autoload.php';
 require_once __DIR__ . '/utils.php';
 
 use App\Controllers\SurveyController;
+use App\Controllers\FeedbackController;
+use App\Controllers\SurveyAnswerController;
+use App\Controllers\EmployeeController;
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && empty($_SESSION['user_id']) && $action !== 'list') {
+if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && empty($_SESSION['user_id']) && !in_array($action, ['list', 'page_data'], true)) {
    jsonResponse(['error' => 'Unauthorized'], 401);
 }
 
 $ctrl = new SurveyController();
+$feedbackCtrl = new FeedbackController();
+$surveyAnswerCtrl = new SurveyAnswerController();
+$employeeCtrl = new EmployeeController();
 $action = $_GET['action'] ?? 'list';
 $data = array_merge($_GET, inputData());
 
 try {
     switch ($action) {
+        case 'page_data':
+            $surveyId = isset($data['survey_id']) && is_numeric($data['survey_id']) ? (int)$data['survey_id'] : null;
+            $responseId = isset($data['response_id']) && is_numeric($data['response_id']) ? (int)$data['response_id'] : null;
+            $answers = $responseId !== null
+                ? $surveyAnswerCtrl->getByResponse($responseId)
+                : ($surveyId !== null ? $surveyAnswerCtrl->getBySurvey($surveyId) : $surveyAnswerCtrl->getAll());
+
+            jsonResponse([
+                'success' => true,
+                'data' => [
+                    'surveys' => $ctrl->index(),
+                    'feedback' => $feedbackCtrl->index(),
+                    'survey_answers' => $answers,
+                    'employees' => $employeeCtrl->index()
+                ]
+            ]);
+            break;
         case 'list':
             jsonResponse($ctrl->index());
             break;
@@ -46,6 +69,26 @@ try {
             }, $questions);
             $id = $ctrl->store($surveyData, $formattedQuestions, $employeeId);
             jsonResponse(['success' => true, 'id' => $id, 'data' => $ctrl->show($id)], 201);
+            break;
+        case 'feedback':
+            $employeeId = (int)($data['employee_id'] ?? 0);
+            if ($employeeId <= 0) {
+                $employeeId = (int)($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? 0);
+            }
+            $comment = trim((string)($data['comment'] ?? $data['comments'] ?? ''));
+            if ($employeeId <= 0 || $comment === '') {
+                jsonResponse(['error' => 'employee_id and comment are required'], 400);
+            }
+
+            $id = $feedbackCtrl->store(
+                $employeeId,
+                $comment,
+                !empty($data['rating']) ? (int)$data['rating'] : null,
+                (string)($data['evaluator_type'] ?? 'HR'),
+                (string)($data['category'] ?? 'general'),
+                !empty($data['is_anonymous']) ? 1 : 0
+            );
+            jsonResponse(['success' => true, 'id' => $id], 201);
             break;
         case 'submit':
             if (empty($data['survey_id']) || empty($data['answers'])) {

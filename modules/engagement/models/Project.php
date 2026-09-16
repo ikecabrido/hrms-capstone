@@ -9,7 +9,7 @@ class Project extends BaseModel
             eer_project_id int(11) NOT NULL AUTO_INCREMENT,
             name varchar(255) DEFAULT NULL,
             description text DEFAULT NULL,
-            deadline date DEFAULT NULL,
+            deadline datetime DEFAULT NULL,
             status varchar(50) DEFAULT 'planning',
             created_by_employee_id int(11) DEFAULT NULL,
             created_at datetime DEFAULT current_timestamp(),
@@ -18,6 +18,18 @@ class Project extends BaseModel
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
 
         $this->execute($sql);
+
+        $columnType = $this->execute("SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eer_projects' AND COLUMN_NAME = 'deadline'")->fetchColumn();
+        if ($columnType === 'date') {
+            $this->execute('ALTER TABLE eer_projects MODIFY deadline datetime DEFAULT NULL');
+        }
+
+        $columnExtra = $this->execute("SELECT EXTRA FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'eer_projects' AND COLUMN_NAME = 'eer_project_id'")->fetchColumn();
+        if (stripos((string)$columnExtra, 'auto_increment') === false) {
+            $this->execute('ALTER TABLE eer_projects MODIFY eer_project_id int(11) NOT NULL AUTO_INCREMENT');
+        }
     }
 
     public function createProject($name, $description, $deadline, $status, $createdBy)

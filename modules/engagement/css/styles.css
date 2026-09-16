@@ -18,11 +18,6 @@
 @import url('base/reset.css');
 @import url('base/global.css');
 
-
-
-@import url('CUSTOM/custom.css');
-
-
 /*Module CSS*/
 @import url('../pages/css/style.css');
 

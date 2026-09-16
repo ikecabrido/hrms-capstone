@@ -18,8 +18,14 @@ function normalizeCommunicationTab(tabId) {
 const COMMUNICATION_STORAGE_KEY = 'engagement:communication:active-tab';
 const COMMUNICATION_LEGACY_STORAGE_KEY = 'communication-active-tab';
 
+function isCommunicationPage() {
+  return Boolean(document.getElementById('communication-tabs'));
+}
+
 // Handle tab navigation based on the last selected tab, with a safe fallback
 function activateTabFromHash() {
+  if (!isCommunicationPage()) return;
+
   let activeTabId = '';
 
   try {
@@ -74,7 +80,7 @@ function activateTabFromHash() {
       setTimeout(attemptActivateTab, 100);
     } else {
       console.warn('[Communication Tab] Failed to find tab after', maxRetries, 'retries, using first available');
-      const firstTab = document.querySelector('.nav-link');
+      const firstTab = document.querySelector('#communication-tabs .nav-link');
       if (firstTab) {
         switchTab(firstTab, false, true);
       }
@@ -106,8 +112,8 @@ function switchTab(tabLink, updateHistory = true, isInitialLoad = false) {
   }
   
   // Get all tabs and panes
-  const allTabs = document.querySelectorAll('.nav-link');
-  const allPanes = document.querySelectorAll('.tab-pane');
+  const allTabs = document.querySelectorAll('#communication-tabs .nav-link');
+  const allPanes = document.querySelectorAll('#communication-tabs-content .tab-pane');
   
   if (isInitialLoad) {
     // No animation on initial load - just activate
@@ -177,7 +183,9 @@ function switchTab(tabLink, updateHistory = true, isInitialLoad = false) {
 
 // Add click handlers to all tab links
 function initTabClickHandlers() {
-  const tabLinks = document.querySelectorAll('.nav-link');
+  if (!isCommunicationPage()) return;
+
+  const tabLinks = document.querySelectorAll('#communication-tabs .nav-link');
   
   tabLinks.forEach(link => {
     // Remove any existing listeners to avoid duplicates
@@ -194,6 +202,186 @@ function initTabClickHandlers() {
 function escapeCommunicationHtml(value) {
   return String(value || '').replace(/[&<>'"]/g, function (character) {
     return {'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[character];
+  });
+}
+
+function getPriorityBadgeClass(priority) {
+  const classes = {urgent: 'danger', high: 'warning', normal: 'info', low: 'secondary'};
+  return classes[String(priority || 'normal').toLowerCase()] || 'light';
+}
+
+function getNotificationTypeIcon(type) {
+  const icons = {
+    info: 'fas fa-info-circle text-info',
+    warning: 'fas fa-exclamation-triangle text-warning',
+    success: 'fas fa-check-circle text-success',
+    danger: 'fas fa-times-circle text-danger'
+  };
+  return icons[String(type || '').toLowerCase()] || 'fas fa-bell text-primary';
+}
+
+function renderCommunicationAnnouncements(announcements) {
+  const container = document.getElementById('announcements-container');
+  if (!container || !Array.isArray(announcements)) return;
+
+  if (!announcements.length) {
+    container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-bullhorn fa-3x mb-3"></i><h5>No announcements yet</h5><p>Company announcements will appear here.</p></div>';
+    return;
+  }
+
+  container.innerHTML = announcements.slice(0, 5).map(function (announcement) {
+    const content = String(announcement.content || '');
+    const date = announcement.created_at ? new Date(announcement.created_at).toLocaleString() : '';
+    return '<div class="announcement-card card mb-3"><div class="card-body">' +
+      '<div class="d-flex justify-content-between align-items-start mb-2"><h6 class="card-title text-primary mb-1">' + escapeCommunicationHtml(announcement.title) + '</h6>' +
+      '<span class="badge badge-' + getPriorityBadgeClass(announcement.priority) + '">' + escapeCommunicationHtml((announcement.priority || 'normal').charAt(0).toUpperCase() + (announcement.priority || 'normal').slice(1)) + '</span></div>' +
+      '<p class="card-text text-muted small mb-2"><i class="fas fa-calendar"></i> ' + escapeCommunicationHtml(date) + ' | <i class="fas fa-tag"></i> ' + escapeCommunicationHtml(announcement.category || 'general') + ' | <i class="fas fa-user"></i> ' + escapeCommunicationHtml(announcement.author_name || announcement.created_by_name || 'Admin') + '</p>' +
+      renderCommunicationContent(content, announcement.eer_announcements_id, 'primary') +
+      '</div></div>';
+  }).join('');
+}
+
+function renderCommunicationUpdates(updates) {
+  const container = document.getElementById('updates-container');
+  if (!container || !Array.isArray(updates)) return;
+
+  if (!updates.length) {
+    container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-building fa-3x mb-3"></i><h5>Department Updates</h5><p>Updates from different departments will appear here.</p></div>';
+    return;
+  }
+
+  container.innerHTML = updates.slice(0, 10).map(function (update) {
+    const content = String(update.content || '');
+    const date = update.created_at ? new Date(update.created_at).toLocaleString() : '';
+    return '<div class="dept-update-item card mb-3" data-dept="' + escapeCommunicationHtml(update.department || '') + '"><div class="card-body">' +
+      '<div class="d-flex justify-content-between align-items-start mb-2"><h6 class="card-title text-success mb-1">' + escapeCommunicationHtml(update.title) + '</h6>' +
+      '<span class="badge badge-' + getPriorityBadgeClass(update.priority) + '">' + escapeCommunicationHtml((update.priority || 'normal').charAt(0).toUpperCase() + (update.priority || 'normal').slice(1)) + '</span></div>' +
+      '<p class="card-text text-muted small mb-2"><i class="fas fa-calendar"></i> ' + escapeCommunicationHtml(date) + ' | <i class="fas fa-building"></i> ' + escapeCommunicationHtml(update.department || 'General') + ' | <i class="fas fa-user"></i> ' + escapeCommunicationHtml(update.author_name || update.created_by_name || 'Admin') + '</p>' +
+      renderCommunicationContent(content, update.eer_announcements_id, 'success') +
+      '</div></div>';
+  }).join('');
+}
+
+function renderCommunicationNotifications(notifications, lcmNotifications) {
+  const container = document.getElementById('notifications-container');
+  if (!container || !Array.isArray(notifications)) return;
+  const allNotifications = notifications.concat(Array.isArray(lcmNotifications) ? lcmNotifications : []);
+
+  if (!allNotifications.length) {
+    container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-bell fa-3x mb-3"></i><h5>No notifications</h5><p>HR notifications will appear here.</p></div>';
+    return;
+  }
+
+  container.innerHTML = allNotifications.map(function (notification) {
+    const isRead = Number(notification.is_read || 0) === 1;
+    const title = notification.title || (notification.notification_type ? 'Legal & Compliance' : 'HR Update');
+    return '<div class="notification-item ' + (isRead ? 'notification-read' : 'notification-unread') + '"><div class="d-flex justify-content-between align-items-start"><div class="flex-grow-1">' +
+      '<div class="d-flex align-items-center mb-1"><span class="badge badge-light notification-type-badge notification-type-badge--side">' + escapeCommunicationHtml(getNotificationTypeLabel(notification.type || notification.notification_type || 'info')) + '</span><i class="' + getNotificationTypeIcon(notification.type || notification.notification_type || 'info') + ' mr-2"></i><h6 class="mb-0">' + escapeCommunicationHtml(title) + '</h6></div>' +
+      '<p class="text-muted small mb-1"><i class="fas fa-calendar"></i> ' + escapeCommunicationHtml(notification.created_at || '') + '</p><p class="mb-2">' + escapeCommunicationHtml(notification.message || '') + '</p></div>' +
+      (!isRead && notification.id ? '<div class="ml-3 notification-actions"><button type="button" class="btn btn-sm btn-outline-success js-mark-notification-read" data-notification-id="' + Number(notification.id) + '"><i class="fas fa-check"></i> Mark Read</button><span class="badge badge-primary notification-new-badge">New</span></div>' : '') +
+      '</div></div>';
+  }).join('');
+}
+
+function getNotificationTypeLabel(type) {
+  const labels = {survey: 'Survey', social: 'Social', recognition: 'Recognition', grievance: 'Grievance', policy: 'Policy'};
+  return labels[String(type || '').toLowerCase()] || 'HR Update';
+}
+
+function renderCommunicationMessages(messages, currentEmployeeId) {
+  const container = document.getElementById('messages-container');
+  if (!container || !Array.isArray(messages)) return;
+  const emptySearch = '<div id="message-search-empty" class="text-center text-muted py-4" style="display: none;"><i class="fas fa-search fa-2x mb-2"></i><h5>No matching messages</h5><p>Try a different name, message, or time.</p></div>';
+
+  if (!messages.length) {
+    container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-comments fa-3x mb-3"></i><h5>No messages yet</h5><p>Your conversations with HR will appear here.</p></div>' + emptySearch;
+    return;
+  }
+
+  container.innerHTML = messages.map(function (message) {
+    const isSent = Number(message.sender_id) === Number(currentEmployeeId);
+    const sender = message.sender_name || message.sender_id || '';
+    const text = String(message.message || '');
+    const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+    return '<div class="message-bubble ' + (isSent ? 'sent' : 'received') + '" data-message-search="' + escapeCommunicationHtml((sender + ' ' + text + ' ' + timestamp).toLowerCase()) + '"><div class="p-2"><div class="d-flex justify-content-between align-items-center mb-1"><small class="text-muted"><i class="fas fa-user"></i> ' + escapeCommunicationHtml(sender) + '</small><small class="text-muted"><i class="fas fa-clock"></i> ' + escapeCommunicationHtml(timestamp) + '</small></div><p class="mb-0">' + escapeCommunicationHtml(text) + '</p></div></div>';
+  }).join('') + emptySearch;
+}
+
+function populateCommunicationOptions(data) {
+  const departments = Array.isArray(data.departments) ? data.departments : [];
+  const employees = Array.isArray(data.employees) ? data.employees : [];
+  const departmentSelects = document.querySelectorAll('select[name="department"], #dept-filter');
+  const employeeSelect = document.querySelector('select[name="receiver_id"]');
+
+  departmentSelects.forEach(function (select) {
+    const original = select.id === 'dept-filter' ? '<option value="">All Departments</option>' : '<option value="">Select Department</option>';
+    select.innerHTML = original + departments.map(function (department) {
+      const name = department.department_name || '';
+      return name ? '<option value="' + escapeCommunicationHtml(name) + '">' + escapeCommunicationHtml(name) + '</option>' : '';
+    }).join('') + (select.id === 'dept-filter' ? '' : '<option value="all">All Departments</option>');
+  });
+
+  if (employeeSelect) {
+    employeeSelect.innerHTML = '<option value="">Select recipient...</option>' + employees.map(function (employee) {
+      const name = [employee.first_name, employee.middle_name, employee.last_name].filter(Boolean).join(' ');
+      const id = Number(employee.employee_id || 0);
+      return id ? '<option value="' + id + '">' + escapeCommunicationHtml(name || employee.employee_code || ('Employee #' + id)) + '</option>' : '';
+    }).join('');
+  }
+}
+
+function loadCommunicationPageData() {
+  fetch('api/communication.php?action=page_data', {credentials: 'same-origin', cache: 'no-store'})
+    .then(function (response) {
+      if (!response.ok) throw new Error('Unable to load communication data.');
+      return response.json();
+    })
+    .then(function (response) {
+      const data = response.data || {};
+      renderCommunicationAnnouncements(data.announcements);
+      renderCommunicationUpdates(data.department_updates);
+      renderCommunicationNotifications(data.notifications, data.lcm_notifications);
+      renderCommunicationMessages(data.messageThreads, response.current_employee_id);
+      populateCommunicationOptions(data);
+    })
+    .catch(function (error) {
+      console.warn('[Communication] API data load failed; keeping server-rendered content.', error);
+    });
+}
+
+function initCommunicationApiActions() {
+  const container = document.getElementById('notifications-container');
+  if (!container || container.dataset.apiActionsBound === '1') return;
+  container.dataset.apiActionsBound = '1';
+  container.addEventListener('click', function (event) {
+    const button = event.target.closest('.js-mark-notification-read');
+    if (!button) return;
+
+    button.disabled = true;
+    fetch('api/communication.php?action=mark_notification_read', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'same-origin',
+      body: JSON.stringify({notification_id: button.dataset.notificationId})
+    })
+      .then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok || data.error) throw new Error(data.error || 'Unable to mark notification as read.');
+          return data;
+        });
+      })
+      .then(function () {
+        const item = button.closest('.notification-item');
+        if (item) {
+          item.classList.remove('notification-unread');
+          item.classList.add('notification-read');
+          item.querySelectorAll('.js-mark-notification-read, .notification-new-badge').forEach(function (element) { element.remove(); });
+        }
+      })
+      .catch(function (error) {
+        button.disabled = false;
+        window.alert(error.message);
+      });
   });
 }
 
@@ -264,7 +452,9 @@ function initCommunicationForms() {
             if (container) {
               const emptyState = container.querySelector('.text-center.text-muted');
               if (emptyState) emptyState.remove();
-              container.insertAdjacentHTML('afterbegin', '<div class="message-bubble sent"><div class="p-2"><small class="text-muted"><i class="fas fa-clock"></i> Just now</small><p class="mb-0">' + escapeCommunicationHtml(formData.get('message')) + '</p></div></div>');
+              const messageText = escapeCommunicationHtml(formData.get('message'));
+              container.insertAdjacentHTML('afterbegin', '<div class="message-bubble sent" data-message-search="' + messageText.toLowerCase() + ' current just now"><div class="p-2"><small class="text-muted"><i class="fas fa-clock"></i> Just now</small><p class="mb-0">' + messageText + '</p></div></div>');
+              applyMessageSearch();
             }
           }
           form.reset();
@@ -285,6 +475,43 @@ function initCommunicationForms() {
   });
 }
 
+function applyMessageSearch() {
+  const searchInput = document.getElementById('message-search');
+  const container = document.getElementById('messages-container');
+  const emptyState = document.getElementById('message-search-empty');
+
+  if (!searchInput || !container) return;
+
+  const query = String(searchInput.value || '').trim().toLowerCase();
+  const bubbles = Array.from(container.querySelectorAll('.message-bubble'));
+  let visibleCount = 0;
+
+  bubbles.forEach(function (bubble) {
+    const searchableText = (String(bubble.dataset.messageSearch || '') + ' ' + String(bubble.textContent || '')).toLowerCase();
+    const isMatch = !query || searchableText.includes(query);
+    bubble.style.display = isMatch ? '' : 'none';
+    if (isMatch) visibleCount += 1;
+  });
+
+  if (emptyState) {
+    emptyState.style.display = query && visibleCount === 0 ? 'block' : 'none';
+  }
+}
+
+function initMessageSearch() {
+  const searchInput = document.getElementById('message-search');
+
+  if (!searchInput || searchInput.dataset.searchBound === '1') {
+    applyMessageSearch();
+    return;
+  }
+
+  searchInput.dataset.searchBound = '1';
+  searchInput.addEventListener('input', applyMessageSearch);
+
+  applyMessageSearch();
+}
+
 window.addEventListener('notifications:all-read', function () {
   document.querySelectorAll('#notifications-container .notification-item').forEach(function (item) {
     item.classList.remove('notification-unread');
@@ -297,10 +524,9 @@ window.addEventListener('notifications:all-read', function () {
 
 function initPolicyFilter() {
   const filterSelect = document.getElementById('policy-filter');
-  const policyCards = document.querySelectorAll('.policy-card');
   const emptyState = document.querySelector('#policies-container .text-center.text-muted.py-4');
 
-  if (!filterSelect || !policyCards.length) return;
+  if (!filterSelect) return;
 
   const normalizeCategory = function (value) {
     const normalized = String(value || '').trim().toLowerCase();
@@ -312,7 +538,7 @@ function initPolicyFilter() {
     const selected = normalizeCategory(this.value || '');
     let visibleCount = 0;
 
-    policyCards.forEach(function (card) {
+    document.querySelectorAll('#policies-container .policy-card').forEach(function (card) {
       const title = normalizeCategory(card.dataset.title || '');
       const category = normalizeCategory(card.dataset.category || '');
       const shouldShow = !selected || title === selected || category === selected;
@@ -328,6 +554,50 @@ function initPolicyFilter() {
 
   filterSelect.value = '';
   filterSelect.dispatchEvent(new Event('change'));
+}
+
+function addSharedPolicyCard(policyData, targetAudience) {
+  const container = document.getElementById('policies-container');
+  if (!container) return;
+
+  const emptyState = container.querySelector('.text-center.text-muted.py-4');
+  if (emptyState) emptyState.remove();
+
+  const title = policyData.title;
+  const content = policyData.content || 'Please review the policy shared by Legal & Compliance Management.';
+  const effectiveDate = policyData.effective || '';
+  const attachment = policyData.attachment || '';
+  const isUpdate = policyData.isUpdate;
+  const sourcePolicyId = policyData.sourcePolicyId;
+  const now = new Date();
+  const sharedAt = now.toLocaleDateString(undefined, {month: 'short', day: '2-digit', year: 'numeric'}) + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  const normalizedCategory = (policyData.category || 'General').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'general';
+  const normalizedTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const preview = content.length > 150 ? content.slice(0, 150) + '...' : content;
+  const alreadyShared = Array.from(container.querySelectorAll('.policy-card')).some(function (card) {
+    const existingSourceId = String(card.dataset.sourcePolicyId || '').split('|', 1)[0];
+    const baseSourceId = String(sourcePolicyId || '').split('|', 1)[0];
+    return (existingSourceId && baseSourceId && existingSourceId === baseSourceId) || card.dataset.title === normalizedTitle;
+  });
+  if (alreadyShared) return;
+
+  const download = attachment
+    ? '<a href="policy_download.php?lcm=1&id=' + encodeURIComponent(sourcePolicyId) + '" class="btn btn-xs btn-outline-secondary" download style="font-size: 11px; padding: 4px 10px; line-height: 1.3; border-radius: 6px; margin-left: auto;"><i class="fas fa-download"></i> Download</a>'
+    : '<span class="badge badge-secondary" style="font-size: 10px; padding: 4px 7px; line-height: 1.2;"><i class="fas fa-minus-circle"></i> No File</span>';
+
+  container.insertAdjacentHTML('afterbegin',
+    '<div class="card mb-3 policy-card" data-source-policy-id="' + escapeCommunicationHtml(sourcePolicyId) + '" data-category="' + escapeCommunicationHtml(normalizedCategory) + '" data-title="' + escapeCommunicationHtml(normalizedTitle) + '">' +
+      '<div class="card-body">' +
+        '<div class="d-flex justify-content-between align-items-start mb-2"><h6 class="card-title text-primary mb-1"><i class="fas fa-file-contract text-primary mr-2"></i>' + escapeCommunicationHtml(title) + (isUpdate ? ' <span class="badge badge-warning ml-2">Policy Update</span>' : '') + '</h6></div>' +
+        '<p class="text-muted small mb-2"><i class="fas fa-calendar"></i> Policy date: ' + escapeCommunicationHtml(effectiveDate || 'N/A') + ' | <i class="fas fa-paper-plane"></i> Shared: ' + escapeCommunicationHtml(sharedAt) + ' | Audience: ' + escapeCommunicationHtml(targetAudience) + '</p>' +
+        '<p class="card-text">' + escapeCommunicationHtml(preview).replace(/\n/g, '<br>') + '</p>' +
+        '<div class="d-flex justify-content-between align-items-center flex-wrap" style="margin-top: 0.5rem; gap: 0.5rem;"><div style="flex: 1; min-width: 0;"></div>' + download + '</div>' +
+      '</div>' +
+    '</div>'
+  );
+
+  const filterSelect = document.getElementById('policy-filter');
+  if (filterSelect) filterSelect.dispatchEvent(new Event('change'));
 }
 
 function initLcmPolicySharing() {
@@ -405,23 +675,31 @@ function initLcmPolicySharing() {
   if (shareForm) {
     shareForm.addEventListener('submit', function (event) {
       event.preventDefault();
+      if (shareForm.dataset.submitting === '1') return;
+      shareForm.dataset.submitting = '1';
 
       const button = shareForm.querySelector('button[type="submit"]');
-      if (!button) return;
+      if (!button) {
+        shareForm.dataset.submitting = '0';
+        return;
+      }
 
       const formData = new FormData(shareForm);
       const sourcePolicyId = formData.get('source_policy_id');
       if (!sourcePolicyId) {
+        shareForm.dataset.submitting = '0';
         window.alert('Please select a policy to share.');
         return;
       }
 
       const selectedAudience = formData.get('target_type') || 'all';
       if (selectedAudience === 'department' && !formData.get('department_id')) {
+        shareForm.dataset.submitting = '0';
         window.alert('Please select a department for the policy audience.');
         return;
       }
       if (selectedAudience === 'employees' && formData.getAll('employee_ids[]').length === 0) {
+        shareForm.dataset.submitting = '0';
         window.alert('Please select at least one employee for the policy audience.');
         return;
       }
@@ -433,6 +711,15 @@ function initLcmPolicySharing() {
         department_id: formData.get('department_id') || '',
         employee_ids: formData.getAll('employee_ids[]'),
         announcement: formData.get('announcement') || ''
+      };
+      const selectedOption = policySelect.options[policySelect.selectedIndex];
+      const selectedPolicy = {
+        sourcePolicyId: String(sourcePolicyId),
+        title: (selectedOption.dataset.title || selectedOption.textContent || '').trim(),
+        content: selectedOption.dataset.content || '',
+        effective: selectedOption.dataset.effective || '',
+        attachment: selectedOption.dataset.attachment || '',
+        isUpdate: selectedOption.dataset.isUpdate === '1'
       };
 
       button.disabled = true;
@@ -453,15 +740,20 @@ function initLcmPolicySharing() {
           });
         })
         .then(function () {
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('_policy_refresh', Date.now().toString());
-          currentUrl.hash = '#policies';
-          window.location.href = currentUrl.toString();
+          const audienceLabels = {all: 'all', department: 'department', employees: 'selected employees'};
+          addSharedPolicyCard(selectedPolicy, audienceLabels[selectedAudience] || selectedAudience);
+          shareForm.reset();
+          clearPolicyPreview();
+          updateAudienceFields();
+          button.disabled = false;
+          button.innerHTML = '<i class="fas fa-paper-plane"></i> <span id="lcm-share-label">Share Policy</span>';
+          shareForm.dataset.submitting = '0';
         })
         .catch(function (error) {
           window.alert(error.message);
           button.disabled = false;
           button.innerHTML = '<i class="fas fa-paper-plane"></i> <span id="lcm-share-label">Share Policy</span>';
+          shareForm.dataset.submitting = '0';
         });
     });
   }
@@ -474,22 +766,30 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
     console.log('[Communication Tab] DOMContentLoaded fired, initializing...');
     setTimeout(function() {
+      if (!isCommunicationPage()) return;
       initTabClickHandlers();
       activateTabFromHash();
       initCommunicationForms();
+      initMessageSearch();
       initPolicyFilter();
       initLcmPolicySharing();
+      initCommunicationApiActions();
+      loadCommunicationPageData();
       console.log('[Communication Tab] Initialization complete');
     }, 100);
   });
 } else {
   console.log('[Communication Tab] DOM already loaded, initializing...');
   setTimeout(function() {
+    if (!isCommunicationPage()) return;
     initTabClickHandlers();
     activateTabFromHash();
     initCommunicationForms();
+    initMessageSearch();
     initPolicyFilter();
     initLcmPolicySharing();
+    initCommunicationApiActions();
+    loadCommunicationPageData();
     console.log('[Communication Tab] Initialization complete');
   }, 100);
 }
@@ -508,8 +808,11 @@ window.addEventListener('page:loaded', function(e) {
       initTabClickHandlers();
       activateTabFromHash();
       initCommunicationForms();
+      initMessageSearch();
       initPolicyFilter();
       initLcmPolicySharing();
+      initCommunicationApiActions();
+      loadCommunicationPageData();
       console.log('[Communication Tab] Initialization complete after page load');
     }, 150);
   }

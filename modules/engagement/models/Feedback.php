@@ -31,6 +31,14 @@ class Feedback extends BaseModel
         $evaluation_date = null,
         $evaluator_type = 'Self'
     ) {
+        $idExtra = $this->execute("SELECT EXTRA FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = 'eer_survey_feedback_id'
+              AND COLUMN_NAME = 'eer_survey_feedback_id_id'")->fetchColumn();
+        if (stripos((string)$idExtra, 'auto_increment') === false) {
+            $this->execute('ALTER TABLE eer_survey_feedback_id MODIFY eer_survey_feedback_id_id int(11) NOT NULL AUTO_INCREMENT');
+        }
+
         $sql = 'INSERT INTO eer_survey_feedback_id (employee_id, comment, rating, survey_id, category, is_anonymous, evaluator_type, evaluation_date) VALUES (:employee_id, :comment, :rating, :survey_id, :category, :is_anonymous, :evaluator_type, :evaluation_date)';
         $params = [
             'employee_id' => $employee_id,

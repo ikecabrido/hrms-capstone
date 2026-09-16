@@ -1,6 +1,5 @@
     
     const persistentTabContainers = [
-        'communication-tabs',
         'collaboration-tabs'
     ];
 
@@ -10,7 +9,6 @@
 
     function getPersistentTabKeys(container) {
         const keysByContainer = {
-            'communication-tabs': ['engagement:communication:active-tab', 'communication-active-tab'],
             'collaboration-tabs': ['engagement:social:active-tab', 'socialPageActiveTab', 'social-active-tab'],
             'grievance-tabs': ['engagement:grievance:active-tab', 'grievance-active-tab']
         };

@@ -118,7 +118,8 @@ class RecognitionController
             : new Database();
         $db = $database->getConnection();
 
-        if (!$this->recognition->tableHasColumns('pm_reports', ['report_id', 'employee_id', 'final_rating_percent', 'final_grade', 'period_end'])
+        if (!$this->recognition->tableHasColumns('pm_performance_reports', ['report_id', 'employee_id', 'overall_rating', 'period_end'])
+            && !$this->recognition->tableHasColumns('pm_reports', ['report_id', 'employee_id', 'final_rating_percent', 'final_grade', 'period_end'])
             && !$this->recognition->tableHasColumns('pm_appraisals', ['appraisal_id', 'employee_id', 'overall_rating'])) {
             return [];
         }
@@ -145,7 +146,12 @@ class RecognitionController
                                 pr.report_id,
                                 pr.employee_id,
                                 pr.final_rating_percent,
-                                pr.overall_rating_5,
+                                CASE
+                                    WHEN pr.final_rating_percent >= 95 THEN 5
+                                    WHEN pr.final_rating_percent >= 80 THEN 4
+                                    WHEN pr.final_rating_percent >= 70 THEN 3
+                                    ELSE 2
+                                END as overall_rating_5,
                                 pr.final_grade,
                                 pr.period_end
                             FROM pm_reports pr

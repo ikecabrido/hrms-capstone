@@ -13,13 +13,29 @@
 
   function normalizeSurveyUrlState() {
     const url = new URL(window.location.href);
+    if (url.searchParams.get('page') !== 'survey') {
+      return;
+    }
+
     const queryTab = url.searchParams.get('survey_tab');
     const hashTab = url.hash.replace('#', '');
+    const storedTab = [
+      sessionStorage.getItem(SURVEY_SHARED_STORAGE_KEY),
+      sessionStorage.getItem(SURVEY_STORAGE_KEY),
+      localStorage.getItem(SURVEY_SHARED_STORAGE_KEY),
+      localStorage.getItem(SURVEY_STORAGE_KEY),
+      localStorage.getItem(SURVEY_LEGACY_STORAGE_KEY)
+    ].find(function(tab) {
+      return validTabIds.includes(tab);
+    });
+
     if (validTabIds.includes(queryTab)) {
       explicitDeepLinkTab = queryTab;
       url.hash = '#' + queryTab;
     } else if (hashTab && !validTabIds.includes(hashTab)) {
-      url.hash = '#satisfaction';
+      url.hash = '#' + (storedTab || 'satisfaction');
+    } else if (!hashTab) {
+      url.hash = '#' + (storedTab || 'satisfaction');
     }
     url.searchParams.delete('survey_tab');
     window.history.replaceState({}, '', url.toString());
@@ -58,7 +74,7 @@
     // A non-default URL hash is an explicit tab choice, so it must win over
     // browser storage when the page is opened directly on that tab.
     const hashFromUrl = window.location.hash ? window.location.hash.replace('#', '') : '';
-    if (hashFromUrl && validTabIds.includes(hashFromUrl) && hashFromUrl !== 'satisfaction') {
+    if (hashFromUrl && validTabIds.includes(hashFromUrl)) {
       return hashFromUrl;
     }
 
@@ -154,6 +170,12 @@
 
   function restoreSurveyTab() {
     const savedTab = getStoredSurveyTab();
+    const currentUrl = new URL(window.location.href);
+    if (currentUrl.searchParams.get('page') === 'survey' && currentUrl.hash !== '#' + savedTab) {
+      currentUrl.hash = '#' + savedTab;
+      window.history.replaceState({}, '', currentUrl.toString());
+    }
+
     const targetTab = document.querySelector('#survey-tabs a[href="#' + CSS.escape(savedTab) + '"]');
     const targetPane = document.getElementById(savedTab);
 
@@ -259,7 +281,7 @@
           .then(function() {
             form.reset();
             applySurveyTab(selectedTab);
-            return refreshCreatedSurveyList(selectedTab);
+            window.location.reload();
           })
           .catch(function(error) {
             window.alert(error.message || 'Unable to create the survey.');
@@ -280,55 +302,124 @@
     });
   }
 
-  function refreshCreatedSurveyList(surveyType) {
-    const list = document.getElementById(surveyType === 'pulse' ? 'pulse-surveys-list' : 'satisfaction-surveys-list');
-    if (!list) return Promise.resolve();
+  function surveyApiUrl(action) {
+    return window.location.pathname.split('/modules/engagement/')[0]
+      + '/modules/engagement/api/survey.php?action=' + action;
+  }
 
-    const apiUrl = window.location.pathname.split('/modules/engagement/')[0]
-      + '/modules/engagement/api/survey.php?action=list&t=' + Date.now();
+  function renderSurveyEmployees(employees) {
+    const select = document.getElementById('feedback-employee');
+    if (!select || !Array.isArray(employees) || employees.length === 0) return;
+    select.innerHTML = '<option value="">Select an employee</option>' + employees.map(function(employee) {
+      const names = [employee.first_name, employee.middle_name, employee.last_name].filter(Boolean).join(' ');
+      const name = employee.full_name || employee.name || names || ('Employee #' + (employee.employee_id || 'Unknown'));
+      const department = employee.department || employee.department_name;
+      return '<option value="' + Number(employee.employee_id || 0) + '">' + escapeSurveyHtml(name + (department ? ' (' + department + ')' : '')) + '</option>';
+    }).join('');
+  }
 
-    return fetch(apiUrl, { credentials: 'same-origin', cache: 'no-store' })
+  function isSuggestion(feedback) {
+    const comment = String(feedback.comment || '').toLowerCase();
+    const category = String(feedback.category || '').toLowerCase();
+    const type = String(feedback.evaluator_type || '').toLowerCase();
+    return ['work_environment', 'management', 'policies', 'colleagues', 'compensation', 'work_life_balance', 'other'].includes(category)
+      || type === 'suggestion' || /suggest|improve|better|recommend/.test(comment);
+  }
+
+  function renderFeedback(feedback) {
+    const suggestions = (Array.isArray(feedback) ? feedback : []).filter(isSuggestion);
+    const list = document.getElementById('suggestions-list');
+    if (list) {
+      list.innerHTML = suggestions.length ? suggestions.slice(0, 15).map(function(item) {
+        const category = String(item.category || 'other').replace(/_/g, ' ');
+        const author = item.is_anonymous ? 'Anonymous Submission' : 'From: ' + (item.employee_name || 'Unknown');
+        return '<div class="card mb-3 suggestion-item" data-category="' + escapeSurveyHtml(item.category || 'other') + '" data-rating="' + Number(item.rating || 0) + '"><div class="card-body pb-2">'
+          + '<div class="d-flex justify-content-between align-items-start mb-2"><span class="badge badge-pill badge-success">' + escapeSurveyHtml(category.charAt(0).toUpperCase() + category.slice(1)) + '</span><small class="text-muted">Rating: ' + escapeSurveyHtml(item.rating || 'N/A') + '</small></div>'
+          + '<p class="mb-2">' + escapeSurveyHtml(item.comment || '').replace(/\n/g, '<br>') + '</p><small class="text-muted"><i class="fas fa-user-secret mr-1"></i>' + escapeSurveyHtml(author) + ' | <i class="fas fa-calendar mr-1"></i>' + escapeSurveyHtml(item.evaluation_date || 'Recent') + '</small>'
+          + '</div></div>';
+      }).join('') : '<div class="text-center text-muted py-4"><i class="fas fa-lightbulb fa-3x mb-3 text-warning"></i><p>No suggestions collected yet</p><small>Suggestions will appear here as employees submit feedback with improvement ideas</small></div>';
+    }
+
+    const counts = {};
+    suggestions.forEach(function(item) { const category = item.category || 'other'; counts[category] = (counts[category] || 0) + 1; });
+    const categoryAnalytics = document.getElementById('suggestion-category-analytics');
+    if (categoryAnalytics) {
+      categoryAnalytics.innerHTML = Object.keys(counts).length ? Object.keys(counts).sort(function(a, b) { return counts[b] - counts[a]; }).slice(0, 7).map(function(category) {
+        return '<div class="d-flex justify-content-between align-items-center mb-2"><span>' + escapeSurveyHtml(category.replace(/_/g, ' ')) + '</span><span class="badge badge-primary">' + counts[category] + '</span></div>';
+      }).join('') : '<p class="text-muted small">No categories yet</p>';
+    }
+
+    const ratings = suggestions.map(function(item) { return Number(item.rating || 0); });
+    const highQuality = ratings.filter(function(rating) { return rating >= 4; }).length;
+    const average = ratings.length ? ratings.reduce(function(total, rating) { return total + rating; }, 0) / ratings.length : 0;
+    const quality = document.getElementById('suggestion-quality-analytics');
+    if (quality) quality.innerHTML = '<div class="mb-2"><strong>Total Suggestions:</strong><br><span class="text-primary">' + suggestions.length + '</span></div><div class="mb-2"><strong>Avg Quality Rating:</strong><br><span class="text-info">' + average.toFixed(1) + ' ⭐</span></div><div><strong>Quality Suggestions:</strong><br><span class="text-success">' + highQuality + ' (' + (suggestions.length ? Math.round(highQuality / suggestions.length * 100) : 0) + '%)</span></div>';
+  }
+
+  function loadSurveyPageData() {
+    fetch(surveyApiUrl('page_data'), {credentials: 'same-origin', cache: 'no-store'})
       .then(function(response) {
-        if (!response.ok) throw new Error('Unable to refresh survey list.');
+        if (!response.ok) throw new Error('Unable to load survey data.');
         return response.json();
       })
-      .then(function(surveys) {
-        const matchingSurveys = (Array.isArray(surveys) ? surveys : []).filter(function(survey) {
-          return (survey.survey_type || 'satisfaction') === surveyType;
-        });
+      .then(function(result) {
+        if (!result.success) throw new Error(result.error || 'Unable to load survey data.');
+        const data = result.data || {};
+        window.surveyPageData = data;
+        renderSurveyEmployees(data.employees);
+        renderFeedback(data.feedback);
+      })
+      .catch(function(error) { console.warn('[Survey] API page-data load failed:', error.message); });
+  }
 
-        if (!matchingSurveys.length) {
-          list.innerHTML = surveyType === 'pulse'
-            ? '<div class="text-center text-muted py-4"><i class="fas fa-bolt fa-3x mb-3 text-warning"></i><p>No active pulse surveys</p><small>Create your first pulse survey to get quick feedback from employees</small></div>'
-            : '<p class="text-muted">No satisfaction surveys yet.</p>';
-          return;
+  function initFeedbackForms() {
+    document.querySelectorAll('.hr-feedback-form, .suggestion-form').forEach(function(form) {
+      if (form.dataset.feedbackApiBound === 'true') return;
+      form.dataset.feedbackApiBound = 'true';
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        if (form.dataset.submitting === '1') return;
+
+        if (!form.reportValidity()) return;
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton ? submitButton.innerHTML : '';
+        form.dataset.submitting = '1';
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
         }
 
-        if (surveyType === 'pulse') {
-          list.innerHTML = '<div class="row">' + matchingSurveys.map(function(survey) {
-            const surveyId = Number(survey.eer_survey_id || 0);
-            return '<div class="col-md-6 mb-3"><div class="card border-warning"><div class="card-body">'
-              + '<h6 class="card-title">' + escapeSurveyHtml(survey.title) + '</h6>'
-              + '<p class="card-text small text-muted">Created: ' + escapeSurveyHtml(survey.created_at || 'N/A')
-              + '<br>Anonymous: ' + (survey.is_anonymous ? 'Yes' : 'No') + '</p>'
-              + '<div class="btn-group btn-group-sm"><a class="btn btn-outline-info" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&action=view&id=' + surveyId + '">Take Survey</a></div>'
-              + '</div></div></div>';
-          }).join('') + '</div>';
-          return;
-        }
-
-        list.innerHTML = '<div class="list-group">' + matchingSurveys.map(function(survey) {
-          const surveyId = Number(survey.eer_survey_id || 0);
-          return '<div class="list-group-item d-flex justify-content-between align-items-center">'
-            + '<div><strong>' + escapeSurveyHtml(survey.title) + '</strong><br>'
-            + '<small class="text-muted">Created: ' + escapeSurveyHtml(survey.created_at || 'N/A')
-            + ' | Anonymous: ' + (survey.is_anonymous ? 'Yes' : 'No') + '</small></div>'
-            + '<div class="btn-group" role="group"><a class="btn btn-sm btn-info" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&action=view&id=' + surveyId + '">View</a></div></div>';
-        }).join('') + '</div>';
+        const data = Object.fromEntries(new FormData(form).entries());
+        data.comment = data.comments || data.comment || '';
+        data.evaluator_type = form.classList.contains('suggestion-form') ? 'Suggestion' : 'HR';
+        fetch(surveyApiUrl('feedback'), {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)})
+          .then(function(response) { return response.json().then(function(result) { if (!response.ok || !result.success) throw new Error(result.error || 'Unable to save feedback.'); return result; }); })
+          .then(function() { form.reset(); loadSurveyPageData(); })
+          .catch(function(error) { window.alert(error.message); })
+          .finally(function() {
+            form.dataset.submitting = '0';
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.innerHTML = originalButtonText;
+            }
+          });
       });
+    });
   }
 
   function initSurveyPage() {
+    const surveyAreas = document.querySelectorAll('.survey-area');
+    surveyAreas.forEach(function(area, index) {
+      if (index > 0) {
+        area.remove();
+      }
+    });
+
+    if (!document.querySelector('.survey-area')) {
+      return;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'view_results') {
       const analyticsTab = document.getElementById('analytics-tab');
@@ -345,6 +436,8 @@
 
     initTabClickHandlers();
     initSurveyFormHandlers();
+    initFeedbackForms();
+    loadSurveyPageData();
     restoreSurveyTab();
 
     window.addEventListener('load', function() {
@@ -390,16 +483,6 @@
         applySurveyTab(hashTab);
       } else {
         restoreSurveyTab();
-      }
-    }, { once: false });
-
-    window.addEventListener('page:loaded', function(e) {
-      if (e.detail && e.detail.page === 'survey') {
-        setTimeout(function() {
-          initTabClickHandlers();
-          initSurveyFormHandlers();
-          restoreSurveyTab();
-        }, 100);
       }
     }, { once: false });
 
@@ -449,6 +532,14 @@
       });
     }
   }
+
+  // The page loader replaces the container after this module has loaded.
+  // Initialize the survey again when that fragment arrives.
+  window.addEventListener('page:loaded', function(e) {
+    if (e.detail && e.detail.page === 'survey') {
+      setTimeout(initSurveyPage, 100);
+    }
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSurveyPage, { once: true });

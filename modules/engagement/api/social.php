@@ -6,7 +6,7 @@ use App\Controllers\SocialController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && !in_array($action, ['list', 'feed'], true)) {
+if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && !in_array($action, ['list', 'feed', 'page_data'], true)) {
    jsonResponse(['error' => 'Unauthorized'], 401);
 }
 
@@ -40,6 +40,11 @@ $data = inputData();
 
 try {
     switch ($action) {
+        case 'page_data':
+            $pageData = $ctrl->getPageData();
+            $pageData['current_employee_id'] = $_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? null;
+            jsonResponse(['success' => true, 'data' => $pageData]);
+            break;
         case 'feed':
             jsonResponse(['success' => true, 'data' => $ctrl->getPosts()]);
             break;

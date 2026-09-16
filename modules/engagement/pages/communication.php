@@ -3,162 +3,14 @@
 require_once __DIR__ . '/../../../auth/session.php';
 require_once __DIR__ . '/../autoload.php';
 
-use App\Controllers\CommunicationController;
-use App\Controllers\MessageController;
-use App\Controllers\EmployeeController;
-
-
-
-// Get current user's info
-$currentEmployeeId = $_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? null;
-$currentUserId = $_SESSION['user']['id'] ?? $_SESSION['user']['user_id'] ?? $_SESSION['user']['employee_id'] ?? $_SESSION['user_id'] ?? $_SESSION['user']['user_id'] ?? null;
-if (!$currentUserId) {
-  $currentUserId = $_SESSION['employee_id'] ?? null;
-}
-
-$communicationController = new CommunicationController();
-$currentRole = strtolower(trim((string)($_SESSION['user']['role_name'] ?? $_SESSION['user']['role'] ?? $_SESSION['role_name'] ?? $_SESSION['role'] ?? '')));
-$currentRoleId = (int)($_SESSION['user']['role_id'] ?? $_SESSION['role_id'] ?? 0);
-$isHrAdmin = in_array($currentRoleId, [1, 12], true)
-  || preg_match('/(^|[^a-z])(admin|hr|human resources|human resource|employee relations|engagement)([^a-z]|$)/', $currentRole) === 1;
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $formType = $_POST['form_type'] ?? '';
-  $isAjax = !empty($_POST['ajax']);
-  $responseMessage = '';
-  try {
-    if ($formType === 'announcement') {
-      $title = trim((string)($_POST['title'] ?? ''));
-      $content = trim((string)($_POST['content'] ?? ''));
-      if ($title === '' || $content === '') {
-        throw new \InvalidArgumentException('Announcement title and content are required.');
-      }
-      if (empty($currentEmployeeId)) {
-        throw new \RuntimeException('Current user is not linked to an employee record.');
-      }
-      $communicationController->postAnnouncement(
-        $title,
-        $content,
-        (int)$currentEmployeeId,
-        $_POST['category'] ?? 'general',
-        $_POST['priority'] ?? 'normal',
-        $_POST['target_audience'] ?? 'all'
-      );
-      $responseMessage = 'Announcement posted successfully.';
-      $_SESSION['flash_success'] = $responseMessage;
-    } elseif ($formType === 'department_update') {
-      $title = trim((string)($_POST['title'] ?? ''));
-      $content = trim((string)($_POST['content'] ?? ''));
-      $department = trim((string)($_POST['department'] ?? ''));
-      if ($title === '' || $content === '' || $department === '') {
-        throw new \InvalidArgumentException('Update title, department, and content are required.');
-      }
-      if (empty($currentEmployeeId)) {
-        throw new \RuntimeException('Current user is not linked to an employee record.');
-      }
-      $communicationController->postDepartmentUpdate(
-        $title,
-        $content,
-        $department,
-        $_POST['priority'] ?? 'normal',
-        (int)$currentEmployeeId
-      );
-      $responseMessage = 'Department update posted successfully.';
-      $_SESSION['flash_success'] = $responseMessage;
-    } elseif ($formType === 'message') {
-      $receiverId = (int)($_POST['receiver_id'] ?? 0);
-      $message = trim((string)($_POST['message'] ?? ''));
-      if (empty($currentEmployeeId) || $receiverId <= 0 || $message === '') {
-        throw new \InvalidArgumentException('Recipient and message are required.');
-      }
-      $communicationController->sendMessage((int)$currentEmployeeId, $receiverId, $message);
-      $responseMessage = 'Message sent successfully.';
-      $_SESSION['flash_success'] = $responseMessage;
-    } elseif ($formType === 'share_from_lcm') {
-      if (!$isHrAdmin) {
-        throw new \RuntimeException('Only authorized HR/Admin users can share policies.');
-      }
-      $targetType = $_POST['target_type'] ?? 'all';
-      if ($targetType === 'department') {
-        $targetAudience = 'department_id:' . (int)($_POST['department_id'] ?? 0);
-      } elseif ($targetType === 'employees') {
-        $employeeIds = array_filter(array_map('intval', (array)($_POST['employee_ids'] ?? [])));
-        $targetAudience = 'employees:' . implode(',', array_unique($employeeIds));
-      } else {
-        $targetAudience = 'all';
-      }
-      $communicationController->shareLcmPolicy(
-        'LCM',
-        (string)($_POST['source_policy_id'] ?? ''),
-        $targetAudience,
-        $currentUserId,
-        trim((string)($_POST['announcement'] ?? ''))
-      );
-      $_SESSION['flash_success'] = 'Policy shared successfully and affected employees were notified.';
-    } elseif (($_POST['form_type'] ?? '') === 'mark_read') {
-      $communicationController->markNotificationAsRead($_POST['notification_id'] ?? 0);
-      $_SESSION['flash_success'] = 'Notification marked as read.';
-    }
-  } catch (Throwable $e) {
-    if ($isAjax) {
-      header('Content-Type: application/json; charset=utf-8');
-      http_response_code(422);
-      echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-      exit;
-    }
-    $_SESSION['flash_error'] = $e->getMessage();
-  }
-
-  if ($isAjax) {
-    unset($_SESSION['flash_success'], $_SESSION['flash_error']);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode(['success' => true, 'message' => $responseMessage]);
-    exit;
-  }
-
-  $redirectTab = $formType === 'announcement' ? 'announcements' : ($formType === 'department_update' ? 'updates' : ($formType === 'message' ? 'messaging' : 'policies'));
-  header('Location: index.php?page=communication#' . $redirectTab);
-  exit;
-}
-
-$payload = $communicationController->getPageData($currentEmployeeId, $isHrAdmin);
-$payload['lcm_departments'] = $communicationController->getLcmDepartments();
+// Dynamic communication data is loaded by pages/js/communication.js from the API.
+$payload = [];
+$showPolicySharing = false;
 
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 $flashError = $_SESSION['flash_error'] ?? null;
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-// Helper functions
-function getPriorityBadgeClass($priority) {
-    switch ($priority) {
-        case 'urgent': return 'danger';
-        case 'high': return 'warning';
-        case 'normal': return 'info';
-        case 'low': return 'secondary';
-        default: return 'light';
-    }
-}
-
-function getNotificationTypeIcon($type) {
-    switch ($type) {
-        case 'info': return 'fas fa-info-circle text-info';
-        case 'warning': return 'fas fa-exclamation-triangle text-warning';
-        case 'success': return 'fas fa-check-circle text-success';
-        case 'danger': return 'fas fa-times-circle text-danger';
-        default: return 'fas fa-bell text-primary';
-    }
-}
-
-  function getNotificationTypeLabel($type) {
-    $labels = [
-      'survey' => 'Survey',
-      'social' => 'Social',
-      'recognition' => 'Recognition',
-      'grievance' => 'Grievance',
-      'policy' => 'Policy',
-    ];
-    return $labels[strtolower((string)$type)] ?? 'HR Update';
-  }
 ?>
 
 
@@ -204,7 +56,7 @@ function getNotificationTypeIcon($type) {
                     <i class="fas fa-building"></i> Department Updates
                   </a>
                 </li>
-                <?php if ($isHrAdmin || !empty($payload['lcm_policies'])): ?>
+                <?php if ($showPolicySharing && ($isHrAdmin || !empty($payload['lcm_policies']))): ?>
                 <li class="nav-item">
                   <a class="nav-link" id="policies-tab" data-toggle="pill" href="#policies" role="tab">
                     <i class="fas fa-file-contract"></i> Policy Sharing
@@ -292,7 +144,7 @@ function getNotificationTypeIcon($type) {
                                       <h6 class="card-title text-primary mb-1">
                                         <?= htmlspecialchars($announcement['title']) ?>
                                       </h6>
-                                      <span class="badge badge-<?= getPriorityBadgeClass($announcement['priority'] ?? 'normal') ?>">
+                                      <span class="badge badge-secondary">
                                         <?= ucfirst($announcement['priority'] ?? 'normal') ?>
                                       </span>
                                     </div>
@@ -342,13 +194,13 @@ function getNotificationTypeIcon($type) {
                                   <div class="d-flex justify-content-between align-items-start">
                                     <div class="flex-grow-1">
                                       <div class="d-flex align-items-center mb-1">
-                                        <span class="badge badge-light notification-type-badge notification-type-badge--side"><?= htmlspecialchars(getNotificationTypeLabel($notificationType)) ?></span>
-                                        <i class="<?= getNotificationTypeIcon($notificationType) ?> mr-2"></i>
-                                        <h6 class="mb-0"><?= htmlspecialchars(getNotificationTypeLabel($notificationType)) ?> Notification</h6>
+                                        <span class="badge badge-light notification-type-badge notification-type-badge--side">HR Update</span>
+                                        <i class="fas fa-bell text-primary mr-2"></i>
+                                        <h6 class="mb-0">HR Update Notification</h6>
                                       </div>
                                       <p class="text-muted small mb-1">
                                         <i class="fas fa-calendar"></i> <?= date('M d, Y H:i', strtotime($notification['created_at'] ?? date('Y-m-d H:i:s'))) ?> |
-                                        <i class="fas fa-bolt"></i> Automatic from <?= htmlspecialchars(getNotificationTypeLabel($notificationType)) ?>
+                                        <i class="fas fa-bolt"></i> Automatic HR update
                                       </p>
                                       <p class="mb-2"><?= htmlspecialchars($notification['message'] ?? 'No details') ?></p>
                                     </div>
@@ -373,7 +225,7 @@ function getNotificationTypeIcon($type) {
                                     <div class="flex-grow-1">
                                       <div class="d-flex align-items-center mb-1">
                                         <span class="badge badge-warning mr-2">Legal & Compliance</span>
-                                        <i class="<?= getNotificationTypeIcon($notification['notification_type'] ?? $notification['type'] ?? 'info') ?> mr-2"></i>
+                                        <i class="fas fa-bell text-primary mr-2"></i>
                                         <h6 class="mb-0"><?= htmlspecialchars($notification['title'] ?? $notification['message'] ?? 'Compliance Notification') ?></h6>
                                         <?php if (empty($notification['is_read']) || $notification['is_read'] == 0): ?>
                                           <span class="badge badge-primary ml-2">New</span>
@@ -476,7 +328,7 @@ function getNotificationTypeIcon($type) {
                                       <h6 class="card-title text-success mb-1">
                                         <?= htmlspecialchars($update['title']) ?>
                                       </h6>
-                                      <span class="badge badge-<?= getPriorityBadgeClass($update['priority'] ?? 'normal') ?>">
+                                      <span class="badge badge-secondary">
                                         <?= ucfirst($update['priority'] ?? 'normal') ?>
                                       </span>
                                     </div>
@@ -509,7 +361,7 @@ function getNotificationTypeIcon($type) {
                   </div>
                 </div>
 
-                <?php if ($isHrAdmin || !empty($payload['lcm_policies'])): ?>
+                <?php if ($showPolicySharing && ($isHrAdmin || !empty($payload['lcm_policies']))): ?>
                 <!-- Policy Sharing Tab -->
                 <div class="tab-pane fade" id="policies" role="tabpanel">
                   <div class="row">
@@ -625,7 +477,7 @@ function getNotificationTypeIcon($type) {
                                     $normalizedCategory = 'general';
                                   }
                                 ?>
-                                <div class="card mb-3 policy-card" data-category="<?= htmlspecialchars($normalizedCategory) ?>" data-title="<?= htmlspecialchars(strtolower(str_replace([' ', '_', '-'], '-', trim((string)($policy['title'] ?? ''))))) ?>">
+                                <div class="card mb-3 policy-card" data-source-policy-id="<?= htmlspecialchars((string)($policy['source_policy_id'] ?? '')) ?>" data-category="<?= htmlspecialchars($normalizedCategory) ?>" data-title="<?= htmlspecialchars(strtolower(str_replace([' ', '_', '-'], '-', trim((string)($policy['title'] ?? ''))))) ?>">
                                   <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
                                       <h6 class="card-title text-primary mb-1">
@@ -828,21 +680,18 @@ function getNotificationTypeIcon($type) {
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-inbox"></i> Message Threads</h3>
                           <div class="card-tools">
-
+                            <div class="message-search-wrap">
+                              <label class="sr-only" for="message-search">Search messages</label>
+                              <input type="search" id="message-search" class="form-control" placeholder="Search messages..." autocomplete="off">
+                            </div>
                           </div>
                         </div>
                         <div class="card-body message-thread">
-                          <!-- DEBUG INFO -->
-                          <div class="alert alert-info" style="display: none;" id="debug-info">
-                            Current Employee ID: <?= htmlspecialchars($currentEmployeeId ?? 'NULL') ?><br/>
-                            Message Threads Count: <?= count($payload['messageThreads'] ?? []) ?>
-                          </div>
-                          
                           <div id="messages-container" class="communication-post-scroll">
                             <?php if (!empty($payload['messageThreads'])): ?>
                               <?php foreach ($payload['messageThreads'] as $message): ?>
-                                <?php $isSent = (!empty($currentEmployeeId) && (int)$message['sender_id'] === (int)$currentEmployeeId); ?>
-                                <div class="message-bubble <?= $isSent ? 'sent' : 'received' ?>">
+                                <?php $isSent = false; ?>
+                                <div class="message-bubble <?= $isSent ? 'sent' : 'received' ?>" data-message-search="<?= htmlspecialchars(strtolower(trim(($message['sender_name'] ?? $message['sender_id']) . ' ' . ($message['message'] ?? '') . ' ' . date('H:i', strtotime($message['timestamp'])))), ENT_QUOTES, 'UTF-8') ?>">
                                   <div class="p-2">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
                                       <small class="text-muted">
@@ -863,6 +712,11 @@ function getNotificationTypeIcon($type) {
                                 <p>Your conversations with HR will appear here.</p>
                               </div>
                             <?php endif; ?>
+                            <div id="message-search-empty" class="text-center text-muted py-4" style="display: none;">
+                              <i class="fas fa-search fa-2x mb-2"></i>
+                              <h5>No matching messages</h5>
+                              <p>Try a different name, message, or time.</p>
+                            </div>
                           </div>
                         </div>
                       </div>

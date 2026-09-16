@@ -266,6 +266,111 @@
     attemptInitialize();
   }
 
+  function getStatusBadgeClass(status) {
+    const value = String(status || '').toLowerCase().trim();
+    if (value === 'resolved') return 'success';
+    if (value === 'closed') return 'secondary';
+    if (value === 'under review') return 'info';
+    if (value === 'escalated') return 'danger';
+    return 'warning';
+  }
+
+  function getStatusProgressClass(status) {
+    return getStatusBadgeClass(status);
+  }
+
+  function getStatusProgress(status) {
+    const value = String(status || '').toLowerCase().trim();
+    if (value === 'pending' || value === 'submitted') return 25;
+    if (value === 'under review') return 50;
+    if (value === 'resolved' || value === 'closed') return 100;
+    if (value === 'escalated') return 75;
+    return 0;
+  }
+
+  function payrollLabel(grievance) {
+    const category = String(grievance.category || '').toLowerCase();
+    const subject = String(grievance.subject || '').toLowerCase();
+    const payrollRelated = ['payroll', 'payslip', 'pay', 'salary', 'benefit', 'deduction']
+      .some(function (term) { return category.includes(term) || subject.includes(term); });
+    if (!payrollRelated) return 'None';
+    if (grievance.payslip_information) return grievance.payslip_information;
+    if (grievance.payslip_id) return 'Payslip ' + grievance.payslip_id;
+    if (grievance.gross_pay || grievance.net_pay) return 'Gross ' + Number(grievance.gross_pay || 0).toFixed(2) + ' | Net ' + Number(grievance.net_pay || 0).toFixed(2);
+    return 'None';
+  }
+
+  function renderGrievanceTable(grievances) {
+    const tbody = document.querySelector('#all-grievances-table tbody');
+    if (!tbody || !Array.isArray(grievances)) return;
+    if (!grievances.length) {
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No grievance records found.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = grievances.map(function (grievance) {
+      const id = Number(grievance.id || grievance.eer_grievance_id || 0);
+      const status = grievance.status || 'Pending';
+      const category = grievance.category || 'N/A';
+      const department = grievance.department || '';
+      const payslip = payrollLabel(grievance);
+      const adjustments = grievance.employee_adjustments || '';
+      const search = [grievance.subject, grievance.employee_name, category, payslip, grievance.payroll_module, grievance.payroll_reference_id, adjustments].filter(Boolean).join(' ').toLowerCase();
+      const date = String(grievance.created_at || '').slice(0, 10);
+      const displayDate = grievance.created_at ? new Date(grievance.created_at).toLocaleDateString(undefined, {month: 'short', day: '2-digit', year: 'numeric'}) : 'N/A';
+      return '<tr class="grievance-row" data-id="' + id + '" data-status="' + htmlspecialchars(status.toLowerCase()) + '" data-category="' + htmlspecialchars(category) + '" data-priority="' + htmlspecialchars(String(grievance.priority || '').toLowerCase()) + '" data-department="' + htmlspecialchars(department) + '" data-date="' + htmlspecialchars(date) + '" data-search="' + htmlspecialchars(search) + '">' +
+        '<td>' + id + '</td><td>' + htmlspecialchars(grievance.employee_name || 'Unknown') + '</td><td>' + htmlspecialchars(grievance.subject || '') + '</td><td>' + htmlspecialchars(category) + '</td>' +
+        '<td><span class="badge badge-' + getStatusBadgeClass(status) + '">' + htmlspecialchars(status) + '</span></td>' +
+        '<td><span class="badge badge-' + (String(grievance.priority || '').toLowerCase() === 'high' ? 'danger' : 'secondary') + '">' + htmlspecialchars(grievance.priority || 'Medium') + '</span></td>' +
+        '<td>' + htmlspecialchars(displayDate) + '</td><td>' + htmlspecialchars(payslip) + '</td><td>' + (adjustments ? '<small title="' + htmlspecialchars(adjustments) + '">' + htmlspecialchars(adjustments.slice(0, 50)) + (adjustments.length > 50 ? '...' : '') + '</small>' : '<span class="text-muted">None</span>') + '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-info" title="View Grievance" data-grievance-view="' + id + '"><i class="fas fa-eye"></i></button></td></tr>';
+    }).join('');
+    window.originalGrievanceRows = Array.from(tbody.querySelectorAll('.grievance-row'));
+  }
+
+  function renderGrievanceManagementOptions(grievances) {
+    const select = document.getElementById('management-grievance-select');
+    if (!select || !Array.isArray(grievances)) return;
+    select.innerHTML = '<option value="">Select grievance record</option>' + grievances.map(function (grievance) {
+      const id = Number(grievance.id || grievance.eer_grievance_id || 0);
+      return '<option value="' + id + '" data-status="' + htmlspecialchars(String(grievance.status || 'Pending').toLowerCase()) + '" data-escalation-level="' + htmlspecialchars(grievance.escalation_level || '') + '" data-escalation-reason="' + htmlspecialchars(grievance.escalation_reason || '') + '" data-compliance-record-id="' + Number(grievance.compliance_record_id || 0) + '">' + id + ' - ' + htmlspecialchars(grievance.subject || '') + '</option>';
+    }).join('');
+  }
+
+  function renderGrievanceDepartments(departments) {
+    if (!Array.isArray(departments)) return;
+    ['#department-filter', '#report-department'].forEach(function (selector) {
+      const select = document.querySelector(selector);
+      if (!select) return;
+      select.innerHTML = '<option value="">All Departments</option>' + departments.map(function (department) {
+        const name = department.department_name || '';
+        return name ? '<option value="' + htmlspecialchars(name) + '">' + htmlspecialchars(name) + '</option>' : '';
+      }).join('');
+    });
+  }
+
+  function loadGrievancePageData() {
+    fetch('/hrms-capstone/modules/engagement/api/grievance.php?action=page_data', {credentials: 'same-origin', cache: 'no-store'})
+      .then(function (response) {
+        if (!response.ok) throw new Error('Unable to load grievance data.');
+        return response.json();
+      })
+      .then(function (response) {
+        const data = response.data || {};
+        window.grievancesData = Array.isArray(data.grievances) ? data.grievances : [];
+        window.reportData = window.grievancesData;
+        window.grievancePayslipsData = data.employeePayslips || {};
+        renderGrievanceTable(window.grievancesData);
+        renderGrievanceManagementOptions(window.grievancesData);
+        renderGrievanceDepartments(data.departments || []);
+        initGrievanceFilters();
+        updateManagementFormState();
+      })
+      .catch(function (error) {
+        console.warn('[Grievance] API data load failed; keeping server-rendered fallback.', error);
+      });
+  }
+
   function resetAutomaticReportFilters() {
     ['report-start-date', 'report-end-date', 'report-department', 'report-category', 'report-status', 'report-employee'].forEach(function (id) {
       const field = document.getElementById(id);
@@ -385,6 +490,7 @@
         initGrievanceApiForms();
         initializeGrievanceTabs();
         initGrievanceFilters();
+        loadGrievancePageData();
       }, 0);
     }
   });
@@ -393,11 +499,13 @@
     initGrievanceApiForms();
     initializeGrievanceTabs();
     initGrievanceFilters();
+    loadGrievancePageData();
   } else {
     document.addEventListener('DOMContentLoaded', function () {
       initGrievanceApiForms();
       initializeGrievanceTabs();
       initGrievanceFilters();
+      loadGrievancePageData();
     }, { once: true });
   }
 

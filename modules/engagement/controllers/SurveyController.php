@@ -51,10 +51,29 @@ class SurveyController
         return $this->surveyModel->getWithQuestions($surveyId);
     }
 
-    public function submit($surveyId, $employeeId, $answers)
+    public function getEmployeeAnswersForSurvey($surveyId, $employeeId)
     {
         $surveyId = (int) $surveyId;
         $employeeId = (int) $employeeId;
+
+        if ($surveyId <= 0 || $employeeId <= 0) {
+            return [];
+        }
+
+        $response = $this->surveyModel->getLatestResponseForEmployee($surveyId, $employeeId);
+        if (!$response || empty($response['answers'])) {
+            return [];
+        }
+
+        $answers = json_decode((string) $response['answers'], true);
+        return is_array($answers) ? $answers : [];
+    }
+
+    public function submit($surveyId, $employeeId, $answers, $targetEmployeeId = null)
+    {
+        $surveyId = (int) $surveyId;
+        $employeeId = (int) $employeeId;
+        $targetEmployeeId = $targetEmployeeId !== null ? (int) $targetEmployeeId : $employeeId;
 
         if ($surveyId <= 0) {
             throw new \InvalidArgumentException('Survey ID is required.');
@@ -68,7 +87,7 @@ class SurveyController
             throw new \InvalidArgumentException('At least one survey answer is required.');
         }
 
-        return $this->surveyModel->submitResponse($surveyId, $employeeId, $answers);
+        return $this->surveyModel->submitResponse($surveyId, $employeeId, $answers, $targetEmployeeId);
     }
 
     public function store($surveyData, $questions, $created_by_employee_id)

@@ -4,117 +4,20 @@ require_once __DIR__ . '/../../../auth/session.php';
 require_once __DIR__ . '/../autoload.php';
 
 
-use App\Controllers\SocialController;
-use App\Controllers\ReactionController;
-use App\Controllers\ReplyController;
-use App\Controllers\GroupController;
-use App\Controllers\GroupMemberController;
-
-
-$role = strtolower(trim($_SESSION['user']['role'] ?? ''));
-$isHrAdmin = $role === 'admin' || $role === 'hr_admin' || strpos($role, 'hr') !== false || strpos($role, 'admin') !== false;
-$currentEmployeeId = $_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? null;
-
-$ctrl = new SocialController();
-$reactionCtrl = new ReactionController();
-$replyCtrl = new ReplyController();
-$groupCtrl = new GroupController();
-$groupMemberCtrl = new GroupMemberController();
-
-$payload = $ctrl->getPageData();
-
-$validSocialTabs = ['feed', 'forums', 'groups', 'projects'];
-$savedSocialTab = strtolower(trim((string)($_COOKIE['engagement_social_tab'] ?? '')));
-$activeSocialTab = in_array($savedSocialTab, $validSocialTabs, true) ? $savedSocialTab : 'feed';
+$payload = [
+  'feed' => [],
+  'shared_files' => [],
+  'forums' => [],
+  'projects' => [],
+  'groups' => [],
+  'group_members' => [],
+  'employees' => [],
+];
 
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 $flashError = $_SESSION['flash_error'] ?? null;
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $employeeId = $_SESSION['user']['employee_id']
-    ?? $_SESSION['employee_id']
-    ?? $currentEmployeeId;
-  $userId = $_SESSION['user']['id']
-    ?? $_SESSION['user']['user_id']
-    ?? $_SESSION['user_id']
-    ?? null;
-  $action = $_POST['action'] ?? '';
-  $authorId = $employeeId ?: $userId;
-  $userType = $employeeId ? 'employee' : 'user';
-
-  if ($action === 'share_update') {
-    if (!$authorId) {
-      $_SESSION['flash_error'] = 'Unable to determine author.';
-    } else {
-      try {
-        $messages = $ctrl->publishUpdate(
-          $authorId,
-          trim((string)($_POST['content'] ?? '')),
-          $userType,
-          $_FILES['shared_file'] ?? null,
-          $_POST['description'] ?? ''
-        );
-        $_SESSION['flash_success'] = implode(' ', $messages);
-      } catch (Throwable $exception) {
-        $_SESSION['flash_error'] = $exception->getMessage();
-      }
-    }
-  } elseif ($action === 'comment' && !empty($_POST['comment']) && !empty($_POST['post_id'])) {
-        $commentText = trim($_POST['comment']);
-        if ($authorId) {
-            $ctrl->addComment((int)$_POST['post_id'], $authorId, $commentText, $userType);
-            $_SESSION['flash_success'] = 'Comment added successfully.';
-        } else {
-            $_SESSION['flash_error'] = 'Unable to determine author.';
-        }
-        } elseif ($action === 'reply' && !empty($_POST['comment_id']) && !empty($_POST['post_id']) && !empty($_POST['content'])) {
-          if ($authorId) {
-            $replyCtrl->addReply(
-              (int)$_POST['comment_id'],
-              (int)$_POST['post_id'],
-              $authorId,
-              trim($_POST['content']),
-              $userType
-            );
-            $_SESSION['flash_success'] = 'Reply added successfully.';
-          } else {
-            $_SESSION['flash_error'] = 'Unable to determine author.';
-          }
-    }
-
-    if ($action === 'reaction' && !empty($_POST['reaction_type']) && !empty($_POST['post_id'])) {
-        $reactionType = $_POST['reaction_type'];
-        $postId = (int)$_POST['post_id'];
-
-      if (!$authorId) {
-        $_SESSION['flash_error'] = 'Unable to determine author.';
-      } elseif ($userType === 'employee') {
-            $reactionCtrl->addReaction($postId, $authorId, null, $reactionType);
-        } else {
-            $reactionCtrl->addReaction($postId, null, $authorId, $reactionType);
-        }
-    }
-
-    if ($action === 'create_group' && !empty($_POST['group_name'])) {
-        $groupName = trim($_POST['group_name']);
-      if ($authorId) {
-        $groupCtrl->createGroup($groupName, null, $authorId);
-        $_SESSION['flash_success'] = 'Group created successfully.';
-      } else {
-        $_SESSION['flash_error'] = 'Unable to determine author.';
-      }
-    } elseif ($action === 'add_member' && !empty($_POST['group_id']) && !empty($_POST['employee_id'])) {
-        $groupId = (int)$_POST['group_id'];
-        $employeeIdValue = $_POST['employee_id'];
-        $groupMemberCtrl->addMember($groupId, $employeeIdValue);
-        $_SESSION['flash_success'] = 'Member added to group successfully.';
-    }
-
-    $refreshUrl = htmlspecialchars($_SERVER['REQUEST_URI'], ENT_QUOTES, 'UTF-8');
-    echo '<script>window.location.replace(' . json_encode($refreshUrl) . ');</script>';
-    exit;
-}
 ?>
 
 <div class="module-header">
@@ -180,52 +83,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <ul class="nav nav-tabs" id="collaboration-tabs" role="tablist">
 
           <li class="nav-item">
-            <a class="nav-link<?= $activeSocialTab === 'feed' ? ' active' : '' ?>"
+            <a class="nav-link"
                id="feed-tab"
                data-toggle="tab"
                href="#feed"
                role="tab"
                aria-controls="feed"
-               aria-selected="<?= $activeSocialTab === 'feed' ? 'true' : 'false' ?>">
+               aria-selected="false">
               <i class="fas fa-rss mr-2"></i>
               Employee Interaction Feed
             </a>
           </li>
 
           <li class="nav-item">
-            <a class="nav-link<?= $activeSocialTab === 'forums' ? ' active' : '' ?>"
+            <a class="nav-link"
                id="forums-tab"
                data-toggle="tab"
                href="#forums"
                role="tab"
                aria-controls="forums"
-               aria-selected="<?= $activeSocialTab === 'forums' ? 'true' : 'false' ?>">
+               aria-selected="false">
               <i class="fas fa-comments mr-2"></i>
               Discussion Forums
             </a>
           </li>
 
           <li class="nav-item">
-            <a class="nav-link<?= $activeSocialTab === 'groups' ? ' active' : '' ?>"
+            <a class="nav-link"
                id="groups-tab"
                data-toggle="tab"
                href="#groups"
                role="tab"
                aria-controls="groups"
-               aria-selected="<?= $activeSocialTab === 'groups' ? 'true' : 'false' ?>">
+               aria-selected="false">
               <i class="fas fa-users mr-2"></i>
               Team Groups
             </a>
           </li>
 
           <li class="nav-item">
-            <a class="nav-link<?= $activeSocialTab === 'projects' ? ' active' : '' ?>"
+            <a class="nav-link"
                id="projects-tab"
                data-toggle="tab"
                href="#projects"
                role="tab"
                aria-controls="projects"
-               aria-selected="<?= $activeSocialTab === 'projects' ? 'true' : 'false' ?>">
+               aria-selected="false">
               <i class="fas fa-sitemap mr-2"></i>
               Project Collaboration Spaces
             </a>
@@ -237,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="tab-content" id="collaboration-tab-content">
 
           <!-- Employee Interaction Feed Tab -->
-          <div class="tab-pane fade<?= $activeSocialTab === 'feed' ? ' show active' : '' ?>"
+          <div class="tab-pane fade"
                id="feed"
                role="tabpanel"
                aria-labelledby="feed-tab">
@@ -273,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                       <div class="card card-info card-outline h-100">
                         <div class="card-header"><h3 class="card-title"><i class="fas fa-rss mr-2"></i>Social Feed</h3></div>
                         <div class="card-body">
-                          <div id="social-feed" data-can-reply="true" data-employee-id="<?= htmlspecialchars((string)($currentEmployeeId ?? '')) ?>">
+                          <div id="social-feed" data-can-reply="true" data-employee-id="">
                             <?php if (!empty($payload['feed']) || !empty($payload['shared_files'])): ?>
                               <?php foreach ($payload['feed'] ?? [] as $post): ?>
                                 <div class="card mb-3 social-post-card" style="border-left: 4px solid #007bff;">
@@ -393,7 +296,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                   $analyticsReactions = 0;
                   $sentimentCounts = ['positive' => 0, 'neutral' => 0, 'negative' => 0];
                   $positiveWords = ['good', 'great', 'love', 'excellent', 'awesome', 'happy', 'nice', 'amazing'];
-                  $negativeWords = ['bad', 'sad', 'angry', 'terrible', 'hate', 'poor', 'worst', 'problem'];
+                  $negativeWords = ['bad', 'sad', 'angry', 'terrible', 'hate', 'poor', 'worst', 'problem', 'putang', 'gago', 'tanga', 'bwisit', 'pangit', 'galit', 'inis', 'problema', 'ayaw'];
                   foreach ($analyticsPosts as $analyticsPost) {
                     $analyticsComments += count($analyticsPost['comments'] ?? []);
                     $analyticsReactions += (int)($analyticsPost['like_count'] ?? 0) + (int)($analyticsPost['heart_count'] ?? 0) + (int)($analyticsPost['wow_count'] ?? 0);
@@ -437,7 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Discussion Forums Tab -->
-          <div class="tab-pane fade<?= $activeSocialTab === 'forums' ? ' show active' : '' ?>"
+          <div class="tab-pane fade"
                id="forums"
                role="tabpanel"
                aria-labelledby="forums-tab">
@@ -490,7 +393,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- Team Groups Tab -->
           <!-- Team Groups Tab -->
-          <div class="tab-pane fade<?= $activeSocialTab === 'groups' ? ' show active' : '' ?>"
+          <div class="tab-pane fade"
                id="groups"
                role="tabpanel"
                aria-labelledby="groups-tab">                  <div class="row">
@@ -510,7 +413,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                   <button class="btn btn-primary" type="submit">Create Group</button>
                                 </form>
 
-                                <?php if (!empty($payload['groups'])): ?>
                                   <form id="group-member-form" method="post" class="group-member-form" data-skip>
                                     <input type="hidden" name="action" value="add_member">
                                     <div class="form-group">
@@ -533,11 +435,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                     <button class="btn btn-primary" type="submit">Add Member</button>
                                   </form>
-                                <?php else: ?>
-                                  <div class="alert alert-warning mt-3">
-                                    Create a group first before adding members.
-                                  </div>
-                                <?php endif; ?>
                               </div>
                             </div>
 
@@ -559,7 +456,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="card card-success card-outline">
                               <div class="card-header"><h3 class="card-title">Existing Groups</h3></div>
                               <div class="card-body">
-                                <?php if (!empty($payload['groups'])): ?>
                                   <div class="existing-groups-grid">
                                     <?php foreach ($payload['groups'] as $group): ?>
                                       <div class="existing-group-card" data-group-id="<?= htmlspecialchars($group['eer_group_id']) ?>">
@@ -586,9 +482,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                       </div>
                                     <?php endforeach; ?>
                                   </div>
-                                <?php else: ?>
-                                  <p class="text-muted">No groups created yet.</p>
-                                <?php endif; ?>
                               </div>
                             </div>
                           </div>
@@ -599,7 +492,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
 
                 <!-- Project Collaboration Spaces Tab -->
-                <div class="tab-pane fade<?= $activeSocialTab === 'projects' ? ' show active' : '' ?>" id="projects" role="tabpanel" aria-labelledby="projects-tab">
+                <div class="tab-pane fade" id="projects" role="tabpanel" aria-labelledby="projects-tab">
                   <div class="row">
                     <div class="col-12">
                       <div class="card card-success card-outline">
@@ -679,7 +572,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="modal-body">
           <div class="form-group"><label for="projectName">Project Name</label><input id="projectName" type="text" class="form-control" required maxlength="255"></div>
           <div class="form-group"><label for="projectDescription">Description</label><textarea id="projectDescription" class="form-control" rows="4" required></textarea></div>
-          <div class="form-group"><label for="projectDeadline">Deadline</label><input id="projectDeadline" type="date" class="form-control"></div>
+          <div class="form-row">
+            <div class="form-group col-md-7"><label for="projectDeadline">Deadline</label><input id="projectDeadline" type="date" class="form-control" required></div>
+            <div class="form-group col-md-5"><label for="projectDeadlineTime">Time</label><input id="projectDeadlineTime" type="time" class="form-control" required></div>
+          </div>
           <div class="form-group"><label for="projectStatus">Status</label><select id="projectStatus" class="form-control"><option value="planning">Planning</option><option value="active">Active</option><option value="on-hold">On Hold</option><option value="completed">Completed</option></select></div>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button><button type="submit" class="btn btn-success"><i class="fas fa-plus mr-1"></i>Create Project Space</button></div>

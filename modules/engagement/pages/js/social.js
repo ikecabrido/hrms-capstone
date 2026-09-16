@@ -1,3 +1,9 @@
+function escapeHtml(text) {
+  var span = document.createElement('span');
+  span.textContent = text == null ? '' : String(text);
+  return span.innerHTML;
+}
+
 // Persist active tab state using localStorage with smooth transitions
   const STORAGE_KEY = 'engagement:social:active-tab';
   const LEGACY_STORAGE_KEY = 'socialPageActiveTab';
@@ -338,6 +344,7 @@
         resetSocialTabObserver();
         restoreSavedTab();
         activateSocialTabFromHash(true);
+        setTimeout(loadSocialPageData, 50);
       }
     });
   }
@@ -952,13 +959,12 @@
         .then(function(data) {
           if (data.success) {
             fetchSocialFeed();
-            window.location.reload();
           } else {
             alert(data.message || 'Failed to react.');
           }
         })
-        .catch(function() {
-          alert('Failed to send reaction.');
+        .catch(function(error) {
+          alert(error.message || 'Failed to send reaction.');
         });
     });
 
@@ -1027,7 +1033,7 @@
       }
 
       var positiveWords = ['good','great','love','excellent','awesome','happy','nice','amazing'];
-      var negativeWords = ['bad','sad','angry','terrible','hate','poor','worst','problem'];
+      var negativeWords = ['bad','sad','angry','terrible','hate','poor','worst','problem','putang','gago','tanga','bwisit','pangit','galit','inis','problema','ayaw'];
 
       var counts = { positive: 0, neutral: 0, negative: 0 };
 
@@ -1314,13 +1320,21 @@
           submitButton.disabled = true;
         }
 
-        fetch(SOCIAL_API_BASE + '?resource=forum&action=create', {
+        fetch(new URL('../api/forum.php?action=create', engagementScript.src).href, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: title, description: description, category: category })
+          body: JSON.stringify({ title: title, description: description, category: category }),
+          credentials: 'same-origin'
         })
           .then(function(response) {
-            return response.json();
+            return response.text().then(function(text) {
+              var data = {};
+              try { data = text ? JSON.parse(text) : {}; } catch (error) {
+                throw new Error('Forum API returned an invalid response.');
+              }
+              if (!response.ok) throw new Error(data.message || data.error || 'Failed to create forum.');
+              return data;
+            });
           })
           .then(function(data) {
             if (data.success) {
@@ -1339,8 +1353,8 @@
               alert(data.message || 'Failed to create forum.');
             }
           })
-          .catch(function() {
-            alert('Unable to create forum.');
+          .catch(function(error) {
+            alert(error.message || 'Unable to create forum.');
           })
           .finally(function() {
             if (submitButton) {
@@ -1353,19 +1367,48 @@
 
     var createProjectForm = document.getElementById('createProjectForm');
     if (createProjectForm) {
+      var projectDeadlineInput = document.getElementById('projectDeadline');
+      if (projectDeadlineInput) {
+        var today = new Date();
+        var maximumDeadlineDate = new Date(today.getTime() + (3 * 24 * 60 * 60 * 1000));
+        var formatDateInputValue = function(date) {
+          return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+        };
+        projectDeadlineInput.min = formatDateInputValue(today);
+        projectDeadlineInput.max = formatDateInputValue(maximumDeadlineDate);
+      }
+
       createProjectForm.addEventListener('submit', function(event) {
         event.preventDefault();
         var nameInput = document.getElementById('projectName');
         var descriptionInput = document.getElementById('projectDescription');
         var deadlineInput = document.getElementById('projectDeadline');
+        var deadlineTimeInput = document.getElementById('projectDeadlineTime');
         var statusInput = document.getElementById('projectStatus');
         var name = nameInput ? nameInput.value.trim() : '';
         var description = descriptionInput ? descriptionInput.value.trim() : '';
         var deadline = deadlineInput ? deadlineInput.value : '';
+        var deadlineTime = deadlineTimeInput ? deadlineTimeInput.value : '';
         var status = statusInput ? statusInput.value : '';
 
         if (!name || !description) {
           alert('Please provide a project name and description.');
+          return;
+        }
+
+        if (!deadline || !deadlineTime) {
+          alert('Please provide both a deadline date and time.');
+          return;
+        }
+
+        var deadlineDate = new Date(deadline + 'T' + deadlineTime);
+        var now = new Date();
+        var todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        var maximumDeadlineDate = new Date(todayDate.getTime() + (3 * 24 * 60 * 60 * 1000));
+        var selectedDate = new Date(deadline + 'T00:00:00');
+        if (Number.isNaN(deadlineDate.getTime()) || Number.isNaN(selectedDate.getTime())
+          || deadlineDate < now || selectedDate < todayDate || selectedDate > maximumDeadlineDate) {
+          alert('The deadline must be within the next 3 days.');
           return;
         }
 
@@ -1378,21 +1421,35 @@
         fetch(SOCIAL_API_BASE + '?resource=project&action=create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
           body: JSON.stringify({
             name: name,
             description: description,
             deadline: deadline,
+            deadline_time: deadlineTime,
             status: status
           })
         })
           .then(function(response) {
-            return response.json();
+            return response.text().then(function(text) {
+              var data;
+              try {
+                data = text ? JSON.parse(text) : {};
+              } catch (error) {
+                throw new Error('The server returned an invalid response.');
+              }
+              if (!response.ok) {
+                throw new Error(data.message || data.error || 'Failed to create project.');
+              }
+              return data;
+            });
           })
           .then(function(data) {
             if (data.success) {
               if (nameInput) nameInput.value = '';
               if (descriptionInput) descriptionInput.value = '';
               if (deadlineInput) deadlineInput.value = '';
+              if (deadlineTimeInput) deadlineTimeInput.value = '';
               if (statusInput) statusInput.value = 'planning';
               closeSocialModal('createProjectModal');
               window.location.reload();
@@ -1400,8 +1457,8 @@
               alert(data.message || 'Failed to create project.');
             }
           })
-          .catch(function() {
-            alert('Unable to create project.');
+          .catch(function(error) {
+            alert(error.message || 'Unable to create project.');
           })
           .finally(function() {
             if (submitButton) {
@@ -1496,11 +1553,177 @@
     }
 
     bindCommentForms();
+    fetchSocialFeed();
   }
 
-  document.addEventListener('DOMContentLoaded', initializeSocialFeed, { once: true });
+  function bindSocialGroupForms() {
+    const groupForm = document.querySelector('.group-create-form');
+    if (groupForm && groupForm.dataset.apiBound !== '1') {
+      groupForm.dataset.apiBound = '1';
+      groupForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(groupForm);
+        fetch(new URL('../api/group.php', engagementScript.src).href, {
+          method: 'POST',
+          body: new URLSearchParams({name: formData.get('group_name') || ''}),
+          credentials: 'same-origin'
+        }).then(function(response) { return response.json().then(function(data) { if (!response.ok || !data.success) throw new Error(data.message || 'Unable to create group.'); return data; }); })
+          .then(function() { groupForm.reset(); loadSocialPageData(); })
+          .catch(function(error) { window.alert(error.message); });
+      });
+    }
+
+    const memberForm = document.getElementById('group-member-form');
+    if (memberForm && memberForm.dataset.apiBound !== '1') {
+      memberForm.dataset.apiBound = '1';
+      memberForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(memberForm);
+        fetch(new URL('../api/group_member.php', engagementScript.src).href, {
+          method: 'POST',
+          body: JSON.stringify({group_id: formData.get('group_id'), employee_id: formData.get('employee_id')}),
+          headers: {'Content-Type': 'application/json'},
+          credentials: 'same-origin'
+        }).then(function(response) { return response.json().then(function(data) { if (!response.ok || !data.success) throw new Error(data.message || data.error || 'Unable to add group member.'); return data; }); })
+          .then(function() { memberForm.reset(); loadSocialPageData(); })
+          .catch(function(error) { window.alert(error.message); });
+      });
+    }
+  }
+
+  function loadSocialPageData() {
+    const apiUrl = window.location.pathname.split('/modules/engagement/')[0] + '/modules/engagement/api/social.php?action=page_data';
+    const groupApiUrl = new URL('../api/group.php', engagementScript.src).href;
+
+    function renderForums(forums) {
+      const forumsList = document.getElementById('forums-list');
+      if (!forumsList || !Array.isArray(forums)) return;
+      forumsList.innerHTML = forums.length ? forums.map(function(forum) {
+        return '<div class="card mb-3 forum-card"><div class="card-body"><h5 class="mb-1" style="font-weight:600;">' + escapeHtml(forum.title || 'Untitled Forum') + '</h5><p class="mb-1 text-muted">' + escapeHtml(forum.description || '') + '</p><small class="text-muted">Category: ' + escapeHtml(forum.category || 'General') + '</small><div class="d-flex justify-content-between text-muted small"><span>Created by: ' + escapeHtml(forum.creator_name || forum.created_by_employee_id || 'Unknown') + '</span><span>' + escapeHtml(forum.created_at || '') + '</span></div></div></div>';
+      }).join('') : '<div class="alert alert-info">No forums available yet.</div>';
+    }
+
+    function renderGroups(groups, groupMembers) {
+      const groupsGrid = document.querySelector('.existing-groups-grid');
+      if (!groupsGrid || !Array.isArray(groups)) return;
+      const membersByGroup = groupMembers || {};
+      groupsGrid.innerHTML = groups.length ? groups.map(function(group) {
+        const groupId = Number(group.eer_group_id || 0);
+        const members = membersByGroup[groupId] || [];
+        const memberMarkup = members.length
+          ? '<ul class="list-group list-group-flush">' + members.map(function(member) { return '<li class="list-group-item py-1">Employee ID: ' + escapeHtml(member.employee_id || 'N/A') + (member.full_name ? ' - ' + escapeHtml(member.full_name) : '') + '</li>'; }).join('') + '</ul>'
+          : '<p class="text-muted mb-0">No members yet.</p>';
+        return '<div class="existing-group-card" data-group-id="' + groupId + '"><h5 class="mb-1">' + escapeHtml(group.name || 'Untitled Group') + '</h5><p class="mb-1 text-muted">ID: ' + groupId + '</p><p class="mb-1"><strong>Members:</strong></p><div id="group-members-' + groupId + '">' + memberMarkup + '</div></div>';
+      }).join('') : '<p class="text-muted">No groups created yet.</p>';
+    }
+
+    fetch(groupApiUrl, {credentials: 'same-origin', cache: 'no-store'})
+      .then(function(response) { return response.ok ? response.json() : null; })
+      .then(function(result) {
+        if (result && result.success && Array.isArray(result.data)) renderGroups(result.data, {});
+      })
+      .catch(function(error) { console.warn('[Social] Unable to load groups:', error.message); });
+
+    fetch(apiUrl, { credentials: 'same-origin', cache: 'no-store' })
+      .then(function(response) {
+        if (!response.ok) throw new Error('Unable to load social page data.');
+        return response.json();
+      })
+      .then(function(result) {
+        const data = result.data || {};
+        window.socialPageData = data;
+        const feed = document.getElementById('social-feed');
+        if (feed && data.current_employee_id) feed.dataset.employeeId = data.current_employee_id;
+
+        if (Array.isArray(data.forums) && data.forums.length > 0) {
+          renderForums(data.forums);
+        }
+
+        const projects = document.getElementById('projects-list');
+        if (projects && Array.isArray(data.projects)) {
+          projects.innerHTML = data.projects.length ? data.projects.map(function(project) {
+            const status = String(project.status || 'unknown').toLowerCase();
+            const statusClass = {active: 'badge-success', completed: 'badge-primary', 'on-hold': 'badge-warning', planning: 'badge-info'}[status] || 'badge-secondary';
+            return '<div class="card mb-3 project-card"><div class="card-body"><h5 class="mb-1" style="font-weight:600;">' + escapeHtml(project.name || 'Untitled Project') + '</h5><p class="mb-1 text-muted">' + escapeHtml(project.description || '') + '</p><span class="badge ' + statusClass + '">' + escapeHtml(status.charAt(0).toUpperCase() + status.slice(1)) + '</span><small class="text-muted ml-3">Deadline: ' + escapeHtml(project.deadline || 'Not set') + '</small><div class="d-flex justify-content-between text-muted small"><span>Created by: ' + escapeHtml(project.creator_name || project.created_by_employee_id || 'Unknown') + '</span><span>' + escapeHtml(project.created_at || '') + '</span></div></div></div>';
+          }).join('') : '<div class="alert alert-info">No project spaces available yet.</div>';
+        }
+
+        const groupSelect = document.getElementById('group-id');
+        if (groupSelect && Array.isArray(data.groups)) {
+          groupSelect.innerHTML = '<option value="">Choose group</option>' + data.groups.map(function(group) {
+            return '<option value="' + Number(group.eer_group_id || 0) + '">' + escapeHtml((group.name || 'Untitled Group') + ' (ID: ' + (group.eer_group_id || '') + ')') + '</option>';
+          }).join('');
+        }
+        const employeeSelect = document.getElementById('employee-id');
+        if (employeeSelect && Array.isArray(data.employees)) {
+          employeeSelect.innerHTML = '<option value="">Choose employee</option>' + data.employees.map(function(employee) {
+            return '<option value="' + Number(employee.employee_id || 0) + '">' + escapeHtml((employee.employee_id || '') + ' - ' + (employee.full_name || 'No name')) + '</option>';
+          }).join('');
+        }
+        bindSocialGroupForms();
+
+        renderGroups(data.groups, data.group_members);
+
+        const socialFeedItems = Array.isArray(data.feed) ? data.feed : [];
+        const comments = socialFeedItems.reduce(function(total, post) { return total + (Array.isArray(post.comments) ? post.comments.length : 0); }, 0);
+        const reactions = socialFeedItems.reduce(function(total, post) { return total + Number(post.like_count || 0) + Number(post.heart_count || 0) + Number(post.wow_count || 0); }, 0);
+        const sentiment = {positive: 0, neutral: 0, negative: 0};
+        socialFeedItems.forEach(function(post) {
+          const text = String(post.content || '') + ' ' + (post.comments || []).map(function(comment) { return comment.comment || ''; }).join(' ');
+          const positive = /good|great|love|excellent|awesome|happy|nice|amazing/i.test(text);
+          const negative = /bad|sad|angry|terrible|hate|poor|worst|problem/i.test(text);
+          if (positive && !negative) sentiment.positive += 1;
+          else if (negative && !positive) sentiment.negative += 1;
+          else sentiment.neutral += 1;
+        });
+        const sentimentValues = document.querySelectorAll('#sentiment-analysis .analytics-stat strong');
+        if (sentimentValues[0]) sentimentValues[0].textContent = sentiment.positive;
+        if (sentimentValues[1]) sentimentValues[1].textContent = sentiment.neutral;
+        if (sentimentValues[2]) sentimentValues[2].textContent = sentiment.negative;
+        const engagementValues = document.querySelectorAll('#engagement-analytics .analytics-stat strong');
+        if (engagementValues[0]) engagementValues[0].textContent = socialFeedItems.length;
+        if (engagementValues[1]) engagementValues[1].textContent = comments;
+        if (engagementValues[2]) engagementValues[2].textContent = reactions;
+      })
+      .catch(function(error) {
+        console.warn('[Social] API page-data load failed; existing specialized loaders remain active.', error);
+      });
+  }
+
+  function loadForumsFromDatabase() {
+    const forumsList = document.getElementById('forums-list');
+    if (!forumsList) return;
+
+    fetch(window.location.origin + '/hrms-capstone/modules/engagement/api/forum.php?action=list&_=' + Date.now(), {
+      credentials: 'same-origin',
+      cache: 'no-store'
+    })
+      .then(function(response) {
+        if (!response.ok) throw new Error('Forum API returned HTTP ' + response.status);
+        return response.json();
+      })
+      .then(function(result) {
+        if (!result || result.success !== true || !Array.isArray(result.data)) {
+          throw new Error(result && result.message ? result.message : 'Invalid forum API response.');
+        }
+        forumsList.innerHTML = result.data.length ? result.data.map(function(forum) {
+            return '<div class="card mb-3 forum-card"><div class="card-body"><h5 class="mb-1" style="font-weight:600;">' + escapeHtml(forum.title || 'Untitled Forum') + '</h5><p class="mb-1 text-muted">' + escapeHtml(forum.description || '') + '</p><small class="text-muted">Category: ' + escapeHtml(forum.category || 'General') + '</small><div class="d-flex justify-content-between text-muted small"><span>Created by: ' + escapeHtml(forum.creator_name || forum.created_by_employee_id || 'Unknown') + '</span><span>' + escapeHtml(forum.created_at || '') + '</span></div></div></div>';
+          }).join('') : '<div class="alert alert-info">No forums available yet.</div>';
+      })
+      .catch(function(error) {
+        console.warn('[Social Forums] Unable to load database records:', error.message);
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initializeSocialFeed();
+    loadForumsFromDatabase();
+    loadSocialPageData();
+  }, { once: true });
   window.addEventListener('page:loaded', function(event) {
     if (event.detail && event.detail.page === 'social') {
       initializeSocialFeed();
+      loadForumsFromDatabase();
+      loadSocialPageData();
     }
   });

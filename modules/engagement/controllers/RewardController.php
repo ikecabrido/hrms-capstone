@@ -59,17 +59,21 @@ class RewardController
                            WHERE pr.overall_rating >= 4.0
                               AND pr.period_end >= DATE_SUB(NOW(), INTERVAL 6 MONTH)";
            }
-        if ($this->reward->tableHasColumns('pm_reports', ['report_id', 'employee_id', 'final_rating_percent', 'overall_rating_5', 'final_grade', 'period_end'])) {
+        if ($this->reward->tableHasColumns('pm_reports', ['report_id', 'employee_id', 'final_rating_percent', 'final_grade', 'period_end'])) {
             $subqueries[] = "SELECT 
                                 pr.employee_id,
                                 pr.final_rating_percent,
-                                pr.overall_rating_5,
+                                CASE
+                                    WHEN pr.final_rating_percent >= 95 THEN 5
+                                    WHEN pr.final_rating_percent >= 80 THEN 4
+                                    WHEN pr.final_rating_percent >= 70 THEN 3
+                                    ELSE 2
+                                END as overall_rating_5,
                                 pr.final_grade,
                                 pr.evaluation_period,
                                 pr.period_end
                             FROM pm_reports pr
-                            WHERE pr.final_rating_percent >= 80 
-                                AND pr.overall_rating_5 >= 4
+                            WHERE pr.final_rating_percent >= 80
                                 AND pr.period_end >= DATE_SUB(NOW(), INTERVAL 6 MONTH)";
         }
         if ($this->reward->tableHasColumns('pm_appraisals', ['appraisal_id', 'employee_id', 'overall_rating'])) {
@@ -106,14 +110,19 @@ class RewardController
                         d.department_name as department,
                         AVG(pr.final_rating_percent) as avg_final_rating_percent,
                         MAX(pr.final_grade) as final_grade,
-                        AVG(pr.overall_rating_5) as overall_rating_5,
+                        AVG(CASE
+                            WHEN pr.final_rating_percent >= 95 THEN 5
+                            WHEN pr.final_rating_percent >= 80 THEN 4
+                            WHEN pr.final_rating_percent >= 70 THEN 3
+                            ELSE 2
+                        END) as overall_rating_5,
                         pr.evaluation_period,
                         MAX(pr.period_end) as period_end,
                         SUM(
                             CASE
-                                WHEN pr.overall_rating_5 = 5 AND pr.final_rating_percent >= 95 THEN 100
-                                WHEN pr.overall_rating_5 >= 4 AND pr.final_rating_percent >= 80 THEN 50
-                                WHEN pr.overall_rating_5 >= 3 AND pr.final_rating_percent >= 70 THEN 25
+                                WHEN pr.final_rating_percent >= 95 THEN 100
+                                WHEN pr.final_rating_percent >= 80 THEN 50
+                                WHEN pr.final_rating_percent >= 70 THEN 25
                                 ELSE 0
                             END
                         ) as total_performance_points

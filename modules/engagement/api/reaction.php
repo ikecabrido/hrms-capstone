@@ -60,15 +60,22 @@ try {
             }
         }
 
-        $postId = $input['post_id'] ?? null;
-        $targetType = $input['target_type'] ?? 'post';
-        $targetId = $input['target_id'] ?? $postId;
+        $targetType = strtolower(trim((string)($input['target_type'] ?? 'post')));
+        $rawPostId = $input['post_id'] ?? null;
+        $rawTargetId = $input['target_id'] ?? $rawPostId;
+        $postId = filter_var($rawPostId ?? $rawTargetId, FILTER_VALIDATE_INT);
+        $targetId = filter_var($rawTargetId, FILTER_VALIDATE_INT);
         $employeeId = $input['employee_id'] ?? resolveEmployeeIdFromSession();
         $userId = $_SESSION['user']['id'] ?? $_SESSION['user']['user_id'] ?? $_SESSION['user_id'] ?? null;
         $type = $input['type'] ?? 'like';
 
-        $hasValidTarget = $targetId && in_array($targetType, ['post', 'comment', 'reply'], true)
-            && ($targetType !== 'post' || $postId);
+        if ($targetType === 'post') {
+            $postId = $targetId;
+        }
+
+        $hasValidTarget = $targetId !== false && $targetId > 0
+            && in_array($targetType, ['post', 'comment', 'reply'], true)
+            && ($targetType !== 'post' || ($postId !== false && $postId > 0));
         if ($hasValidTarget && in_array($type, ['like', 'heart', 'wow', 'angry'], true)) {
             $result = $reactionCtrl->addReaction($postId, $employeeId, $userId, $type, $targetType, $targetId);
             echo json_encode(['success' => true, 'result' => $result]);

@@ -43,12 +43,34 @@ try {
                     $data = $_POST;
                 }
 
+                $deadlineDate = trim((string)($data['deadline'] ?? ''));
+                $deadlineTime = trim((string)($data['deadline_time'] ?? ''));
+                if ($deadlineDate === '' || $deadlineTime === '') {
+                    echo json_encode(['success' => false, 'message' => 'A deadline date and time are required']);
+                    break;
+                }
+
+                $deadline = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $deadlineDate . ' ' . $deadlineTime);
+                $dateErrors = DateTimeImmutable::getLastErrors();
+                if (!$deadline || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))) {
+                    echo json_encode(['success' => false, 'message' => 'Please provide a valid deadline']);
+                    break;
+                }
+
+                $now = new DateTimeImmutable('now');
+                $today = new DateTimeImmutable('today');
+                $maximumDeadline = $today->modify('+3 days')->setTime(23, 59, 59);
+                if ($deadline < $now || $deadline > $maximumDeadline) {
+                    echo json_encode(['success' => false, 'message' => 'The deadline must be within the next 3 days']);
+                    break;
+                }
+
                 $createdBy = $_SESSION['employee_id'] ?? $_SESSION['user']['employee_id'] ?? null;
                 if (empty($createdBy)) {
                     echo json_encode(['success' => false, 'message' => 'Current user is not linked to an employee record']);
                     break;
                 }
-                $result = $projectController->createProject($data['name'], $data['description'], $data['deadline'], $data['status'], (int)$createdBy);
+                $result = $projectController->createProject($data['name'], $data['description'], $deadline->format('Y-m-d H:i:s'), $data['status'], (int)$createdBy);
                 if ($result) {
                     echo json_encode(['success' => true, 'message' => 'Project created successfully']);
                 } else {

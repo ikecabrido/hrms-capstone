@@ -3,13 +3,6 @@ require_once __DIR__ . '/../../../auth/session.php';
 require_once __DIR__ . '/../autoload.php';
 
 
-use App\Controllers\GrievanceController;
-
-use App\Controllers\EmployeeController;
-use App\Controllers\UserController;
-
-$theme = $_SESSION['user']['theme'] ?? 'light';
-
 $authUser = $_SESSION['user'] ?? [];
 $userRole = strtolower(trim((string)($authUser['role_name']
   ?? $authUser['role']
@@ -36,266 +29,15 @@ if (empty($_SESSION['employee_id']) || !$isHrAdmin) {
     ? $savedGrievanceTab
     : 'all-grievances';
 
-$grievanceCtrl = new GrievanceController();
-$employeeCtrl = new EmployeeController();
-$userCtrl = new UserController();
-
-$payload = $payload ?? [];
-$payload['grievances'] = $grievanceCtrl->getGrievances();
-$payload['departments'] = $grievanceCtrl->getDepartments();
-$payload['grievanceStats'] = $grievanceCtrl->getGrievanceStats();
-$payload['complianceRecords'] = $grievanceCtrl->getComplianceRecords();
-$payload['employees'] = $employeeCtrl->index();
-$payload['employeePayslips'] = [];
-foreach ($payload['employees'] as $employee) {
-    $employeeId = $employee['employee_id'] ?? $employee['id'] ?? null;
-    if (!empty($employeeId)) {
-        $payload['employeePayslips'][(int)$employeeId] = $grievanceCtrl->getEmployeePayslips((int)$employeeId);
-    }
-}
-$payload['hrUsers'] = array_values(array_filter($userCtrl->index(), function ($user) {
-    $role = strtolower(trim($user['role'] ?? ''));
-    return $role === 'admin' || $role === 'hr' || $role === 'hr_admin' || strpos($role, 'hr') !== false || strpos($role, 'admin') !== false;
-}));
-$payload['attendanceLinks'] = [];
-foreach ($payload['grievances'] as $grievance) {
-    $grievanceId = (int)($grievance['id'] ?? 0);
-    if ($grievanceId > 0) {
-        $payload['attendanceLinks'][$grievanceId] = $grievanceCtrl->getAttendanceLinks($grievanceId);
-    }
-}
-
-$uploadDir = __DIR__ . '/../../uploads/grievances/';
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
-}
-
-// Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $currentUserId = $_SESSION['employee_id']
-    ?? $_SESSION['user']['employee_id']
-    ?? $_SESSION['user']['id']
-    ?? $_SESSION['user_id']
-    ?? null;
-    $isFinalized = false;
-    $existingGrievance = null;
-    $grievanceId = !empty($_POST['grievance_id']) ? (int)$_POST['grievance_id'] : 0;
-
-    if ($grievanceId) {
-        $existingGrievance = $grievanceCtrl->getGrievanceById($grievanceId);
-        if ($existingGrievance && in_array($existingGrievance['status'], ['Resolved', 'Closed'], true)) {
-            $isFinalized = true;
-        }
-    }
-
-    if ($currentUserId && !empty($_POST['management_action'])) {
-        if (!$grievanceId) {
-            $_SESSION['flash_error'] = 'Please select a grievance record before saving.';
-        } else {
-            $status = trim($_POST['status'] ?? '');
-            $hrRemarks = trim($_POST['hr_remarks'] ?? '');
-            $resolution = trim($_POST['final_resolution'] ?? '');
-            if ($status === '' || $hrRemarks === '' || $resolution === '') {
-                $_SESSION['flash_error'] = 'All management fields are required before saving.';
-            } else {
-                try {
-                    $data = [];
-                    $data['status'] = $status;
-                    $data['resolution_of_complaint'] = $resolution;
-                    $data['action_taken'] = $hrRemarks;
-                    $data['confidential'] = isset($_POST['confidential']) ? 1 : 0;
-                    $data['compliance_record_id'] = !empty($_POST['compliance_record_id'])
-                      ? (int)$_POST['compliance_record_id']
-                      : null;
-
-                    if (!empty($_FILES['supporting_document']['name']) && is_uploaded_file($_FILES['supporting_document']['tmp_name'])) {
-                        $extension = pathinfo($_FILES['supporting_document']['name'], PATHINFO_EXTENSION);
-                        $fileName = 'grievance_' . $grievanceId . '_' . time() . '.' . $extension;
-                        $targetPath = $uploadDir . $fileName;
-                        if (move_uploaded_file($_FILES['supporting_document']['tmp_name'], $targetPath)) {
-                            $data['attachment_path'] = 'uploads/grievances/' . $fileName;
-                        }
-                    }
-
-                    $grievanceCtrl->updateGrievanceManagement($grievanceId, $data, $currentUserId);
-
-                    $investigationNotes = trim($_POST['investigation_notes'] ?? '');
-                    if ($investigationNotes !== '') {
-                        $grievanceCtrl->addUpdate($grievanceId, $investigationNotes, $currentUserId);
-                    }
-                    $grievanceCtrl->addUpdate($grievanceId, 'HR Remarks: ' . $hrRemarks, $currentUserId);
-                    $grievanceCtrl->addUpdate($grievanceId, 'Final Resolution: ' . $resolution, $currentUserId);
-                } catch (Exception $e) {
-                    $_SESSION['flash_error'] = 'Error updating grievance: ' . $e->getMessage();
-                }
-            }
-        }
-    } elseif ($currentUserId) {
-        if (!empty($_POST['subject']) && !empty($_POST['description'])) {
-            try {
-                $employeeId = $_POST['employee_id'] ?? null;
-                $anonymous = isset($_POST['anonymous']) ? 1 : 0;
-                $attachmentPath = null;
-
-                if (!empty($_FILES['supporting_document']['name']) && is_uploaded_file($_FILES['supporting_document']['tmp_name'])) {
-                    $extension = pathinfo($_FILES['supporting_document']['name'], PATHINFO_EXTENSION);
-                    $fileName = 'grievance_' . time() . '_' . uniqid() . '.' . $extension;
-                    $targetPath = $uploadDir . $fileName;
-                    if (move_uploaded_file($_FILES['supporting_document']['tmp_name'], $targetPath)) {
-                        $attachmentPath = 'uploads/grievances/' . $fileName;
-                    }
-                }
-
-                $payslipId = !empty($_POST['payslip_id']) ? (int)$_POST['payslip_id'] : null;
-                $payslipInformation = trim($_POST['payslip_information'] ?? '');
-
-                $grievanceCtrl->fileGrievance(
-                    $employeeId,
-                    $_POST['subject'],
-                    $_POST['description'],
-                    $_POST['category'] ?? 'Workplace Conflict',
-                    $anonymous,
-                    $attachmentPath,
-                    $currentUserId,
-                    $payslipId,
-                    $payslipInformation,
-                    7,
-                    date('Y-m-d')
-                );
-                $_SESSION['flash_success'] = 'Grievance submitted successfully.';
-            } catch (Exception $e) {
-                $_SESSION['flash_error'] = 'Error submitting grievance: ' . $e->getMessage();
-            }
-        } elseif ($isFinalized) {
-            $_SESSION['flash_error'] = 'This grievance is already resolved or closed and cannot be modified.';
-        } elseif (!empty($_POST['grievance_id']) && !empty($_POST['status']) && strtolower(trim($_POST['status'])) === 'resolved') {
-            $resolution = trim($_POST['resolution'] ?? '');
-            $grievanceCtrl->resolveGrievance($_POST['grievance_id'], $resolution, $currentUserId);
-            $_SESSION['flash_success'] = 'Grievance resolved successfully.';
-        } elseif (!empty($_POST['grievance_id']) && !empty($_POST['status'])) {
-            $status = $_POST['status'];
-            $resolution = trim($_POST['resolution'] ?? '');
-            if (strtolower(trim($status)) === 'resolution proposed' && $resolution !== '') {
-                $grievanceCtrl->updateResolution($_POST['grievance_id'], $resolution, 'Updated by HR Personnel ID: ' . $currentUserId);
-            }
-            $grievanceCtrl->updateStatus($_POST['grievance_id'], $status);
-            $_SESSION['flash_success'] = 'Grievance status updated.';
-        } elseif (!empty($_POST['bulk_status_ids']) && !empty($_POST['bulk_status'])) {
-            $ids = array_filter(array_map('intval', explode(',', $_POST['bulk_status_ids'])));
-            $status = $_POST['bulk_status'];
-            foreach ($ids as $id) {
-                if ($id > 0) {
-                    $existing = $grievanceCtrl->getGrievanceById($id);
-                    if ($existing && !in_array($existing['status'], ['Resolved', 'Closed'], true)) {
-                        $grievanceCtrl->updateStatus($id, $status);
-                    }
-                }
-            }
-            $_SESSION['flash_success'] = 'Bulk status update completed.';
-        } elseif (!empty($_POST['grievance_id']) && !empty($_POST['resolution'])) {
-            $grievanceCtrl->updateResolution($_POST['grievance_id'], $_POST['resolution'], 'Updated by HR Personnel ID: ' . $currentUserId);
-            $_SESSION['flash_success'] = 'Grievance resolution notes saved.';
-        } elseif (!empty($_POST['grievance_id']) && !empty($_POST['escalation_reason']) && isset($_POST['escalate_action'])) {
-            try {
-                $newLevel = !empty($_POST['new_escalation_level']) ? (int)$_POST['new_escalation_level'] : (($_POST['current_level'] ?? 1) + 1);
-                $grievanceCtrl->escalateGrievance($_POST['grievance_id'], $_POST['escalation_reason'], $newLevel);
-                $_SESSION['flash_success'] = 'Grievance escalated successfully to Level ' . $newLevel . '.';
-            } catch (Exception $e) {
-                $_SESSION['flash_error'] = 'Error escalating grievance: ' . $e->getMessage();
-            }
-        } elseif (isset($_POST['grievance_id']) && isset($_POST['confidential'])) {
-            $grievanceCtrl->markConfidential($_POST['grievance_id'], (bool)$_POST['confidential']);
-            $_SESSION['flash_success'] = 'Confidentiality setting updated.';
-        } elseif (!empty($_POST['grievance_id']) && !empty($_POST['investigation_notes'])) {
-            $grievanceCtrl->addInvestigationNotes($_POST['grievance_id'], $_POST['investigation_notes'], $currentUserId);
-            $_SESSION['flash_success'] = 'Investigation notes added.';
-        }
-    }
-
-    $isAjaxRequest = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
-    if ($isAjaxRequest) {
-        $responseSuccess = !empty($_SESSION['flash_success']);
-        $responseMessage = $_SESSION['flash_success'] ?? ($_SESSION['flash_error'] ?? 'Request processed.');
-
-        unset($_SESSION['flash_success'], $_SESSION['flash_error']);
-
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => $responseSuccess,
-            'message' => $responseMessage,
-        ]);
-        exit;
-    }
-
-}
-
-  if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['management_action'])) {
-    $payload['grievances'] = $grievanceCtrl->getGrievances();
-    $payload['grievanceStats'] = $grievanceCtrl->getGrievanceStats();
-    $payload['complianceRecords'] = $grievanceCtrl->getComplianceRecords();
-  }
+$payload = [
+  'grievances' => [],
+  'departments' => [],
+];
 
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 $flashError = $_SESSION['flash_error'] ?? null;
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-// Helper functions
-function getStatusBadgeClass($status) {
-    $status = strtolower(trim($status));
-    switch ($status) {
-        case 'pending':
-        case 'submitted':
-            return 'warning';
-        case 'under review':
-            return 'info';
-        case 'resolved':
-            return 'success';
-        case 'closed':
-            return 'secondary';
-        case 'escalated':
-            return 'danger';
-        default:
-            return 'light';
-    }
-}
-
-function getStatusProgressClass($status) {
-    $status = strtolower(trim($status));
-    switch ($status) {
-        case 'pending':
-        case 'submitted':
-            return 'warning';
-        case 'under review':
-            return 'info';
-        case 'resolved':
-            return 'success';
-        case 'closed':
-            return 'secondary';
-        case 'escalated':
-            return 'danger';
-        default:
-            return 'light';
-    }
-}
-
-function getStatusProgress($status) {
-    $status = strtolower(trim($status));
-    switch ($status) {
-        case 'pending':
-        case 'submitted':
-            return 25;
-        case 'under review':
-            return 50;
-        case 'resolved':
-            return 100;
-        case 'closed':
-            return 100;
-        case 'escalated':
-            return 75;
-        default:
-            return 0;
-    }
-}
 ?>
 <div class="module-header">
         <h1>Grievances</h1>
@@ -465,7 +207,7 @@ function getStatusProgress($status) {
                               <td><?= htmlspecialchars($grievance['employee_name'] ?? 'Unknown') ?></td>
                               <td><?= htmlspecialchars($grievance['subject'] ?? '') ?></td>
                               <td><?= htmlspecialchars($grievance['category'] ?? 'N/A') ?></td>
-                              <td><span class="badge badge-<?= getStatusBadgeClass($grievance['status']) ?>"><?= htmlspecialchars(ucfirst($grievance['status'] ?? 'Pending')) ?></span></td>
+                              <td><span class="badge badge-secondary"><?= htmlspecialchars(ucfirst($grievance['status'] ?? 'Pending')) ?></span></td>
                               <td><span class="badge badge-<?= strtolower($grievance['priority'] ?? '') === 'high' ? 'danger' : 'secondary' ?>"><?= htmlspecialchars(ucfirst($grievance['priority'] ?? 'Medium')) ?></span></td>
                               <td><?= htmlspecialchars(date('M d, Y', strtotime($grievance['created_at'] ?? 'now'))) ?></td>
                               <td><?= htmlspecialchars($payslipLabel ?: 'None') ?></td>

@@ -88,15 +88,18 @@ class Survey extends BaseModel
         return $this->execute($sql, $params)->fetch();
     }
 
-    public function submitResponse($survey_id, $employee_id, $answers)
+    public function submitResponse($survey_id, $employee_id, $answers, $target_employee_id = null)
     {
+        $targetEmployeeId = $target_employee_id !== null ? (int)$target_employee_id : (int)$employee_id;
+
         $sql = 'INSERT INTO eer_survey_responses 
-                (survey_id, employee_id, answers, submitted_at) 
-                VALUES (:survey_id, :employee_id, :answers, NOW())';
+                (survey_id, employee_id, target_employee_id, answers, submitted_at) 
+                VALUES (:survey_id, :employee_id, :target_employee_id, :answers, NOW())';
 
         $params = [
             'survey_id' => $survey_id,
             'employee_id' => $employee_id,
+            'target_employee_id' => $targetEmployeeId,
             'answers' => is_array($answers)
                 ? json_encode($answers, JSON_UNESCAPED_UNICODE)
                 : $answers,
@@ -134,5 +137,17 @@ class Survey extends BaseModel
         $sql = 'SELECT * FROM eer_survey_responses WHERE survey_id = :survey_id';
         $params = ['survey_id' => $surveyId];
         return $this->execute($sql, $params)->fetchAll();
+    }
+
+    public function getLatestResponseForEmployee($survey_id, $employee_id)
+    {
+        $sql = 'SELECT * FROM eer_survey_responses '
+            . 'WHERE survey_id = :survey_id AND employee_id = :employee_id '
+            . 'ORDER BY eer_survey_response_id DESC LIMIT 1';
+
+        return $this->execute($sql, [
+            'survey_id' => (int)$survey_id,
+            'employee_id' => (int)$employee_id,
+        ])->fetch();
     }
 }

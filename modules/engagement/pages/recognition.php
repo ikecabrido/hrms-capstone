@@ -3,56 +3,10 @@ require_once __DIR__ . '/../../../auth/session.php';
 require_once __DIR__ . '/../autoload.php';
 
 use App\Controllers\RecognitionController;
-use App\Controllers\GrievanceController;
-use App\Controllers\SocialController;
-use App\Controllers\SurveyController;
-use App\Controllers\FeedbackController;
-use App\Controllers\CommunicationController;
-use App\Controllers\RewardController;
-use App\Controllers\RewardRedemptionController;
-use App\Controllers\BadgeController;
-use App\Controllers\EmployeeBadgeController;
-use App\Controllers\AwardHistoryController;
-use App\Controllers\EmployeeController;
 
-$theme = $_SESSION['user']['theme'] ?? 'light';
-
-$ctrl = new RecognitionController();
-$grievanceCtrl = new GrievanceController();
-$socialCtrl = new SocialController();
-$surveyCtrl = new SurveyController();
-$feedbackCtrl = new FeedbackController();
-$communicationCtrl = new CommunicationController();
-
-
+$recognitionCtrl = new RecognitionController();
 $payload = $payload ?? [];
-$payload['recognitions'] = $ctrl->getRecognitions();
-$payload['leaderboard'] = $ctrl->getLeaderboard();
-
-// Only include Employee Recognition & Rewards tables
-$rewardCtrl = new RewardController();
-$rewardRedemptionCtrl = new RewardRedemptionController();
-$badgeCtrl = new BadgeController();
-$employeeBadgeCtrl = new EmployeeBadgeController();
-$awardHistoryCtrl = new AwardHistoryController();
-$employeeCtrl = new EmployeeController();
-
-$payload['rewards'] = $rewardCtrl->index();
-$payload['reward_redemptions'] = $rewardRedemptionCtrl->index();
-$payload['badges'] = $badgeCtrl->index();
-$payload['employee_badges'] = $employeeBadgeCtrl->index();
-$payload['award_history'] = $awardHistoryCtrl->index();
-$payload['employees'] = $employeeCtrl->index();
-$payload['announcements'] = $communicationCtrl->getRecognitionAnnouncements();
-$payload['recently_recognized'] = $ctrl->getRecentlyRecognizedEmployees(30);
-$payload['comprehensive_leaderboard'] = $ctrl->getComprehensiveLeaderboard(10);
-$payload['department_leaderboard'] = $ctrl->getDepartmentLeaderboard(null, 10);
-$payload['recognition_recommendations'] = $ctrl->getRecognitionRecommendations(10);
-$payload['performance_leaderboard'] = $ctrl->getPerformanceLeaderboard(10);
-$payload['employees_without_reports'] = $ctrl->getEmployeesWithoutPerformanceReports();
-$payload['performance_candidates'] = $rewardCtrl->getPerformanceBasedCandidates();
-$payload['top_performers'] = $rewardCtrl->getTopPerformers();
-$payload['improvement_candidates'] = $rewardCtrl->getImprovementCandidates();
+$payload['recognitions'] = $recognitionCtrl->getRecognitions();
 
 $validRecognitionTabs = ['recognition', 'employee-month', 'badges', 'rewards', 'leaderboard'];
 $resetRecognitionTab = !empty($_SESSION['reset_recognition_tab_on_first_visit']);
@@ -70,144 +24,8 @@ if ($savedRecognitionTab === '') {
 }
 $activeRecognitionTab = in_array($savedRecognitionTab, $validRecognitionTabs, true) ? $savedRecognitionTab : 'recognition';
 
-$currentEmployeeId = $_SESSION['user']['employee_id'] ?? null;
-$currentUserId = $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? null;
-if ($currentEmployeeId) {
-  $payload['my_points'] = $ctrl->getEmployeeTotalPoints($currentEmployeeId);
-  $payload['my_badge_recommendations'] = $ctrl->getBadgeRecommendations($currentEmployeeId);
-}
-
 $selectedMonth = (int)($_GET['month'] ?? date('m'));
 $selectedYear = (int)($_GET['year'] ?? date('Y'));
-$payload['employee_of_month_candidates'] = $ctrl->getEmployeeOfTheMonthCandidates($selectedMonth, $selectedYear, $currentUserId);
-
-// Get nominated employees (for badge assignment filtering)
-$nominatedEmployeeIds = [];
-foreach ($payload['award_history'] ?? [] as $award) {
-  if (strpos($award['award_name'] ?? '', 'Nomination') !== false) {
-    if (!in_array($award['employee_id'], $nominatedEmployeeIds)) {
-      $nominatedEmployeeIds[] = $award['employee_id'];
-    }
-  }
-}
-$payload['nominated_employee_ids'] = $nominatedEmployeeIds;
-
-// Handle form submissions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  $isAjaxRewardRequest = ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest'
-    && ($_POST['action'] ?? '') === 'add_reward';
-  $currentEmployeeId = $_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? null;
-  $currentUserId = $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? null;
-  $senderId = $currentUserId ?? $currentEmployeeId;
-
-  if (!empty($_POST['action']) && $_POST['action'] === 'add_reward') {
-    if (empty($_POST['reward_name']) || empty($_POST['reward_points'])) {
-      if ($isAjaxRewardRequest) {
-        http_response_code(422);
-        header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'error' => 'Reward name and points are required.']);
-        exit;
-      }
-    } else {
-      try {
-        $rewardCtrl->store([
-          'name' => trim($_POST['reward_name']),
-          'description' => trim($_POST['reward_description'] ?? ''),
-          'points_required' => (int)$_POST['reward_points']
-        ]);
-        $_SESSION['flash_success'] = 'Reward added successfully!';
-        if ($isAjaxRewardRequest) {
-          header('Content-Type: application/json');
-          echo json_encode(['success' => true]);
-          exit;
-        }
-      } catch (Exception $e) {
-        $_SESSION['flash_error'] = 'Error adding reward: ' . $e->getMessage();
-        if ($isAjaxRewardRequest) {
-          http_response_code(500);
-          header('Content-Type: application/json');
-          echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-          exit;
-        }
-      }
-    }
-  }
-
-  if ($senderId) {
-    // Handle recognition submission
-    if (!empty($_POST['receiver_id']) && !empty($_POST['message'])) {
-      $ctrl->sendRecognition($senderId, $_POST['receiver_id'], $_POST['message'], (int)($_POST['points'] ?? 10));
-      $_SESSION['flash_success'] = 'Recognition sent successfully.';
-    }
-
-    // Handle badge assignment
-    if (!empty($_POST['badge_employee_id']) && !empty($_POST['badge_id'])) {
-      $performanceScore = null;
-      if (!empty($_POST['badge_employee_id'])) {
-        $employeeId = (int)$_POST['badge_employee_id'];
-        $performanceScore = $ctrl->getEmployeePerformanceScore($employeeId);
-      }
-      $ctrl->assignAchievementBadge($_POST['badge_employee_id'], $_POST['badge_id'], $currentUserId, $performanceScore);
-      $_SESSION['flash_success'] = 'Badge assigned successfully.';
-    }
-
-    // Handle recognition announcements
-    if (!empty($_POST['form_type']) && $_POST['form_type'] === 'recognition_announcement') {
-      $title = trim($_POST['title'] ?? '');
-      $content = trim($_POST['content'] ?? '');
-      if ($title && $content) {
-        $communicationCtrl->postRecognitionAnnouncement($title, $content, $senderId);
-        $_SESSION['flash_success'] = 'Recognition announcement posted successfully.';
-      } else {
-        $_SESSION['flash_error'] = 'Title and content are required for recognition announcements.';
-      }
-    }
-
-    // Handle Employee of the Month nomination
-    if (!empty($_POST['nominate_employee_id']) && !empty($_POST['nomination_reason'])) {
-      $employee = $employeeCtrl->find($_POST['nominate_employee_id']);
-      if ($employee) {
-        $awardHistoryCtrl->store([
-          'employee_id' => $_POST['nominate_employee_id'],
-          'award_name' => 'Employee of the Month Nomination',
-          'reason' => $_POST['nomination_reason'],
-          'nominated_by' => $senderId,
-          'award_type' => 'employee_of_month',
-          'month_year' => date('Y-m'),
-          'status' => 'nominated'
-        ]);
-        $_SESSION['flash_success'] = 'Employee nominated for Employee of the Month.';
-      }
-    }
-
-        // Handle Employee of the Month vote
-        if (!empty($_POST['action']) && $_POST['action'] === 'vote_employee_month' && !empty($_POST['award_history_id'])) {
-          $awardHistoryId = (int)$_POST['award_history_id'];
-
-          if (!isset($_SESSION['employee_month_votes'])) {
-            $_SESSION['employee_month_votes'] = [];
-          }
-
-          if (!$ctrl->hasVotedForEmployeeMonth((int)($currentUserId ?? $senderId), $awardHistoryId)) {
-            $_SESSION['employee_month_votes'][] = $awardHistoryId;
-
-            $nomineeEmployeeId = $ctrl->getEmployeeFromAwardHistory($awardHistoryId);
-
-            if ($nomineeEmployeeId) {
-              $ctrl->addVotePoints($currentEmployeeId ?? $senderId, $nomineeEmployeeId);
-              $awardHistoryCtrl->incrementVoteCount($awardHistoryId);
-            }
-
-            $_SESSION['flash_success'] = 'Your vote has been recorded! (+5 points awarded to nominee)';
-          } else {
-            $_SESSION['flash_error'] = 'You have already voted this month.';
-          }
-        }
-      }
-
-      header('Location: ' . $_SERVER['REQUEST_URI']);
-      exit;
-    }
 
     $flashSuccess = $_SESSION['flash_success'] ?? null;
     $flashError = $_SESSION['flash_error'] ?? null;
@@ -551,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-crown mr-2"></i>Current Winner</h3>
                         </div>
-                        <div class="card-body text-center">
+                        <div class="card-body text-center" id="current-winner-content">
                           <?php
                           // Get the current month's employee of the month
                           $currentMonth = date('Y-m');
@@ -750,7 +568,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <th>Total</th>
                                   </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="comprehensive-leaderboard-list">
                                   <?php foreach (array_slice($payload['comprehensive_leaderboard'], 0, 9) as $entry): ?>
                                     <tr>
                                       <td>
@@ -773,7 +591,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               </table>
                             </div>
                           <?php else: ?>
-                            <p class="text-muted text-center">No leaderboard data available yet.</p>
+                            <div class="table-responsive leaderboard-table-scroll">
+                              <table class="table table-hover mb-0">
+                                <thead>
+                                  <tr>
+                                    <th>Rank</th>
+                                    <th>Employee</th>
+                                    <th>Recognition</th>
+                                    <th>Performance</th>
+                                    <th>Badges</th>
+                                    <th>Awards</th>
+                                    <th>Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody id="comprehensive-leaderboard-list">
+                                  <tr><td colspan="7" class="text-muted text-center">Loading leaderboard...</td></tr>
+                                </tbody>
+                              </table>
+                            </div>
                           <?php endif; ?>
                         </div>
                       </div>
@@ -783,7 +618,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-users mr-2"></i>Department Leaderboard</h3>
                         </div>
-                        <div class="card-body p-0">
+                          <div class="card-body p-0" id="department-leaderboard-list">
                           <?php if (!empty($payload['department_leaderboard'])): ?>
                             <div class="department-leaderboard-scroll">
                               <ul class="list-group list-group-flush">

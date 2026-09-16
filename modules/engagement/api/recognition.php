@@ -4,6 +4,12 @@ require_once __DIR__ . '/utils.php';
 
 use App\Controllers\RecognitionController;
 use App\Controllers\AwardHistoryController;
+use App\Controllers\RewardController;
+use App\Controllers\RewardRedemptionController;
+use App\Controllers\BadgeController;
+use App\Controllers\EmployeeBadgeController;
+use App\Controllers\EmployeeController;
+use App\Controllers\CommunicationController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $action = $_GET['action'] ?? 'list';
@@ -17,6 +23,57 @@ $data = inputData();
 
 try {
     switch ($action) {
+        case 'page_data':
+            $rewardCtrl = new RewardController();
+            $employeeCtrl = new EmployeeController();
+            $optionalRewardData = function (callable $loader) {
+                try {
+                    return $loader();
+                } catch (\Throwable $e) {
+                    error_log('Optional recognition reward data unavailable: ' . $e->getMessage());
+                    return [];
+                }
+            };
+            $recognitionData = [
+                'recognitions' => $ctrl->getRecognitions(),
+                'leaderboard' => $ctrl->getLeaderboard(),
+                'rewards' => $rewardCtrl->index(),
+                'reward_redemptions' => (new RewardRedemptionController())->index(),
+                'badges' => (new BadgeController())->index(),
+                'employee_badges' => (new EmployeeBadgeController())->index(),
+                'award_history' => (new AwardHistoryController())->index(),
+                'employees' => $employeeCtrl->index(),
+                'announcements' => (new CommunicationController())->getRecognitionAnnouncements(),
+                'recently_recognized' => $ctrl->getRecentlyRecognizedEmployees(30),
+                'comprehensive_leaderboard' => $ctrl->getComprehensiveLeaderboard(10),
+                'department_leaderboard' => $ctrl->getDepartmentLeaderboard(null, 10),
+                'recognition_recommendations' => $ctrl->getRecognitionRecommendations(10),
+                'performance_leaderboard' => $ctrl->getPerformanceLeaderboard(10),
+                'employees_without_reports' => $ctrl->getEmployeesWithoutPerformanceReports(),
+                'performance_candidates' => $optionalRewardData([$rewardCtrl, 'getPerformanceBasedCandidates']),
+                'top_performers' => $optionalRewardData([$rewardCtrl, 'getTopPerformers']),
+                'improvement_candidates' => $optionalRewardData([$rewardCtrl, 'getImprovementCandidates']),
+            ];
+
+            $currentEmployeeId = $_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? null;
+            $currentUserId = $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? null;
+            if ($currentEmployeeId) {
+                $recognitionData['my_points'] = $ctrl->getEmployeeTotalPoints($currentEmployeeId);
+                $recognitionData['my_badge_recommendations'] = $ctrl->getBadgeRecommendations($currentEmployeeId);
+            }
+
+            $selectedMonth = (int)($_GET['month'] ?? date('m'));
+            $selectedYear = (int)($_GET['year'] ?? date('Y'));
+            $recognitionData['employee_of_month_candidates'] = $ctrl->getEmployeeOfTheMonthCandidates($selectedMonth, $selectedYear, $currentUserId);
+            $recognitionData['nominated_employee_ids'] = array_values(array_unique(array_map(
+                'intval',
+                array_filter(array_map(function ($award) {
+                    return strpos($award['award_name'] ?? '', 'Nomination') !== false ? ($award['employee_id'] ?? 0) : 0;
+                }, $recognitionData['award_history']))
+            )));
+
+            jsonResponse(['success' => true, 'data' => $recognitionData]);
+            break;
         case 'list':
             $data = $ctrl->getRecognitions();
             jsonResponse(['success' => true, 'data' => $data]);
