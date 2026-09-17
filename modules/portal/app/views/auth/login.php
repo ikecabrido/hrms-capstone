@@ -15,30 +15,48 @@
 
 <body>
     <div class="login-container">
-        
+
         <div class="login-contents">
-            <h1 style="
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-weight:900;
+            <div style="
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 6px;
 ">
-                Employee Port<a href="index.php?url=admin" style="
-            color:inherit;
-            text-decoration:none;
-            font-size:inherit;
-            font-weight:inherit;
-            cursor:default;
+                <h1 style="
+        margin: 0;
+        padding: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 900;
+        font-size: 2rem;
+        line-height: 1;
+        white-space: nowrap;
+    ">
+                    Employee Port<a href="index.php?url=admin" style="
+            display: inline;
+            margin: 0;
+            padding: 0;
+            color: inherit;
+            text-decoration: none;
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            line-height: inherit;
+            letter-spacing: inherit;
+            vertical-align: baseline;
+            cursor: default;
         ">a</a>l
-            </h1>
-            
+                </h1>
+            </div>
+
             <div class="school-logo" style="flex:auto; justify-content: center ;">
                 <img src="/hrms-capstone/modules/portal/public/assets/images/bcp-logo.png" alt="School Logo">
             </div>
             <?php require __DIR__ . '/../partials/notification.php'; ?>
             <?php require __DIR__ . '/rate-limit.php'; ?>
             <form id="loginForm" method="POST" action="index.php?url=auth-login">
-                
+
                 <div class="error-message" id="errorMsg">
                 </div>
                 <div class="input-group">

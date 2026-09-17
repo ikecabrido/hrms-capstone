@@ -27,31 +27,45 @@
 
 
 
-    <div class="realtime" style="font-size: 16px" id="realtimeClock">--:--</div>
-    <script>
-        (function () {
-            function updateClock() {
-                const clock = document.getElementById('realtimeClock');
-                if (!clock) return;
+<div class="realtime" style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 80px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 16px;
+    white-space: nowrap;
+    z-index: 999999;
+    margin: 0;
+    padding: 0;
+" id="realtimeClock">--:--</div>
 
-                const now = new Date();
+<script>
+(function () {
+    function updateClock() {
+        const clock = document.getElementById('realtimeClock');
+        if (!clock) return;
 
-                let hours = now.getHours();
-                const minutes = String(now.getMinutes()).padStart(2, '0');
-                const seconds = String(now.getSeconds()).padStart(2, '0');
+        const now = new Date();
 
-                const ampm = hours >= 12 ? 'PM' : 'AM';
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
 
-                hours = hours % 12 || 12;
+        const ampm = hours >= 12 ? 'PM' : 'AM';
 
-                clock.textContent =
-                    String(hours).padStart(2, '0') +
-                    ':' + minutes +
-                    ' ' + ampm;
-            }
+        hours = hours % 12 || 12;
 
-            updateClock();
-            setInterval(updateClock, 1000);
-        })();
-    </script>
+        clock.textContent =
+            String(hours).padStart(2, '0') +
+            ':' + minutes +
+            ' ' + ampm;
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+})();
+</script>
 </header>
