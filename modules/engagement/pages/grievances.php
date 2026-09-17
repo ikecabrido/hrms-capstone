@@ -23,7 +23,7 @@ if (empty($_SESSION['employee_id']) || !$isHrAdmin) {
     exit;
 }
 
-  $validGrievanceTabs = ['all-grievances', 'management', 'reports'];
+  $validGrievanceTabs = ['all-grievances', 'management'];
   $savedGrievanceTab = strtolower(trim((string)($_COOKIE['engagement_grievance_tab'] ?? '')));
   $activeGrievanceTab = in_array($savedGrievanceTab, $validGrievanceTabs, true)
     ? $savedGrievanceTab
@@ -81,11 +81,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     <i class="fas fa-cogs"></i> Manage Grievance
                   </a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link<?= $activeGrievanceTab === 'reports' ? ' active' : '' ?>" id="reports-tab" href="#reports" data-grievance-tab="reports" role="tab" aria-selected="<?= $activeGrievanceTab === 'reports' ? 'true' : 'false' ?>">
-                    <i class="fas fa-file-alt"></i> Reports
-                  </a>
-                </li>
               </ul>
             </div>
 
@@ -95,8 +90,11 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                   <!-- Record Employee Grievance form removed per request -->
 
                   <div class="row mb-3">
-                     <div class="col-12 mb-2">
+                     <div class="col-12 mb-2 grievance-list-toolbar">
                       <p class="text-muted small mb-0">All Grievances.</p>
+                      <button type="button" class="btn btn-primary btn-sm" data-open-grievance-reports onclick="var reportModal=document.getElementById('grievance-report-modal');if(reportModal){reportModal.classList.add('is-open');reportModal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');}">
+                        <i class="fas fa-file-alt mr-1"></i> Reports
+                      </button>
                     </div>
                     <!-- helper removed per request -->
                     <div class="col-md-2">
@@ -150,7 +148,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                           <th>Employee Name</th>
                           <th>Subject</th>
                           <th>Category</th>
-                          <th>Status</th>
+                          <th>Status Tracking</th>
                           <th>Priority</th>
                           <th>Date Submitted</th>
                           <th>Payslip</th>
@@ -207,7 +205,18 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                               <td><?= htmlspecialchars($grievance['employee_name'] ?? 'Unknown') ?></td>
                               <td><?= htmlspecialchars($grievance['subject'] ?? '') ?></td>
                               <td><?= htmlspecialchars($grievance['category'] ?? 'N/A') ?></td>
-                              <td><span class="badge badge-secondary"><?= htmlspecialchars(ucfirst($grievance['status'] ?? 'Pending')) ?></span></td>
+                              <?php
+                                $statusValue = strtolower(trim((string)($grievance['status'] ?? 'pending')));
+                                $statusProgress = in_array($statusValue, ['resolved', 'closed'], true) ? 100 : ($statusValue === 'escalated' ? 75 : ($statusValue === 'under review' ? 50 : 25));
+                                $statusClass = $statusValue === 'resolved' ? 'success' : ($statusValue === 'closed' ? 'secondary' : ($statusValue === 'escalated' ? 'danger' : ($statusValue === 'under review' ? 'info' : 'warning')));
+                              ?>
+                              <td class="grievance-status-tracking">
+                                <span class="badge badge-<?= $statusClass ?>"><?= htmlspecialchars(ucfirst($grievance['status'] ?? 'Pending')) ?></span>
+                                <div class="progress mt-1" role="progressbar" aria-label="Grievance status progress" aria-valuenow="<?= $statusProgress ?>" aria-valuemin="0" aria-valuemax="100">
+                                  <div class="progress-bar bg-<?= $statusClass ?>" style="width: <?= $statusProgress ?>%"></div>
+                                </div>
+                                <small class="text-muted"><?= $statusProgress ?>% tracked</small>
+                              </td>
                               <td><span class="badge badge-<?= strtolower($grievance['priority'] ?? '') === 'high' ? 'danger' : 'secondary' ?>"><?= htmlspecialchars(ucfirst($grievance['priority'] ?? 'Medium')) ?></span></td>
                               <td><?= htmlspecialchars(date('M d, Y', strtotime($grievance['created_at'] ?? 'now'))) ?></td>
                               <td><?= htmlspecialchars($payslipLabel ?: 'None') ?></td>
@@ -308,40 +317,47 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                   </div>
                 </div>
 
-                
-
-                <div class="tab-pane fade<?= $activeGrievanceTab === 'reports' ? ' show active' : '' ?>" id="reports" role="tabpanel" aria-labelledby="reports-tab">
-                  <p class="text-muted mb-3">Grievance Reports & Exports – generate and export reports derived from grievance records (not directly from payroll tables).</p>
-                  <div class="row">
-                    <div class="col-md-4">
-                      <div class="card card-primary">
-                        <div class="card-header"><h3 class="card-title"><i class="fas fa-file-alt"></i> Generate Reports</h3></div>
-                        <div class="card-body">
-                          <form id="report-form">
-                            <div class="form-group"><label>Report Type</label><select class="form-control" id="report-type"><option value="summary">Summary Report</option><option value="detailed">Detailed Report</option><option value="category">Category Analysis</option><option value="resolution">Resolution Report</option></select></div>
-                            <div class="form-group"><label>Employee</label><input type="text" class="form-control" id="report-employee" placeholder="Employee name"></div>
-                            <div class="form-group"><label>Date Range</label><div class="input-group"><input type="date" class="form-control" id="report-start-date"><div class="input-group-prepend"><span class="input-group-text">to</span></div><input type="date" class="form-control" id="report-end-date"></div></div>
-                            <div class="form-group"><label>Department</label><select class="form-control" id="report-department"><option value="">All Departments</option><?php foreach ($payload['departments'] as $departmentRow): ?><?php $department = $departmentRow['department_name'] ?? ''; ?><?php if ($department !== ''): ?><option value="<?= htmlspecialchars($department) ?>"><?= htmlspecialchars($department) ?></option><?php endif; ?><?php endforeach; ?></select></div>
-                            <div class="form-group"><label>Category</label><select class="form-control" id="report-category"><option value="">All Categories</option><option value="Payroll Issues">Payroll Issues</option><option value="Attendance & Leave">Attendance & Leave</option><option value="Workplace Harassment">Workplace Harassment</option><option value="Supervisor/Management Issues">Supervisor/Management Issues</option><option value="Co-worker Issues">Co-worker Issues</option><option value="Health and Safety">Health and Safety</option><option value="Company Policy Violations">Company Policy Violations</option><option value="Benefits Concerns">Benefits Concerns</option><option value="Other Employment Concerns">Other Employment Concerns</option><option value="Other">Other</option></select></div>
-                            <div class="form-group"><label>Status</label><select class="form-control" id="report-status"><option value="">All Status</option><option value="Pending">Pending</option><option value="Resolved">Resolved</option><option value="Closed">Closed</option><option value="Escalated">Escalated</option></select></div>
-                            <div class="form-group"><label>Format</label><select class="form-control" id="report-format"><option value="pdf">PDF</option><option value="excel">Excel</option></select></div>
-                            <button type="button" class="btn btn-primary btn-block" onclick="generateCustomReport()"><i class="fas fa-download"></i> Generate Report</button>
-                          </form>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="col-md-8">
-                      <div id="generated-report" class="card mb-3 hidden">
-                        <div class="card-header"><h3 class="card-title"><i class="fas fa-file-alt"></i> Generated Report Result</h3></div>
-                        <div class="card-body"><div id="generated-report-summary" class="mb-3"></div><div class="table-responsive"><table class="table table-bordered table-sm" id="generated-report-table"><thead></thead><tbody></tbody></table></div></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
     </div>
           </div>
+
+  <div class="grievance-report-modal" id="grievance-report-modal" aria-hidden="true">
+    <div class="grievance-report-dialog" role="dialog" aria-modal="true" aria-labelledby="grievance-report-title">
+      <div class="grievance-report-header">
+        <h2 id="grievance-report-title"><i class="fas fa-file-alt mr-2"></i>Generate Reports</h2>
+        <button type="button" class="grievance-report-close" data-close-grievance-reports onclick="closeGrievanceReports()" aria-label="Close reports">&times;</button>
+      </div>
+      <div class="grievance-report-body">
+        <p class="text-muted mb-3">Generate reports from the grievance records currently available in the system.</p>
+        <form id="report-form">
+          <div class="grievance-report-grid">
+            <div class="form-group"><label>Report Type</label><select class="form-control" id="report-type"><option value="summary">Summary Report</option><option value="detailed">Detailed Report</option><option value="category">Category Analysis</option><option value="resolution">Resolution Report</option></select></div>
+            <div class="form-group"><label for="report-employee">Employee</label><select class="form-control" id="report-employee"><option value="">All Employees</option><?php
+              $reportEmployees = [];
+              foreach (($payload['grievances'] ?? []) as $reportGrievance) {
+                $reportEmployee = trim((string)($reportGrievance['employee_name'] ?? ''));
+                if ($reportEmployee !== '') {
+                  $reportEmployees[$reportEmployee] = $reportEmployee;
+                }
+              }
+              foreach ($reportEmployees as $reportEmployee):
+            ?><option value="<?= htmlspecialchars($reportEmployee) ?>"><?= htmlspecialchars($reportEmployee) ?></option><?php endforeach; ?></select></div>
+            <div class="form-group"><label>Date Range</label><div class="input-group grievance-date-range"><input type="date" class="form-control" id="report-start-date"><div class="input-group-prepend"><span class="input-group-text">to</span></div><input type="date" class="form-control" id="report-end-date"></div></div>
+            <div class="form-group"><label>Department</label><select class="form-control" id="report-department"><option value="">All Departments</option><?php foreach ($payload['departments'] as $departmentRow): ?><?php $department = $departmentRow['department_name'] ?? ''; ?><?php if ($department !== ''): ?><option value="<?= htmlspecialchars($department) ?>"><?= htmlspecialchars($department) ?></option><?php endif; ?><?php endforeach; ?></select></div>
+            <div class="form-group"><label>Category</label><select class="form-control" id="report-category"><option value="">All Categories</option><option value="Payroll Issues">Payroll Issues</option><option value="Attendance & Leave">Attendance & Leave</option><option value="Workplace Harassment">Workplace Harassment</option><option value="Supervisor/Management Issues">Supervisor/Management Issues</option><option value="Co-worker Issues">Co-worker Issues</option><option value="Health and Safety">Health and Safety</option><option value="Company Policy Violations">Company Policy Violations</option><option value="Benefits Concerns">Benefits Concerns</option><option value="Other Employment Concerns">Other Employment Concerns</option><option value="Other">Other</option></select></div>
+            <div class="form-group"><label>Status</label><select class="form-control" id="report-status"><option value="">All Status</option><option value="Pending">Pending</option><option value="Resolved">Resolved</option><option value="Closed">Closed</option><option value="Escalated">Escalated</option></select></div>
+            <div class="form-group"><label>Format</label><select class="form-control" id="report-format"><option value="pdf">PDF</option><option value="excel">Excel</option></select></div>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="generateCustomReport()"><i class="fas fa-download mr-1"></i> Generate Report</button>
+        </form>
+        <div id="generated-report" class="card mb-3 hidden">
+          <div class="card-header"><h3 class="card-title"><i class="fas fa-file-alt"></i> Generated Report Result</h3></div>
+          <div class="card-body"><div id="generated-report-summary" class="mb-3"></div><div class="table-responsive"><table class="table table-bordered table-sm" id="generated-report-table"><thead></thead><tbody></tbody></table></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 

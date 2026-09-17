@@ -83,14 +83,14 @@
 
   window.dom = dom;
 
-  const grievanceTabIds = ['all-grievances', 'management', 'reports'];
+  const grievanceTabIds = ['all-grievances', 'management'];
   const GRIEVANCE_STORAGE_KEY = 'engagement:grievance:active-tab';
   const GRIEVANCE_LEGACY_STORAGE_KEY = 'grievance-active-tab';
   const GRIEVANCE_COOKIE_KEY = 'engagement_grievance_tab';
 
   function getSavedGrievanceTab() {
     const candidateKeys = [GRIEVANCE_STORAGE_KEY, GRIEVANCE_LEGACY_STORAGE_KEY];
-    const validTabIds = ['all-grievances', 'management', 'reports'];
+    const validTabIds = ['all-grievances', 'management'];
 
     const cookieMatch = document.cookie.match(/(?:^|;\s*)engagement_grievance_tab=([^;]*)/);
     if (cookieMatch) {
@@ -187,11 +187,6 @@
       window.history.replaceState({}, '', window.location.pathname + window.location.search + '#' + validTabId);
     }
 
-    if (validTabId === 'reports') {
-      resetAutomaticReportFilters();
-      initReportEmployeeAutofill();
-      setTimeout(function () { generateCustomReport(false); }, 0);
-    }
   }
 
   function protectSavedGrievanceTab() {
@@ -315,12 +310,14 @@
       const department = grievance.department || '';
       const payslip = payrollLabel(grievance);
       const adjustments = grievance.employee_adjustments || '';
+      const progress = getStatusProgress(status);
+      const statusClass = getStatusBadgeClass(status);
       const search = [grievance.subject, grievance.employee_name, category, payslip, grievance.payroll_module, grievance.payroll_reference_id, adjustments].filter(Boolean).join(' ').toLowerCase();
       const date = String(grievance.created_at || '').slice(0, 10);
       const displayDate = grievance.created_at ? new Date(grievance.created_at).toLocaleDateString(undefined, {month: 'short', day: '2-digit', year: 'numeric'}) : 'N/A';
       return '<tr class="grievance-row" data-id="' + id + '" data-status="' + htmlspecialchars(status.toLowerCase()) + '" data-category="' + htmlspecialchars(category) + '" data-priority="' + htmlspecialchars(String(grievance.priority || '').toLowerCase()) + '" data-department="' + htmlspecialchars(department) + '" data-date="' + htmlspecialchars(date) + '" data-search="' + htmlspecialchars(search) + '">' +
         '<td>' + id + '</td><td>' + htmlspecialchars(grievance.employee_name || 'Unknown') + '</td><td>' + htmlspecialchars(grievance.subject || '') + '</td><td>' + htmlspecialchars(category) + '</td>' +
-        '<td><span class="badge badge-' + getStatusBadgeClass(status) + '">' + htmlspecialchars(status) + '</span></td>' +
+        '<td class="grievance-status-tracking"><span class="badge badge-' + statusClass + '">' + htmlspecialchars(status) + '</span><div class="progress mt-1" role="progressbar" aria-label="Grievance status progress" aria-valuenow="' + progress + '" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar bg-' + statusClass + '" style="width: ' + progress + '%"></div></div><small class="text-muted">' + progress + '% tracked</small></td>' +
         '<td><span class="badge badge-' + (String(grievance.priority || '').toLowerCase() === 'high' ? 'danger' : 'secondary') + '">' + htmlspecialchars(grievance.priority || 'Medium') + '</span></td>' +
         '<td>' + htmlspecialchars(displayDate) + '</td><td>' + htmlspecialchars(payslip) + '</td><td>' + (adjustments ? '<small title="' + htmlspecialchars(adjustments) + '">' + htmlspecialchars(adjustments.slice(0, 50)) + (adjustments.length > 50 ? '...' : '') + '</small>' : '<span class="text-muted">None</span>') + '</td>' +
         '<td><button type="button" class="btn btn-sm btn-info" title="View Grievance" data-grievance-view="' + id + '"><i class="fas fa-eye"></i></button></td></tr>';
@@ -335,6 +332,23 @@
       const id = Number(grievance.id || grievance.eer_grievance_id || 0);
       return '<option value="' + id + '" data-status="' + htmlspecialchars(String(grievance.status || 'Pending').toLowerCase()) + '" data-escalation-level="' + htmlspecialchars(grievance.escalation_level || '') + '" data-escalation-reason="' + htmlspecialchars(grievance.escalation_reason || '') + '" data-compliance-record-id="' + Number(grievance.compliance_record_id || 0) + '">' + id + ' - ' + htmlspecialchars(grievance.subject || '') + '</option>';
     }).join('');
+  }
+
+  function renderGrievanceReportEmployees(grievances) {
+    const select = document.getElementById('report-employee');
+    if (!select || !Array.isArray(grievances)) return;
+
+    const names = Array.from(new Set(grievances
+      .map(function (grievance) { return String(grievance.employee_name || '').trim(); })
+      .filter(Boolean)))
+      .sort(function (left, right) { return left.localeCompare(right); });
+
+    select.innerHTML = '<option value="">All Employees</option>' + names.map(function (name) {
+      return '<option value="' + htmlspecialchars(name) + '">' + htmlspecialchars(name) + '</option>';
+    }).join('');
+
+    // Rebind after the API replaces the employee options.
+    initReportEmployeeAutofill();
   }
 
   function renderGrievanceDepartments(departments) {
@@ -362,6 +376,7 @@
         window.grievancePayslipsData = data.employeePayslips || {};
         renderGrievanceTable(window.grievancesData);
         renderGrievanceManagementOptions(window.grievancesData);
+        renderGrievanceReportEmployees(window.grievancesData);
         renderGrievanceDepartments(data.departments || []);
         initGrievanceFilters();
         updateManagementFormState();
@@ -522,6 +537,49 @@
     });
   }
 })();
+
+function openGrievanceReports() {
+  const modal = document.getElementById('grievance-report-modal');
+  if (!modal) return;
+
+  resetAutomaticReportFilters();
+  const output = document.getElementById('generated-report');
+  if (output) {
+    output.classList.add('hidden');
+    output.style.display = 'none';
+  }
+
+  modal.classList.add('is-open');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  initReportEmployeeAutofill();
+  const reportType = document.getElementById('report-type');
+  if (reportType) reportType.focus();
+}
+
+function closeGrievanceReports() {
+  const modal = document.getElementById('grievance-report-modal');
+  if (!modal) return;
+  modal.classList.remove('is-open');
+  modal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+}
+
+if (!window.__grievanceReportsModalBound) {
+  window.__grievanceReportsModalBound = true;
+  document.addEventListener('click', function (event) {
+    if (event.target.closest('[data-open-grievance-reports]')) {
+      openGrievanceReports();
+      return;
+    }
+    if (event.target.closest('[data-close-grievance-reports]') || event.target.id === 'grievance-report-modal') {
+      closeGrievanceReports();
+    }
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') closeGrievanceReports();
+  });
+}
 
 function initializeCharts() {
   const grievances = window.grievancesData || [];
@@ -724,14 +782,20 @@ function updateGrievanceRow(grievanceId, status) {
     : (status || '').toLowerCase() === 'under review' ? 'info'
     : (status || '').toLowerCase() === 'escalated' ? 'danger'
     : 'warning';
+  const normalizedStatus = String(status || '').toLowerCase().trim();
+  const progress = normalizedStatus === 'pending' || normalizedStatus === 'submitted' ? 25
+    : normalizedStatus === 'under review' ? 50
+    : normalizedStatus === 'resolved' || normalizedStatus === 'closed' ? 100
+    : normalizedStatus === 'escalated' ? 75
+    : 0;
 
   row.attr('data-status', (status || '').toLowerCase());
-  row.find('td:nth-child(5)').html('<span class="badge badge-' + badgeClass + '">' + htmlspecialchars(status || 'Pending') + '</span>');
+  row.find('td:nth-child(5)').html('<span class="badge badge-' + badgeClass + '">' + htmlspecialchars(status || 'Pending') + '</span><div class="progress mt-1" role="progressbar" aria-label="Grievance status progress" aria-valuenow="' + progress + '" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar bg-' + badgeClass + '" style="width: ' + progress + '%"></div></div><small class="text-muted">' + progress + '% tracked</small>');
 
   (window.originalGrievanceRows || []).forEach(function (originalRow) {
     if (originalRow.getAttribute('data-id') === String(grievanceId)) {
       originalRow.setAttribute('data-status', (status || '').toLowerCase());
-      originalRow.querySelector('td:nth-child(5)').innerHTML = '<span class="badge badge-' + badgeClass + '">' + htmlspecialchars(status || 'Pending') + '</span>';
+      originalRow.querySelector('td:nth-child(5)').innerHTML = '<span class="badge badge-' + badgeClass + '">' + htmlspecialchars(status || 'Pending') + '</span><div class="progress mt-1" role="progressbar" aria-label="Grievance status progress" aria-valuenow="' + progress + '" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar bg-' + badgeClass + '" style="width: ' + progress + '%"></div></div><small class="text-muted">' + progress + '% tracked</small>';
     }
   });
 
@@ -1153,19 +1217,29 @@ function initReportEmployeeAutofill() {
 
   const autofillEmployee = function () {
     const enteredName = normalize(employeeField.value);
-    if (!enteredName) return;
+    if (!enteredName) {
+      employeeField.dataset.lastAutofilledName = '';
+      resetAutomaticReportFilters();
+      return;
+    }
 
-    const employeeRows = (window.reportData || [])
+    const employeeRows = (window.grievancesData || window.reportData || [])
       .filter(function (item) {
-        const employeeName = normalize(item.employee_name);
-        return employeeName === enteredName || employeeName.includes(enteredName);
+        return normalize(item.employee_name) === enteredName;
       })
       .sort(function (left, right) {
         return String(right.created_at || '').localeCompare(String(left.created_at || ''));
       });
 
     const employeeRecord = employeeRows[0];
-    if (!employeeRecord) return;
+    if (!employeeRecord) {
+      if (typeof generateCustomReport === 'function') {
+        generateCustomReport(false);
+      }
+      return;
+    }
+
+    employeeField.dataset.lastAutofilledName = enteredName;
 
     setSelectValue('report-department', employeeRecord.department);
     setSelectValue('report-category', employeeRecord.category);
@@ -1178,7 +1252,7 @@ function initReportEmployeeAutofill() {
     if (grievanceDate && startField && endField) {
       const start = new Date(grievanceDate + 'T12:00:00');
       const end = new Date(start);
-      end.setDate(end.getDate() + 3);
+      end.setDate(end.getDate() + 5);
       startField.value = formatDateForInput(start);
       endField.value = formatDateForInput(end);
     }
@@ -1190,11 +1264,17 @@ function initReportEmployeeAutofill() {
     }
   };
 
-  employeeField.addEventListener('input', autofillEmployee);
+  employeeField.addEventListener('input', function () {
+    employeeField.dataset.lastAutofilledName = '';
+  });
   employeeField.addEventListener('change', autofillEmployee);
-  setTimeout(autofillEmployee, 0);
-  setTimeout(autofillEmployee, 100);
-  setTimeout(autofillEmployee, 500);
+  employeeField.addEventListener('blur', autofillEmployee);
+  employeeField.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      autofillEmployee();
+    }
+  });
 }
 
 function downloadReport(reportTitle, headers, rows, format) {
