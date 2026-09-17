@@ -347,6 +347,12 @@ class Policy
         return $result;
     }
 
+    public function deletePolicy($policyId)
+    {
+        $stmt = $this->conn->prepare("DELETE FROM lc_policies WHERE id = :id");
+        return $stmt->execute([':id' => (int) $policyId]);
+    }
+
     public function getAcknowledgementStats($policyId)
     {
         $sql = "SELECT

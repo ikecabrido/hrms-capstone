@@ -15,6 +15,31 @@ class DocumentationController extends ExitManagementController
     /**
      * Upload document
      */
+    private function resolveDocumentTitle(array $data): string
+    {
+        $title = trim((string)($data['title'] ?? ''));
+        if ($title !== '') {
+            return $title;
+        }
+
+        $documentType = trim((string)($data['document_type'] ?? ''));
+        $typeMap = [
+            'resignation_letter' => 'Resignation Letter',
+            'termination_letter' => 'Termination Letter',
+            'clearance_form' => 'Clearance Form',
+            'handover_document' => 'Handover Document',
+            'settlement_receipt' => 'Settlement Receipt',
+            'exit_interview' => 'Exit Interview Notes',
+            'certificate' => 'Experience Certificate',
+        ];
+
+        if (isset($typeMap[$documentType])) {
+            return $typeMap[$documentType];
+        }
+
+        return 'Exit Document';
+    }
+
     public function uploadDocument(array $data): array
     {
         try {
@@ -23,13 +48,15 @@ class DocumentationController extends ExitManagementController
             error_log("FILES data: " . json_encode(array_keys($_FILES)));
             
             // Validate required fields
-            $required = ['employee_id', 'document_type', 'title'];
+            $required = ['employee_id', 'document_type'];
             foreach ($required as $field) {
                 if (empty($data[$field])) {
                     error_log("Document validation failed: $field is required. Data: " . json_encode($data));
                     return ['success' => false, 'message' => "Field '$field' is required"];
                 }
             }
+
+            $data['title'] = $this->resolveDocumentTitle($data);
 
             if (!empty($data['exit_case_type']) || !empty($data['exit_case_id'])) {
                 if (empty($data['exit_case_type']) || empty($data['exit_case_id'])) {
@@ -118,12 +145,14 @@ class DocumentationController extends ExitManagementController
             }
 
             // Validate required fields
-            $required = ['employee_id', 'document_type', 'title'];
+            $required = ['employee_id', 'document_type'];
             foreach ($required as $field) {
                 if (empty($data[$field])) {
                     return ['success' => false, 'message' => "Field '$field' is required"];
                 }
             }
+
+            $data['title'] = $this->resolveDocumentTitle($data);
 
             if (!empty($data['exit_case_type']) || !empty($data['exit_case_id'])) {
                 if (empty($data['exit_case_type']) || empty($data['exit_case_id'])) {
@@ -133,6 +162,26 @@ class DocumentationController extends ExitManagementController
                     return ['success' => false, 'message' => 'Invalid exit_case_type'];
                 }
                 $data['exit_case_id'] = (int)$data['exit_case_id'];
+            }
+
+            $filePath = $data['file_path'] ?? null;
+            if (isset($_FILES['document_file']) && $_FILES['document_file']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/../uploads/documents/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                $fileName = basename($_FILES['document_file']['name']);
+                $filePath = 'uploads/documents/' . time() . '_' . $fileName;
+                $fullPath = __DIR__ . '/../' . $filePath;
+
+                if (!move_uploaded_file($_FILES['document_file']['tmp_name'], $fullPath)) {
+                    return ['success' => false, 'message' => 'Failed to save replacement file'];
+                }
+
+                $data['file_path'] = $filePath;
+            } elseif (isset($_FILES['document_file']) && $_FILES['document_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+                return ['success' => false, 'message' => 'File upload error: ' . $_FILES['document_file']['error']];
             }
 
             $success = $this->documentationModel->updateDocument($data['document_id'], $data);
@@ -489,7 +538,7 @@ class DocumentationController extends ExitManagementController
                 ];
             }
 
-            $document = $this->documentationModel->getDocument($documentId);
+            $document = $this->documentationModel->getDocumentById($documentId);
 
             if (!$document) {
                 return [

@@ -14,6 +14,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div class="module-content">
         <div id="surveys-section" class="section">
+            <?php $alertId = 'survey-action-alert'; $alertIcon = 'fas fa-clipboard-check'; $alertMessage = 'Post-exit surveys require follow-up'; $alertCount = 0; $alertViewAction = 'active'; include __DIR__ . '/../includes/action-alert.php'; ?>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">

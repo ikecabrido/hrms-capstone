@@ -48,9 +48,11 @@ class SettlementModel extends ExitManagementModel
      */
     public function createSettlement(array $data): int
     {
-        $hasPaymentDate = $this->settlementColumnExists('payment_date');
         $hasExitCaseType = $this->settlementColumnExists('exit_case_type');
         $hasExitCaseId = $this->settlementColumnExists('exit_case_id');
+        $hasRequestedAt = $this->settlementColumnExists('requested_at');
+        $hasLastWorkingDate = $this->settlementColumnExists('last_working_date');
+        $hasRemarks = $this->settlementColumnExists('remarks');
 
         $columns = ['employee_id'];
         $values = [$data['employee_id']];
@@ -70,55 +72,31 @@ class SettlementModel extends ExitManagementModel
             $values[] = $data['exit_case_id'] ?? null;
         }
 
-        $columns[] = 'basic_salary';
-        $values[] = $data['basic_salary'];
-
-        foreach ([
-            'remaining_salary',
-            'unused_leave_conversion',
-            'overtime_pay',
-            'holiday_pay',
-            'bonuses',
-            'commission',
-            'hra',
-            'conveyance',
-            'lta',
-            'medical_allowance',
-            'other_allowances',
-            'separation_pay',
-            'tax',
-            'sss',
-            'philhealth',
-            'pagibig',
-            'cash_advance',
-            'company_loan',
-            'equipment_damage',
-            'missing_assets',
-            'late_deductions',
-            'absence_deductions',
-            'provident_fund',
-            'gratuity',
-            'notice_pay',
-            'outstanding_loans',
-            'other_deductions'
-        ] as $field) {
-            $this->appendOptionalSettlementField($columns, $values, $data, $field);
+        if ($hasLastWorkingDate) {
+            $columns[] = 'last_working_date';
+            $values[] = $data['last_working_date'] ?? $data['settlement_date'] ?? null;
         }
 
-        $columns[] = 'net_payable';
-        $values[] = $data['net_payable'];
-        $columns[] = 'settlement_date';
-        $values[] = $data['settlement_date'];
-
-        if ($hasPaymentDate) {
-            $columns[] = 'payment_date';
-            $values[] = $data['payment_date'] ?? null;
+        if ($this->settlementColumnExists('payroll_settlement_id')) {
+            $columns[] = 'payroll_settlement_id';
+            $values[] = $data['payroll_settlement_id'] ?? null;
         }
 
         $columns[] = 'status';
+        $values[] = $data['status'] ?? 'requested';
+
+        if ($hasRequestedAt) {
+            $columns[] = 'requested_at';
+            $values[] = $data['requested_at'] ?? date('Y-m-d H:i:s');
+        }
+
+        if ($hasRemarks) {
+            $columns[] = 'remarks';
+            $values[] = $data['remarks'] ?? null;
+        }
+
         $columns[] = 'created_by';
-        $values[] = $data['status'] ?? 'pending_approval';
-        $values[] = $data['created_by'];
+        $values[] = $data['created_by'] ?? 0;
 
         $placeholderString = implode(', ', array_fill(0, count($columns), '?'));
         $columnString = implode(', ', $columns);
@@ -134,9 +112,9 @@ class SettlementModel extends ExitManagementModel
      */
     public function updateSettlement(int $settlementId, array $data): bool
     {
-        $hasPaymentDate = $this->settlementColumnExists('payment_date');
         $hasExitCaseType = $this->settlementColumnExists('exit_case_type');
         $hasExitCaseId = $this->settlementColumnExists('exit_case_id');
+        $hasLastWorkingDate = $this->settlementColumnExists('last_working_date');
 
         $fields = ['employee_id = ?'];
         $values = [$data['employee_id']];
@@ -156,57 +134,29 @@ class SettlementModel extends ExitManagementModel
             $values[] = $data['exit_case_id'] ?? null;
         }
 
-        $fields[] = 'basic_salary = ?';
-        $values[] = $data['basic_salary'] ?? 0;
-
-        foreach ([
-            'remaining_salary',
-            'unused_leave_conversion',
-            'overtime_pay',
-            'holiday_pay',
-            'bonuses',
-            'commission',
-            'hra',
-            'conveyance',
-            'lta',
-            'medical_allowance',
-            'other_allowances',
-            'separation_pay',
-            'tax',
-            'sss',
-            'philhealth',
-            'pagibig',
-            'cash_advance',
-            'company_loan',
-            'equipment_damage',
-            'missing_assets',
-            'late_deductions',
-            'absence_deductions',
-            'provident_fund',
-            'gratuity',
-            'notice_pay',
-            'outstanding_loans',
-            'other_deductions'
-        ] as $field) {
-            $this->appendOptionalSettlementFieldUpdate($fields, $values, $data, $field);
+        if ($hasLastWorkingDate) {
+            $fields[] = 'last_working_date = ?';
+            $values[] = $data['last_working_date'] ?? null;
         }
 
-        $fields[] = 'net_payable = ?';
-        $values[] = $data['net_payable'] ?? 0;
-        $fields[] = 'settlement_date = ?';
-        $values[] = $data['settlement_date'] ?? null;
-
-        if ($hasPaymentDate) {
-            $fields[] = 'payment_date = ?';
-            $values[] = $data['payment_date'] ?? null;
+        if ($this->settlementColumnExists('remarks')) {
+            $fields[] = 'remarks = ?';
+            $values[] = $data['remarks'] ?? null;
         }
 
         $fields[] = 'status = ?';
-        $values[] = $data['status'] ?? 'pending_approval';
+        $values[] = $data['status'] ?? 'requested';
+
+        if ($this->settlementColumnExists('requested_at')) {
+            $fields[] = 'requested_at = ?';
+            $values[] = $data['requested_at'] ?? date('Y-m-d H:i:s');
+        }
+
         if ($this->settlementColumnExists('updated_by')) {
             $fields[] = 'updated_by = ?';
             $values[] = $data['updated_by'] ?? null;
         }
+
         $fields[] = 'updated_at = NOW()';
 
         $fieldStr = implode(',\n                ', $fields);
@@ -214,7 +164,7 @@ class SettlementModel extends ExitManagementModel
         $stmt = $this->db->prepare(
             "UPDATE exit_employee_settlements
              SET {$fieldStr}
-             WHERE id = ?"
+             WHERE settlement_id = ?"
         );
 
         $values[] = $settlementId;
@@ -227,17 +177,30 @@ class SettlementModel extends ExitManagementModel
      */
     public function getSettlementById(int $settlementId): ?array
     {
-        // Include resignation_type only if column exists in exit_resignations
-        $resignationTypeSelect = $this->columnExists('exit_resignations', 'resignation_type') ? 'r.resignation_type' : 'NULL AS resignation_type';
+        $hasResignationTable = $this->tableExists('exit_resignations');
+        $hasResignationType = $hasResignationTable && $this->columnExists('exit_resignations', 'resignation_type');
+        $hasResignationLastWorkingDate = $hasResignationTable && $this->columnExists('exit_resignations', 'last_working_date');
+
+        $resignationTypeSelect = $hasResignationType ? 'r.resignation_type' : 'NULL AS resignation_type';
+        $resignationLastWorkingDateSelect = $hasResignationLastWorkingDate ? 'r.last_working_date' : 'NULL AS last_working_date';
+
+        $resignationJoin = '';
+        if ($hasResignationTable && $this->columnExists('exit_employee_settlements', 'resignation_id')) {
+            $resignationJoin = 'LEFT JOIN exit_resignations r ON s.resignation_id = r.id';
+        } elseif ($hasResignationTable && $this->columnExists('exit_employee_settlements', 'exit_case_id')) {
+            $resignationJoin = 'LEFT JOIN exit_resignations r ON s.exit_case_id = r.id';
+        } elseif ($hasResignationTable) {
+            $resignationJoin = 'LEFT JOIN exit_resignations r ON 1=0';
+        }
 
         $stmt = $this->db->prepare("
-             SELECT s.*, COALESCE(NULLIF(s.status, ''), 'pending_approval') AS status,
+             SELECT s.*, COALESCE(NULLIF(s.status, ''), 'pending') AS status,
                  CONCAT(e.first_name, ' ', e.last_name) AS full_name, e.employee_id as emp_id,
-                   " . $resignationTypeSelect . ", r.last_working_date
+                   " . $resignationTypeSelect . ", " . $resignationLastWorkingDateSelect . "
             FROM exit_employee_settlements s
             JOIN em_employees e ON s.employee_id = e.employee_id
-            LEFT JOIN exit_resignations r ON s.resignation_id = r.id
-            WHERE s.id = ?
+            {$resignationJoin}
+            WHERE s.settlement_id = ?
         ");
         $stmt->execute([$settlementId]);
         $settlement = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
@@ -309,7 +272,7 @@ class SettlementModel extends ExitManagementModel
             $params = [$exitCaseType, $exitCaseId];
 
             if ($excludeSettlementId !== null) {
-                $sql .= " AND id != ?";
+                $sql .= " AND settlement_id != ?";
                 $params[] = $excludeSettlementId;
             }
 
@@ -326,7 +289,7 @@ class SettlementModel extends ExitManagementModel
             $params = [$exitCaseId];
 
             if ($excludeSettlementId !== null) {
-                $sql .= " AND id != ?";
+                $sql .= " AND settlement_id != ?";
                 $params[] = $excludeSettlementId;
             }
 
@@ -344,7 +307,7 @@ class SettlementModel extends ExitManagementModel
      */
     public function isSettlementArchivable(int $settlementId): bool
     {
-        $stmt = $this->db->prepare("SELECT status FROM exit_employee_settlements WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT status FROM exit_employee_settlements WHERE settlement_id = ?");
         $stmt->execute([$settlementId]);
         $status = $stmt->fetchColumn();
 
@@ -352,7 +315,7 @@ class SettlementModel extends ExitManagementModel
             return false;
         }
 
-        return in_array($status, ['approved', 'paid', 'rejected'], true);
+        return in_array($status, ['approved', 'paid', 'cancelled'], true);
     }
 
     /**
@@ -362,10 +325,10 @@ class SettlementModel extends ExitManagementModel
     {
         $stmt = $this->db->prepare("
             UPDATE exit_employee_settlements
-            SET status = ?, approved_by = ?, approved_at = NOW()
-            WHERE id = ?
+            SET status = ?, updated_at = NOW()
+            WHERE settlement_id = ?
         ");
-        return $stmt->execute([$status, $approvedBy, $settlementId]);
+        return $stmt->execute([$status, $settlementId]);
     }
 
     /**
@@ -377,8 +340,8 @@ class SettlementModel extends ExitManagementModel
             SELECT s.*, CONCAT(e.first_name, ' ', e.last_name) AS full_name, e.employee_id as emp_id
             FROM exit_employee_settlements s
             JOIN em_employees e ON s.employee_id = e.employee_id
-            WHERE s.status = 'pending_approval'
-            ORDER BY s.settlement_date ASC
+            WHERE s.status = 'requested'
+            ORDER BY s.created_at ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -424,7 +387,7 @@ class SettlementModel extends ExitManagementModel
         }
 
         // Always include status and timestamps (may be present or will be NULL if missing)
-        $baseSelect[] = "COALESCE(NULLIF(s.status, ''), 'pending_approval') AS status";
+        $baseSelect[] = "COALESCE(NULLIF(s.status, ''), 'requested') AS status";
         $baseSelect[] = "s.created_at";
         $baseSelect[] = "s.updated_at";
 
@@ -618,7 +581,7 @@ class SettlementModel extends ExitManagementModel
     public function archiveSettlement(int $settlementId, string $archiveReason = 'Manual archive'): bool
     {
         // Get the full settlement data
-        $stmt = $this->db->prepare("SELECT * FROM exit_employee_settlements WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM exit_employee_settlements WHERE settlement_id = ?");
         $stmt->execute([$settlementId]);
         $settlement = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$settlement) {
@@ -656,7 +619,7 @@ class SettlementModel extends ExitManagementModel
             ]);
 
             // Delete from exit_employee_settlements
-            $deleteStmt = $this->db->prepare("DELETE FROM exit_employee_settlements WHERE id = ?");
+            $deleteStmt = $this->db->prepare("DELETE FROM exit_employee_settlements WHERE settlement_id = ?");
             $deleteStmt->execute([$settlementId]);
 
             $this->db->commit();
@@ -693,33 +656,25 @@ class SettlementModel extends ExitManagementModel
             // Insert back into exit_employee_settlements
             $insertStmt = $this->db->prepare("
                 INSERT INTO exit_employee_settlements (
-                    id, employee_id, resignation_id, basic_salary, hra, conveyance, lta,
-                    medical_allowance, other_allowances, provident_fund, gratuity,
-                    notice_pay, outstanding_loans, other_deductions, net_payable,
-                    settlement_date, status, created_by, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    settlement_id, employee_id, exit_case_type, exit_case_id, last_working_date,
+                    payroll_settlement_id, status, requested_at, completed_at, remarks,
+                    created_by, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ");
 
             $insertStmt->execute([
-                $settlementData['id'],
+                $settlementData['settlement_id'] ?? $settlementData['id'] ?? null,
                 $settlementData['employee_id'],
-                $settlementData['resignation_id'],
-                $settlementData['basic_salary'],
-                $settlementData['hra'],
-                $settlementData['conveyance'],
-                $settlementData['lta'],
-                $settlementData['medical_allowance'],
-                $settlementData['other_allowances'],
-                $settlementData['provident_fund'],
-                $settlementData['gratuity'],
-                $settlementData['notice_pay'],
-                $settlementData['outstanding_loans'],
-                $settlementData['other_deductions'],
-                $settlementData['net_payable'],
-                $settlementData['settlement_date'],
-                $settlementData['status'] ?? 'pending_approval',
+                $settlementData['exit_case_type'] ?? ($settlementData['resignation_id'] ? 'resignation' : 'termination'),
+                $settlementData['exit_case_id'] ?? ($settlementData['resignation_id'] ?? 0),
+                $settlementData['last_working_date'] ?? $settlementData['settlement_date'] ?? null,
+                $settlementData['payroll_settlement_id'] ?? null,
+                $settlementData['status'] ?? 'requested',
+                $settlementData['requested_at'] ?? $settlementData['created_at'] ?? date('Y-m-d H:i:s'),
+                $settlementData['completed_at'] ?? null,
+                $settlementData['remarks'] ?? null,
                 $settlementData['created_by'],
-                $settlementData['created_at'],
+                $settlementData['created_at'] ?? date('Y-m-d H:i:s'),
                 date('Y-m-d H:i:s')
             ]);
 

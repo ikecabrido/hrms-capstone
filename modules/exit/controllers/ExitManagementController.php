@@ -19,13 +19,25 @@ class ExitManagementController
         try {
             $db = $this->model->getConnection();
 
-            // Pending approvals
+            // Pending approvals (resignations + terminations)
             $stmt = $db->query("SELECT COUNT(*) as count FROM exit_resignations WHERE status IN ('pending','pending_review','pending_legal_review')");
-            $pending = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+            $pendingResignations = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+            $pendingTerminations = 0;
+            if ($this->model->tableExists('exit_terminations')) {
+                $stmt = $db->query("SELECT COUNT(*) as count FROM exit_terminations WHERE status IN ('pending_review','pending_legal_review')");
+                $pendingTerminations = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+            }
+            $pending = $pendingResignations + $pendingTerminations;
 
-            // Approved
+            // Approved (resignations + terminations)
             $stmt = $db->query("SELECT COUNT(*) as count FROM exit_resignations WHERE status = 'approved'");
-            $approved = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+            $approvedResignations = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+            $approvedTerminations = 0;
+            if ($this->model->tableExists('exit_terminations')) {
+                $stmt = $db->query("SELECT COUNT(*) as count FROM exit_terminations WHERE status = 'approved'");
+                $approvedTerminations = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+            }
+            $approved = $approvedResignations + $approvedTerminations;
 
             // Interviews (unique cases that have scheduled or completed interviews)
             $stmt = $db->query("SELECT COUNT(DISTINCT CONCAT(IFNULL(exit_case_type,''), '-', IFNULL(exit_case_id,''))) AS count FROM exit_interviews WHERE status IN ('scheduled','completed','pending')");
@@ -75,13 +87,24 @@ class ExitManagementController
             $days = max(1, (int)$days);
             $limit = max(1, (int)$limit);
 
-            $query = "SELECT r.id AS resignation_id, r.employee_id, CONCAT(e.first_name, ' ', e.last_name) AS full_name, COALESCE(d.department_name, e.department) AS department, e.email, r.notice_date, r.last_working_date, DATEDIFF(r.last_working_date, CURDATE()) AS days_left, r.status
-                      FROM exit_resignations r
-                      LEFT JOIN em_employees e ON r.employee_id = e.employee_id
-                      LEFT JOIN em_departments d ON e.department_id = d.department_id
-                      WHERE r.last_working_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY)
-                      ORDER BY r.last_working_date ASC
-                      LIMIT {$limit}";
+                        // Include both resignations and terminations (alias termination.effective_date as last_working_date)
+                        $query = "SELECT r.id AS resignation_id, r.employee_id, CONCAT(e.first_name, ' ', e.last_name) AS full_name, COALESCE(d.department_name, '') AS department, e.email, r.notice_date, r.last_working_date, DATEDIFF(r.last_working_date, CURDATE()) AS days_left, r.status, 'resignation' AS exit_type
+                                            FROM exit_resignations r
+                                            LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                                            LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                            WHERE r.last_working_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY)
+                                                AND r.status NOT IN ('archived','withdrawn','rejected','rejected_by_legal')
+                                            
+                                            UNION ALL
+
+                                            SELECT t.id AS resignation_id, t.employee_id, CONCAT(e2.first_name, ' ', e2.last_name) AS full_name, COALESCE(d2.department_name, '') AS department, e2.email, NULL AS notice_date, t.effective_date AS last_working_date, DATEDIFF(t.effective_date, CURDATE()) AS days_left, t.status, 'termination' AS exit_type
+                                            FROM exit_terminations t
+                                            LEFT JOIN em_employees e2 ON t.employee_id = e2.employee_id
+                                            LEFT JOIN em_departments d2 ON e2.department_id = d2.department_id
+                                            WHERE t.effective_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL {$days} DAY)
+                                                AND t.status NOT IN ('archived','withdrawn','rejected','rejected_by_legal')
+                                            ORDER BY last_working_date ASC
+                                            LIMIT {$limit}";
 
             $stmt = $db->query($query);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -247,23 +270,24 @@ class ExitManagementController
             }
 
             if ($this->model->tableExists('exit_employee_settlements') && $this->model->columnExists('exit_employee_settlements', 'settlement_date')) {
-                $settlementSql = "SELECT
-                    s.id AS exit_case_id,
-                    s.employee_id,
-                    CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
-                    COALESCE(s.exit_case_type, 'resignation') AS exit_case_type,
-                    s.settlement_date AS scheduled_date,
-                    s.status,
-                    DATEDIFF(s.settlement_date, CURDATE()) AS days_remaining,
-                    'settlement' AS activity_type,
-                    'Settlement' AS activity_label,
-                    'settlement_detail' AS action,
-                    0 AS is_action_required
-                FROM exit_employee_settlements s
-                LEFT JOIN em_employees e ON e.employee_id = s.employee_id
-                WHERE s.status IN ('pending', 'pending_approval', 'approved')
-                  AND s.settlement_date IS NOT NULL
-                  AND s.settlement_date BETWEEN ? AND ?";
+                                $settlementSql = "SELECT
+                                        s.id AS exit_case_id,
+                                        s.employee_id,
+                                        CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                                        COALESCE(s.exit_case_type, 'resignation') AS exit_case_type,
+                                        COALESCE(s.settlement_date, s.requested_at, s.completed_at, r.last_working_date) AS scheduled_date,
+                                        s.status,
+                                        DATEDIFF(COALESCE(s.settlement_date, s.requested_at, s.completed_at, r.last_working_date), CURDATE()) AS days_remaining,
+                                        'settlement' AS activity_type,
+                                        'Settlement' AS activity_label,
+                                        'settlement_detail' AS action,
+                                        0 AS is_action_required
+                                FROM exit_employee_settlements s
+                                LEFT JOIN em_employees e ON e.employee_id = s.employee_id
+                                LEFT JOIN exit_resignations r ON s.resignation_id = r.id OR s.exit_case_id = r.id
+                                WHERE s.status IN ('pending', 'requested', 'approved')
+                                    AND COALESCE(s.settlement_date, s.requested_at, s.completed_at, r.last_working_date) IS NOT NULL
+                                    AND COALESCE(s.settlement_date, s.requested_at, s.completed_at, r.last_working_date) BETWEEN ? AND ?";
                 $settlementStmt = $db->prepare($settlementSql);
                 $settlementStmt->execute([$windowStart, $windowEnd]);
                 foreach ($settlementStmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
@@ -439,20 +463,59 @@ class ExitManagementController
             $items = [];
 
             // Pending resignation approvals
-            $stmt = $db->query("SELECT id, employee_id, DATEDIFF(CURDATE(), notice_date) AS days_since_notice, last_working_date, reason FROM exit_resignations WHERE status IN ('pending_review','pending_legal_review') ORDER BY created_at DESC LIMIT 20");
-            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
-                $items[] = [
-                    'type' => 'resignation_approval',
-                    'id' => $r['id'],
-                    'employee_id' => $r['employee_id'],
-                    'label' => 'Resignation approval',
-                    'meta' => $r,
-                    'priority' => 1
-                ];
+            try {
+                $stmt = $db->query("SELECT id, employee_id, DATEDIFF(CURDATE(), notice_date) AS days_since_notice, last_working_date, reason FROM exit_resignations WHERE status IN ('pending_review','pending_legal_review') ORDER BY created_at DESC LIMIT 20");
+                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+                    $items[] = [
+                        'type' => 'resignation_approval',
+                        'id' => $r['id'],
+                        'employee_id' => $r['employee_id'],
+                        'label' => 'Resignation approval',
+                        'meta' => $r,
+                        'priority' => 1
+                    ];
+                }
+            } catch (Exception $e) {
+                error_log('ExitManagementController::getActionItems pending resignation approvals query failed: ' . $e->getMessage());
+            }
+
+            // Pending termination reviews (mirrors pending resignation approvals)
+            try {
+                $stmt = $db->query("SELECT id, employee_id, termination_reason, effective_date, status, DATEDIFF(CURDATE(), effective_date) AS days_overdue FROM exit_terminations WHERE status IN ('pending_review','pending_legal_review') ORDER BY created_at DESC LIMIT 20");
+                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $t) {
+                    $items[] = [
+                        'type' => 'termination_pending',
+                        'id' => $t['id'],
+                        'employee_id' => $t['employee_id'],
+                        'label' => 'Termination review',
+                        'meta' => $t,
+                        'priority' => 1
+                    ];
+                }
+            } catch (Exception $e) {
+                error_log('getActionItems: pending termination reviews query failed: ' . $e->getMessage());
+            }
+
+            // Approved terminations whose effective date has already passed (overdue, needs finalizing)
+            try {
+                $stmt = $db->query("SELECT id, employee_id, termination_reason, effective_date, status, DATEDIFF(CURDATE(), effective_date) AS days_overdue FROM exit_terminations WHERE status = 'approved' AND effective_date <= CURDATE() ORDER BY effective_date ASC LIMIT 20");
+                foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $t) {
+                    $items[] = [
+                        'type' => 'termination_overdue',
+                        'id' => $t['id'],
+                        'employee_id' => $t['employee_id'],
+                        'label' => 'Termination overdue',
+                        'meta' => $t,
+                        'priority' => 1
+                    ];
+                }
+            } catch (Exception $e) {
+                error_log('getActionItems: overdue terminations query failed: ' . $e->getMessage());
             }
 
             // Interviews scheduled but not completed (pending action)
-            $stmt = $db->query("SELECT ei.id AS interview_id, ei.employee_id, ei.scheduled_at, ei.status, CONCAT(e.first_name, ' ', e.last_name) AS full_name FROM exit_interviews ei LEFT JOIN em_employees e ON ei.employee_id = e.employee_id WHERE ei.status = 'scheduled' ORDER BY ei.scheduled_at ASC LIMIT 20");
+            // Use verified column `scheduled_date` only
+            $stmt = $db->query("SELECT ei.id AS interview_id, ei.employee_id, ei.scheduled_date AS scheduled_at, ei.status, CONCAT(e.first_name, ' ', e.last_name) AS full_name FROM exit_interviews ei LEFT JOIN em_employees e ON ei.employee_id = e.employee_id WHERE ei.status = 'scheduled' ORDER BY ei.scheduled_date ASC LIMIT 20");
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $i) {
                 $items[] = [
                     'type' => 'interview_scheduled',
@@ -479,9 +542,9 @@ class ExitManagementController
                 }
             } catch (Exception $e) {}
 
-            // Settlements pending approval
+            // Settlements pending approval — use verified settlement columns
             if ($this->model->tableExists('exit_employee_settlements')) {
-                $stmt = $db->query("SELECT id, employee_id, amount, status, created_at FROM exit_employee_settlements WHERE status IN ('pending_approval','pending') ORDER BY created_at ASC LIMIT 20");
+                $stmt = $db->query("SELECT settlement_id AS id, employee_id, exit_case_type, exit_case_id, status, requested_at, completed_at, created_at FROM exit_employee_settlements WHERE status IN ('requested','pending') ORDER BY created_at ASC LIMIT 20");
                 foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $s) {
                     $items[] = [
                         'type' => 'settlement_pending',
@@ -539,6 +602,82 @@ class ExitManagementController
     }
 
     /**
+     * Return simple counts for each exit stage used by the shared action-alert
+     */
+    public function getStagePendingCounts(): array
+    {
+        try {
+            $db = $this->model->getConnection();
+
+            $counts = [
+                'resignations' => 0,
+                'terminations' => 0,
+                'interviews' => 0,
+                'knowledge_transfer' => 0,
+                'settlements' => 0,
+                'documentation' => 0,
+                'post_exit_feedback' => 0
+            ];
+
+            // Resignations pending
+            try {
+                $stmt = $db->query("SELECT COUNT(*) as c FROM exit_resignations WHERE status IN ('pending_review','pending_legal_review','pending')");
+                $counts['resignations'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+            } catch (Exception $e) {}
+
+            // Terminations pending
+            if ($this->model->tableExists('exit_terminations')) {
+                try {
+                    $stmt = $db->query("SELECT COUNT(*) as c FROM exit_terminations WHERE status IN ('pending_review','pending_legal_review','pending')");
+                    $counts['terminations'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+                } catch (Exception $e) {}
+            }
+
+            // Interviews scheduled
+            if ($this->model->tableExists('exit_interviews')) {
+                try {
+                    $stmt = $db->query("SELECT COUNT(DISTINCT id) as c FROM exit_interviews WHERE status IN ('scheduled','pending','in_progress')");
+                    $counts['interviews'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+                } catch (Exception $e) {}
+            }
+
+            // Knowledge transfer needed (use model helper if available)
+            try {
+                $kt = $this->model->getEmployeesNeedingKnowledgeTransfer();
+                $counts['knowledge_transfer'] = is_array($kt) ? count($kt) : 0;
+            } catch (Exception $e) {
+                $counts['knowledge_transfer'] = 0;
+            }
+
+            // Settlements pending
+            if ($this->model->tableExists('exit_employee_settlements')) {
+                try {
+                    $stmt = $db->query("SELECT COUNT(*) as c FROM exit_employee_settlements WHERE status IN ('requested','pending','requested')");
+                    $counts['settlements'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+                } catch (Exception $e) {}
+            }
+
+            // Documentation incomplete
+            if ($this->model->columnExists('exit_resignations', 'documentation_complete')) {
+                try {
+                    $stmt = $db->query("SELECT COUNT(*) as c FROM exit_resignations WHERE documentation_complete = 0");
+                    $counts['documentation'] = (int)($stmt->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
+                } catch (Exception $e) { $counts['documentation'] = 0; }
+            }
+
+            // Post-exit feedback pending
+            try {
+                $eligible = $this->model->getEligiblePostExitFeedbackCases();
+                $counts['post_exit_feedback'] = is_array($eligible) ? count($eligible) : 0;
+            } catch (Exception $e) { $counts['post_exit_feedback'] = 0; }
+
+            return $counts;
+        } catch (Exception $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Get dashboard statistics
      */
     public function getDashboardStats(): array
@@ -560,7 +699,7 @@ class ExitManagementController
             $activeTransfers = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
 
             // Count pending settlements
-            $stmt = $db->query("SELECT COUNT(*) as count FROM exit_employee_settlements WHERE status = 'pending_approval'");
+            $stmt = $db->query("SELECT COUNT(*) as count FROM exit_employee_settlements WHERE status = 'requested'");
             $pendingSettlements = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
 
             // Count total active employees (the managed workforce, not system login accounts)
@@ -688,7 +827,7 @@ class ExitManagementController
             $db = $this->model->getConnection();
                  $query = "SELECT r.*, 
                          CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                         COALESCE(d.department_name, e.department) AS department,
+                         COALESCE(d.department_name, '') AS department,
                          e.email AS employee_email,
                          CONCAT(p.first_name, ' ', p.last_name) AS preclearance_desk_person_name,
                          DATEDIFF(r.last_working_date, CURDATE()) AS days_left
@@ -708,7 +847,7 @@ class ExitManagementController
             try {
                   $query = "SELECT r.*, 
                              CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                             COALESCE(d.department_name, e.department) AS department,
+                             COALESCE(d.department_name, '') AS department,
                              e.email,
                              DATEDIFF(r.last_working_date, CURDATE()) AS days_left
                          FROM exit_resignations r
@@ -762,10 +901,20 @@ class ExitManagementController
             $recentResignations = $this->getRecentResignations($limit);
             $recent['recent_resignations'] = is_array($recentResignations) ? $recentResignations : [];
 
+            // Recent terminations
+            $terminations = [];
+            try {
+                $stmt = $db->query("SELECT t.id, t.employee_id, t.status, t.effective_date, t.created_at, CONCAT(e.first_name, ' ', e.last_name) AS full_name FROM exit_terminations t LEFT JOIN em_employees e ON t.employee_id = e.employee_id ORDER BY t.updated_at DESC LIMIT {$limit}");
+                $terminations = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+            } catch (Exception $e) {
+                $terminations = [];
+            }
+            $recent['recent_terminations'] = $terminations;
+
             // Recent interviews (scheduled or in_progress)
             $interviews = [];
             try {
-                $stmt = $db->query("SELECT ei.id AS interview_id, ei.employee_id, ei.scheduled_at, ei.status, CONCAT(e.first_name, ' ', e.last_name) AS full_name FROM exit_interviews ei LEFT JOIN em_employees e ON ei.employee_id = e.employee_id WHERE ei.status IN ('scheduled','in_progress') ORDER BY ei.scheduled_at DESC LIMIT {$limit}");
+                $stmt = $db->query("SELECT ei.id AS interview_id, ei.employee_id, COALESCE(ei.scheduled_date, ei.scheduled_at) AS scheduled_at, ei.status, CONCAT(e.first_name, ' ', e.last_name) AS full_name FROM exit_interviews ei LEFT JOIN em_employees e ON ei.employee_id = e.employee_id WHERE ei.status IN ('scheduled','in_progress') ORDER BY COALESCE(ei.scheduled_date, ei.scheduled_at) DESC LIMIT {$limit}");
                 $interviews = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
             } catch (Exception $e) {
                 $interviews = [];
@@ -871,7 +1020,7 @@ class ExitManagementController
             // Group exits by the employee's department to show which departments
             // have the most exit cases. Use LEFT JOIN in case employee record
             // is missing; fallback to 'Unknown'.
-            $query = "SELECT COALESCE(d.department_name, e.department, 'Unknown') AS department, COUNT(*) AS count
+            $query = "SELECT COALESCE(d.department_name, 'Unknown') AS department, COUNT(*) AS count
                       FROM exit_resignations r
                       LEFT JOIN em_employees e ON r.employee_id = e.employee_id
                       LEFT JOIN em_departments d ON e.department_id = d.department_id
@@ -914,7 +1063,7 @@ class ExitManagementController
                         pc.approved_at,
                         pc.comments,
                         CONCAT(e.first_name, ' ', e.last_name) AS full_name,
-                        s.settlement_date,
+                        COALESCE(s.settlement_date, s.requested_at, s.completed_at) AS settlement_date,
                         s.net_payable
                  FROM payroll_clearances pc
                  LEFT JOIN exit_employee_settlements s ON pc.settlement_id = s.id
@@ -987,12 +1136,12 @@ class ExitManagementController
             $statuses = [];
             $statusCounts = [];
             foreach ($statusResults as $row) {
-                $statuses[] = ucfirst($row['status']);
+                $statuses[] = isset($row['status']) ? ucwords(str_replace('_', ' ', $row['status'])) : '';
                 $statusCounts[] = (int)$row['count'];
             }
 
             // Department distribution (reuse department grouping)
-            $deptStmt = $db->query("SELECT COALESCE(d.department_name, e.department, 'Unknown') AS department, COUNT(*) AS count
+            $deptStmt = $db->query("SELECT COALESCE(d.department_name, 'Unknown') AS department, COUNT(*) AS count
                                       FROM exit_resignations r
                                       LEFT JOIN em_employees e ON r.employee_id = e.employee_id
                                       LEFT JOIN em_departments d ON e.department_id = d.department_id
@@ -1023,7 +1172,7 @@ class ExitManagementController
         try {
             $db = $this->model->getConnection();
             $stmt = $db->prepare(
-                "SELECT r.*, COALESCE(d.department_name, e.department, 'Unknown') AS department, CONCAT(e.first_name, ' ', e.last_name) AS full_name
+                "SELECT r.*, COALESCE(d.department_name, 'Unknown') AS department, CONCAT(e.first_name, ' ', e.last_name) AS full_name
                  FROM exit_resignations r
                  LEFT JOIN em_employees e ON r.employee_id = e.employee_id
                  LEFT JOIN em_departments d ON e.department_id = d.department_id
@@ -1081,7 +1230,7 @@ class ExitManagementController
             $statuses = [];
             $counts = [];
             foreach ($results as $row) {
-                $statuses[] = ucfirst($row['status']);
+                $statuses[] = isset($row['status']) ? ucwords(str_replace('_', ' ', $row['status'])) : '';
                 $counts[] = (int)$row['count'];
             }
 
@@ -1148,7 +1297,40 @@ class ExitManagementController
                     $page = (int)($data['page'] ?? 1);
                     $limit = (int)($data['limit'] ?? 10);
                     $search = $data['search'] ?? '';
-                    return $this->model->getExitCaseDocumentationList($status, $page, $limit, $search);
+
+                    $listResult = $this->model->getExitCaseDocumentationList($status, $page, $limit, $search);
+
+                    // Try to augment each case with documents_check (progress) when possible
+                    try {
+                        require_once __DIR__ . '/../models/DocumentationModel.php';
+                        $docModel = new DocumentationModel();
+                        if (!empty($listResult['data']) && is_array($listResult['data'])) {
+                            foreach ($listResult['data'] as &$caseRow) {
+                                try {
+                                    $empId = (int)($caseRow['employee_id'] ?? 0);
+                                    $caseType = $caseRow['exit_case_type'] ?? '';
+                                    $caseId = (int)($caseRow['exit_case_id'] ?? 0);
+                                    if (!empty($caseType) && $caseId > 0) {
+                                        // compute exit-case progress across canonical 5 steps
+                                        $caseRow['documents_check'] = $docModel->computeExitCaseProgress($caseType, $caseId, $empId);
+                                    } elseif ($empId > 0) {
+                                        // fallback to legacy per-employee doc check
+                                        $caseRow['documents_check'] = $docModel->checkRequiredDocuments($empId);
+                                    } else {
+                                        $caseRow['documents_check'] = null;
+                                    }
+                                } catch (Exception $e) {
+                                    $caseRow['documents_check'] = null;
+                                }
+                            }
+                            unset($caseRow);
+                        }
+                    } catch (Exception $e) {
+                        // Non-fatal: if DocumentationModel cannot be loaded, leave listResult untouched
+                        error_log('Failed to augment documentation list with documents_check: ' . $e->getMessage());
+                    }
+
+                    return $listResult;
 
                 case 'get_exit_case_documentation':
                     $exitCaseType = $data['exit_case_type'] ?? '';
@@ -1176,9 +1358,19 @@ class ExitManagementController
                     $docModel = new DocumentationModel();
                     $interviewModel = new ExitInterviewModel();
                     $transferModel = new KnowledgeTransferModel();
-                    $settlementModel = new SettlementModel();
 
                     $documents = $docModel->getDocumentsByExitCase($exitCaseType, $exitCaseId);
+
+                    // Compute required documents progress for this employee (if available)
+                    $documentsCheck = null;
+                    try {
+                        if (!empty($case['employee_id'])) {
+                            $documentsCheck = $docModel->checkRequiredDocuments((int)$case['employee_id']);
+                        }
+                    } catch (Exception $e) {
+                        error_log('checkRequiredDocuments failed: ' . $e->getMessage());
+                        $documentsCheck = null;
+                    }
 
                     // Detect whether this installation supports per-case document linking
                     $documentsSupported = $docModel->columnExists('exit_documents', 'exit_case_type') && $docModel->columnExists('exit_documents', 'exit_case_id');
@@ -1241,6 +1433,7 @@ class ExitManagementController
                         'data' => $case,
                         'documents_supported' => $documentsSupported,
                         'documents' => $documents,
+                        'documents_check' => $documentsCheck,
                         'exit_interview' => $exitInterview,
                         'knowledge_transfer' => $knowledgeTransfer,
                         'settlement' => $settlement
@@ -1254,6 +1447,9 @@ class ExitManagementController
                 case 'get_eligible_employees':
                     return $this->getEligibleEmployees();
 
+                case 'get_exit_case_employees':
+                    return $this->model->getEmployeesWithExitCases();
+
                 case 'get_employees_with_resignations':
                     return $this->model->getEmployeesWithResignations();
 
@@ -1263,7 +1459,10 @@ class ExitManagementController
                 case 'get_approved_exit_cases':
                     return $this->model->getApprovedExitCases();
                 case 'get_waiting_interview_cases':
-                    return $this->model->getApprovedCasesAwaitingInterview();
+                    // Banner should show recently auto-created interview records
+                    // (created by the system when an exit case is approved). Use
+                    // a 48-hour window by default.
+                    return $this->model->getRecentAutoCreatedInterviews(48);
                 case 'get_eligible_post_exit_cases':
                     return $this->model->getEligiblePostExitFeedbackCases();
                 case 'get_active_exit_cases':
@@ -1308,6 +1507,9 @@ class ExitManagementController
 
                 case 'get_action_items':
                     return $this->getActionItems();
+
+                case 'get_stage_pending_counts':
+                    return $this->getStagePendingCounts();
 
                 case 'debug_get_exit_joined':
                     return $this->getExitJoinedSample();

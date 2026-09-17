@@ -240,7 +240,7 @@ class ResignationController extends ExitManagementController
         $reason = htmlspecialchars($res['reason'] ?? '', ENT_QUOTES);
         $noticeDate = htmlspecialchars($res['notice_date'] ?? 'N/A', ENT_QUOTES);
         $lastWorking = htmlspecialchars($res['last_working_date'] ?? 'N/A', ENT_QUOTES);
-        $status = htmlspecialchars($res['status'] ?? 'N/A', ENT_QUOTES);
+        $status = htmlspecialchars(isset($res['status']) ? ucwords(str_replace('_', ' ', $res['status'])) : 'N/A', ENT_QUOTES);
 
         $header = '<div style="border-bottom:2px solid #1f5fbf;padding-bottom:12px;margin-bottom:18px;display:flex;align-items:center"><img src="/capstone_hr_management_system2/assets/pics/bcpLogo.png" style="width:80px;height:80px;margin-right:16px"><div><h2 style="margin:0;color:#174a8b">Resignation Record</h2><div style="font-size:12px;color:#333">Bestlink College of the Philippines - Bulacan Campus</div></div></div>';
 

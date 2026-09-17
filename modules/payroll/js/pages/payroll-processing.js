@@ -334,7 +334,7 @@ function initPayrollProcessing() {
       const haystack = (
         fullName(e) +
         " " +
-        (e.employee_num || "")
+        (e.employee_code || "")
       ).toLowerCase();
       return haystack.includes(term);
     });
@@ -492,7 +492,7 @@ function initPayrollProcessing() {
             <div class="pp-section">
                 <div class="pp-section-title"><i class="fa-solid fa-id-card"></i> Employee Information</div>
                 <div class="pp-info-grid">
-                    <div><span>Employee No.</span><strong>${esc(emp.employee_code || "—")}</strong></div>
+                                        <div><span>Position</span><strong>${esc(emp.position_name || "—")}</strong></div>
                     <div><span>Employment Type</span><strong>${esc(emp.employment_type || "—")}</strong></div>
                     <div><span>Qualification</span><strong>${esc(emp.graduate_level || "—")}</strong></div>
                     ${negotiatedSalaryHtml}

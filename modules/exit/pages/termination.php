@@ -55,6 +55,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div class="module-content">
         <div id="terminations-section" class="section">
+            <?php $alertId = 'termination-action-alert'; $alertIcon = 'fas fa-exclamation-triangle'; $alertMessage = 'Pending terminations need review'; $alertCount = 0; $alertViewAction = 'pending_review'; include __DIR__ . '/../includes/action-alert.php'; ?>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">
@@ -86,12 +87,6 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="terminationStatusAlertWrapper" style="margin-bottom: 16px; min-height: 120px; max-height: 220px; overflow-y: auto; border: 1px solid #f0d36d; background: #fffaf0; border-radius: 6px; padding: 8px; position: relative;">
-                        <div id="terminationStatusAlert" class="alert alert-warning" role="alert" style="display:none; margin: 0; font-weight: 600; border-left: 5px solid #d39e00; box-shadow: 0 2px 8px rgba(0,0,0,0.08); width: 100%; min-height: 72px; display: flex; align-items: center;">
-                            <i class="fas fa-exclamation-triangle"></i>Termination Alert: <span id="terminationStatusAlertCount" style="font-weight: 700; margin-left: 4px;"></span>
-                            <span id="terminationStatusAlertText">Termination status checks will appear here.</span>
-                        </div>
-                    </div>
                     <div class="table-responsive">
                         <table id="terminations-table" class="table table-bordered table-striped table-sm">
                             <colgroup>
@@ -147,6 +142,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                     <select class="form-control" id="terminationEmployeeSelect" name="employee_id" required>
                                         <option value="">Select Employee</option>
                                     </select>
+                                    <div id="terminationEmployeeDisplay" class="form-control-plaintext" style="display: none;"></div>
                                     <div id="terminationEligibilityMessage" class="mt-2" style="display: none;"></div>
                                 </div>
                             </div>

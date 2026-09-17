@@ -14,6 +14,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div class="module-content">
         <div id="transfers-section" class="section">
+            <?php $alertId = 'knowledge-transfer-action-alert'; $alertIcon = 'fas fa-exchange-alt'; $alertMessage = 'Knowledge transfer tasks still require action'; $alertCount = 0; $alertViewAction = 'active'; include __DIR__ . '/../includes/action-alert.php'; ?>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">
@@ -117,8 +118,8 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <div class="form-group">
                             <label>Knowledge Transfer Items</label>
                             <div id="transferItemsContainer">
-                                <div class="transfer-item mb-3 p-3 border rounded">
-                                    <div class="row">
+                                <div class="transfer-item mb-3 p-3">
+                                    <div class="row transfer-item-row g-2 align-items-start">
                                         <div class="col-md-3">
                                             <select class="form-control" name="items[0][type]" required>
                                                 <option value="">Select Type</option>
@@ -139,13 +140,13 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                                 <option value="high">High</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-1">
+                                        <div class="col-md-1 remove-item-wrapper">
                                             <button type="button" class="btn btn-danger btn-sm remove-item">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="row mt-2">
+                                    <div class="row mt-2 g-2">
                                         <div class="col-12 mb-2">
                                             <textarea class="form-control" name="items[0][description]" rows="2" placeholder="Description"></textarea>
                                         </div>
@@ -206,6 +207,84 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Transfer Plan Modal -->
+    <div class="modal fade exit-modal" id="archiveTransferPlanModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="archiveTransferPlanForm">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">Archive Transfer Plan</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="archiveTransferPlanId" name="plan_id">
+                        <div class="form-group">
+                            <label for="archiveTransferPlanEmployeeId">Employee ID</label>
+                            <input type="text" class="form-control" id="archiveTransferPlanEmployeeId" name="employee_id" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="archiveTransferPlanEmployeeName">Employee Name</label>
+                            <input type="text" class="form-control" id="archiveTransferPlanEmployeeName" name="employee_name" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="archiveTransferPlanReason">Archive Reason</label>
+                            <input type="text" class="form-control" id="archiveTransferPlanReason" name="reason" readonly>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label for="archiveTransferPlanNotes">Notes</label>
+                            <textarea class="form-control" id="archiveTransferPlanNotes" name="notes" rows="3" placeholder="Optional notes"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Archive Plan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Transfer Item Modal -->
+    <div class="modal fade exit-modal" id="archiveTransferItemModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <form id="archiveTransferItemForm">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">Archive Transfer Item</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="archiveTransferItemId" name="item_id">
+                        <div class="form-group">
+                            <label for="archiveTransferItemEmployeeId">Employee ID</label>
+                            <input type="text" class="form-control" id="archiveTransferItemEmployeeId" name="employee_id" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="archiveTransferItemEmployeeName">Employee Name</label>
+                            <input type="text" class="form-control" id="archiveTransferItemEmployeeName" name="employee_name" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="archiveTransferItemReason">Archive Reason</label>
+                            <input type="text" class="form-control" id="archiveTransferItemReason" name="reason" readonly>
+                        </div>
+                        <div class="form-group mb-0">
+                            <label for="archiveTransferItemNotes">Notes</label>
+                            <textarea class="form-control" id="archiveTransferItemNotes" name="notes" rows="3" placeholder="Optional notes"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Archive Item</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

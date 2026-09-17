@@ -16,6 +16,12 @@ $currentUserId = $policy->getCurrentUserEmployeeId();
 $action = isset($_GET['action']) ? trim((string) $_GET['action']) : '';
 $policyId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
+if ($action === 'delete' && $policyId > 0) {
+    $policy->deletePolicy($policyId);
+    header('Location: ?page=policy-management');
+    exit;
+}
+
 $stats = $policy->getDashboardStats();
 $filters = [
     'status' => isset($_GET['status']) ? trim((string) $_GET['status']) : '',
@@ -809,6 +815,7 @@ $filterAckStatus = $filters['ack_status'];
       <div class="policy-card">
         <div class="policy-card-head">
           <h3><i class="bi bi-folder2-open"></i> Policies</h3>
+          <a href="?page=policy-create" style="display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:6px 14px; border-radius:8px; border:1px solid var(--info-blue,#3b82c4); background:var(--info-blue,#3b82c4); color:#fff; font-weight:700; font-size:0.78rem; line-height:1.4; text-decoration:none; white-space:nowrap; transition:all 0.15s ease; box-shadow:0 1px 2px rgba(59,130,196,.25);"><i class="bi bi-plus-lg"></i> Create Policy</a>
         </div>
         <div class="policy-card-body">
           <?php if (empty($policies)): ?>
@@ -872,6 +879,7 @@ $filterAckStatus = $filters['ack_status'];
                       <div class="policy-actions-menu">
                         <a href="?page=policy-view&id=<?= (int) $p['id'] ?>"><i class="bi bi-eye"></i> View</a>
                         <a href="?page=acknowledgement-report&id=<?= (int) $p['id'] ?>"><i class="bi bi-bar-chart"></i> Report</a>
+                        <a href="?page=policy-management&action=delete&id=<?= (int) $p['id'] ?>" class="policy-action-danger" onclick="return confirm('Delete this policy? This cannot be undone.');"><i class="bi bi-trash"></i> Delete</a>
                       </div>
                     </div>
                   </td>

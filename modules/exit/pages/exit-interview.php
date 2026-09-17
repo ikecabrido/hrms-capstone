@@ -6,13 +6,12 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 <style>
     #interviewQueueAlertWrapper {
         margin-bottom: 16px;
-        min-height: 120px;
         max-height: 240px;
         overflow-y: auto;
         border: 1px solid #b9d9ff;
         background: #f4f9ff;
         border-radius: 6px;
-        padding: 10px;
+        padding: 8px 10px;
         position: relative;
         box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.08);
     }
@@ -23,9 +22,10 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
         gap: 6px;
         margin: 0;
         width: 100%;
-        min-height: 90px;
-        border-left: 5px solid #0d6efd;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        min-height: auto;
+        border-left: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        padding: 6px 8px;
     }
 
     .interview-ready-row {
@@ -35,8 +35,8 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
         padding: 9px 12px;
         margin: 4px 0;
         border-radius: 4px;
-        background: rgba(255,255,255,0.22);
-        border-left: 3px solid #0d6efd;
+        background: rgba(13,110,253,0.04);
+        border-left: none;
         line-height: 1.45;
     }
 </style>
@@ -51,6 +51,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div class="module-content">
         <div id="interviews-section" class="section">
+            <?php $alertId = 'interview-action-alert'; $alertIcon = 'fas fa-user-check'; $alertMessage = 'Approved cases are waiting for an exit interview'; $alertCount = 0; $alertViewAction = 'scheduled'; include __DIR__ . '/../includes/action-alert.php'; ?>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">
@@ -77,10 +78,10 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     </div>
                 </div>
                 <div class="card-body">
-                    <div id="interviewQueueAlertWrapper" style="margin-bottom: 16px; min-height: 120px; max-height: 240px; overflow-y: auto; border: 1px solid #b9d9ff; background: #f4f9ff; border-radius: 6px; padding: 10px; position: relative;">
-                        <div id="interviewQueueAlert" class="alert alert-info" role="alert" style="display:none; margin: 0; font-weight: 600; border-left: 5px solid #0d6efd; box-shadow: 0 2px 8px rgba(0,0,0,0.06); width: 100%; min-height: 90px; display: flex; align-items: center;">
-                            <div class="d-flex align-items-center gap-2 mb-1"><i class="fas fa-bell"></i><strong>Exit Interview Queue</strong></div>
-                            <div id="interviewQueueAlertText">No approved exit cases are waiting for a scheduled interview.</div>
+                    <div id="interviewQueueAlertWrapper" style="margin-bottom: 16px; max-height: 240px; overflow-y: auto; border: 1px solid #b9d9ff; background: #f4f9ff; border-radius: 6px; padding: 8px 10px; position: relative;">
+                        <div id="interviewQueueAlert" class="alert alert-info" role="status" style="display:none; margin: 0; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.04); width: 100%; min-height: auto; display: flex; align-items: center; padding: 6px 8px;">
+                            <div class="d-flex align-items-center gap-2 mb-1"><strong>Recently Auto-Created Interviews</strong> <span id="interviewQueueCount" class="badge badge-info ml-2" style="font-weight:600; display:none;">0</span></div>
+                            <div id="interviewQueueAlertText">No recently auto-created exit interviews.</div>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -98,6 +99,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             </tbody>
                         </table>
                     </div>
+                    <div id="interviews-pagination" class="mt-3 d-flex justify-content-between align-items-center"></div>
                 </div>
             </div>
         </div>
@@ -146,14 +148,39 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Interview Time *</label>
-                                    <div class="row">
-                                        <div class="col-4">
-                                            <input type="number" class="form-control" id="interviewHour" min="1" max="12" placeholder="HH">
-                                        </div>
-                                        <div class="col-4">
-                                            <input type="number" class="form-control" id="interviewMinute" min="0" max="59" step="5" placeholder="MM">
-                                        </div>
-                                        <div class="col-4">
+                                    <div class="interview-time-group">
+                                        <div class="interview-time-inline">
+                                            <select class="form-control" id="interviewHour" required>
+                                                <option value="">HH</option>
+                                                <option value="1">1</option>
+                                                <option value="2">2</option>
+                                                <option value="3">3</option>
+                                                <option value="4">4</option>
+                                                <option value="5">5</option>
+                                                <option value="6">6</option>
+                                                <option value="7">7</option>
+                                                <option value="8">8</option>
+                                                <option value="9">9</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                            </select>
+                                            <span class="interview-time-separator">:</span>
+                                            <select class="form-control" id="interviewMinute" required>
+                                                <option value="">MM</option>
+                                                <option value="00">00</option>
+                                                <option value="05">05</option>
+                                                <option value="10">10</option>
+                                                <option value="15">15</option>
+                                                <option value="20">20</option>
+                                                <option value="25">25</option>
+                                                <option value="30">30</option>
+                                                <option value="35">35</option>
+                                                <option value="40">40</option>
+                                                <option value="45">45</option>
+                                                <option value="50">50</option>
+                                                <option value="55">55</option>
+                                            </select>
                                             <select class="form-control" id="interviewMeridiem">
                                                 <option value="AM">AM</option>
                                                 <option value="PM">PM</option>
@@ -161,7 +188,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                         </div>
                                     </div>
                                     <input type="hidden" id="interviewTime" name="scheduled_time">
-                                    <small class="form-text text-muted">Enter the interview time in separate fields.</small>
+                                    <small class="form-text text-muted mt-2 d-block">Select the interview time in separate fields.</small>
                                 </div>
                             </div>
                         </div>
@@ -171,7 +198,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             <input type="text" class="form-control" id="interviewLocation" name="location" value="Virtual">
                         </div>
 
-                        <div class="form-group">
+                        <div class="form-group interview-notes-group">
                             <label for="interviewNotes">Notes</label>
                             <textarea class="form-control" id="interviewNotes" name="notes" rows="2"></textarea>
                         </div>

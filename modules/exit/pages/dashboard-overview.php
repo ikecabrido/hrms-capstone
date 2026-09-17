@@ -31,9 +31,12 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     </div>
                     <div class="dashboard-panel-body alert-panel-body">
                         <div id="upcoming-exit-activities-summary" class="alert-summary-row"></div>
-                        <ul id="upcoming-exit-activities-list" class="dashboard-list alert-list">
-                            <li class="empty-state">No alerts to review.</li>
-                        </ul>
+                        <div class="dashboard-scroll">
+                            <ul id="upcoming-exit-activities-list" class="dashboard-list alert-list">
+                                <li class="empty-state">No alerts to review.</li>
+                            </ul>
+                        </div>
+                        <a href="index.php?page=resignation" class="dashboard-view-all">View All</a>
                     </div>
                 </div>
 
@@ -73,9 +76,12 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     <span>Upcoming Exit Activities</span>
                 </div>
                 <div class="dashboard-panel-body alert-panel-body">
-                    <ul id="upcoming-exit-activities-bottom-list" class="dashboard-list alert-list">
-                        <li class="empty-state">No upcoming exit activities.</li>
-                    </ul>
+                    <div class="dashboard-scroll">
+                        <ul id="upcoming-exit-activities-bottom-list" class="dashboard-list alert-list">
+                            <li class="empty-state">No upcoming exit activities.</li>
+                        </ul>
+                    </div>
+                    <a href="index.php?page=exit-interview" class="dashboard-view-all">View All</a>
                 </div>
             </div>
 
@@ -83,9 +89,12 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                 <div class="dashboard-panel mini-panel">
                     <div class="dashboard-panel-header">Upcoming Last Working Dates</div>
                     <div class="dashboard-panel-body">
-                        <ul id="upcoming-exits-list" class="dashboard-list">
-                            <li class="empty-state">No upcoming exits found</li>
-                        </ul>
+                            <div class="dashboard-scroll">
+                                <ul id="upcoming-exits-list" class="dashboard-list">
+                                    <li class="empty-state">No upcoming exits found</li>
+                                </ul>
+                            </div>
+                            <a href="index.php?page=resignation" class="dashboard-view-all">View All</a>
                     </div>
                 </div>
 
@@ -95,9 +104,12 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <button type="button" class="panel-refresh-btn" onclick="loadActionRequiredList();">Refresh</button>
                     </div>
                     <div class="dashboard-panel-body">
-                        <div id="action-required-list" class="dashboard-action-list">
-                            <div class="empty-state">No actions required</div>
+                        <div class="dashboard-scroll">
+                            <div id="action-required-list" class="dashboard-action-list">
+                                <div class="empty-state">No actions required</div>
+                            </div>
                         </div>
+                        <a href="index.php?page=resignation" class="dashboard-view-all">View All</a>
                     </div>
                 </div>
             </div>
@@ -105,7 +117,8 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
             <div class="dashboard-panel full-panel">
                 <div class="dashboard-panel-header">Recent / Active Exit Cases</div>
                 <div class="dashboard-panel-body">
-                    <table class="dashboard-table">
+                    <div class="dashboard-scroll">
+                        <table class="dashboard-table">
                         <thead>
                             <tr>
                                 <th>Employee</th>
@@ -116,12 +129,14 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                 <th>View</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="recent-active-tbody">
                             <tr>
                                 <td colspan="6" class="empty-row">No recent cases</td>
                             </tr>
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
+                    <a href="index.php?page=resignation" class="dashboard-view-all">View All</a>
                 </div>
             </div>
         </div>
