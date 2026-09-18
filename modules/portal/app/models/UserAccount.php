@@ -73,32 +73,37 @@ class UserAccount
 
         return $this->conn->lastInsertId();
     }
-    public function getByUsername($username)
-    {
-        $sql = "SELECT * FROM {$this->table} 
-            WHERE username = :username 
+public function getByUsername($username)
+{
+    $sql = "SELECT *
+            FROM {$this->table}
+            WHERE username = :username
             LIMIT 1";
 
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([
-            ':username' => $username
-        ]);
+    $stmt = $this->conn->prepare($sql);
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-    public function getByEmail($email)
-    {
-        $sql = "SELECT * FROM {$this->table} 
-            WHERE email = :email 
+    $stmt->execute([
+        ':username' => $username
+    ]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+public function getByEmail($email)
+{
+    $sql = "SELECT *
+            FROM {$this->table}
+            WHERE email = :email
             LIMIT 1";
 
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([
-            ':email' => $email
-        ]);
+    $stmt = $this->conn->prepare($sql);
 
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
+    $stmt->execute([
+        ':email' => $email
+    ]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
     public function getAllAttendance()
     {
         $sql = "

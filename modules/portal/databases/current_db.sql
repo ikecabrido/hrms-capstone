@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 31, 2026 at 05:28 PM
+-- Generation Time: Sep 18, 2026 at 01:16 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -169,35 +169,13 @@ CREATE TABLE `em_employees` (
 --
 
 INSERT INTO `em_employees` (`employee_id`, `employee_code`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `email`, `mobile_no`, `phone_no`, `current_address`, `permanent_address`, `department_id`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
-(1, 'EMP-000001', 4, 'Ronaldo', 'G.', 'Raymundo', '', 'Male', '1995-01-02', NULL, 'Single', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 3, 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 13:47:35', '2026-08-25 15:33:06', 0, NULL, NULL),
-(2, 'EMP-000002', NULL, 'Juan', 'Dela', 'Cruz', NULL, 'Male', '1990-05-15', NULL, NULL, NULL, NULL, 'juan.delacruz@bcp.edu.ph', '09123456789', '021234567', '123 Main St, Manila', NULL, 3, 2, '2023-01-15', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 14:54:48', '2026-08-13 15:17:40', 0, NULL, NULL),
-(3, 'EMP-000003', NULL, 'Erwin', 'M.', 'De Guzman', NULL, NULL, '1995-09-18', NULL, NULL, NULL, NULL, 'erwindeguzman@gmail.com', '09123456789', '0987654321', '', NULL, 3, 6, '2026-08-11', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-11 19:09:33', '2026-08-13 15:17:40', 0, NULL, NULL),
+(1, 'EMP-000001', 4, 'Ronaldo', 'G.', 'Raymundo', '', 'Male', '1995-01-02', NULL, 'Married', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 3, 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 13:47:35', '2026-09-13 04:12:02', 0, NULL, NULL),
+(3, 'EMP-000003', 8, 'Erwin', 'M.', 'De Guzman', NULL, NULL, '1995-09-18', NULL, NULL, NULL, NULL, 'erwindeguzman@gmail.com', '09123456789', '0987654321', '', NULL, 3, 6, '2026-08-11', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-11 19:09:33', '2026-09-18 11:12:32', 0, NULL, NULL),
 (4, 'EMP-000004', NULL, 'Roberto', 'J', 'Albert', NULL, NULL, '1998-02-12', NULL, NULL, NULL, NULL, 'robert@gmail.com', '09123456789', '987654321', '', NULL, 3, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-13 11:01:36', '2026-08-13 15:17:40', 0, NULL, NULL),
 (5, 'EMP-000005', NULL, 'Althea', 'M.', 'Santos', NULL, NULL, '1999-09-19', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '09123456789', '987654321', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-13 11:04:21', '2026-08-13 15:17:40', 0, NULL, NULL),
 (6, 'EMP-000006', NULL, 'Bianca', 'G.', 'Reyes', NULL, NULL, '1995-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '987654321', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', NULL, '2026-08-13 11:05:33', '2026-08-13 15:17:40', 0, NULL, NULL),
 (7, 'EMP-000007', NULL, 'Chloe', 'M.', 'Cruz', NULL, NULL, '1995-02-12', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', '', NULL, 'None', '', '', '', NULL, '2026-08-13 11:06:40', '2026-08-13 15:17:40', 0, NULL, NULL),
 (8, 'EMP-000008', NULL, 'Diana', 'G.', 'Bautista', NULL, NULL, '1995-11-11', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '', '', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', '', NULL, 'None', '', '', '', NULL, '2026-08-13 11:07:39', '2026-08-13 15:17:40', 0, NULL, NULL),
-(9, 'EMP-000009', NULL, 'Elena', 'G.', 'Ocampo', NULL, NULL, '1995-06-16', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 2, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:08:37', '2026-08-13 15:17:40', 0, NULL, NULL),
-(10, 'EMP-000010', NULL, 'Fiona', 'G.', 'Ramos', NULL, NULL, '1996-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 2, NULL, '2026-08-13', NULL, 'Active', '', NULL, 'None', '', '', '', NULL, '2026-08-13 11:09:29', '2026-08-13 15:17:40', 0, NULL, NULL),
-(11, 'EMP-000011', NULL, 'Aaron', '', 'Mendoza', NULL, NULL, '1999-07-17', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 2, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:10:26', '2026-08-13 15:17:40', 0, NULL, NULL),
-(12, 'EMP-000012', NULL, 'Caleb', '', 'Santos', NULL, NULL, '1990-04-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 2, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:11:23', '2026-08-13 15:17:40', 0, NULL, NULL),
-(13, 'EMP-000013', NULL, 'David', '', 'Aquino', NULL, NULL, '0000-00-00', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '', '', '', NULL, 4, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:12:30', '2026-08-13 15:17:40', 0, NULL, NULL),
-(14, 'EMP-000014', NULL, 'Ethan', '', 'Garcia', NULL, NULL, '1999-12-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 4, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:13:14', '2026-08-13 15:17:40', 0, NULL, NULL),
-(15, 'EMP-000015', NULL, 'Felix', '', 'Del Rosario', NULL, NULL, '2001-12-15', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 4, NULL, '2026-08-13', NULL, 'Active', 'OJT/Training', NULL, 'None', '', '', '', NULL, '2026-08-13 11:14:12', '2026-08-13 15:17:40', 0, NULL, NULL),
-(16, 'EMP-000016', NULL, 'Gabriel', '', 'Gonzales', NULL, NULL, '1990-02-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 4, NULL, '2026-08-13', NULL, 'Active', 'Part-time', 1, 'None', '', '', '', NULL, '2026-08-13 11:15:10', '2026-08-13 15:17:40', 0, NULL, NULL),
-(17, 'EMP-000017', NULL, 'Hugo', '', 'Villanueva', NULL, NULL, '1999-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Part-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:16:41', '2026-08-13 15:17:40', 0, NULL, NULL),
-(18, 'EMP-000018', NULL, 'Ian', '', 'Fernandez', NULL, NULL, '1990-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:17:19', '2026-08-13 15:17:40', 0, NULL, NULL),
-(19, 'EMP-000019', NULL, 'Jacob', '', 'Lopez', NULL, NULL, '1999-12-15', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:18:06', '2026-08-13 15:17:40', 0, NULL, NULL),
-(20, 'EMP-000020', NULL, 'Ian', '', 'Perez', NULL, NULL, '1990-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 5, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:18:56', '2026-08-25 18:22:36', 0, NULL, NULL),
-(21, 'EMP-000021', NULL, 'Gia', '', 'Valdez', NULL, NULL, '1990-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 6, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:19:35', '2026-08-13 15:17:40', 0, NULL, NULL),
-(22, 'EMP-000022', NULL, 'Aaron', '', 'Valdez', NULL, NULL, '1996-12-15', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 6, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:20:21', '2026-08-13 15:17:40', 0, NULL, NULL),
-(23, 'EMP-000023', NULL, 'Aaron', '', 'Pascual', NULL, NULL, '1999-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 6, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:21:00', '2026-08-13 15:17:40', 0, NULL, NULL),
-(24, 'EMP-000024', NULL, 'Iris', '', 'Soriano', NULL, NULL, '1998-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 6, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:21:36', '2026-08-13 15:17:40', 0, NULL, NULL),
-(25, 'EMP-000025', NULL, 'Zenith', '', 'Tolentino', NULL, NULL, '1998-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 7, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:22:23', '2026-08-13 15:17:40', 0, NULL, NULL),
-(26, 'EMP-000026', NULL, 'Lumina', '', 'Tolentino', NULL, NULL, '1999-10-20', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 7, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:22:59', '2026-08-13 15:17:40', 0, NULL, NULL),
-(27, 'EMP-000027', NULL, 'Vibe', '', 'Mercado', NULL, NULL, '1999-08-08', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 7, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:23:32', '2026-08-13 15:17:40', 0, NULL, NULL),
-(28, 'EMP-000028', NULL, 'Diana', '', 'Mercado', NULL, NULL, '1990-09-19', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 7, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', NULL, '2026-08-13 11:24:04', '2026-08-13 15:17:40', 0, NULL, NULL),
-(29, 'EMP-000029', NULL, 'Jhon Carlo', NULL, 'Garcia', NULL, 'Male', '1995-01-15', NULL, 'Single', 'Filipino', NULL, 'jhon.garcia@bcp.edu.ph', '09170000001', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
 (30, 'EMP-000030', NULL, 'Russel', 'Gohetia', 'Cabrido', NULL, 'Male', '1995-02-20', NULL, 'Single', 'Filipino', NULL, 'russel.cabrido@bcp.edu.ph', '09170000002', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 32000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
 (31, 'EMP-000031', NULL, 'Jose Mari Rich', NULL, 'Malana', NULL, 'Male', '1995-03-10', NULL, 'Single', 'Filipino', NULL, 'jose.malana@bcp.edu.ph', '09170000003', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
 (32, 'EMP-000032', NULL, 'Russell', NULL, 'Placer', NULL, 'Male', '1995-04-15', NULL, 'Single', 'Filipino', NULL, 'russell.placer@bcp.edu.ph', '09170000004', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
@@ -308,7 +286,9 @@ INSERT INTO `ep_benefits_and_government_contribution` (`benefit_id`, `employee_i
 (8, 1, 'Pag-IBIG', '2026-02', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786692021_7130abb94c.pdf', 1, '2026-08-14 07:20:21', '2026-08-14 07:20:21'),
 (9, 2, 'Pag-IBIG', '2026-06', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits_1786954963_92bdd2e8.pdf', 3, '2026-08-17 08:03:22', '2026-08-17 08:22:43'),
 (10, 3, 'BIR Form 2316', '2026-07', 'sample', 'BPA-EMPLOYEE-PORTAL.pdf', 'assets/uploads/benefits/benefits1786953890_74e86d6cf9.pdf', 3, '2026-08-17 08:04:50', '2026-08-17 08:04:50'),
-(11, 1, 'Pag-IBIG', '2026-07', 'sample', 'warehousing.jpg', 'assets/uploads/benefits/benefits1787675086_f47a4dd5a2.jpg', 4, '2026-08-25 16:24:46', '2026-08-25 16:24:46');
+(11, 1, 'Pag-IBIG', '2026-07', 'sample', 'warehousing.jpg', 'assets/uploads/benefits/benefits1787675086_f47a4dd5a2.jpg', 4, '2026-08-25 16:24:46', '2026-08-25 16:24:46'),
+(12, 1, 'Withholding Tax', '2026-06', 'sample', 'database schema page 1_page-0001.jpg', 'assets/uploads/benefits/benefits1788494733_c5167f4179.jpg', 4, '2026-09-04 04:05:33', '2026-09-04 04:05:33'),
+(13, 1, 'PhilHealth', '2026-05', 'sample', 'sample philhealth image.jpg', 'assets/uploads/benefits/benefits1789623553_404b3dfe74.jpg', 4, '2026-09-17 05:39:13', '2026-09-17 05:39:13');
 
 -- --------------------------------------------------------
 
@@ -514,11 +494,12 @@ CREATE TABLE `ep_users` (
 --
 
 INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `role`, `is_active`, `theme`, `profile_image`, `created_at`, `password_reset_token`, `password_reset_expires`) VALUES
-(1, 'Employee 1', '$2y$10$O6XSlGEzC5GCae7BrLAhneWoLgqV3P1Pi3a0czwSdmZ.6.kR8F9va', 'monstreborvinsmoke025@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
-(2, 'Employee 2', '$2y$10$b2mhtPvVKZKi7yhVPL3S7uc4QU9V25ltIWQ9Qjp538la9gg7qIRn.', NULL, 0, 'employee', 1, 'light', NULL, '2026-03-24 18:06:12', NULL, NULL),
-(3, 'Admin Employee Portal', '$2y$10$h2fzXPO1/co0hCUn/wwOnuLB4I/26hMz3hGJIqbRmujA2R1UxHIvy', 'crobertjanssen@gmail.com', 1, 'super_admin', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
-(4, 'Employee 3', '$2y$10$g17RDcYiD9hI9K6Nj5KyMehcqlAaoh0qDeGpYUn9TJI1cpfkIfv32', 'sample@gmail.com', 0, 'employee', 1, 'light', 'profile_4_1787671041.png', '2026-01-28 07:21:13', NULL, NULL),
-(5, 'sample', '$2y$10$dHzUOq6RTrujLH/eo9w4dudWV6qZD41cAhVM22kde2bl8I5KlxZuK', 'camposrobertjanssent.pdm@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-08-16 13:35:55', NULL, NULL);
+(1, 'Employee 1', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'monstreborvinsmoke025@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
+(2, 'Employee 2', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', NULL, 0, 'employee', 1, 'light', NULL, '2026-03-24 18:06:12', NULL, NULL),
+(3, 'Admin Employee Portal', '$2y$10$h2fzXPO1/co0hCUn/wwOnuLB4I/26hMz3hGJIqbRmujA2R1UxHIvy', 'admin@gmail.com', 1, 'super_admin', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
+(4, 'Employee 3', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'sample@gmail.com', 0, 'employee', 1, 'light', 'profile_4_1787671041.png', '2026-01-28 07:21:13', NULL, NULL),
+(5, 'sample', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'camposrobertjanssent.pdm@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-08-16 13:35:55', NULL, NULL),
+(8, 'Erwin De Guzman', '$2y$10$5hvRMK1jG45pyKtTZgo6CuklVNAEuKgxW4zyywFGCURuORRr4vPYu', 'erwindeguzman@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-09-18 11:12:32', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1402,7 +1383,7 @@ ALTER TABLE `em_positions`
 -- AUTO_INCREMENT for table `ep_benefits_and_government_contribution`
 --
 ALTER TABLE `ep_benefits_and_government_contribution`
-  MODIFY `benefit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `benefit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `ep_notifications`
@@ -1438,7 +1419,7 @@ ALTER TABLE `ep_resignation_requests`
 -- AUTO_INCREMENT for table `ep_users`
 --
 ALTER TABLE `ep_users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `lc_complaints`

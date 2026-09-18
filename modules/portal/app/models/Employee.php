@@ -154,7 +154,7 @@ class Employee
     {
         $sql = "SELECT *
             FROM {$this->table}
-            WHERE id = :employee_id
+            WHERE employee_id = :employee_id
             LIMIT 1";
 
         $stmt = $this->conn->prepare($sql);
@@ -165,11 +165,13 @@ class Employee
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
     public function updateUserId($employeeId, $userId)
     {
         $sql = "UPDATE {$this->table}
             SET user_id = :user_id
-            WHERE id = :employee_id";
+            WHERE employee_id = :employee_id
+            AND user_id IS NULL";
 
         $stmt = $this->conn->prepare($sql);
 
