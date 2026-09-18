@@ -1,5 +1,5 @@
-<div class="modal fade" id="createAccountModal<?= (int) $employee['id'] ?>" tabindex="-1"
-    aria-labelledby="createAccountModalLabel<?= (int) $employee['id'] ?>" aria-hidden="true">
+<div class="modal fade" id="createAccountModal<?= (int) $employee['employee_id'] ?>" tabindex="-1"
+    aria-labelledby="createAccountModalLabel<?= (int) $employee['employee_id'] ?>" aria-hidden="true">
 
     <div class="modal-dialog modal-dialog-centered" style="max-width:460px;">
 
@@ -28,7 +28,7 @@
                         </div>
 
                         <div>
-                            <h5 class="modal-title mb-0" id="createAccountModalLabel<?= (int) $employee['id'] ?>" style="
+                            <h5 class="modal-title mb-0" id="createAccountModalLabel<?= (int) $employee['employee_id'] ?>" style="
                                     color:#0f172a;
                                     font-size:15px;
                                     font-weight:700;
@@ -128,7 +128,7 @@
                     </div>
 
 
-                    <input type="hidden" name="employee_id" value="<?= (int) $employee['id'] ?>">
+                    <input type="hidden" name="employee_id" value="<?= (int) $employee['employee_id'] ?>">
 
                     <input type="hidden" name="role" value="employee">
 
@@ -136,7 +136,7 @@
                     <!-- USERNAME -->
                     <div style="margin-bottom:14px;">
 
-                        <label for="username<?= (int) $employee['id'] ?>" style="
+                        <label for="username<?= (int) $employee['employee_id'] ?>" style="
                                 display:block;
                                 margin-bottom:5px;
                                 color:#334155;
@@ -159,7 +159,7 @@
                                 <i class="fa-solid fa-user" style="font-size:10px;"></i>
                             </span>
 
-                            <input type="text" id="username<?= (int) $employee['id'] ?>" name="username"
+                            <input type="text" id="username<?= (int) $employee['employee_id'] ?>" name="username"
                                 class="form-control" placeholder="Enter username" required autocomplete="off" style="
                                     height:38px;
                                     border-color:#e2e8f0;
@@ -176,7 +176,7 @@
                     <!-- EMAIL -->
                     <div style="margin-bottom:14px;">
 
-                        <label for="email<?= (int) $employee['id'] ?>" style="
+                        <label for="email<?= (int) $employee['employee_id'] ?>" style="
                                 display:block;
                                 margin-bottom:5px;
                                 color:#334155;
@@ -199,7 +199,7 @@
                                 <i class="fa-solid fa-envelope" style="font-size:10px;"></i>
                             </span>
 
-                            <input type="email" id="email<?= (int) $employee['id'] ?>" name="email" class="form-control"
+                            <input type="email" id="email<?= (int) $employee['employee_id'] ?>" name="email" class="form-control"
                                 placeholder="employee@example.com"
                                 value="<?= htmlspecialchars($employee['email'] ?? '') ?>" required style="
                                     height:38px;
@@ -215,7 +215,7 @@
 
 <div style="margin-bottom:14px;">
 
-    <label for="password<?= (int) $employee['id'] ?>" style="
+    <label for="password<?= (int) $employee['employee_id'] ?>" style="
         display:block;
         margin-bottom:5px;
         color:#334155;
@@ -240,7 +240,7 @@
 
         <input
             type="password"
-            id="password<?= (int) $employee['id'] ?>"
+            id="password<?= (int) $employee['employee_id'] ?>"
             name="password"
             class="form-control"
             placeholder="Minimum 8 characters"
@@ -259,7 +259,7 @@
         <button
             type="button"
             class="password-toggle-btn"
-            data-password-target="password<?= (int) $employee['id'] ?>"
+            data-password-target="password<?= (int) $employee['employee_id'] ?>"
             aria-label="Show password"
             title="Show password"
             style="
@@ -286,7 +286,7 @@
 <!-- CONFIRM PASSWORD -->
 <div style="margin-bottom:16px;">
 
-    <label for="password_confirmation<?= (int) $employee['id'] ?>" style="
+    <label for="password_confirmation<?= (int) $employee['employee_id'] ?>" style="
         display:block;
         margin-bottom:5px;
         color:#334155;
@@ -311,7 +311,7 @@
 
         <input
             type="password"
-            id="password_confirmation<?= (int) $employee['id'] ?>"
+            id="password_confirmation<?= (int) $employee['employee_id'] ?>"
             name="password_confirmation"
             class="form-control"
             placeholder="Re-enter password"
@@ -330,7 +330,7 @@
         <button
             type="button"
             class="password-toggle-btn"
-            data-password-target="password_confirmation<?= (int) $employee['id'] ?>"
+            data-password-target="password_confirmation<?= (int) $employee['employee_id'] ?>"
             aria-label="Show password"
             title="Show password"
             style="
