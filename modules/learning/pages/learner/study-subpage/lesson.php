@@ -58,6 +58,7 @@ try {
         }
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study-subpage/lesson');
     $lesson = null;
 }
 

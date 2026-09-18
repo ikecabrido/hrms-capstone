@@ -239,9 +239,8 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
     </div>
 
     <div class="tab-content" data-tab="tab-template">
-        <div style="padding:0 0 1rem; display:flex; justify-content:space-between; align-items:center;">
+        <div style="padding:0 0 1rem;">
             <p style="margin:0; color:var(--muted); font-size:0.9rem;">Reuse course structures. Save from the Structure Builder.</p>
-            <a href="?page=instructor/elearning-subpage/course-structure" class="catalog-request-btn"><i class="fas fa-layer-group"></i> Open Builder</a>
         </div>
         <div class="catalog-grid" id="templates-grid">
             <div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--muted);">Loading templates...</div>
@@ -337,7 +336,7 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
             'tab-lesson':{label:'Add Lesson',url:'?page=instructor/elearning-subpage/lesson'},
             'tab-quiz':{label:'Add Quiz',url:'?page=instructor/elearning-subpage/quiz'},
             'tab-evaluation':{label:'Add Evaluation',url:'?page=instructor/elearning-subpage/evaluation'},
-            'tab-template':null
+            'tab-template':{label:'Add Template',url:'?page=instructor/elearning-subpage/course-structure'}
         };
         function syncAddBtn(){
             if(!addWrap)return;
@@ -384,7 +383,7 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
         });
         if(paginationEl){paginationEl.addEventListener('click',function(e){var b=e.target.closest('[data-action]');if(!b||b.disabled)return;if(b.dataset.action==='prev'&&currentPage>1)currentPage--;if(b.dataset.action==='next')currentPage++;updateGrid();});}
         var pageSizeSelect=document.getElementById('catalog-page-size');
-        if(pageSizeSelect){pageSizeSelect.addEventListener('change',function(){PAGE_SIZE=parseInt(this.value,10)||12;currentPage=1;updateGrid();});}
+        if(pageSizeSelect){var ldps=parseInt(window.LD_DEFAULT_PAGE_SIZE,10)||12;pageSizeSelect.value=String(ldps);PAGE_SIZE=ldps;pageSizeSelect.addEventListener('change',function(){PAGE_SIZE=parseInt(this.value,10)||12;currentPage=1;updateGrid();});}
         updateGrid();
         syncAddBtn();
     })();
@@ -392,7 +391,7 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
 </div>
 
 <!-- Entity Detail Content -->
-<div id="entity-content" style="display:none;">
+<div id="entity-content" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10000; align-items:center; justify-content:center;">
     <div id="entity-content-panel" class="entity-content-box" data-size="standard">
         <div class="entity-content-header">
             <h2 id="modal-title"></h2>

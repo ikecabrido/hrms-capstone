@@ -11,6 +11,7 @@ try {
     $stmt = $pdo->query("SELECT id, title FROM ld_course WHERE status != 'archived' ORDER BY title ASC");
     $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/manage-learners');
     $courses = [];
 }
 ?>

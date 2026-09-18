@@ -1,6 +1,7 @@
 <?php
 include_once dirname(__DIR__, 3) . '/classes/Employee.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
+require_once dirname(__DIR__, 3) . '/classes/dberror.php';
 
 header('Content-Type: application/json');
 
@@ -56,5 +57,5 @@ try {
 
     echo json_encode(['success' => true, 'structure' => $structure]);
 } catch (Throwable $e) {
-    echo json_encode(['success' => false, 'error' => 'Server error']);
+    DbError::json($e, 'learner/get-course-structure');
 }

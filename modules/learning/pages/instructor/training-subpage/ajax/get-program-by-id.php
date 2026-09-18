@@ -25,12 +25,6 @@ try {
         exit;
     }
 
-    // Get real counts from database
-    $enrollmentCount = (int) $pdo->query("SELECT COUNT(*) FROM ld_enrollment WHERE program_id = {$id}")->fetchColumn();
-    $completedCount = (int) $pdo->query("SELECT COUNT(*) FROM ld_enrollment WHERE program_id = {$id} AND status = 'completed'")->fetchColumn();
-    $programData['enrollment_count'] = $enrollmentCount;
-    $programData['completion_count'] = $completedCount;
-
     http_response_code(200);
     echo json_encode([
         'success' => true,

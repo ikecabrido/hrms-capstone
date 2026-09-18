@@ -4,9 +4,10 @@
     // Use global showToast from header.php
     var showToast = window.showToast || function(m,t) { console.log('[' + t + '] ' + m); };
 
-    var PAGE_SIZE = 12;
+    var PAGE_SIZE = parseInt(window.LD_DEFAULT_PAGE_SIZE, 10) || 12;
     var currentPage = 1;
     var currentTab = 'all';
+    var currentSort = 'default';
     var searchQuery = '';
     var viewMode = 'grid';
     var allRecommendations = [];
@@ -19,11 +20,43 @@
     var allCards = Array.from(grid.querySelectorAll('.catalog-card'));
 
     function getFilteredCards() {
-        return allCards.filter(function(card) {
-            var typeMatch = currentTab === 'all' || card.dataset.type === currentTab;
+        var filtered = allCards.filter(function(card) {
+            var typeMatch;
+            if (currentTab === 'all') {
+                typeMatch = true;
+            } else if (currentTab === 'enrolled') {
+                typeMatch = card.dataset.enrolled === 'true';
+            } else {
+                typeMatch = card.dataset.type === currentTab;
+            }
             var searchMatch = !searchQuery || (card.dataset.title + ' ' + card.dataset.desc + ' ' + card.dataset.category).toLowerCase().indexOf(searchQuery) !== -1;
             return typeMatch && searchMatch;
         });
+
+        // Sort
+        if (currentSort === 'name-asc' || currentSort === 'name-desc') {
+            filtered.sort(function(a, b) {
+                var nameA = (a.dataset.title || '').toLowerCase();
+                var nameB = (b.dataset.title || '').toLowerCase();
+                var cmp = nameA < nameB ? -1 : nameA > nameB ? 1 : 0;
+                return currentSort === 'name-desc' ? -cmp : cmp;
+            });
+        } else if (currentSort === 'newest') {
+            filtered.sort(function(a, b) {
+                // Use data-id as a proxy for creation order (higher = newer)
+                return (parseInt(b.dataset.id) || 0) - (parseInt(a.dataset.id) || 0);
+            });
+        } else {
+            // Default: push enrolled items to the bottom
+            var notEnrolled = [];
+            var enrolled = [];
+            filtered.forEach(function(card) {
+                if (card.dataset.enrolled === 'true') enrolled.push(card);
+                else notEnrolled.push(card);
+            });
+            filtered = notEnrolled.concat(enrolled);
+        }
+        return filtered;
     }
 
     function renderCards() {
@@ -34,8 +67,13 @@
         var start = (currentPage - 1) * PAGE_SIZE;
         var end = start + PAGE_SIZE;
 
+        // Reorder DOM: hide all, then append visible ones in the correct order
         allCards.forEach(function(c) { c.style.display = 'none'; });
-        filtered.slice(start, end).forEach(function(c) { c.style.display = ''; });
+        var visible = filtered.slice(start, end);
+        visible.forEach(function(c) {
+            c.style.display = '';
+            grid.appendChild(c);
+        });
 
         emptyState.style.display = total === 0 ? 'block' : 'none';
         countEl.textContent = total + ' item' + (total !== 1 ? 's' : '');
@@ -147,6 +185,16 @@
         });
     });
 
+    // ---- Sort dropdown ----
+    var sortSelect = document.getElementById('catalog-sort-select');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            currentSort = sortSelect.value;
+            currentPage = 1;
+            renderCards();
+        });
+    }
+
     // ---- Pagination ----
     document.querySelectorAll('.page-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -172,7 +220,7 @@
     var emPerformanceContent = document.getElementById('cem-performance-content');
     var emEnrollBtn = document.getElementById('cem-enroll-btn');
     var emState = { type: '', id: 0, link: '', enrolled: false, activeTab: 'overview', data: {} };
-    var typeLabels = { course: 'Course', program: 'Program', 'learning-path': 'Learning Path', 'video-conference': 'Live Session', module: 'Module', lesson: 'Lesson', quiz: 'Quiz' };
+    var typeLabels = { course: 'Course', program: 'Program', 'learning-path': 'Learning Path', 'video-conference': 'Online Training', module: 'Module', lesson: 'Lesson', quiz: 'Quiz' };
 
     function syncEmTabs() {
         document.querySelectorAll('.entity-content-tab').forEach(function(btn) {
@@ -230,7 +278,7 @@
                 var d = new Date(scheduled.replace(' ', 'T'));
                 scheduledDate = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
             }
-            overviewHtml += '<div><label style="color:var(--color1); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Type</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--color2);"><i class="fas fa-video" style="color:#ef4444; margin-right:0.4rem;"></i>Video Conference</p></div>';
+            overviewHtml += '<div><label style="color:var(--color1); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Type</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--color2);"><i class="fas fa-video" style="color:#ef4444; margin-right:0.4rem;"></i>Online Training</p></div>';
             overviewHtml += '<div><label style="color:var(--color1); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Platform</label><p style="margin:0.55rem 0 0; font-size:1rem;"><span style="padding:0.2rem 0.6rem; border-radius:999px; background:' + pColor + '; color:#fff; font-weight:600; font-size:0.85rem;">' + platformLabel + '</span></p></div>';
             if (scheduledDate) overviewHtml += '<div><label style="color:var(--color1); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Scheduled</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--color2);">' + scheduledDate + '</p></div>';
             if (duration) overviewHtml += '<div><label style="color:var(--color1); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Duration</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--color2);">' + duration + ' minutes</p></div>';

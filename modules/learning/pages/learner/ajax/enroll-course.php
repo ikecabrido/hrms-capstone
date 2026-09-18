@@ -7,8 +7,12 @@ if (!isset($_SESSION['employee_id'])) {
     die(json_encode(['error' => 'Unauthorized']));
 }
 
-include_once dirname(__DIR__, 3) . '/classes/enrollment.php';
+require_once dirname(__DIR__, 3) . '/classes/enrollment.php';
+require_once dirname(__DIR__, 3) . '/classes/csrf.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
+
+// CSRF validation for state-changing request
+CSRF::requireValid();
 
 try {
     $data = json_decode(file_get_contents('php://input'), true);

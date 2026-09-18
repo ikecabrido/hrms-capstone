@@ -25,9 +25,19 @@ try {
         exit;
     }
 
-    // Get real counts from database
-    $quizCount = (int) $pdo->query("SELECT COUNT(*) FROM ld_quiz WHERE lesson_id = {$id}")->fetchColumn();
-    $lessonData['quiz_count'] = $quizCount;
+    // Include the parent module name for display (the parent module selector)
+    if (!empty($lessonData['module_id'])) {
+        $modStmt = $pdo->prepare('SELECT title FROM ld_module WHERE id = :mid LIMIT 1');
+        $modStmt->execute([':mid' => (int) $lessonData['module_id']]);
+        $modTitle = $modStmt->fetchColumn();
+        $lessonData['module_name'] = $modTitle ?: '';
+    } else {
+        $lessonData['module_name'] = '';
+    }
+
+    // ld_quiz stores quizzes at module level (no lesson_id column), so there is
+    // no reliable per-lesson quiz count available here.
+    $lessonData['quiz_count'] = 0;
 
     http_response_code(200);
     echo json_encode([

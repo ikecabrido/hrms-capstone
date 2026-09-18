@@ -34,5 +34,16 @@
         </div>
     </div>
     <script src="login.js"></script>
+    <script>
+    (function () {
+        document.addEventListener('keydown', function (e) {
+            // Left Shift + T → redirect to L&D login page
+            if (e.key === 'T' && e.code === 'KeyT') {
+                e.preventDefault();
+                window.location.href = 'modules/learning/login.php';
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

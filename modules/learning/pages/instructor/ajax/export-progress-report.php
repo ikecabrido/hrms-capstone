@@ -42,7 +42,7 @@ try {
         header('Content-Disposition: attachment; filename="progress-report-' . date('Y-m-d') . '.csv"');
 
         $output = fopen('php://output', 'w');
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF'));
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
         fputcsv($output, ['First Name', 'Last Name', 'Email', 'Course', 'Status', 'Score', 'Enrolled', 'Completed']);
 
         foreach ($rows as $row) {

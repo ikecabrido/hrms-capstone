@@ -94,6 +94,7 @@ try {
         }
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study-subpage/quiz-review');
     $session = null;
 }
 

@@ -24,9 +24,6 @@ try {
         echo json_encode(['error' => 'Video conference not found']);
         exit;
     }
-    // Get real attendance count
-    $attendanceCount = (int) $pdo->query("SELECT COUNT(DISTINCT learner_id) FROM ld_grade WHERE video_conference_id = {$id}")->fetchColumn();
-    $videoConferenceData['attendance_count'] = $attendanceCount;
     http_response_code(200);
     echo json_encode([
         'success' => true,

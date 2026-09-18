@@ -42,11 +42,12 @@ try {
         $attendance = $checkStmt->fetch(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/catalog-subpage/video-conference');
     $conference = null;
 }
 
 if (!$conference) {
-    echo '<div class="module-content"><div class="mode-card"><h2>Session Not Found</h2><p>The video conference you are looking for does not exist or is no longer scheduled.</p>';
+    echo '<div class="module-content"><div class="mode-card"><h2>Training Session Not Found</h2><p>The video conference you are looking for does not exist or is no longer scheduled.</p>';
     echo '</div></div>';
     return;
 }
@@ -64,9 +65,7 @@ $platformColor = match($conference['platform']) {
 
 <div class="module-content">
     <div style="margin-bottom:1.5rem;">
-        <a href="?page=learner/catalog" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; border:1px solid rgba(32,0,130,0.15); border-radius:8px; background:var(--surface, #fff); color:var(--text); font-size:0.85rem; font-weight:600; text-decoration:none; transition:all 0.2s;">
-            <i class="fas fa-arrow-left"></i> Back to Catalog
-        </a>
+        <?= BackLink::anchor('learner/catalog', 'style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; border:1px solid rgba(32,0,130,0.15); border-radius:8px; background:var(--surface, #fff); color:var(--text); font-size:0.85rem; font-weight:600; text-decoration:none; transition:all 0.2s;"') ?>
     </div>
 
     <!-- Video Conference Header -->
@@ -77,7 +76,7 @@ $platformColor = match($conference['platform']) {
             </div>
             <div style="flex:1; min-width:300px;">
                 <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem; flex-wrap:wrap;">
-                    <span class="pill" style="background:linear-gradient(135deg, rgba(185,28,28,0.85), rgba(239,68,68,0.7)); color:#fff;">Video Conference</span>
+                    <span class="pill" style="background:linear-gradient(135deg, rgba(185,28,28,0.85), rgba(239,68,68,0.7)); color:#fff;">Online Training</span>
                     <span class="pill" style="background:<?= $platformColor ?>; color:#fff;"><?= htmlspecialchars($platformDisplay) ?></span>
                     <?php if ($isPast): ?>
                         <span class="pill" style="background:#6c757d; color:#fff;">Past Session</span>
@@ -148,7 +147,7 @@ $platformColor = match($conference['platform']) {
                             </div>
                             <div>
                                 <div style="font-weight:700; color:#6c757d; font-size:0.95rem;">Session Ended</div>
-                                <div style="font-size:0.82rem; color:#9ca3af;">This live session has already concluded.</div>
+                                <div style="font-size:0.82rem; color:#9ca3af;">This online training session has already concluded.</div>
                             </div>
                         </div>
                     <?php elseif ($conference['meeting_link']): ?>

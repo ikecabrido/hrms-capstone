@@ -57,6 +57,7 @@ class Course
         $title = trim((string) ($input['title'] ?? ''));
         $category = $input['category'] ?? null;
         $status = trim((string) ($input['status'] ?? 'draft'));
+        $deliveryMode = trim((string) ($input['delivery_mode'] ?? 'online'));
         $description = $input['description'] ?? null;
         $startDate = $input['start_date'] ?? null;
         $enrollmentDeadline = $input['enrollment_deadline'] ?? null;
@@ -73,11 +74,16 @@ class Course
             $status = 'draft';
         }
 
-        $stmt = $this->conn->prepare('UPDATE ld_course SET title = ?, category = ?, status = ?, description = ?, start_date = ?, enrollment_deadline = ?, updated_at = NOW() WHERE id = ?');
+        if (!in_array($deliveryMode, ['online', 'face_to_face', 'hybrid'], true)) {
+            $deliveryMode = 'online';
+        }
+
+        $stmt = $this->conn->prepare('UPDATE ld_course SET title = ?, category = ?, status = ?, delivery_mode = ?, description = ?, start_date = ?, enrollment_deadline = ?, updated_at = NOW() WHERE id = ?');
         $stmt->execute([
             $title,
             $category,
             $status,
+            $deliveryMode,
             $description,
             $startDate,
             $enrollmentDeadline,
@@ -126,6 +132,7 @@ class Course
         $category = trim((string) ($input['category'] ?? ''));
         $thumbnailPath = trim((string) ($input['thumbnail_path'] ?? ''));
         $status = trim((string) ($input['status'] ?? 'draft'));
+        $deliveryMode = trim((string) ($input['delivery_mode'] ?? 'online'));
         $startDate = trim((string) ($input['start_date'] ?? ''));
         $enrollmentDeadline = trim((string) ($input['enrollment_deadline'] ?? ''));
 
@@ -142,6 +149,10 @@ class Course
 
         if (!in_array($status, ['draft', 'active', 'archived'], true)) {
             $status = 'draft';
+        }
+
+        if (!in_array($deliveryMode, ['online', 'face_to_face', 'hybrid'], true)) {
+            $deliveryMode = 'online';
         }
 
         if (!empty($files['thumbnail']['name']) && is_uploaded_file($files['thumbnail']['tmp_name'])) {
@@ -167,6 +178,7 @@ class Course
                     thumbnail_path,
                     category,
                     status,
+                    delivery_mode,
                     start_date,
                     enrollment_deadline
                 ) VALUES (
@@ -176,6 +188,7 @@ class Course
                     :thumbnail_path,
                     :category,
                     :status,
+                    :delivery_mode,
                     :start_date,
                     :enrollment_deadline
                 )';
@@ -188,6 +201,7 @@ class Course
             ':thumbnail_path' => $thumbnailPath !== '' ? $thumbnailPath : null,
             ':category' => $category !== '' ? $category : null,
             ':status' => $status,
+            ':delivery_mode' => $deliveryMode,
             ':start_date' => $startDate !== '' ? $startDate : null,
             ':enrollment_deadline' => $enrollmentDeadline !== '' ? $enrollmentDeadline : null,
         ]);
@@ -269,7 +283,7 @@ class Course
 
             $lessonStmt = $this->conn->prepare('SELECT * FROM ld_lesson WHERE module_id = :mid ORDER BY order_index');
             $quizStmt = $this->conn->prepare('SELECT * FROM ld_quiz WHERE module_id = :mid');
-            $questionStmt = $this->conn->prepare('SELECT * FROM ld_quiz_question WHERE quiz_id = :qid ORDER BY id');
+            $questionStmt = $this->conn->prepare("SELECT * FROM ld_quiz_question WHERE item_type = 'quiz' AND reference_id = :qid ORDER BY order_index ASC, id ASC");
             $optionStmt = $this->conn->prepare('SELECT * FROM ld_quiz_question_option WHERE question_id = :qid');
 
             $insMod = $this->conn->prepare(
@@ -285,8 +299,8 @@ class Course
                 . ' VALUES (:mid, :title, :dur, :pass, :max, :show, :status)'
             );
             $insQuestion = $this->conn->prepare(
-                'INSERT INTO ld_quiz_question (quiz_id, question_text, question_type, order_index)'
-                . ' VALUES (:qid, :text, :type, :oi)'
+                "INSERT INTO ld_quiz_question (item_type, reference_id, question_text, question_type, order_index, status)"
+                . " VALUES ('quiz', :rid, :text, :type, :oi, :status)"
             );
             $insOption = $this->conn->prepare(
                 'INSERT INTO ld_quiz_question_option (question_id, option_text, is_correct, order_index)'
@@ -334,10 +348,11 @@ class Course
                     $questionStmt->execute([':qid' => $quiz['id']]);
                     foreach ($questionStmt->fetchAll() as $q) {
                         $insQuestion->execute([
-                            ':qid'  => $newQuizId,
-                            ':text' => $q['question_text'],
-                            ':type' => $q['question_type'] ?? 'multiple_choice',
-                            ':oi'   => $q['order_index'] ?? 0,
+                            ':rid'    => $newQuizId,
+                            ':text'   => $q['question_text'],
+                            ':type'   => $q['question_type'] ?? 'multiple_choice',
+                            ':oi'     => $q['order_index'] ?? 0,
+                            ':status' => 'draft',
                         ]);
                         $newQid = (int) $this->conn->lastInsertId();
 

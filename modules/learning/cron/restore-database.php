@@ -5,7 +5,7 @@
  *
  * ⚠️  CLI-ONLY — This script deliberately refuses to run from a web browser.
  *     A live database restore is destructive if triggered by accident.
- *     Run manually: php C:/xampp/htdocs/itsar/modules/learning/cron/restore-database.php <backup-file>
+ *     Run manually: php <app root>/modules/learning/cron/restore-database.php <backup-file>
  *
  * Usage:
  *   php restore-database.php                        # Lists available backups

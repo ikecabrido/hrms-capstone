@@ -39,14 +39,14 @@ try {
             q.title AS quiz_title,
             qa.score,
             qa.passed,
-            qa.submitted_at,
+            qa.attempted_at,
             m.title AS module_title
         FROM ld_quiz_attempt qa
         JOIN ld_quiz q ON q.id = qa.quiz_id
         JOIN ld_module m ON m.id = q.module_id
         JOIN ld_course c ON c.id = m.course_id
         $where
-        ORDER BY qa.submitted_at DESC
+        ORDER BY qa.attempted_at DESC
     ");
     $stmt->execute($params);
     $quizScores = $stmt->fetchAll();

@@ -38,7 +38,7 @@
                         require_once dirname(__DIR__, 5) . '/database/db.php';
                         $pdo = (new Database())->getConnection();
                         $allSkills = $pdo->query('SELECT id, name FROM ld_skill WHERE status = "active" ORDER BY name')->fetchAll(PDO::FETCH_ASSOC);
-                    } catch (Throwable $e) { $allSkills = []; }
+                    } catch (Throwable $e) { DbError::capture($e, 'instructor/training-subpage/program'); $allSkills = []; }
                     foreach ($allSkills as $sk):
                     ?>
                     <label style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.3rem 0.6rem; border:1px solid rgba(32,0,130,0.15); border-radius:999px; cursor:pointer; font-size:0.78rem; font-weight:600; background:rgba(32,0,130,0.04); color:var(--text);">
@@ -58,67 +58,12 @@
 </div>
 
 <script>
-(function () {
-    const form = document.getElementById('add-program-form');
-    if (!form) return;
-
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton ? submitButton.textContent : '';
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = 'Saving...';
-        }
-
-        const formData = new FormData(form);
-
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(async function (response) {
-            const data = await response.json().catch(function () {
-                return { success: false, message: 'Request failed.' };
-            });
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Unable to create program.');
-            }
-
-            // Show notification instead of alert
-            const notification = document.createElement('div');
-            notification.textContent = 'Saved successfully: ' + (data.message || 'Program created successfully.');
-            notification.style.cssText = 'position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:8px;background:#10b981;color:#fff;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 4000);
-            form.reset();
-        })
-        .catch(function (error) {
-            // Show notification instead of alert
-            const notification = document.createElement('div');
-            notification.textContent = 'Save failed: ' + (error.message || 'Unable to create program.');
-            notification.style.cssText = 'position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:8px;background:#ef4444;color:#fff;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 4000);
-        })
-        .finally(function () {
-            if (submitButton) {
-                submitButton.disabled = false;
-                submitButton.textContent = originalText;
-            }
-        });
-    });
-})();
-</script>
-<script>
 (function() {
     const params = new URLSearchParams(window.location.search);
     const programId = params.get('id');
     
     if (programId) {
-        fetch('/itsar/modules/learning/pages/instructor/training-subpage/ajax/get-program-by-id.php?id=' + programId, {
+        fetch('pages/instructor/training-subpage/ajax/get-program-by-id.php?id=' + programId, {
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
@@ -148,60 +93,85 @@
         .catch(e => console.error('Error loading program:', e));
     }
 
-    // Handle form submission for both add and edit
+    // Single submit handler for both add and edit
     const addProgramForm = document.getElementById('add-program-form');
     if (addProgramForm) {
         addProgramForm.addEventListener('submit', function(e) {
-            if (this.action.includes('edit-program')) {
-                e.preventDefault();
-                
-                const programId = this.querySelector('input[name="id"]')?.value;
-                if (!programId) {
-                    alert('Program ID is missing');
-                    return;
-                }
+            e.preventDefault();
+            
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton ? submitButton.textContent : '';
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Saving...';
+            }
 
-                const formData = new FormData(this);
-                const data = {
-                    id: parseInt(programId),
-                    title: formData.get('title'),
-                    status: formData.get('status'),
-                    description: formData.get('description')
-                };
+            const isEdit = this.action.includes('edit-program');
+            const programId = this.querySelector('input[name="id"]')?.value;
 
-                fetch(this.action, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                    body: JSON.stringify(data)
-                })
-                .then(r => r.json())
-                .then(result => {
-                    if (result.success) {
-                        const notif = document.createElement('div');
-                        notif.textContent = 'Program updated successfully';
-                        notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:8px;background:#10b981;color:#fff;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
-                        document.body.appendChild(notif);
-                        setTimeout(() => {
-                            window.location.href = '?page=instructor/training';
-                        }, 1500);
-                    } else {
-                        const notif = document.createElement('div');
-                        notif.textContent = 'Error updating program: ' + (result.error || 'Unknown error');
-                        notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:8px;background:#ef4444;color:#fff;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
-                        document.body.appendChild(notif);
-                        setTimeout(() => notif.remove(), 4000);
-                    }
-                })
-                .catch(e => {
+            if (isEdit && !programId) {
+                alert('Program ID is missing');
+                if (submitButton) { submitButton.disabled = false; submitButton.textContent = originalText; }
+                return;
+            }
+
+            const formData = new FormData(this);
+            const payload = isEdit ? {
+                id: parseInt(programId),
+                title: formData.get('title'),
+                status: formData.get('status'),
+                description: formData.get('description')
+            } : formData;
+
+            const fetchOpts = {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            };
+
+            if (isEdit) {
+                fetchOpts.headers['Content-Type'] = 'application/json';
+                fetchOpts.body = JSON.stringify(payload);
+            } else {
+                fetchOpts.body = payload;
+            }
+
+            fetch(this.action, fetchOpts)
+            .then(r => r.json())
+            .then(result => {
+                if (result.success) {
                     const notif = document.createElement('div');
-                    notif.textContent = 'Error: ' + e.message;
+                    notif.textContent = isEdit ? 'Program updated successfully' : ('Saved successfully: ' + (result.message || 'Program created successfully.'));
+                    notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:8px;background:#10b981;color:#fff;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+                    document.body.appendChild(notif);
+                    setTimeout(() => {
+                        notif.remove();
+                        if (isEdit) {
+                            window.location.href = '?page=instructor/training';
+                        } else {
+                            // Reload to clear form and show success state
+                            window.location.reload();
+                        }
+                    }, 1500);
+                } else {
+                    const notif = document.createElement('div');
+                    notif.textContent = 'Error: ' + (result.error || 'Unknown error');
                     notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:8px;background:#ef4444;color:#fff;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
                     document.body.appendChild(notif);
                     setTimeout(() => notif.remove(), 4000);
-                    console.error('Update error:', e);
-                });
-            }
+                }
+            })
+            .catch(e => {
+                const notif = document.createElement('div');
+                notif.textContent = 'Error: ' + e.message;
+                notif.style.cssText = 'position:fixed;top:20px;right:20px;padding:1rem 1.5rem;border-radius:8px;background:#ef4444;color:#fff;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+                document.body.appendChild(notif);
+                setTimeout(() => notif.remove(), 4000);
+                console.error('Submit error:', e);
+            })
+            .finally(() => {
+                if (submitButton) { submitButton.disabled = false; submitButton.textContent = originalText; }
+            });
         });
     }
 })();

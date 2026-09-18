@@ -35,9 +35,9 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 
 
 $_SESSION['last_activity'] = time();
 
-$current_employee_name = $_SESSION['employee_name'] ?? 'Unknown';
+$current_employee_name = $_SESSION['employee_name'] ?? $_SESSION['first_name'] ?? 'Unknown';
 $current_employee_id   = $_SESSION['employee_id'];
-$current_department_id   = $_SESSION['department_id'];
+$current_department_id   = $_SESSION['department_id'] ?? 0;
 $current_department_name = $_SESSION['department_name'] ?? 'Unknown';
-$current_role          = (int) $_SESSION['role'];
-$current_role_name     = $_SESSION['role_name'];
+$current_role          = (int) ($_SESSION['role'] ?? $_SESSION['role_id'] ?? 0);
+$current_role_name     = $_SESSION['role_name'] ?? 'Unknown';

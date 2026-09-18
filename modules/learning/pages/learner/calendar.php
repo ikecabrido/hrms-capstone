@@ -92,6 +92,7 @@ try {
 
     usort($events, fn($a, $b) => strtotime($a['datetime']) - strtotime($b['datetime']));
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/calendar');
     $events = [];
 }
 
@@ -200,7 +201,7 @@ $monthNames = ['', 'January','February','March','April','May','June','July','Aug
                             </p>
                         </div>
                         <?php if ($ev['type'] === 'Video Conference' && !empty($ev['datetime']) && strtotime($ev['datetime']) > time()): ?>
-                            <a href="?page=learner/catalog-subpage/video-conference&video_conference_id=<?= $ev['id'] ?? 0 ?>" style="padding:0.4rem 0.8rem; background:var(--primary); color:#fff; border:none; border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:500;">Join</a>
+                            <a href="?page=learner/catalog-subpage/video-conference&back=learner/calendar&video_conference_id=<?= $ev['id'] ?? 0 ?>" style="padding:0.4rem 0.8rem; background:var(--primary); color:#fff; border:none; border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:500;">Join</a>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
@@ -242,7 +243,7 @@ $monthNames = ['', 'January','February','March','April','May','June','July','Aug
             <h3 id="event-modal-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text, #222);">New Event</h3>
             <button onclick="document.getElementById('event-modal-overlay').style.display='none'" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:rgba(32,0,130,0.4); padding:0.25rem;"><i class="fas fa-times"></i></button>
         </div>
-        <form id="event-form" style="padding:1.5rem;">
+        <form id="event-form" data-skip style="padding:1.5rem;">
             <input type="hidden" name="event_id" id="event-form-id" value="" />
             <div style="margin-bottom:1rem;">
                 <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--primary, #320082); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem;">Title *</label>

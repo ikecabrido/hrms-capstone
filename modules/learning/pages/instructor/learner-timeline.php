@@ -33,6 +33,7 @@ try {
         $learners = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/learner-timeline');
     $courses = [];
     $learners = [];
 }

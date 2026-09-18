@@ -107,7 +107,7 @@
     var emState = { type: '', id: 0, link: '', enrolled: false, activeTab: 'overview' };
 
     var typeIcons = { course: 'fa-graduation-cap', program: 'fa-layer-group', 'learning-path': 'fa-route', 'video-conference': 'fa-video', module: 'fa-cube', lesson: 'fa-book-open', quiz: 'fa-question-circle' };
-    var typeLabels = { course: 'Course', program: 'Program', 'learning-path': 'Learning Path', 'video-conference': 'Live Session', module: 'Module', lesson: 'Lesson', quiz: 'Quiz' };
+    var typeLabels = { course: 'Course', program: 'Program', 'learning-path': 'Learning Path', 'video-conference': 'Online Training', module: 'Module', lesson: 'Lesson', quiz: 'Quiz' };
 
     function syncEmTabs() {
         document.querySelectorAll('.cem-tab').forEach(function(btn) {

@@ -2,7 +2,7 @@
 /**
  * Outbound: get-compliance-training-log.php
  * Returns compliance-tagged training completions for Learning Compliance (lc_trainings).
- * Courses tagged as compliance via category='compliance' or linked to compliance skills.
+ * Courses tagged as compliance via is_compliance_required (fallback: category string).
  *
  * GET /api/outbound/get-compliance-training-log.php
  * Header: X-API-Key: <key>
@@ -19,7 +19,8 @@ try {
 
     ApiAuth::requireAuth($pdo, 'learning-development');
 
-    $where = "WHERE (c.category = 'Compliance' OR c.category = 'compliance' OR c.category = 'Safety')";
+    // Compliance courses = flagged is_compliance_required, with category-string fallback for legacy rows
+    $where = "WHERE (c.is_compliance_required = 1 OR c.category IN ('Compliance','compliance','Safety'))";
     $params = [];
 
     if (!empty($_GET['employee_id'])) {
@@ -37,16 +38,18 @@ try {
             c.title AS training_name,
             c.category AS training_type,
             e.completed_at AS date_completed,
-            DATE_ADD(e.completed_at, INTERVAL 1 YEAR) AS expiry_date,
+            COALESCE(cert.valid_until, DATE_ADD(e.completed_at, INTERVAL 1 YEAR)) AS expiry_date,
             CASE
                 WHEN e.status = 'completed' THEN 'Completed'
                 WHEN e.status = 'in_progress' THEN 'In Progress'
-                WHEN e.enrollment_deadline < NOW() AND e.status != 'completed' THEN 'Expired'
+                WHEN c.enrollment_deadline < NOW() AND e.status != 'completed' THEN 'Expired'
                 ELSE 'Pending'
             END AS status,
             e.enrolled_at AS created_at
         FROM ld_enrollment e
         JOIN ld_course c ON c.id = e.course_id
+        LEFT JOIN ld_certificate cert
+            ON cert.learner_id = e.learner_id AND cert.course_id = e.course_id AND cert.status = 'active'
         $where
         ORDER BY e.completed_at DESC
     ");

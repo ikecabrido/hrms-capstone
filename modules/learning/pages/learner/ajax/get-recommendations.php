@@ -129,7 +129,7 @@ try {
             'skills' => array_column($skills, 'name'),
             'score' => $score,
             'reasons' => $matchReasons,
-            'link' => '?page=learner/catalog-subpage/course&course_id=' . $courseId,
+            'link' => '?page=learner/study-subpage/course&course_id=' . $courseId,
         ];
     }
 

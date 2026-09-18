@@ -11,7 +11,7 @@
         'course': 'Course',
         'program': 'Program',
         'learning-path': 'Learning Path',
-        'video-conference': 'Video Conference'
+        'video-conference': 'Online Training'
     };
 
     // ─── Catalog Modal ─────────────────────────────────────────────────────
@@ -113,7 +113,7 @@
                     if (duration) detailsHtml += '<p style="margin:0.3rem 0 0 0; color:#666;"><strong>Duration:</strong> ' + duration + ' minutes</p>';
                     contentHtml = '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">' +
                         '<div style="width:50px;height:50px;border-radius:10px;background:linear-gradient(135deg, rgba(185,28,28,0.85), rgba(239,68,68,0.7));display:flex;align-items:center;justify-content:center;"><i class="fas fa-video" style="color:#fff;font-size:1.3rem;"></i></div>' +
-                        '<div><span class="pill">Video Conference</span></div></div>' +
+                        '<div><span class="pill">Online Training</span></div></div>' +
                         '<h3 style="margin-top:0;">About This Session</h3><p>' + description + '</p>' +
                         '<div style="background:#f0f0f0; padding:1rem; border-radius:6px; margin:1rem 0;">' + detailsHtml + '</div>';
                 }

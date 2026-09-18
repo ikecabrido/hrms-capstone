@@ -8,11 +8,17 @@ if (!isset($_SESSION['employee_id'])) {
 }
 
 require_once dirname(__DIR__, 5) . '/database/db.php';
+require_once dirname(__DIR__, 5) . '/classes/progress.php';
 
 try {
     $learnerId = (int) $_SESSION['employee_id'];
     $database = new Database();
     $pdo = $database->getConnection();
+
+    // Modules are containers: their completion is derived from the lesson/quiz rows
+    // the progress writer actually records. There is never an item_type = 'module' row
+    // in ld_progress, so counting those made modules_completed permanently 0.
+    $moduleCompletedSql = Progress::sqlModuleCompleted('m', 'e.id');
 
     // Get all enrollments with progress
     $stmt = $pdo->prepare("
@@ -20,9 +26,11 @@ try {
             e.id AS enrollment_id,
             c.id AS course_id,
             c.title AS course_title,
-            (SELECT COUNT(*) FROM ld_module WHERE course_id = c.id) as total_modules,
-            (SELECT COUNT(DISTINCT p.reference_id) FROM ld_progress p 
-             WHERE p.enrollment_id = e.id AND p.item_type = 'module' AND p.status = 'completed') as modules_completed
+            (SELECT COUNT(*) FROM ld_module m
+              WHERE m.course_id = c.id AND m.status = 'active') as total_modules,
+            (SELECT COUNT(*) FROM ld_module m
+              WHERE m.course_id = c.id AND m.status = 'active'
+                AND " . $moduleCompletedSql . ") as modules_completed
         FROM ld_enrollment e
         JOIN ld_course c ON c.id = e.course_id
         WHERE e.learner_id = :learner_id AND e.status IN ('enrolled', 'in_progress', 'completed')

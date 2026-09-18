@@ -36,6 +36,14 @@ if ($code === '') {
     }
 }
 
+// Where the visitor arrived from, so the back link returns them to the list they
+// were browsing instead of always dropping them on the learner catalog. Only the
+// destinations known to BackLink are accepted; anything else falls back to Catalog,
+// which is also what a direct or shared visit gets.
+$backPage = BackLink::resolve('learner/catalog', $_GET['back'] ?? '');
+$backUrl = BackLink::url($backPage);
+$backLabel = BackLink::label($backPage);
+
 $isExpired = $cert ? ($cert['valid_until'] && strtotime($cert['valid_until']) < time()) : false;
 $statusClass = $isExpired ? 'expired' : 'valid';
 $statusLabel = $isExpired ? 'Expired' : 'Valid Certificate';
@@ -178,7 +186,7 @@ $certColor = $isExpired ? $brandRed : $brandGreen;
         <!-- Toolbar -->
         <div class="cert-toolbar">
             <div class="cert-toolbar-left">
-                <a href="index.php?page=learner/catalog" id="certBackBtn"><i class="fas fa-arrow-left" style="margin-right:0.3rem;"></i> Back to Catalog</a>
+                <a href="<?= htmlspecialchars($backUrl) ?>" id="certBackBtn"><i class="fas fa-arrow-left" style="margin-right:0.3rem;"></i> <?= htmlspecialchars($backLabel) ?></a>
             </div>
             <div class="cert-actions">
                 <button type="button" class="cert-btn cert-btn-print" onclick="window.print();">

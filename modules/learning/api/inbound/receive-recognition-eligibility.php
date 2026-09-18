@@ -74,6 +74,15 @@ try {
     $enrollmentResults = [];
     $enrollment = new Enrollment($pdo);
 
+    // Record each unlock (ld_recognition_unlock) — 'redeemed' when the reward
+    // translated into an actual enrollment, otherwise 'unlocked' (granted but unused).
+    $unlockStmt = $pdo->prepare(
+        'INSERT INTO ld_recognition_unlock
+            (learner_id, course_id, recognition_category, external_reference_id, status, redeemed_at)
+         VALUES
+            (:learner_id, :course_id, :recognition_category, :external_reference_id, :status, :redeemed_at)'
+    );
+
     foreach ($courses as $course) {
         $result = $enrollment->invite($receiverId, (int)$course['course_id'], 0);
         $enrollmentResults[] = [
@@ -82,6 +91,15 @@ try {
             'result' => $result,
         ];
         if ($result['success']) $enrolled++;
+
+        $unlockStmt->execute([
+            ':learner_id'           => $receiverId,
+            ':course_id'            => (int)$course['course_id'],
+            ':recognition_category' => $category,
+            ':external_reference_id'=> $extRefId,
+            ':status'               => $result['success'] ? 'redeemed' : 'unlocked',
+            ':redeemed_at'          => $result['success'] ? date('Y-m-d H:i:s') : null,
+        ]);
     }
 
     $log->markProcessed('employee-engagement', $extRefId, 'recognition_eligibility');

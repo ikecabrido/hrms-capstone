@@ -161,24 +161,76 @@ try {
     $stmt->execute([':lid' => $employeeId]);
     $recentGrades = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Bookmarks
+    // Bookmarks - batch fetch titles
     $stmt = $pdo->prepare("SELECT b.item_type, b.reference_id FROM ld_bookmark b WHERE b.learner_id = :lid ORDER BY b.created_at DESC LIMIT 5");
     $stmt->execute([':lid' => $employeeId]);
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $b) {
-        $title = $link = '';
-        if ($b['item_type'] === 'course') { $t = $pdo->prepare("SELECT title FROM ld_course WHERE id = :id"); $t->execute([':id' => $b['reference_id']]); $title = $t->fetchColumn() ?: 'Unknown'; $link = '?page=learner/catalog-subpage/course&course_id=' . $b['reference_id']; }
-        elseif ($b['item_type'] === 'lesson') { $t = $pdo->prepare("SELECT title FROM ld_lesson WHERE id = :id"); $t->execute([':id' => $b['reference_id']]); $title = $t->fetchColumn() ?: 'Unknown'; $link = '?page=learner/catalog-subpage/lesson&lesson_id=' . $b['reference_id']; }
-        elseif ($b['item_type'] === 'module') { $t = $pdo->prepare("SELECT title FROM ld_module WHERE id = :id"); $t->execute([':id' => $b['reference_id']]); $title = $t->fetchColumn() ?: 'Unknown'; $link = '?page=learner/catalog-subpage/module&module_id=' . $b['reference_id']; }
-        $bookmarks[] = ['title' => $title, 'link' => $link];
+    $bookmarkItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($bookmarkItems) {
+        $courseIds = [];
+        $lessonIds = [];
+        $moduleIds = [];
+        foreach ($bookmarkItems as $b) {
+            if ($b['item_type'] === 'course') $courseIds[] = $b['reference_id'];
+            elseif ($b['item_type'] === 'lesson') $lessonIds[] = $b['reference_id'];
+            elseif ($b['item_type'] === 'module') $moduleIds[] = $b['reference_id'];
+        }
+
+        $titles = [];
+        if ($courseIds) {
+            $ph = implode(',', array_fill(0, count($courseIds), '?'));
+            $t = $pdo->prepare("SELECT id, title FROM ld_course WHERE id IN ($ph)");
+            $t->execute($courseIds);
+            foreach ($t->fetchAll(PDO::FETCH_KEY_PAIR) as $id => $title) $titles["course:$id"] = $title;
+        }
+        if ($lessonIds) {
+            $ph = implode(',', array_fill(0, count($lessonIds), '?'));
+            $t = $pdo->prepare("SELECT id, title FROM ld_lesson WHERE id IN ($ph)");
+            $t->execute($lessonIds);
+            foreach ($t->fetchAll(PDO::FETCH_KEY_PAIR) as $id => $title) $titles["lesson:$id"] = $title;
+        }
+        if ($moduleIds) {
+            $ph = implode(',', array_fill(0, count($moduleIds), '?'));
+            $t = $pdo->prepare("SELECT id, title FROM ld_module WHERE id IN ($ph)");
+            $t->execute($moduleIds);
+            foreach ($t->fetchAll(PDO::FETCH_KEY_PAIR) as $id => $title) $titles["module:$id"] = $title;
+        }
+
+        foreach ($bookmarkItems as $b) {
+            $key = $b['item_type'] . ':' . $b['reference_id'];
+            $title = $titles[$key] ?? 'Unknown';
+            $link = '';
+            if ($b['item_type'] === 'course') $link = '?page=learner/study-subpage/course&course_id=' . $b['reference_id'];
+            elseif ($b['item_type'] === 'lesson') $link = '?page=learner/study-subpage/lesson&lesson_id=' . $b['reference_id'];
+            elseif ($b['item_type'] === 'module') $link = '?page=learner/study-subpage/module&module_id=' . $b['reference_id'];
+            $bookmarks[] = ['title' => $title, 'link' => $link];
+        }
     }
 
-    // Favorites
+    // Favorites - batch fetch titles
     $stmt = $pdo->prepare("SELECT f.item_type, f.reference_id FROM ld_favorite f WHERE f.learner_id = :lid ORDER BY f.created_at DESC LIMIT 5");
     $stmt->execute([':lid' => $employeeId]);
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $f) {
-        $title = $link = '';
-        if ($f['item_type'] === 'course') { $t = $pdo->prepare("SELECT title FROM ld_course WHERE id = :id"); $t->execute([':id' => $f['reference_id']]); $title = $t->fetchColumn() ?: 'Unknown'; $link = '?page=learner/catalog-subpage/course&course_id=' . $f['reference_id']; }
-        $favorites[] = ['title' => $title, 'link' => $link];
+    $favoriteItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($favoriteItems) {
+        $courseIds = [];
+        foreach ($favoriteItems as $f) {
+            if ($f['item_type'] === 'course') $courseIds[] = $f['reference_id'];
+        }
+        $titles = [];
+        if ($courseIds) {
+            $ph = implode(',', array_fill(0, count($courseIds), '?'));
+            $t = $pdo->prepare("SELECT id, title FROM ld_course WHERE id IN ($ph)");
+            $t->execute($courseIds);
+            foreach ($t->fetchAll(PDO::FETCH_KEY_PAIR) as $id => $title) $titles["course:$id"] = $title;
+        }
+        foreach ($favoriteItems as $f) {
+            $key = $f['item_type'] . ':' . $f['reference_id'];
+            $title = $titles[$key] ?? 'Unknown';
+            $link = '';
+            if ($f['item_type'] === 'course') $link = '?page=learner/study-subpage/course&course_id=' . $f['reference_id'];
+            $favorites[] = ['title' => $title, 'link' => $link];
+        }
     }
 
     // Notifications
@@ -274,6 +326,7 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
                 <?php
                 $links = [
                     ['icon' => 'fa-graduation-cap', 'label' => 'Browse Catalog', 'url' => '?page=learner/catalog', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1'],
+                    ['icon' => 'fa-route', 'label' => 'My Learning Path', 'url' => '?page=learner/my-learning-path', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1'],
                     ['icon' => 'fa-book-open', 'label' => 'My Study', 'url' => '?page=learner/study', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1'],
                     ['icon' => 'fa-check-circle', 'label' => 'Results', 'url' => '?page=learner/result', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1'],
                     ['icon' => 'fa-calendar', 'label' => 'Calendar', 'url' => '?page=learner/calendar', 'bg' => 'rgba(245,158,11,0.1)', 'color' => '#f59e0b'],
@@ -373,7 +426,7 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
             <?php if (!empty($upcomingVC)): ?>
             <div class="mode-card" style="margin-bottom:1.5rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="margin:0;"><i class="fas fa-video" style="color:var(--accent); margin-right:0.5rem;"></i> Live Sessions</h3>
+                    <h3 style="margin:0;"><i class="fas fa-video" style="color:var(--accent); margin-right:0.5rem;"></i> Online Training</h3>
                     <a href="?page=learner/calendar" style="color:var(--primary); font-size:0.9rem; text-decoration:none;">View All &rarr;</a>
                 </div>
                 <div style="display:grid; gap:0.5rem;">

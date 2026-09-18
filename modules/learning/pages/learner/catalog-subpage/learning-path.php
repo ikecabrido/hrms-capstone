@@ -54,7 +54,7 @@ try {
             'quiz'             => 'Quiz',
             'evaluation'       => 'Evaluation',
             'program'          => 'Program',
-            'video-conference' => 'Video Conference',
+            'video-conference' => 'Online Training',
         ];
 
         $typeIcons = [
@@ -86,6 +86,7 @@ try {
         }
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/catalog-subpage/learning-path');
     $learningPath = null;
 }
 
@@ -201,7 +202,7 @@ $lessonCount = count(array_filter($items, fn($i) => $i['item_type'] === 'lesson'
                                 $itemLink = '';
                                 switch ($item['item_type']) {
                                     case 'course':
-                                        $itemLink = '?page=learner/catalog-subpage/course&course_id=' . $item['reference_id'];
+                                        $itemLink = '?page=learner/study-subpage/course&course_id=' . $item['reference_id'];
                                         break;
                                     case 'module':
                                     case 'lesson':

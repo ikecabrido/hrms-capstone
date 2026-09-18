@@ -212,7 +212,7 @@ function notifColor($type) {
                                         ?>
                                         <?php if ($certLinkCode): ?>
                                         <div style="display:flex; gap:0.4rem; margin-top:0.5rem; flex-wrap:wrap;">
-                                            <a href="?page=public/verify-certificate&code=<?= htmlspecialchars($certLinkCode) ?>" target="_blank" style="padding:0.35rem 0.7rem; background:rgba(220,53,69,0.08); color:#dc3545; border-radius:6px; font-size:0.78rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem;"><i class="fas fa-external-link-alt"></i>View Certificate</a>
+                                            <a href="?page=public/verify-certificate&back=learner/notification&code=<?= htmlspecialchars($certLinkCode) ?>" target="_blank" style="padding:0.35rem 0.7rem; background:rgba(220,53,69,0.08); color:#dc3545; border-radius:6px; font-size:0.78rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem;"><i class="fas fa-external-link-alt"></i>View Certificate</a>
                                             <?php if ($certCourseId > 0): ?>
                                             <button type="button" class="cert-renew-btn" data-course-id="<?= $certCourseId ?>" onclick="renewCourse(this, <?= $certCourseId ?>)" style="padding:0.35rem 0.7rem; background:var(--primary); color:#fff; border:none; border-radius:6px; font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem; transition:all 0.2s;"><i class="fas fa-sync-alt"></i>Renew Course</button>
                                             <?php endif; ?>

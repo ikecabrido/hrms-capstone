@@ -40,6 +40,7 @@ try {
          LIMIT 10"
     )->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
+    DbError::capture($e, 'admin/moderation');
     $pendingReports = [];
     $reviewedReports = [];
     $archivedReports = [];

@@ -1,5 +1,6 @@
 window.addEventListener("page:loaded", function () {
-  const base = window.location.origin + "/hrms-capstone-master";
+  // Derived from the current URL, so the module works under any deployment folder.
+  const base = window.location.origin + window.location.pathname.replace(/\/modules\/[^/]+\/.*$/, "");
 
   // ── Shared Helper ─────────────────────────────────────────────────────────
   function showAlert(id, message, success = false) {

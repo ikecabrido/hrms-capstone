@@ -41,6 +41,7 @@ try {
         $videoConfs = $confStmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/catalog-subpage/program');
     $program = null;
 }
 
@@ -97,7 +98,7 @@ if (!$program) {
     <!-- Scheduled Sessions -->
     <div class="mode-card">
         <h2 style="margin-bottom:0.5rem;">Scheduled Sessions</h2>
-        <p style="color:#666; margin:0 0 1.5rem 0;">Upcoming video conferences and live sessions for this program.</p>
+        <p style="color:#666; margin:0 0 1.5rem 0;">Upcoming online training sessions for this program.</p>
 
         <?php if (empty($videoConfs)): ?>
             <div style="text-align:center; padding:3rem; color:#999;">

@@ -2,6 +2,7 @@
 /**
  * 500 — Internal Server Error
  */
+require_once dirname(__DIR__, 3) . '/includes/app-base.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,7 +32,7 @@
         <p class="error-msg">Something went wrong on our end. The issue has been logged and will be investigated. Please try again later.</p>
         <a href="javascript:location.reload()" class="error-btn">Try Again</a>
         &nbsp;
-        <a href="/itsar/modules/learning/index.php" class="error-btn" style="background:#666;">Home</a>
+        <a href="<?= htmlspecialchars(AppBase::pathFor('modules/learning/index.php')) ?>" class="error-btn" style="background:#666;">Home</a>
     </div>
 </body>
 </html>

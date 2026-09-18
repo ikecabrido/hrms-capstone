@@ -1,4 +1,7 @@
-<?php include_once __DIR__ . "/../../includes/header.php"; ?>
+<?php
+// Rendered inside the module shell by Page::render(), which supplies the header,
+// sidebar and CSS — including header.php here would render a second document.
+?>
 <div class="module-content"><div class="mode-card" style="max-width:800px;margin:0 auto;">
 <h1 style="margin-bottom:1.5rem;">Terms of Service</h1>
 <p style="margin-bottom:1rem;line-height:1.7;">By using the Learning & Development platform, you agree to the following terms.</p>

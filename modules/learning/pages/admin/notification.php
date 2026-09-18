@@ -133,13 +133,13 @@ function adminNotifColor($type) {
         row.addEventListener('click', function() {
             var nid = this.dataset.nid;
             if (this.dataset.read === 'false') {
-                fetch('pages/learner/ajax/mark-notification-read.php', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'notification_id=' + nid })
+                fetch('pages/instructor/ajax/mark-notification-read.php', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=' + nid })
                     .then(function(r){return r.json();}).then(function(d){ if(d.success){ row.dataset.read='true'; row.style.background='#fff'; } });
             }
         });
     });
     document.getElementById('admin-mark-all-read').addEventListener('click', function() {
-        fetch('pages/learner/ajax/mark-all-notification-read.php', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'all=1' })
+        fetch('pages/instructor/ajax/mark-all-notification-read.php', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'all=1' })
             .then(function(r){return r.json();}).then(function(d){ if(d.success) location.reload(); });
     });
     document.getElementById('admin-notif-search').addEventListener('input', function() {

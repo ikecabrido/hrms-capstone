@@ -31,6 +31,7 @@ try {
         $comments = $cStmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study-subpage/discussion');
     $comments = [];
 }
 ?>

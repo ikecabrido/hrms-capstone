@@ -15,8 +15,9 @@
     border-radius:14px;
     position:sticky; top:calc(var(--header-height, 60px) + 0.5rem); z-index:50;
     margin-bottom:1rem;
+    flex-wrap:wrap;
 }
-.cs-toolbar .cs-search { flex:1; min-width:0; position:relative; }
+.cs-toolbar .cs-search { flex:1 1 200px; min-width:170px; position:relative; }
 .cs-toolbar .cs-search i { position:absolute; left:0.85rem; top:50%; transform:translateY(-50%); color:var(--muted, #999); font-size:0.85rem; pointer-events:none; }
 .cs-toolbar .cs-search select {
     width:100%; padding:0.65rem 1rem 0.65rem 2.4rem;
@@ -28,12 +29,51 @@
     background-repeat:no-repeat; background-position:right 0.75rem center;
 }
 .cs-toolbar .cs-search select:focus { border-color:var(--primary, #320082); box-shadow:0 0 0 3px rgba(32,0,130,0.08); }
-.cs-toolbar-actions { display:flex; gap:0.4rem; flex-shrink:0; }
+.cs-toolbar-actions { display:flex; gap:0.4rem; flex-shrink:0; min-width:0; }
 .cs-toolbar-actions button {
     display:inline-flex; align-items:center; justify-content:center; gap:0.35rem;
     padding:0.5rem 0.75rem; border:none; border-radius:8px;
     font-size:0.78rem; font-weight:700; cursor:pointer; transition:all .15s;
 }
+
+/* ─── Filters (inline in toolbar) ────────────────────────────────────────── */
+.cs-filter-select {
+    padding:0.45rem 2rem 0.45rem 0.7rem; border:1px solid rgba(32,0,130,0.15);
+    border-radius:8px; background:var(--surface,#fff); color:var(--text,#333);
+    font-size:0.8rem; font-weight:600; cursor:pointer; outline:none;
+    min-width:0; max-width:170px;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 0.55rem center;
+}
+.cs-filter-select:focus { border-color:var(--primary,#320082); box-shadow:0 0 0 3px rgba(32,0,130,0.08); }
+
+/* Color-coded filters: each filter gets its own accent */
+.cs-filter-skill    { border-color:rgba(99,102,241,0.45);  background-color:rgba(99,102,241,0.06);  }
+.cs-filter-skill:focus    { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,0.14); }
+.cs-filter-category { border-color:rgba(59,130,246,0.45);  background-color:rgba(59,130,246,0.06);  }
+.cs-filter-category:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.14); }
+.cs-filter-status   { border-color:rgba(245,158,11,0.5);   background-color:rgba(245,158,11,0.06); }
+.cs-filter-status:focus   { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,0.14); }
+.cs-filter-type     { border-color:rgba(16,185,129,0.5);   background-color:rgba(16,185,129,0.06); }
+.cs-filter-type:focus     { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,0.14); }
+
+/* Color-coded toolbar buttons */
+#filter-clear {
+    display:inline-flex; align-items:center; gap:0.3rem;
+    padding:0.45rem 0.8rem; border:1px solid rgba(239,68,68,0.3); border-radius:8px;
+    background:rgba(239,68,68,0.07); color:#ef4444; font-weight:700;
+    font-size:0.8rem; cursor:pointer; transition:all .15s;
+}
+#filter-clear:hover { background:rgba(239,68,68,0.16); border-color:rgba(239,68,68,0.5); }
+.cs-toolbar-actions .cs-btn-icon {
+    background:rgba(32,0,130,0.05); color:var(--primary,#320082);
+    border:1px solid rgba(32,0,130,0.2);
+}
+.cs-toolbar-actions .cs-btn-icon:hover {
+    background:var(--primary,#320082); color:#fff; border-color:var(--primary,#320082);
+}
+.cs-toolbar .cs-search select { border-color:rgba(32,0,130,0.25); background-color:rgba(32,0,130,0.03); }
 .cs-btn-icon {
     background:var(--surface, #fff); color:var(--text, #333);
     border:1px solid var(--border, rgba(32,0,130,0.1));
@@ -479,6 +519,7 @@
 @media (max-width:768px) {
     .cs-builder { padding:1rem 0; }
     .cs-toolbar { flex-wrap:wrap; }
+    .cs-toolbar .cs-search { flex:1 1 100%; }
     .cs-toolbar .cs-search select { min-width:0; }
     .cs-header-top { flex-direction:column; }
     .cs-header-actions { width:100%; justify-content:center; }
@@ -492,7 +533,7 @@
 
 <div class="module-content">
     <div class="cs-builder">
-        <!-- Toolbar -->
+        <!-- Toolbar (search + filters + actions) -->
         <div class="cs-toolbar">
             <div class="cs-search">
                 <i class="fas fa-book-open"></i>
@@ -500,9 +541,21 @@
                     <option value="">— Select a Course to Build —</option>
                 </select>
             </div>
+            <select id="filter-skill" class="cs-filter-select cs-filter-skill" title="Filter by skill">
+                <option value="">All Skills</option>
+            </select>
+            <select id="filter-category" class="cs-filter-select cs-filter-category" title="Filter by category">
+                <option value="">All Categories</option>
+            </select>
+            <select id="filter-status" class="cs-filter-select cs-filter-status" title="Filter by status">
+                <option value="">All Statuses</option>
+            </select>
+            <select id="filter-type" class="cs-filter-select cs-filter-type" title="Filter by delivery type">
+                <option value="">All Types</option>
+            </select>
+            <button type="button" id="filter-clear" title="Clear filters"><i class="fas fa-times"></i> Clear</button>
             <div class="cs-toolbar-actions">
-                <button type="button" id="btn-collapse-all" class="cs-btn-icon" title="Collapse All"><i class="fas fa-compress-alt"></i></button>
-                <button type="button" id="btn-expand-all" class="cs-btn-icon" title="Expand All"><i class="fas fa-expand-alt"></i></button>
+                <button type="button" id="btn-toggle-all" class="cs-btn-icon" title="Collapse All"><i class="fas fa-compress-alt"></i></button>
             </div>
         </div>
 

@@ -2,6 +2,7 @@
 /**
  * 404 — Not Found
  */
+require_once dirname(__DIR__, 3) . '/includes/app-base.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,7 +32,7 @@
         <p class="error-msg">The page you're looking for doesn't exist or may have been moved. Check the URL or navigate from the sidebar.</p>
         <a href="javascript:history.back()" class="error-btn">Go Back</a>
         &nbsp;
-        <a href="/itsar/modules/learning/index.php" class="error-btn" style="background:#666;">Home</a>
+        <a href="<?= htmlspecialchars(AppBase::pathFor('modules/learning/index.php')) ?>" class="error-btn" style="background:#666;">Home</a>
     </div>
 </body>
 </html>

@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const PAGE_SIZE = 12;
+    const PAGE_SIZE = parseInt(window.LD_DEFAULT_PAGE_SIZE, 10) || 12;
 
     function syncPageSize(select) {
         const moduleContent = select.closest('.module-content');

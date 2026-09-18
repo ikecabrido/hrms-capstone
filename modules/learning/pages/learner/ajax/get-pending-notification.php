@@ -56,7 +56,7 @@ try {
     $countStmt = $pdo->prepare("
         SELECT COUNT(*)
         FROM ld_notification
-        WHERE user_id = :user_id
+        WHERE user_id = :user_id AND is_read = 0
     ");
 
     $countStmt->execute([

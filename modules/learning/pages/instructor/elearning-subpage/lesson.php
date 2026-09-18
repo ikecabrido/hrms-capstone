@@ -9,6 +9,7 @@ try {
     $lessonPageModObj = new Module($lessonPagePdo);
     $lessonPageModules = $lessonPageModObj->getList();
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/elearning-subpage/lesson');
     $lessonPageModules = [];
 }
 ?>
@@ -57,8 +58,9 @@ try {
         </div>
     </div>
 
-    <div class="toolbar">
-        <div class="toolbar-search">
+    <div class="toolbar" style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+        <?= BackLink::anchor('instructor/elearning', 'style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"') ?>
+        <div class="toolbar-search" style="flex:1;">
             <input type="search" placeholder="Search lesson form..." aria-label="Search lesson form" />
         </div>
         
@@ -156,11 +158,9 @@ try {
     const isEditMode = !!lessonId;
 
     if (isEditMode) {
-        // Change heading and hide module selector
+        // Change heading (keep the parent Module selector visible so the parent can be changed)
         document.getElementById('lesson-form-title').textContent = 'Edit Lesson';
         document.getElementById('lesson-form-desc').textContent = 'Update lesson details and view hierarchical quiz structure.';
-        const moduleLabel = document.querySelector('label:has(input[id="lesson-module-search"])');
-        if (moduleLabel) moduleLabel.style.display = 'none';
     }
 
     const form = document.getElementById('add-lesson-form');
@@ -185,6 +185,9 @@ try {
     });
 
     form.addEventListener('submit', function (event) {
+        // Edit mode is handled by the JSON submit handler in the next script block;
+        // skip this one to avoid sending a duplicate (form-encoded) request.
+        if (isEditMode) return;
         event.preventDefault();
         const submitButton = form.querySelector('button[type="submit"]');
         const originalText = submitButton ? submitButton.textContent : '';
@@ -266,6 +269,9 @@ try {
 
     // Function to load and display quizzes for this lesson
     function loadLessonQuizzes(lid) {
+        // A quiz opened from here returns to this lesson rather than to the list.
+        const lessonBackParam = 'back=' + encodeURIComponent('instructor/elearning-subpage/lesson?id=' + lid);
+
         fetch(`pages/instructor/elearning-subpage/ajax/get-quizzes-by-lesson.php?lesson_id=${lid}`, { credentials: 'same-origin' })
         .then(r => r.json())
         .then((quizzesRes) => {
@@ -279,7 +285,7 @@ try {
                     html += `
                         <div style="padding:0.5rem 0.8rem; background:rgba(59,130,246,0.08); border-radius:6px; margin-bottom:0.5rem; display:flex; align-items:center; justify-content:space-between;">
                             <span style="color:var(--text);">${quiz.title}</span>
-                            <button type="button" class="hierarchy-edit" data-edit-url="?page=instructor/elearning-subpage/quiz&id=${quiz.id}" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--primary); color:var(--surface); border:none; border-radius:4px; cursor:pointer; font-weight:700;">Edit</button>
+                            <button type="button" class="hierarchy-edit" data-edit-url="?page=instructor/elearning-subpage/quiz&${lessonBackParam}&id=${quiz.id}" style="padding:0.3rem 0.6rem; font-size:0.75rem; background:var(--primary); color:var(--surface); border:none; border-radius:4px; cursor:pointer; font-weight:700;">Edit</button>
                         </div>
                     `;
                 });
@@ -409,6 +415,9 @@ try {
             if (lesson.module_id) {
                 form.querySelector('#lesson-module-id').value = lesson.module_id;
             }
+            // Fill the visible parent-module search box so the parent is shown (and can be changed)
+            const modSearch = form.querySelector('#lesson-module-search');
+            if (modSearch) modSearch.value = lesson.module_name || '';
             
             if (!form.querySelector('input[name="id"]')) {
                 const idInput = document.createElement('input');
@@ -443,7 +452,8 @@ try {
                     title: formData.get('title'),
                     content_type: formData.get('content_type'),
                     status: formData.get('status'),
-                    content_body: document.getElementById('quill-content-hidden')?.value || '',
+                    // Read Quill content directly (the hidden-input sync listener runs after this handler)
+                    content_body: (window._lessonQuill && window._lessonQuill.root) ? window._lessonQuill.root.innerHTML : (document.getElementById('quill-content-hidden')?.value || ''),
                     video_url: formData.get('video_url'),
                     module_id: formData.get('module_id') || null
                 };

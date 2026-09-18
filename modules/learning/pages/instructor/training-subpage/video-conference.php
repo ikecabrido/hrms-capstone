@@ -2,18 +2,18 @@
     <div class="toolbar" style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
         <a href="?page=instructor/training" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-left"></i> Back to Trainings</a>
         <div class="toolbar-search" style="flex:1;">
-            <input type="search" placeholder="Search video conference form..." aria-label="Search video conference form" />
+            <input type="search" placeholder="Search online training form..." aria-label="Search video conference form" />
         </div>
     </div>
 
     <div class="mode-card">
-        <h2>Add Video Conference</h2>
-        <p>Schedule a live learning session with a meeting link, platform, and date/time as described in the MD schema.</p>
+        <h2>Add Online Training</h2>
+        <p>Schedule an online training session with a meeting link, platform, and date/time as described in the MD schema.</p>
 
-        <form id="add-video-conference-form" data-skip="true" method="post" action="pages/instructor/training-subpage/ajax/add-video-conference.php">
+        <form id="add-video-conference-form" method="post" action="pages/instructor/training-subpage/ajax/add-video-conference.php">
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-top:1rem;">
                 <label>
-                    <span>Conference title</span>
+                    <span>Training title</span>
                     <input type="text" name="title" required placeholder="e.g. Live Q&A Session" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border);" />
                 </label>
                 <label>
@@ -67,7 +67,7 @@
                         require_once dirname(__DIR__, 5) . '/database/db.php';
                         $pdo = (new Database())->getConnection();
                         $allSkills = $pdo->query('SELECT id, name FROM ld_skill WHERE status = "active" ORDER BY name')->fetchAll(PDO::FETCH_ASSOC);
-                    } catch (Throwable $e) { $allSkills = []; }
+                    } catch (Throwable $e) { DbError::capture($e, 'instructor/training-subpage/video-conference'); $allSkills = []; }
                     foreach ($allSkills as $sk):
                     ?>
                     <label style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.3rem 0.6rem; border:1px solid rgba(32,0,130,0.15); border-radius:999px; cursor:pointer; font-size:0.78rem; font-weight:600; background:rgba(32,0,130,0.04); color:var(--text);">
@@ -116,60 +116,17 @@
                 // ignore fetch failure for now
             });
 
-        searchInput.addEventListener('change', function () {
-            const selected = Array.from(dataList.options).find(function (option) {
+        let selectedOption = null;
+        searchInput.addEventListener('input', function () {
+            selectedOption = Array.from(dataList.options).find(function (option) {
                 return option.value === searchInput.value;
             });
-
-            hiddenInput.value = selected ? (selected.dataset.id || '') : '';
+            hiddenInput.value = selectedOption ? (selectedOption.dataset.id || '') : '';
         });
     }
 
-    bindLookup(courseSearch, courseIdField, courseList, '/itsar/modules/learning/pages/instructor/elearning-subpage/ajax/get-course.php');
-    bindLookup(programSearch, programIdField, programList, '/itsar/modules/learning/pages/instructor/training-subpage/ajax/get-program.php');
-
-    form.addEventListener('submit', function (event) {
-        event.preventDefault();
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalText = submitButton ? submitButton.textContent : '';
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = 'Saving...';
-        }
-
-        const formData = new FormData(form);
-
-        fetch(form.action, {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(async function (response) {
-            const data = await response.json().catch(function () {
-                return { success: false, message: 'Request failed.' };
-            });
-
-            if (!response.ok || !data.success) {
-                throw new Error(data.message || 'Unable to create video conference.');
-            }
-
-            alert('Saved successfully: ' + (data.message || 'Video conference created successfully.'));
-            form.reset();
-            courseIdField.value = '';
-            programIdField.value = '';
-            courseSearch.value = '';
-            programSearch.value = '';
-        })
-        .catch(function (error) {
-            alert('Save failed: ' + (error.message || 'Unable to create video conference.'));
-        })
-        .finally(function () {
-            if (submitButton) {
-                submitButton.disabled = false;
-                submitButton.textContent = originalText;
-            }
-        });
-    });
+    bindLookup(courseSearch, courseIdField, courseList, 'pages/instructor/elearning-subpage/ajax/get-course.php');
+    bindLookup(programSearch, programIdField, programList, 'pages/instructor/training-subpage/ajax/get-program.php');
 })();
 </script>
 <script>
@@ -178,7 +135,9 @@
     const videoId = params.get('id');
     
     if (videoId) {
-        fetch('/itsar/modules/learning/pages/instructor/training-subpage/ajax/get-video-conference-by-id.php?id=' + videoId, {            credentials: 'same-origin'            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        fetch('pages/instructor/training-subpage/ajax/get-video-conference-by-id.php?id=' + videoId, {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())
         .then(data => {
@@ -190,10 +149,12 @@
             form.parentElement.querySelector('h2').textContent = 'Edit Video Conference';
             form.querySelector('input[name="title"]').value = video.title || '';
             form.querySelector('select[name="platform"]').value = video.platform || 'google_meet';
-            form.querySelector('input[name="scheduled_at"]').value = video.scheduled_at || '';
+            const rawScheduled = video.scheduled_at || '';
+            form.querySelector('input[name="scheduled_at"]').value = rawScheduled ? rawScheduled.replace(' ', 'T').slice(0, 16) : '';
             form.querySelector('input[name="duration_minutes"]').value = video.duration_minutes || 60;
-            form.querySelector('select[name="status"]').value = video.status || 'active';
-            form.querySelector('textarea[name="description"]').value = video.description || '';
+            form.querySelector('select[name="status"]').value = video.status || 'scheduled';
+            const descField = form.querySelector('textarea[name="description"]');
+            if (descField) descField.value = video.description || '';
             
             if (video.course_id) {
                 form.querySelector('#video-course-id').value = video.course_id;

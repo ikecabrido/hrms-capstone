@@ -64,6 +64,7 @@ try {
     $stmt->execute([':learner_id' => $learnerId]);
     $completedCourses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/result');
     $grades = [];
     $certificates = [];
     $completedCourses = [];
@@ -81,7 +82,7 @@ try {
                 <option value="failed">Failed</option>
             </select>
             <button type="button" class="toolbar-mode-toggle" data-view="grid" aria-label="Toggle view">Grid</button>
-            
+            <a href="?page=learner/result-subpage/transcript-print" class="toolbar-add-btn" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;"><i class="fas fa-print"></i> Print Transcript</a>
         </div>
     </div>
 
@@ -220,7 +221,7 @@ try {
                                     </div>
                                 </div>
                                 <?php if ($certForCourse): ?>
-                                <a href="?page=public/verify-certificate&code=<?= htmlspecialchars($certForCourse['verification_code']) ?>" target="_blank" style="display:block; text-align:center; padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:var(--primary); color:#fff; text-decoration:none;"><i class="fas fa-certificate" style="margin-right:0.3rem;"></i>View Certificate</a>
+                                <a href="?page=learner/result-subpage/certificate-print&back=learner/result&certificate_id=<?= (int)$certForCourse['id'] ?>" style="display:block; text-align:center; padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:var(--primary); color:#fff; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;"><i class="fas fa-external-link-alt"></i> View Certificate</a>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -240,22 +241,36 @@ try {
                         <p>Complete a course to earn a certificate.</p>
                     </div>
                 <?php else: ?>
-                    <div class="cards-grid" style="margin-top:1rem;">
-                        <?php foreach ($certificates as $cert): ?>
-                        <div class="content-card-item" style="cursor:pointer;">
-                            <div class="content-card-thumb" style="background: linear-gradient(135deg, var(--primary), var(--text)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:1.2rem;">
-                                <i class="fas fa-certificate"></i>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:1.25rem; margin-top:1rem;">
+                        <?php foreach ($certificates as $cert):
+                            $cIsExpired = $cert['valid_until'] && strtotime($cert['valid_until']) < time();
+                            $cStatusColor = $cIsExpired ? '#ef4444' : '#10b981';
+                            $cStatusLabel = $cIsExpired ? 'Expired' : 'Valid Certificate';
+                            $cCertBg = $cIsExpired ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)';
+                        ?>
+                        <div style="border:2px solid rgba(32,0,130,0.08); border-radius:14px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                            <div style="background:linear-gradient(135deg, #320082, #5b21b6); padding:1.5rem; text-align:center; color:#fff; position:relative; overflow:hidden;">
+                                <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; background:rgba(255,255,255,0.06); border-radius:50%;"></div>
+                                <div style="position:absolute; bottom:-25px; left:-15px; width:65px; height:65px; background:rgba(255,255,255,0.04); border-radius:50%;"></div>
+                                <div style="font-size:2.5rem; margin-bottom:0.5rem; position:relative;"><i class="fas fa-award"></i></div>
+                                <h3 style="margin:0; font-size:1.1rem; font-weight:800; position:relative;"><?= htmlspecialchars($cert['course_title']) ?></h3>
+                                <p style="margin:0.3rem 0 0; opacity:0.8; font-size:0.85rem; position:relative;">Certificate of Completion</p>
                             </div>
-                            <div class="content-card-body">
-                                <div class="content-card-meta">
-                                    <span class="pill">Certificate</span>
-                                    <span class="pill">Active</span>
+                            <div style="padding:1.25rem;">
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.75rem;">
+                                    <div>
+                                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Issued</div>
+                                        <div style="margin-top:0.2rem; color:var(--text); font-size:0.9rem;"><?= $cert['issued_at'] ? date('M j, Y', strtotime($cert['issued_at'])) : 'N/A' ?></div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Status</div>
+                                        <div style="margin-top:0.2rem;"><span style="padding:0.2rem 0.6rem; border-radius:999px; font-size:0.72rem; font-weight:700; background:<?= $cCertBg ?>; color:<?= $cStatusColor ?>;"><?= $cStatusLabel ?></span></div>
+                                    </div>
                                 </div>
-                                <h3><?= htmlspecialchars($cert['course_title']) ?></h3>
-                                <p>Earned on <?= date('M d, Y', strtotime($cert['issued_at'])) ?></p>
-                                <div class="content-card-footer">
-                                    <button class="view-cert-btn" data-cert-id="<?= $cert['id'] ?>" data-code="<?= htmlspecialchars($cert['verification_code']) ?>" style="padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:500;">View Certificate</button>
+                                <div style="font-family:monospace; font-size:0.72rem; color:rgba(32,0,130,0.5); background:rgba(32,0,130,0.04); padding:0.5rem 0.7rem; border-radius:6px; margin-bottom:0.75rem; word-break:break-all;">
+                                    <i class="fas fa-fingerprint" style="color:var(--primary); margin-right:0.2rem;"></i><?= htmlspecialchars($cert['verification_code']) ?>
                                 </div>
+                                <a href="?page=public/verify-certificate&back=learner/result&code=<?= htmlspecialchars($cert['verification_code']) ?>" target="_blank" style="display:block; text-align:center; padding:0.55rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:var(--primary); color:var(--surface); text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;"><i class="fas fa-external-link-alt"></i> View Certificate</a>
                             </div>
                         </div>
                         <?php endforeach; ?>
@@ -426,7 +441,7 @@ document.querySelectorAll('.content-card-item:has(.view-cert-btn)').forEach(card
 viewCertBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     const code = this.dataset.code;
-    window.location.href = '?page=public/verify-certificate&code=' + code;
+    window.location.href = '?page=public/verify-certificate&back=learner/result&code=' + code;
 });
 
 // Load progress details

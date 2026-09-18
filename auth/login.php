@@ -2,6 +2,29 @@
 // auth/login.php
 include "../database/db.php";
 
+function resolveLearningRole(array $user): string {
+    $roleId = (int) ($user['role_id'] ?? 0);
+    $roleName = strtolower($user['role_name'] ?? '');
+    $deptName = strtolower($user['department_name'] ?? '');
+    $empId = (int) ($user['employee_id'] ?? 0);
+
+    if ($roleId === 1 || stripos($roleName, 'system admin') !== false) {
+        return 'admin';
+    }
+
+    // L&D admins - specific employee IDs that should have admin access
+    $ldAdminEmployeeIds = [35, 1018];
+    if (in_array($empId, $ldAdminEmployeeIds, true)) {
+        return 'admin';
+    }
+
+    if ($roleId === 7 || stripos($roleName, 'learning') !== false || stripos($deptName, 'instructor') !== false) {
+        return 'instructor';
+    }
+
+    return 'learner';
+}
+
 $db   = new Database();
 $conn = $db->getConnection();
 
@@ -46,53 +69,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── Authentication ────────────────────────────────────────────────────────
     $stmt = $conn->prepare("
-<<<<<<< Updated upstream
         SELECT
-            user_account.user_id,
-            user_account.employee_id,
-            user_account.password,
-            hrms_employee.role,
-            hrms_employee.department,
-            hrms_roles.role_name,
-            hrms_department.department_name
-        FROM user_account
-        INNER JOIN hrms_employee  ON hrms_employee.employee_id  = user_account.employee_id
-        INNER JOIN hrms_roles      ON hrms_roles.role_id          = hrms_employee.role
-        LEFT  JOIN hrms_department ON hrms_department.department_id = hrms_employee.department
-        WHERE user_account.employee_id = :employeeid
-        AND   hrms_employee.status      = 'active'
-=======
-        SELECT 
-            u.user_id, 
-            u.employee_id, 
+            u.user_id,
+            u.employee_id,
             u.role_id,
             u.password,
-            u.account_status,
-            e.employee_code,
-            e.first_name,
-            e.middle_name,
-            e.last_name,
-            e.position_id,
             e.department_id,
-            e.employment_status,
-            p.position_name,
             r.role_name,
             d.department_name
         FROM user_account u
-        INNER JOIN em_employees e
-            ON e.employee_id = u.employee_id
-        INNER JOIN em_roles r
-            ON r.role_id = u.role_id
-        INNER JOIN em_positions p
-            ON p.position_id = e.position_id
-        LEFT JOIN em_departments d
-            ON d.department_id = e.department_id
-        WHERE (e.employee_code = :employeeid OR e.employee_id = :employeeid_num)
+        INNER JOIN em_employees e ON e.employee_id = u.employee_id
+        INNER JOIN em_roles r ON r.role_id = u.role_id
+        LEFT  JOIN em_departments d ON d.department_id = e.department_id
+        WHERE (e.employee_code = :employeeid OR u.employee_id = :employeeid_num)
         AND e.employment_status = 'Active'
->>>>>>> Stashed changes
         LIMIT 1
     ");
-    $stmt->bindParam(':employeeid', $employeeid);
+    $stmt->bindParam(':employeeid', $employeeid, PDO::PARAM_STR);
     $stmt->bindValue(':employeeid_num', (int) $employeeid, PDO::PARAM_INT);
     $stmt->execute();
 
@@ -103,9 +96,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         unset($_SESSION[$key]);
 
         $_SESSION['employee_id']     = $user['employee_id'];
-        $_SESSION['role']            = $user['role'];
+        $_SESSION['role']            = $user['role_id'];
         $_SESSION['role_name']       = $user['role_name'];
-        $_SESSION['department_id']   = $user['department'];
+        $_SESSION['department_id']   = $user['department_id'];
         $_SESSION['department_name'] = $user['department_name'];
 
         $redirectMap = [
@@ -123,7 +116,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         ];
 
-        $role = (int) $user['role'];
+        $empId = (int) $user['employee_id'];
+
+        // ── Resolve L&D role from role/department ────────────────────────────
+        $ldRole = resolveLearningRole($user);
+        $_SESSION['learning_role'] = $ldRole;
+
+        if ($ldRole !== 'learner') {
+            echo json_encode([
+                'success'  => true,
+                'redirect' => 'modules/learning/index.php',
+            ]);
+            exit();
+        }
+
+        $role = (int) $user['role_id'];
 
         if (!isset($redirectMap[$role])) {
             echo json_encode(['success' => false, 'locked' => false, 'message' => 'Invalid role.']);

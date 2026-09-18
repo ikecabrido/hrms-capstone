@@ -4,7 +4,7 @@ header('Content-Type: application/json; charset=utf-8');
 require_once dirname(__FILE__, 6) . '/database/db.php';
 try {
 
-$stmt = $pdo->prepare('SELECT * FROM ld_announcement WHERE (audience=' . ' . 'all' . ' . ' OR audience=' . ' . 'instructor' . ' . ') AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY created_at DESC LIMIT 20');
+$stmt = $pdo->prepare('SELECT * FROM ld_announcement WHERE (audience=' . chr(39) . 'all' . chr(39) . ' OR audience=' . chr(39) . 'instructor' . chr(39) . ') AND (expires_at IS NULL OR expires_at > NOW()) ORDER BY created_at DESC LIMIT 20');
 $stmt->execute();
 echo json_encode(['success'=>true,'items'=>$stmt->fetchAll(PDO::FETCH_ASSOC)]);
 } catch (Throwable $e) { echo json_encode(['success'=>false,'message'=>$e->getMessage()]); }
