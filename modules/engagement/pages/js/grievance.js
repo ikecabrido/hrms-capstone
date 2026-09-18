@@ -1100,6 +1100,16 @@ function generateCustomReport(downloadFile = true) {
   const data = window.reportData || [];
   const normalize = value => String(value || '').trim().toLowerCase();
 
+  if (outputCard) {
+    outputCard.classList.add('hidden');
+    outputCard.style.display = 'none';
+  }
+  if (summary) summary.innerHTML = '';
+  if (table) {
+    table.querySelector('thead').innerHTML = '';
+    table.querySelector('tbody').innerHTML = '';
+  }
+
   let filtered = data.slice();
   if (startDate) {
     filtered = filtered.filter(item => item.created_at && String(item.created_at).slice(0, 10) >= startDate);
@@ -1136,9 +1146,9 @@ function generateCustomReport(downloadFile = true) {
         const key = item.status || 'Unknown';
         statusCounts[key] = (statusCounts[key] || 0) + 1;
       });
-      summary.innerHTML = reportSummary(format.toUpperCase());
-      headers = ['Status', 'Count'];
-      rows = Object.keys(statusCounts).map(status => [status, statusCounts[status]]);
+      summary.innerHTML = `<strong>Report Summary</strong><br>${Object.entries(statusCounts).map(([status, count]) => `${status} | ${count}`).join('<br>') || 'No records found.'}`;
+      headers = [];
+      rows = Object.entries(statusCounts).map(([status, count]) => [status, count]);
       break;
     case 'detailed':
       reportTitle = 'Detailed Grievance Report';
@@ -1175,11 +1185,27 @@ function generateCustomReport(downloadFile = true) {
   const tbody = table.querySelector('tbody');
   thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
   tbody.innerHTML = rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}" class="text-center text-muted">No records match the selected filters. Clear or adjust the filters to see the ${data.length} available grievance record(s).</td></tr>`;
-  outputCard.classList.remove('hidden');
-  outputCard.style.display = 'block';
-  outputCard.querySelector('.card-title').innerText = reportTitle;
+
+  if (outputCard) {
+    outputCard.classList.add('hidden');
+    outputCard.style.display = 'none';
+  }
+  if (summary) summary.innerHTML = '';
+  if (tbody) tbody.innerHTML = '';
+  if (thead) thead.innerHTML = '';
+
   if (downloadFile) {
-    downloadReport(reportTitle, headers, rows, format);
+    const pdfFilters = {
+      reportType: type,
+      employee: document.getElementById('report-employee')?.value || '',
+      startDate: startDate || '',
+      endDate: endDate || '',
+      department: department || '',
+      category: category || '',
+      status: status || '',
+      format: format
+    };
+    downloadReport(reportTitle, headers, rows, format, pdfFilters);
   }
 }
 
@@ -1277,7 +1303,7 @@ function initReportEmployeeAutofill() {
   });
 }
 
-function downloadReport(reportTitle, headers, rows, format) {
+function downloadReport(reportTitle, headers, rows, format, filters = {}) {
   const safeName = reportTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
   const filename = safeName + (format === 'excel' ? '.csv' : '.pdf');
 
@@ -1286,7 +1312,7 @@ function downloadReport(reportTitle, headers, rows, format) {
     return;
   }
 
-  downloadPdf(filename, reportTitle, headers, rows);
+  downloadPdf(filename, reportTitle, headers, rows, filters);
 }
 
 function downloadCsv(filename, headers, rows) {
@@ -1304,7 +1330,7 @@ function downloadCsv(filename, headers, rows) {
   URL.revokeObjectURL(link.href);
 }
 
-function downloadPdf(filename, title, headers, rows) {
+function downloadPdf(filename, title, headers, rows, filters = {}) {
   const jsPdfConstructor = window.jspdf?.jsPDF || window.jsPDF;
   if (typeof jsPdfConstructor !== 'function') {
     console.warn('jsPDF not loaded; falling back to CSV.');
@@ -1313,25 +1339,133 @@ function downloadPdf(filename, title, headers, rows) {
   }
 
   const doc = new jsPdfConstructor();
-  doc.setFontSize(14);
-  doc.text(title, 14, 20);
-  const startY = 30;
+  const now = new Date();
+  const generatedAt = now.toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  const totalRecords = Array.isArray(rows) ? rows.length : 0;
+  const totalCount = rows.reduce((sum, row) => {
+    const value = Number(row[row.length - 1]);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0);
 
-  if (typeof doc.autoTable === 'function') {
+  const companyName = 'HRMS';
+  const reportType = filters.reportType || 'Summary';
+  const employee = filters.employee || 'All Employees';
+  const dateRange = [filters.startDate, filters.endDate].filter(Boolean).join(' to ') || 'All Dates';
+  const department = filters.department || 'All Departments';
+  const category = filters.category || 'All Categories';
+  const status = filters.status || 'All Status';
+
+  const filterLines = [
+    ['Company', companyName],
+    ['Report Type', reportType],
+    ['Employee', employee],
+    ['Date Range', dateRange],
+    ['Department', department],
+    ['Category', category],
+    ['Status', status],
+    ['Format', (filters.format || 'PDF').toUpperCase()]
+  ];
+
+  const isSummaryReport = String(reportType).toLowerCase() === 'summary';
+
+  doc.setFillColor(9, 89, 133);
+  doc.rect(0, 0, 210, 36, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.text(title, 14, 21);
+
+  doc.setTextColor(60, 72, 88);
+  doc.setFontSize(10);
+  doc.text('Generated: ' + generatedAt, 14, 46);
+  doc.text('Prepared by: ' + companyName, 14, 53);
+  doc.text('Total records: ' + totalRecords, 14, 60);
+
+  if (totalCount > 0) {
+    doc.text('Total count: ' + totalCount, 110, 60);
+  }
+
+  doc.setFillColor(232, 239, 244);
+  doc.roundedRect(14, 68, 182, 40, 2, 2, 'F');
+  doc.setDrawColor(171, 188, 202);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(14, 68, 182, 40, 2, 2, 'S');
+
+  doc.setFont(undefined, 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(18, 52, 76);
+  doc.text('Report Filters', 20, 80);
+  doc.setFont(undefined, 'normal');
+  doc.setFontSize(9);
+
+  let filterLineY = 88;
+  filterLines.forEach(([label, value]) => {
+    if (filterLineY > 104) return;
+    doc.text(label + ': ' + value, 20, filterLineY);
+    filterLineY += 6;
+  });
+
+  const summaryItems = Array.isArray(rows) ? rows.filter(row => Array.isArray(row) && row.length >= 2) : [];
+  const summaryY = 118;
+  if (summaryItems.length) {
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(12);
+    doc.text('Report Summary', 14, summaryY);
+    doc.setFont(undefined, 'normal');
+
+    let summaryLineY = summaryY + 8;
+    summaryItems.forEach((row) => {
+      const left = String(row[0] || '').trim();
+      const right = String(row[1] || '').trim();
+      if (left && right) {
+        doc.setFontSize(9.5);
+        doc.text(left + ' | ' + right, 18, summaryLineY);
+        summaryLineY += 7;
+      }
+    });
+  }
+
+  const startY = Math.max(150, summaryItems.length ? summaryY + summaryItems.length * 8 + 8 : 150);
+  const bodyRows = rows.length ? rows : [['No records found for this report.']];
+
+  if (!isSummaryReport && typeof doc.autoTable === 'function') {
     doc.autoTable({
       head: [headers],
-      body: rows.length ? rows : [['No records found for this report.']],
+      body: bodyRows,
       startY,
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [41, 128, 185], textColor: 255 }
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 3, textColor: [30, 30, 30] },
+      headStyles: { fillColor: [52, 90, 118], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [242, 246, 249] },
+      margin: { top: 5, left: 14, right: 14, bottom: 30 },
+      didDrawPage: function (data) {
+        const pageHeight = doc.internal.pageSize.getHeight();
+        doc.setDrawColor(180, 180, 180);
+        doc.setLineWidth(0.3);
+        doc.line(14, pageHeight - 18, 196, pageHeight - 18);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(companyName, data.settings.margin.left, pageHeight - 10);
+        doc.text(String(doc.internal.getCurrentPageInfo().pageNumber), 200, pageHeight - 10, { align: 'right' });
+
+        doc.setDrawColor(120, 140, 160);
+        doc.line(132, pageHeight - 42, 196, pageHeight - 42);
+        doc.setTextColor(80, 80, 80);
+        doc.setFontSize(8);
+        doc.text('Authorized Signature', 132, pageHeight - 46);
+      }
     });
-  } else {
+  } else if (!isSummaryReport) {
     doc.setFontSize(10);
     let y = startY;
     doc.text(headers.join(' | '), 14, y);
     y += 8;
-    rows.length ? rows : [['No records found for this report.']];
-    (rows.length ? rows : [['No records found for this report.']]).forEach(row => {
+    bodyRows.forEach(row => {
       if (y > 270) {
         doc.addPage();
         y = 20;
@@ -1339,6 +1473,15 @@ function downloadPdf(filename, title, headers, rows) {
       doc.text(row.map(cell => String(cell)).join(' | '), 14, y);
       y += 7;
     });
+    doc.setDrawColor(120, 140, 160);
+    doc.line(145, 270, 196, 270);
+    doc.setFontSize(8);
+    doc.text('Authorized Signature', 145, 276);
+  } else {
+    doc.setDrawColor(120, 140, 160);
+    doc.line(118, 260, 196, 260);
+    doc.setFontSize(8);
+    doc.text('Authorized Signature', 118, 266);
   }
 
   doc.save(filename);

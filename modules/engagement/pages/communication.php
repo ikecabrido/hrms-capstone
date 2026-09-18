@@ -51,11 +51,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     <i class="fas fa-bell"></i> HR Notifications
                   </a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link" id="updates-tab" data-toggle="pill" href="#updates" role="tab">
-                    <i class="fas fa-building"></i> Department Updates
-                  </a>
-                </li>
                 <?php if ($showPolicySharing && ($isHrAdmin || !empty($payload['lcm_policies']))): ?>
                 <li class="nav-item">
                   <a class="nav-link" id="policies-tab" data-toggle="pill" href="#policies" role="tab">

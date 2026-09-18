@@ -4,6 +4,8 @@
     </footer>
 </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.1.0/jspdf.plugin.autotable.min.js"></script>
     <script type="module" src="js/script.js?v=<?php echo filemtime(__DIR__ . '/../js/script.js'); ?>"></script>
     <script>
         (function() {
