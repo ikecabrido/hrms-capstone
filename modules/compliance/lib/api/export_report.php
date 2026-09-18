@@ -22,23 +22,29 @@ function cv_value(PDO $db, string $sql, $default = 0) {
 
 $reportTables = [
     'employee_master_list' => 'em_employees',
-    'employee_compliance' => 'lc_compliance_records',
-    'employee_documents' => 'employee_documents',
-    'document_expiration' => 'employee_documents',
-    'training_certifications' => 'lc_trainings',
+    'employee_compliance' => 'lc_compliance_summary',
+    'employee_documents' => 'em_documents',
+    'training_certifications' => 'pm_employee_training',
     'policy_acknowledgement' => 'lc_acknowledgment_log',
-    'leave_summary' => 'leave_requests',
+    'leave_summary' => 'ta_leave_requests',
     'disciplinary_actions' => 'lc_disciplinary_actions',
     'anonymous_reports' => 'lc_complaints',
     'legal_cases' => 'lc_compliance_violations',
-    'audit_findings' => 'lc_audit_findings',
-    'recruitment_summary' => 'lc_recruitment',
-    'new_employees' => 'em_employees',
-    'exit_clearance' => 'lc_exit_clearance',
-    'exit_summary' => 'exit_resignations',
-    'job_posting_approval' => 'lc_job_posting_requests',
-    'vacancy_reports' => 'lc_vacant_positions',
+    'recruitment_summary' => 'rao_applications',
+    'new_employees' => 'rao_onboarding',
+    'exit_clearance' => 'exit_resignations',
+    'job_posting_approval' => 'rao_jobs',
+    'employee_attendance' => 'em_attendance',
+    'employee_performance' => 'em_performance_reviews',
+    'sss_contributions' => 'lc_sss_contributions',
+    'philhealth_contributions' => 'lc_philhealth_contributions',
+    'pagibig_contributions' => 'lc_pagibig_contributions',
+    'bir_tax_withholding' => 'lc_bir_contributions',
+    'incident_reports' => 'lc_incident_report',
+    'government_submission' => 'em_government_ids',
+    'contract_renewals' => 'em_contract_renewals',
 ];
+
 
 $reportTitle = ucwords(str_replace(['_', '-'], ' ', $key)) . ' Report';
 $rows = [];

@@ -73,48 +73,40 @@ $reportCategories = [
         'icon' => 'bi-people',
         'reports' => [
             ['key' => 'employee_master_list', 'label' => 'Employee Master List', 'table' => 'em_employees', 'table_label' => 'Employees', 'export' => 'export_report'],
-            ['key' => 'employee_compliance', 'label' => 'Employee Compliance Status', 'table' => 'lc_compliance_records', 'table_label' => 'Compliance Records', 'export' => 'export_report'],
-            ['key' => 'employee_documents', 'label' => 'Employee Documents', 'table' => 'employee_documents', 'table_label' => 'Employee Documents', 'export' => 'export_report'],
-            ['key' => 'employment_contracts', 'label' => 'Employment Contracts', 'table' => 'lc_contracts', 'table_label' => 'Contracts', 'export' => 'export_contract_compliance'],
-            ['key' => 'document_expiration', 'label' => 'Document Expiration', 'table' => 'employee_documents', 'table_label' => 'Employee Documents', 'export' => 'export_report'],
-            ['key' => 'training_certifications', 'label' => 'Training & Certifications', 'table' => 'lc_trainings', 'table_label' => 'Trainings', 'export' => 'export_report'],
+            ['key' => 'employee_compliance', 'label' => 'Employee Compliance Status', 'table' => 'lc_compliance_summary', 'table_label' => 'Compliance Records', 'export' => 'export_report'],
+            ['key' => 'employee_documents', 'label' => 'Employee Documents', 'table' => 'em_documents', 'table_label' => 'Employee Documents', 'export' => 'export_report'],
+            ['key' => 'training_certifications', 'label' => 'Training & Certifications', 'table' => 'pm_employee_training', 'table_label' => 'Trainings', 'export' => 'export_report'],
             ['key' => 'policy_acknowledgement', 'label' => 'Policy Acknowledgement', 'table' => 'lc_acknowledgment_log', 'table_label' => 'Acknowledgement Log', 'export' => 'export_report'],
-            ['key' => 'leave_summary', 'label' => 'Leave Summary', 'table' => 'leave_requests', 'table_label' => 'Leave Requests', 'export' => 'export_report'],
+            ['key' => 'leave_summary', 'label' => 'Leave Summary', 'table' => 'ta_leave_requests', 'table_label' => 'Leave Requests', 'export' => 'export_report'],
         ]
     ],
     'Government Reports' => [
         'icon' => 'bi-bank2',
         'reports' => [
-            ['key' => 'sss_compliance', 'label' => 'SSS Compliance', 'table' => 'sss_contributions', 'table_label' => 'SSS Contributions', 'export' => 'export_sss_report'],
-            ['key' => 'philhealth_compliance', 'label' => 'PhilHealth Compliance', 'table' => 'philhealth_contributions', 'table_label' => 'PhilHealth Contributions', 'export' => 'export_philhealth_report'],
-            ['key' => 'pagibig_compliance', 'label' => 'Pag-IBIG Compliance', 'table' => 'pagibig_contributions', 'table_label' => 'Pag-IBIG Contributions', 'export' => 'export_pagibig_report'],
-            ['key' => 'bir_compliance', 'label' => 'BIR Compliance', 'table' => 'pr_bir_contribution', 'table_label' => 'BIR Contributions', 'export' => 'export_government_report'],
-            ['key' => 'government_submission', 'label' => 'Government Submission Status', 'table' => 'lc_government_validations', 'table_label' => 'Government Validations', 'export' => 'export_government_report'],
-            ['key' => 'missing_registrations', 'label' => 'Missing Government Registrations', 'table' => 'lc_government_requirements', 'table_label' => 'Government Requirements', 'export' => 'export_government_report'],
-            ['key' => 'government_summary', 'label' => 'Government Compliance Summary', 'table' => 'lc_compliance_records', 'table_label' => 'Compliance Records', 'export' => 'export_government_report'],
+            ['key' => 'sss_compliance', 'label' => 'SSS Compliance', 'table' => 'lc_sss_contributions', 'table_label' => 'SSS Contributions', 'export' => 'export_sss_report'],
+            ['key' => 'philhealth_compliance', 'label' => 'PhilHealth Compliance', 'table' => 'lc_philhealth_contributions', 'table_label' => 'PhilHealth Contributions', 'export' => 'export_philhealth_report'],
+            ['key' => 'pagibig_compliance', 'label' => 'Pag-IBIG Compliance', 'table' => 'lc_pagibig_contributions', 'table_label' => 'Pag-IBIG Contributions', 'export' => 'export_pagibig_report'],
+            ['key' => 'bir_compliance', 'label' => 'BIR Compliance', 'table' => 'lc_bir_contributions', 'table_label' => 'BIR Contributions', 'export' => 'export_government_report'],
+            ['key' => 'government_submission', 'label' => 'Government Submission Status', 'table' => 'em_government_ids', 'table_label' => 'Government Validations', 'export' => 'export_government_report'],
         ]
     ],
     'Legal Reports' => [
         'icon' => 'bi-shield-exclamation',
         'reports' => [
-            ['key' => 'incident_reports', 'label' => 'Incident Reports', 'table' => 'incident_report', 'table_label' => 'Incident Reports', 'export' => 'export_incident'],
-            ['key' => 'disciplinary_actions', 'label' => 'Disciplinary Actions', 'table' => 'lc_disciplinary_actions', 'table_label' => 'Disciplinary Actions', 'export' => 'export_report'],
+            ['key' => 'incident_reports', 'label' => 'Incident Reports', 'table' => 'lc_incident_report', 'table_label' => 'Incident Reports', 'export' => 'export_incident'],
+            ['key' => 'disciplinary_actions', 'label' => 'Disciplinary Actions', 'table' => 'lc_complaint_decision_history', 'table_label' => 'Disciplinary Actions', 'export' => 'export_report'],
             ['key' => 'anonymous_reports', 'label' => 'Anonymous Reports', 'table' => 'lc_complaints', 'table_label' => 'Complaints', 'export' => 'export_report'],
-            ['key' => 'legal_cases', 'label' => 'Legal Cases', 'table' => 'lc_compliance_violations', 'table_label' => 'Compliance Violations', 'export' => 'export_report'],
             ['key' => 'risk_assessment', 'label' => 'Risk Assessment', 'table' => 'lc_risks', 'table_label' => 'Risks', 'export' => 'export_risk'],
-            ['key' => 'audit_findings', 'label' => 'Audit Findings', 'table' => 'lc_audit_findings', 'table_label' => 'Audit Findings', 'export' => 'export_report'],
         ]
     ],
     'Recruitment & Exit Reports' => [
         'icon' => 'bi-person-plus',
         'reports' => [
-            ['key' => 'recruitment_summary', 'label' => 'Recruitment Summary', 'table' => 'lc_recruitment', 'table_label' => 'Recruitment', 'export' => 'export_report'],
-            ['key' => 'new_employees', 'label' => 'New Employees', 'table' => 'em_employees', 'table_label' => 'Employees', 'export' => 'export_report'],
-            ['key' => 'contract_renewals', 'label' => 'Contract Renewals', 'table' => 'lc_contracts', 'table_label' => 'Contracts', 'export' => 'export_contract_compliance'],
-            ['key' => 'exit_clearance', 'label' => 'Exit Clearance', 'table' => 'lc_exit_clearance', 'table_label' => 'Exit Clearance', 'export' => 'export_report'],
-            ['key' => 'exit_summary', 'label' => 'Exit Summary', 'table' => 'exit_resignations', 'table_label' => 'Exit Requests', 'export' => 'export_report'],
-            ['key' => 'job_posting_approval', 'label' => 'Job Posting Approval', 'table' => 'lc_job_posting_requests', 'table_label' => 'Job Posting Requests', 'export' => 'export_report'],
-            ['key' => 'vacancy_reports', 'label' => 'Vacancy Reports', 'table' => 'lc_vacant_positions', 'table_label' => 'Vacant Positions', 'export' => 'export_report'],
+            ['key' => 'recruitment_summary', 'label' => 'Recruitment Summary', 'table' => 'rao_applications', 'table_label' => 'Recruitment', 'export' => 'export_report'],
+            ['key' => 'new_employees', 'label' => 'New Employees', 'table' => 'rao_onboarding', 'table_label' => 'Employees', 'export' => 'export_report'],
+            ['key' => 'contract_renewals', 'label' => 'Contract Renewals', 'table' => 'em_contract_renewals', 'table_label' => 'Contracts', 'export' => 'export_contract_compliance'],
+            ['key' => 'exit_clearance', 'label' => 'Exit Clearance', 'table' => 'exit_resignations', 'table_label' => 'Exit Clearance', 'export' => 'export_report'],
+            ['key' => 'job_posting_approval', 'label' => 'Job Posting Approval', 'table' => 'rao_jobs', 'table_label' => 'Job Posting Requests', 'export' => 'export_report'],
         ]
     ],
 ];

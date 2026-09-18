@@ -66,23 +66,16 @@ $reportConfig = [
         },
     ],
     'employee_compliance' => [
-        'table' => 'lc_compliance_records',
+        'table' => 'lc_compliance_summary',
         'title' => 'Employee Compliance Status',
     ],
     'employee_documents' => [
-        'table' => 'employee_documents',
+        'table' => 'em_documents',
         'title' => 'Employee Documents',
     ],
-    'employment_contracts' => [
-        'type' => 'contract_compliance',
-        'title' => 'Employment Contracts',
-    ],
-    'document_expiration' => [
-        'table' => 'employee_documents',
-        'title' => 'Document Expiration',
-    ],
+   
     'training_certifications' => [
-        'table' => 'lc_trainings',
+        'table' => 'pm_employee_training',
         'title' => 'Training & Certifications',
     ],
     'policy_acknowledgement' => [
@@ -90,7 +83,7 @@ $reportConfig = [
         'title' => 'Policy Acknowledgement',
     ],
     'leave_summary' => [
-        'table' => 'leave_requests',
+        'table' => 'ta_leave_requests',
         'title' => 'Leave Summary',
     ],
     'sss_compliance' => [
@@ -114,69 +107,51 @@ $reportConfig = [
         'title' => 'BIR Compliance',
     ],
     'government_submission' => [
-        'table' => 'lc_government_validations',
+        'table' => 'em_government_ids',
         'title' => 'Government Submission Status',
     ],
-    'missing_registrations' => [
-        'table' => 'lc_government_requirements',
-        'title' => 'Missing Government Registrations',
-    ],
-    'government_summary' => [
-        'table' => 'lc_compliance_records',
-        'title' => 'Government Compliance Summary',
-    ],
+   
+   
     'incident_reports' => [
         'type' => 'incident',
         'title' => 'Incident Reports',
     ],
     'disciplinary_actions' => [
-        'table' => 'lc_disciplinary_actions',
+        'table' => 'lc_complaint_decision_history',
         'title' => 'Disciplinary Actions',
     ],
     'anonymous_reports' => [
         'table' => 'lc_complaints',
         'title' => 'Anonymous Reports',
     ],
-    'legal_cases' => [
-        'table' => 'lc_compliance_violations',
-        'title' => 'Legal Cases',
-    ],
+   
     'risk_assessment' => [
         'type' => 'risk',
         'title' => 'Risk Assessment',
     ],
-    'audit_findings' => [
-        'table' => 'lc_audit_findings',
-        'title' => 'Audit Findings',
-    ],
+    
     'recruitment_summary' => [
-        'table' => 'lc_recruitment',
+        'table' => 'rao_applications',
         'title' => 'Recruitment Summary',
     ],
     'new_employees' => [
-        'table' => 'em_employees',
+        'table' => 'rao_onboarding',
         'title' => 'New Employees',
     ],
     'contract_renewals' => [
-        'type' => 'contract_compliance',
+        'table' => 'em_contract_renewals',
         'title' => 'Contract Renewals',
     ],
     'exit_clearance' => [
-        'table' => 'lc_exit_clearance',
+        'table' => 'exit_resignations',
         'title' => 'Exit Clearance',
     ],
-    'exit_summary' => [
-        'table' => 'exit_resignations',
-        'title' => 'Exit Summary',
-    ],
+  
     'job_posting_approval' => [
-        'table' => 'lc_job_posting_requests',
+        'table' => 'rao_jobs',
         'title' => 'Job Posting Approval',
     ],
-    'vacancy_reports' => [
-        'table' => 'lc_vacant_positions',
-        'title' => 'Vacancy Reports',
-    ],
+   
 ];
 
 if (!isset($reportConfig[$key])) {
@@ -211,14 +186,14 @@ if (isset($config['type'])) {
 
         case 'government':
             $subtype = $config['subtype'];
-            $table = $subtype . '_contributions';
+            $table = 'lc_' . $subtype . '_contributions';
             $summaryData = [
                 'Total Employees' => (int) pv_value($db, "SELECT COUNT(*) FROM em_employees WHERE employment_status NOT IN ('Resigned','Terminated')"),
                 'Submitted' => (int) pv_value($db, "SELECT COUNT(*) FROM $table WHERE status = 'submitted'"),
                 'Pending' => (int) pv_value($db, "SELECT COUNT(*) FROM $table WHERE status = 'pending'"),
                 'Rejected' => (int) pv_value($db, "SELECT COUNT(*) FROM $table WHERE status = 'rejected'"),
             ];
-            $sql = "SELECT CONCAT(e.first_name, ' ', e.last_name) AS full_name, e.employee_no, c.contribution_number, c.status, c.created_at, c.updated_at
+            $sql = "SELECT CONCAT(e.first_name, ' ', e.last_name) AS full_name, e.employee_code AS employee_no, c.contribution_number, c.status, c.created_at, c.updated_at
                     FROM $table c
                     LEFT JOIN em_employees e ON e.employee_id = c.employee_id
                     ORDER BY c.created_at DESC
@@ -232,7 +207,7 @@ if (isset($config['type'])) {
                            i.incident_date, i.incident_time, i.location, i.title,
                            COALESCE(i.reporter_name, 'Unassigned') AS reporter_name,
                            COALESCE(i.assigned_name, 'Unassigned') AS assigned_name
-                    FROM incident_report i
+                     FROM lc_incident_report i
                     ORDER BY i.incident_date DESC
                     LIMIT 200";
             $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
