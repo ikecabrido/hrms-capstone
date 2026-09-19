@@ -8,6 +8,8 @@ $timeout = 1800;
 // Helper to detect API/fetch requests
 $isApiRequest = $_SERVER['REQUEST_METHOD'] === 'POST' ||
     !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
+$isApiRequest = $_SERVER['REQUEST_METHOD'] === 'POST' ||
+    !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
 
 // Redirect to login if not authenticated
 if (!isset($_SESSION['employee_id'])) {
@@ -16,7 +18,7 @@ if (!isset($_SESSION['employee_id'])) {
         echo json_encode(['success' => false, 'message' => 'Unauthorized. Please log in.']);
         exit();
     }
-    header('Location: /index.php');
+    header('Location: hrms-capstone/index.php');
     exit();
 }
 
@@ -39,7 +41,14 @@ $current_employee_name = $_SESSION['employee_name'] ?? 'Unknown';
 $current_employee_id   = $_SESSION['employee_id'];
 $current_employee_code = $_SESSION['employee_code'] ?? '';
 $current_department_id   = $_SESSION['department_id'] ?? null;
+$current_employee_code = $_SESSION['employee_code'] ?? '';
+$current_department_id   = $_SESSION['department_id'] ?? null;
 $current_department_name = $_SESSION['department_name'] ?? 'Unknown';
+$current_position_id   = $_SESSION['position_id'] ?? null;
+$current_position_name = $_SESSION['position_name'] ?? 'Unknown';
+$current_role_id   = $_SESSION['role_id'];
+$current_role_name = $_SESSION['role_name'];
+
 $current_position_id   = $_SESSION['position_id'] ?? null;
 $current_position_name = $_SESSION['position_name'] ?? 'Unknown';
 $current_role_id   = $_SESSION['role_id'];

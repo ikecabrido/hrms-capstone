@@ -1,0 +1,577 @@
+/* ==========================================================================
+   Period Manager — page-specific styles
+   Reuses the existing Payroll theme variables (base/variables.css):
+   --color1 (deep purple), --color3 (white), --color9 (light gray), etc.
+   ========================================================================== */
+
+.pm-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ---------- Alert ---------- */
+.pm-alert {
+  padding: 0.85rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pm-alert.pm-alert-success {
+  background: #e6f7ee;
+  color: #1e7e4d;
+  border: 1px solid #b7e4c7;
+}
+
+.pm-alert.pm-alert-error {
+  background: #fdecec;
+  color: var(--color10);
+  border: 1px solid #f5c2c2;
+}
+
+/* ---------- Summary cards ---------- */
+.pm-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.pm-summary-card {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.pm-summary-card-wide {
+  grid-column: span 1;
+}
+
+.pm-summary-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--color3);
+  background: var(--color1);
+}
+
+.pm-icon-open {
+  background: #1e9e64;
+}
+.pm-icon-closed {
+  background: var(--color2);
+}
+.pm-icon-current {
+  background: var(--color7);
+}
+
+.pm-summary-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pm-summary-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color8);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pm-summary-card-wide .pm-summary-value {
+  font-size: 1rem;
+}
+
+.pm-summary-label {
+  font-size: 0.78rem;
+  color: var(--color5);
+}
+
+/* ---------- Toolbar ---------- */
+.pm-toolbar {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pm-toolbar-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+.pm-search-wrap {
+  position: relative;
+  min-width: 220px;
+  flex: 1;
+  max-width: 320px;
+}
+
+.pm-search-wrap i {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color4);
+  font-size: 0.85rem;
+}
+
+.pm-search-wrap input {
+  width: 100%;
+  padding: 0.55rem 0.75rem 0.55rem 2.1rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.pm-search-wrap input:focus {
+  border-color: var(--color7);
+}
+
+#pmStatusFilter {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: var(--color3);
+  color: var(--color8);
+  outline: none;
+}
+
+.pm-toolbar-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* ---------- Buttons ---------- */
+.pm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.pm-btn i {
+  font-size: 0.85rem;
+}
+
+.pm-btn-primary {
+  background: var(--color1);
+  color: var(--color3);
+}
+
+.pm-btn-primary:hover {
+  filter: brightness(1.12);
+}
+
+.pm-btn-outline {
+  background: var(--color3);
+  color: var(--color1);
+  border: 1px solid var(--color1);
+}
+
+.pm-btn-outline:hover {
+  background: rgba(32, 0, 130, 0.06);
+}
+
+.pm-btn-secondary {
+  background: var(--color9);
+  color: var(--color2);
+}
+
+.pm-btn-secondary:hover {
+  background: var(--color4);
+}
+
+.pm-btn-danger {
+  background: var(--color10);
+  color: var(--color3);
+}
+
+.pm-btn-danger:hover {
+  filter: brightness(1.08);
+}
+
+.pm-btn-sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  border-radius: 6px;
+}
+
+.pm-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Table card ---------- */
+.pm-table-card {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.pm-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.pm-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.pm-table thead th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color5);
+  background: var(--color9);
+  padding: 0.85rem 1.1rem;
+  white-space: nowrap;
+}
+
+.pm-table tbody td {
+  padding: 0.85rem 1.1rem;
+  font-size: 0.87rem;
+  color: var(--color8);
+  border-top: 1px solid var(--color9);
+  vertical-align: middle;
+}
+
+.pm-table tbody tr:hover {
+  background: rgba(240, 240, 240, 0.6);
+}
+
+.pm-actions-col {
+  width: 1%;
+}
+
+.pm-period-name {
+  font-weight: 600;
+}
+
+.pm-loading-row,
+.pm-error-row {
+  text-align: center;
+  padding: 2.5rem 1rem !important;
+  color: var(--color5);
+  font-size: 0.9rem;
+}
+
+.pm-error-row {
+  color: var(--color10);
+}
+
+/* ---------- Status badges ---------- */
+.pm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pm-badge-open {
+  background: #e6f7ee;
+  color: #1e7e4d;
+}
+
+.pm-badge-closed {
+  background: var(--color9);
+  color: var(--color2);
+}
+
+/* ---------- Row actions ---------- */
+.pm-row-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.pm-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--color4);
+  background: var(--color3);
+  color: var(--color2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.pm-icon-btn:hover {
+  background: var(--color9);
+}
+
+.pm-icon-btn-danger:hover {
+  background: #fdecec;
+  color: var(--color10);
+  border-color: #f5c2c2;
+}
+
+.pm-icon-btn-primary:hover {
+  background: rgba(32, 0, 130, 0.08);
+  color: var(--color1);
+  border-color: var(--color1);
+}
+
+/* ---------- Empty state ---------- */
+.pm-empty-state {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+  color: var(--color5);
+}
+
+.pm-empty-state i {
+  font-size: 2.2rem;
+  color: var(--color4);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.pm-empty-state p {
+  margin-bottom: 1.1rem;
+  font-size: 0.95rem;
+}
+
+/* ---------- Modals ---------- */
+.pm-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.pm-modal {
+  background: var(--color3);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+}
+
+.pm-modal-sm {
+  max-width: 420px;
+}
+
+.pm-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.3rem;
+  border-bottom: 1px solid var(--color9);
+}
+
+.pm-modal-header h2 {
+  font-size: 1.05rem;
+  color: var(--color8);
+  margin: 0;
+}
+
+.pm-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--color5);
+  cursor: pointer;
+}
+
+.pm-modal-body {
+  padding: 1.3rem;
+}
+
+.pm-modal-subtitle {
+  color: var(--color5);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.pm-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 1rem 1.3rem;
+  border-top: 1px solid var(--color9);
+}
+
+#pmPeriodForm {
+  display: flex;
+  flex-direction: column;
+}
+#pmPeriodForm .pm-modal-body,
+#pmPeriodForm {
+  padding: 0;
+}
+#pmPeriodForm .pm-form-group {
+  padding: 0 1.3rem;
+}
+#pmPeriodForm .pm-form-row {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+#pmPeriodForm .pm-form-group:first-of-type {
+  padding-top: 1.3rem;
+}
+
+.pm-form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pm-form-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color2);
+}
+
+.pm-required {
+  color: var(--color10);
+}
+
+.pm-form-group input {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  outline: none;
+  color: var(--color8);
+}
+
+.pm-form-group input:focus {
+  border-color: var(--color7);
+}
+
+.pm-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.pm-form-error {
+  margin: 0 1.3rem 1rem;
+  padding: 0.6rem 0.75rem;
+  background: #fdecec;
+  color: var(--color10);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+/* Generate-preview */
+.pm-preview {
+  background: var(--color9);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.pm-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.87rem;
+}
+
+.pm-preview-row span {
+  color: var(--color5);
+}
+.pm-preview-row strong {
+  color: var(--color8);
+}
+
+/* ==========================================================================
+   Responsiveness
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .pm-summary-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pm-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pm-toolbar-actions {
+    justify-content: stretch;
+  }
+
+  .pm-toolbar-actions .pm-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .pm-search-wrap {
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .pm-summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .pm-modal {
+    max-width: 100%;
+  }
+}

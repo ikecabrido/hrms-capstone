@@ -4,8 +4,9 @@ require_once 'classes/Page.php';
 $pageController = new Page();
 $currentPage = $pageController->getPage();
 
-include 'includes/sidebar.php';
 include 'includes/header.php';
+include 'includes/sidebar.php';
+
 ?>
 
 <main class="main-content">

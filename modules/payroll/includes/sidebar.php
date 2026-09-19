@@ -13,6 +13,9 @@ $employeeClass = new Employee();
             <!-- Bell Icon + Notification Dropdown -->
             <div class="icon-wrapper" id="bellWrapper">
                 <i class="fa-regular fa-bell" id="bellBtn"></i>
+                <span class="notification-badge" id="notificationBadge">
+
+                </span>
                 <div class="icon-dropdown" id="bellDropdown">
                     <div class="dropdown-header">
                         <span>Notifications</span>
@@ -51,7 +54,7 @@ $employeeClass = new Employee();
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="/hrms-capstone/auth/logout.php" class="signout-link">
+                            <a href="/auth/logout.php" class="signout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                             </a>
                         </li>
