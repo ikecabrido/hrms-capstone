@@ -30,8 +30,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Get POST data
-$data = json_decode(file_get_contents("php://input"), true);
+// Get POST data or multipart/form-data
+$data = [];
+if (!empty($_FILES) || (isset($_SERVER['CONTENT_TYPE']) && stripos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false)) {
+    // Use form fields
+    $data = $_POST;
+} else {
+    $data = json_decode(file_get_contents("php://input"), true);
+}
 
 // Validate required fields
 $required_fields = ['employee_id', 'leave_type_id', 'start_date', 'end_date', 'reason'];
@@ -84,6 +90,24 @@ $request_data = [
     'reason' => trim($data['reason']),
     'total_days' => $total_days
 ];
+
+// Handle file upload if present (supporting_document)
+if (!empty($_FILES['supporting_document']['name'])) {
+    $uploadDir = __DIR__ . '/../../../uploads/leave_documents/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    $allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx'];
+    $ext = strtolower(pathinfo($_FILES['supporting_document']['name'], PATHINFO_EXTENSION));
+    if (in_array($ext, $allowedExtensions, true)) {
+        $safeFilename = uniqid('leave_doc_') . '.' . $ext;
+        $destination = $uploadDir . $safeFilename;
+        if (move_uploaded_file($_FILES['supporting_document']['tmp_name'], $destination)) {
+            $request_data['supporting_document'] = 'uploads/leave_documents/' . $safeFilename;
+            $request_data['document_uploaded_at'] = date('Y-m-d H:i:s');
+        }
+    }
+}
 
 // Submit request through controller
 $leaveController = new LeaveController();

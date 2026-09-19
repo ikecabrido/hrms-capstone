@@ -85,8 +85,6 @@ class LeaveAbsenceHelper
         $badges = [
             'Pending' => '<span class="badge badge-warning">Pending Approval</span>',
             'PENDING' => '<span class="badge badge-warning">Pending Approval</span>',
-            'APPROVED_BY_HEAD' => '<span class="badge badge-info">Approved by Head</span>',
-            'APPROVED_BY_HR' => '<span class="badge badge-success">Approved & Active</span>',
             'Approved' => '<span class="badge badge-success">Approved</span>',
             'REJECTED' => '<span class="badge badge-danger">Rejected</span>',
             'CANCELLED' => '<span class="badge badge-secondary">Cancelled</span>',

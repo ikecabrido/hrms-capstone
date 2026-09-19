@@ -33,17 +33,13 @@ function initHamburgerLayout() {
             // Desktop behavior: hide sidebar and adjust layout
             sidebar.classList.toggle('hidden');
             
-            // Adjust main content, footer, and header
+            // Update collapsed state using the shared body class rather than inline styles.
+            // This keeps layout behavior consistent across pages and allows stylesheets
+            // (e.g. `body.sidebar-collapse main.main-content`) to control the layout.
             if (sidebar.classList.contains('hidden')) {
-                mainContent.style.marginLeft = '0';
-                footer.style.marginLeft = '0';
-                header.style.left = '0';
-                header.style.width = '100%';
+                document.body.classList.add('sidebar-collapse');
             } else {
-                mainContent.style.marginLeft = '252px';
-                footer.style.marginLeft = '252px';
-                header.style.left = '252px';
-                header.style.width = 'calc(100% - 252px)';
+                document.body.classList.remove('sidebar-collapse');
             }
         }
     });
@@ -80,24 +76,21 @@ function initHamburgerLayout() {
         const mobile = isMobile();
 
         if (mobile) {
-            // Mobile: clear any desktop inline styles so CSS (off-canvas
-            // sidebar, full-width content) takes over correctly.
-            mainContent.style.marginLeft = '';
-            footer.style.marginLeft = '';
-            header.style.left = '';
-            header.style.width = '';
+            // Mobile: ensure the shared collapsed class is not applied and
+            // clear any desktop-only states so CSS can take over.
+            document.body.classList.remove('sidebar-collapse');
             sidebar.classList.remove('hidden');
             sidebar.classList.remove('active');
             overlay.classList.remove('active');
             hamburger?.classList.remove('active');
         } else {
-            // Desktop: restore desktop layout if sidebar is not manually hidden.
+            // Desktop: use the sidebar's `hidden` flag to drive the shared
+            // `sidebar-collapse` class. This avoids writing inline styles here.
             overlay.classList.remove('active');
-            if (!sidebar.classList.contains('hidden')) {
-                mainContent.style.marginLeft = '252px';
-                footer.style.marginLeft = '252px';
-                header.style.left = '252px';
-                header.style.width = 'calc(100% - 252px)';
+            if (sidebar.classList.contains('hidden')) {
+                document.body.classList.add('sidebar-collapse');
+            } else {
+                document.body.classList.remove('sidebar-collapse');
             }
         }
     }

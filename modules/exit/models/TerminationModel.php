@@ -16,6 +16,23 @@ class TerminationModel extends ExitManagementModel
         $this->ensureTerminationSchema();
     }
 
+    /**
+     * Ensure text is safe for FPDF core fonts by replacing problematic
+     * characters and converting encoding to ISO-8859-1 with transliteration.
+     */
+    private function pdfText(string $text): string
+    {
+        // Normalize different dash characters to a safe ASCII hyphen with spaces
+        $text = str_replace(["\xE2\x80\x94", "\xE2\x80\x93", '—', '–'], ' - ', $text);
+
+        // Trim accidental tabs/newlines at ends
+        $text = trim($text);
+
+        // Convert UTF-8 to ISO-8859-1 with transliteration; fall back to original on failure
+        $converted = @iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $text);
+        return $converted !== false ? $converted : $text;
+    }
+
     private function ensureExitTerminationsAutoIncrement(): void
     {
         try {
@@ -156,7 +173,7 @@ class TerminationModel extends ExitManagementModel
      */
     protected function saveTerminationLetter(int $terminationId, array $data): void
     {
-        // Build a simple HTML letter. Keep it consistent with settlement header used elsewhere.
+        // Generate a professionally formatted PDF termination letter using FPDF.
         $employeeId = $data['employee_id'] ?? '';
         $employeeName = '';
         try {
@@ -172,18 +189,6 @@ class TerminationModel extends ExitManagementModel
         $reason = $data['termination_reason'] ?? '';
         $comments = $data['comments'] ?? '';
 
-        $html = '<!doctype html><html><head><meta charset="utf-8"><title>Termination Letter</title>' .
-            '<style>body{font-family:Arial,sans-serif;margin:24px;color:#172b4d;} .school-header{display:flex;align-items:center;border-bottom:2px solid #1f5fbf;padding-bottom:14px;margin-bottom:20px;} .school-header img{width:86px;height:86px;object-fit:contain;margin-right:18px;} .school-name{font-size:20px;font-weight:700;color:#174a8b;} .school-details{font-size:12px;line-height:1.6;color:#333;margin-top:4px;} .content{font-size:14px;line-height:1.7;color:#1f2937;}</style>' .
-            '</head><body>' .
-            '<div class="school-header"><img src="/capstone_hr_management_system2/assets/pics/bcpLogo.png" alt="BCP logo"><div><div class="school-name">Bestlink College of the Philippines - Bulacan Campus</div><div class="school-details">Lot 1 Ipo Road Brgy. Minuyan Proper, City of San Jose Del Monte, Bulacan.<br>Tel. No.: (044)792-1992</div></div></div>' .
-            '<h2>Termination Letter</h2>' .
-            '<div class="content">' .
-            '<p>This letter serves as formal notice that <strong>' . htmlspecialchars($employeeName, ENT_QUOTES) . '</strong> (Employee ID: ' . htmlspecialchars($employeeId, ENT_QUOTES) . ') is being terminated effective <strong>' . htmlspecialchars($effectiveDate, ENT_QUOTES) . '</strong>.</p>' .
-            '<p><strong>Reason for termination:</strong> ' . nl2br(htmlspecialchars($reason, ENT_QUOTES)) . '</p>' .
-            ($comments ? '<p><strong>Additional notes:</strong> ' . nl2br(htmlspecialchars($comments, ENT_QUOTES)) . '</p>' : '') .
-            '<p>Issued by HR Management</p>' .
-            '</div></body></html>';
-
         // Ensure uploads directory exists
         $uploadDir = __DIR__ . '/../uploads/documents/';
         if (!is_dir($uploadDir)) {
@@ -194,9 +199,130 @@ class TerminationModel extends ExitManagementModel
         $filePathRelative = 'uploads/documents/' . $pdfFileName;
         $fullPath = __DIR__ . '/../' . $filePathRelative;
 
-        $pdfGenerated = $this->buildPdfFromText($fullPath, 'Termination Letter', $html);
+        // Require module-local FPDF (should exist at modules/exit/vendor/fpdf/fpdf.php)
+        $fpdfPath = __DIR__ . '/../vendor/fpdf/fpdf.php';
+        if (!file_exists($fpdfPath)) {
+            throw new Exception('FPDF library not found at ' . $fpdfPath);
+        }
 
-        if (!$pdfGenerated) {
+        require_once $fpdfPath;
+
+        try {
+            $pdf = new \FPDF();
+            $pdf->AddPage();
+
+            // Header: logo + school name/address with blue accent and divider line
+            $logoPath = realpath(__DIR__ . '/../../time/assets/pics/bcpLogo.png');
+            if ($logoPath && file_exists($logoPath)) {
+                // Place logo at left (10mm from left, 10mm from top), width ~25mm
+                $pdf->Image($logoPath, 10, 10, 25);
+            }
+
+            // School name in blue (#174a8b -> RGB 23,74,139)
+            $pdf->SetTextColor(23, 74, 139);
+            $pdf->SetFont('Arial', 'B', 14);
+            // Position text to the right of the logo (if present)
+            $pdf->SetXY(40, 12);
+            $pdf->Cell(0, 6, $this->pdfText('Bestlink College of the Philippines - Bulacan Campus'), 0, 1, 'L');
+
+            // Address in normal color
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetX(40);
+            $pdf->MultiCell(0, 5, $this->pdfText("Lot 1 Ipo Road Brgy. Minuyan Proper, City of San Jose Del Monte, Bulacan. Tel. No.: (044)792-1992"), 0, 'L');
+
+            // Draw a blue horizontal rule (#1f5fbf -> RGB 31,95,191) below header
+            $yLine = $pdf->GetY() + 4;
+            $pdf->SetDrawColor(31, 95, 191);
+            $pdf->SetLineWidth(0.8);
+            // If a logo was placed on the left, start the line to the right of it (approx x=40mm)
+            $lineStartX = 10;
+            if (!empty($logoPath) && file_exists($logoPath)) {
+                $lineStartX = 40; // leave space for logo (10 + logo width ~25 + gap)
+            }
+            $pdf->Line($lineStartX, $yLine, $pdf->GetPageWidth() - 10, $yLine);
+            $pdf->Ln(8);
+
+            // Title (bold, slightly larger, dark navy)
+            $pdf->SetTextColor(15, 42, 74);
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->Cell(0, 8, $this->pdfText('Termination Letter'), 0, 1, 'C');
+            $pdf->Ln(4);
+
+            // Date
+            $pdf->SetFont('Arial', '', 11);
+            $dateStr = date('F j, Y');
+            $pdf->Cell(0, 6, $this->pdfText($dateStr), 0, 1, 'R');
+            $pdf->Ln(6);
+
+            // Reference line with Employee ID
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, $this->pdfText('Re: Notice of Termination - Employee ID ' . $employeeId), 0, 1, 'L');
+            $pdf->Ln(4);
+
+            // Salutation
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(0, 6, $this->pdfText('Dear ' . ($employeeName ?: 'Employee') . ','), 0, 1);
+            $pdf->Ln(4);
+
+            // Opening paragraph (formal notice)
+            $pdf->SetFont('Arial', '', 11);
+            $opening = sprintf("This letter is to formally notify you that your employment with Bestlink College of the Philippines - Bulacan Campus will be terminated, effective %s. This decision has been made after careful consideration and in accordance with the applicable provisions of company policy and the Labor Code of the Philippines.", $effectiveDate ?: 'the effective date');
+            $pdf->MultiCell(0, 6, $this->pdfText($opening));
+            $pdf->Ln(4);
+
+            // Reason section
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, $this->pdfText('The termination is based on the following grounds:'), 0, 1);
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->MultiCell(0, 6, $this->pdfText($reason ?: 'Not specified.'));
+            $pdf->Ln(4);
+
+            // Additional notes (if any)
+            if (!empty(trim($comments))) {
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->Cell(0, 6, $this->pdfText('Additional Notes:'), 0, 1);
+                $pdf->SetFont('Arial', '', 11);
+                $pdf->MultiCell(0, 6, $this->pdfText($comments));
+                $pdf->Ln(4);
+            }
+
+            // Return of company property
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->MultiCell(0, 6, $this->pdfText("You are requested to return all company property, including but not limited to identification cards, keys, equipment, and documents, to the Human Resources Office on or before your last working day."));
+            $pdf->Ln(4);
+
+            // Final pay and benefits
+            $pdf->MultiCell(0, 6, $this->pdfText("Your final pay, including any unused leave conversions and other benefits due, will be processed in accordance with company policy and applicable law. You will be informed of the schedule and requirements for claiming these through the appropriate HR channels."));
+            $pdf->Ln(4);
+
+            // Contact/questions
+            $pdf->MultiCell(0, 6, $this->pdfText("Should you have any questions regarding this letter or the termination process, please contact the Human Resources Office at your earliest convenience."));
+            $pdf->Ln(6);
+
+            // Closing paragraph
+            $pdf->MultiCell(0, 6, $this->pdfText("We thank you for your service and wish you success in your future endeavors."));
+            $pdf->Ln(8);
+
+            // Formal sign-off
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(0, 6, $this->pdfText('Sincerely,'), 0, 1);
+            $pdf->Ln(18);
+
+            // Signature block (single clean sign-off)
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(0, 6, '______________________________', 0, 1);
+            $pdf->Cell(0, 6, $this->pdfText('HR Manager / Authorized Signatory'), 0, 1);
+            $pdf->Ln(6);
+            $pdf->Cell(0, 6, $this->pdfText('Bestlink College of the Philippines - Bulacan Campus'), 0, 1);
+
+            // Save PDF to file
+            $pdf->Output('F', $fullPath);
+        } catch (Throwable $e) {
+            throw new Exception('FPDF generation failed: ' . $e->getMessage());
+        }
+
+        if (!file_exists($fullPath) || filesize($fullPath) === 0) {
             throw new Exception('Unable to generate termination letter PDF');
         }
 

@@ -22,8 +22,8 @@ class Leave
         }
 
         $query = "INSERT INTO `ta_leave_requests` 
-                  (employee_id, leave_type_id, start_date, end_date, details, status)
-                  VALUES (:employee_id, :leave_type_id, :start_date, :end_date, :details, 'PENDING')";
+                  (employee_id, leave_type_id, start_date, end_date, details, supporting_document, document_uploaded_at, status)
+                  VALUES (:employee_id, :leave_type_id, :start_date, :end_date, :details, :supporting_document, :document_uploaded_at, 'Pending')";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':employee_id', $data['employee_id'], PDO::PARAM_STR);
@@ -33,6 +33,11 @@ class Leave
 
         $details = $data['details'] ?? $data['reason'] ?? '';
         $stmt->bindParam(':details', $details);
+        // Optional supporting document path and upload timestamp
+        $supportingDocument = $data['supporting_document'] ?? null;
+        $documentUploadedAt = $data['document_uploaded_at'] ?? null;
+        $stmt->bindParam(':supporting_document', $supportingDocument);
+        $stmt->bindParam(':document_uploaded_at', $documentUploadedAt);
 
         return $stmt->execute();
     }
@@ -87,7 +92,7 @@ class Leave
                 LEFT JOIN em_departments d ON e.department_id = d.department_id
                 INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
                 INNER JOIN department_heads dh ON dh.department = COALESCE(d.department_name, e.department)
-                WHERE dh.user_id = :user_id AND lr.status IN ('Pending', 'PENDING')
+                WHERE dh.user_id = :user_id AND lr.status = 'Pending'
                 ORDER BY lr.date_submitted DESC";
 
         if ($limit !== null) {
@@ -120,7 +125,7 @@ class Leave
                   INNER JOIN em_employees e ON lr.employee_id = e.employee_id
                   LEFT JOIN em_departments d ON e.department_id = d.department_id
                   INNER JOIN department_heads dh ON dh.department = COALESCE(d.department_name, e.department)
-                  WHERE dh.user_id = :user_id AND lr.status IN ('Pending', 'PENDING')";
+                  WHERE dh.user_id = :user_id AND lr.status = 'Pending'";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':user_id', $deptHeadUserId, PDO::PARAM_INT);
@@ -151,7 +156,7 @@ class Leave
                 INNER JOIN em_employees e ON lr.employee_id = e.employee_id
                 LEFT JOIN em_departments d ON e.department_id = d.department_id
                 INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
-                WHERE lr.status IN ('Pending', 'PENDING', 'APPROVED_BY_HEAD')
+                WHERE lr.status = 'Pending'
                 ORDER BY lr.date_submitted DESC";
 
         if ($limit !== null) {
@@ -179,8 +184,8 @@ class Leave
     public function countForHRApproval()
     {
         $query = "SELECT COUNT(*) AS total
-                  FROM ta_leave_requests lr
-                  WHERE lr.status IN ('Pending', 'PENDING', 'APPROVED_BY_HEAD')";
+              FROM ta_leave_requests lr
+              WHERE lr.status = 'Pending'";
 
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -215,7 +220,7 @@ class Leave
             error_log('Successfully updated ta_leave_requests. Status: ' . $status);
 
             // If approved, transfer to lc_leave_requests for Legal & Compliance
-            if ($status === 'Approved' || $status === 'APPROVED_BY_HR') {
+            if ($status === 'Approved') {
                 error_log('Preparing to transfer approved leave to lc_leave_requests for ID: ' . $leave_request_id);
                 
                 // Get the leave request details with leave type name
@@ -365,6 +370,18 @@ class Leave
     }
 
     /**
+     * Get leave request with leave type name by ID
+     */
+    public function getRequestWithType($leave_request_id)
+    {
+        $query = "SELECT lr.*, lt.leave_type_name FROM ta_leave_requests lr JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id WHERE lr.id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':id', $leave_request_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Check if employee has sufficient leave balance
      */
     public function checkLeaveBalance($employee_id, $leave_type_id, $requested_days)
@@ -424,7 +441,7 @@ class Leave
      */
     public function getLeaveBalance($employee_id, $leave_type_id = null)
     {
-        $query = "SELECT lb.*, lt.leave_type_name, lt.days_per_year,
+        $query = "SELECT lb.*, lt.leave_type_name, lt.days_per_year, lt.accrual_frequency,
                          COALESCE(lb.opening_balance, lt.days_per_year) AS total_days,
                          COALESCE(lb.used_balance, 0) AS used_days,
                          COALESCE(lb.remaining_balance, lt.days_per_year) AS remaining_days
@@ -462,13 +479,47 @@ class Leave
     }
 
     /**
+     * Get leave history (Approved + Rejected). If $employee_id is null, return global history.
+     */
+    public function getHistory($employee_id = null, $limit = 50, $offset = 0)
+    {
+        $query = "SELECT lr.id, lr.employee_id, lr.leave_type_id, lr.start_date, lr.end_date, lr.details, lr.status, lr.updated_at,
+                         lt.leave_type_name, CONCAT(COALESCE(e.first_name,''),' ',COALESCE(e.last_name,'')) AS full_name
+                  FROM ta_leave_requests lr
+                  INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
+                  LEFT JOIN em_employees e ON lr.employee_id = e.employee_id
+                  WHERE lr.status IN ('Approved','REJECTED','Rejected')";
+
+        if ($employee_id) {
+            $query .= " AND lr.employee_id = :employee_id";
+        }
+
+        $query .= " ORDER BY lr.updated_at DESC LIMIT :limit OFFSET :offset";
+
+        $stmt = $this->conn->prepare($query);
+        if ($employee_id) {
+            $stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Provision default leave balances for a single employee.
      */
     public function provisionLeaveBalancesForEmployee($employee_id, $year = null)
     {
         $year = (int)($year ?? date('Y'));
 
-        $leaveTypes = $this->getLeaveTypes();
+        // Only provision leave types that are explicitly yearly —
+        // this prevents double-crediting when monthly accruals run.
+        $query = "SELECT * FROM ta_leave_types WHERE accrual_frequency = 'yearly' ORDER BY leave_type_name";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $leaveTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if (empty($leaveTypes)) {
             return false;
         }
@@ -510,17 +561,22 @@ class Leave
     {
         $year = (int)($year ?? date('Y'));
 
-        $query = "SELECT e.employee_id, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name
-                  FROM em_employees e
-                  LEFT JOIN ta_leave_balances lb ON e.employee_id = lb.employee_id AND lb.year = :year
-                  WHERE LOWER(COALESCE(e.employment_status, '')) = 'active'
-                    AND lb.employee_id IS NULL";
+                // Return employees who are missing balances for any yearly-accrual leave type.
+                // This ensures the provisioning flow only seeds yearly types and
+                // runs even if monthly balances already exist for the employee.
+                $query = "SELECT DISTINCT e.employee_id, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name
+                                    FROM em_employees e
+                                    JOIN ta_leave_types lt ON lt.accrual_frequency = 'yearly'
+                                    LEFT JOIN ta_leave_balances lb ON e.employee_id = lb.employee_id
+                                        AND lb.year = :year AND lb.leave_type_id = lt.leave_type_id
+                                    WHERE LOWER(COALESCE(e.employment_status, '')) = 'active'
+                                        AND lb.leave_type_id IS NULL";
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':year', $year, PDO::PARAM_INT);
-        $stmt->execute();
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(':year', $year, PDO::PARAM_INT);
+                $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+                return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**

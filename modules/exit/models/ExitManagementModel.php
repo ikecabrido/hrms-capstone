@@ -8,6 +8,41 @@ class ExitManagementModel
 
     protected function buildPdfFromText(string $outputPath, string $title, string $htmlContent): bool
     {
+        // Prefer a local, module-scoped FPDF if available (single-file, no Composer).
+        $localFpdfPath = __DIR__ . '/../vendor/fpdf/fpdf.php';
+        if (file_exists($localFpdfPath)) {
+            try {
+                require_once $localFpdfPath;
+                if (class_exists('FPDF')) {
+                    $plainText = preg_replace('/<br\s*\/?/i', "\n", $htmlContent);
+                    $plainText = preg_replace('/<\/?(p|div|li|h[1-6]|tr|td|th)\s*[^>]*>/i', "\n", $plainText);
+                    $plainText = strip_tags($plainText);
+                    $plainText = html_entity_decode($plainText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $plainText = preg_replace('/\r\n?/', "\n", $plainText);
+                    $plainText = preg_replace('/[\n]{3,}/', "\n\n", $plainText);
+                    $lines = array_filter(array_map('trim', preg_split('/\n/', $plainText)), static fn ($line) => $line !== '');
+
+                    if (empty($lines)) {
+                        $lines = [$title];
+                    }
+
+                    $pdf = new \FPDF();
+                    $pdf->AddPage();
+                    $pdf->SetFont('Arial', '', 12);
+
+                    foreach ($lines as $line) {
+                        // Use MultiCell for wrapping long lines
+                        $pdf->MultiCell(0, 6, $line);
+                    }
+
+                    $pdf->Output('F', $outputPath);
+                    return file_exists($outputPath) && filesize($outputPath) > 0;
+                }
+            } catch (Throwable $e) {
+                error_log('FPDF generation failed: ' . $e->getMessage());
+            }
+        }
+
         $autoloaderCandidates = [
             __DIR__ . '/../../vendor/autoload.php',
             __DIR__ . '/../../../vendor/autoload.php',
