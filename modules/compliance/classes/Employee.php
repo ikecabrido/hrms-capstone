@@ -24,7 +24,7 @@ class Employee
     }
 
     /**
-     * Get all employees
+     * Get all em_employees
      */
     public function getEmployees()
     {
@@ -35,12 +35,12 @@ class Employee
                     e.last_name,
                     d.department_name,
                     p.position_name,
-                    e.status
-                FROM hrms_employee AS e
-                LEFT JOIN hrms_department AS d
-                    ON e.department = d.department_id
-                LEFT JOIN hrms_position AS p
-                    ON e.position = p.position_id
+                    e.employment_status
+                FROM em_employees AS e
+                LEFT JOIN em_departments AS d
+                    ON e.department_id = d.department_id
+                LEFT JOIN em_positions AS p
+                    ON e.position_id = p.position_id
                 ORDER BY e.employee_id";
 
         $stmt = $this->conn->prepare($sql);
@@ -74,7 +74,7 @@ class Employee
 
         if ($employeeId) {
             $sql = "SELECT first_name, last_name
-                    FROM hrms_employee
+                    FROM em_employees
                     WHERE employee_id = :employee_id
                     LIMIT 1";
 
@@ -107,9 +107,9 @@ class Employee
 
         if ($employeeId) {
             $sql = "SELECT p.position_name
-                    FROM hrms_employee AS e
-                    LEFT JOIN hrms_position AS p
-                        ON e.position = p.position_id
+                    FROM em_employees AS e
+                    LEFT JOIN em_positions AS p
+                        ON e.position_id = p.position_id
                     WHERE e.employee_id = :employee_id
                     LIMIT 1";
 
@@ -127,3 +127,4 @@ class Employee
         return 'Unknown Position';
     }
 }
+

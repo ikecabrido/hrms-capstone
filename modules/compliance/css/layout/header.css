@@ -10,7 +10,12 @@ header {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     z-index: 999;
     transition: left 0.3s ease, width 0.3s ease;
-    
+    overflow: visible;
+}
+
+header.sidebar-collapsed {
+    left: 0;
+    width: 100%;
 }
 
 header i {
@@ -27,7 +32,6 @@ header i {
     cursor: pointer;
     padding: 0.5rem;
     margin-left: 1rem;
-    transition: all 0.3s ease;
 }
 
 .hamburger span {
@@ -35,7 +39,6 @@ header i {
     height: 3px;
     background: var(--color8);
     border-radius: 3px;
-    transition: all 0.3s ease;
     display: block;
 }
 
@@ -44,17 +47,47 @@ header i {
 }
 
 @media (max-width: 768px) {
-        header {
+    :root {
+        --header-height: 60px;
+    }
+
+    header {
         left: 0;
         width: 100%;
     }
 
-        .hamburger {
+    .hamburger {
         display: flex;
+    }
+
+    .header-actions {
+        gap: 0.1rem;
+    }
+
+    .realtime {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.15rem;
+    }
+
+    .header-icon-btn {
+        width: 34px;
+        height: 34px;
+    }
+
+    .header-icon-btn i {
+        font-size: 1.1rem;
     }
 }
 
+body.sidebar-mobile-open .sidebar-overlay {
+    display: block;
+}
+
 @media (max-width: 480px) {
+    :root {
+        --header-height: 50px;
+    }
+
     header {
         height: 50px;
     }
@@ -67,9 +100,40 @@ header i {
 }
 
 .realtime {
-    margin-left: auto;
-    margin-right: 1rem;
     font-size: 1rem;
     color: var(--color8);
-    padding: 0.5rem 1rem;
+    padding: 0.5rem 0.25rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-left: auto;
+}
+
+.header-icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: var(--color8);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.header-icon-btn i {
+    font-size: 1.25rem;
+}
+
+.header-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
 }

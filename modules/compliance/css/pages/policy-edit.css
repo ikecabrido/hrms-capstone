@@ -1,0 +1,98 @@
+.policy-module { padding: 4px 2px 24px; }
+
+.policy-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; }
+.policy-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.policy-card-head h3 { margin:0; font-size:0.98rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
+.policy-empty { padding:24px; text-align:center; color:var(--text-400,#8b93a1); font-size:0.84rem; }
+
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.form-group { display:flex; flex-direction:column; gap:6px; }
+.form-group > label { font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); text-transform:uppercase; letter-spacing:.4px; }
+.form-control { padding:10px 12px; border-radius:10px; border:1px solid var(--border,#e4e8ee); background:var(--paper,#eef1f5); color:var(--text-900,#1b2430); font-size:0.92rem; font-weight:600; transition:all .15s ease; width:100%; }
+.form-control:focus { outline:none; border-color:var(--info-blue,#3b82c4); box-shadow:0 0 0 3px rgba(59,130,196,.12); }
+textarea.form-control { resize:vertical; min-height:80px; }
+
+.policy-actions-row { display:flex; gap:8px; }
+
+.policy-email-payroll-btn {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    height:34px;
+    padding:0 14px;
+    border-radius:8px;
+    border:1px solid var(--border,#e4e8ee);
+    background:#fff;
+    color:var(--text-700,#3b4252);
+    font-size:0.85rem;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all 0.15s ease;
+    text-decoration:none;
+    gap:6px;
+}
+.policy-email-payroll-btn:hover:not(:disabled) {
+    border-color:var(--info-blue,#3b82c4);
+    color:var(--info-blue,#3b82c4);
+    box-shadow:0 0 0 3px rgba(59,130,196,.1);
+}
+.policy-email-payroll-btn:disabled {
+    background:var(--paper,#eef1f5);
+    border-color:var(--hairline,#dde3ea);
+    color:var(--text-400,#8b95a4);
+    cursor:not-allowed;
+    box-shadow:none;
+}
+
+.policy-side-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; }
+.policy-side-card h4 { margin:0 0 12px; font-size:0.88rem; font-weight:700; color:var(--text-900,#1b2430); }
+.policy-quick-stat { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border,#e4e8ee); }
+.policy-quick-stat:last-child { border-bottom:none; }
+.policy-quick-label { font-size:0.78rem; color:var(--text-600,#5a6779); }
+.policy-quick-value { font-size:0.88rem; font-weight:700; color:var(--text-900,#1b2430); }
+.policy-quick-value.success { color:#1f7a52; }
+.policy-quick-value.warning { color:#a86b13; }
+.policy-quick-value.danger { color:#a3272a; }
+
+.policy-table-wrap { overflow-x:auto; max-height:520px; overflow-y:auto; }
+.policy-table-wrap::-webkit-scrollbar { width: 8px; height: 8px; }
+.policy-table-wrap::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+.policy-table-wrap::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+.policy-table-wrap::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+.policy-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+.policy-table thead th { position:sticky; top:0; background:#fafbfc; z-index:1; }
+.policy-table th { text-align:left; padding:10px 12px; font-size:0.72rem; font-weight:700; text-transform:uppercase; color:var(--text-400,#8b93a1); border-bottom:1px solid var(--border,#e4e8ee); background:#fafbfc; }
+.policy-table td { padding:10px 12px; border-bottom:1px solid var(--border,#e4e8ee); vertical-align:middle; }
+.policy-table tr:last-child td { border-bottom:none; }
+
+.alert { padding:14px 16px; border-radius:10px; margin-bottom:16px; font-size:0.88rem; font-weight:600; }
+.alert-danger { background:rgba(214,72,74,.08); color:#a3272a; border:1px solid rgba(214,72,74,.18); }
+.alert-danger ul { margin:0; padding-left:18px; }
+.alert-danger li { margin-bottom:4px; }
+
+.policy-actions { position:relative; display:inline-block; }
+.policy-actions-toggle { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid var(--border,#e4e8ee); background:#fff; color:var(--text-700,#3b4252); font-size:1rem; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.15s ease; }
+.policy-actions-toggle:hover { background:var(--paper,#eef1f5); }
+.policy-actions-menu { display:none; position:absolute; right:0; top:calc(100% + 6px); background:#fff; border:1px solid var(--border,#e4e8ee); border-radius:10px; box-shadow:0 10px 30px rgba(13,27,46,.12); min-width:170px; z-index:50; padding:6px; }
+.policy-actions-menu.show { display:block; }
+.policy-actions-menu a, .policy-actions-menu button { display:flex; align-items:center; gap:10px; width:100%; padding:9px 12px; border-radius:8px; border:none; background:transparent; color:var(--text-900,#1b2430); font-size:0.84rem; font-weight:600; cursor:pointer; text-decoration:none; transition:background .12s ease; }
+.policy-actions-menu a:hover, .policy-actions-menu button:hover { background:var(--paper,#eef1f5); }
+.policy-actions-menu .policy-action-danger { color:#ef4444; }
+.policy-actions-menu .policy-action-danger:hover { background:rgba(239,68,68,.08); }
+
+.policy-stamp { display:inline-block; font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
+.policy-stamp-draft { background:rgba(217,154,43,.14); color:#a86b13; }
+.policy-stamp-review { background:rgba(59,130,196,.12); color:#1c5a8a; }
+.policy-stamp-approved { background:rgba(59,130,196,.12); color:#1c5a8a; }
+.policy-stamp-published { background:rgba(47,158,110,.12); color:#1f7a52; }
+.policy-stamp-archived { background:rgba(107,114,128,.12); color:#4b5563; }
+
+@media (max-width: 1100px) {
+  .policy-row { grid-template-columns:1fr; }
+  .policy-col-side { position:static; width:auto; }
+}
+
+@media (max-width: 768px) {
+  .form-row { grid-template-columns:1fr; }
+}

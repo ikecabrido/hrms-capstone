@@ -1,0 +1,880 @@
+/* ============================================================
+    HRMS Legal & Compliance — Onboarding Package PDF Stylesheet
+    Optimized for Dompdf / Chrome Print-to-PDF
+    ============================================================ */
+
+/* ---------- Page setup ---------- */
+@page {
+    margin: 14mm;
+    size: A4 portrait;
+}
+
+@page :first {
+    margin-top: 12mm;
+}
+
+/* ---------- Reset / base ---------- */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    border: none !important;
+}
+
+body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10pt;
+    line-height: 1.45;
+    color: #111111;
+    background: #ffffff;
+}
+
+/* ---------- Package wrapper ---------- */
+.pkg-wrap {
+    max-width: 100%;
+    margin: 0 auto;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   DOCUMENT SECTION CONTAINERS
+   ============================================================ */
+
+.pkg-section {
+    break-before: page;
+    page-break-before: always;
+    position: relative;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.pkg-section:first-of-type {
+    break-before: auto;
+    page-break-before: auto;
+}
+
+/* Force each section onto its own page */
+.pkg-section + .pkg-section {
+    break-before: page;
+    page-break-before: always;
+}
+
+/* ============================================================
+   DOCUMENT HEADER (per section)
+   ============================================================ */
+
+.pkg-cover {
+    padding: 2mm 0 2mm;
+    border-bottom: 1pt solid #0f2b4d;
+    margin-bottom: 5px;
+    break-inside: avoid;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    box-shadow: none !important;
+}
+
+.pkg-institution {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #0f2b4d;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: center;
+}
+
+.pkg-dept {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 7pt;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: center;
+    margin-top: 0;
+}
+
+.pkg-doc-title {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    font-weight: 700;
+    color: #0f2b4d;
+    text-align: center;
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.pkg-doc-subtitle {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 7pt;
+    color: #4b5563;
+    text-align: center;
+    margin-top: 2px;
+}
+
+/* ============================================================
+   INFORMATION TABLE
+   ============================================================ */
+
+.pkg-info {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3px 0 5px;
+    font-size: 9pt;
+}
+
+.pkg-info td {
+    padding: 2px 3px;
+    vertical-align: top;
+    font-size: 9pt;
+}
+
+.pkg-info td:first-child {
+    width: 130px;
+    color: #374151;
+    font-weight: 700;
+}
+
+.pkg-info td:last-child {
+    color: #111827;
+}
+
+.pkg-divider {
+    border: none;
+    border-top: 1px solid #d1d5db;
+    margin: 4px 0;
+}
+
+/* ============================================================
+   DOCUMENT BODY (clauses)
+   ============================================================ */
+
+.document-preview {
+    background: #ffffff;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.document-header {
+    text-align: center;
+    padding-bottom: 3px;
+    border-bottom: 1pt solid #0f2b4d;
+    margin-bottom: 4px;
+    break-inside: avoid;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    box-shadow: none !important;
+}
+
+.document-title {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 12pt;
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.document-subtitle {
+    margin: 2px 0 0;
+    font-size: 7pt;
+    color: #4b5563;
+}
+
+.document-meta {
+    margin: 1px 0 0;
+    font-size: 8pt;
+    color: #6b7280;
+}
+
+.document-separator {
+    border: none;
+    border-top: 0.5pt solid #e5e7eb;
+    margin: 0 0 4px;
+}
+
+.document-information {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+    font-size: 9pt;
+}
+
+.document-information td {
+    padding: 2px 0;
+    vertical-align: top;
+    font-size: 9pt;
+}
+
+.document-information .info-label {
+    width: 110px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.document-information .info-value {
+    color: #111827;
+}
+
+.document-information .info-value pre,
+.document-information .info-value .pre-wrap {
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+.document-body {
+    text-align: justify;
+    line-height: 1.45;
+}
+
+.document-body p {
+    margin: 0 0 4px;
+}
+
+.document-body p:last-child {
+    margin-bottom: 0;
+}
+
+.document-body pre,
+.document-body .pre-wrap {
+    white-space: pre-wrap;
+}
+
+/* ---------- Handbook-specific ---------- */
+.handbook-body h1,
+.handbook-body h2,
+.handbook-body h3,
+.handbook-body h4 {
+    font-family: "Times New Roman", Times, serif;
+    font-weight: 700;
+    color: #0f2b4d;
+    text-transform: uppercase;
+    margin: 6px 0 2px;
+    break-after: avoid;
+}
+
+.handbook-body h1 {
+    font-size: 12pt;
+    text-align: center;
+}
+
+.handbook-body h2 {
+    font-size: 10pt;
+    border-bottom: 0.5pt solid #0f2b4d;
+    padding-bottom: 0;
+}
+
+.handbook-body h3 {
+    font-size: 9.5pt;
+}
+
+.handbook-body p {
+    margin: 0 0 4px;
+    text-align: justify;
+}
+
+.handbook-body ul,
+.handbook-body ol {
+    margin: 0 0 4px;
+    padding-left: 18px;
+}
+
+.handbook-body li {
+    margin-bottom: 0;
+}
+
+.handbook-body strong {
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.document-signature {
+    margin-top: 8px;
+    break-inside: avoid;
+}
+
+.document-signature-block {
+    display: inline-block;
+    width: 100%;
+    vertical-align: top;
+    margin-right: 0;
+}
+
+.sig-image {
+    margin-bottom: 2px;
+    position: relative;
+    display: inline-block;
+}
+
+.sig-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    max-height: 36px;
+}
+
+.sig-text {
+    position: relative;
+    z-index: 1;
+    padding-top: 18px;
+    font-size: 8pt;
+    color: #222222;
+}
+
+.sig-name {
+    font-weight: 700;
+    color: #0f2b4d;
+    margin-top: 1px;
+}
+
+.sig-role {
+    font-size: 8pt;
+    color: #4b5563;
+}
+
+.sig-date {
+    font-size: 8pt;
+    color: #4b5563;
+    margin-top: 1px;
+}
+
+.agreement-block {
+    margin-bottom: 7px;
+}
+
+.agreement-intro {
+    margin: 0 0 4px;
+    text-align: justify;
+}
+
+.section-block {
+    margin-bottom: 5px;
+    break-inside: avoid;
+}
+
+.section-number {
+    display: inline;
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: #111111;
+}
+
+.section-title {
+    display: inline;
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: #111111;
+    text-transform: uppercase;
+}
+
+.section-text {
+    margin: 2px 0 0;
+    text-align: justify;
+}
+
+.section-list {
+    margin: 2px 0 0;
+    padding-left: 20px;
+}
+
+.section-list-item {
+    margin-bottom: 0;
+}
+
+/* ============================================================
+   SIGNATURE BLOCKS
+   ============================================================ */
+
+.signatures-block {
+    margin-top: 12px;
+    padding-top: 6px;
+    border-top: 0.5pt solid #9ca3af;
+    break-inside: avoid;
+}
+
+.signatures-title {
+    margin: 0 0 2px;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #111111;
+}
+
+.signatures-intro {
+    margin: 0 0 6px;
+    text-align: center;
+    font-size: 7pt;
+    color: #4b5563;
+}
+
+.signature-group {
+    margin-bottom: 7px;
+    break-inside: avoid;
+}
+
+.signature-group-title {
+    margin: 0 0 2px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #374151;
+}
+
+.signature-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+}
+
+.signature-table td {
+    padding: 1px 0;
+    vertical-align: top;
+    font-size: 9pt;
+}
+
+.signature-table td:first-child {
+    width: 150px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.signature-table td:last-child {
+    color: #111827;
+}
+
+.sig-line-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-top: 3px;
+}
+
+.sig-line-label {
+    font-size: 8pt;
+    color: #4b5563;
+    margin-bottom: 1px;
+}
+
+.sig-line {
+    border-bottom: 0.5pt solid #111111;
+    height: 16px;
+    min-width: 130px;
+}
+
+.sig-line.short {
+    min-width: 90px;
+}
+
+/* ============================================================
+   ALERT BLOCKS
+   ============================================================ */
+
+.electronic-ack-block {
+    margin-top: 8px;
+    padding: 6px;
+    border: 0.5pt solid #c7d7fb;
+    border-radius: 3pt;
+    background: #f5f9ff;
+    break-inside: avoid;
+}
+
+.electronic-ack-title {
+    margin: 0 0 2px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 9pt;
+    font-weight: 700;
+    color: #1f3a5f;
+}
+
+.disclaimer-block {
+    margin-top: 8px;
+    padding: 6px;
+    border: 0.5pt solid #d1d5db;
+    border-radius: 3pt;
+    background: #f9fafb;
+    break-inside: avoid;
+}
+
+.disclaimer-title {
+    margin: 0 0 2px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #374151;
+}
+
+.disclaimer-text {
+    margin: 0;
+    font-size: 7pt;
+    line-height: 1.5;
+    color: #4b5563;
+    text-align: justify;
+}
+
+.document-warning {
+    margin-top: 8px;
+    padding: 8px;
+    border: 0.5pt solid #d8dce4;
+    border-radius: 3pt;
+    background: #fafbfc;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 9pt;
+    line-height: 1.45;
+    color: #555555;
+    break-inside: avoid;
+}
+
+.document-warning strong {
+    color: #333333;
+}
+
+.document-validation-errors {
+    margin-top: 8px;
+    padding: 10px;
+    border: 0.5pt solid #f5c6c6;
+    border-radius: 4pt;
+    background: #fff5f5;
+    color: #7f1d1d;
+    break-inside: avoid;
+}
+
+.document-validation-errors h4 {
+    margin: 0 0 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #b91c1c;
+}
+
+.document-validation-errors ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.document-empty-state {
+    padding: 24px;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* ============================================================
+   DOCUMENT FOOTER / PAGE NUMBERING
+   ============================================================ */
+
+.pkg-footer {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    padding-top: 2px;
+    border-top: 0.5pt solid #d1d5db;
+    font-size: 7pt;
+    color: #6b7280;
+}
+
+.pkg-footer td {
+    vertical-align: top;
+    padding: 0;
+}
+
+.pkg-footer .pf-left {
+    text-align: left;
+}
+
+.pkg-footer .pf-center {
+    text-align: center;
+}
+
+.pkg-footer .pf-right {
+    text-align: right;
+}
+
+.document-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 10px;
+    padding-top: 4px;
+    border-top: 0.5pt solid #cfcfcf;
+    font-size: 7pt;
+    color: #555555;
+}
+
+.footer-left {
+    text-align: left;
+}
+
+.footer-right {
+    text-align: right;
+}
+
+/* ============================================================
+   NOTARY / WATERMARK
+   ============================================================ */
+
+.document-notary {
+    margin-top: 4px;
+    text-align: center;
+}
+
+.document-notary img {
+    height: 80px;
+    opacity: 0.15;
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+
+.text-center {
+    text-align: center;
+}
+
+.mt-14 {
+    margin-top: 10px;
+}
+
+hr {
+    border: none;
+    border-top: 0.5pt solid #e5e7eb;
+    margin: 0 0 8px;
+}
+
+/* ============================================================
+   MARKDOWN-DRIVEN DOCUMENT BODY (within package sections)
+   Targets HTML produced by dg_markdown_to_html() for handbook,
+   NDA, and any future markdown-based templates.
+   ============================================================ */
+
+.pkg-section .document-body {
+    text-align: justify;
+    line-height: 1.45;
+}
+
+.pkg-section .document-body p {
+    margin: 0 0 4px;
+}
+
+.pkg-section .document-body p:last-child {
+    margin-bottom: 0;
+}
+
+.pkg-section .document-body h1,
+.pkg-section .document-body h2,
+.pkg-section .document-body h3,
+.pkg-section .document-body h4,
+.pkg-section .document-body h5,
+.pkg-section .document-body h6 {
+    font-family: "Times New Roman", Times, serif;
+    font-weight: 700;
+    color: #0f2b4d;
+    text-transform: uppercase;
+    margin: 6px 0 2px;
+    break-after: avoid;
+    page-break-after: avoid;
+}
+
+.pkg-section .document-body h1 {
+    font-size: 12pt;
+    text-align: center;
+}
+
+.pkg-section .document-body h2 {
+    font-size: 10pt;
+    border-bottom: 0.5pt solid #0f2b4d;
+    padding-bottom: 0;
+}
+
+.pkg-section .document-body h3 {
+    font-size: 9.5pt;
+}
+
+.pkg-section .document-body h4 {
+    font-size: 9.5pt;
+}
+
+.pkg-section .document-body ul,
+.pkg-section .document-body ol {
+    margin: 0 0 4px;
+    padding-left: 18px;
+}
+
+.pkg-section .document-body li {
+    margin-bottom: 0;
+    break-inside: avoid;
+}
+
+.pkg-section .document-body li::marker {
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.pkg-section .document-body strong {
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.pkg-section .document-body em {
+    font-style: italic;
+}
+
+.pkg-section .document-body code {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    background: #f5f5f5;
+    padding: 1px 3px;
+    border-radius: 2pt;
+}
+
+.pkg-section .document-body blockquote {
+    margin: 5px 0 6px;
+    padding: 5px 10px;
+    border-left: 2pt solid #0f2b4d;
+    background: #f9fafb;
+    font-style: italic;
+    break-inside: avoid;
+}
+
+.pkg-section .document-body hr {
+    border: none;
+    border-top: 0.5pt solid #d1d5db;
+    margin: 6px 0;
+}
+
+.pkg-section .document-body pre {
+    white-space: pre-wrap;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    background: #f5f5f5;
+    padding: 5px 7px;
+    margin: 3px 0 6px;
+}
+
+/* ============================================================
+   RAW TEXT / PRE-FORMATTED CONTRACT BODY
+   For employment_contract which uses plain-text paragraphs
+   ============================================================ */
+
+.pkg-section .contract-raw p {
+    margin: 0 0 6px;
+    text-align: justify;
+}
+
+.pkg-section .contract-raw p:last-child {
+    margin-bottom: 0;
+}
+
+/* ============================================================
+   PAGE BREAK CONTROLS
+   ============================================================ */
+
+.pkg-cover,
+.signatures-block,
+.signature-group,
+.document-signature,
+.disclaimer-block,
+.electronic-ack-block,
+.document-warning,
+.document-validation-errors,
+.section-block {
+    break-inside: avoid;
+}
+
+/* Avoid breaking inside handbook headings */
+.handbook-body h1,
+.handbook-body h2,
+.handbook-body h3,
+.handbook-body h4 {
+    break-after: avoid;
+}
+
+/* Avoid breaking inside list items */
+.handbook-body li {
+    break-inside: avoid;
+}
+
+/* Avoid breaking inside package section markdown elements */
+.pkg-section .document-body h1,
+.pkg-section .document-body h2,
+.pkg-section .document-body h3,
+.pkg-section .document-body h4,
+.pkg-section .document-body h5,
+.pkg-section .document-body h6 {
+    break-after: avoid;
+    page-break-after: avoid;
+}
+
+.pkg-section .document-body li {
+    break-inside: avoid;
+}
+
+.pkg-section .document-body blockquote {
+    break-inside: avoid;
+}
+
+.pkg-section .document-body pre {
+    break-inside: avoid;
+}
+
+/* ============================================================
+   RESPONSIVE (for on-screen previews only)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .pkg-cover {
+        padding: 2mm 0 2mm;
+    }
+
+    .pkg-doc-title {
+        font-size: 11pt;
+    }
+
+    .document-signature-block {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .sig-line-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .pkg-info td {
+        display: block;
+        width: 100%;
+    }
+
+    .pkg-info td:first-child {
+        width: 100%;
+        padding-bottom: 1px;
+    }
+
+    .pkg-info td:last-child {
+        padding-top: 0;
+        margin-bottom: 3px;
+    }
+
+    .document-footer {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .footer-right {
+        text-align: left;
+    }
+}

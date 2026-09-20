@@ -1,0 +1,557 @@
+2026-08-25 19:06:49 - Script started
+2026-08-25 19:06:49 - Redirecting: generate=0
+2026-08-25 19:06:52 - Script started
+2026-08-25 19:06:52 - Entering try block
+2026-08-25 19:06:52 - Templates loaded, saveDir=
+2026-08-25 19:13:25 - Script started
+2026-08-25 19:13:25 - Entering try block
+2026-08-25 19:13:25 - Templates loaded, saveDir=
+2026-08-25 19:13:26 - After DB transaction, file_exists=yes
+2026-08-25 19:16:14 - Script started
+2026-08-25 19:16:14 - Entering try block
+2026-08-25 19:16:14 - Templates loaded, saveDir=
+2026-08-25 19:16:15 - After DB transaction, file_exists=yes
+2026-08-25 19:22:14 - Script started
+2026-08-25 19:22:14 - Entering try block
+2026-08-25 19:22:14 - Templates loaded, saveDir=
+2026-08-25 19:22:15 - After DB transaction, file_exists=yes
+2026-08-25 19:25:33 - Script started
+2026-08-25 19:25:33 - Entering try block
+2026-08-25 19:25:33 - Templates loaded, saveDir=
+2026-08-25 19:25:34 - DB transaction error: Failed to write PDF file to disk at: C:\xampp\htdocs\hrms-capstone\modules\compliance\pages/../assets/documents/onboarding/onboarding_49_20260825.pdf
+2026-08-25 19:27:42 - Script started
+2026-08-25 19:27:42 - Entering try block
+2026-08-25 19:27:42 - Templates loaded, saveDir=
+2026-08-25 19:27:43 - DB transaction error: Failed to write PDF file to disk at: C:\xampp\htdocs\hrms-capstone\modules\compliance\pages/../assets/documents/onboarding/onboarding_49_20260825.pdf
+2026-08-25 19:28:28 - Script started
+2026-08-25 19:28:28 - Entering try block
+2026-08-25 19:28:28 - Templates loaded, saveDir=
+2026-08-25 19:28:30 - DB transaction error: Failed to move temporary PDF to final path: C:\xampp\htdocs\hrms-capstone\modules\compliance\pages/../assets/documents/onboarding/onboarding_49_20260825.pdf
+2026-08-25 19:28:59 - Script started
+2026-08-25 19:28:59 - Entering try block
+2026-08-25 19:28:59 - Templates loaded, saveDir=
+2026-08-25 19:29:00 - After DB transaction, file_exists=yes
+2026-08-25 19:29:04 - Script started
+2026-08-25 19:29:04 - Entering try block
+2026-08-25 19:29:04 - Templates loaded, saveDir=
+2026-08-25 19:29:05 - After DB transaction, file_exists=yes
+2026-08-25 19:30:46 - Script started
+2026-08-25 19:30:46 - Entering try block
+2026-08-25 19:30:46 - Templates loaded, saveDir=
+2026-08-25 19:30:46 - After DB transaction, file_exists=yes
+2026-08-25 19:32:08 - Script started
+2026-08-25 19:32:08 - Entering try block
+2026-08-25 19:32:09 - Templates loaded, saveDir=
+2026-08-25 19:32:10 - DB transaction error: Failed to move temporary PDF to final path: C:\xampp\htdocs\hrms-capstone\modules\compliance\pages/../assets/documents/onboarding/onboarding_49_20260825.pdf
+2026-08-25 19:32:29 - Script started
+2026-08-25 19:32:29 - Entering try block
+2026-08-25 19:32:29 - Templates loaded, saveDir=
+2026-08-25 19:32:30 - After DB transaction, file_exists=yes
+2026-08-25 19:38:02 - Script started
+2026-08-25 19:38:02 - Redirecting: generate=0
+2026-08-25 19:38:05 - Script started
+2026-08-25 19:38:05 - Entering try block
+2026-08-25 19:38:05 - Templates loaded, saveDir=
+2026-08-25 19:38:08 - After DB transaction, file_exists=yes
+2026-08-25 19:38:27 - Script started
+2026-08-25 19:38:27 - Redirecting: generate=0
+2026-08-25 19:38:30 - Script started
+2026-08-25 19:38:30 - Entering try block
+2026-08-25 19:38:30 - Templates loaded, saveDir=
+2026-08-25 19:38:33 - After DB transaction, file_exists=yes
+2026-08-25 19:44:55 - Script started
+2026-08-25 19:44:55 - Entering try block
+2026-08-25 19:44:55 - Templates loaded, saveDir=
+2026-08-25 19:44:59 - After DB transaction, file_exists=yes
+2026-08-25 19:47:04 - Script started
+2026-08-25 19:47:04 - Entering try block
+2026-08-25 19:47:04 - Templates loaded, saveDir=
+2026-08-25 19:47:06 - After DB transaction, file_exists=yes
+2026-08-25 19:48:16 - Script started
+2026-08-25 19:48:16 - Entering try block
+2026-08-25 19:48:16 - Templates loaded, saveDir=
+2026-08-25 19:48:19 - After DB transaction, file_exists=yes
+2026-08-25 19:49:47 - Script started
+2026-08-25 19:49:47 - Entering try block
+2026-08-25 19:49:47 - Templates loaded, saveDir=
+2026-08-25 19:49:50 - After DB transaction, file_exists=yes
+2026-08-25 20:00:17 - Script started
+2026-08-25 20:00:17 - Redirecting: generate=0
+2026-08-25 20:07:54 - Script started
+2026-08-25 20:07:54 - Redirecting: generate=0
+2026-08-25 20:07:57 - Script started
+2026-08-25 20:07:57 - Entering try block
+2026-08-25 20:07:57 - Templates loaded, saveDir=
+2026-08-25 20:36:29 - Script started
+2026-08-25 20:36:29 - Entering try block
+2026-08-25 20:36:29 - Templates loaded, saveDir=
+2026-08-25 20:36:38 - Script started
+2026-08-25 20:36:38 - Redirecting: generate=0
+2026-08-25 20:36:42 - Script started
+2026-08-25 20:36:42 - Entering try block
+2026-08-25 20:36:42 - Templates loaded, saveDir=
+2026-08-25 21:05:35 - Script started
+2026-08-25 21:05:35 - Entering try block
+2026-08-25 21:05:35 - Templates loaded, saveDir=
+2026-08-25 21:05:37 - DB transaction error: Failed to move temporary PDF to final path: C:\xampp\htdocs\hrms-capstone\modules\compliance\pages/../assets/documents/onboarding/onboarding_50_20260825.pdf
+2026-08-25 21:05:44 - Script started
+2026-08-25 21:05:44 - Entering try block
+2026-08-25 21:05:44 - Templates loaded, saveDir=
+2026-08-25 21:05:46 - DB transaction error: Failed to move temporary PDF to final path: C:\xampp\htdocs\hrms-capstone\modules\compliance\pages/../assets/documents/onboarding/onboarding_50_20260825.pdf
+2026-08-25 21:06:05 - Script started
+2026-08-25 21:06:05 - Entering try block
+2026-08-25 21:06:05 - Templates loaded, saveDir=
+2026-08-25 21:06:06 - After DB transaction, file_exists=yes
+2026-08-25 21:06:17 - Script started
+2026-08-25 21:06:17 - Redirecting: generate=0
+2026-08-25 21:06:21 - Script started
+2026-08-25 21:06:21 - Entering try block
+2026-08-25 21:06:21 - Templates loaded, saveDir=
+2026-08-25 21:06:22 - After DB transaction, file_exists=yes
+2026-08-25 21:08:47 - Script started
+2026-08-25 21:08:47 - Redirecting: generate=0
+2026-08-25 21:09:19 - Script started
+2026-08-25 21:09:19 - Redirecting: generate=0
+2026-08-25 21:09:24 - Script started
+2026-08-25 21:09:24 - Entering try block
+2026-08-25 21:09:24 - Templates loaded, saveDir=
+2026-08-25 21:09:25 - After DB transaction, file_exists=yes
+2026-08-25 21:10:54 - Script started
+2026-08-25 21:10:54 - Redirecting: generate=0
+2026-08-25 21:13:49 - Script started
+2026-08-25 21:13:49 - Entering try block
+2026-08-25 21:13:49 - Templates loaded, saveDir=
+2026-08-25 21:13:50 - After DB transaction, file_exists=yes
+2026-08-25 21:14:17 - Script started
+2026-08-25 21:14:17 - Redirecting: generate=0
+2026-08-25 21:16:28 - Script started
+2026-08-25 21:16:28 - Redirecting: generate=0
+2026-08-25 21:18:14 - Script started
+2026-08-25 21:18:14 - Entering try block
+2026-08-25 21:18:14 - Templates loaded, saveDir=
+2026-08-25 21:18:16 - After DB transaction, file_exists=yes
+2026-08-25 21:20:11 - Script started
+2026-08-25 21:20:11 - Redirecting: generate=0
+2026-08-25 21:21:08 - Script started
+2026-08-25 21:21:08 - Redirecting: generate=0
+2026-08-25 21:21:13 - Script started
+2026-08-25 21:21:13 - Entering try block
+2026-08-25 21:21:13 - Templates loaded, saveDir=
+2026-08-25 21:21:14 - After DB transaction, file_exists=yes
+2026-08-25 21:23:01 - Script started
+2026-08-25 21:23:01 - Redirecting: generate=0
+2026-08-25 21:23:05 - Script started
+2026-08-25 21:23:05 - Entering try block
+2026-08-25 21:27:47 - Script started
+2026-08-25 21:27:47 - Entering try block
+2026-08-25 21:31:49 - Script started
+2026-08-25 21:31:49 - Entering try block
+2026-08-25 21:33:39 - Script started
+2026-08-25 21:33:39 - Entering try block
+2026-08-25 21:33:39 - Templates loaded, saveDir=
+2026-08-25 21:33:40 - After DB transaction, file_exists=yes
+2026-08-25 21:33:42 - Script started
+2026-08-25 21:33:42 - Redirecting: generate=0
+2026-08-25 21:33:46 - Script started
+2026-08-25 21:33:46 - Entering try block
+2026-08-25 21:33:46 - Templates loaded, saveDir=
+2026-08-25 21:33:46 - After DB transaction, file_exists=yes
+2026-08-25 21:37:11 - Script started
+2026-08-25 21:37:11 - Redirecting: generate=0
+2026-08-26 00:53:56 - Script started
+2026-08-26 00:53:56 - Redirecting: generate=0
+2026-08-26 00:54:00 - Script started
+2026-08-26 00:54:00 - Entering try block
+2026-08-26 00:54:00 - Templates loaded, saveDir=
+2026-08-26 00:54:01 - After DB transaction, file_exists=yes
+2026-08-26 01:38:51 - Script started
+2026-08-26 01:38:51 - Redirecting: generate=0
+2026-08-26 01:38:55 - Script started
+2026-08-26 01:38:55 - Entering try block
+2026-08-26 01:38:55 - Templates loaded, saveDir=
+2026-08-26 01:38:56 - After DB transaction, file_exists=yes
+2026-08-26 03:41:47 - Script started
+2026-08-26 03:41:47 - Redirecting: generate=0
+2026-08-26 03:41:51 - Script started
+2026-08-26 03:41:51 - Entering try block
+2026-08-26 03:41:51 - Templates loaded, saveDir=
+2026-08-26 03:41:53 - After DB transaction, file_exists=yes
+2026-08-26 03:56:54 - Script started
+2026-08-26 03:56:54 - Redirecting: generate=0
+2026-08-26 04:12:15 - Script started
+2026-08-26 04:12:15 - Redirecting: generate=0
+2026-08-26 04:12:19 - Script started
+2026-08-26 04:12:19 - Entering try block
+2026-08-26 04:12:19 - Templates loaded, saveDir=
+2026-08-26 04:12:19 - After DB transaction, file_exists=yes
+2026-08-26 04:15:05 - Script started
+2026-08-26 04:15:05 - Redirecting: generate=0
+2026-08-26 04:15:09 - Script started
+2026-08-26 04:15:09 - Entering try block
+2026-08-26 04:15:09 - Templates loaded, saveDir=
+2026-08-26 04:15:09 - After DB transaction, file_exists=yes
+2026-08-26 04:16:33 - Script started
+2026-08-26 04:16:33 - Redirecting: generate=0
+2026-08-26 04:16:37 - Script started
+2026-08-26 04:16:37 - Entering try block
+2026-08-26 04:16:37 - Templates loaded, saveDir=
+2026-08-26 04:16:37 - After DB transaction, file_exists=yes
+2026-08-26 04:18:38 - Script started
+2026-08-26 04:18:38 - Redirecting: generate=0
+2026-08-26 04:18:43 - Script started
+2026-08-26 04:18:43 - Entering try block
+2026-08-26 04:18:43 - Templates loaded, saveDir=
+2026-08-26 04:18:43 - After DB transaction, file_exists=yes
+2026-08-26 04:20:50 - Script started
+2026-08-26 04:20:50 - Redirecting: generate=0
+2026-08-26 04:20:54 - Script started
+2026-08-26 04:20:54 - Entering try block
+2026-08-26 04:20:54 - Templates loaded, saveDir=
+2026-08-26 04:20:54 - After DB transaction, file_exists=yes
+2026-08-26 04:22:07 - Script started
+2026-08-26 04:22:07 - Redirecting: generate=0
+2026-08-26 04:22:11 - Script started
+2026-08-26 04:22:11 - Entering try block
+2026-08-26 04:22:11 - Templates loaded, saveDir=
+2026-08-26 04:22:11 - After DB transaction, file_exists=yes
+2026-08-26 04:25:39 - Script started
+2026-08-26 04:25:39 - Redirecting: generate=0
+2026-08-26 04:26:36 - Script started
+2026-08-26 04:26:36 - Entering try block
+2026-08-26 04:26:36 - Templates loaded, saveDir=
+2026-08-26 04:26:36 - After DB transaction, file_exists=yes
+2026-08-26 04:29:59 - Script started
+2026-08-26 04:29:59 - Redirecting: generate=0
+2026-08-26 04:30:03 - Script started
+2026-08-26 04:30:03 - Entering try block
+2026-08-26 04:30:03 - Templates loaded, saveDir=
+2026-08-26 04:30:03 - After DB transaction, file_exists=yes
+2026-08-26 04:32:52 - Script started
+2026-08-26 04:32:52 - Redirecting: generate=0
+2026-08-26 04:32:57 - Script started
+2026-08-26 04:32:57 - Entering try block
+2026-08-26 04:32:57 - Templates loaded, saveDir=
+2026-08-26 04:32:57 - After DB transaction, file_exists=yes
+2026-08-26 04:35:18 - Script started
+2026-08-26 04:35:18 - Redirecting: generate=0
+2026-08-26 04:35:22 - Script started
+2026-08-26 04:35:22 - Entering try block
+2026-08-26 04:35:22 - Templates loaded, saveDir=
+2026-08-26 04:35:22 - After DB transaction, file_exists=yes
+2026-08-26 04:37:21 - Script started
+2026-08-26 04:37:21 - Redirecting: generate=0
+2026-08-26 04:37:26 - Script started
+2026-08-26 04:37:26 - Entering try block
+2026-08-26 04:37:26 - Templates loaded, saveDir=
+2026-08-26 04:37:26 - After DB transaction, file_exists=yes
+2026-08-26 04:38:17 - Script started
+2026-08-26 04:38:17 - Redirecting: generate=0
+2026-08-26 04:38:20 - Script started
+2026-08-26 04:38:20 - Entering try block
+2026-08-26 04:38:20 - Templates loaded, saveDir=
+2026-08-26 04:38:20 - After DB transaction, file_exists=yes
+2026-08-26 04:39:28 - Script started
+2026-08-26 04:39:28 - Redirecting: generate=0
+2026-08-26 04:39:34 - Script started
+2026-08-26 04:39:34 - Entering try block
+2026-08-26 04:39:34 - Templates loaded, saveDir=
+2026-08-26 04:39:34 - After DB transaction, file_exists=yes
+2026-08-26 04:40:58 - Script started
+2026-08-26 04:40:58 - Redirecting: generate=0
+2026-08-26 04:41:02 - Script started
+2026-08-26 04:41:02 - Entering try block
+2026-08-26 04:41:02 - Templates loaded, saveDir=
+2026-08-26 04:41:02 - After DB transaction, file_exists=yes
+2026-08-26 04:43:26 - Script started
+2026-08-26 04:43:26 - Redirecting: generate=0
+2026-08-26 04:43:30 - Script started
+2026-08-26 04:43:30 - Entering try block
+2026-08-26 04:43:30 - Templates loaded, saveDir=
+2026-08-26 04:43:30 - After DB transaction, file_exists=yes
+2026-08-26 04:45:53 - Script started
+2026-08-26 04:45:53 - Redirecting: generate=0
+2026-08-26 04:45:58 - Script started
+2026-08-26 04:45:58 - Entering try block
+2026-08-26 04:45:58 - Templates loaded, saveDir=
+2026-08-26 04:45:58 - After DB transaction, file_exists=yes
+2026-08-26 04:46:43 - Script started
+2026-08-26 04:46:43 - Redirecting: generate=0
+2026-08-26 04:46:47 - Script started
+2026-08-26 04:46:47 - Entering try block
+2026-08-26 04:46:47 - Templates loaded, saveDir=
+2026-08-26 04:46:47 - After DB transaction, file_exists=yes
+2026-08-26 04:47:26 - Script started
+2026-08-26 04:47:26 - Redirecting: generate=0
+2026-08-26 04:47:30 - Script started
+2026-08-26 04:47:30 - Entering try block
+2026-08-26 04:47:30 - Templates loaded, saveDir=
+2026-08-26 04:47:30 - After DB transaction, file_exists=yes
+2026-08-26 04:50:30 - Script started
+2026-08-26 04:50:30 - Redirecting: generate=0
+2026-08-26 04:50:35 - Script started
+2026-08-26 04:50:35 - Entering try block
+2026-08-26 04:50:35 - Templates loaded, saveDir=
+2026-08-26 04:50:35 - After DB transaction, file_exists=yes
+2026-08-26 04:55:39 - Script started
+2026-08-26 04:55:39 - Redirecting: generate=0
+2026-08-26 04:55:44 - Script started
+2026-08-26 04:55:44 - Entering try block
+2026-08-26 04:55:44 - Templates loaded, saveDir=
+2026-08-26 04:55:44 - After DB transaction, file_exists=yes
+2026-08-26 04:56:48 - Script started
+2026-08-26 04:56:48 - Redirecting: generate=0
+2026-08-26 04:57:00 - Script started
+2026-08-26 04:57:00 - Entering try block
+2026-08-26 04:57:00 - Templates loaded, saveDir=
+2026-08-26 04:57:00 - After DB transaction, file_exists=yes
+2026-08-26 04:57:03 - Script started
+2026-08-26 04:57:03 - Redirecting: generate=0
+2026-08-26 04:59:43 - Script started
+2026-08-26 04:59:43 - Entering try block
+2026-08-26 04:59:43 - Templates loaded, saveDir=
+2026-08-26 04:59:43 - After DB transaction, file_exists=yes
+2026-08-26 05:00:28 - Script started
+2026-08-26 05:00:28 - Redirecting: generate=0
+2026-08-26 05:12:30 - Script started
+2026-08-26 05:12:30 - Entering try block
+2026-08-26 05:12:30 - Templates loaded, saveDir=
+2026-08-26 05:12:30 - After DB transaction, file_exists=yes
+2026-08-26 05:16:29 - Script started
+2026-08-26 05:16:29 - Redirecting: generate=0
+2026-08-26 05:16:32 - Script started
+2026-08-26 05:16:32 - Entering try block
+2026-08-26 05:16:32 - Templates loaded, saveDir=
+2026-08-26 05:16:32 - After DB transaction, file_exists=yes
+2026-08-26 05:17:55 - Script started
+2026-08-26 05:17:55 - Redirecting: generate=0
+2026-08-26 05:22:03 - Script started
+2026-08-26 05:22:03 - Entering try block
+2026-08-26 05:22:03 - Templates loaded, saveDir=
+2026-08-26 05:22:03 - After DB transaction, file_exists=yes
+2026-08-26 05:25:16 - Script started
+2026-08-26 05:25:16 - Entering try block
+2026-08-26 05:25:16 - Templates loaded, saveDir=
+2026-08-26 05:25:17 - After DB transaction, file_exists=yes
+2026-08-26 05:28:42 - Script started
+2026-08-26 05:28:42 - Redirecting: generate=0
+2026-08-26 05:30:16 - Script started
+2026-08-26 05:30:16 - Entering try block
+2026-08-26 05:30:16 - Templates loaded, saveDir=
+2026-08-26 05:30:16 - After DB transaction, file_exists=yes
+2026-08-26 05:34:58 - Script started
+2026-08-26 05:34:58 - Redirecting: generate=0
+2026-08-26 05:35:02 - Script started
+2026-08-26 05:35:02 - Entering try block
+2026-08-26 05:35:02 - Templates loaded, saveDir=
+2026-08-26 05:35:02 - After DB transaction, file_exists=yes
+2026-08-26 05:36:59 - Script started
+2026-08-26 05:36:59 - Redirecting: generate=0
+2026-08-26 05:38:02 - Script started
+2026-08-26 05:38:02 - Entering try block
+2026-08-26 05:38:02 - Templates loaded, saveDir=
+2026-08-26 05:38:02 - After DB transaction, file_exists=yes
+2026-08-26 05:38:58 - Script started
+2026-08-26 05:38:58 - Redirecting: generate=0
+2026-08-26 05:39:02 - Script started
+2026-08-26 05:39:02 - Entering try block
+2026-08-26 05:39:02 - Templates loaded, saveDir=
+2026-08-26 05:39:02 - After DB transaction, file_exists=yes
+2026-08-26 05:39:07 - Script started
+2026-08-26 05:43:11 - Script started
+2026-08-26 05:43:11 - Redirecting: generate=0
+2026-08-26 05:43:14 - Script started
+2026-08-26 05:43:14 - Entering try block
+2026-08-26 05:43:14 - Templates loaded, saveDir=
+2026-08-26 05:43:14 - After DB transaction, file_exists=yes
+2026-08-26 05:46:12 - Script started
+2026-08-26 05:46:12 - Redirecting: generate=0
+2026-08-26 05:46:16 - Script started
+2026-08-26 05:46:16 - Entering try block
+2026-08-26 05:46:16 - Templates loaded, saveDir=
+2026-08-26 05:46:16 - After DB transaction, file_exists=yes
+2026-08-26 05:48:04 - Script started
+2026-08-26 05:48:04 - Redirecting: generate=0
+2026-08-26 05:48:09 - Script started
+2026-08-26 05:48:09 - Entering try block
+2026-08-26 05:48:09 - Templates loaded, saveDir=
+2026-08-26 05:48:09 - After DB transaction, file_exists=yes
+2026-08-26 05:48:43 - Script started
+2026-08-26 05:48:43 - Redirecting: generate=0
+2026-08-26 05:48:55 - Script started
+2026-08-26 05:48:55 - Entering try block
+2026-08-26 05:48:55 - Templates loaded, saveDir=
+2026-08-26 05:48:55 - After DB transaction, file_exists=yes
+2026-08-26 05:50:11 - Script started
+2026-08-26 05:50:11 - Redirecting: generate=0
+2026-08-26 05:50:14 - Script started
+2026-08-26 05:50:14 - Entering try block
+2026-08-26 05:50:14 - Templates loaded, saveDir=
+2026-08-26 05:50:14 - After DB transaction, file_exists=yes
+2026-08-26 05:51:09 - Script started
+2026-08-26 05:51:09 - Redirecting: generate=0
+2026-08-26 05:51:18 - Script started
+2026-08-26 05:51:18 - Entering try block
+2026-08-26 05:51:18 - Templates loaded, saveDir=
+2026-08-26 05:51:18 - After DB transaction, file_exists=yes
+2026-08-26 05:53:37 - Script started
+2026-08-26 05:53:37 - Redirecting: generate=0
+2026-08-26 05:53:40 - Script started
+2026-08-26 05:53:40 - Entering try block
+2026-08-26 05:53:40 - Templates loaded, saveDir=
+2026-08-26 05:53:40 - After DB transaction, file_exists=yes
+2026-08-26 05:56:17 - Script started
+2026-08-26 05:56:17 - Redirecting: generate=0
+2026-08-26 05:56:29 - Script started
+2026-08-26 05:56:29 - Entering try block
+2026-08-26 05:56:29 - Templates loaded, saveDir=
+2026-08-26 05:56:29 - After DB transaction, file_exists=yes
+2026-08-26 06:00:27 - Script started
+2026-08-26 06:00:27 - Redirecting: generate=0
+2026-08-26 06:06:47 - Script started
+2026-08-26 06:06:47 - Redirecting: generate=0
+2026-08-26 06:06:50 - Script started
+2026-08-26 06:06:50 - Entering try block
+2026-08-26 06:06:50 - Templates loaded, saveDir=
+2026-08-26 06:06:50 - After DB transaction, file_exists=yes
+2026-08-26 06:08:24 - Script started
+2026-08-26 06:08:24 - Redirecting: generate=0
+2026-08-26 06:11:35 - Script started
+2026-08-26 06:11:35 - Redirecting: generate=0
+2026-08-26 06:11:40 - Script started
+2026-08-26 06:11:40 - Entering try block
+2026-08-26 06:11:40 - Templates loaded, saveDir=
+2026-08-26 06:11:40 - After DB transaction, file_exists=yes
+2026-08-26 06:15:57 - Script started
+2026-08-26 06:15:57 - Entering try block
+2026-08-26 06:15:57 - Templates loaded, saveDir=
+2026-08-26 06:15:57 - After DB transaction, file_exists=yes
+2026-08-26 06:18:13 - Script started
+2026-08-26 06:18:13 - Redirecting: generate=0
+2026-08-26 06:18:17 - Script started
+2026-08-26 06:18:17 - Entering try block
+2026-08-26 06:18:17 - Templates loaded, saveDir=
+2026-08-26 06:18:17 - After DB transaction, file_exists=yes
+2026-08-26 06:21:37 - Script started
+2026-08-26 06:21:37 - Redirecting: generate=0
+2026-08-26 06:21:41 - Script started
+2026-08-26 06:21:41 - Entering try block
+2026-08-26 06:21:41 - Templates loaded, saveDir=
+2026-08-26 06:21:41 - After DB transaction, file_exists=yes
+2026-08-26 06:22:58 - Script started
+2026-08-26 06:22:58 - Redirecting: generate=0
+2026-08-26 06:23:01 - Script started
+2026-08-26 06:23:01 - Entering try block
+2026-08-26 06:23:01 - Templates loaded, saveDir=
+2026-08-26 06:23:01 - After DB transaction, file_exists=yes
+2026-08-26 06:23:57 - Script started
+2026-08-26 06:23:57 - Redirecting: generate=0
+2026-08-26 06:24:02 - Script started
+2026-08-26 06:24:02 - Entering try block
+2026-08-26 06:24:02 - Templates loaded, saveDir=
+2026-08-26 06:24:02 - After DB transaction, file_exists=yes
+2026-08-26 06:26:47 - Script started
+2026-08-26 06:26:47 - Redirecting: generate=0
+2026-08-26 06:26:50 - Script started
+2026-08-26 06:26:50 - Entering try block
+2026-08-26 06:26:50 - Templates loaded, saveDir=
+2026-08-26 06:26:50 - After DB transaction, file_exists=yes
+2026-08-26 06:30:00 - Script started
+2026-08-26 06:30:00 - Redirecting: generate=0
+2026-08-26 06:30:05 - Script started
+2026-08-26 06:30:05 - Entering try block
+2026-08-26 06:30:05 - Templates loaded, saveDir=
+2026-08-26 06:30:05 - After DB transaction, file_exists=yes
+2026-08-26 06:30:57 - Script started
+2026-08-26 06:30:57 - Redirecting: generate=0
+2026-08-26 06:31:04 - Script started
+2026-08-26 06:31:04 - Entering try block
+2026-08-26 06:31:04 - Templates loaded, saveDir=
+2026-08-26 06:31:04 - After DB transaction, file_exists=yes
+2026-08-26 08:38:56 - Script started
+2026-08-26 08:38:56 - Redirecting: generate=0
+2026-08-26 08:39:00 - Script started
+2026-08-26 08:39:00 - Entering try block
+2026-08-26 08:39:00 - Templates loaded, saveDir=
+2026-08-26 08:39:01 - After DB transaction, file_exists=yes
+2026-08-26 08:39:56 - Script started
+2026-08-26 08:39:56 - Redirecting: generate=0
+2026-08-26 08:42:17 - Script started
+2026-08-26 08:42:17 - Redirecting: generate=0
+2026-08-26 08:42:20 - Script started
+2026-08-26 08:42:20 - Entering try block
+2026-08-26 08:42:21 - Templates loaded, saveDir=
+2026-08-26 08:42:21 - After DB transaction, file_exists=yes
+2026-08-26 08:45:46 - Script started
+2026-08-26 08:45:46 - Redirecting: generate=0
+2026-08-26 08:45:50 - Script started
+2026-08-26 08:45:50 - Entering try block
+2026-08-26 08:45:50 - Templates loaded, saveDir=
+2026-08-26 08:45:50 - After DB transaction, file_exists=yes
+2026-08-26 08:46:50 - Script started
+2026-08-26 08:46:50 - Redirecting: generate=0
+2026-08-26 08:46:54 - Script started
+2026-08-26 08:46:54 - Entering try block
+2026-08-26 08:46:54 - Templates loaded, saveDir=
+2026-08-26 08:46:54 - After DB transaction, file_exists=yes
+2026-08-26 08:52:16 - Script started
+2026-08-26 08:52:16 - Redirecting: generate=0
+2026-08-26 08:52:20 - Script started
+2026-08-26 08:52:20 - Entering try block
+2026-08-26 08:52:20 - Templates loaded, saveDir=
+2026-08-26 08:52:20 - After DB transaction, file_exists=yes
+2026-08-26 08:54:23 - Script started
+2026-08-26 08:54:23 - Redirecting: generate=0
+2026-08-26 08:54:27 - Script started
+2026-08-26 08:54:27 - Entering try block
+2026-08-26 08:54:27 - Templates loaded, saveDir=
+2026-08-26 08:54:27 - After DB transaction, file_exists=yes
+2026-08-26 08:57:46 - Script started
+2026-08-26 08:57:46 - Redirecting: generate=0
+2026-08-26 09:27:54 - Script started
+2026-08-26 09:27:54 - Redirecting: generate=0
+2026-08-26 09:27:58 - Script started
+2026-08-26 09:27:58 - Entering try block
+2026-08-26 09:27:58 - Templates loaded, saveDir=
+2026-08-26 09:27:58 - After DB transaction, file_exists=yes
+2026-08-26 09:38:13 - Script started
+2026-08-26 09:38:13 - Redirecting: generate=0
+2026-08-26 09:39:30 - Script started
+2026-08-26 09:39:30 - Entering try block
+2026-08-26 09:39:30 - Templates loaded, saveDir=
+2026-08-26 09:39:30 - After DB transaction, file_exists=yes
+2026-08-26 09:43:44 - Script started
+2026-08-26 09:43:45 - Redirecting: generate=0
+2026-08-26 09:43:48 - Script started
+2026-08-26 09:43:48 - Entering try block
+2026-08-26 09:43:48 - Templates loaded, saveDir=
+2026-08-26 09:43:48 - After DB transaction, file_exists=yes
+2026-08-26 09:53:05 - Script started
+2026-08-26 09:53:05 - Redirecting: generate=0
+2026-08-26 09:53:09 - Script started
+2026-08-26 09:53:09 - Entering try block
+2026-08-26 09:53:09 - Templates loaded, saveDir=
+2026-08-26 09:53:09 - After DB transaction, file_exists=yes
+2026-08-26 09:54:42 - Script started
+2026-08-26 09:54:42 - Redirecting: generate=0
+2026-08-26 09:54:46 - Script started
+2026-08-26 09:54:46 - Entering try block
+2026-08-26 09:54:46 - Templates loaded, saveDir=
+2026-08-26 09:54:46 - After DB transaction, file_exists=yes
+2026-08-26 10:30:52 - Script started
+2026-08-26 10:30:52 - Redirecting: generate=0
+2026-08-26 10:30:55 - Script started
+2026-08-26 10:30:55 - Entering try block
+2026-08-26 10:30:55 - Templates loaded, saveDir=
+2026-08-26 10:30:55 - After DB transaction, file_exists=yes
+2026-08-26 14:53:32 - Script started
+2026-08-26 14:53:32 - Redirecting: generate=0
+2026-08-26 14:53:36 - Script started
+2026-08-26 14:53:36 - Entering try block
+2026-08-26 14:53:36 - Templates loaded, saveDir=
+2026-08-26 14:53:36 - After DB transaction, file_exists=yes
+2026-08-26 14:58:52 - Script started
+2026-08-26 14:58:52 - Redirecting: generate=0
+2026-08-26 14:58:56 - Script started
+2026-08-26 14:58:56 - Entering try block
+2026-08-26 14:58:56 - Templates loaded, saveDir=
+2026-08-26 14:58:56 - After DB transaction, file_exists=yes

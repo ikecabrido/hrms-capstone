@@ -1,0 +1,175 @@
+/* ==========================================================================
+   List Action Buttons — shared, consistent action control for list items
+   Used by every compliance list (monitoring, violations, DOLE checklist,
+   contracts, working hours). One visual language, four variants, two sizes.
+   Tokens (var(--...)) are provided by css/tokens.css via the app shell.
+   ========================================================================== */
+
+/* --- Core button -------------------------------------------------------- */
+.lc-act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease, transform .05s ease;
+  user-select: none;
+}
+.lc-act:active { transform: translateY(1px); }
+.lc-act:focus-visible { outline: 2px solid var(--info-blue, #3b82c4); outline-offset: 2px; }
+.lc-act i { font-size: 0.92em; line-height: 1; }
+
+/* Default (medium) size — matches the row padding rhythm */
+.lc-act { font-size: 0.76rem; padding: 7px 12px; }
+/* Small size — compact, for dense table rows */
+.lc-act.sm { font-size: 0.72rem; padding: 5px 9px; }
+/* Large size — primary CTAs in cards */
+.lc-act.lg { font-size: 0.82rem; padding: 9px 15px; }
+
+/* --- Variants ----------------------------------------------------------- */
+/* Secondary (neutral outline) — the default contextual action */
+.lc-act.secondary {
+  background: var(--bg-soft, #f3f5f9);
+  color: var(--text-700, #3b4252);
+  border-color: var(--border, #e4e8ee);
+}
+.lc-act.secondary:hover { border-color: var(--border-strong, #d3d9e2); color: var(--text-900, #1b2430); }
+
+/* Primary (brand) — the single most important per-item action */
+.lc-act.primary {
+  background: var(--info-blue, #3b82c4);
+  color: #fff;
+  border-color: var(--info-blue, #3b82c4);
+}
+.lc-act.primary:hover { filter: brightness(1.05); }
+
+/* Success — confirm / approve / resolve */
+.lc-act.success {
+  background: rgba(47, 158, 110, .12);
+  color: #1f7a52;
+  border-color: rgba(47, 158, 110, .4);
+}
+.lc-act.success:hover { background: rgba(47, 158, 110, .2); border-color: #2f9e6e; }
+
+/* Danger — dismiss / escalate / revoke */
+.lc-act.danger {
+  background: rgba(214, 72, 74, .1);
+  color: #a3272a;
+  border-color: rgba(214, 72, 74, .4);
+}
+.lc-act.danger:hover { background: rgba(214, 72, 74, .18); border-color: #d6484a; }
+
+/* Ghost — icon-only / low-emphasis */
+.lc-act.ghost {
+  background: transparent;
+  color: var(--text-500, #6b7280);
+  border-color: transparent;
+}
+.lc-act.ghost:hover { background: var(--bg-soft, #f3f5f9); color: var(--text-900, #1b2430); }
+
+/* --- Icon-only button --------------------------------------------------- */
+.lc-act.icon-only { padding: 7px; width: 30px; height: 30px; }
+.lc-act.icon-only.sm { padding: 5px; width: 26px; height: 26px; }
+.lc-act.icon-only.lg { padding: 9px; width: 36px; height: 36px; }
+
+/* --- Container alignment inside list rows ------------------------------- */
+.lc-act-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: nowrap; justify-content: flex-end; }
+.lc-act-stack { display: flex; align-items: center; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+
+/* --- Per-item action menu (overflow "⋯" dropdown) ---------------------- */
+.lc-act-menu-wrap { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; }
+.lc-act-menu {
+  display: none !important;
+  position: fixed;
+  z-index: 2147483647;
+  min-width: 210px;
+  max-width: 320px;
+  max-height: 72vh;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--border, #e4e8ee);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(27, 36, 48, .14);
+  padding: 6px;
+  box-sizing: border-box;
+}
+.lc-act-menu.is-open { display: block !important; }
+.lc-act-menu-label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-400, #8b93a1);
+  padding: 6px 10px 4px;
+}
+.lc-act-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  text-align: left;
+  font-size: 0.78rem;
+  color: var(--text-700, #3b4252);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.lc-act-menu-item:hover { background: var(--bg-soft, #f3f5f9); color: var(--text-900, #1b2430); }
+.lc-act-menu-item i { font-size: 0.84rem; color: var(--text-500, #6b7280); }
+.lc-act-menu-item.danger { color: #a3272a; }
+.lc-act-menu-item.danger i { color: #a3272a; }
+.lc-act-menu-item.danger:hover { background: rgba(214, 72, 74, .1); }
+.lc-act-menu-sep { height: 1px; background: var(--border, #e4e8ee); margin: 5px 4px; }
+.lc-act-menu-item.is-flagged { color: #1f7a52; }
+.lc-act-menu-item.is-flagged i { color: #1f7a52; }
+.lc-act-menu-item:disabled { opacity: .6; cursor: progress; }
+.lc-act-menu-item.is-disabled { opacity: .5; cursor: not-allowed; color: var(--text-400, #8b93a1); }
+.lc-act-menu-item.is-disabled:hover { background: transparent; color: var(--text-400, #8b93a1); }
+.lc-act-menu-item.is-disabled i { color: var(--text-400, #8b93a1); }
+
+/* Keep action buttons from stretching inside table cells */
+td .lc-act-group, td .lc-act-stack { justify-content: flex-end; }
+
+/* Flagged contract state on the Employment Contract Compliance table */
+.ecc-row-flagged { background: rgba(214, 72, 74, .08); }
+.ecc-row-resolved { background: rgba(31, 122, 82, .07); }
+.ecc-flag-badge {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: #fff;
+  background: #a3272a;
+  padding: 1px 7px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+.ecc-resolved-badge {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: #fff;
+  background: #1f7a52;
+  padding: 1px 7px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+.ecc-gap-response {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: var(--text-600, #566072);
+  font-style: italic;
+}

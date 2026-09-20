@@ -2,6 +2,8 @@
 
 /*Components CSS*/
 @import url('components/dropdown.css');
+@import url('components/calendar.css');
+@import url('components/list_action_buttons.css');
 
 /*Layout CSS*/
 @import url('layout/sidebar.css');
@@ -10,9 +12,13 @@
 @import url('layout/module-container.css');
 
 /*Pages CSS*/
+@import url('pages/dashboard.css');
+@import url('pages/notification-compose.css');
+@import url('pages/labor-law-references.css');
+@import url('generate_documents.css');
 
 /*Base CSS*/
 @import url('base/variables.css');
+@import url('base/tokens.css');
 @import url('base/reset.css');
 @import url('base/global.css');
-

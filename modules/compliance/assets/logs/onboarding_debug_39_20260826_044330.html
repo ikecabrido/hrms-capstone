@@ -1,0 +1,2000 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Onboarding Document Package</title><style>/* ============================================================
+    HRMS Legal & Compliance — Onboarding Package PDF Stylesheet
+    Optimized for Dompdf / Chrome Print-to-PDF
+    ============================================================ */
+
+/* ---------- Page setup ---------- */
+@page {
+    margin: 14mm;
+    size: A4 portrait;
+}
+
+@page :first {
+    margin-top: 12mm;
+}
+
+/* ---------- Reset / base ---------- */
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    border: none !important;
+}
+
+body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10pt;
+    line-height: 1.45;
+    color: #111111;
+    background: #ffffff;
+}
+
+/* ---------- Package wrapper ---------- */
+.pkg-wrap {
+    max-width: 100%;
+    margin: 0 auto;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   DOCUMENT SECTION CONTAINERS
+   ============================================================ */
+
+.pkg-section {
+    break-before: page;
+    page-break-before: always;
+    position: relative;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.pkg-section:first-of-type {
+    break-before: auto;
+    page-break-before: auto;
+}
+
+/* Force each section onto its own page */
+.pkg-section + .pkg-section {
+    break-before: page;
+    page-break-before: always;
+}
+
+/* ============================================================
+   DOCUMENT HEADER (per section)
+   ============================================================ */
+
+.pkg-cover {
+    padding: 2mm 0 2mm;
+    border-bottom: 1pt solid #0f2b4d;
+    margin-bottom: 5px;
+    break-inside: avoid;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    box-shadow: none !important;
+}
+
+.pkg-institution {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #0f2b4d;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: center;
+}
+
+.pkg-dept {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 7pt;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-align: center;
+    margin-top: 0;
+}
+
+.pkg-doc-title {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    font-weight: 700;
+    color: #0f2b4d;
+    text-align: center;
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.pkg-doc-subtitle {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 7pt;
+    color: #4b5563;
+    text-align: center;
+    margin-top: 2px;
+}
+
+/* ============================================================
+   INFORMATION TABLE
+   ============================================================ */
+
+.pkg-info {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 3px 0 5px;
+    font-size: 9pt;
+}
+
+.pkg-info td {
+    padding: 2px 3px;
+    vertical-align: top;
+    font-size: 9pt;
+}
+
+.pkg-info td:first-child {
+    width: 130px;
+    color: #374151;
+    font-weight: 700;
+}
+
+.pkg-info td:last-child {
+    color: #111827;
+}
+
+.pkg-divider {
+    border: none;
+    border-top: 1px solid #d1d5db;
+    margin: 4px 0;
+}
+
+/* ============================================================
+   DOCUMENT BODY (clauses)
+   ============================================================ */
+
+.document-preview {
+    background: #ffffff;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.document-header {
+    text-align: center;
+    padding-bottom: 3px;
+    border-bottom: 1pt solid #0f2b4d;
+    margin-bottom: 4px;
+    break-inside: avoid;
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    box-shadow: none !important;
+}
+
+.document-title {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 12pt;
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.document-subtitle {
+    margin: 2px 0 0;
+    font-size: 7pt;
+    color: #4b5563;
+}
+
+.document-meta {
+    margin: 1px 0 0;
+    font-size: 8pt;
+    color: #6b7280;
+}
+
+.document-separator {
+    border: none;
+    border-top: 0.5pt solid #e5e7eb;
+    margin: 0 0 4px;
+}
+
+.document-information {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+    font-size: 9pt;
+}
+
+.document-information td {
+    padding: 2px 0;
+    vertical-align: top;
+    font-size: 9pt;
+}
+
+.document-information .info-label {
+    width: 110px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.document-information .info-value {
+    color: #111827;
+}
+
+.document-information .info-value pre,
+.document-information .info-value .pre-wrap {
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+.document-body {
+    text-align: justify;
+    line-height: 1.45;
+}
+
+.document-body p {
+    margin: 0 0 4px;
+}
+
+.document-body p:last-child {
+    margin-bottom: 0;
+}
+
+.document-body pre,
+.document-body .pre-wrap {
+    white-space: pre-wrap;
+}
+
+/* ---------- Handbook-specific ---------- */
+.handbook-body h1,
+.handbook-body h2,
+.handbook-body h3,
+.handbook-body h4 {
+    font-family: "Times New Roman", Times, serif;
+    font-weight: 700;
+    color: #0f2b4d;
+    text-transform: uppercase;
+    margin: 6px 0 2px;
+    break-after: avoid;
+}
+
+.handbook-body h1 {
+    font-size: 12pt;
+    text-align: center;
+}
+
+.handbook-body h2 {
+    font-size: 10pt;
+    border-bottom: 0.5pt solid #0f2b4d;
+    padding-bottom: 0;
+}
+
+.handbook-body h3 {
+    font-size: 9.5pt;
+}
+
+.handbook-body p {
+    margin: 0 0 4px;
+    text-align: justify;
+}
+
+.handbook-body ul,
+.handbook-body ol {
+    margin: 0 0 4px;
+    padding-left: 18px;
+}
+
+.handbook-body li {
+    margin-bottom: 0;
+}
+
+.handbook-body strong {
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.document-signature {
+    margin-top: 8px;
+    break-inside: avoid;
+}
+
+.document-signature-block {
+    display: inline-block;
+    width: 46%;
+    vertical-align: top;
+    margin-right: 3%;
+}
+
+.sig-image {
+    margin-bottom: 2px;
+    position: relative;
+    display: inline-block;
+}
+
+.sig-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    max-height: 24px;
+}
+
+.sig-text {
+    position: relative;
+    z-index: 1;
+    padding-top: 18px;
+    font-size: 8pt;
+    color: #222222;
+}
+
+.sig-name {
+    font-weight: 700;
+    color: #0f2b4d;
+    margin-top: 1px;
+}
+
+.sig-role {
+    font-size: 8pt;
+    color: #4b5563;
+}
+
+.sig-date {
+    font-size: 8pt;
+    color: #4b5563;
+    margin-top: 1px;
+}
+
+.agreement-block {
+    margin-bottom: 7px;
+}
+
+.agreement-intro {
+    margin: 0 0 4px;
+    text-align: justify;
+}
+
+.section-block {
+    margin-bottom: 5px;
+    break-inside: avoid;
+}
+
+.section-number {
+    display: inline;
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: #111111;
+}
+
+.section-title {
+    display: inline;
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: #111111;
+    text-transform: uppercase;
+}
+
+.section-text {
+    margin: 2px 0 0;
+    text-align: justify;
+}
+
+.section-list {
+    margin: 2px 0 0;
+    padding-left: 20px;
+}
+
+.section-list-item {
+    margin-bottom: 0;
+}
+
+/* ============================================================
+   SIGNATURE BLOCKS
+   ============================================================ */
+
+.signatures-block {
+    margin-top: 12px;
+    padding-top: 6px;
+    border-top: 0.5pt solid #9ca3af;
+    break-inside: avoid;
+}
+
+.signatures-title {
+    margin: 0 0 2px;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #111111;
+}
+
+.signatures-intro {
+    margin: 0 0 6px;
+    text-align: center;
+    font-size: 7pt;
+    color: #4b5563;
+}
+
+.signature-group {
+    margin-bottom: 7px;
+    break-inside: avoid;
+}
+
+.signature-group-title {
+    margin: 0 0 2px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #374151;
+}
+
+.signature-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+}
+
+.signature-table td {
+    padding: 1px 0;
+    vertical-align: top;
+    font-size: 9pt;
+}
+
+.signature-table td:first-child {
+    width: 150px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.signature-table td:last-child {
+    color: #111827;
+}
+
+.sig-line-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    margin-top: 3px;
+}
+
+.sig-line-label {
+    font-size: 8pt;
+    color: #4b5563;
+    margin-bottom: 1px;
+}
+
+.sig-line {
+    border-bottom: 0.5pt solid #111111;
+    height: 16px;
+    min-width: 130px;
+}
+
+.sig-line.short {
+    min-width: 90px;
+}
+
+/* ============================================================
+   ALERT BLOCKS
+   ============================================================ */
+
+.electronic-ack-block {
+    margin-top: 8px;
+    padding: 6px;
+    border: 0.5pt solid #c7d7fb;
+    border-radius: 3pt;
+    background: #f5f9ff;
+    break-inside: avoid;
+}
+
+.electronic-ack-title {
+    margin: 0 0 2px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 9pt;
+    font-weight: 700;
+    color: #1f3a5f;
+}
+
+.disclaimer-block {
+    margin-top: 8px;
+    padding: 6px;
+    border: 0.5pt solid #d1d5db;
+    border-radius: 3pt;
+    background: #f9fafb;
+    break-inside: avoid;
+}
+
+.disclaimer-title {
+    margin: 0 0 2px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 8pt;
+    font-weight: 700;
+    color: #374151;
+}
+
+.disclaimer-text {
+    margin: 0;
+    font-size: 7pt;
+    line-height: 1.5;
+    color: #4b5563;
+    text-align: justify;
+}
+
+.document-warning {
+    margin-top: 8px;
+    padding: 8px;
+    border: 0.5pt solid #d8dce4;
+    border-radius: 3pt;
+    background: #fafbfc;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 9pt;
+    line-height: 1.45;
+    color: #555555;
+    break-inside: avoid;
+}
+
+.document-warning strong {
+    color: #333333;
+}
+
+.document-validation-errors {
+    margin-top: 8px;
+    padding: 10px;
+    border: 0.5pt solid #f5c6c6;
+    border-radius: 4pt;
+    background: #fff5f5;
+    color: #7f1d1d;
+    break-inside: avoid;
+}
+
+.document-validation-errors h4 {
+    margin: 0 0 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #b91c1c;
+}
+
+.document-validation-errors ul {
+    margin: 0;
+    padding-left: 16px;
+}
+
+.document-empty-state {
+    padding: 24px;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* ============================================================
+   DOCUMENT FOOTER / PAGE NUMBERING
+   ============================================================ */
+
+.pkg-footer {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    padding-top: 2px;
+    border-top: 0.5pt solid #d1d5db;
+    font-size: 7pt;
+    color: #6b7280;
+}
+
+.pkg-footer td {
+    vertical-align: top;
+    padding: 0;
+}
+
+.pkg-footer .pf-left {
+    text-align: left;
+}
+
+.pkg-footer .pf-center {
+    text-align: center;
+}
+
+.pkg-footer .pf-right {
+    text-align: right;
+}
+
+.document-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 10px;
+    padding-top: 4px;
+    border-top: 0.5pt solid #cfcfcf;
+    font-size: 7pt;
+    color: #555555;
+}
+
+.footer-left {
+    text-align: left;
+}
+
+.footer-right {
+    text-align: right;
+}
+
+/* ============================================================
+   NOTARY / WATERMARK
+   ============================================================ */
+
+.document-notary {
+    margin-top: 4px;
+    text-align: center;
+}
+
+.document-notary img {
+    height: 80px;
+    opacity: 0.15;
+}
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+
+.text-center {
+    text-align: center;
+}
+
+.mt-14 {
+    margin-top: 10px;
+}
+
+hr {
+    border: none;
+    border-top: 0.5pt solid #e5e7eb;
+    margin: 0 0 8px;
+}
+
+/* ============================================================
+   MARKDOWN-DRIVEN DOCUMENT BODY (within package sections)
+   Targets HTML produced by dg_markdown_to_html() for handbook,
+   NDA, and any future markdown-based templates.
+   ============================================================ */
+
+.pkg-section .document-body {
+    text-align: justify;
+    line-height: 1.45;
+}
+
+.pkg-section .document-body p {
+    margin: 0 0 4px;
+}
+
+.pkg-section .document-body p:last-child {
+    margin-bottom: 0;
+}
+
+.pkg-section .document-body h1,
+.pkg-section .document-body h2,
+.pkg-section .document-body h3,
+.pkg-section .document-body h4,
+.pkg-section .document-body h5,
+.pkg-section .document-body h6 {
+    font-family: "Times New Roman", Times, serif;
+    font-weight: 700;
+    color: #0f2b4d;
+    text-transform: uppercase;
+    margin: 6px 0 2px;
+    break-after: avoid;
+    page-break-after: avoid;
+}
+
+.pkg-section .document-body h1 {
+    font-size: 12pt;
+    text-align: center;
+}
+
+.pkg-section .document-body h2 {
+    font-size: 10pt;
+    border-bottom: 0.5pt solid #0f2b4d;
+    padding-bottom: 0;
+}
+
+.pkg-section .document-body h3 {
+    font-size: 9.5pt;
+}
+
+.pkg-section .document-body h4 {
+    font-size: 9.5pt;
+}
+
+.pkg-section .document-body ul,
+.pkg-section .document-body ol {
+    margin: 0 0 4px;
+    padding-left: 18px;
+}
+
+.pkg-section .document-body li {
+    margin-bottom: 0;
+    break-inside: avoid;
+}
+
+.pkg-section .document-body li::marker {
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.pkg-section .document-body strong {
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.pkg-section .document-body em {
+    font-style: italic;
+}
+
+.pkg-section .document-body code {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    background: #f5f5f5;
+    padding: 1px 3px;
+    border-radius: 2pt;
+}
+
+.pkg-section .document-body blockquote {
+    margin: 5px 0 6px;
+    padding: 5px 10px;
+    border-left: 2pt solid #0f2b4d;
+    background: #f9fafb;
+    font-style: italic;
+    break-inside: avoid;
+}
+
+.pkg-section .document-body hr {
+    border: none;
+    border-top: 0.5pt solid #d1d5db;
+    margin: 6px 0;
+}
+
+.pkg-section .document-body pre {
+    white-space: pre-wrap;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 9pt;
+    background: #f5f5f5;
+    padding: 5px 7px;
+    margin: 3px 0 6px;
+}
+
+/* ============================================================
+   RAW TEXT / PRE-FORMATTED CONTRACT BODY
+   For employment_contract which uses plain-text paragraphs
+   ============================================================ */
+
+.pkg-section .contract-raw p {
+    margin: 0 0 6px;
+    text-align: justify;
+}
+
+.pkg-section .contract-raw p:last-child {
+    margin-bottom: 0;
+}
+
+/* ============================================================
+   PAGE BREAK CONTROLS
+   ============================================================ */
+
+.pkg-cover,
+.signatures-block,
+.signature-group,
+.document-signature,
+.disclaimer-block,
+.electronic-ack-block,
+.document-warning,
+.document-validation-errors,
+.section-block {
+    break-inside: avoid;
+}
+
+/* Avoid breaking inside handbook headings */
+.handbook-body h1,
+.handbook-body h2,
+.handbook-body h3,
+.handbook-body h4 {
+    break-after: avoid;
+}
+
+/* Avoid breaking inside list items */
+.handbook-body li {
+    break-inside: avoid;
+}
+
+/* Avoid breaking inside package section markdown elements */
+.pkg-section .document-body h1,
+.pkg-section .document-body h2,
+.pkg-section .document-body h3,
+.pkg-section .document-body h4,
+.pkg-section .document-body h5,
+.pkg-section .document-body h6 {
+    break-after: avoid;
+    page-break-after: avoid;
+}
+
+.pkg-section .document-body li {
+    break-inside: avoid;
+}
+
+.pkg-section .document-body blockquote {
+    break-inside: avoid;
+}
+
+.pkg-section .document-body pre {
+    break-inside: avoid;
+}
+
+/* ============================================================
+   RESPONSIVE (for on-screen previews only)
+   ============================================================ */
+
+@media (max-width: 768px) {
+    .pkg-cover {
+        padding: 2mm 0 2mm;
+    }
+
+    .pkg-doc-title {
+        font-size: 11pt;
+    }
+
+    .document-signature-block {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .sig-line-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .pkg-info td {
+        display: block;
+        width: 100%;
+    }
+
+    .pkg-info td:first-child {
+        width: 100%;
+        padding-bottom: 1px;
+    }
+
+    .pkg-info td:last-child {
+        padding-top: 0;
+        margin-bottom: 3px;
+    }
+
+    .document-footer {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .footer-right {
+        text-align: left;
+    }
+}
+
+    .pkg-wrap {
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 16px;
+        font-family: "Times New Roman", Times, serif;
+        color: #111;
+    }
+    .pkg-section {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        position: relative;
+        overflow: hidden;
+    }
+    .pkg-watermark {
+        position:absolute;
+        top:50%;
+        left:50%;
+        transform:translate(-50%,-50%) rotate(-35deg);
+        width:260px;
+        max-width:60%;
+        opacity:0.08;
+        pointer-events:none;
+        z-index:0;
+    }
+    .pkg-section > *:not(.pkg-watermark) {
+        position: relative;
+        z-index: 1;
+    }
+    .pkg-section + .pkg-section {
+        break-before: auto;
+        page-break-before: auto;
+    }
+    .pkg-cover {
+        border-bottom: 2px solid #0f2b4d;
+        padding-bottom: 12px;
+        margin-bottom: 16px;
+    }
+    .pkg-footer {
+        margin-top: 16px;
+        padding-top: 8px;
+        border-top: 1px solid #d1d5db;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    .document-preview {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .document-header {
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
+    }
+    @media (max-width: 640px) {
+        .pkg-wrap { padding: 0 8px; }
+        .pkg-section { padding: 16px; }
+    }
+    </style></head><body><div class="pkg-wrap"><div class="pkg-section"><img src="../assets/notary.png" class="pkg-watermark" alt=""><div class="pkg-cover"><div class="pkg-institution">Bestlink College of the Philippines</div><div class="pkg-dept">Human Resources Department</div><div class="pkg-doc-title">EMPLOYMENT CONTRACT</div><div class="pkg-doc-subtitle">Employment Agreement · Governed by applicable Philippine labor laws</div></div>
+
+<div class="document-preview">
+
+    
+    <div class="agreement-block">
+        <p class="agreement-intro">
+            This Employment Contract ("Agreement") is entered into between <strong>Bestlink College of the Philippines</strong>, 
+            with office address at <strong>________________</strong>, 
+            hereinafter referred to as the <strong>"Employer,"</strong> and 
+            <strong>Alexis  Cueto</strong>, hereinafter referred to as the <strong>"Employee."</strong>
+        </p>
+        <p class="agreement-intro">
+            The Employer and Employee agree to the following terms and conditions governing the Employee's employment.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-title">Employment Terms Notice</h2>
+        <p class="section-text">
+            This Agreement sets out the principal terms and conditions of employment. It shall be read together with applicable company policies, 
+            the Employee Handbook, duly executed employment-related agreements, and applicable laws and regulations.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">1.</h2>
+        <h3 class="section-title">POSITION AND DUTIES</h3>
+        <p class="section-text">
+            The Employee is employed as <strong>HR Staff</strong> under the 
+            <strong>ADMIN STAFF</strong> department.
+        </p>
+        <p class="section-text">
+            The Employee agrees to perform the duties and responsibilities normally associated with the position, 
+            as well as other reasonable duties that may be assigned by the Employer in accordance with the Employee's position, 
+            qualifications, and organizational requirements.
+        </p>
+        <p class="section-text">
+            The Employee shall perform assigned duties diligently, professionally, and in accordance with the policies, 
+            procedures, rules, and standards established by the Employer.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">2.</h2>
+        <h3 class="section-title">COMMENCEMENT OF EMPLOYMENT</h3>
+        <p class="section-text">
+            The Employee's employment shall commence on <strong>August 14, 2026</strong>.
+        </p>
+        <p class="section-text">
+            The Employee's date of hire is recorded as <strong>August 14, 2026</strong>.
+        </p>
+        <p class="section-text">
+            The Employee's employment status shall be <strong>Active</strong>, 
+            subject to the terms and conditions stated in this Agreement, applicable company policies, and applicable law.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">3.</h2>
+        <h3 class="section-title">PLACE OF WORK</h3>
+        <p class="section-text">
+            The Employee's primary place of work shall be at <strong>________________</strong>, 
+            or at such other location as may reasonably be required by the Employer in connection with the Employee's duties.
+        </p>
+        <p class="section-text">
+            Any temporary or permanent reassignment shall be made in accordance with applicable company policies and Philippine labor laws.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">4.</h2>
+        <h3 class="section-title">COMPENSATION</h3>
+        <p class="section-text">The Employee shall receive the following compensation:</p>
+        <p class="section-text">
+            <strong>Monthly Salary:</strong> PHP 30,000.00<br>
+            <strong>Salary in Words:</strong> Thirty Thousand Pesos        </p>
+        <p class="section-text">
+            In consideration of the services rendered by the Employee, the Employee shall receive a monthly salary of 
+            <strong>PHP 30,000.00</strong> (<strong>Thirty Thousand Pesos</strong>), 
+            subject to applicable deductions, taxes, government contributions, and other lawful deductions.
+        </p>
+        <p class="section-text">
+            Salary shall be paid in accordance with the Employer's established payroll schedule and applicable compensation policies.
+        </p>
+        <p class="section-text">
+            Any salary adjustment, incentive, allowance, or additional benefit shall be subject to applicable company policies, 
+            employment conditions, approval requirements, and applicable law.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">5.</h2>
+        <h3 class="section-title">WORKING HOURS</h3>
+        <p class="section-text">
+            The Employee shall observe the working schedule assigned by the Employer. The standard work schedule shall be determined 
+            in accordance with the requirements of the Employee's position and the Employer's operating schedule.
+        </p>
+        <p class="section-text">
+            The Employee shall observe required attendance, timekeeping, break, overtime, and scheduling procedures established by the Employer.
+        </p>
+        <p class="section-text">
+            Work performed beyond the applicable normal working hours shall be subject to applicable company policies and Philippine labor laws.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">6.</h2>
+        <h3 class="section-title">EMPLOYEE BENEFITS</h3>
+        <p class="section-text">
+            The Employee shall be entitled to benefits required by applicable Philippine laws and regulations, 
+            as well as benefits provided by the Employer under its approved policies and applicable employment arrangements.
+        </p>
+        <p class="section-text">
+            Applicable statutory benefits may include government-mandated contributions and benefits, 
+            subject to eligibility requirements and prevailing laws and regulations.
+        </p>
+        <p class="section-text">
+            Company-provided benefits shall be governed by the applicable policies, rules, eligibility requirements, and benefit plans of the Employer.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">7.</h2>
+        <h3 class="section-title">LEAVE AND ABSENCES</h3>
+        <p class="section-text">
+            The Employee shall be entitled to applicable statutory and company-provided leave benefits 
+            subject to eligibility requirements and the Employer's established leave policies.
+        </p>
+        <p class="section-text">
+            Requests for leave shall be submitted through the prescribed procedure and within the required period, 
+            except in circumstances where advance notice is not reasonably possible.
+        </p>
+        <p class="section-text">
+            Unauthorized or excessive absences, tardiness, or failure to comply with attendance procedures may be subject to 
+            appropriate administrative action in accordance with company policy and applicable law.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">8.</h2>
+        <h3 class="section-title">EMPLOYEE RESPONSIBILITIES</h3>
+        <p class="section-text">The Employee agrees to:</p>
+        <ol class="section-list">
+            <li class="section-list-item">Perform assigned duties competently and responsibly.</li>
+            <li class="section-list-item">Observe company policies, procedures, and workplace rules.</li>
+            <li class="section-list-item">Maintain professional conduct in the workplace.</li>
+            <li class="section-list-item">Protect company property and resources.</li>
+            <li class="section-list-item">Maintain the confidentiality of sensitive information.</li>
+            <li class="section-list-item">Comply with applicable workplace safety requirements.</li>
+            <li class="section-list-item">Maintain accurate employment and personal information.</li>
+            <li class="section-list-item">Perform duties in accordance with applicable laws and regulations.</li>
+        </ol>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">9.</h2>
+        <h3 class="section-title">CONFIDENTIALITY</h3>
+        <p class="section-text">
+            The Employee acknowledges that, during employment, the Employee may have access to confidential, proprietary, 
+            personal, operational, financial, academic, administrative, or other sensitive information belonging to the Employer.
+        </p>
+        <p class="section-text">
+            The Employee agrees not to disclose, reproduce, misuse, or provide confidential information to unauthorized persons 
+            except when disclosure is authorized by the Employer or required by law.
+        </p>
+        <p class="section-text">
+            The Employee's confidentiality obligations shall be further governed by the applicable Non-Disclosure and Confidentiality Agreement 
+            executed in connection with employment.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">10.</h2>
+        <h3 class="section-title">DATA PRIVACY AND PERSONAL INFORMATION</h3>
+        <p class="section-text">
+            The Employee acknowledges that the Employer may collect, process, store, and use personal information for legitimate 
+            employment, administrative, payroll, benefits, compliance, security, and other lawful purposes.
+        </p>
+        <p class="section-text">
+            The Employee agrees to comply with the Employer's applicable data privacy, information security, and records management policies.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">11.</h2>
+        <h3 class="section-title">COMPANY PROPERTY</h3>
+        <p class="section-text">
+            All equipment, documents, records, identification cards, access credentials, files, materials, and other property 
+            provided to the Employee for work purposes shall remain the property of the Employer unless otherwise stated in writing.
+        </p>
+        <p class="section-text">
+            Upon separation from employment, the Employee shall return all company property in the Employee's possession or control, 
+            subject to applicable company procedures.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">12.</h2>
+        <h3 class="section-title">WORKPLACE CONDUCT</h3>
+        <p class="section-text">
+            The Employee shall maintain professional and respectful conduct and shall comply with the Employer's code of conduct, 
+            Employee Handbook, workplace policies, and applicable laws.
+        </p>
+        <p class="section-text">
+            Conduct that violates applicable policies or laws may result in appropriate administrative action following the Employer's 
+            established procedures and applicable legal requirements.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">13.</h2>
+        <h3 class="section-title">HEALTH, SAFETY, AND SECURITY</h3>
+        <p class="section-text">
+            The Employee shall comply with applicable workplace health, safety, emergency, security, and access-control procedures.
+        </p>
+        <p class="section-text">
+            The Employee shall immediately report workplace hazards, incidents, accidents, security concerns, or other matters 
+            requiring attention through the appropriate reporting channels.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">14.</h2>
+        <h3 class="section-title">INTELLECTUAL PROPERTY AND WORK PRODUCT</h3>
+        <p class="section-text">
+            Work products, documents, materials, records, and other outputs created by the Employee in the course of performing 
+            assigned employment duties shall be handled in accordance with applicable law, company policies, and any applicable written agreements.
+        </p>
+        <p class="section-text">
+            The Employee shall not reproduce, distribute, commercialize, or otherwise use protected company materials outside the scope 
+            of authorized employment duties without proper authorization.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">15.</h2>
+        <h3 class="section-title">COMPANY POLICIES</h3>
+        <p class="section-text">
+            The Employee acknowledges that the Employer maintains policies, procedures, rules, and guidelines governing employment and workplace conduct.
+        </p>
+        <p class="section-text">
+            The Employee agrees to familiarize themselves with and comply with applicable policies, including the Employee Handbook and 
+            other officially issued workplace policies.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">16.</h2>
+        <h3 class="section-title">DISCIPLINE AND ADMINISTRATIVE ACTION</h3>
+        <p class="section-text">
+            Violations of company policies, employment obligations, or applicable laws may result in appropriate administrative action 
+            in accordance with the Employer's established procedures and applicable Philippine labor laws.
+        </p>
+        <p class="section-text">
+            Any disciplinary action shall be undertaken in accordance with applicable procedural and substantive requirements.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">17.</h2>
+        <h3 class="section-title">TERMINATION AND SEPARATION</h3>
+        <p class="section-text">
+            Employment may end through resignation, expiration of an applicable employment period, termination for lawful cause, 
+            or other circumstances recognized by applicable law.
+        </p>
+        <p class="section-text">
+            The Employer and Employee shall comply with applicable notice, clearance, turnover, return-of-property, final-pay, 
+            and other separation requirements.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">18.</h2>
+        <h3 class="section-title">GOVERNING LAW</h3>
+        <p class="section-text">
+            This Agreement shall be interpreted and implemented in accordance with applicable laws and regulations of the Republic of the Philippines, 
+            including applicable provisions of the Philippine Labor Code and relevant labor and employment regulations.
+        </p>
+        <p class="section-text">
+            <strong>Governing Legal Reference:</strong> Philippine Labor Code (PD 442)        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">19.</h2>
+        <h3 class="section-title">ENTIRE AGREEMENT</h3>
+        <p class="section-text">
+            This Agreement, together with applicable employment policies, the Employee Handbook, and other duly executed employment-related agreements, 
+            constitutes the understanding between the Employer and Employee concerning the matters covered herein, subject to applicable law.
+        </p>
+        <p class="section-text">
+            Any amendment or modification to this Agreement shall be made in accordance with applicable company procedures and legal requirements.
+        </p>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-number">20.</h2>
+        <h3 class="section-title">EMPLOYEE ACKNOWLEDGMENT</h3>
+        <p class="section-text">
+            By signing below, the Employee confirms that the Employee has read and understood this Employment Contract and agrees to comply with 
+            its applicable terms and conditions, the Employee Handbook, company policies, and applicable laws.
+        </p>
+        <p class="section-text">
+            The Employee further acknowledges receipt of the applicable onboarding documents and understands that questions concerning the terms of 
+            employment may be raised with the appropriate Human Resources representative or authorized company representative.
+        </p>
+    </div>
+
+    <div class="signatures-block">
+        <h2 class="signatures-title">SIGNATURES</h2>
+        <p class="signatures-intro">
+            By signing below, the parties acknowledge that they have read, understood, and agreed to the applicable terms and conditions of this Employment Contract.
+        </p>
+
+        <div class="signature-group">
+            <h4 class="signature-group-title">FOR THE EMPLOYER</h4>
+            <table class="signature-table">
+                <tr>
+                    <td class="sig-label">Authorized Employer Representative:</td>
+                    <td class="sig-value">Blythe Enriquez</td>
+                </tr>
+                <tr>
+                    <td class="sig-label">Organization:</td>
+                    <td class="sig-value">Bestlink College of the Philippines</td>
+                </tr>
+                <tr>
+                    <td class="sig-label">Position:</td>
+                    <td class="sig-value">HR Directress</td>
+                </tr>
+            </table>
+            <div class="sig-line-group">
+                <div class="sig-line-label">Signature:</div>
+                <div class="sig-line"><img src="http://127.0.0.1/hrms-capstone/modules/compliance/assets/images.png" alt="Signature" style="height:70px; vertical-align:middle; display:inline-block;"></div>
+                <div class="sig-line-label">Date:</div>
+                <div class="sig-line short"></div>
+            </div>
+        </div>
+
+        <div class="signature-group">
+            <h4 class="signature-group-title">EMPLOYEE</h4>
+            <table class="signature-table">
+                <tr>
+                    <td class="sig-label">Name:</td>
+                    <td class="sig-value">Alexis  Cueto</td>
+                </tr>
+                <tr>
+                    <td class="sig-label">Employee No.:</td>
+                    <td class="sig-value">EMP-000039</td>
+                </tr>
+                <tr>
+                    <td class="sig-label">Position:</td>
+                    <td class="sig-value">HR Staff</td>
+                </tr>
+                <tr>
+                    <td class="sig-label">Department:</td>
+                    <td class="sig-value">ADMIN STAFF</td>
+                </tr>
+            </table>
+            <div class="sig-line-group">
+                <div class="sig-line-label">Signature:</div>
+                <div class="sig-line"></div>
+                <div class="sig-line-label">Date:</div>
+                <div class="sig-line short"></div>
+            </div>
+        </div>
+
+        <div class="signature-group">
+            <h4 class="signature-group-title">WITNESS</h4>
+            <table class="signature-table">
+                <tr>
+                    <td class="sig-label">Name:</td>
+                    <td class="sig-value">________________</td>
+                </tr>
+            </table>
+            <div class="sig-line-group">
+                <div class="sig-line-label">Signature:</div>
+                <div class="sig-line"></div>
+                <div class="sig-line-label">Date:</div>
+                <div class="sig-line short"></div>
+            </div>
+        </div>
+
+        <div class="signature-group">
+            <h4 class="signature-group-title">WITNESS</h4>
+            <table class="signature-table">
+                <tr>
+                    <td class="sig-label">Name:</td>
+                    <td class="sig-value">________________</td>
+                </tr>
+            </table>
+            <div class="sig-line-group">
+                <div class="sig-line-label">Signature:</div>
+                <div class="sig-line"></div>
+                <div class="sig-line-label">Date:</div>
+                <div class="sig-line short"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="electronic-ack-block">
+        <h3 class="electronic-ack-title">ELECTRONIC ACKNOWLEDGMENT</h3>
+        <p class="section-text">
+            By selecting the acknowledgment option in the employee portal, the Employee confirms that they have read and understood this Employment Contract 
+            and agree to comply with its applicable terms, the Employee Handbook, company policies, and applicable laws.
+        </p>
+    </div>
+
+    <div class="disclaimer-block">
+        <h4 class="disclaimer-title">DISCLAIMER</h4>
+        <p class="disclaimer-text">
+            <strong>This document is provided for thesis and academic purposes only.</strong> It is a sample/template document created for the purpose of 
+            demonstrating the proposed system and does not constitute an official employment contract, legal advice, or an authorized document of 
+            <strong>Bestlink College of the Philippines</strong>.
+        </p>
+    </div>
+
+    <div class="document-footer">
+        <div class="footer-left">
+            <strong>Bestlink College of the Philippines</strong><br>
+            Human Resources Department
+        </div>
+        <div class="footer-right">
+            <strong>Contract No.:</strong> CTR-2026-0273<br>
+            <strong>Version:</strong> 1.0<br>
+            <strong>Date:</strong> August 26, 2026        </div>
+    </div>
+
+    
+</div>
+
+
+<style>
+/* =========================================================
+   EMPLOYMENT CONTRACT - NEW FORMAT
+   ========================================================= */
+
+.document-preview {
+    width: 100%;
+    max-width: 900px;
+    margin: 15px auto;
+    padding: 18px 22px;
+    background: #ffffff;
+    border: 1px solid #d7dbe3;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10.5px;
+    line-height: 1.45;
+    color: #222;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.document-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.document-institution {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #111;
+    margin-bottom: 3px;
+}
+
+.document-dept {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #444;
+    margin-bottom: 10px;
+}
+
+.document-title {
+    margin: 0;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #111;
+}
+
+.document-subtitle {
+    margin: 4px 0 0;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10px;
+    line-height: 1.5;
+    color: #666;
+}
+
+.document-separator {
+    margin: 8px 0;
+    border: 0;
+    border-top: 1px solid #cfcfcf;
+}
+
+.document-information {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 8px;
+    font-family: "Times New Roman", Times, serif;
+}
+
+.document-information td {
+    padding: 2px 0;
+    vertical-align: top;
+    font-size: 10px;
+}
+
+.document-information td:first-child {
+    width: 160px;
+    font-weight: 700;
+    color: #333;
+}
+
+.document-information td:last-child {
+    color: #222;
+}
+
+.document-warning {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #d8dce4;
+    border-radius: 8px;
+    background: #fafbfc;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10px;
+    line-height: 1.45;
+    color: #666;
+}
+
+.document-warning strong {
+    color: #333;
+}
+
+.document-body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10.5px;
+    line-height: 1.45;
+    color: #222;
+}
+
+.agreement-block {
+    margin-bottom: 8px;
+}
+
+.agreement-intro {
+    margin: 0 0 10px;
+    text-align: justify;
+}
+
+.section-block {
+    margin-bottom: 7px;
+}
+
+.section-number {
+    display: inline;
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #111;
+}
+
+.section-title {
+    display: inline;
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #111;
+    text-transform: uppercase;
+}
+
+.section-text {
+    margin: 3px 0 0;
+    text-align: justify;
+}
+
+.section-list {
+    margin: 3px 0 0;
+    padding-left: 22px;
+}
+
+.section-list-item {
+    margin-bottom: 1px;
+}
+
+.signatures-block {
+    margin-top: 14px;
+    padding-top: 8px;
+    border-top: 1px solid #cfcfcf;
+}
+
+.signatures-title {
+    margin: 0 0 4px;
+    text-align: center;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #111;
+}
+
+.signatures-intro {
+    margin: 0 0 8px;
+    text-align: center;
+    font-size: 9px;
+    color: #555;
+}
+
+.signature-group {
+    margin-bottom: 10px;
+}
+
+.signature-group-title {
+    margin: 0 0 3px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #333;
+}
+
+.signature-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+}
+
+.signature-table td {
+    padding: 2px 0;
+    vertical-align: top;
+    font-size: 10px;
+}
+
+.signature-table td:first-child {
+    width: 160px;
+    font-weight: 700;
+    color: #333;
+}
+
+.signature-table td:last-child {
+    color: #222;
+}
+
+.sig-line-group {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    margin-top: 2px;
+}
+
+.sig-line-label {
+    font-size: 9px;
+    color: #555;
+    margin-bottom: 1px;
+}
+
+.sig-line {
+    border-bottom: 1px solid #222;
+    height: 18px;
+    min-width: 140px;
+}
+
+.sig-line.short {
+    min-width: 100px;
+}
+
+.electronic-ack-block {
+    margin-top: 10px;
+    padding: 8px;
+    border: 1px solid #d8dce4;
+    border-radius: 6px;
+    background: #fafbfc;
+}
+
+.electronic-ack-title {
+    margin: 0 0 2px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: #333;
+}
+
+.disclaimer-block {
+    margin-top: 10px;
+    padding: 8px;
+    border: 1px solid #d8dce4;
+    border-radius: 6px;
+    background: #fafbfc;
+}
+
+.disclaimer-title {
+    margin: 0 0 2px;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: #444;
+}
+
+.disclaimer-text {
+    margin: 0;
+    font-size: 8px;
+    line-height: 1.5;
+    color: #666;
+    text-align: justify;
+}
+
+.document-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 12px;
+    padding-top: 6px;
+    border-top: 1px solid #cfcfcf;
+    font-size: 9px;
+    color: #555;
+}
+
+.footer-left {
+    text-align: left;
+}
+
+.footer-right {
+    text-align: right;
+}
+
+.document-notary {
+    margin-top: 8px;
+    text-align: center;
+}
+
+.document-notary img {
+    height: 180px;
+    opacity: 0.22;
+}
+
+.document-signature {
+    margin-top: 24px;
+}
+
+.document-signature-block {
+    display: inline-block;
+    width: 45%;
+    vertical-align: top;
+    margin-right: 4%;
+}
+
+.sig-image {
+    margin-bottom: 6px;
+}
+
+.sig-image img {
+    height: 70px;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.sig-text {
+    font-size: 12px;
+    color: #333;
+}
+
+.sig-name {
+    font-weight: 700;
+    color: #0f2b4d;
+    margin-top: 4px;
+}
+
+.sig-role {
+    font-size: 11px;
+    color: #666;
+}
+
+.sig-date {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .document-preview {
+        padding: 18px;
+    }
+
+    .document-title {
+        font-size: 18px;
+    }
+
+    .document-information td:first-child {
+        width: 140px;
+    }
+
+    .signature-group {
+        page-break-inside: avoid;
+    }
+}
+
+@media (max-width: 576px) {
+    .document-preview {
+        margin: 8px;
+        padding: 12px;
+        border-radius: 6px;
+    }
+
+    .document-title {
+        font-size: 16px;
+        letter-spacing: 0.04em;
+    }
+
+    .document-information,
+    .document-information tbody,
+    .document-information tr,
+    .document-information td {
+        display: block;
+        width: 100%;
+    }
+
+    .document-information td:first-child {
+        width: 100%;
+        padding-bottom: 1px;
+    }
+
+    .document-information td:last-child {
+        padding-top: 0;
+        margin-bottom: 8px;
+    }
+
+    .sig-line-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .document-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .footer-right {
+        text-align: left;
+    }
+}
+
+
+/* =========================================================
+   PRINT / PDF
+   ========================================================= */
+
+@media print {
+    .document-preview {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        background: #ffffff;
+        font-size: 10pt;
+        line-height: 1.45;
+    }
+
+    .document-title {
+        font-size: 16pt;
+    }
+
+    .document-subtitle {
+        font-size: 10pt;
+    }
+
+    .document-separator {
+        border-top: 1px solid #000;
+    }
+
+    .disclaimer-block {
+        background: transparent;
+        border: 1px solid #999;
+    }
+
+    .document-validation-errors,
+    .document-empty-state,
+    .document-warning {
+        break-inside: avoid;
+    }
+
+    .document-body {
+        break-inside: auto;
+    }
+
+    .section-block {
+        break-inside: avoid;
+    }
+
+    .signatures-block {
+        break-inside: avoid;
+    }
+}
+
+</style>
+
+
+
+<table class="pkg-footer" cellpadding="0" cellspacing="0" border="0"><tr><td class="pf-left">Bestlink College of the Philippines</td><td class="pf-center">Human Resources Department</td><td class="pf-right">Page 1 of 3</td></tr></table></div><div style="page-break-after: always; break-after: page;"></div><div class="pkg-section"><img src="../assets/notary.png" class="pkg-watermark" alt=""><div class="pkg-cover"><div class="pkg-institution">Bestlink College of the Philippines</div><div class="pkg-dept">Human Resources Department</div><div class="pkg-doc-title">EMPLOYEE HANDBOOK</div><div class="pkg-doc-subtitle">Version 1.0 · Effective August 24, 2026</div></div>
+
+<div class="document-preview">
+
+    <div class="document-header">
+        <h2 class="document-title">EMPLOYEE HANDBOOK</h2>
+        <p class="document-subtitle">Version 1.0             · Effective August 25, 2026        </p>
+    </div>
+
+    <hr class="document-separator">
+
+    <table class="document-information">
+        <tr>
+            <td class="info-label">Document</td>
+            <td class="info-value">Employee Handbook</td>
+        </tr>
+        <tr>
+            <td class="info-label">Version</td>
+            <td class="info-value">1.0</td>
+        </tr>
+        <tr>
+            <td class="info-label">Effective Date</td>
+            <td class="info-value">August 25, 2026</td>
+        </tr>
+        <tr>
+            <td class="info-label">Governing Law</td>
+            <td class="info-value">Philippine Labor Code (PD 442) and applicable company policies</td>
+        </tr>
+    </table>
+
+    <table class="document-information">
+        <tr>
+            <td class="info-label">Employee Name</td>
+            <td class="info-value">Employee #39</td>
+        </tr>
+        <tr>
+            <td class="info-label">Department</td>
+            <td class="info-value">________________</td>
+        </tr>
+        <tr>
+            <td class="info-label">Position</td>
+            <td class="info-value">________________</td>
+        </tr>
+        <tr>
+            <td class="info-label">Date Hired</td>
+            <td class="info-value">________________</td>
+        </tr>
+    </table>
+
+    <div class="document-body">
+        <p style="margin:0 0 8px;"><strong>EMPLOYEE HANDBOOK</strong></p>
+<p style="margin:0 0 8px;"><strong><em>BESTLINK COLLEGE OF THE PHILIPPINES</em></strong></p>
+<p style="margin:0 0 8px;">Employee Policies, Workplace Standards and Guidelines</p>
+<p style="margin:0 0 8px;"><strong>1. WELCOME</strong></p>
+<p style="margin:0 0 8px;">Welcome to the organization. This Employee Handbook provides the general policies, expectations, and workplace standards that guide our employees in performing their duties and working with one another.</p>
+<p style="margin:0 0 8px;">Every employee is expected to read, understand, and follow the policies contained in this handbook, as well as any lawful instructions, procedures, and workplace rules communicated by management.</p>
+<p style="margin:0 0 8px;"><strong>2. EQUAL OPPORTUNITY AND RESPECTFUL WORKPLACE</strong></p>
+<p style="margin:0 0 8px;">The organization is committed to maintaining a professional, respectful, and inclusive workplace.</p>
+<p style="margin:0 0 8px;">Employees are expected to treat colleagues, clients, customers, supervisors, and business partners with professionalism, courtesy, and respect.</p>
+<p style="margin:0 0 8px;">Harassment, discrimination, bullying, intimidation, threats, or other inappropriate workplace behavior will not be tolerated.</p>
+<p style="margin:0 0 8px;">Employees who experience or witness inappropriate conduct are encouraged to report the matter through the appropriate management or Human Resources channel.</p>
+<p style="margin:0 0 8px;"><strong>3. EMPLOYEE RESPONSIBILITIES</strong></p>
+<p style="margin:0 0 8px;">Employees are expected to:</p>
+<p style="margin:0 0 8px;">• Perform their assigned duties responsibly and professionally.<br>• Follow reasonable and lawful instructions from authorized supervisors.<br>• Observe company policies and workplace procedures.<br>• Maintain honesty and integrity in all work-related activities.<br>• Protect company property, information, and resources.<br>• Maintain appropriate professional conduct.<br>• Cooperate with colleagues and supervisors.<br>• Report workplace concerns, safety issues, or policy violations promptly.</p>
+<p style="margin:0 0 8px;">Employees are responsible for understanding the requirements of their position and asking their supervisor or Human Resources for clarification when necessary.</p>
+<p style="margin:0 0 8px;"><strong>4. ATTENDANCE AND PUNCTUALITY</strong></p>
+<p style="margin:0 0 8px;">Employees are expected to report to work on time and maintain reliable attendance.</p>
+<p style="margin:0 0 8px;">Employees who are unable to report to work or expect to be late should notify their immediate supervisor or follow the organization's established attendance notification procedure as soon as reasonably possible.</p>
+<p style="margin:0 0 8px;">Repeated or unauthorized absences, tardiness, or failure to follow attendance procedures may result in appropriate corrective action.</p>
+<p style="margin:0 0 8px;"><strong>5. ACKNOWLEDGEMENT</strong></p>
+<p style="margin:0 0 8px;">By selecting the acknowledgement option in the employee portal, I confirm that I have read and understood this Employee Handbook and agree to comply with the applicable policies, procedures, and workplace standards contained herein.</p>    </div>
+
+    
+</div>
+<table class="pkg-footer" cellpadding="0" cellspacing="0" border="0"><tr><td class="pf-left">Bestlink College of the Philippines</td><td class="pf-center">Human Resources Department</td><td class="pf-right">Page 2 of 3</td></tr></table></div><div style="page-break-after: always; break-after: page;"></div><div class="pkg-section"><img src="../assets/notary.png" class="pkg-watermark" alt="">
+<div class="document-preview">
+
+    <div class="document-header">
+        <h2 class="document-title">NON-DISCLOSURE AGREEMENT</h2>
+        <p class="document-subtitle">Governed by Data Privacy Act of 2012 (RA 10173)</p>
+    </div>
+
+    <hr class="document-separator">
+
+    <table class="document-information">
+        <tr>
+            <td class="info-label">Employee Name</td>
+            <td class="info-value">Alexis  Cueto</td>
+        </tr>
+        <tr>
+            <td class="info-label">Employee Number</td>
+            <td class="info-value">EMP-000039</td>
+        </tr>
+        <tr>
+            <td class="info-label">Department</td>
+            <td class="info-value">ADMIN STAFF</td>
+        </tr>
+        <tr>
+            <td class="info-label">Position</td>
+            <td class="info-value">HR Staff</td>
+        </tr>
+        <tr>
+            <td class="info-label">Agreement Date</td>
+            <td class="info-value">August 26, 2026</td>
+        </tr>
+        <tr>
+            <td class="info-label">Date Hired</td>
+            <td class="info-value">August 14, 2026</td>
+        </tr>
+    </table>
+
+    <div class="document-body">
+        <p style="margin:0 0 8px;">BESTLINK COLLEGE OF THE PHILIPPINES – BULACAN CAMPUS</p>
+<p style="margin:0 0 8px;">NON-DISCLOSURE AND CONFIDENTIALITY AGREEMENT</p>
+<p style="margin:0 0 8px;">Confidentiality, Data Protection and Information Security Agreement</p>
+<p style="margin:0 0 8px;">CONFIDENTIALITY NOTICE</p>
+<p style="margin:0 0 8px;">This Agreement establishes the Employee's obligations concerning confidential, proprietary, sensitive, personal, and non-public information accessed or received during the course of employment. The Employee is expected to protect such information from unauthorized access, use, disclosure, copying, removal, or distribution.</p>
+<p style="margin:0 0 8px;">This Non-Disclosure and Confidentiality Agreement ("Agreement") is entered into by and between BESTLINK College of the Philippines – Bulacan Campus ("Company" or "Employer") and Alexis  Cueto ("Employee"), effective as of .</p>
+<p style="margin:0 0 8px;">PURPOSE</p>
+<p style="margin:0 0 8px;">The Employee acknowledges that, in the course of employment, they may have access to confidential, proprietary, sensitive, and non-public information belonging to the Employer, its employees, students, applicants, clients, suppliers, partners, and other stakeholders.</p>
+<p style="margin:0 0 8px;">This Agreement establishes the Employee's responsibilities in protecting such information from unauthorized access, use, disclosure, copying, or distribution.</p>
+<p style="margin:0 0 8px;">DEFINITION OF CONFIDENTIAL INFORMATION</p>
+<p style="margin:0 0 8px;">"Confidential Information" includes, but is not limited to:</p>
+<p style="margin:0 0 8px;">• Employee personnel records, compensation information, employment records, and disciplinary records.<br>• Student records, academic records, contact information, and other personally identifiable information.<br>• Applicant and recruitment information.<br>• Business plans, strategies, financial information, budgets, and reports.<br>• Payroll, benefits, compensation, and government contribution information.<br>• Employment contracts, policies, procedures, forms, manuals, and internal documents.<br>• Legal documents, complaints, investigations, case records, and compliance information.<br>• Passwords, system credentials, access codes, database credentials, and IT security information.</p>
+<p style="margin:0 0 8px;">EMPLOYEE OBLIGATIONS</p>
+<p style="margin:0 0 8px;">The Employee shall:</p>
+<p style="margin:0 0 8px;">• Hold all Confidential Information in strict confidence.<br>• Not disclose, publish, or disseminate Confidential Information to any unauthorized person.<br>• Not use Confidential Information for any purpose other than performing employment duties.<br>• Take all reasonable precautions to prevent unauthorized access to Confidential Information.<br>• Report any unauthorized disclosure or suspected breach immediately to the Human Resources Department.</p>
+<p style="margin:0 0 8px;">RETURN OF DOCUMENTS</p>
+<p style="margin:0 0 8px;">Upon termination of employment, the Employee shall return all documents, files, records, and materials containing Confidential Information, and shall not retain any copies in any form.</p>
+<p style="margin:0 0 8px;">TERM</p>
+<p style="margin:0 0 8px;">This Agreement shall remain in effect for the duration of the Employee's employment and for a period of three (3) years thereafter.</p>
+<p style="margin:0 0 8px;">GOVERNING LAW</p>
+<p style="margin:0 0 8px;">This Agreement shall be governed by and construed in accordance with Philippine law, including the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+<p style="margin:0 0 8px;">IN WITNESS WHEREOF, the parties have executed this Agreement on the date first written above.</p>
+<p style="margin:0 0 8px;">_________________________________________<br><div style="display:inline-block; vertical-align:middle; text-align:center; font-family:Georgia, serif; font-style:italic; color:#1b2430; line-height:1.2;">HR Directress<div style="border-bottom:1px solid #1b2430; width:140px; margin-top:2px;"></div></div><br>Bestlink College of the Philippines</p>
+<p style="margin:0 0 8px;">Employee: _________________________<br>Alexis  Cueto<br>Date:</p>    </div>
+
+</div>
+<table class="pkg-footer" cellpadding="0" cellspacing="0" border="0"><tr><td class="pf-left">Bestlink College of the Philippines</td><td class="pf-center">Human Resources Department</td><td class="pf-right">Page 3 of 3</td></tr></table></div></div></body></html>

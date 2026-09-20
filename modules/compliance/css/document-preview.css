@@ -1,0 +1,587 @@
+/* ============================================================
+   HRMS Legal & Compliance — Professional Document Design System
+   ============================================================ */
+
+/* ---------- Document paper ---------- */
+.document-preview {
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.45;
+    color: #222222;
+    background: #ffffff;
+    border: 1px solid #d9dde3;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    padding: 22px 26px;
+    margin-top: 18px;
+    max-width: 100%;
+    position: relative;
+}
+
+/* ---------- Document header ---------- */
+.document-header {
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #0f2b4d;
+    margin-bottom: 14px;
+}
+
+.document-title {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 20pt;
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.document-subtitle {
+    margin: 6px 0 0;
+    font-size: 9.5pt;
+    color: #4b5563;
+}
+
+.document-meta {
+    margin: 4px 0 0;
+    font-size: 9pt;
+    color: #6b7280;
+}
+
+/* ---------- Separator ---------- */
+.document-separator {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 0 0 14px;
+}
+
+/* ---------- Information table ---------- */
+.document-information {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+}
+
+.document-information td {
+    padding: 4px 0;
+    vertical-align: top;
+    font-size: 10pt;
+}
+
+.document-information .info-label {
+    width: 140px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.document-information .info-value {
+    color: #111827;
+}
+
+.document-information .info-value pre,
+.document-information .info-value .pre-wrap {
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+.placeholder-line {
+    min-height: 100px;
+    border-bottom: 1px solid #888;
+}
+
+/* ---------- Two-column information rows ---------- */
+.document-information-row {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.document-information-row td {
+    padding: 4px 0;
+    vertical-align: top;
+    font-size: 10pt;
+}
+
+.document-information-row .info-label {
+    width: 120px;
+    font-weight: 600;
+    color: #4b5563;
+}
+
+.document-information-row .info-value {
+    color: #111827;
+}
+
+/* ---------- Section header ---------- */
+.document-section-header {
+    padding: 14px 0 6px;
+    font-size: 10pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #374151;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* ---------- Document body / clauses ---------- */
+.document-body {
+    text-align: justify;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+.document-body p {
+    margin: 0 0 10px;
+}
+
+.document-body p:last-child {
+    margin-bottom: 0;
+}
+
+.document-body pre,
+.document-body .pre-wrap {
+    white-space: pre-wrap;
+}
+
+/* ---------- Notary seal ---------- */
+.document-notary {
+    text-align: center;
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+.document-notary img {
+    height: 180px;
+    opacity: 0.22;
+}
+
+/* ---------- Tables inside documents ---------- */
+.document-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+    font-size: 10pt;
+}
+
+.document-table th,
+.document-table td {
+    padding: 8px 10px;
+    border: 1px solid #e5e7eb;
+    text-align: left;
+    vertical-align: top;
+}
+
+.document-table thead th {
+    background: #f8f9fa;
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.document-table tbody tr:nth-child(even) {
+    background: #fafbfc;
+}
+
+/* ---------- Signature block ---------- */
+.document-signature {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.document-signature-block {
+    flex: 1 1 260px;
+    min-width: 240px;
+}
+
+.document-signature-block .sig-image {
+    position: relative;
+    display: inline-block;
+}
+
+.document-signature-block .sig-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    max-height: 90px;
+}
+
+.document-signature-block .sig-text {
+    position: relative;
+    z-index: 1;
+    padding-top: 40px;
+}
+
+.document-signature-block .sig-name {
+    font-weight: 700;
+    color: #0f2b4d;
+}
+
+.document-signature-block .sig-role {
+    color: #6b7280;
+    font-size: 9.5pt;
+}
+
+.document-signature-block .sig-date {
+    margin-top: 6px;
+    font-size: 9.5pt;
+    color: #6b7280;
+}
+
+.document-signature-block .sig-role + .sig-name,
+.document-signature-block .sig-name + .sig-name {
+    margin-top: 10px;
+}
+
+/* ---------- Alert / warning / info / validation ---------- */
+.document-alert {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 6px;
+    background: #f5f9ff;
+    border: 1px solid #c7d7fb;
+    color: #1f3a5f;
+    font-size: 10.5pt;
+    line-height: 1.6;
+}
+
+.document-warning {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 6px;
+    background: #fff9f0;
+    border: 1px solid #f5d5a1;
+    color: #5a3e1b;
+    font-size: 10.5pt;
+    line-height: 1.6;
+}
+
+.document-info {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    font-size: 10.5pt;
+    line-height: 1.6;
+}
+
+.document-validation-errors {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 8px;
+    background: #fff5f5;
+    border: 1px solid #f5c6c6;
+    color: #7f1d1d;
+    font-size: 10.5pt;
+    line-height: 1.6;
+}
+
+.document-validation-errors h4 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #b91c1c;
+}
+
+.document-validation-errors ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+/* ---------- Disclaimer / footer ---------- */
+.document-disclaimer {
+    margin-top: 50px;
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: #fafbfc;
+    font-size: 9.5pt;
+    line-height: 1.7;
+    color: #6b7280;
+}
+
+.document-disclaimer strong {
+    color: #374151;
+}
+
+.document-footer {
+    margin-top: 50px;
+    padding: 12px 0 0;
+    border-top: 1px solid #e5e7eb;
+    font-size: 9.5pt;
+    color: #6b7280;
+    text-align: center;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-14 {
+    margin-top: 14px;
+}
+
+/* ---------- Print / PDF ---------- */
+@media print {
+    body {
+        background: #ffffff !important;
+        overflow: visible !important;
+    }
+
+    .document-preview {
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .document-separator {
+        border-top-color: #000000 !important;
+    }
+
+    .document-table thead th {
+        background: #f8f9fa !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .document-disclaimer {
+        border-color: #000000 !important;
+        background: #fafbfc !important;
+    }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+    .document-preview {
+        padding: 18px 20px;
+        max-width: 100%;
+    }
+
+    .document-signature {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 640px) {
+    .document-preview,
+    .document-preview *,
+    .document-preview *::before,
+    .document-preview *::after,
+    .document-table-wrap {
+        box-sizing: border-box;
+    }
+
+    .document-preview {
+        width: 100%;
+        max-width: 100%;
+        padding: 14px;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+    }
+
+    .document-title {
+        font-size: 18px;
+        letter-spacing: 0.04em;
+    }
+
+    .document-subtitle {
+        font-size: 12px;
+    }
+
+    .document-information .info-label {
+        width: auto;
+        display: block;
+        padding-bottom: 1px;
+    }
+
+    .document-information,
+    .document-information tbody,
+    .document-information tr,
+    .document-information td {
+        display: block;
+        width: 100%;
+    }
+
+    .document-information tr {
+        padding: 7px 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .document-information tr:last-child {
+        border-bottom: 0;
+    }
+
+    .document-information td {
+        padding: 1px 0;
+        overflow-wrap: anywhere;
+    }
+
+    .document-information-row td {
+        display: block;
+        width: 100%;
+    }
+
+    .document-information-row .info-label {
+        width: auto;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .document-signature {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .document-signature-block {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Keep document tables legible; horizontal scrolling is preferable to
+       squeezing clearance columns into unreadable text. */
+    .document-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 14px;
+    }
+
+    .document-table {
+        width: 600px;
+        min-width: 600px;
+        margin-bottom: 0;
+        font-size: 11px;
+    }
+
+    .document-table th,
+    .document-table td {
+        padding: 7px 8px;
+        overflow-wrap: anywhere;
+    }
+
+    .document-notary img {
+        max-width: 100%;
+        height: auto;
+        max-height: 130px;
+    }
+
+    .document-disclaimer,
+    .document-footer {
+        margin-top: 28px;
+        overflow-wrap: anywhere;
+    }
+
+    .package-footer .pf-left,
+    .package-footer .pf-right {
+        float: none;
+        display: block;
+        margin: 4px 0;
+    }
+}
+
+@media (max-width: 360px) {
+    .document-preview {
+        padding: 10px;
+        font-size: 10.5px;
+    }
+
+    .document-title {
+        font-size: 16px;
+    }
+
+    .document-table {
+        width: 560px;
+        min-width: 560px;
+    }
+}
+
+/* ---------- Onboarding Package Sections ---------- */
+.package-section {
+    margin-bottom: 0;
+}
+
+.package-section-title {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+    color: #111827;
+    margin: 0 0 18px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #111827;
+}
+
+.package-footer {
+    margin-top: 30px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 9.5pt;
+    color: #6b7280;
+    text-align: center;
+}
+
+.package-footer::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.package-footer .pf-left {
+    float: left;
+}
+
+.package-footer .pf-right {
+    float: right;
+}
+
+/* ---------- Sig block for packages ---------- */
+.sig-block {
+    margin-top: 24px;
+}
+
+.sig-block table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sig-block table td {
+    vertical-align: top;
+    padding: 0;
+}
+
+.sig-block .sig-line {
+    border-bottom: 1px solid #222;
+    height: 36px;
+    min-width: 180px;
+}
+
+.sig-block .sig-label {
+    font-size: 9.5pt;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.sig-block .sig-name {
+    font-weight: 700;
+    color: #0f2b4d;
+    margin-top: 4px;
+}
+
+.sig-block .sig-role {
+    font-size: 9.5pt;
+    color: #6b7280;
+}
+
+.sig-block .sig-date {
+    font-size: 9.5pt;
+    color: #6b7280;
+    margin-top: 4px;
+}

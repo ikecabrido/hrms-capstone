@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{{subject}}</title>
+  <style>
+    /* Reset for email clients */
+    body, table, td, p, a, li, blockquote {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table, td {
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+    img {
+      -ms-interpolation-mode: bicubic;
+      border: 0;
+      outline: none;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#eef1f6; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#1f2733; -webkit-font-smoothing:antialiased;">
+
+  <!-- Wrapper -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#eef1f6; padding:32px 16px;">
+    <tr>
+      <td align="center" valign="top">
+
+        <!-- Main Container -->
+        <table role="presentation" width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px; width:100%; background-color:#ffffff; border-radius:12px; overflow:hidden; border:1px solid #e3e8ef;">
+
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#0e1c33; padding:22px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td width="52" style="width:52px; vertical-align:middle;">
+                    <!-- Logo -->
+                    <img src="cid:bestlink-logo" alt="Bestlink College of the Philippines" width="180" height="56" style="display:block; max-height:56px; max-width:180px; width:auto; height:auto;">
+                  </td>
+                  <td style="vertical-align:middle; padding-left:14px;">
+                    <div style="font-size:16px; font-weight:800; color:#ffffff; line-height:1.2; letter-spacing:0.03em;">BESTLINK COLLEGE OF THE PHILIPPINES</div>
+                    <div style="font-size:12px; font-weight:500; color:rgba(255,255,255,0.7); margin-top:2px;">Bulacan Campus</div>
+                    <div style="font-size:12px; font-weight:500; color:#e3c479; margin-top:1px;">Human Resources &amp; Legal Compliance Office</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Email Information Bar -->
+          <tr>
+            <td style="background-color:#f8f9fb; padding:18px 28px 14px; border-bottom:1px solid #e4e8ee;">
+              <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#8b93a1; margin-bottom:12px;">&#9993; Email Information</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding:3px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                    <span style="display:inline-block; width:70px; font-weight:600; color:#5b6472; font-size:12px;">From</span>
+                    Human Resources &amp; Legal Compliance Office
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:3px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                    <span style="display:inline-block; width:70px; font-weight:600; color:#5b6472; font-size:12px;">To</span>
+                    {{employee_name}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:3px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                    <span style="display:inline-block; width:70px; font-weight:600; color:#5b6472; font-size:12px;">CC</span>
+                    Department Head (Optional)
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:3px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                    <span style="display:inline-block; width:70px; font-weight:600; color:#5b6472; font-size:12px;">Subject</span>
+                    <strong>{{subject}}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:3px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                    <span style="display:inline-block; width:70px; font-weight:600; color:#5b6472; font-size:12px;">Date</span>
+                    {{date}} &bull; {{time}}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:3px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                    <span style="display:inline-block; width:70px; font-weight:600; color:#5b6472; font-size:12px;">Priority</span>
+                    <span style="display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; font-weight:600; background:rgba(47,158,110,0.10); color:#1f7a52;">Normal</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Document Details Card -->
+          <tr>
+            <td style="padding:20px 28px 0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8f9fb; border-radius:10px; border:1px solid #e4e8ee;">
+                <tr>
+                  <td style="padding:18px 20px;">
+                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#8b93a1; margin-bottom:12px;">&#128196; Document Details</div>
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                          <span style="display:inline-block; width:110px; font-weight:600; color:#5b6472; font-size:12px;">Document</span>
+                          Employee Handbook
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                          <span style="display:inline-block; width:110px; font-weight:600; color:#5b6472; font-size:12px;">Version</span>
+                          {{version}}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                          <span style="display:inline-block; width:110px; font-weight:600; color:#5b6472; font-size:12px;">Effective Date</span>
+                          {{effective_date}}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                          <span style="display:inline-block; width:110px; font-weight:600; color:#5b6472; font-size:12px;">Employee No.</span>
+                          {{employee_no}}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                          <span style="display:inline-block; width:110px; font-weight:600; color:#5b6472; font-size:12px;">Department</span>
+                          {{department}}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                          <span style="display:inline-block; width:110px; font-weight:600; color:#5b6472; font-size:12px;">Position</span>
+                          {{position}}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body Content -->
+          <tr>
+            <td style="padding:24px 28px 20px;">
+              <p style="font-size:15px; line-height:1.7; color:#3a4555; margin:0 0 16px;">Dear <strong style="color:#1f2733;">{{employee_name}}</strong>,</p>
+              <div style="font-size:15px; line-height:1.75; color:#3a4555; margin:0 0 24px;">
+                <p style="margin:0 0 16px;">Greetings!</p>
+                <p style="margin:0 0 16px;">We are pleased to provide you with the latest version of the <strong>Employee Handbook of {{company_name}}</strong>.</p>
+                <p style="margin:0 0 16px;">The handbook contains important information about our workplace policies, procedures, standards, employee responsibilities, and other guidelines that help promote a professional, respectful, and productive work environment.</p>
+                
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8f9fb; border-radius:10px; border:1px solid #e4e8ee; margin:20px 0;">
+                  <tr>
+                    <td style="padding:18px 20px;">
+                      <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#8b93a1; margin-bottom:12px;">&#128196; Handbook Details</div>
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                            <span style="display:inline-block; width:120px; font-weight:600; color:#5b6472; font-size:12px;">Version</span>
+                            {{version}}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                            <span style="display:inline-block; width:120px; font-weight:600; color:#5b6472; font-size:12px;">Effective Date</span>
+                            {{effective_date}}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                            <span style="display:inline-block; width:120px; font-weight:600; color:#5b6472; font-size:12px;">Employee No.</span>
+                            {{employee_no}}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                            <span style="display:inline-block; width:120px; font-weight:600; color:#5b6472; font-size:12px;">Department</span>
+                            {{department}}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding:4px 0; font-size:13px; line-height:1.5; color:#1b2430;">
+                            <span style="display:inline-block; width:120px; font-weight:600; color:#5b6472; font-size:12px;">Position</span>
+                            {{position}}
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0 0 16px;">Please take time to carefully read and familiarize yourself with the contents of the handbook. The policies and guidelines contained therein are intended to help you understand your responsibilities and the standards expected of all employees.</p>
+                
+                <p style="margin:0 0 8px;"><strong>Please review the handbook here:</strong></p>
+                <p style="margin:0 0 16px;"><a href="{{preview_url}}" style="color:#1f7a52; text-decoration:none; font-weight:600;">{{preview_url}}</a></p>
+                
+                <p style="margin:0 0 8px;">After reviewing the handbook, please complete the required acknowledgement using the link below:</p>
+                <p style="margin:0 0 16px;"><strong>Acknowledge Employee Handbook:</strong><br>
+                <a href="{{ack_url}}" style="color:#1f7a52; text-decoration:none; font-weight:600;">{{ack_url}}</a></p>
+                
+                <p style="margin:0 0 16px;">Your acknowledgement confirms that you have received and reviewed the Employee Handbook and understand that you are responsible for becoming familiar with and complying with the applicable company policies and guidelines.</p>
+                
+                <p style="margin:0 0 16px;">If you have any questions or need clarification regarding any provision in the handbook, please coordinate with the Human Resources Department.</p>
+                
+                <p style="margin:0 0 16px;">Thank you for your cooperation and commitment to maintaining a professional workplace.</p>
+              </div>
+
+              <!-- Action Box -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f0f7ff; border-radius:10px; border:1px solid #b3d7ff; margin-top:24px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <div style="font-size:14px; font-weight:700; color:#0e1c33; margin-bottom:8px;">&#128279; Action Required</div>
+                    <p style="font-size:14px; line-height:1.6; color:#3a4555; margin:0 0 16px;">
+                      Please review the attached Employee Handbook and submit your acknowledgement through the HR portal.
+                    </p>
+                    <a href="{{ack_url}}" style="display:inline-block; padding:10px 20px; border-radius:8px; background-color:#1f7a52; color:#ffffff; text-decoration:none; font-weight:700; font-size:14px;">
+                      Acknowledge Handbook
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Attachment Notice -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+                <tr>
+                  <td style="padding:12px 16px; background-color:#fff8e6; border-radius:8px; border-left:4px solid #c9a24a;">
+                    <div style="font-size:13px; font-weight:600; color:#6e5a2a; margin-bottom:4px;">&#128196; Attachment</div>
+                    <div style="font-size:13px; line-height:1.5; color:#6e5a2a;">
+                      Employee_Handbook_{{employee_name}}_v{{version}}.pdf
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Signatory -->
+          <tr>
+            <td style="padding:0 28px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="padding-top:16px; border-top:1px solid #e4e8ee;">
+                    <p style="margin:0 0 2px; font-size:14px; line-height:1.4; color:#3a4555;">Sincerely,</p>
+                    <img src="cid:signatory-image" alt="HR Director" width="140" height="56" style="display:block; max-width:140px; max-height:56px; width:auto; height:auto; margin-top:6px; margin-bottom:4px;">
+                    <p style="margin:0; font-size:15px; font-weight:600; color:#0e1c33; line-height:1.4;">HR Director</p>
+                    <p style="margin:0; font-size:13px; color:#5b6472; line-height:1.4;">Human Resources &amp; Legal Compliance Office</p>
+                    <p style="margin:0; font-size:12px; color:#8b93a1; line-height:1.4;">Bestlink College of the Philippines</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#0e1c33; padding:20px 28px; text-align:center;">
+              <div style="font-size:14px; font-weight:700; color:#c9a24a; line-height:1.3;">{{company_name}}</div>
+              <div style="font-size:12px; font-weight:500; color:rgba(255,255,255,0.75); line-height:1.4; margin-top:2px;">Human Resources &amp; Legal Compliance Office</div>
+              <div style="font-size:11px; color:rgba(255,255,255,0.55); line-height:1.4; margin-top:2px;">{{company_address}}</div>
+              <div style="font-size:12px; color:#e3c479; line-height:1.4; margin-top:4px;">&#9993; {{company_email}} &nbsp;|&nbsp; &#127760; {{company_website}} &nbsp;|&nbsp; &#9742; 09077915906</div>
+            </td>
+          </tr>
+
+          <!-- Confidentiality Notice -->
+          <tr>
+            <td style="background-color:#fff8e6; padding:14px 28px; border-left:3px solid #c9a24a;">
+              <div style="font-size:11px; font-weight:700; color:#a4802e; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">&#128737; Confidentiality Notice</div>
+              <div style="font-size:11px; line-height:1.45; color:#6e5a2a;">This email and any attachments may contain confidential and privileged information intended only for the designated recipient(s). Unauthorized access, disclosure, copying, distribution, or use of this information is prohibited.</div>
+            </td>
+          </tr>
+
+          <!-- Academic Disclaimer -->
+          <tr>
+            <td style="background-color:#f5f5f5; padding:14px 28px; border-top:1px solid #e4e8ee;">
+              <div style="font-size:10px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;">&#128214; Academic / Thesis Disclaimer</div>
+              <div style="font-size:10px; line-height:1.45; color:#8b93a1; margin-bottom:4px;">This email is generated solely for academic and research purposes as part of the development of a Human Resource Management System (HRMS) thesis project.</div>
+              <div style="font-size:10px; line-height:1.45; color:#8b93a1; margin-bottom:4px;">The Bestlink College logo, branding, employee names, email addresses, documents, and other information displayed are used only for demonstration and system testing. They do not represent actual institutional communications or official records of Bestlink College of the Philippines.</div>
+              <div style="font-size:9px; color:#9ca3af; font-style:italic;">&copy; {{year}} Human Resource Management System (HRMS) Thesis Project &mdash; Bestlink College of the Philippines</div>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /Main Container -->
+
+      </td>
+    </tr>
+  </table>
+  <!-- /Wrapper -->
+
+</body>
+</html>

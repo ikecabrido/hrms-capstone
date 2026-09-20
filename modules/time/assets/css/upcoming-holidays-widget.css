@@ -1,0 +1,11 @@
+.ta-holidays-widget { border-left: 4px solid #007bff; }
+.holiday-countdown { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border-radius: 8px; }
+.holiday-countdown h5 { color: #fff; }
+.countdown-timer { margin: 15px 0; }
+.list-group-item { border: 0; border-bottom: 1px solid #eee; padding: 12px 0; }
+.list-group-item:last-child { border-bottom: 0; }
+.list-group-item h6 { font-weight: 600; color: #333; }
+.holiday-list { max-height: 400px; overflow-y: auto; }
+#syncHolidaysBtn { transition: transform .3s ease; }
+#syncHolidaysBtn.syncing { animation: upcoming-holiday-spin 1s linear infinite; }
+@keyframes upcoming-holiday-spin { to { transform: rotate(360deg); } }

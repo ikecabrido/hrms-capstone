@@ -1,0 +1,153 @@
+
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .form-section {
+            background: white;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 61, 130, 0.08);
+            border: 1px solid #e8eef7;
+        }
+        .form-section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+        .form-section-title h3 {
+            margin: 0;
+            color: #003d82;
+            font-size: 20px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #003d82;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e8eef7;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: #f9fbfd;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0066cc;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
+            color: white;
+            padding: 14px 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 102, 204, 0.4);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        .alert {
+            padding: 16px 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .alert::before {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+        .alert-success::before {
+            content: "✓";
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left-color: #dc3545;
+        }
+        .alert-error::before {
+            content: "⚠";
+        }
+        .info-box {
+            background: linear-gradient(135deg, #f0f7ff 0%, #f9fbfd 100%);
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 35px;
+            border: 1px solid #e8eef7;
+            border-left: 4px solid #0066cc;
+        }
+        .info-box h3 {
+            margin: 0 0 15px 0;
+            color: #003d82;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .info-box h3::before {
+            content: "ℹ";
+            font-size: 18px;
+        }
+        .info-box ul {
+            line-height: 2;
+            margin-left: 20px;
+            color: #555;
+        }
+        .info-box li {
+            margin-bottom: 8px;
+        }
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-section {
+                padding: 20px;
+            }
+        }
