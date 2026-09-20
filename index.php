@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="shortcut icon" href="assets/bcp-logo.png" type="image/png">
-    <title>Login Page</title>
+    <title>Human Resource Management System</title>
 </head>
 
 <body>
