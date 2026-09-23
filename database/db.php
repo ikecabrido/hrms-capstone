@@ -12,41 +12,11 @@ class Database
 
     public function __construct()
     {
-        /*
-         * Production:
-         * Use environment variables when available.
-         *
-         * Local development:
-         * Fall back to the existing db_config.php.
-         */
-        $configFile = dirname(__DIR__, 2) . '/db_config.php';
-
-        if (getenv('DB_HOST') !== false && getenv('DB_HOST') !== '') {
-            // Production / environment configuration
-            $this->host = getenv('DB_HOST');
-            $this->port = getenv('DB_PORT') ?: '3306';
-            $this->db   = getenv('DB_DATABASE') ?: 'hrms';
-            $this->user = getenv('DB_USER') ?: 'root';
-            $this->pass = getenv('DB_PASSWORD') !== false
-                ? getenv('DB_PASSWORD')
-                : '';
-        } elseif (file_exists($configFile)) {
-            // Existing HRMS local configuration
-            $config = require $configFile;
-
-            $this->host = $config['host'];
-            $this->port = $config['port'];
-            $this->db   = $config['database'];
-            $this->user = $config['username'];
-            $this->pass = $config['password'];
-        } else {
-            // Final local fallback
-            $this->host = 'localhost';
-            $this->port = '3306';
-            $this->db   = 'hrms';
-            $this->user = 'root';
-            $this->pass = '';
-        }
+        $this->host = 'localhost';
+        $this->port = '3306';
+        $this->db   = 'hrms';
+        $this->user = 'root';
+        $this->pass = '';
 
         try {
             $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db};charset=utf8mb4";
@@ -82,4 +52,4 @@ class Database
         return $this->conn;
     }
 }
-```
+

@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             7 => 'modules/learning/index.php',
             8 => 'modules/compliance/index.php',
             9 => 'modules/workforce/index.php',
-            10 => 'modules/exit/index.php',
+            10 => 'modules/exit/inedex.php',
             11 => 'modules/clinic/index.php',
             12 => 'modules/engagement/index.php',
             13 => 'modules/portal/index.php'
