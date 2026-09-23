@@ -17,7 +17,7 @@ function setRecognitionModalVisibility(modalId, shouldOpen) {
   modal.classList.toggle('d-block', shouldOpen);
   modal.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
   modal.setAttribute('aria-modal', shouldOpen ? 'true' : 'false');
-  modal.style.display = shouldOpen ? 'block' : 'none';
+  modal.style.display = shouldOpen ? (modalId === 'editRewardModal' ? 'flex' : 'block') : 'none';
 
   if (shouldOpen) {
     document.body.classList.add('modal-open');
@@ -118,7 +118,7 @@ function renderPendingNominationItem(item) {
     + '<small class="text-muted">Department: N/A • Votes: 0 • Performance: 0%</small>'
     + '<div class="mt-1"><span class="badge badge-warning">Nominated</span>'
     + ' <span class="text-muted small">Reason: ' + escapeHtml(pendingNomination.reason) + '</span></div></div>'
-    + '<div class="text-right candidate-actions"><span class="badge badge-info">Recognition: 0 pts</span>'
+    + '<div class="text-right candidate-actions">'
     + voteButton + '</div>';
 }
 
@@ -202,6 +202,8 @@ function bindNominationFormEvents() {
           pendingNomination.awardHistoryId = result.id || '';
           if (pendingItem) renderPendingNominationItem(pendingItem);
         }
+        pendingNomination = null;
+        loadEmployeeOfTheMonthCandidates();
       })
       .catch(error => {
         console.error('Failed to save nomination', error);
@@ -331,7 +333,7 @@ function populateNominationEmployeesFromRecognitions(recognitions) {
   const select = document.getElementById('nominate-employee');
   if (!select || !Array.isArray(recognitions)) return;
 
-  select.innerHTML = '<option value="">Select employee</option>';
+  const selectedEmployeeId = select.value;
   const recognizedEmployees = new Map();
   recognitions.forEach(function(recognition) {
     const employeeId = recognition.receiver_id || recognition.employee_id;
@@ -342,6 +344,8 @@ function populateNominationEmployeesFromRecognitions(recognitions) {
   recognizedEmployees.forEach(function(employeeName, employeeId) {
     ensureEmployeeInNominationList(employeeId, employeeName);
   });
+
+  if (selectedEmployeeId) select.value = selectedEmployeeId;
 }
 
 // Add smooth transition styles
@@ -660,6 +664,84 @@ function initRecognitionTabClickHandlers() {
   }, true);
 }
 
+function bindRecognitionSendForm() {
+  const sendForm = document.getElementById('send-recognition-form');
+  if (!sendForm || sendForm.dataset.recognitionBound === '1') return;
+  sendForm.dataset.recognitionBound = '1';
+
+  sendForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (sendForm.dataset.submitting === '1') return;
+    const btn = sendForm.querySelector('button[type="submit"]');
+
+    const receiverEl = document.getElementById('rec-receiver');
+    const receiverId = receiverEl ? receiverEl.value : null;
+    const messageEl = document.getElementById('rec-message');
+    const pointsEl = document.getElementById('rec-points');
+    const message = messageEl ? messageEl.value.trim() : '';
+    const points = pointsEl ? parseInt(pointsEl.value, 10) : 10;
+
+    if (!receiverId || !message || Number.isNaN(points) || points < 1) {
+      if (!receiverId) alert('Please select a recipient before sending recognition.');
+      else if (!message) alert('Please enter a message before sending recognition.');
+      else alert('Points must be a valid number greater than 0.');
+      return;
+    }
+
+    sendForm.dataset.submitting = '1';
+    if (btn) { btn.textContent = 'Sending...'; btn.disabled = true; }
+
+    fetch(recognitionApiBase + '?resource=recognition&action=send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ receiver_id: receiverId, message: message, points: points })
+    })
+      .then(async response => {
+        const payloadText = await response.text();
+        let payload;
+        try {
+          payload = JSON.parse(payloadText);
+        } catch (jsonErr) {
+          throw new Error('Invalid server response: ' + payloadText);
+        }
+
+        if (!response.ok) {
+          throw new Error(payload.error || 'Server returned status ' + response.status);
+        }
+
+        return payload;
+      })
+      .then(res => {
+        if (res && (res.id || res.success)) {
+          const receiverName = receiverEl && receiverEl.selectedOptions.length
+            ? receiverEl.selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/, '')
+            : 'Employee';
+          ensureEmployeeInNominationList(receiverId, receiverName);
+          closeRecognitionModal();
+          if (messageEl) messageEl.value = '';
+          if (pointsEl) pointsEl.value = '10';
+          loadRecognitionFeed();
+          loadRecognitionPageData();
+          refreshAllRecognitionSections();
+        } else if (res && res.error) {
+          alert('Error: ' + res.error);
+        } else {
+          throw new Error('Unexpected response from server');
+        }
+      })
+      .catch(err => {
+        console.error('Failed to send recognition', err);
+        alert('Failed to send recognition. ' + err.message);
+      })
+      .finally(() => {
+        sendForm.dataset.submitting = '0';
+        if (btn) { btn.textContent = 'Send Recognition'; btn.disabled = false; }
+      });
+  }, true);
+}
+
 function bindRecognitionPageEvents() {
   if (recognitionPageBindingsInitialized) return;
   recognitionPageBindingsInitialized = true;
@@ -739,6 +821,7 @@ function bindRecognitionPageEvents() {
     loadEmployeeOfTheMonthCandidates();
     bindNominationFormEvents();
     bindAddRewardFormEvents();
+    bindRecognitionSendForm();
   });
 
   const form = document.querySelector('#sendRecognitionModal form');
@@ -846,6 +929,8 @@ function bindRecognitionPageEvents() {
         setRecognitionModalVisibility('addRewardModal', true);
       } else if (modalId === 'createBadgeModal') {
         setRecognitionModalVisibility('createBadgeModal', true);
+      } else if (modalId === 'editRewardModal') {
+        setRecognitionModalVisibility('editRewardModal', true);
       }
       return;
     }
@@ -876,6 +961,7 @@ function bindRecognitionPageEvents() {
       else if (modalId === 'assignBadgeModal') closeAssignBadgeModal();
       else if (modalId === 'addRewardModal') closeAddRewardModal();
       else if (modalId === 'createBadgeModal') closeCreateBadgeModal();
+      else if (modalId === 'editRewardModal') setRecognitionModalVisibility('editRewardModal', false);
       else if (modalId === 'sendRecognitionModal') closeRecognitionModal();
       return;
     }
@@ -921,19 +1007,22 @@ function bindRecognitionPageEvents() {
     if (oldInput) oldInput.remove();
   }
 
-  const employeeListApi = window.location.pathname.indexOf('/pages/') !== -1
-    ? '../api/index.php?resource=employee_list'
-    : 'api/index.php?resource=employee_list';
+  const employeeListApi = recognitionApiBase + '?resource=employee_list';
 
-  fetch(employeeListApi)
-    .then(res => res.json())
+  fetch(employeeListApi, { credentials: 'same-origin' })
+    .then(res => {
+      if (!res.ok) throw new Error('Failed to load employee list: ' + res.status);
+      return res.json();
+    })
     .then(list => {
+      if (!sel) return;
+      sel.innerHTML = '<option value="">Select employee</option>';
       list.forEach(emp => {
         if (!sel) return;
         const opt = document.createElement('option');
         opt.value = emp.employee_id;
         opt.setAttribute('data-employee-id', emp.employee_id);
-        opt.textContent = emp.full_name + ' (' + emp.employee_id + ')';
+        opt.textContent = (emp.full_name || 'Employee') + ' (' + emp.employee_id + ')';
         sel.appendChild(opt);
       });
       if (sel) sel.addEventListener('change', function() {
@@ -958,78 +1047,7 @@ function bindRecognitionPageEvents() {
 
   window.employeeMonthVotes = window.employeeMonthVotes || [];
 
-  const sendForm = document.querySelector('#sendRecognitionModal form');
-  if (sendForm) {
-    sendForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      if (sendForm.dataset.submitting === '1') return;
-      const btn = sendForm.querySelector('button[type=submit]');
-
-      const receiverEl = document.getElementById('rec-receiver');
-      const receiverId = receiverEl ? receiverEl.value : null;
-      const message = document.getElementById('rec-message') ? document.getElementById('rec-message').value.trim() : '';
-      const points = document.getElementById('rec-points') ? parseInt(document.getElementById('rec-points').value, 10) : 10;
-
-      if (!receiverId) {
-        alert('Please select a recipient before sending recognition.');
-        return;
-      }
-
-      sendForm.dataset.submitting = '1';
-      if (btn) { btn.textContent = 'Sending...'; btn.disabled = true; }
-
-      fetch(recognitionApiBase + '?resource=recognition&action=send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ receiver_id: receiverId, message: message, points: points })
-      })
-      .then(async response => {
-        const payloadText = await response.text();
-        let payload;
-        try {
-          payload = JSON.parse(payloadText);
-        } catch (jsonErr) {
-          throw new Error('Invalid server response: ' + payloadText);
-        }
-
-        if (!response.ok) {
-          throw new Error(payload.error || 'Server returned status ' + response.status);
-        }
-
-        return payload;
-      })
-      .then(res => {
-        if (res && (res.id || res.success)) {
-          const receiverName = receiverEl && receiverEl.selectedOptions.length
-            ? receiverEl.selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/, '')
-            : 'Employee';
-          ensureEmployeeInNominationList(receiverId, receiverName);
-          if (typeof window.jQuery === 'function' && window.jQuery.fn && window.jQuery.fn.modal) {
-            window.jQuery('#sendRecognitionModal').modal('hide');
-          } else {
-            closeRecognitionModal();
-          }
-          if (document.getElementById('rec-message')) document.getElementById('rec-message').value = '';
-          if (document.getElementById('rec-points')) document.getElementById('rec-points').value = 10;
-          refreshAllRecognitionSections();
-        } else if (res && res.error) {
-          alert('Error: ' + res.error);
-        } else {
-          throw new Error('Unexpected response from server');
-        }
-      })
-      .catch(err => {
-        console.error('Failed to send recognition', err);
-        alert('Failed to send recognition. ' + err.message);
-      })
-      .finally(() => {
-        sendForm.dataset.submitting = '0';
-        if (btn) { btn.textContent = 'Send Recognition'; btn.disabled = false; }
-      });
-    }, true);
-  }
+  bindRecognitionSendForm();
 
   const employeeMonthFilterForm = document.getElementById('employee-month-filter-form');
   if (employeeMonthFilterForm) {
@@ -1073,6 +1091,13 @@ function bindRecognitionPageEvents() {
 
   if (!document.documentElement.dataset.createBadgeSubmitBound) {
     document.documentElement.dataset.createBadgeSubmitBound = '1';
+    const badgeTierPoints = { bronze: 10, silver: 25, gold: 50, platinum: 100 };
+    document.addEventListener('change', function(e) {
+      if (e.target.matches('#create-badge-tier')) {
+        const badgePoints = document.getElementById('create-badge-points');
+        if (badgePoints) badgePoints.value = badgeTierPoints[e.target.value] || 10;
+      }
+    });
     document.addEventListener('submit', function(e) {
       const createBadgeForm = e.target.closest('#create-badge-form');
       if (!createBadgeForm) return;
@@ -1095,6 +1120,12 @@ function bindRecognitionPageEvents() {
           createBadgeForm.reset();
           const category = document.getElementById('create-badge-category');
           if (category) category.value = 'achievement';
+          const tier = document.getElementById('create-badge-tier');
+          if (tier) tier.value = 'bronze';
+          const points = document.getElementById('create-badge-points');
+          if (points) points.value = '10';
+          const icon = document.getElementById('create-badge-icon');
+          if (icon) icon.value = 'fas fa-medal';
           loadBadges();
         })
         .catch(error => console.error('Failed to create badge', error))
@@ -1124,7 +1155,6 @@ function bindRecognitionPageEvents() {
             voteSucceeded = true;
             window.employeeMonthVotes.push(awardHistoryId);
             refreshAllRecognitionSections();
-            alert('Vote recorded successfully.');
           } else if (res && res.error) {
             alert('Error: ' + res.error);
           }
@@ -1212,6 +1242,7 @@ function startRecognitionAutoRefresh(intervalMs) {
 }
 
 function refreshAllRecognitionSections() {
+  loadRecognitionPageData();
   loadRecognitionFeed();
   loadAwardHistory();
   loadRewards();
@@ -1287,8 +1318,8 @@ function renderComprehensiveLeaderboard(items) {
   body.innerHTML = items.slice(0, 9).map(function(item, index) {
     const rank = Number(item.rank_position || index + 1);
     return '<tr><td><span class="badge ' + (rank <= 3 ? 'badge-warning' : 'badge-secondary') + '">' + rank + '</span></td>'
-      + '<td><strong>' + escapeHtml(item.employee_name || 'Unknown') + '</strong><div class="text-muted small">' + escapeHtml(item.department || 'N/A') + '</div></td>'
-      + '<td>' + Number(item.recognition_points || 0) + '</td><td>' + Number(item.performance_points || 0) + '</td>'
+      + '<td><strong>' + escapeHtml(item.employee_name || 'Unknown') + '</strong><div class="text-muted small">' + escapeHtml(item.department || 'N/A') + '</div><button type="button" class="btn btn-link btn-sm p-0 adjust-points" data-employee-id="' + escapeHtml(item.employee_id || '') + '" data-employee-name="' + escapeHtml(item.employee_name || '') + '">Adjust points</button></td>'
+      + '<td>' + Number(item.recognition_points || 0) + '</td><td>' + Number(item.performance_score || 0) + '%</td>'
       + '<td>' + Number(item.badge_points || 0) + '</td><td>' + Number(item.award_points || 0) + '</td>'
       + '<td><span class="badge badge-success badge-pill">' + Number(item.total_points || 0) + ' pts</span></td></tr>';
   }).join('');
@@ -1314,9 +1345,13 @@ function renderCurrentWinner(awardHistory, employees, candidates) {
   const container = document.getElementById('current-winner-content');
   if (!container) return;
   const currentMonth = new Date().toISOString().slice(0, 7);
-  const winnerCandidate = (Array.isArray(candidates) ? candidates : []).find(function(item) {
-    return String(item.status || '').toLowerCase() === 'winner';
-  });
+  const winnerCandidate = (Array.isArray(candidates) ? candidates : [])
+    .slice()
+    .sort(function(first, second) {
+      return Number(second.votes || 0) - Number(first.votes || 0)
+        || Number(second.performance_score || 0) - Number(first.performance_score || 0)
+        || Number(second.recognition_total || 0) - Number(first.recognition_total || 0);
+    })[0] || null;
   const winnerAward = (Array.isArray(awardHistory) ? awardHistory : []).find(function(item) {
     const isEmployeeMonth = String(item.award_type || '').toLowerCase() === 'employee_of_month'
       || String(item.award_name || '').toLowerCase().indexOf('employee of the month') !== -1;
@@ -1426,13 +1461,21 @@ document.addEventListener('click', function(e){
 });
 
 function loadRecognitionFeed() {
-  fetch(recognitionApiBase + '?resource=recognition&action=list&t=' + Date.now())
+  const feed = document.getElementById('recognition-feed');
+  if (!feed) return;
+
+  const initialFeedHtml = feed.dataset.initializedHtml || feed.innerHTML.trim();
+  if (initialFeedHtml && !feed.dataset.hasBeenRefreshed) {
+    feed.dataset.initializedHtml = initialFeedHtml;
+    feed.dataset.hasBeenRefreshed = '1';
+  }
+
+  fetch(recognitionApiBase + '?resource=recognition&action=list&t=' + Date.now(), { cache: 'no-store', credentials: 'same-origin' })
     .then(r => r.json())
     .then(res => {
-      const feed = document.getElementById('recognition-feed');
       if (!feed) return;
-      feed.innerHTML = '';
       if (res && res.data && res.data.length) {
+        feed.innerHTML = '';
         res.data.forEach(r => {
           const item = document.createElement('div');
           item.className = 'list-group-item recognition-entry';
@@ -1440,7 +1483,6 @@ function loadRecognitionFeed() {
           item.dataset.senderName = r.sender_name || '';
           item.dataset.receiverId = r.receiver_id || '';
           item.dataset.receiverName = r.receiver_name || '';
-          // store recognition id for change detection
           item.dataset.recognitionId = r.id || r.eer_recognition_id || '';
           item.innerHTML = `
             <div class="recognition-entry-header">
@@ -1458,7 +1500,6 @@ function loadRecognitionFeed() {
         });
         populateNominationEmployeesFromFeed();
 
-        // highlight newest item if it's new since last load
         try {
           const newFirstId = res.data[0] && (res.data[0].id || res.data[0].eer_recognition_id) ? (res.data[0].id || res.data[0].eer_recognition_id) : null;
           if (typeof lastSeenRecognitionId !== 'undefined' && lastSeenRecognitionId !== null && newFirstId && newFirstId != lastSeenRecognitionId) {
@@ -1469,13 +1510,17 @@ function loadRecognitionFeed() {
               setTimeout(() => { newEl.style.backgroundColor = ''; }, 3000);
             }
           }
-          // update last seen id
           window.lastSeenRecognitionId = res.data[0] && (res.data[0].id || res.data[0].eer_recognition_id) ? (res.data[0].id || res.data[0].eer_recognition_id) : window.lastSeenRecognitionId;
         } catch (err) {
           console.error('Error detecting new recognition', err);
         }
-      } else {
+      } else if (!initialFeedHtml || !initialFeedHtml.includes('recognition-entry')) {
         feed.innerHTML = '<div class="text-muted">No recognition found.</div>';
+      }
+    })
+    .catch(() => {
+      if (initialFeedHtml && initialFeedHtml.includes('recognition-entry')) {
+        feed.innerHTML = initialFeedHtml;
       }
     });
 }
@@ -1497,7 +1542,8 @@ function loadBadges() {
         res.data.forEach(b => {
           const item = document.createElement('div');
           item.className = 'list-group-item';
-          item.innerHTML = `<b>${escapeHtml(b.name)}</b><br><span>${escapeHtml(b.description)}</span>`;
+          const badgeIcon = b.icon || 'fas fa-medal';
+          item.innerHTML = `<div class="d-flex align-items-center"><span class="badge-icon" aria-hidden="true"><i class="${escapeHtml(badgeIcon)}"></i></span><b>${escapeHtml(b.name)}</b></div><span class="badge-description">${escapeHtml(b.description || '')}</span><div class="text-muted small mt-1">+${Number(b.points_value || 0)} points</div>`;
           feed.appendChild(item);
           if (badgeSelect) {
             const option = document.createElement('option');
@@ -1538,19 +1584,100 @@ function loadRewards() {
     .then(r => r.json())
     .then(res => {
       const feed = document.getElementById('rewards-feed');
+      const editSelect = document.getElementById('edit-reward-select');
       if (!feed) return;
       feed.innerHTML = '';
+      if (editSelect) editSelect.innerHTML = '<option value="">Select reward</option>';
       if (res && res.data && res.data.length) {
         res.data.forEach(rw => {
           const item = document.createElement('div');
-          item.className = 'list-group-item';
-          item.innerHTML = `<b>${escapeHtml(rw.name)}</b> <span class='badge badge-info ml-2'>${rw.points_required} pts</span><br><span>${escapeHtml(rw.description || '')}</span>`;
+          item.className = 'list-group-item reward-item';
+          const rewardIcon = rw.icon || 'fas fa-gift';
+          item.innerHTML = `<div class="reward-icon" aria-hidden="true"><i class="${escapeHtml(rewardIcon)}"></i></div><div class="reward-content"><strong>${escapeHtml(rw.name)}</strong><span class="reward-description">${escapeHtml(rw.description || '')}</span><small class="text-muted">Performance requirement: ${Number(rw.performance_requirement || 0)}%</small></div><span class="badge badge-info reward-points">${Number(rw.points_required || 0)} pts</span>`;
           feed.appendChild(item);
+          if (editSelect) {
+            const option = document.createElement('option');
+            option.value = rw.eer_reward_id;
+            option.textContent = rw.name;
+            option.dataset.name = rw.name || '';
+            option.dataset.description = rw.description || '';
+            option.dataset.points = rw.points_required || '';
+            editSelect.appendChild(option);
+          }
         });
       } else {
         feed.innerHTML = '<div class="text-muted">No rewards found.</div>';
       }
     });
+}
+
+if (!window.__rewardEditBound) {
+  window.__rewardEditBound = true;
+  document.addEventListener('change', function(event) {
+    if (!event.target.matches('#edit-reward-select')) return;
+    const option = event.target.selectedOptions[0];
+    if (!option) return;
+    document.getElementById('edit-reward-name').value = option.dataset.name || '';
+    document.getElementById('edit-reward-description').value = option.dataset.description || '';
+    document.getElementById('edit-reward-points').value = option.dataset.points || '';
+  });
+  document.addEventListener('submit', function(event) {
+    const form = event.target.closest('#edit-reward-form');
+    if (!form) return;
+    event.preventDefault();
+    const select = document.getElementById('edit-reward-select');
+    const payload = {
+      id: select.value,
+      name: document.getElementById('edit-reward-name').value.trim(),
+      description: document.getElementById('edit-reward-description').value,
+      points_required: Number(document.getElementById('edit-reward-points').value)
+    };
+    fetch(recognitionRewardApi + '?action=update', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    }).then(response => response.json().then(data => ({ response, data })))
+      .then(({ response, data }) => {
+        if (!response.ok || !data.success) throw new Error(data.error || 'Unable to update reward.');
+        setRecognitionModalVisibility('editRewardModal', false);
+        loadRewards();
+      }).catch(error => window.alert(error.message));
+  });
+}
+
+if (!window.__editRewardModalCloseBound) {
+  window.__editRewardModalCloseBound = true;
+  document.addEventListener('click', function(event) {
+    const modal = document.getElementById('editRewardModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    if (event.target === modal || event.target.closest('#editRewardModal [data-recognition-close="editRewardModal"]')) {
+      event.preventDefault();
+      setRecognitionModalVisibility('editRewardModal', false);
+    }
+  }, true);
+}
+
+if (!window.__pointsAdjustmentBound) {
+  window.__pointsAdjustmentBound = true;
+  document.addEventListener('click', function(event) {
+    const adjustButton = event.target.closest('.adjust-points');
+    if (!adjustButton) return;
+    const points = window.prompt('Points adjustment for ' + (adjustButton.dataset.employeeName || 'employee') + ':', '0');
+    if (points === null || !Number.isInteger(Number(points)) || Number(points) === 0) return;
+    const reason = window.prompt('Reason for this adjustment:');
+    if (reason === null || !reason.trim()) return;
+
+    fetch(recognitionApiBase + '?resource=recognition&action=adjust_points', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ employee_id: adjustButton.dataset.employeeId, points: Number(points), reason: reason.trim() })
+    })
+      .then(response => response.json().then(data => ({ response, data })))
+      .then(({ response, data }) => {
+        if (!response.ok || !data.success) throw new Error(data.error || 'Unable to adjust points.');
+        loadRecognitionPageData();
+        loadRecognitionFeed();
+      })
+      .catch(error => window.alert(error.message));
+  });
 }
 
 function loadRewardRedemptions() {
@@ -1563,8 +1690,12 @@ function loadRewardRedemptions() {
       if (res && res.data && res.data.length) {
         res.data.forEach(rr => {
           const item = document.createElement('div');
-          item.className = 'list-group-item';
-          item.innerHTML = `<b>${escapeHtml(rr.employee_name || rr.employee_id)}</b> redeemed <b>${escapeHtml(rr.reward_name || rr.reward_id)}</b> <small class='text-muted float-right'>${escapeHtml(rr.redeemed_at || '')}</small>`;
+          item.className = 'list-group-item reward-redemption-item';
+          const status = String(rr.status || 'pending').toLowerCase();
+          const actions = status === 'pending'
+            ? `<div class="mt-2"><button type="button" class="btn btn-sm btn-success redemption-action" data-redemption-action="approved" data-redemption-id="${escapeHtml(rr.eer_reward_redemption_id)}">Approve</button> <button type="button" class="btn btn-sm btn-outline-danger redemption-action" data-redemption-action="rejected" data-redemption-id="${escapeHtml(rr.eer_reward_redemption_id)}">Reject</button></div>`
+            : '';
+          item.innerHTML = `<div class="d-flex justify-content-between align-items-start"><div><strong>${escapeHtml(rr.employee_name || rr.employee_id)}</strong><div class="text-muted">redeemed <b>${escapeHtml(rr.reward_name || rr.reward_id)}</b></div><small class="text-muted">${escapeHtml(rr.redeemed_at || '')}</small></div><span class="badge badge-secondary">${escapeHtml(status)}</span></div>${actions}`;
           feed.appendChild(item);
         });
       } else {
@@ -1572,6 +1703,33 @@ function loadRewardRedemptions() {
       }
     });
 }
+
+  if (!window.__rewardRedemptionActionsBound) {
+    window.__rewardRedemptionActionsBound = true;
+    document.addEventListener('click', function(event) {
+      const actionButton = event.target.closest('.redemption-action');
+      if (!actionButton) return;
+      const status = actionButton.dataset.redemptionAction;
+      const id = actionButton.dataset.redemptionId;
+      const reason = status === 'rejected' ? window.prompt('Reason for rejection:') : null;
+      if (status === 'rejected' && reason === null) return;
+      actionButton.disabled = true;
+      fetch(recognitionApiBase + '?resource=reward_redemption&action=update_status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, status: status, reason: reason })
+      })
+        .then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+          if (!response.ok || !data.success) throw new Error(data.error || 'Unable to update redemption.');
+          loadRewardRedemptions();
+        })
+        .catch(error => {
+          actionButton.disabled = false;
+          window.alert(error.message);
+        });
+    });
+  }
 
 const recommendationPageSize = 2;
 let recommendationPageIndex = 0;
@@ -1710,7 +1868,8 @@ function loadEmployeeOfTheMonthCandidates() {
         const voteButton = candidate.eer_award_history_id && !hasVoted
           ? '<form method="POST" action="" class="mt-2 vote-form"><input type="hidden" name="action" value="vote_employee_month"><input type="hidden" name="award_history_id" value="' + escapeHtml(candidate.eer_award_history_id) + '"><button type="submit" class="btn btn-sm btn-outline-warning"><i class="fas fa-vote-yea"></i> Vote +5</button></form>'
           : (candidate.eer_award_history_id ? '' : '<button type="button" class="btn btn-sm btn-outline-secondary mt-2" disabled>Not Nominated</button>');
-        item.innerHTML = `<div><strong>${escapeHtml(candidate.employee_name || candidate.employee_id)}</strong><br><small class="text-muted">Department: ${escapeHtml(candidate.department || 'N/A')} • Votes: ${escapeHtml(candidate.votes || 0)} • Performance: ${escapeHtml(candidate.performance_score || 0)}%</small><div class="mt-1"><span class="badge ${statusBadge}">${escapeHtml((candidate.status || 'nominated').charAt(0).toUpperCase() + (candidate.status || 'nominated').slice(1))}</span>${candidate.nomination_reason ? ' <span class="text-muted small">Reason: ' + escapeHtml(candidate.nomination_reason) + '</span>' : ''}</div></div><div class="text-right"><span class="badge badge-info">Recognition: ${escapeHtml(candidate.recognition_total || 0)} pts</span>${voteButton}</div>`;
+        const awardIcon = candidate.award_icon || 'fas fa-trophy';
+        item.innerHTML = `<div><div class="employee-month-name"><span class="employee-month-icon" aria-hidden="true"><i class="${escapeHtml(awardIcon)}"></i></span><strong>${escapeHtml(candidate.employee_name || candidate.employee_id)}</strong></div><small class="text-muted">Department: ${escapeHtml(candidate.department || 'N/A')} • Votes: ${escapeHtml(candidate.votes || 0)} • Performance: ${escapeHtml(candidate.performance_score || 0)}%</small><div class="mt-1"><span class="badge ${statusBadge}">${escapeHtml((candidate.status || 'nominated').charAt(0).toUpperCase() + (candidate.status || 'nominated').slice(1))}</span>${candidate.nomination_reason ? ' <span class="text-muted small">Reason: ' + escapeHtml(candidate.nomination_reason) + '</span>' : ''}</div></div><div class="text-right">${voteButton}</div>`;
         container.appendChild(item);
       });
       appendPendingNomination();
@@ -1728,8 +1887,9 @@ function loadEmployeeBadges() {
       if (res && res.data && res.data.length) {
         res.data.forEach(eb => {
           const item = document.createElement('div');
-          item.className = 'list-group-item';
-          item.innerHTML = `<b>${escapeHtml(eb.employee_name || eb.employee_id)}</b> earned <b>${escapeHtml(eb.badge_name || eb.badge_id)}</b> <small class='text-muted float-right'>${escapeHtml(eb.earned_at || '')}</small>`;
+          item.className = 'list-group-item employee-badge-item';
+          const badgeIcon = eb.badge_icon || 'fas fa-medal';
+          item.innerHTML = `<div class="employee-badge-icon" aria-hidden="true"><i class="${escapeHtml(badgeIcon)}"></i></div><div class="employee-badge-content"><strong>${escapeHtml(eb.employee_name || eb.employee_id)}</strong><div class="employee-badge-earned">earned <b>${escapeHtml(eb.badge_name || eb.badge_id)}</b></div><small class="text-muted">${escapeHtml(eb.awarded_at || eb.earned_at || '')}</small></div><span class="badge badge-success employee-badge-points">+${Number(eb.badge_points || 0)} pts</span>`;
           feed.appendChild(item);
         });
       } else {

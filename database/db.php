@@ -2,6 +2,8 @@
 
 class Database
 {
+    private static $instance = null;
+
     // Railway will provide these, otherwise they fall back to your local setup
     private $host;
     private $port;
@@ -31,6 +33,15 @@ class Database
         } catch (PDOException $e) {
             die("DB Connection failed: " . $e->getMessage());
         }
+    }
+
+    public static function getInstance()
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
     }
 
     public function getRoles()

@@ -17,6 +17,7 @@ $controller = new RewardController();
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = inputData();
+        $action = $_GET['action'] ?? 'create';
         $name = trim((string)($data['reward_name'] ?? $data['name'] ?? ''));
         $points = (int)($data['reward_points'] ?? $data['points_required'] ?? 0);
 
@@ -24,11 +25,16 @@ try {
             jsonResponse(['success' => false, 'error' => 'Reward name and points are required.'], 422);
         }
 
-        $id = $controller->store([
+        $rewardData = [
             'name' => $name,
             'description' => trim((string)($data['reward_description'] ?? $data['description'] ?? '')),
             'points_required' => $points,
-        ]);
+        ];
+        if ($action === 'update' && !empty($data['id'])) {
+            $updated = $controller->update((int)$data['id'], $rewardData);
+            jsonResponse(['success' => $updated > 0]);
+        }
+        $id = $controller->store($rewardData);
 
         jsonResponse(['success' => true, 'id' => $id], 201);
     }

@@ -25,4 +25,26 @@ class RewardRedemption extends BaseModel
         $this->execute($sql, $params);
         return $this->db->lastInsertId();
     }
+
+    public function updateStatus($redemptionId, $status, $approvedBy = null, $reason = null)
+    {
+        $allowedStatuses = ['pending', 'approved', 'rejected', 'completed'];
+        if (!in_array($status, $allowedStatuses, true)) {
+            throw new \InvalidArgumentException('Invalid redemption status.');
+        }
+
+        $sql = 'UPDATE eer_reward_redemptions
+                SET status = :status,
+                    approved_by = :approved_by,
+                    approved_at = CASE WHEN :status_for_date IN (\'approved\', \'completed\') THEN NOW() ELSE approved_at END,
+                    rejection_reason = :rejection_reason
+                WHERE eer_reward_redemption_id = :id';
+        return $this->execute($sql, [
+            'status' => $status,
+            'status_for_date' => $status,
+            'approved_by' => $approvedBy,
+            'rejection_reason' => $status === 'rejected' ? $reason : null,
+            'id' => $redemptionId
+        ])->rowCount();
+    }
 }

@@ -117,6 +117,15 @@ try {
             $id = $ctrl->sendRecognition((int)$senderEmployeeId, $data['receiver_id'], $data['message'], (int)$data['points']);
             jsonResponse(['id' => $id], 201);
             break;
+        case 'adjust_points':
+            if (!isset($data['employee_id'], $data['points'], $data['reason'])) {
+                jsonResponse(['error' => 'employee_id, points, and reason are required'], 400);
+            }
+            $adminEmployeeId = $_SESSION['employee_id'] ?? $_SESSION['user']['employee_id'] ?? null;
+            if (!$adminEmployeeId) jsonResponse(['error' => 'Admin employee profile not found'], 400);
+            $id = $ctrl->adjustEmployeePoints((int)$data['employee_id'], (int)$data['points'], (string)$data['reason'], (int)$adminEmployeeId);
+            jsonResponse(['success' => true, 'id' => $id], 201);
+            break;
         case 'history':
             $employeeId = $_SESSION['user']['employee_id'] ?? null;
             if (!$employeeId) jsonResponse(['error' => 'Unauthorized'], 401);

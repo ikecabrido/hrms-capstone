@@ -25,6 +25,11 @@ class RewardController
         return $this->reward->create($data);
     }
 
+    public function update($id, array $data)
+    {
+        return $this->reward->update($id, $data);
+    }
+
     public function categorizeRewards($category)
     {
         return $this->reward->getByCategory($category);

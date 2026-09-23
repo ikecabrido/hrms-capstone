@@ -69,7 +69,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
         </div>
       <!-- Main content -->
 
-          <div class="card shadow-sm border-0 recognition-card recognition-tabs-pending">
+          <div class="card shadow-sm border-0 recognition-card">
             <div class="card-header p-0 border-0">
               <ul class="nav nav-tabs recognition-nav-tabs" id="recognition-tabs" role="tablist" data-reset-tab="<?= $resetRecognitionTab ? 'true' : 'false' ?>">
                 <li class="nav-item">
@@ -476,26 +476,11 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                     <div class="col-md-4">
                       <div class="card card-info card-outline mb-3">
                         <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-sparkles mr-2"></i>Recommended for You</h3>
+                          <h3 class="card-title"><i class="fas fa-cog mr-2"></i>Badge Administration</h3>
                         </div>
                         <div class="card-body">
-                          <?php if (!empty($payload['my_badge_recommendations'])): ?>
-                            <ul class="list-group list-group-flush">
-                              <?php foreach ($payload['my_badge_recommendations'] as $recommendation): ?>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                  <div>
-                                    <strong><?= htmlspecialchars($recommendation['name']) ?></strong>
-                                    <div class="text-muted small"><?= htmlspecialchars($recommendation['description'] ?? '') ?></div>
-                                  </div>
-                                  <span class="badge <?= $recommendation['status'] === 'owned' ? 'badge-success' : 'badge-info' ?>">
-                                    <?= htmlspecialchars(ucfirst($recommendation['status'] ?? 'pending')) ?>
-                                  </span>
-                                </li>
-                              <?php endforeach; ?>
-                            </ul>
-                          <?php else: ?>
-                            <p class="text-muted text-center">No badge recommendations available yet.</p>
-                          <?php endif; ?>
+                          <p class="mb-2">Manage the badge catalog and recognize employees for their achievements.</p>
+                          <p class="text-muted small mb-0">Create badges, review their tier and points, then assign them to employees.</p>
                         </div>
                       </div>
 
@@ -522,6 +507,9 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                           <div class="card-tools">
                             <button type="button" class="btn btn-primary btn-sm header-action-button" data-recognition-open="addRewardModal">
                               <i class="fas fa-plus mr-1"></i>Add Reward
+                            </button>
+                            <button type="button" class="btn btn-outline-primary btn-sm header-action-button" data-recognition-open="editRewardModal">
+                              <i class="fas fa-edit mr-1"></i>Edit Reward
                             </button>
                           </div>
                         </div>
@@ -680,6 +668,15 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
           <option value="teamwork">Teamwork</option>
           <option value="service">Service</option>
         </select></div>
+        <div class="form-row">
+          <div class="form-group col-md-6"><label for="create-badge-tier">Tier</label><select id="create-badge-tier" name="tier" class="form-control" required>
+            <option value="bronze">Bronze</option>
+            <option value="silver">Silver</option>
+            <option value="gold">Gold</option>
+            <option value="platinum">Platinum</option>
+          </select></div>
+          <div class="form-group col-md-6"><label for="create-badge-points">Points Value</label><input type="number" id="create-badge-points" name="points_value" class="form-control" min="1" value="10" readonly required></div>
+        </div>
       </div>
       <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal" data-recognition-close="createBadgeModal">Cancel</button><button type="submit" class="btn btn-primary"><i class="fas fa-medal mr-1"></i>Create Badge</button></div>
     </form>
@@ -733,11 +730,26 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
   </div>
 </div>
 
+<div class="modal fade" id="editRewardModal" tabindex="-1" role="dialog" aria-labelledby="editRewardModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="editRewardModalLabel"><i class="fas fa-edit mr-2"></i>Edit Reward</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="editRewardModal" aria-label="Close"><span>&times;</span></button></div>
+    <form id="edit-reward-form" data-skip="true">
+      <div class="modal-body">
+        <div class="form-group"><label for="edit-reward-select">Select Reward</label><select id="edit-reward-select" class="form-control" required><option value="">Select reward</option></select></div>
+        <div class="form-group"><label for="edit-reward-name">Reward Name</label><input type="text" id="edit-reward-name" class="form-control" required maxlength="150"></div>
+        <div class="form-group"><label for="edit-reward-description">Description</label><textarea id="edit-reward-description" class="form-control" rows="3" maxlength="500"></textarea></div>
+        <div class="form-group mb-0"><label for="edit-reward-points">Points Required</label><input type="number" id="edit-reward-points" class="form-control" min="1" required></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-dismiss="modal" data-recognition-close="editRewardModal">Cancel</button><button type="submit" class="btn btn-primary">Save Changes</button></div>
+    </form>
+  </div></div>
+</div>
+
 <!-- Quick Recognition Modal -->
 <div class="modal fade" id="sendRecognitionModal" tabindex="-1" role="dialog" aria-labelledby="sendRecognitionModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document"><div class="modal-content">
     <div class="modal-header"><h5 class="modal-title" id="sendRecognitionModalLabel"><i class="fas fa-award mr-2"></i>Recognize Employee</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="sendRecognitionModal"><span>&times;</span></button></div>
-    <form data-skip="true">
+    <form id="send-recognition-form" data-skip="true">
       <div class="modal-body">
         <div class="form-group"><label for="rec-receiver">Employee</label><select id="rec-receiver" class="form-control" required><option value="">Select employee</option></select></div>
         <div class="form-group"><label for="rec-message">Message</label><textarea id="rec-message" class="form-control" rows="4" required placeholder="Why are you recognizing this employee?"></textarea></div>

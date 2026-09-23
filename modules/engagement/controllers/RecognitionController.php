@@ -60,6 +60,11 @@ class RecognitionController
         return $this->recognition->assignBadge($employeeId, $badgeId, $awardedBy, $performanceScore);
     }
 
+    public function adjustEmployeePoints($employeeId, $points, $reason, $adminEmployeeId)
+    {
+        return $this->recognition->adjustEmployeePoints($employeeId, $points, $reason, $adminEmployeeId);
+    }
+
     public function getEmployeePerformanceScore($employeeId)
     {
         $database = class_exists(Database::class) && method_exists(Database::class, 'getInstance')

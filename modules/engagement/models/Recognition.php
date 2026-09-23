@@ -173,9 +173,16 @@ class Recognition extends BaseModel
             throw new \RuntimeException('This employee has already been recognized this month.');
         }
 
-        // Insert recognition into eer_recognitions table
-        $sql = "INSERT INTO eer_recognitions (sender_id, receiver_id, message, points, category, created_at) 
-                VALUES (:sender_id, :receiver_id, :message, :points, 'general', NOW())";
+        // Store the receiver's current department with the recognition.
+        $sql = "INSERT INTO eer_recognitions (sender_id, receiver_id, message, points, category, performance_report_id, department, created_at)
+            SELECT :sender_id, e.employee_id, :message, :points, 'general',
+                    (SELECT pr.report_id FROM pm_performance_reports pr
+                     WHERE pr.employee_id = e.employee_id
+                     ORDER BY pr.period_end DESC LIMIT 1),
+                d.department_name, NOW()
+            FROM em_employees e
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            WHERE e.employee_id = :receiver_id";
         
         $this->execute($sql, [
             'sender_id' => $sender_id,
@@ -185,6 +192,34 @@ class Recognition extends BaseModel
         ]);
         
         $recognitionId = (int)$this->db->lastInsertId();
+
+        $this->execute(
+            'UPDATE eer_recognitions er
+             INNER JOIN em_employees e ON e.employee_id = er.receiver_id
+             LEFT JOIN em_departments d ON d.department_id = e.department_id
+             SET er.department = COALESCE(er.department, d.department_name),
+                 er.performance_report_id = COALESCE(
+                     er.performance_report_id,
+                     (SELECT pr.report_id FROM pm_performance_reports pr
+                      WHERE pr.employee_id = e.employee_id
+                      ORDER BY pr.period_end DESC LIMIT 1)
+                 )
+             WHERE er.department IS NULL OR er.performance_report_id IS NULL'
+        );
+
+        $leaderboard = $this->getComprehensiveLeaderboard(10000);
+        foreach ($leaderboard as $entry) {
+            if (empty($entry['rank_position'])) continue;
+            $this->execute(
+                'UPDATE eer_recognitions
+                 SET leaderboard_position = :leaderboard_position
+                 WHERE receiver_id = :receiver_id',
+                [
+                    'leaderboard_position' => (int)($entry['rank_position'] ?? 0),
+                    'receiver_id' => (int)($entry['employee_id'] ?? 0)
+                ]
+            );
+        }
 
         $notification = new Notification();
         $notification->notifyEmployees([(int)$receiver_id], 'You received a recognition: ' . $message, 'recognition');
@@ -278,14 +313,41 @@ class Recognition extends BaseModel
 
     public function assignBadge($employeeId, $badgeId, $awardedBy = null, $performanceScore = null)
     {
-        $sql = "INSERT INTO eer_employee_badges (employee_id, badge_id, awarded_by, performance_score, awarded_at)
-                VALUES (:employeeId, :badgeId, :awardedBy, :performanceScore, NOW())";
+        $nextEmployeeBadgeId = (int)$this->execute(
+            'SELECT COALESCE(MAX(eer_employee_badge_id), 0) + 1 FROM eer_employee_badges'
+        )->fetchColumn();
+
+        $sql = "INSERT INTO eer_employee_badges (eer_employee_badge_id, employee_id, badge_id, awarded_by, reason, performance_linked, performance_score, awarded_at)
+            VALUES (:employeeBadgeId, :employeeId, :badgeId, :awardedBy, :reason, :performanceLinked, :performanceScore, NOW())";
         return $this->execute($sql, [
+            'employeeBadgeId' => $nextEmployeeBadgeId,
             'employeeId' => $employeeId,
             'badgeId' => $badgeId,
             'awardedBy' => $awardedBy,
+            'reason' => 'Assigned by HR/Admin.',
+            'performanceLinked' => $performanceScore !== null && (float)$performanceScore > 0 ? 1 : 0,
             'performanceScore' => $performanceScore !== null ? (float)$performanceScore : 0.00
         ]);
+    }
+
+    public function adjustEmployeePoints($employeeId, $points, $reason, $adminEmployeeId)
+    {
+        $nextRecognitionId = (int)$this->execute(
+            'SELECT COALESCE(MAX(eer_recognition_id), 0) + 1 FROM eer_recognitions'
+        )->fetchColumn();
+        $this->execute(
+            "INSERT INTO eer_recognitions
+             (eer_recognition_id, sender_id, receiver_id, message, points, category, source, status, created_at)
+             VALUES (:id, :sender_id, :receiver_id, :message, :points, 'admin_adjustment', 'manual', 'approved', NOW())",
+            [
+                'id' => $nextRecognitionId,
+                'sender_id' => (int)$adminEmployeeId,
+                'receiver_id' => (int)$employeeId,
+                'message' => trim($reason),
+                'points' => (int)$points
+            ]
+        );
+        return $nextRecognitionId;
     }
 
     public function getTopRecognizedEmployees($limit = 10)
@@ -356,16 +418,23 @@ class Recognition extends BaseModel
 
     public function recordEmployeeMonthVote($awardHistoryId, $voterUserId, $nomineeEmployeeId)
     {
-        $sql = "INSERT INTO eer_award_votes (award_history_id, voter_user_id, nominee_employee_id, created_at)
-                VALUES (:award_history_id, :voter_user_id, :nominee_employee_id, NOW())";
+        $nextVoteId = (int)$this->execute(
+            'SELECT COALESCE(MAX(eer_award_vote_id), 0) + 1 FROM eer_award_votes'
+        )->fetchColumn();
+        $sql = "INSERT INTO eer_award_votes (eer_award_vote_id, award_history_id, voter_user_id, nominee_employee_id, created_at)
+                VALUES (:vote_id, :award_history_id, :voter_user_id, :nominee_employee_id, NOW())";
         $this->execute($sql, [
+            'vote_id' => $nextVoteId,
             'award_history_id' => $awardHistoryId,
             'voter_user_id' => $voterUserId,
             'nominee_employee_id' => $nomineeEmployeeId
         ]);
 
         $this->execute(
-            "UPDATE eer_award_history SET vote_count = vote_count + 1 WHERE eer_award_history_id = :id",
+            "UPDATE eer_award_history
+             SET vote_count = vote_count + 1,
+                 points = GREATEST(COALESCE(points, 0), (vote_count + 1) * 5)
+             WHERE eer_award_history_id = :id",
             ['id' => $awardHistoryId]
         );
     }
@@ -394,7 +463,15 @@ class Recognition extends BaseModel
             d.department_name as department,
             p.position_name as position,
             COALESCE(SUM(CASE WHEN er.source IS NULL OR er.source IN ('manual', 'achievement') THEN er.points ELSE 0 END), 0) as recognition_points,
-            COALESCE(SUM(CASE WHEN er.source = 'performance' THEN er.points ELSE 0 END), 0) as performance_points,
+            COALESCE(
+                (SELECT pr.overall_rating * 20 FROM pm_performance_reports pr
+                 WHERE pr.employee_id = e.employee_id
+                 ORDER BY pr.period_end DESC, pr.report_id DESC LIMIT 1),
+                (SELECT pa.overall_rating * 20 FROM pm_appraisals pa
+                 WHERE pa.employee_id = e.employee_id
+                 ORDER BY COALESCE(pa.due_date, pa.created_at) DESC, pa.appraisal_id DESC LIMIT 1),
+                0
+            ) as performance_score,
             COALESCE((
                 SELECT SUM(b.points_value)
                 FROM eer_employee_badges eb
@@ -409,27 +486,92 @@ class Recognition extends BaseModel
             COUNT(er.eer_recognition_id) as recognition_count,
             ROW_NUMBER() OVER (ORDER BY (
                 COALESCE(SUM(CASE WHEN er.source IS NULL OR er.source IN ('manual', 'achievement') THEN er.points ELSE 0 END), 0)
-                + COALESCE(SUM(CASE WHEN er.source = 'performance' THEN er.points ELSE 0 END), 0)
                 + COALESCE((SELECT SUM(b.points_value) FROM eer_employee_badges eb JOIN eer_badges b ON b.eer_badge_id = eb.badge_id WHERE eb.employee_id = e.employee_id), 0)
                 + COALESCE((SELECT SUM(CASE WHEN ah.points > 0 THEN ah.points ELSE COALESCE(ah.vote_count * 5, 0) END) FROM eer_award_history ah WHERE ah.employee_id = e.employee_id), 0)
             ) DESC) as rank_position,
             (
                 COALESCE(SUM(CASE WHEN er.source IS NULL OR er.source IN ('manual', 'achievement') THEN er.points ELSE 0 END), 0)
-                + COALESCE(SUM(CASE WHEN er.source = 'performance' THEN er.points ELSE 0 END), 0)
                 + COALESCE((SELECT SUM(b.points_value) FROM eer_employee_badges eb JOIN eer_badges b ON b.eer_badge_id = eb.badge_id WHERE eb.employee_id = e.employee_id), 0)
                 + COALESCE((SELECT SUM(CASE WHEN ah.points > 0 THEN ah.points ELSE COALESCE(ah.vote_count * 5, 0) END) FROM eer_award_history ah WHERE ah.employee_id = e.employee_id), 0)
             ) as total_points
-        FROM eer_recognitions er
-        JOIN em_employees e ON e.employee_id = er.receiver_id
+                FROM em_employees e
+                LEFT JOIN eer_recognitions er ON e.employee_id = er.receiver_id
+                        AND er.points IS NOT NULL
         LEFT JOIN em_departments d ON e.department_id = d.department_id
         LEFT JOIN em_positions p ON e.position_id = p.position_id
-        WHERE er.points IS NOT NULL
-          AND (er.source IS NULL OR er.source IN ('manual', 'achievement'))
         GROUP BY e.employee_id, e.first_name, e.middle_name, e.last_name, d.department_name, p.position_name
+                HAVING total_points > 0
         ORDER BY total_points DESC, recognition_count DESC
         LIMIT " . (int)$limit;
 
         return $this->execute($sql)->fetchAll();
+    }
+
+    private function autoAwardAchievementBadges()
+    {
+        $lockAcquired = (int)$this->execute(
+            "SELECT GET_LOCK('hrms_auto_award_achievement_badges', 5)"
+        )->fetchColumn() === 1;
+        if (!$lockAcquired) return;
+
+        try {
+            // Remove duplicates created by earlier overlapping auto-refresh requests.
+            $this->execute(
+                'DELETE duplicate_badge FROM eer_employee_badges duplicate_badge
+                 INNER JOIN eer_employee_badges original_badge
+                   ON original_badge.employee_id = duplicate_badge.employee_id
+                  AND original_badge.badge_id = duplicate_badge.badge_id
+                  AND original_badge.eer_employee_badge_id < duplicate_badge.eer_employee_badge_id'
+            );
+
+            $badges = $this->execute(
+                "SELECT eer_badge_id, name, requirement_value
+                 FROM eer_badges
+                 WHERE status = 'active'
+                   AND requirement_type = 'achievement'
+                   AND requirement_value IS NOT NULL
+                   AND requirement_value > 0"
+            )->fetchAll();
+
+            foreach ($badges as $badge) {
+                $qualifiedEmployees = $this->execute(
+                    "SELECT receiver_id as employee_id, COUNT(*) as achievement_count
+                     FROM eer_recognitions
+                     WHERE source = 'achievement' OR category = 'achievement'
+                     GROUP BY receiver_id
+                     HAVING achievement_count >= :requirement_value",
+                    ['requirement_value' => (int)$badge['requirement_value']]
+                )->fetchAll();
+
+                foreach ($qualifiedEmployees as $employee) {
+                    $alreadyAwarded = $this->execute(
+                        'SELECT 1 FROM eer_employee_badges WHERE employee_id = :employee_id AND badge_id = :badge_id LIMIT 1',
+                        [
+                            'employee_id' => (int)$employee['employee_id'],
+                            'badge_id' => (int)$badge['eer_badge_id']
+                        ]
+                    )->fetchColumn();
+                    if ($alreadyAwarded) continue;
+
+                    $nextEmployeeBadgeId = (int)$this->execute(
+                        'SELECT COALESCE(MAX(eer_employee_badge_id), 0) + 1 FROM eer_employee_badges'
+                    )->fetchColumn();
+                    $this->execute(
+                        "INSERT INTO eer_employee_badges
+                         (eer_employee_badge_id, employee_id, badge_id, awarded_at, reason, performance_linked, performance_score)
+                         VALUES (:id, :employee_id, :badge_id, NOW(), :reason, 0, 0)",
+                        [
+                            'id' => $nextEmployeeBadgeId,
+                            'employee_id' => (int)$employee['employee_id'],
+                            'badge_id' => (int)$badge['eer_badge_id'],
+                            'reason' => 'Automatically awarded after meeting the achievement requirement.'
+                        ]
+                    );
+                }
+            }
+        } finally {
+            $this->execute("SELECT RELEASE_LOCK('hrms_auto_award_achievement_badges')");
+        }
     }
 
     /**
@@ -503,6 +645,24 @@ class Recognition extends BaseModel
             'award_type' => 'employee_of_month'
         ];
 
+        $this->execute(
+            'UPDATE eer_award_history ah
+             SET ah.performance_score = COALESCE(
+                     ah.performance_score,
+                     (SELECT pr.overall_rating * 20 FROM pm_performance_reports pr
+                      WHERE pr.employee_id = ah.employee_id
+                      ORDER BY pr.period_end DESC, pr.report_id DESC LIMIT 1),
+                     (SELECT pa.overall_rating * 20 FROM pm_appraisals pa
+                      WHERE pa.employee_id = ah.employee_id
+                      ORDER BY COALESCE(pa.due_date, pa.created_at) DESC, pa.appraisal_id DESC LIMIT 1),
+                     0
+                 ),
+                 ah.points = GREATEST(COALESCE(ah.points, 0), COALESCE(ah.vote_count, 0) * 5),
+                 ah.award_icon = COALESCE(ah.award_icon, :award_icon)
+             WHERE ah.month_year = :month_year AND ah.award_type = :award_type',
+            ['month_year' => $monthYear, 'award_type' => 'employee_of_month', 'award_icon' => 'fas fa-trophy']
+        );
+
         if ($currentUserId) {
             $userVoteJoin = "
             LEFT JOIN eer_award_votes ev ON ev.voter_user_id = :current_user_id
@@ -524,6 +684,7 @@ class Recognition extends BaseModel
             p.position_name as position,
             ah.month_year,
             ah.status,
+            COALESCE(ah.award_icon, 'fas fa-trophy') as award_icon,
             COALESCE(ah.vote_count, 0) as votes,
             $userVoteSelect,
             COALESCE(

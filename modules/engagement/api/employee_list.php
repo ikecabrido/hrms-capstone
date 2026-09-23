@@ -1,5 +1,5 @@
 <?php
-require_once '../../auth/database.php';
+require_once __DIR__ . '/../../../database/db.php';
 
 $db = Database::getInstance()->getConnection();
 // Include associated user id when available so frontend can map to user_account.id

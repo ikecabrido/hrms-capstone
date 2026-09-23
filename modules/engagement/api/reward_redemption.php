@@ -31,6 +31,14 @@ try {
             $id = $ctrl->store($data);
             jsonResponse(['id' => $id], 201);
             break;
+        case 'update_status':
+            if (empty($data['id']) || empty($data['status'])) {
+                jsonResponse(['error' => 'id and status are required'], 400);
+            }
+            $adminId = $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? $_SESSION['employee_id'] ?? null;
+            $updated = $ctrl->updateStatus((int)$data['id'], $data['status'], $adminId, $data['reason'] ?? null);
+            jsonResponse(['success' => $updated > 0]);
+            break;
         default:
             jsonResponse(['error' => 'unknown action'], 400);
     }

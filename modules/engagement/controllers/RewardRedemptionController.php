@@ -26,4 +26,9 @@ class RewardRedemptionController
     {
         return $this->rewardRedemption->getHistoryByEmployee($employeeId);
     }
+
+    public function updateStatus($id, $status, $approvedBy = null, $reason = null)
+    {
+        return $this->rewardRedemption->updateStatus($id, $status, $approvedBy, $reason);
+    }
 }
