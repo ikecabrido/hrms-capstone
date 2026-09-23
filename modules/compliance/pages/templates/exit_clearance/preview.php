@@ -126,8 +126,6 @@ if ($templateRecord && !empty($templateRecord['template_content'])) {
                 $sepDate = isset($_GET['exit_date']) ? trim((string) $_GET['exit_date']) : '';
                 if ($sepDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $sepDate)) {
                     echo htmlspecialchars(date('F d, Y', strtotime($sepDate)));
-                } else {
-                    echo '___________________________';
                 }
             ?></td>
         </tr>

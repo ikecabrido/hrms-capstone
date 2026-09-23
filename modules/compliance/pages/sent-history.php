@@ -1,5 +1,5 @@
 ﻿<?php
-$pageTitle = 'Notification History';
+$pageTitle = 'Sent History';
 $skipModuleHeader = false;
 
 require_once __DIR__ . '/../../../auth/session.php';

@@ -80,6 +80,7 @@
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/components/list_action_buttons.css?v=2">
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/dashboard.css?v=2">
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/notification-compose.css?v=2">
+    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/notification-detail.css?v=1">
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/labor-law-references.css?v=2">
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/sent-history.css?v=2">
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/case-records.css?v=2">

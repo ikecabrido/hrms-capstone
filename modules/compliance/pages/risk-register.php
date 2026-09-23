@@ -854,7 +854,7 @@ $riskSources = [
 .ra-row--full { display:block; }
 .ra-row--full .ra-col-main { width:100%; }
 
-.ra-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; }
+.ra-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; font-weight:bold; }
 .ra-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
 .ra-card-head__actions { display:inline-flex; align-items:center; gap:8px; }
 .ra-card-head h3 { margin:0; font-size:0.94rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
@@ -899,6 +899,7 @@ $riskSources = [
 
 .modal-body .ra-card { box-shadow:none; }
 .ra-emp-name { font-weight:600; color:#2b3340; font-size:0.76rem; }
+.ra-card .ra-table td[data-label="Risk Description"] .ra-emp-name { font-weight:400; }
 .ra-emp-no { font-size:0.72rem; color:#8b93a1; }
 .ra-type-badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:0.7rem; font-weight:700; white-space:nowrap; background:rgba(59,130,196,.08); color:#1c5a8a; border:1px solid rgba(59,130,196,.16); }
 .ra-type-count { font-size:0.76rem; font-weight:700; padding:2px 8px; border-radius:999px; background:rgba(59,130,196,.08); color:#1c5a8a; white-space:nowrap; }
@@ -1498,6 +1499,7 @@ $riskSources = [
   .ra-card {
     padding: 14px;
     border-radius: 12px;
+    font-weight: bold;
   }
   .ra-card-head h3 {
     font-size: 0.88rem;
@@ -1563,6 +1565,7 @@ $riskSources = [
   .ra-card {
     padding: 10px;
     border-radius: 10px;
+    font-weight: bold;
   }
   .ra-table tbody tr {
     padding: 10px;

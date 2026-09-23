@@ -48,6 +48,22 @@ if ($db instanceof PDO) {
         $em_departments = [];
         $positions = [];
     }
+
+    try {
+        $stmt = $db->query("SELECT policy_code FROM lc_policies WHERE policy_code IS NOT NULL AND policy_code <> ''");
+        $codes = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'policy_code');
+        $nextNum = 1;
+        foreach ($codes as $code) {
+            if (preg_match('/(\d+)$/', $code, $m)) {
+                $nextNum = max($nextNum, (int) $m[1] + 1);
+            }
+        }
+        $autoPolicyCode = 'HR-POL-' . str_pad((string) $nextNum, 3, '0', STR_PAD_LEFT);
+    } catch (Throwable $e) {
+        $autoPolicyCode = 'HR-POL-001';
+    }
+} else {
+    $autoPolicyCode = 'HR-POL-001';
 }
 
 if (!$db instanceof PDO) {
@@ -71,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db instanceof PDO && $policy insta
     ];
 
     if (empty($data['policy_code'])) {
-        $errors[] = 'Policy Code is required.';
+        $data['policy_code'] = $autoPolicyCode;
     }
     if (empty($data['title'])) {
         $errors[] = 'Policy Title is required.';
@@ -171,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db instanceof PDO && $policy insta
                   <div class="pc-form-row">
                      <div class="pc-form-group">
                       <label for="policy_code">Policy Code <span style="color:red;">*</span></label>
-                      <input type="text" id="policy_code" name="policy_code" class="pc-form-control" required value="<?= htmlspecialchars($_POST['policy_code'] ?? '') ?>">
+                      <input type="text" id="policy_code" name="policy_code" class="pc-form-control" required value="<?= htmlspecialchars($_POST['policy_code'] ?? $autoPolicyCode) ?>">
                       <small style="font-size:0.78rem; color:var(--text-500,#6b7280); margin-top:4px;">Unique identifier (e.g. HR-POL-001)</small>
                      </div>
                      <div class="pc-form-group">

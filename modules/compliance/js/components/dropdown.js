@@ -126,7 +126,7 @@ function openNotifDetail(notification, triggerEl) {
         '<span class="notif-detail-time"><i class="fa-regular fa-clock"></i> ' + relativeTime(notification.created_at) + '</span>' +
     '</div>' +
     '<div class="notif-detail-icon-row">' +
-        '<div class="notif-icon notif-icon-lg" style="background: ' + config.bg + '; color: ' + config.color + ';">' +
+        '<div class="notif-icon notif-icon-lg notif-' + escapeHtml(notification.type || 'info') + '" style="background: ' + config.bg + '; color: ' + config.color + ';">' +
             '<i class="fa-solid ' + config.icon + '"></i>' +
         '</div>' +
     '</div>' +
@@ -155,11 +155,11 @@ function relativeTime(dateString) {
 
 function typeConfig(type) {
     const config = {
-        danger: { bg: '#fef2f2', color: '#dc2626', icon: 'fa-circle-exclamation' },
-        warning: { bg: '#fffbeb', color: '#d97706', icon: 'fa-triangle-exclamation' },
-        info: { bg: '#ecfeff', color: '#0891b2', icon: 'fa-circle-info' },
-        success: { bg: '#ecfdf5', color: '#059669', icon: 'fa-circle-check' },
-        primary: { bg: '#eef2ff', color: '#4f46e5', icon: 'fa-star' }
+        danger: { bg: '#fef2f2', color: '#dc2626', icon: 'fa-circle-exclamation', className: 'notif-error' },
+        warning: { bg: '#fffbeb', color: '#d97706', icon: 'fa-triangle-exclamation', className: 'notif-warning' },
+        info: { bg: '#ecfeff', color: '#0891b2', icon: 'fa-circle-info', className: 'notif-info' },
+        success: { bg: '#ecfdf5', color: '#059669', icon: 'fa-circle-check', className: 'notif-success' },
+        primary: { bg: '#eef2ff', color: '#4f46e5', icon: 'fa-star', className: 'notif-system' }
     };
 
     return config[type] || config.info;
@@ -191,12 +191,13 @@ function renderNotifications(notifications) {
         }
 
         return '<li class="notif-item ' + unreadClass + '" data-id="' + notification.id + '" data-email="' + escapeHtml(email) + '">' +
-            '<div class="notif-icon" style="background: ' + config.bg + '; color: ' + config.color + ';">' +
+            '<div class="notif-icon ' + config.className + '" style="background: ' + config.bg + '; color: ' + config.color + ';">' +
                 '<i class="fa-solid ' + config.icon + '"></i>' +
             '</div>' +
             '<div class="notif-content">' +
-                '<p>' + escapeHtml(notification.title) + '</p>' +
-                '<span>' + previewMessage + ' &middot; ' + relativeTime(notification.created_at) + '</span>' +
+                '<p title="' + escapeHtml(notification.title) + '">' + escapeHtml(notification.title) + '</p>' +
+                '<span class="notif-preview">' + previewMessage + '</span>' +
+                '<span class="notif-time"><i class="fa-regular fa-clock"></i> ' + relativeTime(notification.created_at) + '</span>' +
             '</div>' +
         '</li>';
     }).join('');
@@ -208,7 +209,7 @@ function renderNotifications(notifications) {
             if (notification) {
                 markNotificationAsRead(id);
                 persistReadState(id);
-                openNotifDetail(notification, this);
+                window.location.href = '?page=notification-detail&id=' + encodeURIComponent(id);
             }
         });
     });
@@ -375,13 +376,9 @@ notifDetailClose.addEventListener('click', function (e) {
     notifDetailDropdown.classList.remove('open');
 });
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', refreshBadge);
-    } else {
-        refreshBadge();
-    }
+refreshBadge();
 
-    window.addEventListener('resize', function() {
+window.addEventListener('resize', function() {
         var isMobile = window.innerWidth <= 768;
         [bellDropdown, userDropdown].forEach(function(dd) {
             if (!dd) return;

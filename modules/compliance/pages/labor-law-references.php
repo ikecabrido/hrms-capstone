@@ -173,9 +173,8 @@ function llr_build_page_url(int $pageNum, string $search): string {
 
 .llr-item-meta {
     display: flex;
-    align-items: center;
-    gap: 6px 10px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 6px;
     min-width: 0;
 }
 
@@ -472,7 +471,7 @@ function llr_build_page_url(int $pageNum, string $search): string {
     }
 
     .llr-item-meta {
-        gap: 4px 8px;
+        gap: 4px;
     }
 
     .llr-item-ref,
@@ -587,12 +586,15 @@ function llr_build_page_url(int $pageNum, string $search): string {
                         <?php if (!empty($ref['reference_number'])): ?>
                             <span class="llr-item-ref"><?= htmlspecialchars($ref['reference_number']) ?></span>
                         <?php endif; ?>
-                        <?php if (!empty($ref['date_issued'])): ?>
-                            <span class="llr-item-date">Issued: <?= htmlspecialchars($ref['date_issued']) ?></span>
-                        <?php endif; ?>
-                        <?php if ($pdfHref !== ''): ?>
-                            <span class="llr-item-ref">&bull;</span>
-                            <a href="<?= htmlspecialchars($pdfHref) ?>" target="_blank" rel="noopener noreferrer" class="llr-item-ref" style="text-decoration:underline;"><?= htmlspecialchars($pdfLabel) ?></a>
+                        <?php if (!empty($ref['date_issued']) || $pdfHref !== ''): ?>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                                <?php if (!empty($ref['date_issued'])): ?>
+                                    <span class="llr-item-date">Issued: <?= htmlspecialchars($ref['date_issued']) ?></span>
+                                <?php endif; ?>
+                                <?php if ($pdfHref !== ''): ?>
+                                    <a href="<?= htmlspecialchars($pdfHref) ?>" target="_blank" rel="noopener noreferrer" class="llr-item-ref" style="text-decoration:underline;"><?= htmlspecialchars($pdfLabel) ?></a>
+                                <?php endif; ?>
+                            </div>
                         <?php endif; ?>
                     </div>
                     <?php if ($preview !== ''): ?>

@@ -95,7 +95,7 @@ $reportCategories = [
         'reports' => [
             ['key' => 'incident_reports', 'label' => 'Incident Reports', 'table' => 'lc_incident_report', 'table_label' => 'Incident Reports', 'export' => 'export_incident'],
             ['key' => 'disciplinary_actions', 'label' => 'Disciplinary Actions', 'table' => 'lc_complaint_decision_history', 'table_label' => 'Disciplinary Actions', 'export' => 'export_report'],
-            ['key' => 'anonymous_reports', 'label' => 'Anonymous Reports', 'table' => 'lc_complaints', 'table_label' => 'Complaints', 'export' => 'export_report'],
+            ['key' => 'complaints', 'label' => 'Complaints', 'table' => 'lc_complaints', 'table_label' => 'Complaints', 'export' => 'export_report'],
             ['key' => 'risk_assessment', 'label' => 'Risk Assessment', 'table' => 'lc_risks', 'table_label' => 'Risks', 'export' => 'export_risk'],
         ]
     ],

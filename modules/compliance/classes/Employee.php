@@ -4,7 +4,7 @@ include_once __DIR__ . '/../../../database/db.php';
 
 class Employee
 {
-    private PDO $conn;
+    private $conn;
     private $employeeid;
     private $firstname;
     private $lastname;

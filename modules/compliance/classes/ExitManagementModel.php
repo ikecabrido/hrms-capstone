@@ -115,7 +115,12 @@ class ExitManagementModel
                        CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.middle_name, ''), ' ', e.last_name, '') AS employee_name,
                        e.employee_code AS employee_no,
                        d.department_name,
-                       p.position_name
+                       p.position_name,
+                       er.preclearance_desk_person,
+                       er.hr_approved_by,
+                       er.hr_approved_at,
+                       er.legal_approved_by,
+                       er.legal_approved_at
                 FROM exit_resignations er
                 LEFT JOIN em_employees e ON e.employee_id = er.employee_id
                 LEFT JOIN em_departments d ON d.department_id = e.department_id

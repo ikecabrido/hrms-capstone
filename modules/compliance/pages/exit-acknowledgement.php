@@ -120,15 +120,9 @@ try {
 } catch (Exception $e) {}
 
 $complianceItems = [
-    ['label' => 'Employment Contract Verified', 'status' => 'completed'],
-    ['label' => 'Company Policies Acknowledged', 'status' => 'completed'],
-    ['label' => 'Employee Documents Complete', 'status' => 'completed'],
-    ['label' => 'Government Compliance Reviewed', 'status' => 'completed'],
-    ['label' => 'Incident Records Reviewed', 'status' => $hasOpenIncident ? 'pending' : 'completed'],
-    ['label' => 'Risk Assessment Reviewed', 'status' => $hasOpenRiskFlag ? 'pending' : 'completed'],
-    ['label' => 'Active Legal Case', 'status' => 'completed'],
-    ['label' => 'Pending Investigation', 'status' => $hasInvestigatingRiskFlag ? 'pending' : 'completed'],
-    ['label' => 'Pending Compliance Issues', 'status' => $hasPendingComplianceTask ? 'pending' : 'completed'],
+    ['label' => 'Preclearance Desk Person', 'status' => (!empty($exit['preclearance_desk_person']) && (int)$exit['preclearance_desk_person'] > 0) ? 'completed' : 'pending'],
+    ['label' => 'HR Approved', 'status' => (!empty($exit['hr_approved_by']) && (int)$exit['hr_approved_by'] > 0) || !empty($exit['hr_approved_at']) ? 'completed' : 'pending'],
+    ['label' => 'Legal Approved', 'status' => !empty($exit['legal_approved_at']) ? 'completed' : 'pending'],
 ];
 
 $allComplianceClear = true;
