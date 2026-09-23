@@ -665,6 +665,103 @@ class Goal
         }
     }
 
+    public function deleteGoal(int $goalId): bool
+    {
+        if (!$this->tableExists('pm_goals') || $goalId <= 0) {
+            return false;
+        }
+
+        try {
+            $this->conn->beginTransaction();
+            foreach (['pm_goal_progress', 'pm_goal_approvals', 'pm_goal_attachments', 'pm_goal_comments', 'pm_goal_history'] as $table) {
+                if (!$this->tableExists($table)) {
+                    continue;
+                }
+                $stmt = $this->conn->prepare("DELETE FROM {$table} WHERE goal_id = :goal_id");
+                $stmt->bindValue(':goal_id', $goalId, PDO::PARAM_INT);
+                $stmt->execute();
+            }
+
+            $stmt = $this->conn->prepare('DELETE FROM pm_goals WHERE goal_id = :goal_id');
+            $stmt->bindValue(':goal_id', $goalId, PDO::PARAM_INT);
+            $stmt->execute();
+            $deleted = $stmt->rowCount() > 0;
+            $this->conn->commit();
+            return $deleted;
+        } catch (PDOException $e) {
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            return false;
+        }
+    }
+
+    public function createEvent(array $data, string $createdBy = ''): bool
+    {
+        if (!$this->tableExists('pm_goal_events')) {
+            return false;
+        }
+
+        $title = trim((string) ($data['event_title'] ?? ''));
+        $startDate = trim((string) ($data['start_date'] ?? ''));
+        if ($title === '' || $startDate === '') {
+            return false;
+        }
+
+        try {
+            $stmt = $this->conn->prepare(
+                'INSERT INTO pm_goal_events
+                    (event_title, event_type, start_date, end_date, start_time, end_time,
+                     employee_name, department, location, description, related_goal_id,
+                     status, reminder, created_by)
+                 VALUES
+                    (:event_title, :event_type, :start_date, :end_date, :start_time, :end_time,
+                     :employee_name, :department, :location, :description, :related_goal_id,
+                     :status, :reminder, :created_by)'
+            );
+            $values = [
+                ':event_title' => [$title, PDO::PARAM_STR],
+                ':event_type' => [trim((string) ($data['event_type'] ?? 'Other HR Event')), PDO::PARAM_STR],
+                ':start_date' => [$startDate, PDO::PARAM_STR],
+                ':end_date' => [trim((string) ($data['end_date'] ?? '')) ?: null, PDO::PARAM_STR],
+                ':start_time' => [trim((string) ($data['start_time'] ?? '')) ?: null, PDO::PARAM_STR],
+                ':end_time' => [trim((string) ($data['end_time'] ?? '')) ?: null, PDO::PARAM_STR],
+                ':employee_name' => [trim((string) ($data['employee_name'] ?? '')) ?: null, PDO::PARAM_STR],
+                ':department' => [trim((string) ($data['department'] ?? '')) ?: null, PDO::PARAM_STR],
+                ':location' => [trim((string) ($data['location'] ?? '')) ?: null, PDO::PARAM_STR],
+                ':description' => [trim((string) ($data['description'] ?? '')) ?: null, PDO::PARAM_STR],
+                ':related_goal_id' => [(int) ($data['related_goal_id'] ?? 0) ?: null, PDO::PARAM_INT],
+                ':status' => [trim((string) ($data['status'] ?? 'Scheduled')) ?: 'Scheduled', PDO::PARAM_STR],
+                ':reminder' => [trim((string) ($data['reminder'] ?? 'None')) ?: 'None', PDO::PARAM_STR],
+                ':created_by' => [$createdBy ?: 'System', PDO::PARAM_STR],
+            ];
+            foreach ($values as $key => [$value, $type]) {
+                $stmt->bindValue($key, $value, $value === null ? PDO::PARAM_NULL : $type);
+            }
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    public function getEvents(string $fromDate, string $toDate): array
+    {
+        if (!$this->tableExists('pm_goal_events')) {
+            return [];
+        }
+
+        $stmt = $this->conn->prepare(
+            'SELECT * FROM pm_goal_events
+             WHERE start_date <= :to_date
+               AND COALESCE(end_date, start_date) >= :from_date
+             ORDER BY start_date ASC, event_id ASC'
+        );
+        $stmt->bindValue(':from_date', $fromDate, PDO::PARAM_STR);
+        $stmt->bindValue(':to_date', $toDate, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function appendHistory(int $goalId, string $action, string $details, string $createdBy = ''): void
     {
         if (!$this->tableExists('pm_goal_history')) {

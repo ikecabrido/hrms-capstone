@@ -4,10 +4,13 @@ require_once 'classes/Page.php';
 $pageController = new Page();
 $currentPage = $pageController->getPage();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($currentPage === 'evaluation') {
+    require_once __DIR__ . '/controller/EvaluationController.php';
+    (new EvaluationController())->handleRequest();
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($currentPage === 'goal-setting') {
-        require_once 'classes/GoalController.php';
-        (new GoalController())->handleRequest();
+        require_once 'controller/GoalSettingController.php';
+        (new GoalSettingController())->handleRequest();
     } elseif ($currentPage === '360-degree-feedback') {
         require_once 'classes/FeedbackController.php';
         (new FeedbackController())->handleRequest();
@@ -20,9 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($currentPage === 'training-development') {
         require_once __DIR__ . '/controller/TrainingDevelopmentController.php';
         (new TrainingDevelopmentController())->handleRequest();
-    } elseif ($currentPage === 'performance-report') {
-        require_once __DIR__ . '/controller/PerformanceReportController.php';
-        (new PerformanceReportController())->handleRequest();
     }
 }
 

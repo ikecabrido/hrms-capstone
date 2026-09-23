@@ -5,6 +5,126 @@
     font-family: 'Inter', sans-serif;
 }
 
+.goal-setting-module .goal-calendar-grid {
+    grid-auto-rows: 120px;
+}
+
+.goal-setting-module .calendar-day {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 120px;
+    box-sizing: border-box;
+    overflow: hidden;
+    align-items: stretch;
+}
+
+.goal-setting-module .calendar-day-number {
+    flex: 0 0 auto;
+}
+
+.goal-setting-module .calendar-day > [data-open-modal="event-form-modal"] {
+    margin-top: auto !important;
+}
+
+@keyframes goal-setting-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.goal-setting-module > .goal-toolbar,
+.goal-setting-module > .goal-dashboard-grid,
+.goal-setting-module > .goal-panel,
+.goal-setting-module > .goal-insight-grid {
+    animation: goal-setting-reveal 0.45s ease both;
+}
+
+.goal-setting-module > .goal-toolbar { animation-delay: 0.04s; }
+.goal-setting-module > .goal-dashboard-grid { animation-delay: 0.1s; }
+.goal-setting-module > .goal-panel:not(#goal-management) { animation-delay: 0.16s; }
+.goal-setting-module > .goal-insight-grid { animation-delay: 0.22s; }
+.goal-setting-module > #goal-management { animation-delay: 0.28s; }
+
+.goal-stat-card {
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.goal-stat-card:hover,
+.insight-card:hover,
+.goal-panel:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.calendar-event {
+    transition: transform 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.calendar-event:hover {
+    transform: translateX(3px);
+    box-shadow: 0 3px 8px rgba(7, 89, 133, 0.12);
+}
+
+.goal-setting-module .calendar-event.priority-low {
+    background: #fef3c7;
+    color: #a16207;
+}
+
+.goal-setting-module .calendar-event.priority-medium {
+    background: #ea580c;
+    color: #ffffff;
+}
+
+.goal-setting-module .calendar-event.priority-high,
+.goal-setting-module .calendar-event.priority-critical {
+    background: #991b1b;
+    color: #ffffff;
+}
+
+.goal-setting-module .calendar-event.priority-low:hover {
+    background: #fde68a;
+}
+
+.goal-setting-module .calendar-event.priority-medium:hover {
+    background: #c2410c;
+}
+
+.goal-setting-module .calendar-event.priority-high:hover,
+.goal-setting-module .calendar-event.priority-critical:hover {
+    background: #7f1d1d;
+}
+
+.upcoming-pagination button {
+    transition: transform 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+}
+
+.upcoming-pagination button:hover {
+    transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .goal-setting-module > .goal-toolbar,
+    .goal-setting-module > .goal-dashboard-grid,
+    .goal-setting-module > .goal-panel,
+    .goal-setting-module > .goal-insight-grid {
+        animation: none;
+    }
+
+    .goal-stat-card,
+    .insight-card,
+    .goal-panel,
+    .calendar-event,
+    .upcoming-pagination button {
+        transition: none;
+    }
+}
+
 .goal-toolbar {
     display: flex;
     align-items: center;
@@ -445,10 +565,9 @@
 .badge.completed { background: #dcfce7; color: #166534; }
 .badge.overdue { background: #fee2e2; color: #b91c1c; }
 .badge.cancelled { background: #f3f4f6; color: #4b5563; }
-.badge.low { background: #f1f5f9; color: #475569; }
-.badge.medium { background: #e0f2fe; color: #075985; }
-.badge.high { background: #fef3c7; color: #92400e; }
-.badge.critical { background: #fee2e2; color: #991b1b; }
+.goal-setting-module .badge.low { background: #fef3c7 !important; color: #a16207 !important; }
+.goal-setting-module .badge.medium { background: #ea580c !important; color: #ffffff !important; }
+.goal-setting-module .badge.high { background: #991B1B !important; color: #ffffff !important; }
 
 .goal-progress {
     display: flex;

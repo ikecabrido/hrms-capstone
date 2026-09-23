@@ -10,6 +10,7 @@ class Page
         'goal-setting'             => 'Goal Setting',
         'kpi-tracking'  => 'KPI Tracking',
         'appraisals-review'   => 'Appraisals & Review',
+        'evaluation'          => 'Evaluation',
         '360-degree-feedback' => '360-Degree Feedback',
         'training-development' => 'Training & Development',
         'performance-report'     => 'Performance Report',
@@ -17,7 +18,7 @@ class Page
 
     private $sections = [
         'top'             => ['dashboard-overview'],
-        'performance-management'  => ['goal-setting', 'kpi-tracking', 'appraisals-review'],
+        'performance-management'  => ['goal-setting', 'kpi-tracking', 'appraisals-review', 'evaluation'],
         'feedback-&-evaluations'      => ['360-degree-feedback'],
         'training-&-development'       => ['training-development'],
         'reports' => ['performance-report']
@@ -33,7 +34,7 @@ class Page
     {
         if (!is_dir($this->pagesDir)) return;
         foreach (glob($this->pagesDir . '/*.php') as $file) {
-            $this->allowed[] = basename($file, '.php');
+            $this->allowed[] = strtolower(basename($file, '.php'));
         }
     }
 
@@ -77,7 +78,11 @@ class Page
         $sectionOrder = ['performance-management', 'feedback-&-evaluations', 'training-&-development', 'reports'];
         foreach ($sectionOrder as $section) {
             echo '<div class="separator"></div>';
-            echo '<h3>' . ucwords(str_replace('-', ' ', $section)) . '</h3>';
+            $sectionLabel = ucwords(str_replace('-', ' ', $section));
+            if ($section === 'feedback-&-evaluations') {
+                $sectionLabel = 'Feedback';
+            }
+            echo '<h3>' . $sectionLabel . '</h3>';
             foreach ($this->sections[$section] as $p) {
                 $this->renderLink($p);
             }

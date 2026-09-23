@@ -101,6 +101,66 @@ function kpiProgressClass(float $value): string
 ?>
 
 <link rel="stylesheet" href="css/pages/kpi-tracking.css">
+<style>
+.kpi-pagination-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+.kpi-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.kpi-page-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+.kpi-page-btn,
+.kpi-page-nav {
+    min-width: 2.2rem;
+    height: 2.2rem;
+    padding: 0 0.7rem;
+    border: 1px solid #dfe7f3;
+    border-radius: 8px;
+    background: #fff;
+    color: #475569;
+    font-weight: 600;
+    cursor: pointer;
+}
+.kpi-page-btn.is-active,
+.kpi-page-btn:hover:not(:disabled),
+.kpi-page-nav:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+.kpi-page-nav:disabled,
+.kpi-page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.kpi-pagination-summary {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+.kpi-table tbody tr[hidden] {
+    display: none;
+}
+@media (max-width: 720px) {
+    .kpi-pagination-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
 
 <div class="kpi-module">
     <div class="kpi-toolbar">
@@ -257,6 +317,14 @@ function kpiProgressClass(float $value): string
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                    <div class="kpi-pagination-wrap">
+                        <div class="kpi-pagination-summary">Showing <span id="kpi-pagination-range">1-5</span> of <span id="kpi-pagination-total"><?= count($kpis) ?></span></div>
+                        <nav class="kpi-pagination" aria-label="KPI List pages">
+                            <button type="button" class="kpi-page-nav" data-kpi-page-action="prev" aria-label="Previous KPI page" disabled>← Previous</button>
+                            <div class="kpi-page-buttons" aria-live="polite"></div>
+                            <button type="button" class="kpi-page-nav" data-kpi-page-action="next" aria-label="Next KPI page">Next →</button>
+                        </nav>
+                    </div>
                 </div>
             <?php endif; ?>
         </div>
@@ -470,6 +538,68 @@ document.getElementById('view-full-kpi-details')?.addEventListener('click', () =
     const target = employeeId ? `?page=kpi-tracking&employee_id=${employeeId}` : '?page=kpi-tracking';
     window.location.href = target;
 });
+
+(function () {
+    const table = document.querySelector('.kpi-table');
+    if (!table) return;
+    const rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
+    if (!rows.length) return;
+
+    const pageSize = 5;
+    const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+    const rangeEl = document.getElementById('kpi-pagination-range');
+    const totalEl = document.getElementById('kpi-pagination-total');
+    const pageButtons = document.querySelector('.kpi-page-buttons');
+    const prevBtn = document.querySelector('[data-kpi-page-action="prev"]');
+    const nextBtn = document.querySelector('[data-kpi-page-action="next"]');
+
+    if (totalEl) totalEl.textContent = String(rows.length);
+
+    let currentPage = 1;
+
+    function renderPage(page) {
+        currentPage = Math.min(Math.max(page, 1), totalPages);
+
+        rows.forEach((row, index) => {
+            const isVisible = index >= (currentPage - 1) * pageSize && index < currentPage * pageSize;
+            row.hidden = !isVisible;
+            row.style.display = isVisible ? '' : 'none';
+        });
+
+        if (rangeEl) {
+            const start = (currentPage - 1) * pageSize + 1;
+            const end = Math.min(currentPage * pageSize, rows.length);
+            rangeEl.textContent = start + '-' + end;
+        }
+
+        if (prevBtn) prevBtn.disabled = currentPage === 1;
+        if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+
+        if (pageButtons) {
+            pageButtons.innerHTML = '';
+            for (let page = 1; page <= totalPages; page++) {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'kpi-page-btn' + (page === currentPage ? ' is-active' : '');
+                button.textContent = String(page);
+                button.setAttribute('aria-label', 'Go to KPI page ' + page);
+                if (page === currentPage) button.setAttribute('aria-current', 'page');
+                button.addEventListener('click', () => renderPage(page));
+                pageButtons.appendChild(button);
+            }
+        }
+    }
+
+    prevBtn?.addEventListener('click', () => {
+        if (currentPage > 1) renderPage(currentPage - 1);
+    });
+
+    nextBtn?.addEventListener('click', () => {
+        if (currentPage < totalPages) renderPage(currentPage + 1);
+    });
+
+    renderPage(1);
+})();
 
 document.querySelectorAll('[data-action="view"]').forEach((button) => {
     button.addEventListener('click', () => {

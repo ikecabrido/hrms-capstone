@@ -98,4 +98,24 @@ class FeedbackDashboardController
             ]
         ];
     }
+
+    public function getAssignment(int $assignmentId): ?array
+    {
+        return $this->model->getAssignment($assignmentId);
+    }
+
+    public function getFeedbackResponses(int $assignmentId): array
+    {
+        return $this->model->getFeedbackResponses($assignmentId);
+    }
+
+    public function getFeedbackQuestions(): array
+    {
+        return $this->model->getFeedbackQuestions();
+    }
+
+    public function getCompetencies(): array
+    {
+        return $this->model->getCompetencies();
+    }
 }

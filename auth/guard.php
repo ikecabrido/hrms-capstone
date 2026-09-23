@@ -4,7 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['employee_id']) || !isset($_SESSION['role'])) {
+if (!isset($_SESSION['employee_id']) || !isset($_SESSION['role_id'])) {
     $isFetch = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) === 'XMLHttpRequest'
         || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'text/html') && !empty($_SERVER['HTTP_SEC_FETCH_MODE']) && $_SERVER['HTTP_SEC_FETCH_MODE'] === 'cors';
 

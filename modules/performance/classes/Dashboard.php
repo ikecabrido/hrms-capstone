@@ -124,6 +124,113 @@ class PerformanceDashboard
         return $stats;
     }
 
+    public function getDashboardData(): array
+    {
+        $data = [
+            'stats' => [
+                'goals_active' => 0,
+                'kpi_completion' => 0,
+                'appraisals_due' => 0,
+                'training_hours' => 0,
+            ],
+            'trend' => ['labels' => [], 'this_year' => [], 'last_year' => []],
+            'events' => [],
+            'departments' => [],
+            'activities' => [],
+        ];
+
+        if ($this->tableExists('pm_goals')) {
+            $data['stats']['goals_active'] = (int) $this->fetchScalar(
+                "SELECT COUNT(*) FROM pm_goals WHERE status NOT IN ('Completed', 'Cancelled', 'Archived')"
+            );
+        }
+
+        if ($this->tableExists('pm_kpi_entries')) {
+            $data['stats']['kpi_completion'] = (int) ($this->fetchScalar(
+                "SELECT COALESCE(ROUND(AVG(performance_score)), 0) FROM pm_kpi_entries WHERE performance_score IS NOT NULL"
+            ) ?? 0);
+        }
+
+        if ($this->tableExists('pm_appraisals')) {
+            $data['stats']['appraisals_due'] = (int) $this->fetchScalar(
+                "SELECT COUNT(*) FROM pm_appraisals WHERE due_date >= CURDATE() AND status NOT IN ('Completed', 'Cancelled', 'Archived', 'Closed')"
+            );
+        }
+
+        if ($this->tableExists('pm_employee_training') && $this->tableExists('pm_training_programs')) {
+            $data['stats']['training_hours'] = (int) ($this->fetchScalar(
+                "SELECT COALESCE(ROUND(SUM(tp.duration_hours)), 0)
+                 FROM pm_employee_training et
+                 INNER JOIN pm_training_programs tp ON tp.training_id = et.training_id
+                 WHERE et.completion_status = 'Completed'"
+            ) ?? 0);
+        }
+
+        $data['trend'] = $this->getDashboardTrend();
+
+        if ($this->tableExists('pm_goal_events')) {
+            $data['events'] = $this->fetchAll(
+                "SELECT event_id, event_title, event_type, start_date, start_time, end_time, location
+                 FROM pm_goal_events
+                 WHERE start_date >= CURDATE() AND status NOT IN ('Cancelled', 'Archived')
+                 ORDER BY start_date, start_time
+                 LIMIT 6"
+            );
+        }
+
+        if ($this->tableExists('pm_performance_reports')) {
+            $departmentJoin = $this->tableExists('em_departments')
+                ? 'LEFT JOIN em_departments d ON d.department_id = r.department'
+                : '';
+            $departmentLabel = $this->tableExists('em_departments')
+                ? 'COALESCE(d.department_name, CAST(r.department AS CHAR))'
+                : 'CAST(r.department AS CHAR)';
+            $data['departments'] = $this->fetchAll(
+                "SELECT {$departmentLabel} AS department,
+                        ROUND(AVG(r.overall_rating), 1) AS average_rating,
+                        ROUND(AVG(r.goal_completion_rate), 0) AS goals_completed,
+                        ROUND(AVG(r.kpi_health_score), 0) AS kpi_achievement
+                 FROM pm_performance_reports r
+                 {$departmentJoin}
+                 WHERE r.department IS NOT NULL
+                 GROUP BY r.department, {$departmentLabel}
+                 ORDER BY department"
+            );
+        }
+
+        $data['activities'] = $this->getRecentActivities();
+        return $data;
+    }
+
+    private function getDashboardTrend(): array
+    {
+        $queries = [];
+        if ($this->tableExists('pm_performance_reports')) {
+            $queries[] = "SELECT created_at AS recorded_at, overall_rating AS score FROM pm_performance_reports WHERE overall_rating IS NOT NULL";
+        }
+        if ($this->tableExists('pm_appraisals')) {
+            $queries[] = "SELECT updated_at AS recorded_at, overall_rating AS score FROM pm_appraisals WHERE overall_rating IS NOT NULL";
+        }
+        if ($this->tableExists('pm_kpi_entries')) {
+            $queries[] = "SELECT entry_date AS recorded_at, performance_score AS score FROM pm_kpi_entries WHERE performance_score IS NOT NULL";
+        }
+        if (!$queries) {
+            return ['labels' => [], 'this_year' => [], 'last_year' => []];
+        }
+
+        $rows = $this->fetchAll(
+            'SELECT DATE_FORMAT(recorded_at, "%Y-%m") AS month, AVG(score) AS score FROM (' . implode(' UNION ALL ', $queries) . ') dashboard_scores GROUP BY month ORDER BY month'
+        );
+        $trend = ['labels' => [], 'this_year' => [], 'last_year' => []];
+        foreach ($rows as $row) {
+            $trend['labels'][] = date('M Y', strtotime($row['month'] . '-01'));
+            $year = (int) substr($row['month'], 0, 4);
+            $trend['this_year'][] = $year === (int) date('Y') ? round((float) $row['score'], 1) : null;
+            $trend['last_year'][] = $year === (int) date('Y') - 1 ? round((float) $row['score'], 1) : null;
+        }
+        return $trend;
+    }
+
     public function getPerformanceSummary(): array
     {
         $summary = [
@@ -577,13 +684,13 @@ class PerformanceDashboard
             ));
         }
 
-        if ($this->tableExists('kpi_history')) {
+        if ($this->tableExists('pm_kpi_history')) {
             $activities = array_merge($activities, $this->fetchAll(
                 "SELECT action_type AS activity,
                         COALESCE(performed_by_name, performed_by, 'System') AS employee_user,
                         performed_at AS activity_date,
                         'Updated' AS status
-                 FROM kpi_history
+                 FROM pm_kpi_history
                  ORDER BY performed_at DESC
                  LIMIT 8"
             ));

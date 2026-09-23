@@ -49,4 +49,14 @@ class GoalService
     {
         return $this->goalModel->getGoalProgressEntries($goalId);
     }
+
+    public function createEvent(array $data, string $createdBy = ''): bool
+    {
+        return $this->goalModel->createEvent($data, $createdBy);
+    }
+
+    public function getEvents(string $fromDate, string $toDate): array
+    {
+        return $this->goalModel->getEvents($fromDate, $toDate);
+    }
 }

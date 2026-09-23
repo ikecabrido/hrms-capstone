@@ -29,6 +29,26 @@ class FeedbackController
         return $this->dashboardController->getDashboardData($filters);
     }
 
+    public function getAssignment(int $assignmentId): ?array
+    {
+        return $this->dashboardController->getAssignment($assignmentId);
+    }
+
+    public function getFeedbackResponses(int $assignmentId): array
+    {
+        return $this->dashboardController->getFeedbackResponses($assignmentId);
+    }
+
+    public function getFeedbackQuestions(): array
+    {
+        return $this->dashboardController->getFeedbackQuestions();
+    }
+
+    public function getCompetencies(): array
+    {
+        return $this->dashboardController->getCompetencies();
+    }
+
     public function getMessages(): array
     {
         if (session_status() === PHP_SESSION_NONE) {

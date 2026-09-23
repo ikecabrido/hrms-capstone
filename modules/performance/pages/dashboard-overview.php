@@ -1,462 +1,66 @@
 <?php
 require_once __DIR__ . '/../classes/Dashboard.php';
-
-$dashboard = new PerformanceDashboard();
-$overviewStats = $dashboard->getOverviewStats();
-$performanceSummary = $dashboard->getPerformanceSummary();
-$performanceDistribution = $dashboard->getPerformanceDistribution();
-$kpiSummary = $dashboard->getKpiSummary();
-$appraisalRows = $dashboard->getAppraisalRows();
-$feedbackSummary = $dashboard->getFeedbackSummary();
-$feedbackRows = $dashboard->getFeedbackRows();
-$trainingSummary = $dashboard->getTrainingSummary();
-$trainingRows = $dashboard->getTrainingRows();
-$trendData = $dashboard->getTrendData();
-$attentionEmployees = $dashboard->getAttentionEmployees();
-$recentActivities = $dashboard->getRecentActivities();
-$topPerformers = $dashboard->getTopPerformers();
-$needsImprovement = $dashboard->getNeedsImprovement();
-
-$distributionColors = [
-    'Outstanding' => '#16a34a',
-    'Exceeds Expectations' => '#22c55e',
-    'Meets Expectations' => '#3b82f6',
-    'Needs Improvement' => '#f59e0b',
-    'Unsatisfactory' => '#ef4444',
-];
-
-$ratingBreakdown = $performanceDistribution;
-$maxDistributionValue = max(array_values($ratingBreakdown));
-$maxDistributionValue = $maxDistributionValue > 0 ? $maxDistributionValue : 1;
-
-$emptyState = '<div class="empty-state">No data available</div>';
+$dashboardData = (new PerformanceDashboard())->getDashboardData();
+$stats = $dashboardData['stats'];
+$trend = $dashboardData['trend'];
+$events = $dashboardData['events'];
+$departments = $dashboardData['departments'];
+$activities = $dashboardData['activities'];
+$requestedMonth = (int) ($_GET['month'] ?? date('n'));
+$requestedYear = (int) ($_GET['year'] ?? date('Y'));
+$requestedMonth = max(1, min(12, $requestedMonth));
+$monthStart = new DateTimeImmutable(sprintf('%04d-%02d-01', $requestedYear, $requestedMonth));
+$daysInMonth = (int) $monthStart->format('t');
+$firstWeekday = (int) $monthStart->format('N');
+$eventDates = array_values(array_unique(array_column($events, 'start_date')));
+$h = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 ?>
-
-<link rel="stylesheet" href="css/pages/dashboard-overview.css">
-
-<div class="performance-dashboard">
-    <div class="dashboard-topbar">
-        <div class="dashboard-title-wrap">
-            <h1>Performance Dashboard</h1>
-            <p>Employee performance, KPI health, appraisals, feedback and development planning.</p>
-        </div>
+<section class="performance-dashboard" aria-labelledby="dashboard-title">
+    <div class="dashboard-heading"><div><p class="eyebrow">Performance management</p><h1 id="dashboard-title">Dashboard overview</h1><p class="dashboard-subtitle">Performance Management Dashboard</p></div><a class="dashboard-link" href="?page=performance-report">View reports <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a></div>
+    <div class="summary-grid">
+        <article class="summary-card blue"><span class="summary-icon"><i class="fa-solid fa-bullseye"></i></span><div><span>Goals Active</span><strong><?= $h($stats['goals_active']) ?></strong></div></article>
+        <article class="summary-card green"><span class="summary-icon"><i class="fa-solid fa-chart-line"></i></span><div><span>KPI Completion</span><strong><?= $h($stats['kpi_completion']) ?>%</strong></div></article>
+        <article class="summary-card violet"><span class="summary-icon"><i class="fa-regular fa-user"></i></span><div><span>Appraisals Due</span><strong><?= $h($stats['appraisals_due']) ?></strong></div></article>
+        <article class="summary-card orange"><span class="summary-icon"><i class="fa-solid fa-graduation-cap"></i></span><div><span>Training Hours</span><strong><?= $h($stats['training_hours']) ?> <small>hours</small></strong></div></article>
     </div>
-
-    <div class="dashboard-stat-grid">
-        <?php
-        $statCards = [
-            ['label' => 'Total Employees', 'value' => $overviewStats['total_employees'], 'icon' => 'fa-users', 'meta' => 'Current workforce'],
-            ['label' => 'Active Performance Evaluations', 'value' => $overviewStats['active_evaluations'], 'icon' => 'fa-file-circle-check', 'meta' => 'In progress'],
-            ['label' => 'Pending Appraisals', 'value' => $overviewStats['pending_appraisals'], 'icon' => 'fa-clipboard-list', 'meta' => 'Awaiting review'],
-            ['label' => 'Completed Appraisals', 'value' => $overviewStats['completed_appraisals'], 'icon' => 'fa-circle-check', 'meta' => 'Finalized'],
-            ['label' => 'Pending 360 Feedback', 'value' => $overviewStats['pending_feedback'], 'icon' => 'fa-people-arrows', 'meta' => 'Feedback to collect'],
-            ['label' => 'Training Recommendations', 'value' => $overviewStats['training_recommendations'], 'icon' => 'fa-graduation-cap', 'meta' => 'Development plans'],
-            ['label' => 'Employees Needing Attention', 'value' => $overviewStats['employees_needing_attention'], 'icon' => 'fa-triangle-exclamation', 'meta' => 'Intervention list'],
-            ['label' => 'Performance Goals / KPIs', 'value' => $overviewStats['performance_goals'], 'icon' => 'fa-bullseye', 'meta' => 'Live tracking'],
-        ];
-        foreach ($statCards as $stat):
-        ?>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-label"><?= htmlspecialchars($stat['label']) ?></div>
-                    <div class="stat-icon"><i class="fa-solid <?= htmlspecialchars($stat['icon']) ?>"></i></div>
-                </div>
-                <div>
-                    <p class="stat-value"><?= (int)$stat['value'] > 0 ? number_format((int)$stat['value']) : '0' ?></p>
-                    <p class="stat-subtext"><?= htmlspecialchars($stat['meta']) ?></p>
-                </div>
-            </div>
-        <?php endforeach; ?>
+    <div class="dashboard-grid top-grid">
+        <article class="dashboard-panel chart-panel"><div class="panel-heading"><div><h2>Performance Overview</h2><p>Recorded ratings and KPI scores</p></div><span class="legend"><i class="legend-this"></i>This year <i class="legend-last"></i>Last year</span></div><?php if ($trend['labels']): ?><div class="chart-wrap"><canvas id="performanceChart" aria-label="Performance overview line chart"></canvas></div><?php else: ?><div class="empty-state"><i class="fa-regular fa-chart-line"></i><p>No performance data available yet.</p></div><?php endif; ?></article>
+        <article class="dashboard-panel events-panel"><div class="panel-heading"><h2>Upcoming Events</h2><a href="?page=goal-setting">View All</a></div><?php if ($events): ?><div class="event-list"><?php foreach ($events as $event): ?><div class="event-row"><time datetime="<?= $h($event['start_date']) ?>"><b><?= $h(date('M', strtotime($event['start_date']))) ?></b><strong><?= $h(date('d', strtotime($event['start_date']))) ?></strong></time><div><h3><?= $h($event['event_title']) ?></h3><p><?= $h($event['start_time'] ? date('g:i A', strtotime($event['start_time'])) : 'All day') ?><?= $event['location'] ? ' · ' . $h($event['location']) : '' ?></p></div></div><?php endforeach; ?></div><?php else: ?><div class="empty-state"><i class="fa-regular fa-calendar"></i><p>No upcoming events.</p></div><?php endif; ?></article>
+        <article class="dashboard-panel calendar-panel"><div class="panel-heading"><h2><?= $h($monthStart->format('F Y')) ?></h2><div class="calendar-nav"><button type="button" class="calendar-change" data-month="<?= $h($monthStart->modify('-1 month')->format('Y-m')) ?>" aria-label="Previous month"><i class="fa-solid fa-chevron-left"></i></button><button type="button" class="calendar-change" data-month="<?= $h($monthStart->modify('+1 month')->format('Y-m')) ?>" aria-label="Next month"><i class="fa-solid fa-chevron-right"></i></button></div></div><div class="calendar-grid calendar-week"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div class="calendar-grid"><?php for ($blank = 1; $blank < $firstWeekday; $blank++): ?><span></span><?php endfor; ?><?php for ($day = 1; $day <= $daysInMonth; $day++): $date = $monthStart->format('Y-m-') . str_pad((string) $day, 2, '0', STR_PAD_LEFT); ?><span class="calendar-day<?= in_array($date, $eventDates, true) ? ' has-event' : '' ?>"><?= $day ?></span><?php endfor; ?></div><p class="calendar-note"><i class="calendar-dot"></i> Event dates are shown from actual records</p></article>
     </div>
-
-    <div class="overview-grid">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Performance Overview</h2>
-                <a href="?page=performance-report">View report</a>
-            </div>
-
-            <div class="overview-summary">
-                <div class="info-card">
-                    <span class="info-label">Overall Summary</span>
-                    <span class="info-value"><?= htmlspecialchars($performanceSummary['overall_status'] ?: 'No data available') ?></span>
-                    <span class="info-caption">Current workforce status</span>
-                </div>
-                <div class="info-card">
-                    <span class="info-label">Average Rating</span>
-                    <span class="info-value"><?= $performanceSummary['average_rating'] !== null ? number_format((float)$performanceSummary['average_rating'], 1) . '/100' : 'No data available' ?></span>
-                    <span class="info-caption">Across active appraisals</span>
-                </div>
-                <div class="info-card">
-                    <span class="info-label">Top Performer</span>
-                    <span class="info-value"><?= htmlspecialchars($performanceSummary['top_employee'] ?: 'No data available') ?></span>
-                    <span class="info-caption">Highest current rating</span>
-                </div>
-            </div>
-
-            <div class="rating-breakdown" style="margin-top: 1.2rem;">
-                <?php foreach ($ratingBreakdown as $label => $count): ?>
-                    <?php $pct = ($count / $maxDistributionValue) * 100; ?>
-                    <div class="rating-row">
-                        <div class="label"><?= htmlspecialchars($label) ?></div>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width: <?= $pct ?>%; background: <?= htmlspecialchars($distributionColors[$label] ?? '#64748b') ?>;"></div>
-                        </div>
-                        <div class="count"><?= $count ?></div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Performance Rating Distribution</h2>
-            </div>
-            <div class="chart-wrap">
-                <?php if (!empty(array_filter($performanceDistribution, fn($v) => $v > 0))): ?>
-                    <canvas id="performanceDistributionChart"></canvas>
-                <?php else: ?>
-                    <div class="empty-state">No data available</div>
-                <?php endif; ?>
-            </div>
-        </div>
+    <div class="dashboard-grid bottom-grid">
+        <article class="dashboard-panel department-panel"><div class="panel-heading"><h2>Department Performance Summary</h2><a href="?page=performance-report">View All</a></div><?php if ($departments): ?><div class="table-scroll"><table><thead><tr><th>Department</th><th>Avg. Rating</th><th>Goals Completed</th><th>KPI Achievement</th></tr></thead><tbody><?php foreach ($departments as $department): ?><tr><td><?= $h($department['department']) ?></td><td><?= $h($department['average_rating'] ?? 0) ?></td><td><span class="metric"><i style="width: <?= $h($department['goals_completed'] ?? 0) ?>%"></i><?= $h($department['goals_completed'] ?? 0) ?>%</span></td><td><span class="metric blue-metric"><i style="width: <?= $h($department['kpi_achievement'] ?? 0) ?>%"></i><?= $h($department['kpi_achievement'] ?? 0) ?>%</span></td></tr><?php endforeach; ?></tbody></table></div><?php else: ?><div class="empty-state"><i class="fa-solid fa-building"></i><p>No department performance data available yet.</p></div><?php endif; ?></article>
+        <article class="dashboard-panel activity-panel"><div class="panel-heading"><h2>Recent Activities</h2><a href="?page=goal-setting">View All</a></div><?php if ($activities): ?><div class="activity-list"><?php foreach ($activities as $activity): ?><div class="activity-row"><span class="activity-icon"><i class="fa-solid fa-bolt"></i></span><div><h3><?= $h($activity['activity']) ?></h3><p><?= $h($activity['employee_user']) ?> · <?= $h(date('M j, Y g:i A', strtotime($activity['activity_date']))) ?></p></div></div><?php endforeach; ?></div><?php else: ?><div class="empty-state"><i class="fa-regular fa-clock"></i><p>No recent activities.</p></div><?php endif; ?></article>
     </div>
+</section>
 
-    <div class="panel">
-        <div class="panel-header">
-            <h2>KPI Performance</h2>
-        </div>
-        <div class="kpi-grid">
-            <div class="kpi-card">
-                <p class="kpi-name">Total KPIs</p>
-                <p class="kpi-value"><?= number_format((int)$kpiSummary['total_kpis']) ?></p>
-                <div class="kpi-meta">Active KPI definitions</div>
-            </div>
-            <div class="kpi-card">
-                <p class="kpi-name">Assigned KPIs</p>
-                <p class="kpi-value"><?= number_format((int)$kpiSummary['assigned_kpis']) ?></p>
-                <div class="kpi-meta">Current assignments</div>
-            </div>
-            <div class="kpi-card">
-                <p class="kpi-name">Completed KPIs</p>
-                <p class="kpi-value"><?= number_format((int)$kpiSummary['completed_kpis']) ?></p>
-                <div class="kpi-meta">Achieved targets</div>
-            </div>
-            <div class="kpi-card">
-                <p class="kpi-name">In Progress</p>
-                <p class="kpi-value"><?= number_format((int)$kpiSummary['in_progress_kpis']) ?></p>
-                <div class="kpi-meta">Ongoing evaluation</div>
-            </div>
-            <div class="kpi-card">
-                <p class="kpi-name">At Risk</p>
-                <p class="kpi-value"><?= number_format((int)$kpiSummary['at_risk_kpis']) ?></p>
-                <div class="kpi-meta">Needs monitoring</div>
-            </div>
-        </div>
-    </div>
+<style>
+.performance-dashboard{color:#172033;font-family:Inter,sans-serif}.dashboard-heading{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e7ebf0;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,.08);padding:22px 24px;margin:0 0 18px;min-height:100px}.eyebrow{color:#1473e6;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin:0 0 5px}.dashboard-heading h1{font-family:'Mozilla Headline',sans-serif;font-size:1.8rem;line-height:1.1;margin:0}.dashboard-subtitle{color:#8993a2;font-size:.75rem;margin:6px 0 0}.dashboard-link,.panel-heading a{color:#1473e6;font-size:.78rem;font-weight:700;text-decoration:none}.dashboard-link i{margin-left:5px}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.summary-card{background:#fff;border:1px solid #e7ebf0;border-radius:8px;box-shadow:0 3px 12px rgba(31,45,61,.06);display:flex;align-items:center;gap:12px;padding:15px 16px;min-height:84px}.summary-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:1.15rem;flex:0 0 auto}.summary-card span:not(.summary-icon){display:block;color:#687385;font-size:.75rem;font-weight:600}.summary-card strong{display:block;font-size:1.45rem;line-height:1.25}.summary-card small{font-size:.7rem;font-weight:600;color:#687385}.blue .summary-icon{background:#1473e6}.green .summary-icon{background:#10af63}.violet .summary-icon{background:#6752dc}.orange .summary-icon{background:#f59a08}.dashboard-grid{display:grid;gap:14px}.top-grid{grid-template-columns:minmax(0,1.65fr) minmax(230px,.85fr) minmax(220px,.9fr);margin-bottom:14px}.bottom-grid{grid-template-columns:1.35fr 1fr}.dashboard-panel{background:#fff;border:1px solid #e7ebf0;border-radius:8px;box-shadow:0 3px 12px rgba(31,45,61,.05);min-width:0}.panel-heading{display:flex;align-items:center;justify-content:space-between;padding:16px 17px 10px}.panel-heading h2{font-size:.9rem;margin:0}.panel-heading p{font-size:.68rem;color:#8993a2;margin:4px 0 0}.legend{color:#6b7481;font-size:.63rem;white-space:nowrap}.legend i{display:inline-block;width:12px;border-top:2px solid #1473e6;margin:0 5px 2px 10px}.legend .legend-last{border-color:#9aa5b1;border-style:dashed}.chart-wrap{height:218px;padding:8px 16px 16px}.empty-state{min-height:178px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#98a2b1;text-align:center;padding:25px}.empty-state i{font-size:1.45rem;margin-bottom:10px;color:#c1c9d3}.empty-state p{font-size:.8rem;margin:0}.event-list{padding:2px 15px 12px}.event-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f0f2f5}.event-row:last-child{border-bottom:0}.event-row time{background:#eaf3ff;color:#1473e6;display:flex;flex-direction:column;align-items:center;justify-content:center;width:34px;height:38px;border-radius:4px;flex:0 0 auto}.event-row time b{font-size:.53rem;text-transform:uppercase}.event-row time strong{font-size:.9rem}.event-row h3,.activity-row h3{font-size:.72rem;margin:2px 0 4px}.event-row p,.activity-row p{color:#7c8694;font-size:.62rem;margin:0}.calendar-panel{padding-bottom:13px}.calendar-nav{display:flex;gap:3px}.calendar-nav button{background:transparent;border:0;color:#172033;padding:4px;cursor:pointer}.calendar-nav button:hover{color:#1473e6}.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:0 13px;text-align:center}.calendar-week{color:#7f8997;font-size:.59rem;font-weight:700;padding-bottom:6px}.calendar-day{font-size:.67rem;padding:6px 0;border-radius:50%}.calendar-day.has-event{background:#1473e6;color:#fff}.calendar-note{color:#7f8997;font-size:.58rem;margin:14px 14px 0}.calendar-dot{display:inline-block;width:6px;height:6px;background:#1473e6;border-radius:50%;margin-right:5px}.table-scroll{overflow-x:auto;padding:0 16px 12px}table{border-collapse:collapse;width:100%;font-size:.68rem;white-space:nowrap}th{color:#7d8795;font-size:.6rem;text-align:left;padding:9px 5px;border-bottom:1px solid #edf0f4}td{padding:11px 5px;border-bottom:1px solid #f0f2f5}tr:last-child td{border-bottom:0}.metric{color:#172033;display:flex;align-items:center;gap:7px}.metric i{display:inline-block;background:#10b86a;border-radius:2px;height:3px;max-width:55px}.blue-metric i{background:#1473e6}.activity-list{padding:0 17px 12px}.activity-row{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #f0f2f5}.activity-row:last-child{border-bottom:0}.activity-icon{color:#10af63;background:#e7faef;border-radius:50%;display:grid;place-items:center;width:27px;height:27px;flex:0 0 auto;font-size:.65rem}.activity-row h3{font-weight:700}.activity-panel .empty-state,.department-panel .empty-state{min-height:180px}@media(max-width:1050px){.top-grid{grid-template-columns:1.3fr 1fr}.calendar-panel{grid-column:1/-1}.summary-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.dashboard-heading{align-items:flex-start;gap:14px;flex-direction:column;padding:18px 16px}.dashboard-heading h1{font-size:1.5rem}.dashboard-link{align-self:flex-end}.summary-grid,.top-grid,.bottom-grid{grid-template-columns:1fr}.calendar-panel{grid-column:auto}.chart-wrap{height:200px}.legend{display:none}.dashboard-panel{border-radius:6px}}
+</style>
+<style>
+.performance-dashboard .dashboard-heading {
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 18px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+}
 
-    <div class="section-grid">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Appraisals & Reviews</h2>
-                <a href="?page=appraisals-review">View All</a>
-            </div>
-            <?php if (!empty($appraisalRows)): ?>
-                <div class="table-wrap">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Appraisal Period</th>
-                                <th>Status</th>
-                                <th>Performance Rating</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($appraisalRows as $row): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($row['employee'] ?? 'N/A') ?></td>
-                                    <td><?= htmlspecialchars($row['appraisal_period'] ?? 'N/A') ?></td>
-                                    <td><span class="badge <?= strtolower(str_replace(' ', '-', $row['status'] ?? 'pending')) ?>"><?= htmlspecialchars($row['status'] ?? 'Pending') ?></span></td>
-                                    <td><?= $row['performance_rating'] !== null ? number_format((float)$row['performance_rating'], 1) : 'N/A' ?></td>
-                                    <td><?= !empty($row['appraisal_date']) ? htmlspecialchars(date('M d, Y', strtotime($row['appraisal_date']))) : 'N/A' ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php else: ?>
-                <?= $emptyState ?>
-            <?php endif; ?>
-        </div>
+.performance-dashboard .dashboard-heading h1 {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #0f172a;
+}
 
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Top Performers</h2>
-            </div>
-            <?php if (!empty($topPerformers)): ?>
-                <div class="mini-list">
-                    <?php foreach ($topPerformers as $employee): ?>
-                        <div class="mini-item">
-                            <div>
-                                <div class="name"><?= htmlspecialchars($employee['employee_name'] ?? 'Unknown employee') ?></div>
-                                <div class="meta"><?= htmlspecialchars($employee['department'] ?? 'N/A') ?></div>
-                            </div>
-                            <div class="score"><?= $employee['overall_rating'] !== null ? number_format((float)$employee['overall_rating'], 1) : 'N/A' ?></div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <?= $emptyState ?>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <div class="section-grid">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>360-Degree Feedback</h2>
-                <a href="?page=360-degree-feedback">View All</a>
-            </div>
-            <div class="kpi-grid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 1rem;">
-                <div class="kpi-card">
-                    <p class="kpi-name">Pending</p>
-                    <p class="kpi-value"><?= number_format((int)$feedbackSummary['pending']) ?></p>
-                </div>
-                <div class="kpi-card">
-                    <p class="kpi-name">Completed</p>
-                    <p class="kpi-value"><?= number_format((int)$feedbackSummary['completed']) ?></p>
-                </div>
-                <div class="kpi-card">
-                    <p class="kpi-name">Active</p>
-                    <p class="kpi-value"><?= number_format((int)$feedbackSummary['active']) ?></p>
-                </div>
-            </div>
-            <?php if (!empty($feedbackRows)): ?>
-                <div class="table-wrap">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Review Period</th>
-                                <th>Status</th>
-                                <th>Rating</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($feedbackRows as $row): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($row['employee_id'] ?? 'N/A') ?></td>
-                                    <td><?= htmlspecialchars($row['review_period'] ?? 'N/A') ?></td>
-                                    <td><span class="badge <?= strtolower(str_replace(' ', '-', ($row['feedback_status'] ?? 'Pending'))) ?>"><?= htmlspecialchars($row['feedback_status'] ?? 'Pending') ?></span></td>
-                                    <td><?= $row['overall_rating'] !== null ? number_format((float)$row['overall_rating'], 1) : 'N/A' ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php else: ?>
-                <?= $emptyState ?>
-            <?php endif; ?>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Employees Requiring Attention</h2>
-            </div>
-            <?php if (!empty($attentionEmployees)): ?>
-                <div class="mini-list">
-                    <?php foreach (array_slice($attentionEmployees, 0, 5) as $employee): ?>
-                        <div class="mini-item">
-                            <div>
-                                <div class="name"><?= htmlspecialchars($employee['employee'] ?? 'Unknown employee') ?></div>
-                                <div class="meta"><?= htmlspecialchars($employee['reason'] ?? 'Needs attention') ?></div>
-                            </div>
-                            <div class="score"><?= $employee['rating'] !== null ? number_format((float)$employee['rating'], 1) : htmlspecialchars(strtoupper(substr($employee['status'] ?? 'N/A', 0, 3))) ?></div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <div class="empty-state">No employees requiring attention</div>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <div class="trend-grid">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Performance Trends</h2>
-            </div>
-            <div class="chart-wrap">
-                <?php if (!empty(array_filter($trendData['performance'], fn($v) => $v > 0)) || !empty(array_filter($trendData['kpis'], fn($v) => $v > 0)) || !empty(array_filter($trendData['appraisals'], fn($v) => $v > 0)) || !empty(array_filter($trendData['training'], fn($v) => $v > 0))): ?>
-                    <canvas id="performanceTrendChart"></canvas>
-                <?php else: ?>
-                    <div class="empty-state">No trend data available</div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Training & Development</h2>
-                <a href="?page=training-development">View All</a>
-            </div>
-            <div class="kpi-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 1rem;">
-                <div class="kpi-card">
-                    <p class="kpi-name">Total</p>
-                    <p class="kpi-value"><?= number_format((int)$trainingSummary['total_recommendations']) ?></p>
-                </div>
-                <div class="kpi-card">
-                    <p class="kpi-name">Pending</p>
-                    <p class="kpi-value"><?= number_format((int)$trainingSummary['pending_recommendations']) ?></p>
-                </div>
-                <div class="kpi-card">
-                    <p class="kpi-name">Approved</p>
-                    <p class="kpi-value"><?= number_format((int)$trainingSummary['approved_recommendations']) ?></p>
-                </div>
-                <div class="kpi-card">
-                    <p class="kpi-name">High Priority</p>
-                    <p class="kpi-value"><?= number_format((int)$trainingSummary['high_priority_training']) ?></p>
-                </div>
-            </div>
-            <?php if (!empty($trainingRows)): ?>
-                <div class="table-wrap">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Employee</th>
-                                <th>Gap</th>
-                                <th>Training</th>
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($trainingRows as $row): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($row['employee'] ?? 'N/A') ?></td>
-                                    <td><?= htmlspecialchars($row['development_area'] ?? 'N/A') ?></td>
-                                    <td><?= htmlspecialchars($row['performance_gap'] ?? 'N/A') ?></td>
-                                    <td><span class="badge <?= strtolower($row['priority_level'] ?? 'medium') ?>"><?= htmlspecialchars($row['priority_level'] ?? 'Medium') ?></span></td>
-                                    <td><span class="badge <?= strtolower(str_replace(' ', '-', ($row['status'] ?? 'Pending'))) ?>"><?= htmlspecialchars($row['status'] ?? 'Pending') ?></span></td>
-                                    <td><?= !empty($row['recommendation_date']) ? htmlspecialchars(date('M d, Y', strtotime($row['recommendation_date']))) : 'N/A' ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php else: ?>
-                <?= $emptyState ?>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <div class="section-grid">
-        <div class="panel">
-            <div class="panel-header">
-                <h2>Recent Performance Activities</h2>
-            </div>
-            <?php if (!empty($recentActivities)): ?>
-                <div class="timeline">
-                    <?php foreach ($recentActivities as $activity): ?>
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-content">
-                                <strong><?= htmlspecialchars($activity['activity'] ?? 'Activity') ?></strong>
-                                <span><?= htmlspecialchars($activity['employee_user'] ?? 'System') ?> • <?= !empty($activity['activity_date']) ? htmlspecialchars(date('M d, Y h:i A', strtotime($activity['activity_date']))) : 'N/A' ?></span>
-                                <span class="badge <?= strtolower(str_replace(' ', '-', ($activity['status'] ?? 'Updated'))) ?>"><?= htmlspecialchars($activity['status'] ?? 'Updated') ?></span>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php else: ?>
-                <?= $emptyState ?>
-            <?php endif; ?>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const distributionCanvas = document.getElementById('performanceDistributionChart');
-        if (distributionCanvas) {
-            new Chart(distributionCanvas, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Outstanding', 'Exceeds Expectations', 'Meets Expectations', 'Needs Improvement', 'Unsatisfactory'],
-                    datasets: [{
-                        data: [
-                            <?= (int) $performanceDistribution['Outstanding'] ?>,
-                            <?= (int) $performanceDistribution['Exceeds Expectations'] ?>,
-                            <?= (int) $performanceDistribution['Meets Expectations'] ?>,
-                            <?= (int) $performanceDistribution['Needs Improvement'] ?>,
-                            <?= (int) $performanceDistribution['Unsatisfactory'] ?>
-                        ],
-                        backgroundColor: ['#16a34a', '#22c55e', '#3b82f6', '#f59e0b', '#ef4444']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
-                }
-            });
-        }
-
-        const trendCanvas = document.getElementById('performanceTrendChart');
-        if (trendCanvas) {
-            new Chart(trendCanvas, {
-                type: 'line',
-                data: {
-                    labels: <?= json_encode($trendData['labels']) ?>,
-                    datasets: [
-                        {
-                            label: 'Performance',
-                            data: <?= json_encode($trendData['performance']) ?>,
-                            borderColor: '#4f46e5',
-                            backgroundColor: 'rgba(79, 70, 229, 0.12)',
-                            tension: 0.35,
-                            fill: true
-                        },
-                        {
-                            label: 'KPI',
-                            data: <?= json_encode($trendData['kpis']) ?>,
-                            borderColor: '#0ea5e9',
-                            backgroundColor: 'rgba(14, 165, 233, 0.12)',
-                            tension: 0.35,
-                            fill: true
-                        },
-                        {
-                            label: 'Appraisal',
-                            data: <?= json_encode($trendData['appraisals']) ?>,
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                            tension: 0.35,
-                            fill: true
-                        },
-                        {
-                            label: 'Training',
-                            data: <?= json_encode($trendData['training']) ?>,
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.12)',
-                            tension: 0.35,
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { position: 'bottom' } },
-                    scales: {
-                        y: { beginAtZero: false }
-                    }
-                }
-            });
-        }
-    });
-</script>
+.performance-dashboard .dashboard-subtitle {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+</style>
+<?php if ($trend['labels']): ?><script>new Chart(document.getElementById('performanceChart'), {type:'line', data:{labels:<?= json_encode($trend['labels']) ?>, datasets:[{label:'This year',data:<?= json_encode($trend['this_year']) ?>,borderColor:'#1473e6',backgroundColor:'transparent',tension:.35,spanGaps:true},{label:'Last year',data:<?= json_encode($trend['last_year']) ?>,borderColor:'#9aa5b1',borderDash:[5,4],backgroundColor:'transparent',tension:.35,spanGaps:true}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,suggestedMax:100,grid:{color:'#edf0f4'}},x:{grid:{display:false}}}}});</script><?php endif; ?><script>document.querySelectorAll('.calendar-change').forEach(function(button){button.addEventListener('click',function(){var parts=this.dataset.month.split('-');window.location.href='?page=dashboard-overview&year='+parts[0]+'&month='+Number(parts[1]);});});</script>

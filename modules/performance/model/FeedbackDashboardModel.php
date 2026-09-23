@@ -1,6 +1,14 @@
 <?php
 require_once __DIR__ . '/../../../database/db.php';
 
+/**
+ * Provides dashboard and feedback submission data.
+ *
+ * @method array|null getAssignment(int $assignmentId)
+ * @method array getFeedbackResponses(int $assignmentId)
+ * @method array getFeedbackQuestions()
+ * @method array getCompetencies()
+ */
 class FeedbackDashboardModel
 {
     private PDO $conn;
@@ -149,6 +157,77 @@ class FeedbackDashboardModel
             'SELECT cycle_id, title, cycle_period, status, start_date, end_date
              FROM pm_review_cycles
              ORDER BY start_date DESC, cycle_id DESC'
+        );
+    }
+
+    public function getAssignment(int $assignmentId): ?array
+    {
+        if ($assignmentId <= 0 || !$this->tableExists('pm_feedback_assignments')) {
+            return null;
+        }
+
+        $cycleTable = $this->tableExists('pm_feedback_cycles') ? 'pm_feedback_cycles' : null;
+        $cycleJoin = $cycleTable
+            ? " LEFT JOIN {$cycleTable} cycle ON cycle.cycle_id = assignment.cycle_id"
+            : '';
+        $cycleSelect = $cycleTable
+            ? 'cycle.cycle_name AS cycle_title, cycle.cycle_period'
+            : 'NULL AS cycle_title, NULL AS cycle_period';
+
+        $stmt = $this->conn->prepare(
+            "SELECT assignment.*, {$cycleSelect}
+             FROM pm_feedback_assignments assignment
+             {$cycleJoin}
+             WHERE assignment.assignment_id = :assignment_id
+             LIMIT 1"
+        );
+        $stmt->bindValue(':assignment_id', $assignmentId, PDO::PARAM_INT);
+        $stmt->execute();
+        $assignment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $assignment ?: null;
+    }
+
+    public function getFeedbackResponses(int $assignmentId): array
+    {
+        if ($assignmentId <= 0 || !$this->tableExists('pm_feedback_responses')) {
+            return [];
+        }
+
+        return $this->fetchAll(
+            'SELECT response_id, assignment_id, question_id, rating, text_response, comment
+             FROM pm_feedback_responses
+             WHERE assignment_id = :assignment_id
+             ORDER BY response_id ASC',
+            [':assignment_id' => ['value' => $assignmentId, 'type' => PDO::PARAM_INT]]
+        );
+    }
+
+    public function getFeedbackQuestions(): array
+    {
+        if (!$this->tableExists('pm_feedback_questions')) {
+            return [];
+        }
+
+        return $this->fetchAll(
+            'SELECT question_id, competency_id, question_text, question_type, scale_min, scale_max
+             FROM pm_feedback_questions
+             WHERE is_active = 1
+             ORDER BY order_sequence ASC, question_id ASC'
+        );
+    }
+
+    public function getCompetencies(): array
+    {
+        if (!$this->tableExists('pm_competencies')) {
+            return [];
+        }
+
+        return $this->fetchAll(
+            'SELECT competency_id, competency_name
+             FROM pm_competencies
+             WHERE is_active = 1
+             ORDER BY competency_name ASC'
         );
     }
 

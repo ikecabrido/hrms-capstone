@@ -48,7 +48,6 @@ function formatScore(float $score): string
 
 <style>
     :root {
-        --bg: #f3f6fb;
         --panel: #ffffff;
         --panel-soft: #f8fafc;
         --line: #e7ecf3;
@@ -66,7 +65,6 @@ function formatScore(float $score): string
     * { box-sizing: border-box; }
 
     .feedback-dashboard-root {
-        background: var(--bg);
         min-height: 100vh;
         padding: 18px 0 32px;
         color: var(--text);
@@ -84,19 +82,25 @@ function formatScore(float $score): string
         justify-content: space-between;
         align-items: center;
         gap: 16px;
+        padding: 18px 22px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
         margin-bottom: 18px;
     }
 
     .fd-header h1 {
         margin: 0;
-        font-size: 1.55rem;
+        font-size: 1.45rem;
         font-weight: 700;
+        letter-spacing: 0;
         color: var(--text);
     }
 
     .fd-header p {
         margin: 4px 0 0;
-        font-size: 0.82rem;
+        font-size: 0.9rem;
         color: var(--muted);
     }
 
@@ -187,7 +191,7 @@ function formatScore(float $score): string
 
     .fd-card-number {
         margin: 0;
-        font-size: 1.05rem;
+        font-size: 1.7rem;
         font-weight: 700;
         line-height: 1.2;
         letter-spacing: -0.02em;
@@ -725,7 +729,7 @@ function formatScore(float $score): string
         gap: 10px 16px;
     }
 
-    .fd-detail-item { }
+  
 
     .fd-detail-item label {
         display: block;
@@ -780,7 +784,7 @@ function formatScore(float $score): string
                 <select class="fd-select" id="raterTypeFilter" aria-label="Select rater type">
                     <option value="all" <?= ($selectedRaterType === 'all' || $selectedRaterType === '') ? 'selected' : '' ?>>All Rater Types</option>
                     <option value="Self" <?= ($selectedRaterType === 'Self') ? 'selected' : '' ?>>Self</option>
-                    <option value="Manager" <?= ($selectedRaterType === 'Manager') ? 'selected' : '' ?>>Manager</option>
+                    <option value="HR Admin" <?= ($selectedRaterType === 'HR Admin') ? 'selected' : '' ?>>HR Admin</option>
                     <option value="Peer" <?= ($selectedRaterType === 'Peer') ? 'selected' : '' ?>>Peer</option>
                     <option value="Subordinate" <?= ($selectedRaterType === 'Subordinate') ? 'selected' : '' ?>>Subordinate</option>
                     <option value="Other" <?= ($selectedRaterType === 'Other') ? 'selected' : '' ?>>Other</option>
@@ -853,7 +857,7 @@ function formatScore(float $score): string
                     <select class="fd-select-inline" id="raterTypeFilterSecondary">
                         <option value="all" <?= ($selectedRaterType === 'all' || $selectedRaterType === '') ? 'selected' : '' ?>>All Rater Types</option>
                         <option value="Self" <?= ($selectedRaterType === 'Self') ? 'selected' : '' ?>>Self</option>
-                        <option value="Manager" <?= ($selectedRaterType === 'Manager') ? 'selected' : '' ?>>Manager</option>
+                        <option value="HR Admin" <?= ($selectedRaterType === 'HR Admin') ? 'selected' : '' ?>>HR Admin</option>
                         <option value="Peer" <?= ($selectedRaterType === 'Peer') ? 'selected' : '' ?>>Peer</option>
                         <option value="Subordinate" <?= ($selectedRaterType === 'Subordinate') ? 'selected' : '' ?>>Subordinate</option>
                         <option value="Other" <?= ($selectedRaterType === 'Other') ? 'selected' : '' ?>>Other</option>
@@ -870,7 +874,7 @@ function formatScore(float $score): string
                         <div class="fd-breakdown">
                             <?php foreach ($raterBreakdown['rows'] as $row): ?>
                                 <div class="fd-breakdown-row">
-                                    <div class="fd-breakdown-label"><span class="fd-dot" style="background: <?= ['Self' => '#2dd4bf', 'Manager' => '#3b82f6', 'Peer' => '#8b5cf6', 'Subordinate' => '#f59e0b', 'Other' => '#10b981'][$row['label']] ?? '#94a3b8'; ?>"></span> <?= htmlspecialchars((string) $row['label']) ?></div>
+                                    <div class="fd-breakdown-label"><span class="fd-dot" style="background: <?= ['Self' => '#2dd4bf', 'HR Admin' => '#3b82f6', 'Peer' => '#8b5cf6', 'Subordinate' => '#f59e0b', 'Other' => '#10b981'][$row['label']] ?? '#94a3b8'; ?>"></span> <?= htmlspecialchars((string) $row['label']) ?></div>
                                     <div class="fd-count"><?= (int) $row['count'] ?></div>
                                     <div class="fd-percent">(<?= number_format((float) $row['percentage'], 1) ?>%)</div>
                                 </div>
@@ -998,7 +1002,7 @@ function formatScore(float $score): string
                                             <div class="fd-avatar" style="background: linear-gradient(135deg, #e0f2fe, #ede9fe); "><?= htmlspecialchars(strtoupper(substr((string) ($submission['rater_name'] ?? 'R'), 0, 2))) ?></div>
                                             <div>
                                                 <strong><?= htmlspecialchars((string) ($submission['rater_name'] ?? 'Rater')) ?></strong>
-                                                <span><?= htmlspecialchars((string) ($submission['reviewer_type'] ?? 'Manager')) ?></span>
+                                                <span><?= htmlspecialchars((string) ($submission['reviewer_type'] ?? 'HR Admin')) ?></span>
                                             </div>
                                         </div>
                                     </td>
@@ -1081,7 +1085,7 @@ function formatScore(float $score): string
         if (legend) {
             const palette = {
                 Self: '#2dd4bf',
-                Manager: '#3b82f6',
+                'HR Admin': '#3b82f6',
                 Peer: '#8b5cf6',
                 Subordinate: '#f59e0b',
                 Other: '#10b981'

@@ -275,12 +275,6 @@ class TrainingDevelopmentView
             </div>
         </div>
 
-        <div class="floating-cta">
-            <button type="button" class="primary-btn circular-btn" data-open-modal="training-form-modal">
-                <i class="fa-solid fa-plus"></i>
-            </button>
-        </div>
-
         <div class="modal-overlay" id="training-form-modal">
             <div class="modal-card">
                 <div class="modal-header">

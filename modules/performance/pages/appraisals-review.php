@@ -56,6 +56,68 @@ $statCards = [
 ?>
 
 <link rel="stylesheet" href="css/appraisals.css">
+<link rel="stylesheet" href="css/pages/appraisals-reference.css">
+<style>
+.appraisal-pagination-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+.appraisal-pagination {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.appraisal-page-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+.appraisal-page-btn,
+.appraisal-page-nav {
+    min-width: 2.2rem;
+    height: 2.2rem;
+    padding: 0 0.7rem;
+    border: 1px solid #dfe7f3;
+    border-radius: 8px;
+    background: #fff;
+    color: #475569;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.appraisal-page-btn.is-active,
+.appraisal-page-btn:hover:not(:disabled),
+.appraisal-page-nav:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+.appraisal-page-nav:disabled,
+.appraisal-page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.appraisal-pagination-summary {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+.appraisal-table tbody tr[hidden] {
+    display: none;
+}
+@media (max-width: 720px) {
+    .appraisal-pagination-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
 
 <div class="appraisals-page">
 	<div class="appraisals-titlebar">
@@ -125,11 +187,23 @@ $statCards = [
 			<button class="appraisal-button primary filter-submit" type="submit">Apply</button><a class="appraisal-button secondary" href="?page=appraisals-review">Reset</a>
 		</form>
 
-		<div class="appraisal-table-wrap"><table class="appraisal-table"><thead><tr><th>ID</th><th>Employee</th><th>Department</th><th>Review Cycle</th><th>Reviewer</th><th>Status</th><th>Rating</th><th>Due Date</th><th>Actions</th></tr></thead><tbody>
+		<div class="appraisal-table-wrap">
+			<table class="appraisal-table"><thead><tr><th>ID</th><th>Employee</th><th>Department</th><th>Review Cycle</th><th>Reviewer</th><th>Status</th><th>Rating</th><th>Due Date</th><th>Actions</th></tr></thead><tbody>
 			<?php if ($appraisals): foreach ($appraisals as $appraisal): ?>
 				<tr><td>#APP-<?= str_pad((string) ($appraisal['appraisal_id'] ?? 0), 5, '0', STR_PAD_LEFT) ?></td><td><strong><?= htmlspecialchars($appraisal['employee_name'] ?? 'Unknown') ?></strong><small>ID <?= (int) ($appraisal['employee_id'] ?? 0) ?></small></td><td><?= htmlspecialchars($appraisal['department'] ?? 'N/A') ?></td><td><strong><?= htmlspecialchars($appraisal['cycle_title'] ?? 'N/A') ?></strong><small><?= htmlspecialchars($appraisal['appraisal_period'] ?? '') ?></small></td><td><?= htmlspecialchars($appraisal['reviewer_name'] ?? 'Unassigned') ?></td><td><span class="status-pill <?= htmlspecialchars($statusClass($appraisal['status'] ?? 'Not Started')) ?>"><?= htmlspecialchars($appraisal['status'] ?? 'Not Started') ?></span></td><td><strong><?= $appraisal['overall_rating'] !== null ? number_format((float) $appraisal['overall_rating'], 1) : 'N/A' ?></strong><?php if ($appraisal['overall_rating'] !== null): ?><small class="stars">★★★★★</small><?php endif; ?></td><td><?= htmlspecialchars($formatDate($appraisal['due_date'] ?? null)) ?></td><td><a class="icon-action" href="?page=appraisals-review&amp;appraisal_id=<?= (int) $appraisal['appraisal_id'] ?>" title="Review appraisal"><i class="fa-solid fa-ellipsis-vertical"></i></a></td></tr>
 			<?php endforeach; else: ?><tr><td colspan="9"><div class="appraisal-empty">No appraisal records match the current filters.</div></td></tr><?php endif; ?>
-		</tbody></table></div>
+			</tbody></table>
+			<?php if (!empty($appraisals)): ?>
+			<div class="appraisal-pagination-wrap">
+				<div class="appraisal-pagination-summary">Showing <span id="appraisal-pagination-range">1-5</span> of <span id="appraisal-pagination-total"><?= count($appraisals) ?></span></div>
+				<nav class="appraisal-pagination" aria-label="Appraisal Management pages">
+					<button type="button" class="appraisal-page-nav" data-appraisal-page-action="prev" aria-label="Previous appraisal page" disabled>← Previous</button>
+					<div class="appraisal-page-buttons" aria-live="polite"></div>
+					<button type="button" class="appraisal-page-nav" data-appraisal-page-action="next" aria-label="Next appraisal page">Next →</button>
+				</nav>
+			</div>
+			<?php endif; ?>
+		</div>
 	</section>
 </div>
 
@@ -155,6 +229,72 @@ document.querySelectorAll('[data-modal-close]').forEach(function (button) {
 document.querySelectorAll('.appraisal-modal-layer').forEach(function (modal) {
 	modal.addEventListener('click', function (event) { if (event.target === modal) { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); } });
 });
+
+(function () {
+	var table = document.querySelector('.appraisal-table');
+	if (!table) return;
+	var rows = Array.prototype.slice.call(table.querySelectorAll('tbody tr'));
+	if (!rows.length) return;
+
+	var pageSize = 5;
+	var totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+	var rangeEl = document.getElementById('appraisal-pagination-range');
+	var totalEl = document.getElementById('appraisal-pagination-total');
+	var pageButtons = document.querySelector('.appraisal-page-buttons');
+	var prevBtn = document.querySelector('[data-appraisal-page-action="prev"]');
+	var nextBtn = document.querySelector('[data-appraisal-page-action="next"]');
+
+	if (totalEl) totalEl.textContent = String(rows.length);
+
+	var currentPage = 1;
+
+	function renderPage(page) {
+		currentPage = Math.min(Math.max(page, 1), totalPages);
+
+		rows.forEach(function (row, index) {
+			var isVisible = index >= (currentPage - 1) * pageSize && index < currentPage * pageSize;
+			row.hidden = !isVisible;
+			row.style.display = isVisible ? '' : 'none';
+		});
+
+		if (rangeEl) {
+			var start = (currentPage - 1) * pageSize + 1;
+			var end = Math.min(currentPage * pageSize, rows.length);
+			rangeEl.textContent = start + '-' + end;
+		}
+
+		if (prevBtn) prevBtn.disabled = currentPage === 1;
+		if (nextBtn) nextBtn.disabled = currentPage === totalPages;
+
+		if (pageButtons) {
+			pageButtons.innerHTML = '';
+			for (var page = 1; page <= totalPages; page++) {
+				var button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'appraisal-page-btn' + (page === currentPage ? ' is-active' : '');
+				button.textContent = String(page);
+				button.setAttribute('aria-label', 'Go to appraisal page ' + page);
+				if (page === currentPage) button.setAttribute('aria-current', 'page');
+				button.addEventListener('click', function (event) {
+					var targetPage = Number(event.currentTarget.textContent);
+					renderPage(targetPage);
+				});
+				pageButtons.appendChild(button);
+			}
+		}
+	}
+
+	prevBtn && prevBtn.addEventListener('click', function () {
+		if (currentPage > 1) renderPage(currentPage - 1);
+	});
+
+	nextBtn && nextBtn.addEventListener('click', function () {
+		if (currentPage < totalPages) renderPage(currentPage + 1);
+	});
+
+	renderPage(1);
+})();
+
 var employeeSelect = document.querySelector('select[name="employee_id"]');
 if (employeeSelect) employeeSelect.addEventListener('change', function () { var option = employeeSelect.options[employeeSelect.selectedIndex]; document.querySelector('input[name="employee_name"]').value = option.dataset.name || ''; document.querySelector('input[name="department"]').value = option.dataset.department || ''; });
 </script>

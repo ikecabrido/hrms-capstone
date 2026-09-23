@@ -109,6 +109,28 @@ class GoalController
                     $this->redirect();
                     break;
 
+                case 'delete_goal':
+                    $goalId = (int) ($_POST['goal_id'] ?? 0);
+                    $goalModel = new Goal();
+                    if ($goalId > 0 && $goalModel->deleteGoal($goalId)) {
+                        $_SESSION['goal_success'] = 'Goal deleted successfully.';
+                    } else {
+                        $_SESSION['goal_error'] = 'Unable to delete the goal.';
+                    }
+                    $this->redirect();
+                    break;
+
+                case 'create_event':
+                    $data = $_POST;
+                    $eventDate = trim((string) ($data['start_date'] ?? ''));
+                    if ($eventDate !== '' && $this->createEvent($data, (string) $currentUserName)) {
+                        $_SESSION['goal_success'] = 'Calendar event saved successfully.';
+                    } else {
+                        $_SESSION['goal_error'] = 'Unable to save the calendar event. Import database/goal_setting.sql first.';
+                    }
+                    $this->redirect();
+                    break;
+
                 default:
                     $this->redirect();
                     break;
@@ -212,5 +234,15 @@ class GoalController
     public function getSelectedGoalProgressEntries(int $goalId): array
     {
         return $this->goalService->getGoalProgressEntries($goalId);
+    }
+
+    public function createEvent(array $data, string $createdBy = ''): bool
+    {
+        return $this->goalService->createEvent($data, $createdBy);
+    }
+
+    public function getEvents(string $fromDate, string $toDate): array
+    {
+        return $this->goalService->getEvents($fromDate, $toDate);
     }
 }
