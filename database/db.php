@@ -30,7 +30,7 @@ class Database
             $this->pass = getenv('DB_PASSWORD') !== false
                 ? getenv('DB_PASSWORD')
                 : '';
-        } elseif (file_exists($configFile)) {
+        } else (file_exists($configFile)) {
             // Existing HRMS local configuration
             $config = require $configFile;
 
@@ -39,13 +39,7 @@ class Database
             $this->db   = $config['database'];
             $this->user = $config['username'];
             $this->pass = $config['password'];
-        } else {
-            // Final local fallback
-            $this->host = 'localhost';
-            $this->port = '3306';
-            $this->db   = 'hrms';
-            $this->user = 'root';
-            $this->pass = '';
+     
         }
 
         try {
@@ -82,4 +76,4 @@ class Database
         return $this->conn;
     }
 }
-```
+
