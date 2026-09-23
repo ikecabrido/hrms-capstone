@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 28, 2026 at 04:54 PM
+-- Generation Time: Sep 23, 2026 at 10:41 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `hrms`
+-- Database: `hrms_new`
 --
 
 -- --------------------------------------------------------
@@ -289,8 +289,7 @@ CREATE TABLE `eer_announcements` (
   `type` enum('announcement','recognition','department_update') DEFAULT 'announcement',
   `department` varchar(100) DEFAULT NULL,
   `priority` varchar(50) DEFAULT 'normal',
-  `category` varchar(100) DEFAULT 'general',
-  PRIMARY KEY (`eer_announcements_id`)
+  `category` varchar(100) DEFAULT 'general'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -308,7 +307,7 @@ INSERT INTO `eer_announcements` (`eer_announcements_id`, `title`, `content`, `cr
 --
 
 CREATE TABLE `eer_award_history` (
-  `eer_award_history_id` int(11) NOT NULL AUTO_INCREMENT,
+  `eer_award_history_id` int(11) NOT NULL,
   `employee_id` int(11) DEFAULT NULL,
   `award_name` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -321,12 +320,15 @@ CREATE TABLE `eer_award_history` (
   `vote_count` int(11) DEFAULT 0,
   `performance_score` decimal(5,2) DEFAULT NULL,
   `month_year` varchar(7) DEFAULT NULL,
-  `award_icon` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`eer_award_history_id`)
+  `award_icon` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `eer_award_history`
+--
+
 INSERT INTO `eer_award_history` (`eer_award_history_id`, `employee_id`, `award_name`, `created_at`, `reason`, `nominated_by`, `updated_at`, `award_type`, `points`, `status`, `vote_count`, `performance_score`, `month_year`, `award_icon`) VALUES
-(11, 1, 'Employee of the Month Nomination', '2026-09-06 03:15:59', 'QWERTY', 37, '2026-09-08 03:35:37', 'employee_of_month', 0, 'nominated', 1, NULL, '2026-09', NULL);
+(19, 1, 'Employee of the Month Nomination', '2026-09-23 19:44:31', '1', 37, '2026-09-23 19:44:31', 'employee_of_month', 0, 'nominated', 0, 95.00, '2026-09', 'fas fa-trophy');
 
 -- --------------------------------------------------------
 
@@ -339,16 +341,8 @@ CREATE TABLE `eer_award_votes` (
   `award_history_id` int(11) NOT NULL,
   `voter_user_id` int(11) NOT NULL,
   `nominee_employee_id` int(11) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`eer_award_vote_id`)
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `eer_award_votes`
---
-
-INSERT INTO `eer_award_votes` (`eer_award_vote_id`, `award_history_id`, `voter_user_id`, `nominee_employee_id`, `created_at`) VALUES
-(0, 11, 9, 2, '2026-08-02 19:35:10');
 
 -- --------------------------------------------------------
 
@@ -368,8 +362,7 @@ CREATE TABLE `eer_badges` (
   `requirement_value` int(11) DEFAULT NULL,
   `status` enum('active','inactive','retired') DEFAULT 'active',
   `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`eer_badge_id`)
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -377,8 +370,9 @@ CREATE TABLE `eer_badges` (
 --
 
 INSERT INTO `eer_badges` (`eer_badge_id`, `name`, `description`, `icon`, `tier`, `points_value`, `category`, `requirement_type`, `requirement_value`, `status`, `created_at`, `updated_at`) VALUES
-(1, 'Star Performer', 'Awarded for outstanding performance', NULL, 'bronze', 10, 'achievement', 'manual', NULL, 'active', '2026-07-13 15:24:24', '2026-07-13 07:24:24'),
-(2, 'Team Player', 'Recognizes collaboration and teamwork', NULL, 'bronze', 10, 'achievement', 'manual', NULL, 'active', '2026-07-13 15:24:24', '2026-07-13 07:24:24');
+(1, 'Star Performer', 'Awarded for outstanding performance', NULL, 'bronze', 10, 'achievement', 'manual', NULL, 'active', '2026-07-13 15:24:24', '2026-09-23 10:44:39'),
+(2, 'Team Player', 'Recognizes collaboration and teamwork', NULL, 'bronze', 10, 'achievement', 'manual', NULL, 'active', '2026-07-13 15:24:24', '2026-07-13 07:24:24'),
+(3, 'dadasd', '1', 'fas fa-star', 'silver', 25, 'achievement', 'manual', NULL, 'active', '2026-09-24 02:46:17', '2026-09-23 18:46:17');
 
 -- --------------------------------------------------------
 
@@ -393,8 +387,7 @@ CREATE TABLE `eer_comments` (
   `comment` text DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
   `user_id` int(11) DEFAULT NULL,
-  `user_type` enum('employee','user') DEFAULT 'employee',
-  PRIMARY KEY (`eer_comment_id`)
+  `user_type` enum('employee','user') DEFAULT 'employee'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -419,16 +412,8 @@ CREATE TABLE `eer_employee_badges` (
   `reason` text DEFAULT NULL,
   `performance_linked` tinyint(1) DEFAULT 0,
   `performance_score` decimal(5,2) DEFAULT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`eer_employee_badge_id`)
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `eer_employee_badges`
---
-
-INSERT INTO `eer_employee_badges` (`eer_employee_badge_id`, `employee_id`, `badge_id`, `awarded_at`, `awarded_by`, `reason`, `performance_linked`, `performance_score`, `updated_at`) VALUES
-(13, 2, 2, '2026-08-02 18:56:17', 9, NULL, 0, 89.00, '2026-08-02 10:56:17');
 
 -- --------------------------------------------------------
 
@@ -437,13 +422,12 @@ INSERT INTO `eer_employee_badges` (`eer_employee_badge_id`, `employee_id`, `badg
 --
 
 CREATE TABLE `eer_forums` (
-  `eer_forum_id` int(11) NOT NULL AUTO_INCREMENT,
+  `eer_forum_id` int(11) NOT NULL,
   `title` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `category` varchar(100) DEFAULT NULL,
   `created_by_employee_id` int(11) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`eer_forum_id`)
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -488,8 +472,7 @@ CREATE TABLE `eer_grievances` (
   `gross_pay` decimal(10,2) DEFAULT NULL,
   `total_deductions` decimal(10,2) DEFAULT NULL,
   `net_pay` decimal(10,2) DEFAULT NULL,
-  `payslip_information` text DEFAULT NULL,
-  PRIMARY KEY (`eer_grievance_id`)
+  `payslip_information` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -516,18 +499,15 @@ CREATE TABLE `eer_grievance_attendance_links` (
   `attendance_status` varchar(50) DEFAULT NULL,
   `late_minutes` int(11) DEFAULT 0,
   `early_out_minutes` int(11) DEFAULT 0,
-  `linked_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  `linked_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `eer_grievance_attendance_links`
 --
 
-INSERT INTO `eer_grievance_attendance_links`
-  (`id`, `grievance_id`, `employee_id`, `attendance_id`, `attendance_date`, `attendance_status`, `late_minutes`, `early_out_minutes`, `linked_at`)
-VALUES
-  (1, 1, 34, 1, '2026-04-07', 'LATE', 15, 0, '2026-04-07 11:05:00');
+INSERT INTO `eer_grievance_attendance_links` (`id`, `grievance_id`, `employee_id`, `attendance_id`, `attendance_date`, `attendance_status`, `late_minutes`, `early_out_minutes`, `linked_at`) VALUES
+(1, 1, 34, 1, '2026-04-07', 'LATE', 15, 0, '2026-04-07 11:05:00');
 
 -- --------------------------------------------------------
 
@@ -545,18 +525,15 @@ CREATE TABLE `eer_grievance_payroll` (
   `attachment` varchar(255) DEFAULT NULL,
   `status` enum('Pending','Under Review','Resolved','Rejected','Closed') DEFAULT 'Pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `resolved_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`grievance_id`)
+  `resolved_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `eer_grievance_payroll`
 --
 
-INSERT INTO `eer_grievance_payroll`
-  (`grievance_id`, `employee_id`, `payroll_module`, `reference_id`, `complaint_title`, `complaint_details`, `attachment`, `status`, `created_at`, `resolved_at`)
-VALUES
-  (1, 34, 'Payslip Generation', NULL, 'Payroll discrepancy', 'There is a problem with the latest payroll calculation.', NULL, 'Pending', '2026-04-07 11:05:00', NULL);
+INSERT INTO `eer_grievance_payroll` (`grievance_id`, `employee_id`, `payroll_module`, `reference_id`, `complaint_title`, `complaint_details`, `attachment`, `status`, `created_at`, `resolved_at`) VALUES
+(1, 34, 'Payslip Generation', NULL, 'Payroll discrepancy', 'There is a problem with the latest payroll calculation.', NULL, 'Pending', '2026-04-07 11:05:00', NULL);
 
 -- --------------------------------------------------------
 
@@ -565,12 +542,11 @@ VALUES
 --
 
 CREATE TABLE `eer_grievance_updates` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `grievance_id` int(11) DEFAULT NULL,
   `update_text` text DEFAULT NULL,
   `updated_by_employee_id` int(11) DEFAULT NULL,
-  `updated_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  `updated_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -600,8 +576,7 @@ CREATE TABLE `eer_groups` (
   `eer_group_id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `created_by_employee_id` int(11) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`eer_group_id`)
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -621,8 +596,7 @@ INSERT INTO `eer_groups` (`eer_group_id`, `name`, `created_by_employee_id`, `cre
 CREATE TABLE `eer_group_members` (
   `eer_group_member_id` int(11) NOT NULL,
   `group_id` int(11) DEFAULT NULL,
-  `employee_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`eer_group_member_id`)
+  `employee_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -645,8 +619,7 @@ CREATE TABLE `eer_messages` (
   `sender_id` int(11) DEFAULT NULL,
   `receiver_id` int(11) DEFAULT NULL,
   `message` text DEFAULT NULL,
-  `timestamp` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`eer_message_id`)
+  `timestamp` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -663,13 +636,12 @@ INSERT INTO `eer_messages` (`eer_message_id`, `sender_id`, `receiver_id`, `messa
 --
 
 CREATE TABLE `eer_notifications` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `employee_id` int(11) NOT NULL,
   `message` text DEFAULT NULL,
   `type` varchar(50) DEFAULT NULL,
   `is_read` tinyint(1) DEFAULT 0,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`)
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -677,7 +649,171 @@ CREATE TABLE `eer_notifications` (
 --
 
 INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_read`, `created_at`) VALUES
-(1, 37, 'Your survey has been published.', 'survey', 1, '2026-04-07 10:15:00');
+(1, 37, 'Your survey has been published.', 'survey', 1, '2026-04-07 10:15:00'),
+(2, 37, 'You received a recognition: 1223', 'recognition', 1, '2026-09-23 16:44:41'),
+(3, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(4, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(5, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(6, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(7, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(8, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(9, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(10, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(11, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(12, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:44:41'),
+(13, 37, 'You received a recognition: 123', 'recognition', 1, '2026-09-23 16:45:16'),
+(14, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(15, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(16, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(17, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(18, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(19, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(20, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(21, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(22, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(23, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:45:16'),
+(24, 37, 'You received a recognition: qwerty', 'recognition', 1, '2026-09-23 16:47:34'),
+(25, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(26, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(27, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(28, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(29, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(30, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(31, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(32, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(33, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(34, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
+(35, 37, 'You received a recognition: 132', 'recognition', 0, '2026-09-23 17:11:18'),
+(36, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(37, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(38, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(39, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(40, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(41, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(42, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(43, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(44, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(45, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
+(46, 37, 'You received a recognition: 123', 'recognition', 0, '2026-09-23 17:32:18'),
+(47, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(48, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(49, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(50, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(51, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(52, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(53, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(54, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(55, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(56, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
+(57, 29, 'You received a recognition: Browser test save', 'recognition', 0, '2026-09-23 17:41:32'),
+(58, 30, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(59, 31, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(60, 32, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(61, 33, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(62, 34, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(63, 35, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(64, 36, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(65, 38, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(66, 39, 'A recognition was sent to employee #29.', 'recognition', 0, '2026-09-23 17:41:32'),
+(67, 11, 'You received a recognition: Testing recognition flow', 'recognition', 0, '2026-09-23 18:11:32'),
+(68, 29, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(69, 30, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(70, 31, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(71, 32, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(72, 33, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(73, 34, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(74, 35, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(75, 36, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(76, 38, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(77, 39, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
+(78, 37, 'You received a recognition: 123', 'recognition', 0, '2026-09-23 18:24:15'),
+(79, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(80, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(81, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(82, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(83, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(84, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(85, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(86, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(87, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(88, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
+(89, 37, 'You received a recognition: 123', 'recognition', 0, '2026-09-23 18:24:45'),
+(90, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(91, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(92, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(93, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(94, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(95, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(96, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(97, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(98, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(99, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
+(100, 37, 'You received a recognition: ok', 'recognition', 0, '2026-09-23 18:51:03'),
+(101, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(102, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(103, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(104, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(105, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(106, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(107, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(108, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(109, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(110, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
+(111, 37, 'You received a recognition: ok', 'recognition', 0, '2026-09-23 18:56:53'),
+(112, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(113, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(114, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(115, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(116, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(117, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(118, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(119, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(120, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(121, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
+(122, 37, 'You received a recognition: qw', 'recognition', 0, '2026-09-23 19:08:31'),
+(123, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(124, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(125, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(126, 32, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(127, 33, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(128, 34, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(129, 35, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(130, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(131, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(132, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
+(133, 1, 'You received a recognition: 1', 'recognition', 0, '2026-09-24 02:37:19'),
+(134, 29, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(135, 30, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(136, 31, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(137, 32, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(138, 33, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(139, 34, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(140, 35, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(141, 36, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(142, 38, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(143, 39, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 02:37:19'),
+(144, 1, 'You received a recognition: 1', 'recognition', 0, '2026-09-24 03:44:21'),
+(145, 29, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(146, 30, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(147, 31, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(148, 32, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(149, 33, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(150, 34, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(151, 35, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(152, 36, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(153, 38, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(154, 39, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:44:21'),
+(155, 1, 'You received a recognition: 1', 'recognition', 0, '2026-09-24 03:48:06'),
+(156, 29, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(157, 30, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(158, 31, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(159, 32, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(160, 33, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(161, 34, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(162, 35, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(163, 36, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(164, 38, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(165, 39, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06');
 
 -- --------------------------------------------------------
 
@@ -694,8 +830,7 @@ CREATE TABLE `eer_policies` (
   `target_audience` varchar(100) DEFAULT 'all',
   `category` varchar(100) DEFAULT 'general',
   `effective_date` date DEFAULT NULL,
-  `attachment_path` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`eer_policy_id`)
+  `attachment_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -712,15 +847,14 @@ INSERT INTO `eer_policies` (`eer_policy_id`, `title`, `content`, `created_by_emp
 --
 
 CREATE TABLE `eer_projects` (
-  `eer_project_id` int(11) NOT NULL AUTO_INCREMENT,
+  `eer_project_id` int(11) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `deadline` datetime DEFAULT NULL,
   `status` varchar(50) DEFAULT 'planning',
   `created_by_employee_id` int(11) DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`eer_project_id`)
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -738,8 +872,7 @@ CREATE TABLE `eer_reactions` (
   `user_id` int(11) DEFAULT NULL,
   `user_type` enum('employee','user') NOT NULL DEFAULT 'employee',
   `type` enum('like','heart','wow','angry') DEFAULT 'like',
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`eer_reaction_id`)
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -759,7 +892,7 @@ INSERT INTO `eer_reactions` (`eer_reaction_id`, `post_id`, `target_type`, `targe
 --
 
 CREATE TABLE `eer_recognitions` (
-  `eer_recognition_id` int(11) NOT NULL AUTO_INCREMENT,
+  `eer_recognition_id` int(11) NOT NULL,
   `sender_id` int(11) NOT NULL,
   `receiver_id` int(11) NOT NULL,
   `message` text DEFAULT NULL,
@@ -771,9 +904,15 @@ CREATE TABLE `eer_recognitions` (
   `status` enum('pending','approved','rejected') DEFAULT 'approved',
   `leaderboard_position` int(11) DEFAULT NULL,
   `department` varchar(100) DEFAULT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`eer_recognition_id`)
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `eer_recognitions`
+--
+
+INSERT INTO `eer_recognitions` (`eer_recognition_id`, `sender_id`, `receiver_id`, `message`, `points`, `created_at`, `category`, `source`, `performance_report_id`, `status`, `leaderboard_position`, `department`, `updated_at`) VALUES
+(20, 37, 1, '1', 10, '2026-09-24 03:48:06', 'general', 'manual', 36, 'approved', 1, 'IT DEPARTMENT', '2026-09-23 19:48:06');
 
 -- --------------------------------------------------------
 
@@ -791,8 +930,7 @@ CREATE TABLE `eer_replies` (
   `user_type` enum('employee','user') DEFAULT 'employee',
   `content` text DEFAULT NULL,
   `mentioned_user_id` int(11) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`eer_reply_id`)
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -820,8 +958,7 @@ CREATE TABLE `eer_rewards` (
   `performance_requirement` decimal(5,2) DEFAULT NULL,
   `status` enum('active','inactive','archived') DEFAULT 'active',
   `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`eer_reward_id`)
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -829,7 +966,9 @@ CREATE TABLE `eer_rewards` (
 --
 
 INSERT INTO `eer_rewards` (`eer_reward_id`, `name`, `description`, `points_required`, `category`, `icon`, `tier`, `performance_requirement`, `status`, `created_at`, `updated_at`) VALUES
-(1, 'Gift Card', 'Redeem for a store gift card', 100, 'general', NULL, 'bronze', NULL, 'active', '2026-07-13 15:21:25', '2026-07-13 07:21:25');
+(1, 'Gift Card', 'Redeem for a store gift card', 100, 'general', 'fas fa-gift', 'silver', 70.00, 'active', '2026-07-13 15:21:25', '2026-09-23 19:17:44'),
+(2, 'wealthy', 'good job', 99, 'general', 'fas fa-gift', 'bronze', 70.00, 'active', '2026-09-24 03:19:07', '2026-09-23 19:19:07'),
+(3, 'qwert', '123', 100, 'general', 'fas fa-gift', 'silver', 80.00, 'active', '2026-09-24 03:19:20', '2026-09-23 19:19:20');
 
 -- --------------------------------------------------------
 
@@ -848,8 +987,7 @@ CREATE TABLE `eer_reward_redemptions` (
   `approved_at` datetime DEFAULT NULL,
   `rejection_reason` text DEFAULT NULL,
   `notes` text DEFAULT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`eer_reward_redemption_id`)
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -859,7 +997,7 @@ CREATE TABLE `eer_reward_redemptions` (
 --
 
 CREATE TABLE `eer_social_posts` (
-  `eer_social_post_id` int(11) NOT NULL AUTO_INCREMENT,
+  `eer_social_post_id` int(11) NOT NULL,
   `employee_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
   `author_type` enum('employee','user') NOT NULL,
@@ -870,8 +1008,7 @@ CREATE TABLE `eer_social_posts` (
   `file_size` int(11) DEFAULT NULL,
   `file_type` varchar(10) DEFAULT NULL,
   `description` text DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`eer_social_post_id`)
+  `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -888,15 +1025,14 @@ INSERT INTO `eer_social_posts` (`eer_social_post_id`, `employee_id`, `user_id`, 
 --
 
 CREATE TABLE `eer_surveys` (
-  `eer_survey_id` int(11) NOT NULL AUTO_INCREMENT,
+  `eer_survey_id` int(11) NOT NULL,
   `title` varchar(255) DEFAULT NULL,
   `is_anonymous` tinyint(1) DEFAULT 0,
   `survey_type` varchar(100) DEFAULT 'engagement',
   `created_by_employee_id` int(11) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp(),
-  `feedback_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`eer_survey_id`)
+  `feedback_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -917,8 +1053,7 @@ CREATE TABLE `eer_survey_answers` (
   `eer_survey_answer_id` int(11) NOT NULL,
   `response_id` int(11) DEFAULT NULL,
   `question_id` int(11) DEFAULT NULL,
-  `answer` text DEFAULT NULL,
-  PRIMARY KEY (`eer_survey_answer_id`)
+  `answer` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -935,7 +1070,7 @@ INSERT INTO `eer_survey_answers` (`eer_survey_answer_id`, `response_id`, `questi
 --
 
 CREATE TABLE `eer_survey_feedback_id` (
-  `eer_survey_feedback_id_id` int(11) NOT NULL AUTO_INCREMENT,
+  `eer_survey_feedback_id_id` int(11) NOT NULL,
   `survey_id` int(11) DEFAULT NULL,
   `employee_id` varchar(50) DEFAULT NULL,
   `comment` text DEFAULT NULL,
@@ -943,8 +1078,7 @@ CREATE TABLE `eer_survey_feedback_id` (
   `evaluator_type` varchar(50) DEFAULT 'Self',
   `category` varchar(100) DEFAULT 'general',
   `is_anonymous` tinyint(1) DEFAULT 0,
-  `evaluation_date` datetime DEFAULT current_timestamp(),
-  PRIMARY KEY (`eer_survey_feedback_id_id`)
+  `evaluation_date` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -966,11 +1100,10 @@ INSERT INTO `eer_survey_feedback_id` (`eer_survey_feedback_id_id`, `survey_id`, 
 --
 
 CREATE TABLE `eer_survey_questions` (
-  `eer_survey_question_id` int(11) NOT NULL AUTO_INCREMENT,
+  `eer_survey_question_id` int(11) NOT NULL,
   `survey_id` int(11) DEFAULT NULL,
   `question_text` text DEFAULT NULL,
-  `type` varchar(50) DEFAULT NULL,
-  PRIMARY KEY (`eer_survey_question_id`)
+  `type` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -992,8 +1125,7 @@ CREATE TABLE `eer_survey_responses` (
   `survey_id` int(11) DEFAULT NULL,
   `employee_id` int(11) DEFAULT NULL,
   `answers` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`answers`)),
-  `target_employee_id` int(11) DEFAULT NULL,
-  PRIMARY KEY (`eer_survey_response_id`)
+  `target_employee_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -1013,8 +1145,7 @@ CREATE TABLE `eer_survey_targets` (
   `eer_survey_target_id` int(11) NOT NULL,
   `survey_id` int(11) DEFAULT NULL,
   `employee_id` int(11) DEFAULT NULL,
-  `status` enum('pending','completed') DEFAULT NULL,
-  PRIMARY KEY (`eer_survey_target_id`)
+  `status` enum('pending','completed') DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -5641,11 +5772,12 @@ CREATE TABLE `pm_performance_reports` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Dummy data for table `pm_performance_reports`
+-- Dumping data for table `pm_performance_reports`
 --
 
 INSERT INTO `pm_performance_reports` (`report_id`, `report_code`, `employee_id`, `employee_name`, `department`, `position`, `supervisor_id`, `supervisor_name`, `review_period`, `period_start`, `period_end`, `overall_rating`, `kpi_health_score`, `feedback_average`, `goal_completion_rate`, `performance_status`, `risk_level`, `training_recommendation`, `summary`, `status`, `created_by`, `created_at`, `updated_at`) VALUES
-(1, 'PR-2026-0001', 37, 'Geoffrey Balansag', 3, 'HR Staff', 29, 'Juan Dela Cruz', 'Q1 2026 Performance Review', '2026-01-01', '2026-03-31', 4.25, 88.50, 4.10, 92.00, 'Exceeds Expectations', 'Low', 'Advanced HR analytics training', 'Consistently exceeded assigned targets, maintained strong service quality, and completed key HR operations ahead of schedule.', 'Finalized', 29, '2026-04-05 09:00:00', '2026-04-05 09:00:00');
+(1, 'PR-2026-0001', 37, 'Geoffrey Balansag', 3, 'HR Staff', 29, 'Juan Dela Cruz', 'Q1 2026 Performance Review', '2026-01-01', '2026-03-31', 4.25, 88.50, 4.10, 92.00, 'Exceeds Expectations', 'Low', 'Advanced HR analytics training', 'Consistently exceeded assigned targets, maintained strong service quality, and completed key HR operations ahead of schedule.', 'Finalized', 29, '2026-04-05 09:00:00', '2026-04-05 09:00:00'),
+(36, 'PR-2026-0036', 1, 'Ronaldo G. Raymundo', 3, 'HR Staff', 29, 'Juan Dela Cruz', 'Q2 2026 Performance Review', '2026-04-01', '2026-06-30', 4.75, 95.00, 4.80, 96.00, 'Exceeds Expectations', 'Low', 'Advanced leadership training', 'Consistently exceeded performance targets and demonstrated excellent teamwork.', 'Finalized', 29, '2026-09-23 18:36:32', '2026-09-23 18:36:32');
 
 -- --------------------------------------------------------
 
@@ -7098,7 +7230,7 @@ INSERT INTO `user_account` (`user_id`, `employee_id`, `role_id`, `password`, `th
 (6, 34, 9, '$2y$10$ridpEYIFsgjdYqFI3VTKF.MjSf8GX1H.XrzE/4UxmwWQXkJWHbkh6', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:38:34'),
 (7, 35, 7, '$2y$10$pZWeY6ODmnwb4VJuxQiCzOMBL4E42/iqg1Xc1tfCQ3IGFdhJ4O112', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:38:58'),
 (8, 36, 6, '$2y$10$aQ9sEVmIz.cbA5j5eYEIT.r2lCUkfrd6I8X.LY/BLkuo/TUK1Mce6', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:39:33'),
-(9, 37, 12, '$2y$10$88ez1flvZDHzMKv/jQdxE.HbveLfEt6x5fEDGjfX/T0GEqPT8iN0G', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:40:11'),
+(9, 37, 12, '$2y$10$88ez1flvZDHzMKv/jQdxE.HbveLfEt6x5fEDGjfX/T0GEqPT8iN0G', 'light', NULL, 'Active', '2026-09-23 19:47:58', NULL, 0, NULL, '2026-08-14 08:35:08', '2026-09-23 19:47:58'),
 (10, 38, 10, '$2y$10$DQB1tiH4sQ2RE7yWxOcz3OLUwoKvO6SghNeaDmT0.1nfJpJv/zJWG', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:40:40'),
 (11, 39, 11, '$2y$10$Htc.AaV0g3yW1hrOtux6fu1oOXiGgxz5WctWPfE/CjccN3EPwtYlG', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:41:10');
 
@@ -7683,42 +7815,62 @@ ALTER TABLE `cm_vital_signs`
 -- Indexes for table `eer_announcements`
 --
 ALTER TABLE `eer_announcements`
+  ADD PRIMARY KEY (`eer_announcements_id`),
   ADD KEY `created_by_employee_id` (`created_by_employee_id`);
 
 --
 -- Indexes for table `eer_award_history`
 --
 ALTER TABLE `eer_award_history`
-  ADD KEY `employee_id` (`employee_id`);
+  ADD PRIMARY KEY (`eer_award_history_id`),
+  ADD KEY `employee_id` (`employee_id`),
+  ADD KEY `fk_eer_award_history_nominator` (`nominated_by`);
 
 --
 -- Indexes for table `eer_award_votes`
 --
 ALTER TABLE `eer_award_votes`
+  ADD PRIMARY KEY (`eer_award_vote_id`),
   ADD UNIQUE KEY `uniq_award_vote` (`award_history_id`,`voter_user_id`),
   ADD KEY `award_history_id` (`award_history_id`),
-  ADD KEY `voter_user_id` (`voter_user_id`);
+  ADD KEY `voter_user_id` (`voter_user_id`),
+  ADD KEY `fk_eer_award_votes_nominee` (`nominee_employee_id`);
 
 --
+-- Indexes for table `eer_badges`
+--
+ALTER TABLE `eer_badges`
+  ADD PRIMARY KEY (`eer_badge_id`);
+
 --
 -- Indexes for table `eer_comments`
 --
 ALTER TABLE `eer_comments`
+  ADD PRIMARY KEY (`eer_comment_id`),
   ADD KEY `post_id` (`post_id`),
-  ADD KEY `employee_id` (`employee_id`);
+  ADD KEY `employee_id` (`employee_id`),
+  ADD KEY `fk_eer_comments_user` (`user_id`);
 
 --
 -- Indexes for table `eer_employee_badges`
 --
 ALTER TABLE `eer_employee_badges`
+  ADD PRIMARY KEY (`eer_employee_badge_id`),
   ADD KEY `employee_id` (`employee_id`),
   ADD KEY `badge_id` (`badge_id`);
 
 --
+-- Indexes for table `eer_forums`
+--
+ALTER TABLE `eer_forums`
+  ADD PRIMARY KEY (`eer_forum_id`),
+  ADD KEY `fk_eer_forums_employee` (`created_by_employee_id`);
+
 --
 -- Indexes for table `eer_grievances`
 --
 ALTER TABLE `eer_grievances`
+  ADD PRIMARY KEY (`eer_grievance_id`),
   ADD KEY `employee_id` (`employee_id`),
   ADD KEY `created_by_employee_id` (`created_by_employee_id`);
 
@@ -7726,6 +7878,7 @@ ALTER TABLE `eer_grievances`
 -- Indexes for table `eer_grievance_attendance_links`
 --
 ALTER TABLE `eer_grievance_attendance_links`
+  ADD PRIMARY KEY (`id`),
   ADD KEY `grievance_id` (`grievance_id`),
   ADD KEY `employee_id` (`employee_id`),
   ADD KEY `attendance_id` (`attendance_id`);
@@ -7734,12 +7887,14 @@ ALTER TABLE `eer_grievance_attendance_links`
 -- Indexes for table `eer_grievance_payroll`
 --
 ALTER TABLE `eer_grievance_payroll`
+  ADD PRIMARY KEY (`grievance_id`),
   ADD KEY `fk_payroll_employee` (`employee_id`);
 
 --
 -- Indexes for table `eer_grievance_updates`
 --
 ALTER TABLE `eer_grievance_updates`
+  ADD PRIMARY KEY (`id`),
   ADD KEY `fk_update_grievance` (`grievance_id`),
   ADD KEY `fk_update_user` (`updated_by_employee_id`);
 
@@ -7747,12 +7902,14 @@ ALTER TABLE `eer_grievance_updates`
 -- Indexes for table `eer_groups`
 --
 ALTER TABLE `eer_groups`
+  ADD PRIMARY KEY (`eer_group_id`),
   ADD KEY `created_by_employee_id` (`created_by_employee_id`);
 
 --
 -- Indexes for table `eer_group_members`
 --
 ALTER TABLE `eer_group_members`
+  ADD PRIMARY KEY (`eer_group_member_id`),
   ADD KEY `group_id` (`group_id`),
   ADD KEY `employee_id` (`employee_id`);
 
@@ -7760,6 +7917,7 @@ ALTER TABLE `eer_group_members`
 -- Indexes for table `eer_messages`
 --
 ALTER TABLE `eer_messages`
+  ADD PRIMARY KEY (`eer_message_id`),
   ADD KEY `sender_id` (`sender_id`),
   ADD KEY `receiver_id` (`receiver_id`);
 
@@ -7767,19 +7925,28 @@ ALTER TABLE `eer_messages`
 -- Indexes for table `eer_notifications`
 --
 ALTER TABLE `eer_notifications`
+  ADD PRIMARY KEY (`id`),
   ADD KEY `fk_notification_employee` (`employee_id`);
 
 --
 -- Indexes for table `eer_policies`
 --
 ALTER TABLE `eer_policies`
+  ADD PRIMARY KEY (`eer_policy_id`),
   ADD KEY `created_by_employee_id` (`created_by_employee_id`);
 
 --
+-- Indexes for table `eer_projects`
+--
+ALTER TABLE `eer_projects`
+  ADD PRIMARY KEY (`eer_project_id`),
+  ADD KEY `fk_eer_projects_employee` (`created_by_employee_id`);
+
 --
 -- Indexes for table `eer_reactions`
 --
 ALTER TABLE `eer_reactions`
+  ADD PRIMARY KEY (`eer_reaction_id`),
   ADD KEY `post_id` (`post_id`),
   ADD KEY `employee_id` (`employee_id`);
 
@@ -7787,6 +7954,7 @@ ALTER TABLE `eer_reactions`
 -- Indexes for table `eer_recognitions`
 --
 ALTER TABLE `eer_recognitions`
+  ADD PRIMARY KEY (`eer_recognition_id`),
   ADD KEY `sender_id` (`sender_id`),
   ADD KEY `receiver_id` (`receiver_id`);
 
@@ -7794,16 +7962,23 @@ ALTER TABLE `eer_recognitions`
 -- Indexes for table `eer_replies`
 --
 ALTER TABLE `eer_replies`
+  ADD PRIMARY KEY (`eer_reply_id`),
   ADD KEY `comment_id` (`comment_id`),
   ADD KEY `post_id` (`post_id`),
   ADD KEY `employee_id` (`employee_id`),
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `eer_rewards`
+--
+ALTER TABLE `eer_rewards`
+  ADD PRIMARY KEY (`eer_reward_id`);
+
 --
 -- Indexes for table `eer_reward_redemptions`
 --
 ALTER TABLE `eer_reward_redemptions`
+  ADD PRIMARY KEY (`eer_reward_redemption_id`),
   ADD KEY `employee_id` (`employee_id`),
   ADD KEY `reward_id` (`reward_id`);
 
@@ -7811,6 +7986,7 @@ ALTER TABLE `eer_reward_redemptions`
 -- Indexes for table `eer_social_posts`
 --
 ALTER TABLE `eer_social_posts`
+  ADD PRIMARY KEY (`eer_social_post_id`),
   ADD KEY `employee_id` (`employee_id`),
   ADD KEY `user_id` (`user_id`);
 
@@ -7818,6 +7994,7 @@ ALTER TABLE `eer_social_posts`
 -- Indexes for table `eer_surveys`
 --
 ALTER TABLE `eer_surveys`
+  ADD PRIMARY KEY (`eer_survey_id`),
   ADD KEY `created_by_employee_id` (`created_by_employee_id`),
   ADD KEY `fk_eer_surveys_pm360` (`feedback_id`);
 
@@ -7825,26 +8002,29 @@ ALTER TABLE `eer_surveys`
 -- Indexes for table `eer_survey_answers`
 --
 ALTER TABLE `eer_survey_answers`
+  ADD PRIMARY KEY (`eer_survey_answer_id`),
   ADD KEY `response_id` (`response_id`),
   ADD KEY `question_id` (`question_id`);
 
 --
---
 -- Indexes for table `eer_survey_feedback_id`
 --
 ALTER TABLE `eer_survey_feedback_id`
+  ADD PRIMARY KEY (`eer_survey_feedback_id_id`),
   ADD KEY `survey_id` (`survey_id`);
 
 --
 -- Indexes for table `eer_survey_questions`
 --
 ALTER TABLE `eer_survey_questions`
+  ADD PRIMARY KEY (`eer_survey_question_id`),
   ADD KEY `survey_id` (`survey_id`);
 
 --
 -- Indexes for table `eer_survey_responses`
 --
 ALTER TABLE `eer_survey_responses`
+  ADD PRIMARY KEY (`eer_survey_response_id`),
   ADD KEY `survey_id` (`survey_id`),
   ADD KEY `employee_id` (`employee_id`),
   ADD KEY `fk_response_target_employee` (`target_employee_id`);
@@ -7853,6 +8033,7 @@ ALTER TABLE `eer_survey_responses`
 -- Indexes for table `eer_survey_targets`
 --
 ALTER TABLE `eer_survey_targets`
+  ADD PRIMARY KEY (`eer_survey_target_id`),
   ADD KEY `survey_id` (`survey_id`),
   ADD KEY `employee_id` (`employee_id`);
 
@@ -9435,6 +9616,66 @@ ALTER TABLE `eer_announcements`
   MODIFY `eer_announcements_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
+-- AUTO_INCREMENT for table `eer_award_history`
+--
+ALTER TABLE `eer_award_history`
+  MODIFY `eer_award_history_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- AUTO_INCREMENT for table `eer_forums`
+--
+ALTER TABLE `eer_forums`
+  MODIFY `eer_forum_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `eer_grievance_updates`
+--
+ALTER TABLE `eer_grievance_updates`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `eer_notifications`
+--
+ALTER TABLE `eer_notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
+
+--
+-- AUTO_INCREMENT for table `eer_projects`
+--
+ALTER TABLE `eer_projects`
+  MODIFY `eer_project_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `eer_recognitions`
+--
+ALTER TABLE `eer_recognitions`
+  MODIFY `eer_recognition_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+
+--
+-- AUTO_INCREMENT for table `eer_social_posts`
+--
+ALTER TABLE `eer_social_posts`
+  MODIFY `eer_social_post_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `eer_surveys`
+--
+ALTER TABLE `eer_surveys`
+  MODIFY `eer_survey_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+
+--
+-- AUTO_INCREMENT for table `eer_survey_feedback_id`
+--
+ALTER TABLE `eer_survey_feedback_id`
+  MODIFY `eer_survey_feedback_id_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `eer_survey_questions`
+--
+ALTER TABLE `eer_survey_questions`
+  MODIFY `eer_survey_question_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
 -- AUTO_INCREMENT for table `em_certifications`
 --
 ALTER TABLE `em_certifications`
@@ -10134,7 +10375,7 @@ ALTER TABLE `pm_kpi_targets`
 -- AUTO_INCREMENT for table `pm_performance_reports`
 --
 ALTER TABLE `pm_performance_reports`
-  MODIFY `report_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `pm_performance_report_actions`
@@ -10543,106 +10784,6 @@ ALTER TABLE `wfa_tenure_analysis`
 --
 
 --
--- Constraints for EER tables
---
-
-ALTER TABLE `eer_announcements`
-  ADD CONSTRAINT `fk_eer_announcements_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_award_history`
-  ADD CONSTRAINT `fk_eer_award_history_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_award_history_nominator` FOREIGN KEY (`nominated_by`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_award_votes`
-  ADD CONSTRAINT `fk_eer_award_votes_history` FOREIGN KEY (`award_history_id`) REFERENCES `eer_award_history` (`eer_award_history_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_award_votes_user` FOREIGN KEY (`voter_user_id`) REFERENCES `user_account` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_award_votes_nominee` FOREIGN KEY (`nominee_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_comments`
-  ADD CONSTRAINT `fk_eer_comments_post` FOREIGN KEY (`post_id`) REFERENCES `eer_social_posts` (`eer_social_post_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_comments_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_comments_user` FOREIGN KEY (`user_id`) REFERENCES `user_account` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_employee_badges`
-  ADD CONSTRAINT `fk_eer_employee_badges_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_employee_badges_badge` FOREIGN KEY (`badge_id`) REFERENCES `eer_badges` (`eer_badge_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_forums`
-  ADD CONSTRAINT `fk_eer_forums_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_grievances`
-  ADD CONSTRAINT `fk_eer_grievances_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_grievances_creator` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_grievance_attendance_links`
-  ADD CONSTRAINT `fk_eer_grievance_attendance_grievance` FOREIGN KEY (`grievance_id`) REFERENCES `eer_grievances` (`eer_grievance_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_grievance_attendance_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `eer_grievance_updates`
-  ADD CONSTRAINT `fk_eer_grievance_updates_grievance` FOREIGN KEY (`grievance_id`) REFERENCES `eer_grievances` (`eer_grievance_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_grievance_updates_employee` FOREIGN KEY (`updated_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_groups`
-  ADD CONSTRAINT `fk_eer_groups_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_group_members`
-  ADD CONSTRAINT `fk_eer_group_members_group` FOREIGN KEY (`group_id`) REFERENCES `eer_groups` (`eer_group_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_group_members_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `eer_messages`
-  ADD CONSTRAINT `fk_eer_messages_sender` FOREIGN KEY (`sender_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_messages_receiver` FOREIGN KEY (`receiver_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_notifications`
-  ADD CONSTRAINT `fk_eer_notifications_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `eer_policies`
-  ADD CONSTRAINT `fk_eer_policies_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_projects`
-  ADD CONSTRAINT `fk_eer_projects_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_recognitions`
-  ADD CONSTRAINT `fk_eer_recognitions_sender` FOREIGN KEY (`sender_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_recognitions_receiver` FOREIGN KEY (`receiver_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `eer_replies`
-  ADD CONSTRAINT `fk_eer_replies_comment` FOREIGN KEY (`comment_id`) REFERENCES `eer_comments` (`eer_comment_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_replies_post` FOREIGN KEY (`post_id`) REFERENCES `eer_social_posts` (`eer_social_post_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_replies_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_replies_user` FOREIGN KEY (`user_id`) REFERENCES `user_account` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_reward_redemptions`
-  ADD CONSTRAINT `fk_eer_reward_redemptions_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_reward_redemptions_reward` FOREIGN KEY (`reward_id`) REFERENCES `eer_rewards` (`eer_reward_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_social_posts`
-  ADD CONSTRAINT `fk_eer_social_posts_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_social_posts_user` FOREIGN KEY (`user_id`) REFERENCES `user_account` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_surveys`
-  ADD CONSTRAINT `fk_eer_surveys_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_survey_answers`
-  ADD CONSTRAINT `fk_eer_survey_answers_response` FOREIGN KEY (`response_id`) REFERENCES `eer_survey_responses` (`eer_survey_response_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_survey_answers_question` FOREIGN KEY (`question_id`) REFERENCES `eer_survey_questions` (`eer_survey_question_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `eer_survey_feedback_id`
-  ADD CONSTRAINT `fk_eer_survey_feedback_id_survey` FOREIGN KEY (`survey_id`) REFERENCES `eer_surveys` (`eer_survey_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_survey_questions`
-  ADD CONSTRAINT `fk_eer_survey_questions_survey` FOREIGN KEY (`survey_id`) REFERENCES `eer_surveys` (`eer_survey_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `eer_survey_responses`
-  ADD CONSTRAINT `fk_eer_survey_responses_survey` FOREIGN KEY (`survey_id`) REFERENCES `eer_surveys` (`eer_survey_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_survey_responses_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_survey_responses_target` FOREIGN KEY (`target_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
-
-ALTER TABLE `eer_survey_targets`
-  ADD CONSTRAINT `fk_eer_survey_targets_survey` FOREIGN KEY (`survey_id`) REFERENCES `eer_surveys` (`eer_survey_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_survey_targets_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
 -- Constraints for table `cm_clinic_reports`
 --
 ALTER TABLE `cm_clinic_reports`
@@ -10697,6 +10838,176 @@ ALTER TABLE `cm_vital_signs`
   ADD CONSTRAINT `cm_vital_signs_ibfk_1` FOREIGN KEY (`record_id`) REFERENCES `cm_medical_records` (`record_id`) ON DELETE CASCADE,
   ADD CONSTRAINT `cm_vital_signs_ibfk_2` FOREIGN KEY (`recorded_by`) REFERENCES `user_account` (`user_id`) ON DELETE SET NULL;
 
+--
+-- Constraints for table `eer_announcements`
+--
+ALTER TABLE `eer_announcements`
+  ADD CONSTRAINT `fk_eer_announcements_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_award_history`
+--
+ALTER TABLE `eer_award_history`
+  ADD CONSTRAINT `fk_eer_award_history_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_award_history_nominator` FOREIGN KEY (`nominated_by`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_award_votes`
+--
+ALTER TABLE `eer_award_votes`
+  ADD CONSTRAINT `fk_eer_award_votes_history` FOREIGN KEY (`award_history_id`) REFERENCES `eer_award_history` (`eer_award_history_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_award_votes_nominee` FOREIGN KEY (`nominee_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_award_votes_user` FOREIGN KEY (`voter_user_id`) REFERENCES `user_account` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_comments`
+--
+ALTER TABLE `eer_comments`
+  ADD CONSTRAINT `fk_eer_comments_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_comments_post` FOREIGN KEY (`post_id`) REFERENCES `eer_social_posts` (`eer_social_post_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_comments_user` FOREIGN KEY (`user_id`) REFERENCES `user_account` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_employee_badges`
+--
+ALTER TABLE `eer_employee_badges`
+  ADD CONSTRAINT `fk_eer_employee_badges_badge` FOREIGN KEY (`badge_id`) REFERENCES `eer_badges` (`eer_badge_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_employee_badges_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_forums`
+--
+ALTER TABLE `eer_forums`
+  ADD CONSTRAINT `fk_eer_forums_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_grievances`
+--
+ALTER TABLE `eer_grievances`
+  ADD CONSTRAINT `fk_eer_grievances_creator` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_grievances_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_grievance_attendance_links`
+--
+ALTER TABLE `eer_grievance_attendance_links`
+  ADD CONSTRAINT `fk_eer_grievance_attendance_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_grievance_attendance_grievance` FOREIGN KEY (`grievance_id`) REFERENCES `eer_grievances` (`eer_grievance_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_grievance_updates`
+--
+ALTER TABLE `eer_grievance_updates`
+  ADD CONSTRAINT `fk_eer_grievance_updates_employee` FOREIGN KEY (`updated_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_grievance_updates_grievance` FOREIGN KEY (`grievance_id`) REFERENCES `eer_grievances` (`eer_grievance_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_groups`
+--
+ALTER TABLE `eer_groups`
+  ADD CONSTRAINT `fk_eer_groups_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_group_members`
+--
+ALTER TABLE `eer_group_members`
+  ADD CONSTRAINT `fk_eer_group_members_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_group_members_group` FOREIGN KEY (`group_id`) REFERENCES `eer_groups` (`eer_group_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_messages`
+--
+ALTER TABLE `eer_messages`
+  ADD CONSTRAINT `fk_eer_messages_receiver` FOREIGN KEY (`receiver_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_messages_sender` FOREIGN KEY (`sender_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_notifications`
+--
+ALTER TABLE `eer_notifications`
+  ADD CONSTRAINT `fk_eer_notifications_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_policies`
+--
+ALTER TABLE `eer_policies`
+  ADD CONSTRAINT `fk_eer_policies_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_projects`
+--
+ALTER TABLE `eer_projects`
+  ADD CONSTRAINT `fk_eer_projects_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_recognitions`
+--
+ALTER TABLE `eer_recognitions`
+  ADD CONSTRAINT `fk_eer_recognitions_receiver` FOREIGN KEY (`receiver_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_recognitions_sender` FOREIGN KEY (`sender_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_replies`
+--
+ALTER TABLE `eer_replies`
+  ADD CONSTRAINT `fk_eer_replies_comment` FOREIGN KEY (`comment_id`) REFERENCES `eer_comments` (`eer_comment_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_replies_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_replies_post` FOREIGN KEY (`post_id`) REFERENCES `eer_social_posts` (`eer_social_post_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_replies_user` FOREIGN KEY (`user_id`) REFERENCES `user_account` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_reward_redemptions`
+--
+ALTER TABLE `eer_reward_redemptions`
+  ADD CONSTRAINT `fk_eer_reward_redemptions_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_reward_redemptions_reward` FOREIGN KEY (`reward_id`) REFERENCES `eer_rewards` (`eer_reward_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_social_posts`
+--
+ALTER TABLE `eer_social_posts`
+  ADD CONSTRAINT `fk_eer_social_posts_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_social_posts_user` FOREIGN KEY (`user_id`) REFERENCES `user_account` (`user_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_surveys`
+--
+ALTER TABLE `eer_surveys`
+  ADD CONSTRAINT `fk_eer_surveys_employee` FOREIGN KEY (`created_by_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_survey_answers`
+--
+ALTER TABLE `eer_survey_answers`
+  ADD CONSTRAINT `fk_eer_survey_answers_question` FOREIGN KEY (`question_id`) REFERENCES `eer_survey_questions` (`eer_survey_question_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_survey_answers_response` FOREIGN KEY (`response_id`) REFERENCES `eer_survey_responses` (`eer_survey_response_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_survey_feedback_id`
+--
+ALTER TABLE `eer_survey_feedback_id`
+  ADD CONSTRAINT `fk_eer_survey_feedback_id_survey` FOREIGN KEY (`survey_id`) REFERENCES `eer_surveys` (`eer_survey_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_survey_questions`
+--
+ALTER TABLE `eer_survey_questions`
+  ADD CONSTRAINT `fk_eer_survey_questions_survey` FOREIGN KEY (`survey_id`) REFERENCES `eer_surveys` (`eer_survey_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_survey_responses`
+--
+ALTER TABLE `eer_survey_responses`
+  ADD CONSTRAINT `fk_eer_survey_responses_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_survey_responses_survey` FOREIGN KEY (`survey_id`) REFERENCES `eer_surveys` (`eer_survey_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_survey_responses_target` FOREIGN KEY (`target_employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `eer_survey_targets`
+--
+ALTER TABLE `eer_survey_targets`
+  ADD CONSTRAINT `fk_eer_survey_targets_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_survey_targets_survey` FOREIGN KEY (`survey_id`) REFERENCES `eer_surveys` (`eer_survey_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `em_certifications`
