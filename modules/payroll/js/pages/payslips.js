@@ -605,6 +605,9 @@ function initPayslips() {
 
   // ---- View modal --------------------------------------------------------------
   function openModal(overlay) {
+    if (overlay.parentElement !== document.body) {
+      document.body.appendChild(overlay);
+    }
     overlay.style.display = "flex";
   }
   function closeModal(overlay) {

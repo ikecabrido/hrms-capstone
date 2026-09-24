@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ON p.position_id = e.position_id
         LEFT JOIN em_departments d
             ON d.department_id = e.department_id
-        WHERE e.employee_code = :employeeid
+        WHERE e.employee_id = :employeeid
         AND e.employment_status = 'ACTIVE'
         AND p.position_name IN ('HR Staff', 'HR Officer')
         LIMIT 1
