@@ -358,12 +358,74 @@ function escapeHtml(text) {
     activateSocialTabFromHash(true);
   }
 
+  function initializeGroupModal() {
+    var modal = document.getElementById('createGroupModal');
+    if (!modal || modal.dataset.groupModalBound === '1') return;
+    modal.dataset.groupModalBound = '1';
+
+    function openGroupModal() {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        var instance = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
+        instance.show();
+        return;
+      }
+
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+      var nameInput = document.getElementById('groupName');
+      if (nameInput) nameInput.focus();
+    }
+
+    function closeGroupModal() {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        var instance = window.bootstrap.Modal.getInstance(modal);
+        if (instance) {
+          instance.hide();
+          return;
+        }
+      }
+
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+    }
+
+    document.addEventListener('click', function(event) {
+      var trigger = event.target.closest('[data-target="#createGroupModal"]');
+      var toggleTrigger = event.target.closest('[data-toggle="modal"][data-target="#createGroupModal"]');
+      if (trigger || toggleTrigger) {
+        event.preventDefault();
+        event.stopPropagation();
+        openGroupModal();
+        return;
+      }
+
+      if (event.target.closest('#createGroupModal [data-dismiss="modal"], #createGroupModal .close') || event.target === modal) {
+        event.preventDefault();
+        closeGroupModal();
+      }
+    }, true);
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape' && modal.classList.contains('show')) closeGroupModal();
+    });
+  }
+
   function initializeForumModal() {
     var modal = document.getElementById('createForumModal');
     if (!modal || modal.dataset.forumModalBound === '1') return;
     modal.dataset.forumModalBound = '1';
 
     function closeModal() {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        var instance = window.bootstrap.Modal.getInstance(modal);
+        if (instance) {
+          instance.hide();
+          return;
+        }
+      }
+
       modal.classList.remove('show');
       modal.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('modal-open');
@@ -371,11 +433,18 @@ function escapeHtml(text) {
 
     document.addEventListener('click', function(event) {
       var openButton = event.target.closest('[data-target="#createForumModal"]');
-      if (openButton) {
+      var toggleTrigger = event.target.closest('[data-toggle="modal"][data-target="#createForumModal"]');
+      if (openButton || toggleTrigger) {
         event.preventDefault();
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
+        event.stopPropagation();
+        if (window.bootstrap && window.bootstrap.Modal) {
+          var instance = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
+          instance.show();
+        } else {
+          modal.classList.add('show');
+          modal.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('modal-open');
+        }
         var titleInput = document.getElementById('forumTitle');
         if (titleInput) titleInput.focus();
         return;
@@ -388,10 +457,139 @@ function escapeHtml(text) {
       }
 
       if (event.target === modal) closeModal();
-    });
+    }, true);
 
     document.addEventListener('keydown', function(event) {
       if (event.key === 'Escape' && modal.classList.contains('show')) closeModal();
+    });
+  }
+
+  function initializePostModal() {
+    if (document.documentElement.dataset.postModalBound === '1') return;
+    document.documentElement.dataset.postModalBound = '1';
+
+    function closeModal() {
+      closeSocialModal('createPostModal');
+      var form = document.getElementById('createPostForm');
+      if (form) form.reset();
+      var statusBox = document.getElementById('postFormStatus');
+      if (statusBox) statusBox.textContent = '';
+    }
+
+    document.addEventListener('click', function(event) {
+      var modal = document.getElementById('createPostModal');
+      var openButton = event.target.closest('[data-target="#createPostModal"]');
+      var toggleTrigger = event.target.closest('[data-toggle="modal"][data-target="#createPostModal"]');
+      if ((openButton || toggleTrigger) && modal) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (window.bootstrap && window.bootstrap.Modal) {
+          var instance = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
+          instance.show();
+        } else {
+          modal.classList.add('show');
+          modal.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('modal-open');
+        }
+        var contentInput = document.getElementById('postContent');
+        var statusBox = document.getElementById('postFormStatus');
+        if (statusBox) statusBox.textContent = '';
+        if (contentInput) contentInput.focus();
+        return;
+      }
+
+      if (modal && (event.target.closest('#createPostModal [data-dismiss="modal"], #createPostModal .close') || event.target === modal)) {
+        event.preventDefault();
+        closeModal();
+      }
+    }, true);
+
+    document.addEventListener('keydown', function(event) {
+      var modal = document.getElementById('createPostModal');
+      if (modal && event.key === 'Escape' && modal.classList.contains('show')) closeModal();
+    });
+
+    document.addEventListener('submit', function(event) {
+      var form = event.target.closest('#createPostForm');
+      if (!form) return;
+      event.preventDefault();
+      var contentInput = document.getElementById('postContent');
+      var descriptionInput = document.getElementById('postDescription');
+      var attachmentInput = document.getElementById('postAttachment');
+      var statusBox = document.getElementById('postFormStatus');
+      var submitButton = form.querySelector('button[type="submit"]');
+      var content = contentInput ? contentInput.value.trim() : '';
+      var description = descriptionInput ? descriptionInput.value.trim() : '';
+      var attachment = attachmentInput && attachmentInput.files.length > 0 ? attachmentInput.files[0] : null;
+      if (!content && !attachment) {
+        if (statusBox) {
+          statusBox.className = 'small mt-3 text-danger';
+          statusBox.textContent = 'Write a post or choose an attachment first.';
+        }
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Publishing...';
+      if (statusBox) {
+        statusBox.className = 'small mt-3 text-muted';
+        statusBox.textContent = 'Saving post...';
+      }
+      var requestOptions;
+      var requestUrl = SOCIAL_API_BASE + '?resource=social&action=post';
+      if (attachment) {
+        var formData = new FormData();
+        formData.append('shared_file', attachment);
+        formData.append('content', content);
+        formData.append('description', description);
+        requestUrl = SOCIAL_API_BASE + '?resource=file_sharing';
+        requestOptions = { method: 'POST', body: formData };
+      } else {
+        requestOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: content, description: description })
+        };
+      }
+
+      requestOptions.credentials = 'same-origin';
+      fetch(requestUrl, requestOptions)
+        .then(function(response) {
+          return response.text().then(function(responseText) {
+            var data;
+            try {
+              data = JSON.parse(responseText);
+            } catch (parseError) {
+              throw new Error('The server returned an invalid response.');
+            }
+            if (!response.ok || data.success === false) {
+              throw new Error(data.message || data.error || 'Unable to publish post.');
+            }
+            return data;
+          });
+        })
+        .then(function() {
+          if (statusBox) {
+            statusBox.className = 'small mt-3 text-success';
+            statusBox.textContent = 'Post published successfully.';
+          }
+          closeModal();
+          if (typeof window.fetchSocialFeed === 'function') {
+            window.fetchSocialFeed();
+          } else {
+            window.location.reload();
+          }
+        })
+        .catch(function(error) {
+          if (statusBox) {
+            statusBox.className = 'small mt-3 text-danger';
+            statusBox.textContent = error.message || 'Unable to publish post.';
+          }
+        })
+        .finally(function() {
+          submitButton.disabled = false;
+          submitButton.innerHTML = '<i class="fas fa-paper-plane mr-1"></i>Publish Post';
+        });
     });
   }
 
@@ -400,37 +598,206 @@ function escapeHtml(text) {
     if (!modal || modal.dataset.projectModalBound === '1') return;
     modal.dataset.projectModalBound = '1';
     function closeProjectModal() {
+      if (window.bootstrap && window.bootstrap.Modal) {
+        var instance = window.bootstrap.Modal.getInstance(modal);
+        if (instance) {
+          instance.hide();
+          return;
+        }
+      }
+
       modal.classList.remove('show');
       modal.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('modal-open');
     }
     document.addEventListener('click', function(event) {
       var openButton = event.target.closest('[data-target="#createProjectModal"]');
-      if (openButton) {
+      var toggleTrigger = event.target.closest('[data-toggle="modal"][data-target="#createProjectModal"]');
+      if (openButton || toggleTrigger) {
         event.preventDefault();
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('modal-open');
+        event.stopPropagation();
+        if (window.bootstrap && window.bootstrap.Modal) {
+          var instance = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
+          instance.show();
+        } else {
+          modal.classList.add('show');
+          modal.setAttribute('aria-hidden', 'false');
+          document.body.classList.add('modal-open');
+        }
         var nameInput = document.getElementById('projectName');
         if (nameInput) nameInput.focus();
       } else if (event.target.closest('#createProjectModal [data-dismiss="modal"], #createProjectModal .close') || event.target === modal) {
         event.preventDefault();
         closeProjectModal();
       }
-    });
+    }, true);
     document.addEventListener('keydown', function(event) { if (event.key === 'Escape' && modal.classList.contains('show')) closeProjectModal(); });
+  }
+
+  function initializeSocialFilters() {
+    const searchInput = document.getElementById('social-global-search');
+    const filterButtons = document.querySelectorAll('.social-filter-btn');
+    const filterableItems = document.querySelectorAll('[data-social-item]');
+
+    if (!searchInput || !filterButtons.length || !filterableItems.length) {
+      return;
+    }
+
+    function applyFilters() {
+      const query = (searchInput.value || '').trim().toLowerCase();
+      const activeFilter = document.querySelector('.social-filter-btn.active')?.dataset.filter || 'all';
+
+      filterableItems.forEach(function(item) {
+        const itemType = item.dataset.socialItem || 'all';
+        const itemText = (item.textContent || '').toLowerCase();
+        const matchesQuery = !query || itemText.includes(query);
+        const matchesType = activeFilter === 'all' || itemType === activeFilter;
+        item.style.display = matchesQuery && matchesType ? '' : 'none';
+      });
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    filterButtons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        filterButtons.forEach(function(btn) { btn.classList.toggle('active', btn === button); });
+        applyFilters();
+      });
+    });
+
+    applyFilters();
+  }
+
+  function initializeModerationBreakdownSort() {
+    const table = document.querySelector('.moderation-breakdown-table');
+    if (!table || table.dataset.sortInitialized === 'true') return;
+
+    const body = table.querySelector('tbody');
+    const buttons = table.querySelectorAll('.moderation-sort-btn');
+    if (!body || !buttons.length) return;
+
+    table.dataset.sortInitialized = 'true';
+    buttons.forEach(function(button) {
+      button.addEventListener('click', function() {
+        const sortKey = button.dataset.sortKey || 'employee';
+        const rows = Array.from(body.querySelectorAll('[data-employee-row]'));
+        const numericSort = sortKey !== 'employee';
+        const currentDirection = button.dataset.direction === 'asc' ? 'desc' : 'asc';
+
+        buttons.forEach(function(otherButton) {
+          otherButton.dataset.direction = '';
+          otherButton.classList.remove('is-sorted');
+          otherButton.removeAttribute('aria-sort');
+        });
+        button.dataset.direction = currentDirection;
+        button.classList.add('is-sorted');
+        button.setAttribute('aria-sort', currentDirection === 'asc' ? 'ascending' : 'descending');
+
+        rows.sort(function(firstRow, secondRow) {
+          const firstValue = firstRow.dataset[sortKey] || '';
+          const secondValue = secondRow.dataset[sortKey] || '';
+          const comparison = numericSort
+            ? Number(firstValue) - Number(secondValue)
+            : firstValue.localeCompare(secondValue);
+          return currentDirection === 'asc' ? comparison : -comparison;
+        });
+
+        rows.forEach(function(row) { body.appendChild(row); });
+      });
+    });
+  }
+
+  function initializeModerationInsightsTriggers() {
+    if (document.documentElement.dataset.moderationTriggersBound === '1') return;
+    document.documentElement.dataset.moderationTriggersBound = '1';
+
+    function toggleInsights(trigger) {
+      if (!trigger || trigger.dataset.disabled === 'true') return;
+      const details = document.getElementById(trigger.dataset.insightsTarget || '');
+      if (!details) return;
+      const insightsFilter = trigger.dataset.insightsFilter || 'all';
+      const sameFilter = details.dataset.activeFilter === insightsFilter;
+      const willOpen = details.hidden || !sameFilter;
+      details.querySelectorAll('[data-insights-section]').forEach(function(section) {
+        section.hidden = insightsFilter !== 'all' && section.dataset.insightsSection !== insightsFilter;
+      });
+      details.hidden = !willOpen;
+      details.dataset.activeFilter = insightsFilter;
+      document.querySelectorAll('.moderation-insights-trigger').forEach(function(otherTrigger) {
+        otherTrigger.setAttribute('aria-expanded', otherTrigger === trigger && willOpen ? 'true' : 'false');
+      });
+    }
+
+    document.addEventListener('click', function(event) {
+      var trigger = event.target.closest('.moderation-insights-trigger');
+      if (trigger) toggleInsights(trigger);
+    });
+
+    document.addEventListener('keydown', function(event) {
+      var trigger = event.target.closest('.moderation-insights-trigger');
+      if (!trigger || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      toggleInsights(trigger);
+    });
+  }
+
+  function initializeResolvePostActions() {
+    if (document.documentElement.dataset.resolvePostBound === '1') return;
+    document.documentElement.dataset.resolvePostBound = '1';
+    document.addEventListener('click', function(event) {
+      var button = event.target.closest('.resolve-post-btn');
+      if (!button || button.disabled) return;
+      var postId = button.dataset.postId;
+      if (!postId) return;
+
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Saving...';
+      fetch(SOCIAL_API_BASE + '?resource=social&action=resolve', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_id: postId })
+      })
+        .then(function(response) {
+          return response.json().then(function(data) {
+            if (!response.ok || data.success === false) {
+              throw new Error(data.message || data.error || 'Unable to resolve post.');
+            }
+            return data;
+          });
+        })
+        .then(function() {
+          window.location.reload();
+        })
+        .catch(function(error) {
+          button.disabled = false;
+          button.innerHTML = '<i class="fas fa-check mr-1"></i>Mark resolved';
+          window.alert(error.message || 'Unable to resolve post.');
+        });
+    });
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
       initializeSocialTabs();
+      initializeGroupModal();
       initializeForumModal();
+      initializePostModal();
       initializeProjectModal();
+      initializeSocialFilters();
+      initializeModerationBreakdownSort();
+      initializeModerationInsightsTriggers();
+      initializeResolvePostActions();
     }, { once: true });
   } else {
     initializeSocialTabs();
+    initializeGroupModal();
     initializeForumModal();
+    initializePostModal();
     initializeProjectModal();
+    initializeSocialFilters();
+    initializeModerationBreakdownSort();
+    initializeModerationInsightsTriggers();
+    initializeResolvePostActions();
   }
 
   function initializeSocialFeed() {
@@ -478,6 +845,7 @@ function escapeHtml(text) {
           const textarea = form.querySelector('textarea[name="comment"], textarea[name="content"]');
           const postIdInput = form.querySelector('input[name="post_id"]');
           const commentIdInput = form.querySelector('input[name="comment_id"]');
+          const parentReplyIdInput = form.querySelector('input[name="parent_reply_id"]');
 
           if (!textarea || !postIdInput) {
             return;
@@ -491,13 +859,17 @@ function escapeHtml(text) {
           let url = SOCIAL_API_BASE + '?resource=social&action=comment';
 
           if (commentIdInput) {
-            const commentId = commentIdInput.value;
+            const commentId = commentIdInput.value || form.dataset.commentId || '';
             if (!commentId) {
-              alert('Comment ID is missing.');
+              if (button) button.disabled = false;
               return;
             }
+            commentIdInput.value = commentId;
             payload.comment_id = commentId;
             payload.content = textarea.value.trim();
+            if (parentReplyIdInput && parentReplyIdInput.value) {
+              payload.parent_reply_id = parentReplyIdInput.value;
+            }
             url = SOCIAL_API_BASE + '?resource=reply&action=add';
           } else {
             payload.comment = textarea.value.trim();
@@ -623,37 +995,62 @@ function escapeHtml(text) {
             var commenter = comment.author_name ? escapeHtml(comment.author_name) : 'Unknown';
             var commentText = comment.comment ? escapeHtml(comment.comment) : '';
             var commentTime = comment.created_at ? escapeHtml(comment.created_at) : '';
+            var commentId = comment.eer_comment_id || comment.comment_id || comment.id || '';
             var repliesHtml = '';
             var commentCounts = comment.reaction_counts || {};
 
             if (Array.isArray(comment.replies) && comment.replies.length > 0) {
-              repliesHtml = '<div class="replies mt-2 ml-4 border-left pl-2">' +
-                comment.replies.map(function(reply) {
-                  var replier = reply.author_name ? escapeHtml(reply.author_name) : 'Unknown';
-                  var replyText = reply.content ? escapeHtml(reply.content) : '';
-                  var replyTime = reply.created_at ? escapeHtml(reply.created_at) : '';
-                  return '<div class="reply-item mb-2"><strong class="small">' + replier + ':</strong> <span class="small">' + replyText + '</span> <small class="text-muted d-block">' + replyTime + '</small>' + renderCommentReactionButtons('reply', reply.eer_reply_id, reply.reaction_counts || {}) + '</div>';
-                }).join('') +
-                '</div>';
+              function renderReplyTree(reply) {
+                var replier = reply.author_name ? escapeHtml(reply.author_name) : 'Unknown';
+                var replyText = reply.content ? escapeHtml(reply.content) : '';
+                var replyTime = reply.created_at ? escapeHtml(reply.created_at) : '';
+                var replyId = reply.eer_reply_id || reply.reply_id || reply.id || '';
+                var nestedReplies = comment.replies.filter(function(childReply) {
+                  var parentId = childReply.parent_reply_id;
+                  return replyId && parentId !== null && parentId !== undefined && String(parentId) === String(replyId);
+                });
+                var nestedHtml = nestedReplies.length
+                  ? '<div class="nested-replies mt-2 ml-3 pl-3 border-left">' + nestedReplies.map(renderReplyTree).join('') + '</div>'
+                  : '';
+                var nestedReplyControls = replyId ?
+                  '<button type="button" class="btn btn-sm reply-action" data-comment-id="' + commentId + '" data-post-id="' + postId + '" data-parent-reply-id="' + replyId + '">Reply</button>' +
+                  '<form method="POST" class="comment-form reply-form nested-reply-form mt-2 p-2 bg-light rounded d-none" data-skip="true" style="display: none;" data-comment-id="' + commentId + '" data-post-id="' + postId + '" data-parent-reply-id="' + replyId + '">' +
+                    '<input type="hidden" name="comment_id" value="' + commentId + '">' +
+                    '<input type="hidden" name="post_id" value="' + postId + '">' +
+                    '<input type="hidden" name="parent_reply_id" value="' + replyId + '">' +
+                    '<textarea name="content" class="form-control form-control-sm mt-2" rows="2" placeholder="Write a reply to this reply..." required></textarea>' +
+                    '<button type="submit" class="btn btn-sm btn-primary mt-2">Post Reply</button>' +
+                    '<button type="button" class="btn btn-sm btn-secondary mt-2 cancel-reply" style="margin-left: 0.5rem;">Cancel</button>' +
+                  '</form>' : '';
+                return '<div class="reply-item mb-2"><strong class="small">' + replier + ':</strong> <span class="small">' + replyText + '</span> <small class="text-muted d-block">' + replyTime + '</small>' + renderCommentReactionButtons('reply', replyId, reply.reaction_counts || {}) + '<div class="reply-actions mt-1">' + nestedReplyControls + '</div>' + nestedHtml + '</div>';
+              }
+
+              var rootReplies = comment.replies.filter(function(reply) {
+                return reply.parent_reply_id === null || reply.parent_reply_id === undefined || reply.parent_reply_id === '' || String(reply.parent_reply_id) === '0';
+              });
+              repliesHtml = '<div class="replies mt-2 ml-4 border-left pl-2">' + rootReplies.map(renderReplyTree).join('') + '</div>';
             }
 
-            return '<div class="comment-item mb-3 pb-2 border-bottom">' +
-              '<div><strong class="small">' + commenter + ':</strong> <span class="small">' + commentText + '</span> </div>' +
-              '<small class="text-muted d-block mb-2">' + commentTime + '</small>' +
-              renderCommentReactionButtons('comment', comment.eer_comment_id, commentCounts) +
-              repliesHtml +
+            var replyControls = commentId ?
               '<div class="reply-actions mt-2">' +
-                '<button type="button" class="btn btn-sm reply-action" data-comment-id="' + comment.eer_comment_id + '" data-post-id="' + postId + '">Reply</button>' +
+                '<button type="button" class="btn btn-sm reply-action" data-comment-id="' + commentId + '" data-post-id="' + postId + '" data-parent-reply-id="">Reply</button>' +
               '</div>' +
-              '<form method="POST" class="comment-form reply-form mt-2 p-2 bg-light rounded d-none" data-skip="true" style="display: none;" data-comment-id="' + comment.eer_comment_id + '" data-post-id="' + postId + '">' +
-                '<input type="hidden" name="comment_id" value="' + comment.eer_comment_id + '">' +
+              '<form method="POST" class="comment-form reply-form mt-2 p-2 bg-light rounded d-none" data-skip="true" style="display: none;" data-comment-id="' + commentId + '" data-post-id="' + postId + '" data-parent-reply-id="">' +
+                '<input type="hidden" name="comment_id" value="' + commentId + '">' +
                 '<input type="hidden" name="post_id" value="' + postId + '">' +
                 '<div class="form-group mb-2">' +
                   '<textarea name="content" class="form-control form-control-sm" rows="2" placeholder="Write your reply..." required></textarea>' +
                 '</div>' +
                 '<button type="submit" class="btn btn-sm btn-primary">Post Reply</button>' +
                 '<button type="button" class="btn btn-sm btn-secondary ms-2 cancel-reply" style="margin-left: 0.5rem;">Cancel</button>' +
-              '</form>' +
+              '</form>' : '';
+
+            return '<div class="comment-item mb-3 pb-2 border-bottom">' +
+              '<div><strong class="small">' + commenter + ':</strong> <span class="small">' + commentText + '</span> </div>' +
+              '<small class="text-muted d-block mb-2">' + commentTime + '</small>' +
+              renderCommentReactionButtons('comment', commentId, commentCounts) +
+              repliesHtml +
+              replyControls +
               '</div>';
           }).join('') +
           '</div>';
@@ -855,7 +1252,7 @@ function escapeHtml(text) {
       }).join('');
 
       setFeedHtml(html);
-      updateAnalytics(items);
+      updateAnalytics(socialPosts);
     }
 
     function updateReactionCount(postId, reactionType, increment) {
@@ -880,11 +1277,18 @@ function escapeHtml(text) {
         event.preventDefault();
         var commentId = replyToggle.getAttribute('data-comment-id');
         var postId = replyToggle.getAttribute('data-post-id');
-        var form = socialFeed.querySelector('.reply-form[data-comment-id="' + commentId + '"][data-post-id="' + postId + '"]');
+        var parentReplyId = replyToggle.getAttribute('data-parent-reply-id') || '';
+        var form = Array.from(socialFeed.querySelectorAll('.reply-form[data-comment-id="' + commentId + '"][data-post-id="' + postId + '"]')).find(function(candidate) {
+          return (candidate.getAttribute('data-parent-reply-id') || '') === parentReplyId;
+        });
         if (form) {
           var shouldShow = form.style.display === 'none';
           form.style.display = shouldShow ? '' : 'none';
           form.classList.toggle('d-none', !shouldShow);
+          replyToggle.classList.toggle('is-open', shouldShow);
+          replyToggle.innerHTML = shouldShow ? '<i class="fas fa-arrow-left" aria-hidden="true"></i>' : 'Reply';
+          replyToggle.setAttribute('aria-label', shouldShow ? 'Back' : 'Reply');
+          replyToggle.setAttribute('title', shouldShow ? 'Back' : 'Reply');
         }
         return;
       }
@@ -897,6 +1301,18 @@ function escapeHtml(text) {
         if (form) {
           form.classList.add('d-none');
           form.style.display = 'none';
+          var cancelCommentId = form.getAttribute('data-comment-id') || '';
+          var cancelPostId = form.getAttribute('data-post-id') || '';
+          var cancelParentReplyId = form.getAttribute('data-parent-reply-id') || '';
+          var matchingReplyButton = Array.from(socialFeed.querySelectorAll('.reply-action[data-comment-id="' + cancelCommentId + '"][data-post-id="' + cancelPostId + '"]')).find(function(button) {
+            return (button.getAttribute('data-parent-reply-id') || '') === cancelParentReplyId;
+          });
+          if (matchingReplyButton) {
+            matchingReplyButton.classList.remove('is-open');
+            matchingReplyButton.innerHTML = 'Reply';
+            matchingReplyButton.setAttribute('aria-label', 'Reply');
+            matchingReplyButton.setAttribute('title', 'Reply');
+          }
         }
         return;
       }
@@ -1038,6 +1454,10 @@ function escapeHtml(text) {
       var counts = { positive: 0, neutral: 0, negative: 0 };
 
       posts.forEach(function(post) {
+        if (post.moderation_status === 'resolved') {
+          counts.neutral++;
+          return;
+        }
         var content = (post.content || '') + ' ' + (Array.isArray(post.comments) ? post.comments.map(function(c){ return c.comment || ''; }).join(' ') : '');
         var text = content.toLowerCase();
 
@@ -1069,6 +1489,50 @@ function escapeHtml(text) {
       }
 
       var sentiment = computeSentimentSummary(posts);
+      var moderationCounts = {
+        negative: sentiment.negative,
+        positive: sentiment.positive,
+        resolved: 0
+      };
+
+      moderationCounts.negative = 0;
+      if (Array.isArray(posts)) {
+        posts.forEach(function(post) {
+          var moderationText = ((post.content || '') + ' ' + (Array.isArray(post.comments) ? post.comments.map(function(comment) { return comment.comment || ''; }).join(' ') : '')).toLowerCase();
+          var hasNegative = ['bad','sad','angry','terrible','hate','poor','worst','problem','putang','gago','tanga','bwisit','pangit','galit','inis','problema','ayaw'].some(function(word) {
+            return moderationText.indexOf(word) !== -1;
+          });
+          if (hasNegative) {
+            if (post.moderation_status === 'resolved') {
+              moderationCounts.resolved++;
+            } else {
+              moderationCounts.negative++;
+            }
+          }
+        });
+      }
+
+      document.querySelectorAll('[data-moderation-count]').forEach(function(countElement) {
+        var countType = countElement.dataset.moderationCount;
+        countElement.textContent = moderationCounts[countType] || 0;
+      });
+
+      document.querySelectorAll('.moderation-insights-trigger').forEach(function(trigger) {
+        var moderationType = trigger.dataset.moderationType || '';
+        var moderationCount = moderationCounts[moderationType] || 0;
+        var hasItems = moderationCount > 0;
+        trigger.dataset.disabled = hasItems ? 'false' : 'true';
+        trigger.setAttribute('aria-disabled', hasItems ? 'false' : 'true');
+        trigger.setAttribute('tabindex', hasItems ? '0' : '-1');
+        trigger.classList.toggle('is-disabled', !hasItems);
+        if (!hasItems) {
+          trigger.setAttribute('aria-expanded', 'false');
+          var details = document.getElementById(trigger.dataset.insightsTarget || '');
+          if (details && details.dataset.activeFilter === trigger.dataset.insightsFilter) {
+            details.hidden = true;
+          }
+        }
+      });
 
       var engagementHtml = '<div class="analytics-stat-grid">'
         + '<div class="analytics-stat"><strong>' + totalPosts + '</strong><span>Posts</span></div>'
@@ -1664,26 +2128,6 @@ function escapeHtml(text) {
 
         renderGroups(data.groups, data.group_members);
 
-        const socialFeedItems = Array.isArray(data.feed) ? data.feed : [];
-        const comments = socialFeedItems.reduce(function(total, post) { return total + (Array.isArray(post.comments) ? post.comments.length : 0); }, 0);
-        const reactions = socialFeedItems.reduce(function(total, post) { return total + Number(post.like_count || 0) + Number(post.heart_count || 0) + Number(post.wow_count || 0); }, 0);
-        const sentiment = {positive: 0, neutral: 0, negative: 0};
-        socialFeedItems.forEach(function(post) {
-          const text = String(post.content || '') + ' ' + (post.comments || []).map(function(comment) { return comment.comment || ''; }).join(' ');
-          const positive = /good|great|love|excellent|awesome|happy|nice|amazing/i.test(text);
-          const negative = /bad|sad|angry|terrible|hate|poor|worst|problem/i.test(text);
-          if (positive && !negative) sentiment.positive += 1;
-          else if (negative && !positive) sentiment.negative += 1;
-          else sentiment.neutral += 1;
-        });
-        const sentimentValues = document.querySelectorAll('#sentiment-analysis .analytics-stat strong');
-        if (sentimentValues[0]) sentimentValues[0].textContent = sentiment.positive;
-        if (sentimentValues[1]) sentimentValues[1].textContent = sentiment.neutral;
-        if (sentimentValues[2]) sentimentValues[2].textContent = sentiment.negative;
-        const engagementValues = document.querySelectorAll('#engagement-analytics .analytics-stat strong');
-        if (engagementValues[0]) engagementValues[0].textContent = socialFeedItems.length;
-        if (engagementValues[1]) engagementValues[1].textContent = comments;
-        if (engagementValues[2]) engagementValues[2].textContent = reactions;
       })
       .catch(function(error) {
         console.warn('[Social] API page-data load failed; existing specialized loaders remain active.', error);

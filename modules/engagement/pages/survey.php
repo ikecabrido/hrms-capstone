@@ -71,7 +71,7 @@ if ($surveyFormToken === '') {
                 <!-- Employee Satisfaction Surveys Tab -->
                 <div class="tab-pane fade" id="satisfaction" role="tabpanel" aria-labelledby="satisfaction-tab">
                   <div class="row">
-                    <div class="col-12">
+                    <div class="col-lg-7">
                       <div class="card card-secondary card-outline">
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-chart-line mr-2"></i>Create Employee Satisfaction Survey</h3>
@@ -229,8 +229,8 @@ What improvements would you suggest?" required></textarea>
 
                 <!-- HR Feedback Tab -->
                <div class="tab-pane fade" id="hr-feedback" role="tabpanel" aria-labelledby="hr-feedback-tab">
-                  <div class="row">
-                    <div class="col-12">
+                  <div class="row feedback-layout-row">
+                      <div class="col-lg-7">
                       <div class="card card-primary card-outline">
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-user-tie mr-2"></i>Provide Feedback to Employee</h3>
@@ -287,16 +287,184 @@ What improvements would you suggest?" required></textarea>
                               <label for="hr-feedback">Feedback Comments</label>
                               <textarea id="hr-feedback" name="comments" class="form-control" rows="5" placeholder="Provide detailed feedback to help the employee improve." required></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary">
-                              <i class="fas fa-paper-plane mr-2"></i>Submit Feedback
-                            </button>
+                            <div class="feedback-form-actions">
+                              <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane mr-2"></i>Submit Feedback
+                              </button>
+                              <button type="button" class="btn btn-outline-primary feedback-history-toggle" aria-expanded="false" aria-controls="feedbackHistoryDetails">
+                                <i class="fas fa-clock mr-1"></i>Feedback History
+                              </button>
+                            </div>
                           </form>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div id="feedbackHistoryDetails" class="feedback-history-modal" hidden role="dialog" aria-modal="true" aria-labelledby="feedbackHistoryModalTitle">
+                      <div class="feedback-history-modal-dialog">
+                        <div class="feedback-history-modal-header">
+                          <h3 id="feedbackHistoryModalTitle"><i class="fas fa-history mr-2"></i>Feedback History</h3>
+                          <button type="button" class="feedback-history-close" aria-label="Close feedback history">&times;</button>
+                        </div>
+                        <div class="feedback-history-modal-body">
+                          <div id="feedback-history-list" class="table-responsive">
+                            <p class="text-muted text-center py-4 mb-0">Loading feedback history...</p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
+                <style>
+                  #feedbackHistoryDetails {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 1060;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 1.25rem;
+                    background: rgba(12, 32, 50, 0.5);
+                  }
+
+                  #feedbackHistoryDetails[hidden] {
+                    display: none !important;
+                  }
+
+                  #feedbackHistoryDetails .feedback-history-modal-dialog {
+                    width: min(1180px, 100%) !important;
+                    max-height: min(760px, calc(100vh - 2.5rem)) !important;
+                    overflow: hidden !important;
+                    background: #ffffff !important;
+                    border: 1px solid rgba(23, 95, 154, 0.18) !important;
+                    border-radius: 12px !important;
+                    box-shadow: 0 15px 40px rgba(14, 39, 64, 0.22) !important;
+                  }
+
+                  #feedbackHistoryDetails .feedback-history-modal-header {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    padding: 1rem 1.35rem !important;
+                    background: linear-gradient(180deg, #1a9ad8 0%, #0f7ec0 100%) !important;
+                    color: #ffffff !important;
+                  }
+
+                  #feedbackHistoryDetails .feedback-history-modal-header h3 {
+                    margin: 0 !important;
+                    font-size: 1.05rem !important;
+                    font-weight: 700 !important;
+                    color: #ffffff !important;
+                  }
+
+                  #feedbackHistoryDetails .feedback-history-close {
+                    width: 38px !important;
+                    height: 38px !important;
+                    padding: 0 !important;
+                    border: 0 !important;
+                    border-radius: 50% !important;
+                    background: rgba(255, 255, 255, 0.18) !important;
+                    color: #ffffff !important;
+                    font-size: 1.8rem !important;
+                  }
+
+                  #feedbackHistoryDetails .feedback-history-modal-body {
+                    max-height: calc(min(760px, 100vh - 2.5rem) - 70px);
+                    overflow: auto;
+                    background: #ffffff;
+                    padding: 0;
+                  }
+
+                  #feedback-history-list table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    background: #fff;
+                  }
+
+                  #feedback-history-list th {
+                    background: #f5f9ff;
+                    color: #3a5879;
+                    font-size: 0.8rem;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    letter-spacing: 0.04em;
+                    text-align: left;
+                    padding: 0.9rem 1rem;
+                    border-bottom: 1px solid #dfeaf4;
+                  }
+
+                  #feedback-history-list td {
+                    padding: 0.9rem 1rem;
+                    border-bottom: 1px solid #e7eef7;
+                    color: #1b3c64;
+                    vertical-align: top;
+                    line-height: 1.5;
+                  }
+
+                  #feedback-history-list td[colspan="4"] {
+                    background: #fbfdff;
+                    padding-top: 0.5rem;
+                    padding-bottom: 1.15rem;
+                  }
+
+                  #feedback-history-list td[colspan="4"] strong {
+                    color: #0f3e71;
+                    font-weight: 800;
+                  }
+
+                  body.feedback-history-modal-open {
+                    overflow: hidden;
+                  }
+                </style>
+
+                <script>
+                  document.addEventListener('DOMContentLoaded', function () {
+                    const toggle = document.querySelector('.feedback-history-toggle');
+                    const modal = document.getElementById('feedbackHistoryDetails');
+                    if (!toggle || !modal) return;
+
+                    const closeButton = modal.querySelector('.feedback-history-close');
+                    const dialog = modal.querySelector('.feedback-history-modal-dialog');
+
+                    const setHistoryState = function (isOpen) {
+                      modal.hidden = !isOpen;
+                      document.body.classList.toggle('feedback-history-modal-open', isOpen);
+                      toggle.setAttribute('aria-expanded', String(isOpen));
+                      toggle.innerHTML = isOpen
+                        ? '<i class="fas fa-times mr-1"></i>Hide History'
+                        : '<i class="fas fa-clock mr-1"></i>Feedback History';
+                    };
+
+                    toggle.addEventListener('click', function () {
+                      setHistoryState(modal.hidden);
+                    });
+
+                    if (closeButton) {
+                      closeButton.addEventListener('click', function () {
+                        setHistoryState(false);
+                      });
+                    }
+
+                    modal.addEventListener('click', function (event) {
+                      if (event.target === modal) {
+                        setHistoryState(false);
+                      }
+                    });
+
+                    document.addEventListener('keydown', function (event) {
+                      if (event.key === 'Escape' && !modal.hidden) {
+                        setHistoryState(false);
+                      }
+                    });
+
+                    if (dialog) {
+                      dialog.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                      });
+                    }
+                  });
+                </script>
 
                 <!-- Suggestions & Ideas Tab -->
                 <div class="tab-pane fade" id="suggestions" role="tabpanel" aria-labelledby="suggestions-tab">

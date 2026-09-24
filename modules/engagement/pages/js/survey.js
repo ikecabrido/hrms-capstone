@@ -356,6 +356,35 @@
     if (quality) quality.innerHTML = '<div class="mb-2"><strong>Total Suggestions:</strong><br><span class="text-primary">' + suggestions.length + '</span></div><div class="mb-2"><strong>Avg Quality Rating:</strong><br><span class="text-info">' + average.toFixed(1) + ' ⭐</span></div><div><strong>Quality Suggestions:</strong><br><span class="text-success">' + highQuality + ' (' + (suggestions.length ? Math.round(highQuality / suggestions.length * 100) : 0) + '%)</span></div>';
   }
 
+  function renderFeedbackHistory(feedback) {
+    const list = document.getElementById('feedback-history-list');
+    if (!list) return;
+
+    const entries = (Array.isArray(feedback) ? feedback : []).filter(function(item) {
+      return String(item.evaluator_type || '').toLowerCase() === 'hr';
+    });
+
+    if (!entries.length) {
+      list.innerHTML = '<p class="text-muted text-center py-4 mb-0">No HR feedback submitted yet.</p>';
+      return;
+    }
+
+    list.innerHTML = '<table class="table table-sm mb-0 feedback-history-table">' +
+      '<thead><tr><th>Employee</th><th>Category</th><th>Rating</th><th>Date</th></tr></thead><tbody>' +
+      entries.slice(0, 25).map(function(item) {
+        const category = String(item.category || 'Other').replace(/_/g, ' ');
+        const rating = Number(item.rating || 0);
+        const date = item.evaluation_date || item.created_at || 'Recent';
+        return '<tr>' +
+          '<td>' + escapeSurveyHtml(item.employee_name || 'Unknown') + '</td>' +
+          '<td>' + escapeSurveyHtml(category.charAt(0).toUpperCase() + category.slice(1)) + '</td>' +
+          '<td>' + escapeSurveyHtml(rating ? rating + '/5' : 'N/A') + '</td>' +
+          '<td>' + escapeSurveyHtml(date) + '</td>' +
+          '</tr><tr><td colspan="4"><strong>Feedback:</strong> ' + escapeSurveyHtml(item.comment || item.comments || 'No comments available').replace(/\n/g, '<br>') + '</td></tr>';
+      }).join('') +
+      '</tbody></table>';
+  }
+
   function loadSurveyPageData() {
     fetch(surveyApiUrl('page_data'), {credentials: 'same-origin', cache: 'no-store'})
       .then(function(response) {
@@ -368,6 +397,7 @@
         window.surveyPageData = data;
         renderSurveyEmployees(data.employees);
         renderFeedback(data.feedback);
+        renderFeedbackHistory(data.feedback);
       })
       .catch(function(error) { console.warn('[Survey] API page-data load failed:', error.message); });
   }
@@ -408,6 +438,33 @@
     });
   }
 
+  function initFeedbackHistoryToggle() {
+    const toggle = document.querySelector('.feedback-history-toggle');
+    const modal = document.getElementById('feedbackHistoryDetails');
+    const closeButton = modal ? modal.querySelector('.feedback-history-close') : null;
+
+    if (!toggle || !modal) return;
+
+    toggle.addEventListener('click', function() {
+      const isHidden = modal.hidden;
+      modal.hidden = !isHidden;
+      document.body.classList.toggle('feedback-history-modal-open', isHidden);
+      toggle.setAttribute('aria-expanded', String(isHidden));
+      toggle.innerHTML = isHidden
+        ? '<i class="fas fa-times mr-1"></i>Hide History'
+        : '<i class="fas fa-clock mr-1"></i>Feedback History';
+    });
+
+    if (closeButton) {
+      closeButton.addEventListener('click', function() {
+        modal.hidden = true;
+        document.body.classList.remove('feedback-history-modal-open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.innerHTML = '<i class="fas fa-clock mr-1"></i>Feedback History';
+      });
+    }
+  }
+
   function initSurveyPage() {
     const surveyAreas = document.querySelectorAll('.survey-area');
     surveyAreas.forEach(function(area, index) {
@@ -437,6 +494,7 @@
     initTabClickHandlers();
     initSurveyFormHandlers();
     initFeedbackForms();
+    initFeedbackHistoryToggle();
     loadSurveyPageData();
     restoreSurveyTab();
 

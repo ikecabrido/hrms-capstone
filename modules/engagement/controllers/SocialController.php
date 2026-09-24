@@ -166,6 +166,11 @@ class SocialController
         $this->post->editPost($post_id, $content);
     }
 
+    public function resolvePost($post_id)
+    {
+        return $this->post->resolvePost($post_id);
+    }
+
     public function getPostAnalytics($postId)
     {
         return $this->post->getAnalytics($postId);

@@ -11,6 +11,38 @@ class Reply extends BaseModel
         return $column ? 'author_type' : 'user_type';
     }
 
+    private function resolveLinkedUserId($employeeId)
+    {
+        if (empty($employeeId)) {
+            return null;
+        }
+
+        return $this->execute(
+            'SELECT COALESCE(e.user_id, ua.user_id) AS user_id
+             FROM em_employees e
+             LEFT JOIN user_account ua ON ua.employee_id = e.employee_id
+             WHERE e.employee_id = :employee_id
+             LIMIT 1',
+            ['employee_id' => $employeeId]
+        )->fetchColumn() ?: null;
+    }
+
+    private function ensureReplyIdAutoIncrement()
+    {
+        $column = $this->execute("SHOW COLUMNS FROM eer_replies LIKE 'eer_reply_id'")->fetch();
+        if (!$column || strpos((string)($column['Extra'] ?? ''), 'auto_increment') !== false) {
+            return;
+        }
+
+        $zeroId = $this->execute('SELECT COUNT(*) FROM eer_replies WHERE eer_reply_id = 0')->fetchColumn();
+        if ((int)$zeroId > 0) {
+            $nextId = (int)$this->execute('SELECT COALESCE(MAX(eer_reply_id), 0) + 1 FROM eer_replies')->fetchColumn();
+            $this->execute('UPDATE eer_replies SET eer_reply_id = :next_id WHERE eer_reply_id = 0', ['next_id' => $nextId]);
+        }
+
+        $this->execute('ALTER TABLE eer_replies MODIFY eer_reply_id INT(11) NOT NULL AUTO_INCREMENT');
+    }
+
     public function getAllReplies()
     {
         $sql = "SELECT * FROM $this->table";
@@ -57,6 +89,7 @@ class Reply extends BaseModel
 
     public function addReply($commentId, $postId, $authorId, $content, $authorType = 'employee', $parentReplyId = null, $mentionedUserId = null)
     {
+        $this->ensureReplyIdAutoIncrement();
         $params = [
             'comment_id' => $commentId,
             'post_id' => $postId,
@@ -70,6 +103,7 @@ class Reply extends BaseModel
 
         if ($authorType === 'employee') {
             $params['employee_id'] = $authorId;
+            $params['user_id'] = $this->resolveLinkedUserId($authorId);
         } else {
             $params['user_id'] = $authorId;
         }

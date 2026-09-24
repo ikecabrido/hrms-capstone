@@ -80,6 +80,11 @@ try {
             $ctrl->deletePost((int)$data['post_id']);
             jsonResponse(['message' => 'Post deleted successfully'], 200);
             break;
+        case 'resolve':
+            if (empty($data['post_id'])) jsonResponse(['error' => 'post_id required'], 400);
+            $ctrl->resolvePost((int)$data['post_id']);
+            jsonResponse(['success' => true, 'message' => 'Post marked as resolved'], 200);
+            break;
         case 'edit':
             foreach (['post_id', 'content'] as $f) {
                 if (empty($data[$f])) jsonResponse(['error' => "$f is required"], 400);

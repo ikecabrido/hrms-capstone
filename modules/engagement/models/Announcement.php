@@ -99,19 +99,43 @@ class Announcement extends BaseModel
 
     public function shareFile($userId, $fileName, $filePath, $fileSize, $fileType, $description = null, $content = null, $authorType = 'user')
     {
-        $authorColumn = $authorType === 'employee' ? 'employee_id' : 'user_id';
-        $sql = "INSERT INTO eer_social_posts ($authorColumn, author_type, item_type, file_name, file_path, file_size, file_type, description, content, created_at)
-            VALUES (:author_id, :author_type, 'post', :file_name, :file_path, :file_size, :file_type, :description, :content, NOW())";
-        $this->execute($sql, [
-            'author_id' => $userId,
-            'author_type' => $authorType,
-            'file_name' => $fileName,
-            'file_path' => $filePath,
-            'file_size' => $fileSize,
-            'file_type' => $fileType,
-            'description' => $description,
-            'content' => $content
-        ]);
+        if ($authorType === 'employee') {
+            $linkedUserId = $this->execute(
+                'SELECT COALESCE(e.user_id, ua.user_id) AS user_id
+                 FROM em_employees e
+                 LEFT JOIN user_account ua ON ua.employee_id = e.employee_id
+                 WHERE e.employee_id = :employee_id
+                 LIMIT 1',
+                ['employee_id' => $userId]
+            )->fetchColumn();
+            $sql = "INSERT INTO eer_social_posts (employee_id, user_id, author_type, item_type, file_name, file_path, file_size, file_type, description, content, created_at)
+                VALUES (:employee_id, :user_id, :author_type, 'post', :file_name, :file_path, :file_size, :file_type, :description, :content, NOW())";
+            $params = [
+                'employee_id' => $userId,
+                'user_id' => $linkedUserId ?: null,
+                'author_type' => $authorType,
+                'file_name' => $fileName,
+                'file_path' => $filePath,
+                'file_size' => $fileSize,
+                'file_type' => $fileType,
+                'description' => $description,
+                'content' => $content,
+            ];
+        } else {
+            $sql = "INSERT INTO eer_social_posts (user_id, author_type, item_type, file_name, file_path, file_size, file_type, description, content, created_at)
+                VALUES (:user_id, :author_type, 'post', :file_name, :file_path, :file_size, :file_type, :description, :content, NOW())";
+            $params = [
+                'user_id' => $userId,
+                'author_type' => $authorType,
+                'file_name' => $fileName,
+                'file_path' => $filePath,
+                'file_size' => $fileSize,
+                'file_type' => $fileType,
+                'description' => $description,
+                'content' => $content,
+            ];
+        }
+        $this->execute($sql, $params);
         return $this->db->lastInsertId();
     }
 

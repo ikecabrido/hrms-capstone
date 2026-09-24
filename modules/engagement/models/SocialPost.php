@@ -39,8 +39,22 @@ class SocialPost extends BaseModel
             $sql = "INSERT INTO eer_social_posts (user_id, content, description, item_type, created_at, $typeCol) VALUES (:user_id, :content, :description, 'post', NOW(), :author_type)";
             $params = ['user_id' => $author_id, 'content' => $content, 'description' => $description, 'author_type' => $author_type];
         } else {
-            $sql = "INSERT INTO eer_social_posts (employee_id, content, description, item_type, created_at, $typeCol) VALUES (:employee_id, :content, :description, 'post', NOW(), :author_type)";
-            $params = ['employee_id' => $author_id, 'content' => $content, 'description' => $description, 'author_type' => $author_type];
+            $linkedUserId = $this->execute(
+                'SELECT COALESCE(e.user_id, ua.user_id) AS user_id
+                 FROM em_employees e
+                 LEFT JOIN user_account ua ON ua.employee_id = e.employee_id
+                 WHERE e.employee_id = :employee_id
+                 LIMIT 1',
+                ['employee_id' => $author_id]
+            )->fetchColumn();
+            $sql = "INSERT INTO eer_social_posts (employee_id, user_id, content, description, item_type, created_at, $typeCol) VALUES (:employee_id, :user_id, :content, :description, 'post', NOW(), :author_type)";
+            $params = [
+                'employee_id' => $author_id,
+                'user_id' => $linkedUserId ?: null,
+                'content' => $content,
+                'description' => $description,
+                'author_type' => $author_type,
+            ];
         }
         $this->execute($sql, $params);
         $postId = $this->db->lastInsertId();
@@ -70,6 +84,13 @@ class SocialPost extends BaseModel
         $this->execute($sql, ['post_id' => $post_id]);
     }
 
+    public function resolvePost($post_id)
+    {
+        $sql = "UPDATE eer_social_posts
+                SET moderation_status = 'resolved'
+                WHERE eer_social_post_id = :post_id";
+        return $this->execute($sql, ['post_id' => $post_id])->rowCount();
+    }
     public function editPost($post_id, $content)
     {
         $sql = 'UPDATE eer_social_posts SET content = :content WHERE eer_social_post_id = :post_id';

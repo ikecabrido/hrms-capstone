@@ -11,6 +11,38 @@ class Comment extends BaseModel
         return $column ? 'author_type' : 'user_type';
     }
 
+    private function resolveLinkedUserId($employeeId)
+    {
+        if (empty($employeeId)) {
+            return null;
+        }
+
+        return $this->execute(
+            'SELECT COALESCE(e.user_id, ua.user_id) AS user_id
+             FROM em_employees e
+             LEFT JOIN user_account ua ON ua.employee_id = e.employee_id
+             WHERE e.employee_id = :employee_id
+             LIMIT 1',
+            ['employee_id' => $employeeId]
+        )->fetchColumn() ?: null;
+    }
+
+    private function ensureCommentIdAutoIncrement()
+    {
+        $column = $this->execute("SHOW COLUMNS FROM eer_comments LIKE 'eer_comment_id'")->fetch();
+        if (!$column || strpos((string)($column['Extra'] ?? ''), 'auto_increment') !== false) {
+            return;
+        }
+
+        $zeroId = $this->execute('SELECT COUNT(*) FROM eer_comments WHERE eer_comment_id = 0')->fetchColumn();
+        if ((int)$zeroId > 0) {
+            $nextId = (int)$this->execute('SELECT COALESCE(MAX(eer_comment_id), 0) + 1 FROM eer_comments')->fetchColumn();
+            $this->execute('UPDATE eer_comments SET eer_comment_id = :next_id WHERE eer_comment_id = 0', ['next_id' => $nextId]);
+        }
+
+        $this->execute('ALTER TABLE eer_comments MODIFY eer_comment_id INT(11) NOT NULL AUTO_INCREMENT');
+    }
+
     public function getAllComments()
     {
         $sql = "SELECT * FROM $this->table";
@@ -19,6 +51,7 @@ class Comment extends BaseModel
 
     public function createComment($data)
     {
+        $this->ensureCommentIdAutoIncrement();
         $typeCol = $this->getAuthorTypeColumn();
         $sql = "INSERT INTO $this->table (post_id, employee_id, user_id, comment, $typeCol) VALUES (:post_id, :employee_id, :user_id, :comment, :user_type)";
         if (!isset($data['user_type'])) {
@@ -27,7 +60,9 @@ class Comment extends BaseModel
         $params = [
             'post_id' => $data['post_id'],
             'employee_id' => $data['user_type'] === 'employee' ? ($data['employee_id'] ?? null) : null,
-            'user_id' => $data['user_type'] === 'user' ? ($data['user_id'] ?? null) : null,
+            'user_id' => $data['user_type'] === 'employee'
+                ? $this->resolveLinkedUserId($data['employee_id'] ?? null)
+                : ($data['user_id'] ?? null),
             'comment' => $data['comment'],
             'user_type' => $data['user_type']
         ];
@@ -60,12 +95,15 @@ class Comment extends BaseModel
 
     public function addComment($post_id, $author_id, $comment, $author_type = 'employee')
     {
+        $this->ensureCommentIdAutoIncrement();
         $typeCol = $this->getAuthorTypeColumn();
         $sql = "INSERT INTO eer_comments (post_id, employee_id, user_id, comment, created_at, $typeCol) VALUES (:post_id, :employee_id, :user_id, :comment, NOW(), :author_type)";
         $params = [
             'post_id' => $post_id,
             'employee_id' => $author_type === 'employee' ? $author_id : null,
-            'user_id' => $author_type === 'user' ? $author_id : null,
+            'user_id' => $author_type === 'employee'
+                ? $this->resolveLinkedUserId($author_id)
+                : $author_id,
             'comment' => $comment,
             'author_type' => $author_type
         ];

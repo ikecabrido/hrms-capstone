@@ -3,7 +3,6 @@
 require_once __DIR__ . '/../../../auth/session.php';
 require_once __DIR__ . '/../autoload.php';
 
-
 $payload = [
   'feed' => [],
   'shared_files' => [],
@@ -14,6 +13,14 @@ $payload = [
   'employees' => [],
 ];
 
+try {
+    $socialController = new \App\Controllers\SocialController();
+    $pageData = $socialController->getPageData();
+    $payload = array_replace($payload, $pageData);
+} catch (\Throwable $e) {
+    error_log('Social dashboard page data error: ' . $e->getMessage());
+}
+
 $flashSuccess = $_SESSION['flash_success'] ?? null;
 $flashError = $_SESSION['flash_error'] ?? null;
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
@@ -21,8 +28,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 ?>
 
 <div class="module-header">
-        <h1>Social</h1>
-    </div>   
+  <h1>Social</h1>
+</div>
 
 <!-- Create Forum Modal -->
 <div class="modal fade" id="createForumModal" tabindex="-1" role="dialog" aria-labelledby="createForumModalLabel" aria-hidden="true">
@@ -62,6 +69,40 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
     </div>
   </div>
 </div>
+
+<!-- Create Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1" role="dialog" aria-labelledby="createPostModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createPostModalLabel"><i class="fas fa-rss mr-2"></i>Create Post</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <form id="createPostForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="postContent">Post content</label>
+            <textarea id="postContent" class="form-control" rows="5" maxlength="5000" placeholder="Write your post here..."></textarea>
+          </div>
+          <div class="form-group mb-0">
+            <label for="postDescription">Description <span class="text-muted font-weight-normal">(optional)</span></label>
+            <input id="postDescription" type="text" class="form-control" maxlength="255" placeholder="Add a short description">
+          </div>
+          <div class="form-group mb-0 mt-3">
+            <label for="postAttachment">Attachment <span class="text-muted font-weight-normal">(optional)</span></label>
+            <input id="postAttachment" type="file" class="form-control-file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt,.xlsx,.xls">
+            <small class="form-text text-muted">Maximum file size: 10MB</small>
+          </div>
+          <div id="postFormStatus" class="small mt-3" role="status" aria-live="polite"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane mr-1"></i>Publish Post</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
     <div class="social-area">
       <div class="row">
         <div class="col-12">
@@ -74,491 +115,587 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         </div>
       </div>
 
-      <!-- Social Collaboration Tools Tabs -->
-      <!-- Social Collaboration Tools Tabs -->
-<div class="row">
-  <div class="col-12">
-    <div class="card" id="collaboration-tabs-card" style="visibility:hidden">
-      <div class="card-header p-0">
-        <ul class="nav nav-tabs" id="collaboration-tabs" role="tablist">
-
-          <li class="nav-item">
-            <a class="nav-link"
-               id="feed-tab"
-               data-toggle="tab"
-               href="#feed"
-               role="tab"
-               aria-controls="feed"
-               aria-selected="false">
-              <i class="fas fa-rss mr-2"></i>
-              Employee Interaction Feed
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link"
-               id="forums-tab"
-               data-toggle="tab"
-               href="#forums"
-               role="tab"
-               aria-controls="forums"
-               aria-selected="false">
-              <i class="fas fa-comments mr-2"></i>
-              Discussion Forums
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link"
-               id="groups-tab"
-               data-toggle="tab"
-               href="#groups"
-               role="tab"
-               aria-controls="groups"
-               aria-selected="false">
-              <i class="fas fa-users mr-2"></i>
-              Team Groups
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a class="nav-link"
-               id="projects-tab"
-               data-toggle="tab"
-               href="#projects"
-               role="tab"
-               aria-controls="projects"
-               aria-selected="false">
-              <i class="fas fa-sitemap mr-2"></i>
-              Project Collaboration Spaces
-            </a>
-          </li>
-
-        </ul>
+      <div class="row">
+        <div class="col-12">
+          <?php if (!empty($flashSuccess)): ?>
+            <div class="alert alert-success"><?=htmlspecialchars($flashSuccess)?></div>
+          <?php endif; ?>
+          <?php if (!empty($flashError)): ?>
+            <div class="alert alert-danger"><?=htmlspecialchars($flashError)?></div>
+          <?php endif; ?>
+        </div>
       </div>
-      <div class="card-body">
-        <div class="tab-content" id="collaboration-tab-content">
 
-          <!-- Employee Interaction Feed Tab -->
-          <div class="tab-pane fade"
-               id="feed"
-               role="tabpanel"
-               aria-labelledby="feed-tab">
-                  <div class="row social-share-layout">
-                    <div class="col-lg-5 col-md-12 mb-4 mb-lg-0">
-                      <div class="card card-info card-outline h-100">
-                        <div class="card-header"><h3 class="card-title"><i class="fas fa-share-alt mr-2"></i>Share an Update</h3></div>
-                        <div class="card-body">
-                          <form method="post" enctype="multipart/form-data" class="share-form" data-skip>
-                            <input type="hidden" name="action" value="share_update">
-                            <div class="form-group">
-                              <label for="content">Post / Update</label>
-                              <textarea id="content" class="form-control" name="content" rows="4" placeholder="Share something with your team..." ></textarea>
-                            </div>
-                            <div class="form-row">
-                              <div class="form-group col-md-6">
-                                <label for="file-upload">Attach File</label>
-                                <input id="file-upload" type="file" name="shared_file" class="form-control" />
-                              </div>
-                              <div class="form-group col-md-6">
-                                <label for="file-description">Description (optional)</label>
-                                <textarea id="file-description" name="description" class="form-control" rows="2" placeholder="Add a description for the file..."></textarea>
-                              </div>
-                            </div>
-                            <div id="share-status" class="mb-3"></div>
-                            <button class="btn btn-primary" type="submit">Share</button>
-                          </form>
+        <?php
+          $recentPosts = array_slice($payload['feed'] ?? [], 0, 3);
+          $recentForums = array_slice($payload['forums'] ?? [], 0, 3);
+          $recentProjects = array_slice($payload['projects'] ?? [], 0, 3);
+          $groupCount = count($payload['groups'] ?? []);
+          $forumCount = count($payload['forums'] ?? []);
+          $projectCount = count($payload['projects'] ?? []);
+          $postCount = count($payload['feed'] ?? []);
+          $analyticsPosts = $payload['feed'] ?? [];
+          $analyticsComments = 0;
+          $analyticsReactions = 0;
+          $sentimentCounts = ['positive' => 0, 'neutral' => 0, 'negative' => 0];
+          $moderationCounts = ['negative' => 0, 'resolved' => 0];
+          $employeeSentimentSummary = [];
+          $negativeReviewItems = [];
+          $resolvedReviewItems = [];
+          $openNegativeEmployees = [];
+          $positiveWords = ['good', 'great', 'love', 'excellent', 'awesome', 'happy', 'nice', 'amazing'];
+          $negativeWords = ['bad', 'sad', 'angry', 'terrible', 'hate', 'poor', 'worst', 'problem', 'putang', 'gago', 'tanga', 'bwisit', 'pangit', 'galit', 'inis', 'problema', 'ayaw'];
+
+          foreach ($analyticsPosts as $analyticsPost) {
+            $analyticsComments += count($analyticsPost['comments'] ?? []);
+            $analyticsReactions += (int)($analyticsPost['like_count'] ?? 0) + (int)($analyticsPost['heart_count'] ?? 0) + (int)($analyticsPost['wow_count'] ?? 0);
+            $analyticsText = strtolower((string)($analyticsPost['content'] ?? '') . ' ' . implode(' ', array_column($analyticsPost['comments'] ?? [], 'comment')));
+            $employeeName = trim((string)($analyticsPost['author_name'] ?? 'Unknown'));
+            if ($employeeName === '') {
+              $employeeName = 'Unknown';
+            }
+            if (!isset($employeeSentimentSummary[$employeeName])) {
+              $employeeSentimentSummary[$employeeName] = ['positive' => 0, 'neutral' => 0, 'negative' => 0];
+            }
+
+            $hasPositive = false;
+            $hasNegative = false;
+            foreach ($positiveWords as $word) {
+              $hasPositive = $hasPositive || strpos($analyticsText, $word) !== false;
+            }
+            foreach ($negativeWords as $word) {
+              $hasNegative = $hasNegative || strpos($analyticsText, $word) !== false;
+            }
+            if ($hasPositive && !$hasNegative) {
+              $sentimentCounts['positive']++;
+              $employeeSentimentSummary[$employeeName]['positive']++;
+            } elseif ($hasNegative && !$hasPositive) {
+              if (($analyticsPost['moderation_status'] ?? 'open') === 'resolved') {
+                $moderationCounts['resolved']++;
+                $resolvedReviewItems[] = [
+                  'post_id' => (int)($analyticsPost['eer_social_post_id'] ?? 0),
+                  'employee' => $employeeName,
+                  'content' => trim((string)($analyticsPost['content'] ?? '')),
+                  'created_at' => (string)($analyticsPost['created_at'] ?? ''),
+                ];
+                $sentimentCounts['neutral']++;
+                continue;
+              } else {
+                $sentimentCounts['negative']++;
+                $employeeSentimentSummary[$employeeName]['negative']++;
+                $moderationCounts['negative']++;
+                $openNegativeEmployees[$employeeName] = ($openNegativeEmployees[$employeeName] ?? 0) + 1;
+                $negativeReviewItems[] = [
+                  'post_id' => (int)($analyticsPost['eer_social_post_id'] ?? 0),
+                  'employee' => $employeeName,
+                  'content' => trim((string)($analyticsPost['content'] ?? '')),
+                  'created_at' => (string)($analyticsPost['created_at'] ?? ''),
+                ];
+              }
+            } else {
+              $sentimentCounts['neutral']++;
+              $employeeSentimentSummary[$employeeName]['neutral']++;
+            }
+          }
+
+          $flaggedEmployees = [];
+          foreach ($employeeSentimentSummary as $employeeName => $stats) {
+            if ((int)($openNegativeEmployees[$employeeName] ?? 0) > 0) {
+              $flaggedEmployees[] = [
+                'name' => $employeeName,
+                'negative' => (int)$openNegativeEmployees[$employeeName],
+                'positive' => (int)($stats['positive'] ?? 0),
+                'neutral' => (int)($stats['neutral'] ?? 0),
+                'total' => (int)($stats['positive'] ?? 0) + (int)($stats['neutral'] ?? 0) + (int)($stats['negative'] ?? 0),
+              ];
+            }
+          }
+          usort($flaggedEmployees, static function ($a, $b) {
+            return ($b['negative'] ?? 0) <=> ($a['negative'] ?? 0);
+          });
+
+          $positiveEmployees = [];
+          foreach ($employeeSentimentSummary as $employeeName => $stats) {
+            if ((int)($stats['positive'] ?? 0) > 0) {
+              $positiveEmployees[] = [
+                'name' => $employeeName,
+                'positive' => (int)($stats['positive'] ?? 0),
+                'neutral' => (int)($stats['neutral'] ?? 0),
+                'negative' => (int)($stats['negative'] ?? 0),
+                'total' => (int)($stats['positive'] ?? 0) + (int)($stats['neutral'] ?? 0) + (int)($stats['negative'] ?? 0),
+              ];
+            }
+          }
+          usort($positiveEmployees, static function ($a, $b) {
+            return ($b['positive'] ?? 0) <=> ($a['positive'] ?? 0);
+          });
+
+          $mostActiveContributors = [];
+          foreach ($employeeSentimentSummary as $employeeName => $stats) {
+            $total = (int)($stats['positive'] ?? 0) + (int)($stats['neutral'] ?? 0) + (int)($stats['negative'] ?? 0);
+            if ($total > 0) {
+              $mostActiveContributors[] = [
+                'name' => $employeeName,
+                'total' => $total,
+                'positive' => (int)($stats['positive'] ?? 0),
+                'negative' => (int)($stats['negative'] ?? 0),
+              ];
+            }
+          }
+          usort($mostActiveContributors, static function ($a, $b) {
+            return ($b['total'] ?? 0) <=> ($a['total'] ?? 0);
+          });
+
+          $moderationItems = [
+            ['title' => 'Needs review', 'description' => 'Negative sentiment entries', 'count' => max(0, (int)$moderationCounts['negative'])],
+            ['title' => 'Positive signals', 'description' => 'Healthy conversations', 'count' => max(0, (int)$sentimentCounts['positive'])],
+            ['title' => 'Resolved items', 'description' => 'Closed by admin', 'count' => max(0, (int)$moderationCounts['resolved'])],
+          ];
+
+          $activityItems = [];
+          foreach (array_slice($payload['feed'] ?? [], 0, 2) as $post) {
+            $activityItems[] = [
+              'title' => 'New post published',
+              'meta' => htmlspecialchars((string)($post['author_name'] ?? 'Unknown'), ENT_QUOTES, 'UTF-8') . ' • ' . htmlspecialchars((string)($post['created_at'] ?? 'Now'), ENT_QUOTES, 'UTF-8'),
+              'badge' => 'Post',
+            ];
+          }
+          foreach (array_slice($payload['forums'] ?? [], 0, 2) as $forum) {
+            $activityItems[] = [
+              'title' => 'Forum created',
+              'meta' => htmlspecialchars((string)($forum['title'] ?? 'Untitled Forum'), ENT_QUOTES, 'UTF-8') . ' • ' . htmlspecialchars((string)($forum['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'),
+              'badge' => 'Forum',
+            ];
+          }
+          foreach (array_slice($payload['projects'] ?? [], 0, 2) as $project) {
+            $activityItems[] = [
+              'title' => 'Project space updated',
+              'meta' => htmlspecialchars((string)($project['name'] ?? 'Untitled Project'), ENT_QUOTES, 'UTF-8') . ' • ' . htmlspecialchars((string)($project['status'] ?? 'planning'), ENT_QUOTES, 'UTF-8'),
+              'badge' => 'Project',
+            ];
+          }
+          foreach (array_slice($payload['groups'] ?? [], 0, 2) as $group) {
+            $activityItems[] = [
+              'title' => 'Team group created',
+              'meta' => htmlspecialchars((string)($group['name'] ?? 'Untitled Group'), ENT_QUOTES, 'UTF-8') . ' • ' . htmlspecialchars((string)($group['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'),
+              'badge' => 'Group',
+            ];
+          }
+          if (empty($activityItems)) {
+            $activityItems[] = [
+              'title' => 'No admin actions logged',
+              'meta' => 'Created, edited, and removed content will appear here',
+              'badge' => 'Awaiting data',
+            ];
+          }
+        ?>
+
+        <div class="social-overview-grid">
+          <div class="social-stat-card social-stat-primary">
+            <div class="social-stat-icon"><i class="fas fa-rss"></i></div>
+            <div>
+              <span class="social-stat-label">Posts</span>
+              <strong><?= $postCount ?></strong>
+            </div>
+          </div>
+          <div class="social-stat-card social-stat-warning">
+            <div class="social-stat-icon"><i class="fas fa-comments"></i></div>
+            <div>
+              <span class="social-stat-label">Forums</span>
+              <strong><?= $forumCount ?></strong>
+            </div>
+          </div>
+          <div class="social-stat-card social-stat-success">
+            <div class="social-stat-icon"><i class="fas fa-users"></i></div>
+            <div>
+              <span class="social-stat-label">Groups</span>
+              <strong><?= $groupCount ?></strong>
+            </div>
+          </div>
+          <div class="social-stat-card social-stat-info">
+            <div class="social-stat-icon"><i class="fas fa-sitemap"></i></div>
+            <div>
+              <span class="social-stat-label">Projects</span>
+              <strong><?= $projectCount ?></strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="social-dashboard-grid">
+          <div class="social-main-column">
+            <div class="card social-panel" id="feed-section">
+              <div class="card-header social-section-header">
+                <h3 class="card-title"><i class="fas fa-rss mr-2"></i>Recent Posts</h3>
+                <div class="card-tools">
+                  <button type="button" class="btn btn-primary btn-sm" data-target="#createPostModal" data-toggle="modal">
+                    <i class="fas fa-plus mr-1"></i>New Post
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="social-feed" data-can-reply="true" data-employee-id=""><?php if (!empty($recentPosts)): foreach ($recentPosts as $post): ?>
+                  <div class="card mb-3 social-post-card" data-social-item="post" style="border-left: 4px solid #007bff;">
+                    <div class="card-body">
+                      <div class="post-header d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                          <h6 class="card-title mb-1" style="font-weight: 600;">
+                            <?= htmlspecialchars($post['author_name'] ?? 'Unknown') ?>
+                          </h6>
+                          <small class="text-muted"><?= htmlspecialchars($post['created_at'] ?? '') ?></small>
                         </div>
                       </div>
-                    </div>
-
-                    <div class="col-lg-7 col-md-12">
-                      <div class="card card-info card-outline h-100">
-                        <div class="card-header"><h3 class="card-title"><i class="fas fa-rss mr-2"></i>Social Feed</h3></div>
-                        <div class="card-body">
-                          <div id="social-feed" data-can-reply="true" data-employee-id="">
-                            <?php if (!empty($payload['feed']) || !empty($payload['shared_files'])): ?>
-                              <?php foreach ($payload['feed'] ?? [] as $post): ?>
-                                <div class="card mb-3 social-post-card" style="border-left: 4px solid #007bff;">
-                                  <div class="card-body">
-                                    <div class="post-header d-flex justify-content-between align-items-start mb-3">
-                                      <div>
-                                        <h6 class="card-title mb-1" style="font-weight: 600;"><?= htmlspecialchars($post['author_name'] ?? 'Unknown') ?></h6>
-                                        <small class="text-muted"><?= htmlspecialchars($post['created_at'] ?? '') ?></small>
-                                      </div>
-                                    </div>
-                                    <p class="card-text mb-3"><?= nl2br(htmlspecialchars($post['content'] ?? '')) ?></p>
-                                    <?php if (!empty($post['description'])): ?>
-                                      <p class="card-text text-muted small mb-3"><strong>Description:</strong> <?= nl2br(htmlspecialchars($post['description'])) ?></p>
-                                    <?php endif; ?>
-                                    <?php if (!empty($post['file_name']) && !empty($post['file_path'])): ?>
-                                      <div class="shared-file-attachment mb-3 p-3 bg-light rounded-lg border">
-                                        <div class="shared-file-attachment-header">
-                                          <strong class="shared-file-name"><span class="shared-file-type mr-2">FILE</span><?= htmlspecialchars($post['file_name']) ?></strong>
-                                          <a href="download.php?id=<?= (int)$post['eer_social_post_id'] ?>" class="btn btn-sm btn-outline-primary shared-file-download" download>Download</a>
-                                        </div>
-                                      </div>
-                                    <?php endif; ?>
-                                    <div class="reaction-summary border-top border-bottom py-2 px-0 mb-3">
-                                      <small class="text-muted">
-                                        <i class="fas fa-thumbs-up text-primary mr-1"></i><?= (int)($post['like_count'] ?? 0) ?>
-                                        <i class="fas fa-heart text-danger mr-1 ml-2"></i><?= (int)($post['heart_count'] ?? 0) ?>
-                                        <i class="fas fa-star text-warning mr-1 ml-2"></i><?= (int)($post['wow_count'] ?? 0) ?>
-                                        <i class="fas fa-frown-o text-danger mr-1 ml-2"></i><?= (int)($post['angry_count'] ?? 0) ?>
-                                      </small>
-                                    </div>
-                                    <div class="reaction-buttons mt-3 d-flex gap-2">
-                                      <?php $postId = (int)($post['eer_social_post_id'] ?? 0); ?>
-                                      <?php foreach (['like' => 'primary fa-thumbs-up', 'heart' => 'danger fa-heart', 'wow' => 'warning fa-star', 'angry' => 'danger fa-frown-o'] as $reactionType => $reactionStyle): ?>
-                                        <?php [$buttonStyle, $icon] = explode(' ', $reactionStyle, 2); ?>
-                                        <form method="post" class="d-inline" data-skip>
-                                          <input type="hidden" name="action" value="reaction">
-                                          <input type="hidden" name="post_id" value="<?= $postId ?>">
-                                          <input type="hidden" name="reaction_type" value="<?= $reactionType ?>">
-                                          <button type="submit" class="btn btn-sm btn-outline-<?= $buttonStyle ?>" title="<?= ucfirst($reactionType) ?>" aria-label="<?= ucfirst($reactionType) ?>"><i class="fas <?= $icon ?>"></i> <span class="reaction-count"><?= (int)($post[$reactionType . '_count'] ?? 0) ?></span></button>
-                                        </form>
-                                      <?php endforeach; ?>
-                                    </div>
-                                    <?php $commentCount = count($post['comments'] ?? []); ?>
-                                    <details class="social-comments-panel">
-                                      <summary>
-                                        <span><i class="fas fa-comments mr-1"></i> Comments</span>
-                                        <span class="comment-count"><?= $commentCount ?></span>
-                                      </summary>
-                                      <div class="comments-section">
-                                        <?php if ($commentCount > 0): ?>
-                                          <?php foreach ($post['comments'] as $comment): ?>
-                                            <div class="comment-item">
-                                              <div><strong class="small"><?= htmlspecialchars($comment['author_name'] ?? 'Unknown') ?>:</strong> <span class="small"><?= htmlspecialchars($comment['comment'] ?? '') ?></span></div>
-                                              <small class="text-muted d-block mb-2"><?= htmlspecialchars($comment['created_at'] ?? '') ?></small>
-                                              <?php $commentReactionCounts = $comment['reaction_counts'] ?? ['like' => 0, 'heart' => 0, 'wow' => 0, 'angry' => 0]; ?>
-                                              <div class="comment-reaction-buttons mt-1" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>">
-                                                <button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-reaction="like" title="Like"><i class="fas fa-thumbs-up"></i> <span><?= (int)($commentReactionCounts['like'] ?? 0) ?></span></button>
-                                                <button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn text-danger" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-reaction="heart" title="Heart"><i class="fas fa-heart"></i> <span><?= (int)($commentReactionCounts['heart'] ?? 0) ?></span></button>
-                                                <button type="button" class="btn btn-sm btn-link p-0 comment-react-btn text-warning" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-reaction="wow" title="Wow"><i class="fas fa-star"></i> <span><?= (int)($commentReactionCounts['wow'] ?? 0) ?></span></button>
-                                                <button type="button" class="btn btn-sm btn-link p-0 comment-react-btn text-danger" data-target-type="comment" data-target-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-reaction="angry" title="Angry"><i class="fas fa-frown-o"></i> <span><?= (int)($commentReactionCounts['angry'] ?? 0) ?></span></button>
-                                              </div>
-                                              <?php foreach ($comment['replies'] ?? [] as $reply): ?>
-                                                <?php $replyReactionCounts = $reply['reaction_counts'] ?? ['like' => 0, 'heart' => 0, 'wow' => 0, 'angry' => 0]; ?>
-                                                <div class="reply-item"><strong class="small"><?= htmlspecialchars($reply['author_name'] ?? 'Unknown') ?>:</strong> <span class="small"><?= htmlspecialchars($reply['content'] ?? '') ?></span><small class="text-muted d-block"><?= htmlspecialchars($reply['created_at'] ?? '') ?></small><div class="comment-reaction-buttons mt-1" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>"><button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>" data-reaction="like" title="Like"><i class="fas fa-thumbs-up"></i> <span><?= (int)($replyReactionCounts['like'] ?? 0) ?></span></button><button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn text-danger" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>" data-reaction="heart" title="Heart"><i class="fas fa-heart"></i> <span><?= (int)($replyReactionCounts['heart'] ?? 0) ?></span></button><button type="button" class="btn btn-sm btn-link p-0 mr-2 comment-react-btn text-warning" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>" data-reaction="wow" title="Wow"><i class="fas fa-star"></i> <span><?= (int)($replyReactionCounts['wow'] ?? 0) ?></span></button><button type="button" class="btn btn-sm btn-link p-0 comment-react-btn text-danger" data-target-type="reply" data-target-id="<?= (int)($reply['eer_reply_id'] ?? 0) ?>" data-reaction="angry" title="Angry"><i class="fas fa-frown-o"></i> <span><?= (int)($replyReactionCounts['angry'] ?? 0) ?></span></button></div></div>
-                                              <?php endforeach; ?>
-                                              <details class="reply-panel">
-                                                <summary>Reply</summary>
-                                                <form method="POST" class="reply-form" data-skip data-comment-id="<?= (int)($comment['eer_comment_id'] ?? 0) ?>" data-post-id="<?= $postId ?>">
-                                                  <input type="hidden" name="action" value="reply">
-                                                  <input type="hidden" name="comment_id" value="<?= (int)($comment['eer_comment_id'] ?? 0) ?>">
-                                                  <input type="hidden" name="post_id" value="<?= $postId ?>">
-                                                  <textarea name="content" class="form-control form-control-sm" rows="2" placeholder="Write your reply..." required></textarea>
-                                                  <button type="submit" class="btn btn-sm btn-primary">Post Reply</button>
-                                                </form>
-                                              </details>
-                                            </div>
-                                          <?php endforeach; ?>
-                                        <?php else: ?>
-                                          <p class="text-muted font-italic small mb-0">No comments yet.</p>
-                                        <?php endif; ?>
-                                      </div>
-                                      <form method="POST" class="comment-form" data-skip>
-                                        <input type="hidden" name="action" value="comment">
-                                        <input type="hidden" name="post_id" value="<?= $postId ?>">
-                                        <textarea name="comment" class="form-control form-control-sm" rows="2" placeholder="Write a comment..." required></textarea>
-                                        <button type="submit" class="btn btn-sm btn-primary">Comment</button>
-                                      </form>
-                                    </details>
-                                  </div>
-                                </div>
-                              <?php endforeach; ?>
-                              <?php foreach ($payload['shared_files'] ?? [] as $file): ?>
-                                <div class="card mb-3 shared-file-card" style="border-left: 4px solid #17a2b8;">
-                                  <div class="card-body">
-                                    <h5 class="card-title mb-1"><i class="fas fa-file mr-2 text-primary"></i><?= htmlspecialchars($file['file_name'] ?? 'Shared file') ?></h5>
-                                    <span class="badge badge-info mb-2">Shared File</span>
-                                    <p class="card-text"><?= nl2br(htmlspecialchars($file['content'] ?? $file['description'] ?? 'No description provided.')) ?></p>
-                                    <div class="shared-file-meta">
-                                      <p class="text-muted small mb-0">Uploaded by <?= htmlspecialchars($file['uploader_name'] ?? 'Unknown') ?> | <?= htmlspecialchars($file['created_at'] ?? '') ?></p>
-                                      <a href="download.php?id=<?= (int)($file['eer_social_post_id'] ?? 0) ?>" class="btn btn-sm btn-outline-primary shared-file-download" download><i class="fas fa-download mr-1"></i>Download</a>
-                                    </div>
-                                  </div>
-                                </div>
-                              <?php endforeach; ?>
-                            <?php else: ?>
-                              <p class="text-muted">No posts or shared files yet.</p>
-                            <?php endif; ?>
+                      <p class="card-text mb-3"><?= nl2br(htmlspecialchars($post['content'] ?? '')) ?></p>
+                      <?php if (!empty($post['description'])): ?>
+                        <p class="card-text text-muted small mb-3"><strong>Description:</strong> <?= nl2br(htmlspecialchars($post['description'])) ?></p>
+                      <?php endif; ?>
+                      <?php if (!empty($post['file_name']) && !empty($post['file_path'])): ?>
+                        <div class="shared-file-attachment mb-3 p-3 bg-light rounded-lg border">
+                          <div class="shared-file-attachment-header">
+                            <strong class="shared-file-name"><span class="shared-file-type mr-2">FILE</span><?= htmlspecialchars($post['file_name']) ?></strong>
+                            <a href="download.php?id=<?= (int)($post['eer_social_post_id'] ?? 0) ?>" class="btn btn-sm btn-outline-primary shared-file-download" download>Download</a>
                           </div>
                         </div>
+                      <?php endif; ?>
+                      <div class="reaction-summary border-top border-bottom py-2 px-0 mb-3">
+                        <small class="text-muted">
+                          <i class="fas fa-thumbs-up text-primary mr-1"></i><?= (int)($post['like_count'] ?? 0) ?>
+                          <i class="fas fa-heart text-danger mr-1 ml-2"></i><?= (int)($post['heart_count'] ?? 0) ?>
+                          <i class="fas fa-star text-warning mr-1 ml-2"></i><?= (int)($post['wow_count'] ?? 0) ?>
+                          <i class="fas fa-frown-o text-danger mr-1 ml-2"></i><?= (int)($post['angry_count'] ?? 0) ?>
+                        </small>
                       </div>
+                      <?php $postId = (int)($post['eer_social_post_id'] ?? 0); $commentCount = count($post['comments'] ?? []); ?>
+                      <details class="social-comments-panel">
+                        <summary>
+                          <span><i class="fas fa-comments mr-1"></i> Comments</span>
+                          <span class="comment-count"><?= $commentCount ?></span>
+                        </summary>
+                        <div class="comments-section">
+                          <?php if ($commentCount > 0): foreach ($post['comments'] as $comment): ?>
+                            <div class="comment-item">
+                              <div><strong class="small"><?= htmlspecialchars($comment['author_name'] ?? 'Unknown') ?>:</strong> <span class="small"><?= htmlspecialchars($comment['comment'] ?? '') ?></span></div>
+                              <small class="text-muted d-block mb-2"><?= htmlspecialchars($comment['created_at'] ?? '') ?></small>
+                            </div>
+                          <?php endforeach; else: ?>
+                            <p class="text-muted font-italic small mb-0">No comments yet.</p>
+                          <?php endif; ?>
+                        </div>
+                        <form method="POST" class="comment-form" data-skip>
+                          <input type="hidden" name="action" value="comment">
+                          <input type="hidden" name="post_id" value="<?= $postId ?>">
+                          <textarea name="comment" class="form-control form-control-sm" rows="2" placeholder="Write a comment..." required></textarea>
+                          <button type="submit" class="btn btn-sm btn-primary">Comment</button>
+                        </form>
+                      </details>
                     </div>
                   </div>
+                <?php endforeach; else: ?><p class="text-muted">No posts yet. Share a team update to get the feed started.</p><?php endif; ?></div>
+              </div>
+            </div>
+          </div>
 
+          <div class="social-side-column">
+            <div class="card social-panel" id="sentiment-section">
+              <div class="card-header social-section-header">
+                <h3 class="card-title"><i class="fas fa-chart-line mr-2"></i>Sentiment Analysis</h3>
+              </div>
+              <div class="card-body">
+                <div id="sentiment-analysis" class="analytics-stat-grid">
+                  <div class="analytics-stat analytics-stat-positive"><strong><?= $sentimentCounts['positive'] ?></strong><span>Positive</span></div>
+                  <div class="analytics-stat analytics-stat-neutral"><strong><?= $sentimentCounts['neutral'] ?></strong><span>Neutral</span></div>
+                  <div class="analytics-stat analytics-stat-negative"><strong><?= $sentimentCounts['negative'] ?></strong><span>Negative</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card social-panel" id="analytics-section">
+              <div class="card-header social-section-header">
+                <h3 class="card-title"><i class="fas fa-chart-bar mr-2"></i>Engagement Analytics</h3>
+              </div>
+              <div class="card-body">
+                <div id="engagement-analytics" class="analytics-stat-grid">
+                  <div class="analytics-stat"><strong><?= count($analyticsPosts) ?></strong><span>Posts</span></div>
+                  <div class="analytics-stat"><strong><?= $analyticsComments ?></strong><span>Comments</span></div>
+                  <div class="analytics-stat"><strong><?= $analyticsReactions ?></strong><span>Reactions</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="social-feature-grid">
+          <div class="card social-panel" id="forums-section">
+            <div class="card-header social-section-header">
+              <h3 class="card-title"><i class="fas fa-comments mr-2"></i>Discussion Forums</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#createForumModal">
+                  <i class="fas fa-plus mr-1"></i>Create Forum
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="social-list-compact social-scroll-list">
+                <?php if (!empty($recentForums)): ?>
+                  <?php foreach ($recentForums as $forum): ?>
+                    <div class="social-mini-item" data-social-item="forum">
+                      <div class="social-mini-text">
+                        <h6><?= htmlspecialchars($forum['title'] ?? 'Untitled Forum') ?></h6>
+                        <small><?= htmlspecialchars($forum['category'] ?? 'General') ?></small>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <p class="text-muted mb-0">No forums started yet.</p>
+                <?php endif; ?>
+              </div>
+            </div>
+          </div>
+
+          <div class="card social-panel" id="groups-section">
+            <div class="card-header social-section-header">
+              <h3 class="card-title"><i class="fas fa-users mr-2"></i>Team Groups</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#createGroupModal">
+                  <i class="fas fa-plus mr-1"></i>Create Group
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="social-list-compact social-scroll-list">
+                <?php if (!empty($payload['groups'])): ?>
+                  <?php foreach (array_slice($payload['groups'], 0, 4) as $group): ?>
+                    <div class="social-mini-item" data-social-item="group">
+                      <div class="social-mini-text">
+                        <h6><?= htmlspecialchars($group['name'] ?? 'Untitled Group') ?></h6>
+                        <small><?= count($payload['group_members'][(int)($group['eer_group_id'] ?? 0)] ?? []) ?> members</small>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <p class="text-muted mb-0">No groups created yet.</p>
+                <?php endif; ?>
+              </div>
+            </div>
+          </div>
+
+          <div class="card social-panel" id="projects-section">
+            <div class="card-header social-section-header">
+              <h3 class="card-title"><i class="fas fa-sitemap mr-2"></i>Project Collaboration</h3>
+              <div class="card-tools">
+                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#createProjectModal">
+                  <i class="fas fa-plus mr-1"></i>Create Project
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="social-list-compact social-scroll-list">
+                <?php if (!empty($recentProjects)): ?>
+                  <?php foreach ($recentProjects as $project): ?>
+                    <div class="social-mini-item" data-social-item="project">
+                      <div class="social-mini-text">
+                        <h6><?= htmlspecialchars($project['name'] ?? 'Untitled Project') ?></h6>
+                        <small><?= htmlspecialchars($project['status'] ?? 'planning') ?></small>
+                      </div>
+                      <span class="badge badge-light"><?= htmlspecialchars($project['deadline'] ?? 'No deadline') ?></span>
+                    </div>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <p class="text-muted mb-0">No project spaces created yet.</p>
+                <?php endif; ?>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="social-admin-grid">
+          <div class="card social-panel" id="moderation-section">
+            <div class="card-header social-section-header">
+              <h3 class="card-title"><i class="fas fa-shield-alt mr-2"></i>Reports & Moderation</h3>
+            </div>
+            <div class="card-body">
+              <div class="social-list-compact social-scroll-list">
+                <?php foreach ($moderationItems as $moderationItem): ?>
                   <?php
-                  $analyticsPosts = $payload['feed'] ?? [];
-                  $analyticsComments = 0;
-                  $analyticsReactions = 0;
-                  $sentimentCounts = ['positive' => 0, 'neutral' => 0, 'negative' => 0];
-                  $positiveWords = ['good', 'great', 'love', 'excellent', 'awesome', 'happy', 'nice', 'amazing'];
-                  $negativeWords = ['bad', 'sad', 'angry', 'terrible', 'hate', 'poor', 'worst', 'problem', 'putang', 'gago', 'tanga', 'bwisit', 'pangit', 'galit', 'inis', 'problema', 'ayaw'];
-                  foreach ($analyticsPosts as $analyticsPost) {
-                    $analyticsComments += count($analyticsPost['comments'] ?? []);
-                    $analyticsReactions += (int)($analyticsPost['like_count'] ?? 0) + (int)($analyticsPost['heart_count'] ?? 0) + (int)($analyticsPost['wow_count'] ?? 0);
-                    $analyticsText = strtolower((string)($analyticsPost['content'] ?? '') . ' ' . implode(' ', array_column($analyticsPost['comments'] ?? [], 'comment')));
-                    $hasPositive = false;
-                    $hasNegative = false;
-                    foreach ($positiveWords as $word) $hasPositive = $hasPositive || strpos($analyticsText, $word) !== false;
-                    foreach ($negativeWords as $word) $hasNegative = $hasNegative || strpos($analyticsText, $word) !== false;
-                    if ($hasPositive && !$hasNegative) $sentimentCounts['positive']++;
-                    elseif ($hasNegative && !$hasPositive) $sentimentCounts['negative']++;
-                    else $sentimentCounts['neutral']++;
-                  }
+                    $moderationTitle = (string)($moderationItem['title'] ?? '');
+                    $insightsFilter = $moderationTitle === 'Needs review' ? 'needs-review' : ($moderationTitle === 'Resolved items' ? 'resolved' : 'positive-signals');
                   ?>
-                  <div class="row analytics-pair-layout">
-                    <div class="col-lg-6 col-md-12 mb-3 mb-lg-0">
-                      <div class="card card-info card-outline h-100">
-                        <div class="card-header"><h3 class="card-title">Sentiment Analysis</h3></div>
-                        <div class="card-body" id="sentiment-analysis">
-                          <div class="analytics-stat-grid">
-                            <div class="analytics-stat analytics-stat-positive"><strong><?= $sentimentCounts['positive'] ?></strong><span>Positive</span></div>
-                            <div class="analytics-stat analytics-stat-neutral"><strong><?= $sentimentCounts['neutral'] ?></strong><span>Neutral</span></div>
-                            <div class="analytics-stat analytics-stat-negative"><strong><?= $sentimentCounts['negative'] ?></strong><span>Negative</span></div>
-                          </div>
-                        </div>
-                      </div>
+                  <?php $moderationCount = (int)($moderationItem['count'] ?? 0); ?>
+                  <div class="social-mini-item moderation-insights-trigger<?= $moderationCount === 0 ? ' is-disabled' : '' ?>" data-social-item="post" data-moderation-type="<?= $insightsFilter === 'needs-review' ? 'negative' : ($insightsFilter === 'positive-signals' ? 'positive' : 'resolved') ?>" data-disabled="<?= $moderationCount === 0 ? 'true' : 'false' ?>" role="button" tabindex="<?= $moderationCount === 0 ? '-1' : '0' ?>" data-insights-target="employeeModerationDetails" data-insights-filter="<?= $insightsFilter ?>" aria-disabled="<?= $moderationCount === 0 ? 'true' : 'false' ?>" aria-expanded="false" aria-controls="employeeModerationDetails">
+                    <div class="social-mini-text">
+                      <h6><?= htmlspecialchars((string)($moderationItem['title'] ?? 'Review item')) ?></h6>
+                      <small><?= htmlspecialchars((string)($moderationItem['description'] ?? '')) ?></small>
                     </div>
+                    <span class="badge badge-warning" data-moderation-count="<?= $insightsFilter === 'needs-review' ? 'negative' : ($insightsFilter === 'positive-signals' ? 'positive' : 'resolved') ?>"><?= (int)($moderationItem['count'] ?? 0) ?></span>
+                  </div>
+                <?php endforeach; ?>
+              </div>
 
-                    <div class="col-lg-6 col-md-12">
-                      <div class="card card-secondary card-outline h-100">
-                        <div class="card-header"><h3 class="card-title">Engagement Analytics</h3></div>
-                        <div class="card-body" id="engagement-analytics">
-                          <div class="analytics-stat-grid">
-                            <div class="analytics-stat"><strong><?= count($analyticsPosts) ?></strong><span>Posts</span></div>
-                            <div class="analytics-stat"><strong><?= $analyticsComments ?></strong><span>Comments</span></div>
-                            <div class="analytics-stat"><strong><?= $analyticsReactions ?></strong><span>Reactions</span></div>
-                          </div>
-                        </div>
-                      </div>
+              <div id="employeeModerationDetails" class="moderation-insights-details" hidden>
+
+              <?php if (!empty($negativeReviewItems)): ?>
+                <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="needs-review">
+                  <div class="moderation-employee-header">Posts needing review</div>
+                  <?php foreach (array_slice($negativeReviewItems, 0, 5) as $reviewItem): ?>
+                    <div class="moderation-review-row">
+                      <strong><?= htmlspecialchars((string)($reviewItem['employee'] ?? 'Unknown')) ?></strong>
+                      <span><?= htmlspecialchars((string)($reviewItem['content'] ?? 'No content')) ?></span>
+                      <?php if (!empty($reviewItem['created_at'])): ?>
+                        <small><?= htmlspecialchars((string)$reviewItem['created_at']) ?></small>
+                      <?php endif; ?>
+                      <?php if ((int)($reviewItem['post_id'] ?? 0) > 0): ?>
+                        <button type="button" class="btn btn-sm btn-outline-success resolve-post-btn" data-post-id="<?= (int)$reviewItem['post_id'] ?>">
+                          <i class="fas fa-check mr-1"></i>Mark resolved
+                        </button>
+                      <?php endif; ?>
                     </div>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if (!empty($flaggedEmployees)): ?>
+                <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="needs-review">
+                  <div class="moderation-employee-header">Flagged employees</div>
+                  <?php foreach (array_slice($flaggedEmployees, 0, 5) as $flaggedEmployee): ?>
+                    <div class="moderation-employee-row">
+                      <span><?= htmlspecialchars((string)($flaggedEmployee['name'] ?? 'Unknown')) ?></span>
+                      <span class="badge badge-danger"><?= (int)($flaggedEmployee['negative'] ?? 0) ?></span>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if (!empty($positiveEmployees)): ?>
+                <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="positive-signals">
+                  <div class="moderation-employee-header">Positive employees</div>
+                  <?php foreach (array_slice($positiveEmployees, 0, 5) as $positiveEmployee): ?>
+                    <div class="moderation-employee-row">
+                      <span><?= htmlspecialchars((string)($positiveEmployee['name'] ?? 'Unknown')) ?></span>
+                      <span class="badge badge-success"><?= (int)($positiveEmployee['positive'] ?? 0) ?></span>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if (!empty($mostActiveContributors)): ?>
+                <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="positive-signals">
+                  <div class="moderation-employee-header">Most active contributors</div>
+                  <?php foreach (array_slice($mostActiveContributors, 0, 5) as $activeContributor): ?>
+                    <div class="moderation-employee-row">
+                      <span><?= htmlspecialchars((string)($activeContributor['name'] ?? 'Unknown')) ?></span>
+                      <span class="badge badge-info"><?= (int)($activeContributor['total'] ?? 0) ?></span>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if (!empty($employeeSentimentSummary)): ?>
+                <div class="mt-3 pt-3 border-top" data-insights-section="positive-signals">
+                  <div class="moderation-employee-header">Per-employee moderation breakdown</div>
+                  <div class="table-responsive">
+                    <table class="table table-sm moderation-breakdown-table">
+                      <thead>
+                        <tr>
+                          <th><button type="button" class="moderation-sort-btn" data-sort-key="employee">Employee</button></th>
+                          <th><button type="button" class="moderation-sort-btn" data-sort-key="positive">Positive</button></th>
+                          <th><button type="button" class="moderation-sort-btn" data-sort-key="neutral">Neutral</button></th>
+                          <th><button type="button" class="moderation-sort-btn" data-sort-key="negative">Negative</button></th>
+                          <th><button type="button" class="moderation-sort-btn" data-sort-key="total">Total</button></th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <?php foreach ($employeeSentimentSummary as $employeeName => $stats): ?>
+                          <?php
+                            $employeePositive = (int)($stats['positive'] ?? 0);
+                            $employeeNeutral = (int)($stats['neutral'] ?? 0);
+                            $employeeNegative = (int)($stats['negative'] ?? 0);
+                            $employeeTotal = $employeePositive + $employeeNeutral + $employeeNegative;
+                            $employeeStatus = $employeeNegative > 0 ? 'Flagged' : 'Stable';
+                            $employeeStatusClass = $employeeNegative > 0 ? 'badge-danger' : 'badge-success';
+                          ?>
+                          <tr data-employee-row data-employee="<?= htmlspecialchars((string)$employeeName, ENT_QUOTES, 'UTF-8') ?>" data-positive="<?= $employeePositive ?>" data-neutral="<?= $employeeNeutral ?>" data-negative="<?= $employeeNegative ?>" data-total="<?= $employeeTotal ?>">
+                            <td><?= htmlspecialchars((string)$employeeName) ?></td>
+                            <td><?= $employeePositive ?></td>
+                            <td><?= $employeeNeutral ?></td>
+                            <td><?= $employeeNegative ?></td>
+                            <td><?= $employeeTotal ?></td>
+                            <td><span class="badge <?= $employeeStatusClass ?>"><?= $employeeStatus ?></span></td>
+                          </tr>
+                        <?php endforeach; ?>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
+              <?php endif; ?>
 
-                <!-- Discussion Forums Tab -->
-          <div class="tab-pane fade"
-               id="forums"
-               role="tabpanel"
-               aria-labelledby="forums-tab">
-                  <div class="row">
-                    <div class="col-12">
-                      <div class="card card-warning card-outline">
-                        <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-comments mr-2"></i>Discussion Forums</h3>
-                          <div class="card-tools">
-                            <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#createForumModal">
-                              <i class="fas fa-plus mr-1"></i>Create Forum
-                            </button>
-                          </div>
-                        </div>
-                        <div class="card-body">
-                          <div id="forums-list">
-                            <?php if (empty($payload['forums'])): ?>
-                              <div class="alert alert-info">No forums available yet.</div>
-                            <?php else: ?>
-                              <?php foreach ($payload['forums'] as $forum): ?>
-                                <div class="card mb-3 forum-card">
-                                  <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                      <div>
-                                        <h5 class="mb-1" style="font-weight:600;">
-                                          <?= htmlspecialchars($forum['title'] ?? 'Untitled Forum') ?>
-                                        </h5>
-                                        <p class="mb-1 text-muted"><?= htmlspecialchars($forum['description'] ?? '') ?></p>
-                                        <small class="text-muted">
-                                          Category: <?= htmlspecialchars($forum['category'] ?? 'General') ?>
-                                        </small>
-                                      </div>
-                                    </div>
-                                    <div class="d-flex justify-content-between text-muted small">
-                                      <span>
-                                        Created by: <?= htmlspecialchars($forum['creator_name'] ?? $forum['created_by_employee_id'] ?? 'Unknown') ?>
-                                      </span>
-                                      <span><?= htmlspecialchars($forum['created_at'] ?? '') ?></span>
-                                    </div>
-                                  </div>
-                                </div>
-                              <?php endforeach; ?>
-                            <?php endif; ?>
-                          </div>
-                        </div>
-                      </div>
+              <?php if (!empty($resolvedReviewItems)): ?>
+                <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="resolved">
+                  <div class="moderation-employee-header">Resolved posts</div>
+                  <?php foreach (array_slice($resolvedReviewItems, 0, 5) as $resolvedItem): ?>
+                    <div class="moderation-review-row moderation-resolved-row">
+                      <strong><?= htmlspecialchars((string)($resolvedItem['employee'] ?? 'Unknown')) ?></strong>
+                      <span><?= htmlspecialchars((string)($resolvedItem['content'] ?? 'No content')) ?></span>
+                      <?php if (!empty($resolvedItem['created_at'])): ?>
+                        <small><?= htmlspecialchars((string)$resolvedItem['created_at']) ?></small>
+                      <?php endif; ?>
+                      <span class="badge badge-success">Resolved</span>
                     </div>
-                  </div>
+                  <?php endforeach; ?>
                 </div>
+              <?php else: ?>
+                <div class="moderation-empty-state mt-3 pt-3 border-top" data-insights-section="resolved">
+                  <span class="text-muted">No resolved items yet.</span>
+                </div>
+              <?php endif; ?>
 
-                <!-- Team Groups Tab -->
-          <!-- Team Groups Tab -->
-          <div class="tab-pane fade"
-               id="groups"
-               role="tabpanel"
-               aria-labelledby="groups-tab">                  <div class="row">
-                    <div class="col-12">
-                      <div class="card card-primary card-outline">
-                        <div class="card-header"><h3 class="card-title"><i class="fas fa-users mr-2"></i>Manage Groups</h3></div>
-                        <div class="card-body">
-                          <div class="row group-setup-layout">
-                            <div class="col-lg-7 col-md-12">
-                              <div class="group-form-stack">
-                                <form method="post" class="group-create-form">
-                                  <input type="hidden" name="action" value="create_group">
-                                  <div class="form-group">
-                                    <label for="group-name">Group Name</label>
-                                    <input id="group-name" type="text" name="group_name" class="form-control" placeholder="Enter group name" required>
-                                  </div>
-                                  <button class="btn btn-primary" type="submit">Create Group</button>
-                                </form>
+              </div>
+            </div>
+          </div>
 
-                                  <form id="group-member-form" method="post" class="group-member-form" data-skip>
-                                    <input type="hidden" name="action" value="add_member">
-                                    <div class="form-group">
-                                      <label for="group-id">Group</label>
-                                      <select id="group-id" name="group_id" class="form-control" required>
-                                        <option value="">Choose group</option>
-                                        <?php foreach ($payload['groups'] as $group): ?>
-                                          <option value="<?= htmlspecialchars($group['eer_group_id']) ?>"><?= htmlspecialchars($group['name'] . ' (ID: ' . $group['eer_group_id'] . ')') ?></option>
-                                        <?php endforeach; ?>
-                                      </select>
-                                    </div>
-                                    <div class="form-group">
-                                      <label for="employee-id">Employee</label>
-                                      <select id="employee-id" name="employee_id" class="form-control" required>
-                                        <option value="">Choose employee</option>
-                                        <?php foreach ($payload['employees'] as $employee): ?>
-                                          <option value="<?= htmlspecialchars($employee['employee_id']) ?>"><?= htmlspecialchars($employee['employee_id'] . ' - ' . ($employee['full_name'] ?? 'No name')) ?></option>
-                                        <?php endforeach; ?>
-                                      </select>
-                                    </div>
-                                    <button class="btn btn-primary" type="submit">Add Member</button>
-                                  </form>
-                              </div>
-                            </div>
-
-                            <?php if (!empty($payload['employees'])): ?>
-                              <div class="col-lg-5 col-md-12">
-                                <div class="employee-list-panel h-100">
-                                  <h5 class="employee-list-title">Employee list</h5>
-                                  <ul class="employee-list">
-                                    <?php foreach ($payload['employees'] as $employee): ?>
-                                      <li class="employee-list-item"><?= htmlspecialchars($employee['employee_id'] . ' - ' . ($employee['full_name'] ?? 'No name')) ?></li>
-                                    <?php endforeach; ?>
-                                  </ul>
-                                </div>
-                              </div>
-                            <?php endif; ?>
-                          </div>
-
-                          <div class="mt-4">
-                            <div class="card card-success card-outline">
-                              <div class="card-header"><h3 class="card-title">Existing Groups</h3></div>
-                              <div class="card-body">
-                                  <div class="existing-groups-grid">
-                                    <?php foreach ($payload['groups'] as $group): ?>
-                                      <div class="existing-group-card" data-group-id="<?= htmlspecialchars($group['eer_group_id']) ?>">
-                                        <h5 class="mb-1"><?= htmlspecialchars($group['name'] ?? 'Untitled Group') ?></h5>
-                                        <p class="mb-1 text-muted">ID: <?= htmlspecialchars($group['eer_group_id'] ?? 'N/A') ?></p>
-                                        <?php $members = $payload['group_members'][(int)($group['eer_group_id'] ?? 0)] ?? []; ?>
-                                        <p class="mb-1"><strong>Members:</strong></p>
-                                        <div id="group-members-<?= htmlspecialchars($group['eer_group_id']) ?>">
-                                          <?php if (!empty($members)): ?>
-                                            <ul class="list-group list-group-flush">
-                                              <?php foreach ($members as $member): ?>
-                                                <li class="list-group-item py-1">
-                                                  Employee ID: <?= htmlspecialchars($member['employee_id'] ?? 'N/A') ?>
-                                                  <?php if (!empty($member['full_name'])): ?>
-                                                    - <?= htmlspecialchars($member['full_name']) ?>
-                                                  <?php endif; ?>
-                                                </li>
-                                              <?php endforeach; ?>
-                                            </ul>
-                                          <?php else: ?>
-                                            <p class="text-muted mb-0">No members yet.</p>
-                                          <?php endif; ?>
-                                        </div>
-                                      </div>
-                                    <?php endforeach; ?>
-                                  </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+          <div class="card social-panel" id="activity-log-section">
+            <div class="card-header social-section-header">
+              <h3 class="card-title"><i class="fas fa-history mr-2"></i>Admin Activity Log</h3>
+            </div>
+            <div class="card-body">
+              <div class="social-list-compact social-scroll-list">
+                <?php foreach ($activityItems as $activityItem): ?>
+                  <div class="social-mini-item" data-social-item="all">
+                    <div class="social-mini-text">
+                      <h6><?= htmlspecialchars((string)($activityItem['title'] ?? 'Activity')) ?></h6>
+                      <small><?= htmlspecialchars((string)($activityItem['meta'] ?? '')) ?></small>
                     </div>
+                    <span class="badge badge-secondary"><?= htmlspecialchars((string)($activityItem['badge'] ?? 'Info')) ?></span>
                   </div>
-                </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                <!-- Project Collaboration Spaces Tab -->
-                <div class="tab-pane fade" id="projects" role="tabpanel" aria-labelledby="projects-tab">
-                  <div class="row">
-                    <div class="col-12">
-                      <div class="card card-success card-outline">
-                        <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-sitemap mr-2"></i>Project Collaboration Spaces</h3>
-                          <div class="card-tools">
-                            <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#createProjectModal">
-                              <i class="fas fa-plus mr-1"></i>Create Project Space
-                            </button>
-                          </div>
-                        </div>
-                        <div class="card-body">
-                          <div id="projects-list">
-                            <?php if (empty($payload['projects'])): ?>
-                              <div class="alert alert-info">No project spaces available yet.</div>
-                            <?php else: ?>
-                              <?php foreach ($payload['projects'] as $project): ?>
-                                <div class="card mb-3 project-card">
-                                  <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                      <div>
-                                        <h5 class="mb-1" style="font-weight:600;">
-                                          <?= htmlspecialchars($project['name'] ?? 'Untitled Project') ?>
-                                        </h5>
-                                        <p class="mb-1 text-muted"><?= htmlspecialchars($project['description'] ?? '') ?></p>
-                                        <div class="d-flex flex-wrap align-items-center">
-                                          <?php
-                                            $projectStatus = strtolower((string)($project['status'] ?? 'unknown'));
-                                            $statusClasses = [
-                                              'active' => 'badge-success',
-                                              'completed' => 'badge-primary',
-                                              'on-hold' => 'badge-warning',
-                                              'planning' => 'badge-info',
-                                            ];
-                                            $statusLabels = [
-                                              'active' => 'Active',
-                                              'completed' => 'Completed',
-                                              'on-hold' => 'On Hold',
-                                              'planning' => 'Planning',
-                                            ];
-                                          ?>
-                                          <span class="badge <?= htmlspecialchars($statusClasses[$projectStatus] ?? 'badge-secondary') ?>">
-                                            <?= htmlspecialchars($statusLabels[$projectStatus] ?? ucfirst($projectStatus)) ?>
-                                          </span>
-                                          <small class="text-muted ml-3">
-                                            Deadline: <?= htmlspecialchars($project['deadline'] ?? 'Not set') ?>
-                                          </small>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div class="d-flex justify-content-between text-muted small">
-                                      <span>
-                                        Created by: <?= htmlspecialchars($project['creator_name'] ?? $project['created_by_employee_id'] ?? 'Unknown') ?>
-                                      </span>
-                                      <span><?= htmlspecialchars($project['created_at'] ?? '') ?></span>
-                                    </div>
-                                  </div>
-                                </div>
-                              <?php endforeach; ?>
-                            <?php endif; ?>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+      <div class="modal fade" id="createGroupModal" tabindex="-1" role="dialog" aria-labelledby="createGroupModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="createGroupModalLabel"><i class="fas fa-users mr-2"></i>Create Group</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="color: #6c757d; font-size: 1.8rem; padding: 0; border: none; background: none; cursor: pointer; transition: color 0.3s ease; margin-left: auto;" onmouseover="this.style.color='#495057'" onmouseout="this.style.color='#6c757d'"><span aria-hidden="true">×</span></button>
+            </div>
+            <form method="post" class="group-create-form">
+              <input type="hidden" name="action" value="create_group">
+              <div class="modal-body">
+                <div class="form-group">
+                  <label for="groupName">Group Name</label>
+                  <input id="groupName" type="text" name="group_name" class="form-control" placeholder="Enter group name" required>
                 </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Group</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
 
 <!-- Create Project Modal -->
 <div class="modal fade" id="createProjectModal" tabindex="-1" role="dialog" aria-labelledby="createProjectModalLabel" aria-hidden="true">
@@ -585,12 +722,3 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 </div>
 
   <!-- View Project Modal -->
-
-              </div>
-            </div>
-          </div>
-        </div>
-    </div>
-
-   
-    </div>
