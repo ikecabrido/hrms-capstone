@@ -3,9 +3,19 @@
         <p>&copy; <?php echo date('Y'); ?> Human Resource Management System. All rights reserved.</p>
     </footer>
 </div>
+    <script>
+        window.__engagementDebugLogs = false;
+        const __engagementOriginalConsoleLog = console.log.bind(console);
+        const __engagementOriginalConsoleWarn = console.warn.bind(console);
+        window.__engagementSetDebugLogging = function(enabled) {
+            window.__engagementDebugLogs = !!enabled;
+            console.log = window.__engagementDebugLogs ? __engagementOriginalConsoleLog : function() {};
+            console.warn = window.__engagementDebugLogs ? __engagementOriginalConsoleWarn : function() {};
+        };
+        window.__engagementSetDebugLogging(window.__engagementDebugLogs);
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.1.0/jspdf.plugin.autotable.min.js"></script>
     <script type="module" src="js/script.js?v=<?php echo filemtime(__DIR__ . '/../js/script.js'); ?>"></script>
     <script>
         (function() {

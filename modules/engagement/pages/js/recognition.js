@@ -1169,7 +1169,22 @@ function bindRecognitionPageEvents() {
   });
 }
 
+function hasRecognitionPageStructure() {
+  return !!(
+    document.getElementById('recognition-tabs') ||
+    document.getElementById('employee-month') ||
+    document.getElementById('current-winner-content') ||
+    document.getElementById('award-history-feed') ||
+    document.getElementById('recognition-feed')
+  );
+}
+
 function initializeRecognitionPage() {
+  if (!hasRecognitionPageStructure()) {
+    console.log('[Recognition Tab] Recognition UI not found on this page; skipping initialization.');
+    return;
+  }
+
   if (recognitionPageInitialized) return;
   recognitionPageInitialized = true;
 
@@ -1193,6 +1208,13 @@ function initializeRecognitionPage() {
 }
 
 document.addEventListener('DOMContentLoaded', initializeRecognitionPage);
+
+window.addEventListener('page:loaded', function (event) {
+  if (!event.detail || event.detail.page !== 'recognition') return;
+  if (!recognitionPageInitialized) {
+    initializeRecognitionPage();
+  }
+});
 
 let recognitionRefreshTimer = null;
 
@@ -1318,7 +1340,7 @@ function renderComprehensiveLeaderboard(items) {
   body.innerHTML = items.slice(0, 9).map(function(item, index) {
     const rank = Number(item.rank_position || index + 1);
     return '<tr><td><span class="badge ' + (rank <= 3 ? 'badge-warning' : 'badge-secondary') + '">' + rank + '</span></td>'
-      + '<td><strong>' + escapeHtml(item.employee_name || 'Unknown') + '</strong><div class="text-muted small">' + escapeHtml(item.department || 'N/A') + '</div><button type="button" class="btn btn-link btn-sm p-0 adjust-points" data-employee-id="' + escapeHtml(item.employee_id || '') + '" data-employee-name="' + escapeHtml(item.employee_name || '') + '">Adjust points</button></td>'
+      + '<td><strong>' + escapeHtml(item.employee_name || 'Unknown') + '</strong><div class="text-muted small">' + escapeHtml(item.department || 'N/A') + '</div></td>'
       + '<td>' + Number(item.recognition_points || 0) + '</td><td>' + Number(item.performance_score || 0) + '%</td>'
       + '<td>' + Number(item.badge_points || 0) + '</td><td>' + Number(item.award_points || 0) + '</td>'
       + '<td><span class="badge badge-success badge-pill">' + Number(item.total_points || 0) + ' pts</span></td></tr>';
@@ -1375,7 +1397,76 @@ function renderCurrentWinner(awardHistory, employees, candidates) {
     + (winner.reason ? '<div class="current-winner-reason"><span class="current-winner-reason-label">Reason</span><span>' + escapeHtml(winner.reason) + '</span></div>' : '');
 }
 
+const recognitionPerformanceCacheKey = 'engagement:recognition:performance-data';
+const recognitionPerformanceKeys = [
+  'recognition_recommendations',
+  'employees_without_reports',
+  'performance_leaderboard',
+  'comprehensive_leaderboard',
+  'department_leaderboard'
+];
+
+function readRecognitionPerformanceCache() {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(recognitionPerformanceCacheKey) || '{}');
+    return cached && typeof cached === 'object' ? cached : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveRecognitionPerformanceCache(data) {
+  const cache = {};
+  recognitionPerformanceKeys.forEach(function (key) {
+    if (Array.isArray(data[key]) && data[key].length) {
+      cache[key] = data[key];
+    }
+  });
+
+  if (!Object.keys(cache).length) return;
+  try {
+    sessionStorage.setItem(recognitionPerformanceCacheKey, JSON.stringify(cache));
+  } catch (error) {
+    // Ignore storage limits and keep the live API response usable.
+  }
+}
+
+function loadRecognitionPerformanceFallback(apiRoot) {
+  const requests = [
+    ['recognition_recommendations', 'recommendations'],
+    ['performance_leaderboard', 'performance_leaderboard'],
+    ['comprehensive_leaderboard', 'comprehensive_leaderboard'],
+    ['department_leaderboard', 'department_leaderboard']
+  ];
+
+  return Promise.all(requests.map(function (entry) {
+    return fetch(apiRoot + '?action=' + entry[1] + '&limit=10', {credentials: 'same-origin', cache: 'no-store'})
+      .then(function (response) { return response.ok ? response.json() : {success: false}; })
+      .then(function (result) { return [entry[0], result && result.success && Array.isArray(result.data) ? result.data : []]; })
+      .catch(function () { return [entry[0], []]; });
+  })).then(function (results) {
+    const performanceData = {};
+    results.forEach(function (entry) { performanceData[entry[0]] = entry[1]; });
+    saveRecognitionPerformanceCache(performanceData);
+
+    const recommendations = document.getElementById('performance-recommendations-list');
+    if (recommendations && performanceData.recognition_recommendations.length) {
+      recommendations.innerHTML = '<ul class="list-group list-group-flush">' + performanceData.recognition_recommendations.map(function (item) {
+        return '<li class="list-group-item d-flex justify-content-between align-items-center"><div><strong>' + escapeHtml(item.employee_name || item.employee_id || 'Unknown') + '</strong><div class="text-muted small">' + escapeHtml(item.evaluation_period || 'Performance Report') + ' • Grade: ' + escapeHtml(item.final_grade || 'N/A') + ' • Score: ' + escapeHtml(item.final_rating_percent || 'N/A') + '%</div></div><button type="button" class="btn btn-sm btn-outline-success recommend-recognize" data-employee-id="' + escapeHtml(item.employee_id || '') + '" data-employee-name="' + escapeHtml(item.employee_name || '') + '">Recognize</button></li>';
+      }).join('') + '</ul>';
+    }
+
+    renderComprehensiveLeaderboard(performanceData.comprehensive_leaderboard);
+    renderDepartmentLeaderboard(performanceData.department_leaderboard);
+    renderTopPerformers(findCardBodyByTitle('Top Performers'), performanceData.performance_leaderboard);
+  });
+}
+
 function loadRecognitionPageData() {
+  if (!hasRecognitionPageStructure()) {
+    return;
+  }
+
   const apiRoot = window.location.pathname.split('/modules/engagement/')[0] + '/modules/engagement/api/recognition.php';
   const month = document.getElementById('employee-of-month-month');
   const year = document.getElementById('employee-of-month-year');
@@ -1387,7 +1478,24 @@ function loadRecognitionPageData() {
       return response.json();
     })
     .then(function (response) {
-      const data = response.data || {};
+      const apiData = response.data || {};
+      const cachedPerformanceData = readRecognitionPerformanceCache();
+      const data = Object.assign({}, apiData);
+
+      recognitionPerformanceKeys.forEach(function (key) {
+        if ((!Array.isArray(data[key]) || data[key].length === 0) && Array.isArray(cachedPerformanceData[key]) && cachedPerformanceData[key].length) {
+          data[key] = cachedPerformanceData[key];
+        }
+      });
+      saveRecognitionPerformanceCache(data);
+
+      const hasPerformanceData = recognitionPerformanceKeys.some(function (key) {
+        return Array.isArray(data[key]) && data[key].length > 0;
+      });
+      if (!hasPerformanceData) {
+        loadRecognitionPerformanceFallback(apiRoot);
+      }
+
       window.recognitionPageData = data;
       window.recognitionEmployees = data.employees || [];
       populateNominationEmployeesFromRecognitions(data.recognitions);
@@ -1420,6 +1528,9 @@ function loadRecognitionPageData() {
     })
     .catch(function (error) {
       console.warn('[Recognition] API page-data load failed; specialized loaders remain active.', error);
+      loadRecognitionPerformanceFallback(apiRoot).catch(function (fallbackError) {
+        console.warn('[Recognition] Performance fallback failed:', fallbackError);
+      });
     });
 }
 
@@ -1560,11 +1671,30 @@ function loadBadges() {
 }
 
 function loadAwardHistory() {
-  fetch('../api/index.php?resource=award_history')
-    .then(r => r.json())
-    .then(res => {
-      const feed = document.getElementById('award-history-feed');
-      if (!feed) return;
+  const feed = document.getElementById('award-history-feed');
+  if (!feed) return;
+
+  fetch(recognitionApiBase + '?resource=award_history')
+    .then(async function(response) {
+      if (!response.ok) {
+        feed.innerHTML = '<div class="text-muted">No award history found.</div>';
+        return;
+      }
+
+      const text = await response.text();
+      if (!text || !text.trim()) {
+        feed.innerHTML = '<div class="text-muted">No award history found.</div>';
+        return;
+      }
+
+      let res = null;
+      try {
+        res = JSON.parse(text);
+      } catch (error) {
+        feed.innerHTML = '<div class="text-muted">No award history found.</div>';
+        return;
+      }
+
       feed.innerHTML = '';
       if (res && res.data && res.data.length) {
         res.data.forEach(a => {
@@ -1574,6 +1704,11 @@ function loadAwardHistory() {
           feed.appendChild(item);
         });
       } else {
+        feed.innerHTML = '<div class="text-muted">No award history found.</div>';
+      }
+    })
+    .catch(function() {
+      if (feed) {
         feed.innerHTML = '<div class="text-muted">No award history found.</div>';
       }
     });
@@ -1653,31 +1788,6 @@ if (!window.__editRewardModalCloseBound) {
       setRecognitionModalVisibility('editRewardModal', false);
     }
   }, true);
-}
-
-if (!window.__pointsAdjustmentBound) {
-  window.__pointsAdjustmentBound = true;
-  document.addEventListener('click', function(event) {
-    const adjustButton = event.target.closest('.adjust-points');
-    if (!adjustButton) return;
-    const points = window.prompt('Points adjustment for ' + (adjustButton.dataset.employeeName || 'employee') + ':', '0');
-    if (points === null || !Number.isInteger(Number(points)) || Number(points) === 0) return;
-    const reason = window.prompt('Reason for this adjustment:');
-    if (reason === null || !reason.trim()) return;
-
-    fetch(recognitionApiBase + '?resource=recognition&action=adjust_points', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ employee_id: adjustButton.dataset.employeeId, points: Number(points), reason: reason.trim() })
-    })
-      .then(response => response.json().then(data => ({ response, data })))
-      .then(({ response, data }) => {
-        if (!response.ok || !data.success) throw new Error(data.error || 'Unable to adjust points.');
-        loadRecognitionPageData();
-        loadRecognitionFeed();
-      })
-      .catch(error => window.alert(error.message));
-  });
 }
 
 function loadRewardRedemptions() {

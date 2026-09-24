@@ -464,10 +464,12 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
               <div class="social-list-compact social-scroll-list">
                 <?php if (!empty($payload['groups'])): ?>
                   <?php foreach (array_slice($payload['groups'], 0, 4) as $group): ?>
-                    <div class="social-mini-item" data-social-item="group">
+                    <?php $groupId = (int)($group['eer_group_id'] ?? 0); ?>
+                    <?php $groupMembers = $payload['group_members'][$groupId] ?? []; ?>
+                    <div class="social-mini-item social-group-item" data-social-item="group" data-group-id="<?= $groupId ?>" data-group-name="<?= htmlspecialchars((string)($group['name'] ?? 'Untitled Group'), ENT_QUOTES, 'UTF-8') ?>" data-group-members="<?= htmlspecialchars(json_encode($groupMembers), ENT_QUOTES, 'UTF-8') ?>" role="button" tabindex="0" onclick="openGroupMembersModal(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openGroupMembersModal(this); }">
                       <div class="social-mini-text">
                         <h6><?= htmlspecialchars($group['name'] ?? 'Untitled Group') ?></h6>
-                        <small><?= count($payload['group_members'][(int)($group['eer_group_id'] ?? 0)] ?? []) ?> members</small>
+                        <small class="group-member-count"><?= count($groupMembers) ?> members</small>
                       </div>
                     </div>
                   <?php endforeach; ?>
@@ -482,7 +484,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             <div class="card-header social-section-header">
               <h3 class="card-title"><i class="fas fa-sitemap mr-2"></i>Project Collaboration</h3>
               <div class="card-tools">
-                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#createProjectModal">
+                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#createProjectModal">
                   <i class="fas fa-plus mr-1"></i>Create Project
                 </button>
               </div>
@@ -496,7 +498,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                         <h6><?= htmlspecialchars($project['name'] ?? 'Untitled Project') ?></h6>
                         <small><?= htmlspecialchars($project['status'] ?? 'planning') ?></small>
                       </div>
-                      <span class="badge badge-light"><?= htmlspecialchars($project['deadline'] ?? 'No deadline') ?></span>
                     </div>
                   <?php endforeach; ?>
                 <?php else: ?>
@@ -693,6 +694,43 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 <button type="submit" class="btn btn-primary">Create Group</button>
               </div>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="groupMembersModal" tabindex="-1" role="dialog" aria-labelledby="groupMembersModalLabel" aria-hidden="true">
+        <div class="modal-dialog group-members-modal-dialog" role="document">
+          <div class="modal-content group-members-modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="groupMembersModalLabel"><i class="fas fa-users mr-2"></i>Group Members</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="window.closeSocialModal('groupMembersModal')"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+              <div class="group-members-modal-layout">
+                <section class="group-members-list-panel">
+                  <h6>Members</h6>
+                  <div id="groupMembersModalList" class="group-members-modal-list"></div>
+                </section>
+                <section class="group-members-add-panel">
+                  <h6>Add member</h6>
+                  <form id="group-members-modal-form">
+                    <input type="hidden" id="groupMembersModalGroupId" name="group_id">
+                    <div class="form-group">
+                      <label for="groupMembersModalEmployeeId">Employee</label>
+                      <select id="groupMembersModalEmployeeId" name="employee_id" class="form-control" required>
+                        <option value="">Select employee</option>
+                        <?php foreach ($payload['employees'] ?? [] as $employee): ?>
+                          <?php $employeeName = trim(implode(' ', array_filter([$employee['first_name'] ?? '', $employee['middle_name'] ?? '', $employee['last_name'] ?? '']))); ?>
+                          <?php if ($employeeName === '') { $employeeName = (string)($employee['email'] ?? 'Unnamed Employee'); } ?>
+                          <option value="<?= (int)($employee['employee_id'] ?? 0) ?>"><?= htmlspecialchars($employeeName) ?> (ID: <?= (int)($employee['employee_id'] ?? 0) ?>)</option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-user-plus mr-1"></i>Add member</button>
+                  </form>
+                </section>
+              </div>
+            </div>
           </div>
         </div>
       </div>

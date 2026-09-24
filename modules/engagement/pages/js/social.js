@@ -39,6 +39,61 @@ function escapeHtml(text) {
     });
   }
 
+  window.closeSocialModal = closeSocialModal;
+
+  document.addEventListener('click', function(event) {
+    var modal = document.getElementById('groupMembersModal');
+    if (modal && modal.classList.contains('show') && event.target === modal) {
+      window.closeSocialModal('groupMembersModal');
+    }
+  });
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key !== 'Escape') return;
+    var modal = document.getElementById('groupMembersModal');
+    if (modal && modal.classList.contains('show')) {
+      window.closeSocialModal('groupMembersModal');
+    }
+  });
+
+  window.openGroupMembersModal = function(groupItem) {
+    var modal = document.getElementById('groupMembersModal');
+    var modalTitle = document.getElementById('groupMembersModalLabel');
+    var groupIdField = document.getElementById('groupMembersModalGroupId');
+    var membersList = document.getElementById('groupMembersModalList');
+    if (!modal || !groupItem) return;
+
+    var groupName = groupItem.dataset.groupName || 'Group';
+    var members = [];
+    try {
+      members = JSON.parse(groupItem.dataset.groupMembers || '[]');
+    } catch (error) {
+      members = [];
+    }
+
+    if (modalTitle) modalTitle.innerHTML = '<i class="fas fa-users mr-2"></i>' + escapeHtml(groupName) + ' Members';
+    if (groupIdField) groupIdField.value = groupItem.dataset.groupId || '';
+    if (membersList) {
+      membersList.innerHTML = members.length
+        ? members.map(function(member) {
+            var name = member.full_name || ('Employee ID: ' + (member.employee_id || 'N/A'));
+            return '<div class="group-member-row"><i class="fas fa-user mr-2"></i>' + escapeHtml(name) + '</div>';
+          }).join('')
+        : '<div class="group-member-empty">No members yet.</div>';
+    }
+
+    if (window.bootstrap && window.bootstrap.Modal) {
+      (window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal)).show();
+    } else if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+      window.jQuery(modal).modal('show');
+    } else {
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+  };
+
   // Add smooth transition styles
   const style = document.createElement('style');
   style.textContent = `
@@ -1559,10 +1614,20 @@ function escapeHtml(text) {
 
     function renderGroupMembers(groupId, members) {
       var wrapper = document.getElementById('group-members-' + groupId);
+      var groupItem = wrapper ? wrapper.closest('.social-group-item') : document.querySelector('.social-group-item[data-group-id="' + groupId + '"]');
+      var countLabel = groupItem ? groupItem.querySelector('.group-member-count') : null;
+      if (countLabel) {
+        countLabel.textContent = (Array.isArray(members) ? members.length : 0) + ' members';
+      }
+
+      if (groupItem) {
+        groupItem.dataset.groupMembers = JSON.stringify(Array.isArray(members) ? members : []);
+      }
+
       if (!wrapper) return;
 
       if (!Array.isArray(members) || members.length === 0) {
-        wrapper.innerHTML = '<p class="text-muted mb-0">No members yet.</p>';
+        wrapper.innerHTML = '<div class="group-member-empty">No members yet.</div>';
         return;
       }
 
@@ -1574,7 +1639,22 @@ function escapeHtml(text) {
         return '<li class="list-group-item py-1">' + text + '</li>';
       }).join('');
 
-      wrapper.innerHTML = '<ul class="list-group list-group-flush">' + items + '</ul>';
+      wrapper.innerHTML = items;
+    }
+
+    function renderGroupMembersModalList(members) {
+      var membersList = document.getElementById('groupMembersModalList');
+      if (!membersList) return;
+
+      if (!Array.isArray(members) || members.length === 0) {
+        membersList.innerHTML = '<div class="group-member-empty">No members yet.</div>';
+        return;
+      }
+
+      membersList.innerHTML = members.map(function(member) {
+        var memberName = member.full_name || ('Employee ID: ' + (member.employee_id || 'N/A'));
+        return '<div class="group-member-row"><i class="fas fa-user mr-2"></i>' + escapeHtml(memberName) + '</div>';
+      }).join('');
     }
 
     function refreshGroupMembers(groupId) {
@@ -1916,7 +1996,18 @@ function escapeHtml(text) {
               if (deadlineTimeInput) deadlineTimeInput.value = '';
               if (statusInput) statusInput.value = 'planning';
               closeSocialModal('createProjectModal');
-              window.location.reload();
+
+              var projectsList = document.querySelector('#projects-section .social-scroll-list');
+              if (projectsList) {
+                var emptyState = projectsList.querySelector('.text-muted.mb-0');
+                if (emptyState) {
+                  emptyState.remove();
+                }
+
+                var projectStatus = status && status.trim() ? status : 'planning';
+                var newProjectHtml = '<div class="social-mini-item" data-social-item="project"><div class="social-mini-text"><h6>' + escapeHtml(name) + '</h6><small>' + escapeHtml(projectStatus) + '</small></div></div>';
+                projectsList.innerHTML = newProjectHtml + projectsList.innerHTML;
+              }
             } else {
               alert(data.message || 'Failed to create project.');
             }
@@ -2037,25 +2128,38 @@ function escapeHtml(text) {
       });
     }
 
-    const memberForm = document.getElementById('group-member-form');
-    if (memberForm && memberForm.dataset.apiBound !== '1') {
-      memberForm.dataset.apiBound = '1';
-      memberForm.addEventListener('submit', function(event) {
+    var modalMemberForm = document.getElementById('group-members-modal-form');
+    if (modalMemberForm && modalMemberForm.dataset.apiBound !== '1') {
+      modalMemberForm.dataset.apiBound = '1';
+      modalMemberForm.addEventListener('submit', function(event) {
         event.preventDefault();
-        const formData = new FormData(memberForm);
+        var groupId = document.getElementById('groupMembersModalGroupId')?.value || '';
+        var employeeId = document.getElementById('groupMembersModalEmployeeId')?.value || '';
+        if (!groupId || !employeeId) {
+          window.alert('Please select an employee.');
+          return;
+        }
+
         fetch(new URL('../api/group_member.php', engagementScript.src).href, {
           method: 'POST',
-          body: JSON.stringify({group_id: formData.get('group_id'), employee_id: formData.get('employee_id')}),
+          body: JSON.stringify({group_id: groupId, employee_id: employeeId}),
           headers: {'Content-Type': 'application/json'},
           credentials: 'same-origin'
         }).then(function(response) { return response.json().then(function(data) { if (!response.ok || !data.success) throw new Error(data.message || data.error || 'Unable to add group member.'); return data; }); })
-          .then(function() { memberForm.reset(); loadSocialPageData(); })
+          .then(function() {
+            modalMemberForm.reset();
+            refreshGroupMembers(groupId);
+            loadSocialPageData();
+            closeSocialModal('groupMembersModal');
+          })
           .catch(function(error) { window.alert(error.message); });
       });
     }
+
   }
 
   function loadSocialPageData() {
+    bindSocialGroupForms();
     const apiUrl = window.location.pathname.split('/modules/engagement/')[0] + '/modules/engagement/api/social.php?action=page_data';
     const groupApiUrl = new URL('../api/group.php', engagementScript.src).href;
 

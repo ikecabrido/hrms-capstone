@@ -1,6 +1,28 @@
 // Dashboard Charts Handler
 const dashboardCharts = {};
 
+function destroyExistingChart(chartKey, canvas) {
+  if (dashboardCharts[chartKey]) {
+    try {
+      dashboardCharts[chartKey].destroy();
+    } catch (error) {
+      console.warn('Unable to destroy cached chart:', chartKey, error);
+    }
+    dashboardCharts[chartKey] = null;
+  }
+
+  if (canvas && typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
+    const activeChart = Chart.getChart(canvas);
+    if (activeChart) {
+      try {
+        activeChart.destroy();
+      } catch (error) {
+        console.warn('Unable to destroy active chart on canvas:', chartKey, error);
+      }
+    }
+  }
+}
+
 function initDashboardCharts() {
   // Wait for Chart.js to be loaded
   if (typeof Chart === 'undefined') {
@@ -38,10 +60,7 @@ function initDashboardCharts() {
 
 function renderSurveyChart(canvas) {
   try {
-    // Destroy existing chart if it exists
-    if (dashboardCharts.survey) {
-      dashboardCharts.survey.destroy();
-    }
+    destroyExistingChart('survey', canvas);
 
     // Get data from canvas attributes
     const labels = JSON.parse(canvas.dataset.surveyLabels || '[]');
@@ -97,10 +116,7 @@ function renderSurveyChart(canvas) {
 
 function renderFeedbackChart(canvas) {
   try {
-    // Destroy existing chart if it exists
-    if (dashboardCharts.feedback) {
-      dashboardCharts.feedback.destroy();
-    }
+    destroyExistingChart('feedback', canvas);
 
     // Get data from canvas attributes
     const labels = JSON.parse(canvas.dataset.feedbackLabels || '[]');
@@ -156,10 +172,7 @@ function renderFeedbackChart(canvas) {
 
 function renderGrievanceChart(canvas) {
   try {
-    // Destroy existing chart if it exists
-    if (dashboardCharts.grievance) {
-      dashboardCharts.grievance.destroy();
-    }
+    destroyExistingChart('grievance', canvas);
 
     // Get data from canvas attributes
     const labels = JSON.parse(canvas.dataset.grievanceLabels || '[]');

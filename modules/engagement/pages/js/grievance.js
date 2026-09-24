@@ -217,12 +217,13 @@
   }
 
   function initializeGrievanceTabs() {
-    if (!document.getElementById('grievance-tabs')) {
-      console.warn('[Grievance Tab] Tab container not found');
+    const tabContainer = document.getElementById('grievance-tabs');
+    const contentContainer = document.getElementById('grievance-tabs-content');
+    if (!tabContainer || !contentContainer) {
       return;
     }
     
-    const reportContainer = document.getElementById('grievance-tabs-content');
+    const reportContainer = contentContainer;
     if (reportContainer && reportContainer.dataset.reportData) {
       try {
         window.reportData = JSON.parse(reportContainer.dataset.reportData);
@@ -364,6 +365,10 @@
   }
 
   function loadGrievancePageData() {
+    if (!document.getElementById('all-grievances-table') && !document.getElementById('management-grievance-select')) {
+      return;
+    }
+
     fetch('/hrms-capstone/modules/engagement/api/grievance.php?action=page_data', {credentials: 'same-origin', cache: 'no-store'})
       .then(function (response) {
         if (!response.ok) throw new Error('Unable to load grievance data.');
@@ -582,6 +587,16 @@ if (!window.__grievanceReportsModalBound) {
 }
 
 function initializeCharts() {
+  const chartIds = ['statusChart', 'categoryChart', 'trendChart', 'departmentChart', 'resolutionChart'];
+  chartIds.forEach(function (chartId) {
+    const canvas = document.getElementById(chartId);
+    if (!canvas || !window.Chart || typeof window.Chart.getChart !== 'function') return;
+    const existingChart = window.Chart.getChart(canvas);
+    if (existingChart) {
+      existingChart.destroy();
+    }
+  });
+
   const grievances = window.grievancesData || [];
   window.reportData = grievances;
 

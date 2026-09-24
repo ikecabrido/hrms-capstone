@@ -368,6 +368,5 @@ $payload['notifications'] = $communicationCtrl->getNotifications();
         </div>  
       </div>
     </div>  
-  <script src="pages/js/dashboard.js"></script>
 
 

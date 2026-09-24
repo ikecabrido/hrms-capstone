@@ -12,8 +12,8 @@ try {
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
     if ($method === 'POST') {
-        $name = $_POST['name'] ?? null;
-        $description = $_POST['description'] ?? null;
+        $name = $_POST['name'] ?? $_POST['group_name'] ?? null;
+        $description = $_POST['description'] ?? $_POST['group_description'] ?? null;
         $createdBy = $_SESSION['user']['employee_id']
             ?? $_SESSION['employee_id']
             ?? $_SESSION['user']['id']
