@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 18, 2026 at 01:16 PM
+-- Generation Time: Sep 26, 2026 at 09:19 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -171,7 +171,7 @@ CREATE TABLE `em_employees` (
 INSERT INTO `em_employees` (`employee_id`, `employee_code`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `email`, `mobile_no`, `phone_no`, `current_address`, `permanent_address`, `department_id`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
 (1, 'EMP-000001', 4, 'Ronaldo', 'G.', 'Raymundo', '', 'Male', '1995-01-02', NULL, 'Married', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 3, 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 13:47:35', '2026-09-13 04:12:02', 0, NULL, NULL),
 (3, 'EMP-000003', 8, 'Erwin', 'M.', 'De Guzman', NULL, NULL, '1995-09-18', NULL, NULL, NULL, NULL, 'erwindeguzman@gmail.com', '09123456789', '0987654321', '', NULL, 3, 6, '2026-08-11', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-11 19:09:33', '2026-09-18 11:12:32', 0, NULL, NULL),
-(4, 'EMP-000004', NULL, 'Roberto', 'J', 'Albert', NULL, NULL, '1998-02-12', NULL, NULL, NULL, NULL, 'robert@gmail.com', '09123456789', '987654321', '', NULL, 3, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-13 11:01:36', '2026-08-13 15:17:40', 0, NULL, NULL),
+(4, 'EMP-000004', 4, 'David', 'J', 'Albert', NULL, NULL, '1998-02-12', NULL, NULL, NULL, NULL, 'robert@gmail.com', '09123456789', '987654321', '', NULL, 3, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-13 11:01:36', '2026-09-21 04:32:17', 0, NULL, NULL),
 (5, 'EMP-000005', NULL, 'Althea', 'M.', 'Santos', NULL, NULL, '1999-09-19', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '09123456789', '987654321', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-13 11:04:21', '2026-08-13 15:17:40', 0, NULL, NULL),
 (6, 'EMP-000006', NULL, 'Bianca', 'G.', 'Reyes', NULL, NULL, '1995-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '987654321', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', NULL, '2026-08-13 11:05:33', '2026-08-13 15:17:40', 0, NULL, NULL),
 (7, 'EMP-000007', NULL, 'Chloe', 'M.', 'Cruz', NULL, NULL, '1995-02-12', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', '', NULL, 'None', '', '', '', NULL, '2026-08-13 11:06:40', '2026-08-13 15:17:40', 0, NULL, NULL),
@@ -496,7 +496,7 @@ CREATE TABLE `ep_users` (
 INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `role`, `is_active`, `theme`, `profile_image`, `created_at`, `password_reset_token`, `password_reset_expires`) VALUES
 (1, 'Employee 1', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'monstreborvinsmoke025@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
 (2, 'Employee 2', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', NULL, 0, 'employee', 1, 'light', NULL, '2026-03-24 18:06:12', NULL, NULL),
-(3, 'Admin Employee Portal', '$2y$10$h2fzXPO1/co0hCUn/wwOnuLB4I/26hMz3hGJIqbRmujA2R1UxHIvy', 'admin@gmail.com', 1, 'super_admin', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
+(3, 'Admin Employee Portal', '$2y$10$h2fzXPO1/co0hCUn/wwOnuLB4I/26hMz3hGJIqbRmujA2R1UxHIvy', 'admin@gmail.com', 1, 'super_admin', 1, 'light', 'profile_3_1789730868.jpg', '2026-01-28 07:21:13', NULL, NULL),
 (4, 'Employee 3', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'sample@gmail.com', 0, 'employee', 1, 'light', 'profile_4_1787671041.png', '2026-01-28 07:21:13', NULL, NULL),
 (5, 'sample', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'camposrobertjanssent.pdm@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-08-16 13:35:55', NULL, NULL),
 (8, 'Erwin De Guzman', '$2y$10$5hvRMK1jG45pyKtTZgo6CuklVNAEuKgxW4zyywFGCURuORRr4vPYu', 'erwindeguzman@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-09-18 11:12:32', NULL, NULL);
@@ -511,29 +511,38 @@ CREATE TABLE `lc_complaints` (
   `id` int(11) NOT NULL,
   `type` varchar(150) DEFAULT NULL,
   `severity` varchar(20) DEFAULT 'medium',
-  `status` enum('under_initial_review','under_investigation','pending_employee_response','for_decision','closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved','closed') DEFAULT 'under_initial_review',
+  `status` enum('under_initial_review','under_investigation','pending_employee_response','for_decision','closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved','closed','closed_second_written_warning','closed_final_written_warning','termination_employee_reply','termination_reviewed') DEFAULT 'under_initial_review',
+  `current_step_key` varchar(100) DEFAULT NULL,
+  `current_state` varchar(100) DEFAULT NULL,
+  `version` int(10) UNSIGNED NOT NULL DEFAULT 1,
   `employee_id` int(11) DEFAULT NULL,
   `reporter_name` varchar(150) DEFAULT NULL,
   `reporter_department` varchar(150) DEFAULT NULL,
+  `respondent_employee_id` int(11) DEFAULT NULL,
+  `respondent_name` varchar(150) DEFAULT NULL,
   `incident_date` date DEFAULT NULL,
   `incident_time` time DEFAULT NULL,
   `location` varchar(255) DEFAULT NULL,
   `title` varchar(255) DEFAULT NULL,
   `description` text DEFAULT NULL,
+  `evidence_path` varchar(500) DEFAULT NULL,
   `assigned_to` int(11) DEFAULT NULL,
   `assigned_name` varchar(150) DEFAULT NULL,
+  `workflow_progress` longtext DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `employee_response` text DEFAULT NULL,
-  `employee_response_date` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `employee_response_date` datetime DEFAULT NULL,
+  `termination_reply` text DEFAULT NULL,
+  `termination_review_status` enum('pending','rejected','considered') DEFAULT 'pending'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `lc_complaints`
 --
 
-INSERT INTO `lc_complaints` (`id`, `type`, `severity`, `status`, `employee_id`, `reporter_name`, `reporter_department`, `incident_date`, `incident_time`, `location`, `title`, `description`, `assigned_to`, `assigned_name`, `created_at`, `updated_at`, `employee_response`, `employee_response_date`) VALUES
-(1, 'Workplace Conflict', 'Medium', 'under_initial_review', 14, 'Ronaldo G. Raymundo', NULL, '2026-08-31', '18:21:00', 'HR Office', 'sample', 'sample', NULL, NULL, '2026-08-31 10:25:03', '2026-08-31 10:25:03', NULL, NULL);
+INSERT INTO `lc_complaints` (`id`, `type`, `severity`, `status`, `current_step_key`, `current_state`, `version`, `employee_id`, `reporter_name`, `reporter_department`, `respondent_employee_id`, `respondent_name`, `incident_date`, `incident_time`, `location`, `title`, `description`, `evidence_path`, `assigned_to`, `assigned_name`, `workflow_progress`, `created_at`, `updated_at`, `employee_response`, `employee_response_date`, `termination_reply`, `termination_review_status`) VALUES
+(1, 'Harassment', NULL, 'under_initial_review', 'initial_review', 'under_initial_review', 1, 1, 'Ronaldo G. Raymundo', NULL, 3, 'Erwin M. De Guzman', '2026-09-26', '15:12:00', 'Classroom', 'sample', 'sample sample', NULL, NULL, NULL, NULL, '2026-09-26 01:12:55', '2026-09-26 01:12:55', NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1241,7 +1250,13 @@ ALTER TABLE `ep_users`
 -- Indexes for table `lc_complaints`
 --
 ALTER TABLE `lc_complaints`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_employee_id` (`employee_id`),
+  ADD KEY `idx_respondent_employee_id` (`respondent_employee_id`),
+  ADD KEY `idx_assigned_to` (`assigned_to`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_current_step_key` (`current_step_key`),
+  ADD KEY `idx_incident_date` (`incident_date`);
 
 --
 -- Indexes for table `ld_course`

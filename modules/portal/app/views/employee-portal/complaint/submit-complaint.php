@@ -44,38 +44,38 @@
             </div>
 
             <!-- FORM -->
-            <form action="index.php?url=employee-complaints-store" method="POST">
 
+            <form action="index.php?url=employee-complaints-store" method="POST">
                 <!-- SCROLLABLE BODY -->
-                <div class="modal-body  complaint-modal-body" style="
+                <div class="modal-body complaint-modal-body" style="
         padding:24px;
         max-height:70vh;
         overflow-y:auto;
+        overflow-x:hidden;
     ">
 
                     <!-- PERSON BEING REPORTED -->
                     <div style="margin-bottom:20px;">
 
                         <div style="
-                font-size:11px;
-                font-weight:700;
-                color:#111827;
-                margin-bottom:12px;
-            ">
+            font-size:11px;
+            font-weight:700;
+            color:#111827;
+            margin-bottom:12px;
+        ">
                             <i class="fas fa-user-shield" style="color:#2563eb;margin-right:6px;"></i>
                             Person Being Reported
                         </div>
 
                         <div class="row g-3">
 
-                            <!-- RESPONDENT -->
                             <div class="col-12">
 
                                 <label class="form-label small fw-semibold">
                                     Respondent Employee
                                 </label>
 
-                                <select name="employee_id" class="form-select" required>
+                                <select name="respondent_employee_id" class="form-select" required>
 
                                     <option value="">
                                         Select employee
@@ -84,9 +84,13 @@
                                     <?php foreach ($employees as $employeeOption): ?>
 
                                         <option value="<?= htmlspecialchars($employeeOption['employee_id'] ?? '') ?>">
-                                            <?= htmlspecialchars($employeeOption['first_name'] ?? '') ?>
-                                            <?= htmlspecialchars($employeeOption['middle_name'] ?? '') ?>
-                                            <?= htmlspecialchars($employeeOption['last_name'] ?? '') ?>
+                                            <?= htmlspecialchars(
+                                                trim(
+                                                    ($employeeOption['first_name'] ?? '') . ' ' .
+                                                    ($employeeOption['middle_name'] ?? '') . ' ' .
+                                                    ($employeeOption['last_name'] ?? '')
+                                                )
+                                            ) ?>
                                             (<?= htmlspecialchars($employeeOption['employee_code'] ?? '') ?>)
                                         </option>
 
@@ -107,17 +111,17 @@
 
                     <!-- INCIDENT DETAILS -->
                     <div style="
-            padding-top:18px;
-            border-top:1px solid #e5e7eb;
-            margin-bottom:20px;
-        ">
+        padding-top:18px;
+        border-top:1px solid #e5e7eb;
+        margin-bottom:20px;
+    ">
 
                         <div style="
-                font-size:11px;
-                font-weight:700;
-                color:#111827;
-                margin-bottom:12px;
-            ">
+            font-size:11px;
+            font-weight:700;
+            color:#111827;
+            margin-bottom:12px;
+        ">
                             <i class="fas fa-exclamation-circle" style="color:#2563eb;margin-right:6px;"></i>
                             Incident Details
                         </div>
@@ -165,37 +169,6 @@
 
                             </div>
 
-
-                            <!-- SEVERITY -->
-                            <div class="col-md-6">
-
-                                <label class="form-label small fw-semibold">
-                                    Severity
-                                </label>
-
-                                <select name="severity" class="form-select" required>
-
-                                    <option value="">
-                                        Select severity
-                                    </option>
-
-                                    <option value="Low">
-                                        Low
-                                    </option>
-
-                                    <option value="Medium">
-                                        Medium
-                                    </option>
-
-                                    <option value="High">
-                                        High
-                                    </option>
-
-                                </select>
-
-                            </div>
-
-
                             <!-- INCIDENT DATE -->
                             <div class="col-md-6">
 
@@ -232,10 +205,9 @@
                                 </label>
 
                                 <input type="text" name="location" class="form-control" list="incidentLocations"
-                                    placeholder="Select or type incident location" required>
+                                    placeholder="Select or type incident location" maxlength="255" required>
 
                                 <datalist id="incidentLocations">
-
                                     <option value="Office">
                                     <option value="Classroom">
                                     <option value="Faculty Room">
@@ -245,7 +217,6 @@
                                     <option value="Online">
                                     <option value="Off Campus">
                                     <option value="Comfort Room">
-
                                 </datalist>
 
                             </div>
@@ -292,11 +263,11 @@
 
                     <!-- FACTUAL STATEMENT -->
                     <div style="
-            padding:13px 14px;
-            border:1px solid #e5e7eb;
-            border-radius:10px;
-            background:#f8fafc;
-        ">
+        padding:13px 14px;
+        border:1px solid #e5e7eb;
+        border-radius:10px;
+        background:#f8fafc;
+    ">
 
                         <label class="d-flex align-items-start gap-2" style="cursor:pointer;">
 
@@ -306,20 +277,20 @@
                             <span>
 
                                 <strong style="
-                        display:block;
-                        color:#374151;
-                        font-size:10px;
-                    ">
+                    display:block;
+                    color:#374151;
+                    font-size:10px;
+                ">
                                     Confirmation of factual statement
                                 </strong>
 
                                 <small style="
-                        display:block;
-                        margin-top:3px;
-                        color:#6b7280;
-                        font-size:9px;
-                        line-height:1.5;
-                    ">
+                    display:block;
+                    margin-top:3px;
+                    color:#6b7280;
+                    font-size:9px;
+                    line-height:1.5;
+                ">
                                     I confirm that the information provided in this
                                     complaint is true and based on facts or events that
                                     I personally know or have reasonable basis to report.
@@ -347,36 +318,33 @@
     ">
 
                     <button type="button" class="btn" data-bs-dismiss="modal" style="
-                padding:8px 14px;
-                border:1px solid #d1d5db;
-                border-radius:9px;
-                background:#fff;
-                color:#374151;
-                font-size:10px;
-                font-weight:600;
-            ">
+            padding:8px 14px;
+            border:1px solid #d1d5db;
+            border-radius:9px;
+            background:#fff;
+            color:#374151;
+            font-size:10px;
+            font-weight:600;
+        ">
                         Cancel
                     </button>
 
-
                     <button type="submit" class="btn" style="
-                padding:9px 15px;
-                border:0;
-                border-radius:9px;
-                background:#2563eb;
-                color:#fff;
-                font-size:10px;
-                font-weight:600;
-            ">
-
+            padding:9px 15px;
+            border:0;
+            border-radius:9px;
+            background:#2563eb;
+            color:#fff;
+            font-size:10px;
+            font-weight:600;
+        ">
                         <i class="fas fa-paper-plane me-1"></i>
                         Submit Complaint
-
                     </button>
 
                 </div>
-
             </form>
+
 
         </div>
     </div>

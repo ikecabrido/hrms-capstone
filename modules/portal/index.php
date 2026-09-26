@@ -65,6 +65,7 @@ $routes = [
 
     // Profile
     'user-profile' => [ProfileController::class, 'index'],
+    'admin-profile' => [ProfileController::class, 'adminIndex'],
     'update-password' => [ProfileController::class, 'updatePassword'],
     'update-user-profile' => [ProfileController::class, 'updateProfile'],
     'update-profile-image' => [ProfileController::class, 'updateProfileImage'],

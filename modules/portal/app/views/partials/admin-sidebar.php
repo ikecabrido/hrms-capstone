@@ -1,7 +1,7 @@
 <aside class="sidebar">
     <?php require __DIR__ . '/sidebar-data.php'; ?>
     <!-- Logo + Icons -->
-    <?php require __DIR__ . '/sidebar-logo-icon.php'; ?>
+    <?php require __DIR__ . '/admin-sidebar-logo-icon.php'; ?>
 
     <!-- Employee Information -->
     <?php require __DIR__ . '/sidebar-employee-info.php'; ?>

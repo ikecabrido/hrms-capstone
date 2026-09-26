@@ -14,7 +14,7 @@
     <?php endif; ?>
 
 
-    <p class="employee_position fs-6">
+    <p class="employee_position" style="font-size: 11px;">
         <?php if ($_SESSION['is_admin'] == true): ?>
             <span>HR Admin</span>
         <?php else: ?>

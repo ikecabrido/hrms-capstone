@@ -37,6 +37,24 @@ class ProfileController
         $content = __DIR__ . '/../views/employee-portal/profile/content.php';
         require __DIR__ . '/../views/employee-portal/index.php';
     }
+    public function adminIndex()
+    {
+        $userId = $_SESSION['user_id'] ?? null;
+
+        if (!$userId) {
+            header(
+                'Location: /hrms-capstone/modules/portal/index.php?url=auth-index'
+            );
+            exit;
+        }
+
+        $userInfos = $this->userModel->findById($userId);
+        $employeeProfileInfo = $this->employeeModel->findByUserId($userId);
+
+        $title = "Employee Profile";
+        $content = __DIR__ . '/../views/admin-portal/profile/content.php';
+        require __DIR__ . '/../views/admin-portal/index.php';
+    }
     public function updatePassword(): void
     {
         $userId = $_SESSION['user_id'] ?? null;
@@ -84,7 +102,11 @@ class ProfileController
         $redirectTo = $_SERVER['HTTP_REFERER']
             ?? 'index.php?url=user-profile';
 
-        header("Location: " . $redirectTo);
+        if (!empty($_SESSION['is_admin'])) {
+            header('Location: index.php?url=admin-profile');
+        } else {
+            header("Location: " . $redirectTo);
+        }
         exit;
     }
     public function updateProfile(): void
@@ -140,7 +162,11 @@ class ProfileController
                 ?: 'Something went wrong while updating your profile.';
         }
 
-        header('Location: index.php?url=user-profile');
+        if (!empty($_SESSION['is_admin'])) {
+            header('Location: index.php?url=admin-profile');
+        } else {
+            header('Location: index.php?url=user-profile');
+        }
         exit;
     }
     public function updateProfileImage(): void
@@ -207,7 +233,11 @@ class ProfileController
             $_SESSION['error'] = $e->getMessage();
         }
 
-        header('Location: index.php?url=user-profile');
+        if (!empty($_SESSION['is_admin'])) {
+            header('Location: index.php?url=admin-profile');
+        } else {
+            header('Location: index.php?url=user-profile');
+        }
         exit;
     }
 }
