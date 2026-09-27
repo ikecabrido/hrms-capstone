@@ -137,4 +137,39 @@ class Employee
 
         return 'Unknown Position';
     }
+    /**
+     * Get logged-in employee's role name (from em_roles, via user_account)
+     */
+    public function getEmployeeRole()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $employeeId = $_SESSION['employee_id'] ?? null;
+
+        if ($employeeId) {
+            $sql = "SELECT 
+                    r.role_name
+                FROM user_account AS ua
+
+                LEFT JOIN em_roles AS r
+                    ON ua.role_id = r.role_id
+
+                WHERE ua.employee_id = :employee_id
+                LIMIT 1";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':employee_id', $employeeId);
+            $stmt->execute();
+
+            $account = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($account && $account['role_name']) {
+                return htmlspecialchars($account['role_name']);
+            }
+        }
+
+        return 'Unknown Role';
+    }
 }
