@@ -5,6 +5,7 @@ const DASHBOARD_PAGE = 'dashboard-overview';
 let trendChartInstance = null;
 let riskChartInstance = null;
 let complianceChartInstance = null;
+let legalChartInstance = null;
 let resizeObserver = null;
 
 function isMobileView() {
@@ -20,14 +21,23 @@ function getMobileChartHeight() {
 
 async function initDashboard() {
     try {
-        await ensureChartJs();
+        const chartLoaded = await ensureChartJs();
         destroyCharts();
         initKpiInteractions();
         initTrendLine();
         initRiskDonut();
+        initDeptComplianceChart();
+        initLegalCasesChart();
         initDashboardInteractions();
         initFilterInteractions();
+        initDocumentHealthInteractions();
+        initGovInsightTooltip();
+        initIncidentAnalytics();
+        initActionComplianceOverview();
         initMobileResizeObserver();
+        if (!chartLoaded) {
+            console.warn('Chart.js not available. Charts will not render.');
+        }
     } catch (error) {
         console.error('Dashboard initialization failed:', error);
     }
@@ -48,29 +58,34 @@ function initMobileResizeObserver() {
             if (canvas && riskChartInstance && entry.target.id === 'riskPieChart') {
                 riskChartInstance.resize();
             }
+            if (canvas && legalChartInstance && entry.target.id === 'legalCasesChart') {
+                legalChartInstance.resize();
+            }
         });
     });
 
     const trendWrap = document.querySelector('.sparkline-wrap');
     const riskWrap = document.querySelector('.risk-pie-wrap');
+    const legalWrap = document.querySelector('.legal-chart-wrap');
     if (trendWrap) resizeObserver.observe(trendWrap);
     if (riskWrap) resizeObserver.observe(riskWrap);
+    if (legalWrap) resizeObserver.observe(legalWrap);
 }
 
 async function ensureChartJs() {
-    if (typeof Chart !== 'undefined') return;
+    if (typeof Chart !== 'undefined') return true;
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load Chart.js'));
+        script.src = '/hrms-capstone/modules/compliance/lib/chart.js/chart.umd.min.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
         document.head.appendChild(script);
     });
 }
 
 function destroyCharts() {
-    [trendChartInstance, riskChartInstance, complianceChartInstance].forEach(function (instance) {
+    [trendChartInstance, riskChartInstance, complianceChartInstance, legalChartInstance].forEach(function (instance) {
         if (instance) {
             instance.destroy();
         }
@@ -78,6 +93,7 @@ function destroyCharts() {
     trendChartInstance = null;
     riskChartInstance = null;
     complianceChartInstance = null;
+    legalChartInstance = null;
 }
 
 function getTrendLabels() {
@@ -95,15 +111,15 @@ function getTrendValues() {
 function getRiskDistData() {
     if (window.RISK_DIST_VALUES && Array.isArray(window.RISK_DIST_VALUES)) {
         return {
-            labels: window.RISK_DIST_LABELS || ['Low Risk', 'Medium Risk', 'High Risk'],
+            labels: window.RISK_DIST_LABELS || ['Critical', 'High', 'Medium', 'Low'],
             data: window.RISK_DIST_VALUES,
-            colors: window.RISK_DIST_COLORS || ['rgba(16, 185, 129, 0.85)', 'rgba(245, 158, 11, 0.85)', 'rgba(220, 38, 38, 0.85)'],
+            colors: window.RISK_DIST_COLORS || ['rgba(30, 64, 175, 0.85)', 'rgba(37, 99, 235, 0.85)', 'rgba(59, 130, 196, 0.85)', 'rgba(147, 197, 253, 0.85)'],
         };
     }
     return {
-        labels: ['Low Risk', 'Medium Risk', 'High Risk'],
-        data: [3, 2, 0],
-        colors: ['rgba(16, 185, 129, 0.85)', 'rgba(245, 158, 11, 0.85)', 'rgba(220, 38, 38, 0.85)'],
+        labels: ['Critical', 'High', 'Medium', 'Low'],
+        data: [0, 0, 0, 0],
+        colors: ['rgba(30, 64, 175, 0.85)', 'rgba(37, 99, 235, 0.85)', 'rgba(59, 130, 196, 0.85)', 'rgba(147, 197, 253, 0.85)'],
     };
 }
 
@@ -151,7 +167,95 @@ function initFilterInteractions() {
     });
 }
 
+function initDocumentHealthInteractions() {
+    const container = document.querySelector('.document-health');
+    if (!container) return;
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'dh-tooltip';
+    tooltip.style.cssText = 'position:fixed;display:none;padding:6px 10px;background:#0f172a;color:#f8fafc;font-size:11px;font-weight:600;border-radius:6px;pointer-events:none;z-index:900;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.18);';
+    document.body.appendChild(tooltip);
+
+    function showTooltip(x, y, html) {
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+        const rect = tooltip.getBoundingClientRect();
+        tooltip.style.left = (x - rect.width / 2) + 'px';
+        tooltip.style.top = (y - rect.height - 8) + 'px';
+    }
+
+    function hideTooltip() {
+        tooltip.style.display = 'none';
+    }
+
+    container.querySelectorAll('.dh-kpi').forEach(function (kpi) {
+        kpi.addEventListener('click', function () {
+            const label = this.querySelector('.dh-kpi-label')?.textContent?.trim() || '';
+            const event = new CustomEvent('documentHealthFilter', {
+                detail: { filter: label },
+                bubbles: true
+            });
+            window.dispatchEvent(event);
+        });
+    });
+
+    container.querySelectorAll('.dh-legend-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+            const label = this.textContent.trim();
+            const event = new CustomEvent('documentHealthFilter', {
+                detail: { filter: label },
+                bubbles: true
+            });
+            window.dispatchEvent(event);
+        });
+    });
+
+    container.querySelectorAll('.dh-distribution-fill').forEach(function (fill) {
+        fill.addEventListener('mousemove', function (e) {
+            const status = this.dataset.status || '';
+            const count = this.dataset.count || '0';
+            const pct = this.dataset.pct || '0';
+            showTooltip(e.clientX, e.clientY, '<div>' + status + '</div><div style=\"font-weight:400;opacity:.85;margin-top:2px;\">' + count + ' documents (' + pct + '%)</div>');
+        });
+        fill.addEventListener('mouseleave', hideTooltip);
+    });
+}
+
+function initGovInsightTooltip() {
+    const panel = document.querySelector('.chart-panel[data-gov-insight]');
+    if (!panel) return;
+
+    const text = panel.getAttribute('data-gov-insight');
+    if (!text) return;
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'gov-tooltip';
+    tooltip.textContent = text;
+    document.body.appendChild(tooltip);
+
+    panel.addEventListener('mouseenter', function () {
+        tooltip.style.display = 'block';
+        positionTooltip();
+    });
+
+    panel.addEventListener('mouseleave', function () {
+        tooltip.style.display = 'none';
+    });
+
+    panel.addEventListener('mousemove', function (e) {
+        positionTooltip(e);
+    });
+
+    function positionTooltip(e) {
+        const x = e ? e.clientX : tooltip.getBoundingClientRect().left;
+        const y = e ? e.clientY : tooltip.getBoundingClientRect().top;
+        tooltip.style.left = (x + 12) + 'px';
+        tooltip.style.top = (y - 12) + 'px';
+    }
+}
+
 function initTrendLine() {
+    if (typeof Chart === 'undefined') return;
     const canvas = document.getElementById('dashTrendChart');
     if (!canvas) return;
 
@@ -165,10 +269,10 @@ function initTrendLine() {
     const values = getTrendValues();
 
     const scoreColor = values.length > 0 && values[values.length - 1] >= 90
-        ? 'rgba(16, 185, 129, 0.9)'
+        ? 'rgba(37, 99, 235, 0.9)'
         : (values.length > 0 && values[values.length - 1] >= 75
-            ? 'rgba(245, 158, 11, 0.9)'
-            : 'rgba(220, 38, 38, 0.9)');
+            ? 'rgba(96, 165, 250, 0.9)'
+            : 'rgba(30, 64, 175, 0.9)');
 
     const mobileHeight = getMobileChartHeight();
     const sparklineWrap = document.querySelector('.sparkline-wrap');
@@ -255,6 +359,7 @@ function initTrendLine() {
 }
 
 function initRiskDonut() {
+    if (typeof Chart === 'undefined') return;
     const canvas = document.getElementById('riskPieChart');
     if (!canvas) return;
 
@@ -332,6 +437,244 @@ function initRiskDonut() {
     });
 }
 
+function initDeptComplianceChart() {
+    if (typeof Chart === 'undefined') return;
+    const canvas = document.getElementById('deptComplianceChart');
+    if (!canvas) return;
+
+    const existing = Chart.getChart(canvas);
+    if (existing) {
+        existing.destroy();
+    }
+
+    const labels = window.DEPT_COMPLIANCE_LABELS || [];
+    const scores = window.DEPT_COMPLIANCE_SCORES || [];
+    if (!labels.length || !scores.length) return;
+
+    const ctx = canvas.getContext('2d');
+    const backgroundColors = [
+        'rgba(37, 99, 235, 0.85)',
+        'rgba(59, 130, 196, 0.85)',
+        'rgba(30, 64, 175, 0.85)',
+        'rgba(96, 165, 250, 0.85)',
+        'rgba(29, 78, 216, 0.85)',
+        'rgba(37, 99, 235, 0.85)',
+        'rgba(59, 130, 196, 0.85)',
+    ];
+
+    const borderColors = [
+        'rgba(37, 99, 235, 1)',
+        'rgba(59, 130, 196, 1)',
+        'rgba(30, 64, 175, 1)',
+        'rgba(96, 165, 250, 1)',
+        'rgba(29, 78, 216, 1)',
+        'rgba(37, 99, 235, 1)',
+        'rgba(59, 130, 196, 1)',
+    ];
+
+    complianceChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Compliance Score',
+                data: scores,
+                backgroundColor: backgroundColors.slice(0, labels.length),
+                borderColor: borderColors.slice(0, labels.length),
+                borderWidth: 1,
+                borderRadius: 6,
+                borderSkipped: false,
+                maxBarThickness: 48,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    titleColor: '#f8fafc',
+                    bodyColor: '#cbd5e1',
+                    borderColor: '#1e293b',
+                    borderWidth: 1,
+                    padding: isMobileView() ? 10 : 14,
+                    cornerRadius: isMobileView() ? 6 : 10,
+                    titleFont: { size: isMobileView() ? 11 : 13, weight: '600', family: 'Inter' },
+                    bodyFont: { size: isMobileView() ? 11 : 12, family: 'Inter' },
+                    callbacks: {
+                        label: function (context) {
+                            return ' Score: ' + context.parsed.y + '%';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: isMobileView() ? 9 : 11, family: 'Inter' },
+                        maxRotation: isMobileView() ? 45 : 30,
+                        minRotation: isMobileView() ? 45 : 30,
+                    },
+                    border: { display: false }
+                },
+                y: {
+                    beginAtZero: false,
+                    min: Math.max(0, Math.min.apply(null, scores) - 10),
+                    max: 100,
+                    grid: {
+                        color: '#f1f5f9',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: isMobileView() ? 9 : 11, family: 'Inter' },
+                        callback: function (value) {
+                            return value + '%';
+                        },
+                        maxTicksLimit: isMobileView() ? 5 : 7
+                    },
+                    border: { display: false }
+                }
+            },
+            animation: {
+                duration: 800,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+}
+
+function initLegalCasesChart() {
+    if (typeof Chart === 'undefined') return;
+    const canvas = document.getElementById('legalCasesChart');
+    if (!canvas) return;
+
+    const existing = Chart.getChart(canvas);
+    if (existing) {
+        existing.destroy();
+    }
+
+    const labels = window.LEGAL_CASES_LABELS || [];
+    const values = window.LEGAL_CASES_VALUES || [];
+    if (!labels.length || !values.length) {
+        const wrap = document.querySelector('.legal-chart-wrap');
+        if (wrap) {
+            wrap.innerHTML = '<div class="empty-state"><i class="fa-solid fa-gavel"></i><div class="es-title">No legal cases recorded yet</div></div>';
+        }
+        return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const backgroundColors = [
+        'rgba(37, 99, 235, 0.85)',
+        'rgba(59, 130, 196, 0.85)',
+        'rgba(30, 64, 175, 0.85)',
+        'rgba(96, 165, 250, 0.85)',
+        'rgba(29, 78, 216, 0.85)',
+        'rgba(37, 99, 235, 0.85)',
+        'rgba(59, 130, 196, 0.85)',
+    ];
+
+    const borderColors = [
+        'rgba(37, 99, 235, 1)',
+        'rgba(59, 130, 196, 1)',
+        'rgba(30, 64, 175, 1)',
+        'rgba(96, 165, 250, 1)',
+        'rgba(29, 78, 216, 1)',
+        'rgba(37, 99, 235, 1)',
+        'rgba(59, 130, 196, 1)',
+    ];
+
+    legalChartInstance = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Cases',
+                data: values.map(function (value, index) {
+                    return { x: index, y: value };
+                }),
+                backgroundColor: backgroundColors.slice(0, labels.length),
+                borderColor: borderColors.slice(0, labels.length),
+                borderWidth: 1,
+                pointRadius: isMobileView() ? 5 : 7,
+                pointHoverRadius: isMobileView() ? 7 : 10,
+                pointBorderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    titleColor: '#f8fafc',
+                    bodyColor: '#cbd5e1',
+                    borderColor: '#1e293b',
+                    borderWidth: 1,
+                    padding: isMobileView() ? 10 : 14,
+                    cornerRadius: isMobileView() ? 6 : 10,
+                    titleFont: { size: isMobileView() ? 11 : 13, weight: '600', family: 'Inter' },
+                    bodyFont: { size: isMobileView() ? 11 : 12, family: 'Inter' },
+                    callbacks: {
+                        title: function (items) {
+                            if (!items.length) return '';
+                            const index = items[0].parsed.x;
+                            return labels[index] || '';
+                        },
+                        label: function (context) {
+                            return ' ' + context.parsed.y + ' cases';
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: false
+                    },
+                    grid: { display: false },
+                    border: { display: false },
+                    ticks: {
+                        stepSize: 1,
+                        color: '#94a3b8',
+                        font: { size: isMobileView() ? 9 : 11, family: 'Inter' },
+                        maxRotation: isMobileView() ? 45 : 30,
+                        minRotation: isMobileView() ? 45 : 30,
+                        callback: function (value) {
+                            const index = Math.round(value);
+                            return labels[index] || '';
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#f1f5f9',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: isMobileView() ? 9 : 11, family: 'Inter' },
+                        stepSize: 1,
+                        maxTicksLimit: isMobileView() ? 5 : 7
+                    },
+                    border: { display: false }
+                }
+            },
+            animation: {
+                duration: 800,
+                easing: 'easeOutQuart'
+            }
+        }
+    });
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Event Listeners
 // ──────────────────────────────────────────────────────────────────────────────
@@ -352,11 +695,13 @@ let dashboardResizeTimer;
 window.addEventListener('resize', function () {
     clearTimeout(dashboardResizeTimer);
     dashboardResizeTimer = setTimeout(function () {
-        if (!document.getElementById('dashTrendChart') && !document.getElementById('riskPieChart')) return;
+        if (!document.getElementById('dashTrendChart') && !document.getElementById('riskPieChart') && !document.getElementById('deptComplianceChart') && !document.getElementById('legalCasesChart')) return;
 
         const wasDesktop = !isMobileView();
         const sparkWrap = document.querySelector('.sparkline-wrap');
         const riskWrap = document.querySelector('.risk-pie-wrap');
+        const deptWrap = document.querySelector('.dept-chart-wrap');
+        const legalWrap = document.querySelector('.legal-chart-wrap');
 
         if (sparkWrap && trendChartInstance) {
             if (isMobileView()) {
@@ -375,7 +720,269 @@ window.addEventListener('resize', function () {
             }
             riskChartInstance.resize();
         }
+
+        if (deptWrap && complianceChartInstance) {
+            if (isMobileView()) {
+                deptWrap.style.height = '220px';
+            } else {
+                deptWrap.style.height = '260px';
+            }
+            complianceChartInstance.resize();
+        }
+
+        if (legalWrap && legalChartInstance) {
+            if (isMobileView()) {
+                legalWrap.style.height = getMobileChartHeight() + 'px';
+            } else {
+                legalWrap.style.height = '';
+            }
+            legalChartInstance.resize();
+        }
     }, 200);
 });
 
-export { initDashboard, DASHBOARD_PAGE };
+// ── Incident Analytics ──────────────────────────────────────────────────────────
+
+function initIncidentAnalytics() {
+    initIncidentCalendar();
+    initIncidentCategoryFilter();
+}
+
+function initIncidentCalendar() {
+    const calendar = document.querySelector('.incident-calendar');
+    if (!calendar) return;
+
+    const grid = calendar.querySelector('.incident-calendar-grid');
+    const panel = calendar.closest('.chart-panel');
+    const monthLabel = panel ? panel.querySelector('.incident-calendar-month') : null;
+    const prevBtn = panel ? panel.querySelector('[data-direction="prev"]') : null;
+    const nextBtn = panel ? panel.querySelector('[data-direction="next"]') : null;
+    const daysData = calendar.dataset.days ? JSON.parse(calendar.dataset.days) : {};
+
+    function getUrlParam(name) {
+        const value = new URLSearchParams(window.location.search).get(name);
+        return value ? parseInt(value, 10) : null;
+    }
+
+    function updateUrl(year, month) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('incident_year', year);
+        url.searchParams.set('incident_month', month);
+        window.history.replaceState({}, '', url.toString());
+    }
+
+    let year = getUrlParam('incident_year') || parseInt(calendar.dataset.year, 10) || parseInt(monthLabel?.textContent?.match(/\d{4}/)?.[0] || '2026', 10);
+    let month = getUrlParam('incident_month') || parseInt(calendar.dataset.month, 10) || 1;
+    let selectedDate = null;
+    let activeCategory = null;
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'incident-tooltip';
+    document.body.appendChild(tooltip);
+
+    const intensityColors = {
+        0: '',
+        1: 'incident-calendar-day--low',
+        2: 'incident-calendar-day--medium',
+        3: 'incident-calendar-day--high',
+        4: 'incident-calendar-day--critical',
+    };
+
+    function getIntensityClass(count, hasCategoryMatch) {
+        if (hasCategoryMatch) return 'incident-calendar-day--selected';
+        if (count <= 0) return intensityColors[0];
+        if (count === 1) return intensityColors[1];
+        if (count === 2) return intensityColors[2];
+        if (count === 3) return intensityColors[3];
+        return intensityColors[4];
+    }
+
+    function showTooltip(x, y, html) {
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+        const rect = tooltip.getBoundingClientRect();
+        tooltip.style.left = (x - rect.width / 2) + 'px';
+        tooltip.style.top = (y - rect.height - 8) + 'px';
+    }
+
+    function hideTooltip() {
+        tooltip.style.display = 'none';
+    }
+
+    function render() {
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const firstDay = new Date(year, month - 1, 1);
+        const lastDay = new Date(year, month, 0);
+        const daysInMonth = lastDay.getDate();
+        let startDay = firstDay.getDay() - 1;
+        if (startDay < 0) startDay = 6;
+
+        for (let i = 0; i < startDay; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'incident-calendar-day incident-calendar-day--empty';
+            grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            const dayData = daysData[dateStr] || null;
+            const count = dayData ? dayData.total : 0;
+            const hasCategoryMatch = activeCategory && dayData && dayData.categories && dayData.categories[activeCategory];
+            const cell = document.createElement('div');
+            const todayStr = new Date().toISOString().slice(0, 10);
+            cell.className = 'incident-calendar-day ' + getIntensityClass(count, hasCategoryMatch);
+            if (selectedDate === dateStr) {
+                cell.classList.add('incident-calendar-day--selected');
+            }
+            if (dateStr === todayStr && !selectedDate) {
+                cell.classList.add('incident-calendar-day--today');
+            }
+            cell.setAttribute('role', 'button');
+            cell.setAttribute('tabindex', '0');
+            cell.setAttribute('aria-label', dateStr + ', ' + count + ' incidents');
+
+            const numberEl = document.createElement('div');
+            numberEl.className = 'incident-calendar-day-number';
+            numberEl.textContent = day;
+            cell.appendChild(numberEl);
+
+            if (count > 0) {
+                const countEl = document.createElement('div');
+                countEl.className = 'incident-calendar-day-count';
+                countEl.textContent = count;
+                cell.appendChild(countEl);
+
+                cell.addEventListener('mouseenter', function (e) {
+                    let tooltipHtml = '<div>' + dateStr + '</div>';
+                    tooltipHtml += '<div style=\"font-weight:700;margin-top:2px;\">' + count + ' incidents</div>';
+                    if (dayData && dayData.categories) {
+                        Object.entries(dayData.categories).forEach(function (entry) {
+                            tooltipHtml += '<div style=\"font-weight:400;opacity:.85;margin-top:1px;\">' + entry[0] + ' — ' + entry[1] + '</div>';
+                        });
+                    }
+                    if (dayData && dayData.severities) {
+                        Object.entries(dayData.severities).forEach(function (entry) {
+                            tooltipHtml += '<div style=\"font-weight:400;opacity:.85;margin-top:1px;\">' + entry[0] + ' — ' + entry[1] + '</div>';
+                        });
+                    }
+                    showTooltip(e.clientX, e.clientY, tooltipHtml);
+                });
+
+                cell.addEventListener('mouseleave', hideTooltip);
+            }
+
+            cell.addEventListener('click', function () {
+                if (selectedDate === dateStr) {
+                    selectedDate = null;
+                } else {
+                    selectedDate = dateStr;
+                }
+                render();
+                dispatchIncidentDateFilter(selectedDate);
+            });
+
+            cell.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    cell.click();
+                }
+            });
+
+            grid.appendChild(cell);
+        }
+
+        if (monthLabel) {
+            monthLabel.textContent = new Date(year, month - 1, 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+        }
+    }
+
+    window.addEventListener('incidentCategoryFilter', function (e) {
+        activeCategory = e.detail && e.detail.category ? e.detail.category : null;
+        render();
+    });
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function () {
+            month--;
+            if (month < 1) {
+                month = 12;
+                year--;
+            }
+            updateUrl(year, month);
+            render();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+            month++;
+            if (month > 12) {
+                month = 1;
+                year++;
+            }
+            updateUrl(year, month);
+            render();
+        });
+    }
+
+    render();
+}
+
+function dispatchIncidentDateFilter(date) {
+    const event = new CustomEvent('incidentDateFilter', {
+        detail: { date: date },
+        bubbles: true
+    });
+    window.dispatchEvent(event);
+}
+
+function initIncidentCategoryFilter() {
+    const rows = document.querySelectorAll('.incident-cat-row[data-category]');
+    rows.forEach(function (row) {
+        row.addEventListener('click', function () {
+            const category = this.dataset.category;
+            if (activeCategory === category) {
+                activeCategory = null;
+                this.dataset.categoryFiltered = 'false';
+            } else {
+                rows.forEach(function (r) { r.dataset.categoryFiltered = 'false'; });
+                activeCategory = category;
+                this.dataset.categoryFiltered = 'true';
+            }
+            dispatchIncidentCategoryFilter(activeCategory);
+        });
+    });
+}
+
+function dispatchIncidentCategoryFilter(category) {
+    const event = new CustomEvent('incidentCategoryFilter', {
+        detail: { category: category },
+        bubbles: true
+    });
+    window.dispatchEvent(event);
+}
+
+function initActionComplianceOverview() {
+    document.querySelectorAll('.action-group-action').forEach(function (btn) {
+        if (btn.tagName.toLowerCase() === 'a') return;
+        btn.addEventListener('click', function () {
+            const group = this.closest('.action-group');
+            if (!group) return;
+            const url = group.dataset.actionUrl;
+            if (url) {
+                window.location.href = url;
+                return;
+            }
+            const title = group.querySelector('.action-group-title')?.textContent?.trim() || 'Action';
+            const event = new CustomEvent('actionGroupView', {
+                detail: { title: title },
+                bubbles: true
+            });
+            window.dispatchEvent(event);
+        });
+    });
+}
+
+export { initDashboard, initDeptComplianceChart, initIncidentAnalytics, initActionComplianceOverview, DASHBOARD_PAGE };

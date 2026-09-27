@@ -200,12 +200,11 @@ $forwardOnclick = empty($hasEmail) ? ' onclick="return false;"' : '';
       </div>
     </div>
 
-    <aside class="nc-preview-sidebar">
-      <div class="nc-preview-card">
-        <div class="nc-preview-header">
-          <h3>Details</h3>
-        </div>
-        <div class="nc-preview-body">
+    <div class="nc-preview-card">
+      <div class="nc-preview-header">
+        <h3>Details</h3>
+      </div>
+      <div class="nc-preview-body">
           <div class="nc-sh-detail-grid">
             <div class="nc-sh-detail-label">Notification ID</div>
             <div class="nc-sh-detail-value">#<?= escapeHtml($currentNotification['id']) ?></div>
@@ -268,7 +267,6 @@ $forwardOnclick = empty($hasEmail) ? ' onclick="return false;"' : '';
           </div>
         </div>
       </div>
-    </aside>
   </div>
 
 </section>

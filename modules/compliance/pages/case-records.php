@@ -67,7 +67,7 @@ function ch_priority_class(string $p): string {
 function ch_status_class(string $status): string {
     $s = strtolower($status);
     if (in_array($s, ['closed', 'resolved', 'closed_no_violation', 'closed_warning_issued', 'closed_suspension', 'closed_termination_recommended', 'closed_resolved'], true)) return 'ir-status-stamp ir-status-stamp--compliant';
-    if (in_array($s, ['for_hearing', 'decision_pending', 'disciplinary_action', 'for_decision'], true)) return 'ir-status-stamp ir-status-stamp--pending';
+    if (in_array($s, ['for_hearing', 'decision_pending', 'disciplinary_action', 'for_decision', 'termination_employee_reply', 'termination_reviewed'], true)) return 'ir-status-stamp ir-status-stamp--pending';
     if (in_array($s, ['under_investigation', 'pending_nte', 'awaiting_response', 'under_initial_review', 'pending_employee_response'], true)) return 'ir-status-stamp ir-status-stamp--info';
     return 'ir-status-stamp ir-status-stamp--pending';
 }
@@ -87,20 +87,6 @@ function ch_employee_no(PDO $db, $employeeId): string {
     $row = ch_row($db, "SELECT employee_code FROM em_employees WHERE employee_id = " . (int)$employeeId . " LIMIT 1");
     return $row['employee_code'] ?? '';
 }
-function ch_type_icon(string $type): string {
-    $t = strtolower($type);
-    if (str_contains($t, 'conflict of interest')) return 'bi bi-shuffle';
-    if (str_contains($t, 'insubordination')) return 'bi bi-person-x';
-    if (str_contains($t, 'harassment')) return 'bi bi-emoji-frown';
-    if (str_contains($t, 'policy violation')) return 'bi bi-file-earmark-x';
-    if (str_contains($t, 'discrimination')) return 'bi bi-people';
-    if (str_contains($t, 'misconduct')) return 'bi bi-exclamation-triangle';
-    if (str_contains($t, 'theft')) return 'bi bi-bag-x';
-    if (str_contains($t, 'attendance')) return 'bi bi-calendar-x';
-    if (str_contains($t, 'performance')) return 'bi bi-graph-down';
-    return 'bi bi-exclamation-circle';
-}
-
 $complaintTable = 'lc_complaints';
 
 $fSearch   = trim($_GET['search'] ?? '');
@@ -109,6 +95,9 @@ $fSeverity = trim($_GET['priority'] ?? '');
 $fStatus   = trim($_GET['status'] ?? '');
 $fFrom     = trim($_GET['date_from'] ?? '');
 $fTo       = trim($_GET['date_to'] ?? '');
+$fPage     = isset($_GET['cr_page']) ? max(1, (int) $_GET['cr_page']) : 1;
+
+$baseUrl = '?page=case-records';
 
 $where  = [];
 $params = [];
@@ -173,7 +162,28 @@ $records = ch_q($db, "
     FROM `$complaintTable` c
     LEFT JOIN em_employees e ON e.employee_id = c.employee_id
     $whereSql
-    ORDER BY c.created_at DESC LIMIT 100
+    ORDER BY c.created_at DESC
+", $params);
+
+$countQuery = "SELECT COUNT(*) FROM `$complaintTable` c $whereSql";
+$totalRows = (int) ch_value($db, $countQuery, 0);
+
+$perPage = 13;
+$totalPages = ($perPage > 0 && $totalRows > 0) ? (int) ceil($totalRows / $perPage) : 1;
+if ($fPage > $totalPages) {
+    $fPage = $totalPages;
+}
+$offset = ($fPage - 1) * $perPage;
+
+$records = ch_q($db, "
+    SELECT c.*, 
+           CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.middle_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+           e.employee_code AS employee_no
+    FROM `$complaintTable` c
+    LEFT JOIN em_employees e ON e.employee_id = c.employee_id
+    $whereSql
+    ORDER BY c.created_at DESC
+    LIMIT $perPage OFFSET $offset
 ", $params);
 
 $selectedId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
@@ -185,126 +195,147 @@ if ($selectedId) {
 
 $priorityOptions = ['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical'];
 $statusOptions = [
-    'under_initial_review'         => 'Under Initial Review',
-    'under_investigation'          => 'Under Investigation',
-    'pending_employee_response'    => 'Pending Employee Response',
-    'for_decision'                 => 'For Decision',
-    'closed_no_violation'          => 'Closed - No Violation',
-    'closed_warning_issued'        => 'Closed - Warning Issued',
-    'closed_suspension'            => 'Closed - Suspension',
-    'closed_termination_recommended' => 'Closed Termination Recommended',
-    'closed_resolved'              => 'Closed - Resolved',
-    'closed'                       => 'Closed',
+    'under_initial_review'          => 'Under Initial Review',
+    'under_investigation'           => 'Under Investigation',
+    'pending_employee_response'     => 'Pending Employee Response',
+    'for_decision'                  => 'For Decision',
+    'closed_no_violation'           => 'Closed - No Violation',
+    'closed_warning_issued'         => 'Closed - Warning Issued',
+    'closed_second_written_warning' => 'Closed - Second Written Warning',
+    'closed_final_written_warning'  => 'Closed - Final Written Warning',
+    'closed_suspension'             => 'Closed - Suspension',
+    'closed_termination_recommended'=> 'Closed - Termination Recommended',
+    'termination_employee_reply'    => 'Termination - Employee Reply',
+    'termination_reviewed'          => 'Termination - Reviewed',
+    'closed_resolved'               => 'Closed - Resolved',
+    'closed'                        => 'Closed',
 ];
 ?>
-<section class="ir-module">
-   <?php if (!empty($flash)): ?>
-     <?php [$fc, $fm] = explode('|', $flash, 2); ?>
-     <div class="ir-flash <?= htmlspecialchars($fc) ?>"><?= htmlspecialchars($fm) ?></div>
-   <?php endif; ?>
 
-      <div class="ir-summary-bar">
-        <a class="ir-summary-item" href="?page=case-records&status=">
-         <div class="ir-summary-icon amber"><i class="bi bi-journal-text"></i></div>
+    <div class="ir-summary-bar">
+       <a class="ir-summary-item <?= $fStatus === '' && $fType === '' && $fSeverity === '' && $fSearch === '' && $fFrom === '' && $fTo === '' ? 'ir-summary-active' : '' ?>" href="<?= htmlspecialchars($baseUrl) ?>">
          <div>
            <div class="ir-summary-value"><?= number_format($totalComplaints) ?></div>
            <div class="ir-summary-label">Total Complaints</div>
          </div>
        </a>
-       <a class="ir-summary-item" href="?page=case-records&status=under_initial_review">
-         <div class="ir-summary-icon blue"><i class="bi bi-folder"></i></div>
-         <div>
-           <div class="ir-summary-value"><?= number_format($newComplaints) ?></div>
-           <div class="ir-summary-label">Under Initial Review</div>
-         </div>
-       </a>
-       <a class="ir-summary-item" href="?page=case-records&status=under_investigation">
-         <div class="ir-summary-icon purple"><i class="bi bi-binoculars"></i></div>
+       <a class="ir-summary-item <?= $fStatus === 'under_investigation' ? 'ir-summary-active' : '' ?>" href="<?= htmlspecialchars($baseUrl) ?>&status=under_investigation&complaint_type=&priority=&search=&date_from=&date_to=&cr_page=1">
          <div>
            <div class="ir-summary-value"><?= number_format($underInvestigation) ?></div>
            <div class="ir-summary-label">Under Investigation</div>
          </div>
        </a>
-       <a class="ir-summary-item" href="?page=case-records&status=pending_employee_response">
-         <div class="ir-summary-icon orange"><i class="bi bi-reply"></i></div>
+       <a class="ir-summary-item <?= $fStatus === 'pending_employee_response' ? 'ir-summary-active' : '' ?>" href="<?= htmlspecialchars($baseUrl) ?>&status=pending_employee_response&complaint_type=&priority=&search=&date_from=&date_to=&cr_page=1">
          <div>
            <div class="ir-summary-value"><?= number_format($pendingNteResponse) ?></div>
-           <div class="ir-summary-label">Pending Employee Response</div>
+           <div class="ir-summary-label">Pending Response</div>
          </div>
        </a>
-       <a class="ir-summary-item" href="?page=case-records&status=for_decision">
-         <div class="ir-summary-icon red"><i class="bi bi-exclamation-octagon"></i></div>
+       <a class="ir-summary-item <?= $fStatus === 'for_decision' ? 'ir-summary-active' : '' ?>" href="<?= htmlspecialchars($baseUrl) ?>&status=for_decision&complaint_type=&priority=&search=&date_from=&date_to=&cr_page=1">
          <div>
            <div class="ir-summary-value"><?= number_format($forHearing) ?></div>
            <div class="ir-summary-label">For Decision</div>
          </div>
        </a>
-        <a class="ir-summary-item" href="?page=case-records&status=closed">
-          <div class="ir-summary-icon green"><i class="bi bi-check2-all"></i></div>
-          <div>
-            <div class="ir-summary-value"><?= number_format($allClosed) ?></div>
-            <div class="ir-summary-label">Closed</div>
-          </div>
-        </a>
-      </div>
+       <a class="ir-summary-item <?= $fStatus === 'closed' ? 'ir-summary-active' : '' ?>" href="<?= htmlspecialchars($baseUrl) ?>&status=closed&complaint_type=&priority=&search=&date_from=&date_to=&cr_page=1">
+         <div>
+           <div class="ir-summary-value"><?= number_format($allClosed) ?></div>
+           <div class="ir-summary-label">Closed</div>
+         </div>
+       </a>
+     </div>
 
     <div class="ir-row">
       <div class="ir-col ir-col-main">
         <div class="ir-card">
           <div class="ir-card-head">
-            <h3><i class="bi bi-journal-check"></i> Complaint Records</h3>
+             <h3>Complaint Records</h3>
           </div>
           <div class="ir-card-body">
-            <?php if (empty($records)): ?>
-             <div class="ir-empty"><i class="bi bi-emoji-smile"></i> No complaints match the current filters.</div>
-           <?php else: ?>
-           <div class="ir-table-wrap">
-             <table class="ir-table">
-                 <thead>
-                   <tr>
-                     <th class="ir-id-cell">Complaint No.</th>
-                     <th class="ir-emp-cell">Employee</th>
-                     <th>Type</th>
-                     <th>Status</th>
-                     <th>Priority</th>
-                     <th class="ir-action-cell" style="text-align:right;">Actions</th>
-                   </tr>
-                 </thead>
-                <tbody>
-                   <?php foreach ($records as $r): ?>
-                    <tr data-rid="<?= (int)$r['id'] ?>" style="cursor:pointer;">
-                      <td class="ir-id-cell" data-label="Complaint No.">
-                        <div class="ir-cnum"><?= htmlspecialchars('CMP-' . str_pad($r['id'] ?? 0, 5, '0', STR_PAD_LEFT)) ?></div>
-                        <div class="ir-emp-no"><?= ch_date($r['created_at'] ?? null) ?></div>
-                      </td>
-                       <td class="ir-emp-cell" data-label="Employee">
-                         <div class="ir-emp-name"><?= htmlspecialchars($r['employee_name'] ?: ($r['employee_id'] ?? 'N/A'), ENT_QUOTES) ?></div>
-                         <div class="ir-emp-no"><?= htmlspecialchars($r['employee_no'] ?: '—', ENT_QUOTES) ?></div>
+             <?php if (empty($records)): ?>
+              <div class="ir-empty">No complaints match the current filters.</div>
+            <?php else: ?>
+             <div class="ir-table-wrap">
+              <table class="ir-table">
+                  <thead>
+                    <tr>
+                       <th class="ir-id-cell">Complaint No.</th>
+                        <th class="ir-emp-cell">Employee</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Action</th>
+                     </tr>
+                  </thead>
+                 <tbody>
+                    <?php foreach ($records as $r): ?>
+                     <tr data-rid="<?= (int)$r['id'] ?>" style="cursor:pointer;">
+                       <td class="ir-id-cell" data-label="Complaint No.">
+                         <div class="ir-cnum"><?= htmlspecialchars('CMP-' . str_pad($r['id'] ?? 0, 5, '0', STR_PAD_LEFT)) ?></div>
+                         <div class="ir-emp-no"><?= ch_date($r['created_at'] ?? null) ?></div>
                        </td>
-                      <td data-label="Type">
-                        <span class="ir-type-badge" style="background:rgba(168,121,31,.1);color:#8a6318;border:1px solid rgba(168,121,31,.2);">
-                          <i class="<?= ch_type_icon($r['type'] ?? '') ?>"></i> <?= ch_label($r['type'] ?? 'General') ?>
-                        </span>
-                      </td>
-                      <td data-label="Status">
-                        <span class="<?= ch_status_class($r['status'] ?? '') ?>"><?= ch_label($r['status'] ?? 'Under Initial Review') ?></span>
-                      </td>
-                      <td data-label="Priority">
-                        <span class="<?= ch_priority_class($r['severity'] ?? '') ?>">
-                          <span class="ir-severity-dot ir-severity-dot--<?= strtolower($r['severity'] ?? 'medium') ?>"></span>
-                          <?= ch_label($r['severity'] ?? 'Medium') ?>
-                        </span>
-                      </td>
-                      <td class="ir-action-cell" data-label="Actions" style="text-align:right;">
-                        <button type="button" class="ir-btn ir-btn-ghost ir-btn-xs" onclick="window.location.href='?page=complaint-workflow&id=<?= (int)$r['id'] ?>'">
-                          <i class="bi bi-eye"></i> View
-                        </button>
-                      </td>
-                    </tr>
-                   <?php endforeach; ?>
-                </tbody>
-              </table>
-            </div>
+                        <td class="ir-emp-cell" data-label="Employee">
+                          <div class="ir-emp-name"><?= htmlspecialchars($r['employee_name'] ?: ($r['employee_id'] ?? 'N/A'), ENT_QUOTES) ?></div>
+                          <div class="ir-emp-no"><?= htmlspecialchars($r['employee_no'] ?: '—', ENT_QUOTES) ?></div>
+                        </td>
+                        <td data-label="Type">
+                          <span class="ir-type-badge"><?= ch_label($r['type'] ?? 'General') ?></span>
+                        </td>
+                       <td data-label="Status">
+                         <span class="<?= ch_status_class($r['status'] ?? '') ?>"><?= ch_label($r['status'] ?? 'Under Initial Review') ?></span>
+                       </td>
+                         <td data-label="Priority">
+                           <span class="<?= ch_priority_class($r['severity'] ?? '') ?>">
+                             <span class="ir-severity-dot ir-severity-dot--<?= strtolower($r['severity'] ?? 'medium') ?>"></span>
+                             <?= ch_label($r['severity'] ?? 'Medium') ?>
+                           </span>
+                         </td>
+                         <td data-label="Action">
+                           <button type="button" class="ir-btn ir-btn-ghost ir-btn-xs" onclick="window.location.href='?page=complaint-workflow&id=<?= (int)$r['id'] ?>'">View</button>
+                         </td>
+                       </tr>
+                    <?php endforeach; ?>
+                 </tbody>
+               </table>
+             </div>
+             <?php if ($totalPages > 1): ?>
+             <div class="ir-pagination">
+               <span class="ir-pagination-info">
+                 Showing <?= number_format($offset + 1) ?>–<?= number_format(min($offset + $perPage, $totalRows)) ?> of <?= number_format($totalRows) ?> records
+               </span>
+               <nav class="ir-pagination-nav" role="navigation" aria-label="Complaint table pagination">
+                 <?php
+                 $qs = [];
+                 if ($fStatus !== '') $qs[] = 'status=' . urlencode($fStatus);
+                 if ($fType !== '') $qs[] = 'complaint_type=' . urlencode($fType);
+                 if ($fSeverity !== '') $qs[] = 'priority=' . urlencode($fSeverity);
+                 if ($fSearch !== '') $qs[] = 'search=' . urlencode($fSearch);
+                 if ($fFrom !== '') $qs[] = 'date_from=' . urlencode($fFrom);
+                 if ($fTo !== '') $qs[] = 'date_to=' . urlencode($fTo);
+                 $baseQs = $baseUrl . ($qs ? '&' . implode('&', $qs) : '');
+                 $prevPage = $fPage - 1;
+                 $nextPage = $fPage + 1;
+                 ?>
+                  <a href="<?= htmlspecialchars($baseQs) ?>&cr_page=<?= $prevPage ?>"
+                     class="ir-page-btn" <?= $prevPage < 1 ? 'aria-disabled="true"' : '' ?>>
+                    &lt;
+                  </a>
+                 <?php
+                 $range = 2;
+                 $start = max(1, $fPage - $range);
+                 $end = min($totalPages, $fPage + $range);
+                 for ($i = $start; $i <= $end; $i++):
+                 ?>
+                 <a href="<?= htmlspecialchars($baseQs) ?>&cr_page=<?= $i ?>"
+                    class="ir-page-btn <?= $i === $fPage ? 'ir-page-btn--active' : '' ?>"><?= $i ?></a>
+                 <?php endfor; ?>
+                  <a href="<?= htmlspecialchars($baseQs) ?>&cr_page=<?= $nextPage ?>"
+                     class="ir-page-btn" <?= $nextPage > $totalPages ? 'aria-disabled="true"' : '' ?>>
+                    &gt;
+                  </a>
+               </nav>
+             </div>
+             <?php endif; ?>
             <?php endif; ?>
           </div>
         </div>
@@ -313,9 +344,9 @@ $statusOptions = [
        <div class="ir-col ir-col-side">
          <div class="ir-card">
            <div class="ir-card-head">
-             <h3><i class="bi bi-bell"></i> Urgent Actions</h3>
-             <span class="ir-stamp ir-stamp-overdue" style="font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;"><?= number_format($pendingNteResponse + $pendingDisciplinary + $forHearing) ?></span>
-           </div>
+              <h3>Urgent Actions</h3>
+              <span class="ir-stamp ir-stamp-overdue" style="font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;"><?= number_format($pendingNteResponse + $pendingDisciplinary + $forHearing) ?></span>
+            </div>
            <div class="ir-reminder-list ir-reminder-list--compact">
             <?php
             $urgentStatuses = ['under_investigation', 'pending_employee_response', 'for_decision'];
@@ -333,34 +364,42 @@ $statusOptions = [
                     <span class="ir-reminder-step"><?= ch_label($r['type'] ?? 'General') ?></span>
                   </div>
                   <div class="ir-reminder-actions">
-                    <button type="button" class="ir-btn ir-btn-ghost ir-btn-xs" onclick="window.location.href='?page=complaint-workflow&id=<?= (int)$r['id'] ?>'">
-                      <i class="bi bi-eye"></i> View
-                    </button>
+                    <button type="button" class="ir-btn ir-btn-ghost ir-btn-xs" onclick="window.location.href='?page=complaint-workflow&id=<?= (int)$r['id'] ?>'">View</button>
                   </div>
                 </div>
               <?php endforeach; ?>
-            <?php else: ?>
-              <div class="ir-empty"><i class="bi bi-emoji-smile"></i> No urgent actions required.</div>
+             <?php else: ?>
+               <div class="ir-empty">No urgent actions required.</div>
             <?php endif; ?>
           </div>
     </div>
    </div>
   </div>
 </div>
- </section>
+  </section>
 
 <script>
 (function(){
-  document.querySelectorAll('tr[data-rid]').forEach(function(row) {
-    row.addEventListener('click', function(e) {
+  function attachRowClick() {
+    document.removeEventListener('click', document._caseRecordsClickHandler);
+    document._caseRecordsClickHandler = function(e) {
+      var row = e.target.closest('tr[data-rid]');
+      if (!row) return;
       if (e.target.closest('button, a, input, select, textarea, form, label')) return;
       var rid = parseInt(row.getAttribute('data-rid'), 10);
       if (rid) {
         window.location.href = '?page=complaint-workflow&id=' + rid;
       }
-    });
-  });
-  })();
+    };
+    document.addEventListener('click', document._caseRecordsClickHandler);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachRowClick);
+  } else {
+    attachRowClick();
+  }
+  window.addEventListener('page:loaded', attachRowClick);
+})();
 </script>
 
 

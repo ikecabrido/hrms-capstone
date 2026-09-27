@@ -70,6 +70,10 @@ function llr_build_page_url(int $pageNum, string $search): string {
 }
 ?>
 <style>
+/* ============================================
+   Labor Law References — Minimal Styles
+   ============================================ */
+
 .llr-module {
     width: 100%;
     max-width: 100%;
@@ -79,12 +83,11 @@ function llr_build_page_url(int $pageNum, string $search): string {
 }
 
 .llr-card {
-    background: var(--card-bg, #fff);
-    border: 1px solid var(--border, #e4e8ee);
-    border-radius: 14px;
-    padding: 14px;
-    box-shadow: var(--shadow-soft, 0 1px 2px rgba(13, 27, 46, .04));
-    margin-bottom: 14px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
@@ -94,29 +97,29 @@ function llr_build_page_url(int $pageNum, string $search): string {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 14px;
+    gap: 16px;
+    margin-bottom: 20px;
     flex-wrap: wrap;
     width: 100%;
     min-width: 0;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 .llr-card-head h3 {
     margin: 0;
-    font-size: 0.98rem;
-    font-weight: 700;
-    color: var(--text-900, #1b2430);
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
     min-width: 0;
+    letter-spacing: -0.01em;
 }
 
 .llr-empty {
-    padding: 24px;
+    padding: 32px 24px;
     text-align: center;
-    color: var(--text-400, #8b93a1);
-    font-size: 0.84rem;
+    color: #6b7280;
+    font-size: 0.875rem;
     min-width: 0;
     box-sizing: border-box;
 }
@@ -124,80 +127,82 @@ function llr_build_page_url(int $pageNum, string $search): string {
 .llr-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 1px;
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    background: #e5e7eb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
 }
 
 .llr-item {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 14px;
-    border: 1px solid var(--border, #e4e8ee);
-    border-radius: 10px;
+    padding: 16px 20px;
     background: #fff;
     text-decoration: none;
     color: inherit;
-    transition: all .15s ease;
+    transition: background 0.1s ease;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
 }
 
 .llr-item:hover {
-    border-color: var(--info-blue, #3b82c4);
-    box-shadow: 0 0 0 3px rgba(59, 130, 196, .08);
+    background: #f9fafb;
 }
 
 .llr-item-head {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
     flex-wrap: wrap;
     width: 100%;
     min-width: 0;
 }
 
 .llr-item-title {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: var(--text-900, #1b2430);
-    line-height: 1.3;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.4;
     min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;
+    letter-spacing: -0.005em;
 }
 
 .llr-item-meta {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     min-width: 0;
 }
 
 .llr-item-ref {
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--text-600, #5b6472);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #4b5563;
     min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 
 .llr-item-date {
-    font-size: 0.78rem;
-    color: var(--text-500, #6b7280);
+    font-size: 0.8125rem;
+    color: #6b7280;
     min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;
 }
 
 .llr-item-preview {
-    font-size: 0.82rem;
-    color: var(--text-600, #5b6472);
+    font-size: 0.875rem;
+    color: #4b5563;
     line-height: 1.5;
     display: -webkit-box;
     line-clamp: 2;
@@ -212,50 +217,51 @@ function llr_build_page_url(int $pageNum, string $search): string {
 .llr-item-actions {
     display: flex;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 8px;
     flex-wrap: wrap;
 }
 
 .llr-stamp {
     display: inline-block;
-    font-size: 0.66rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
     white-space: nowrap;
     min-width: 0;
     overflow-wrap: anywhere;
     word-break: break-word;
+    letter-spacing: 0.01em;
 }
 
 .llr-stamp-active {
-    background: rgba(47, 158, 110, .12);
-    color: #1f7a52;
+    background: #ecfdf5;
+    color: #065f46;
 }
 
 .llr-stamp-amended {
-    background: rgba(217, 154, 43, .14);
-    color: #a86b13;
+    background: #fffbeb;
+    color: #92400e;
 }
 
 .llr-stamp-superseded {
-    background: rgba(59, 130, 196, .12);
-    color: #1c5a8a;
+    background: #eff6ff;
+    color: #1e40af;
 }
 
 .llr-stamp-repealed {
-    background: rgba(214, 72, 74, .12);
-    color: #a3272a;
+    background: #fef2f2;
+    color: #991b1b;
 }
 
 .llr-stamp-archived {
-    background: rgba(107, 114, 128, .12);
-    color: #4b5563;
+    background: #f9fafb;
+    color: #374151;
 }
 
 .llr-stamp-for_reference {
-    background: rgba(107, 114, 128, .1);
-    color: #6b7280;
+    background: #f9fafb;
+    color: #4b5563;
 }
 
 .llr-table-search {
@@ -263,77 +269,74 @@ function llr_build_page_url(int $pageNum, string $search): string {
     flex-shrink: 0;
 }
 
-.llr-table-search i {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-400, #8b93a1);
-    font-size: 0.8rem;
-    pointer-events: none;
-}
-
 .llr-table-search input {
-    padding: 7px 36px 7px 30px;
-    border: 1px solid var(--border, #e4e8ee);
-    border-radius: 8px;
-    font-size: 0.78rem;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 0.8125rem;
     outline: none;
-    width: 220px;
-    transition: border-color .15s ease, box-shadow .15s ease;
+    width: 240px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
     min-width: 0;
     box-sizing: border-box;
+    color: #111827;
+    background: #fff;
 }
 
 .llr-table-search input:focus {
-    border-color: var(--seal-gold, #a8791f);
-    box-shadow: 0 0 0 3px rgba(168, 121, 31, .12);
+    border-color: #111827;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+.llr-table-search input::placeholder {
+    color: #9ca3af;
 }
 
 .llr-table-search .llr-search-clear {
     position: absolute;
-    right: 8px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1rem;
-    color: var(--text-400, #8b93a1);
-    text-decoration: none;
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 1.125rem;
     line-height: 1;
-    min-width: 32px;
-    min-height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 4px;
-    border-radius: 4px;
 }
 
 .llr-table-search .llr-search-clear:hover {
-    color: var(--text-900, #1b2430);
+    color: #111827;
 }
 
 .llr-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 6px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border, #e4e8ee);
-    background: #fff;
-    color: var(--text-700, #3b4252);
-    font-size: 0.75rem;
-    font-weight: 600;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--color1, #200082);
+    background: var(--color1, #200082);
+    color: #fff;
+    font-size: 0.8125rem;
+    font-weight: 500;
     cursor: pointer;
     white-space: nowrap;
-    transition: all .15s ease;
+    transition: all 0.15s ease;
     text-decoration: none;
     min-height: 36px;
+    letter-spacing: 0.01em;
 }
 
 .llr-action-btn:hover {
-    border-color: var(--info-blue, #3b82c4);
-    color: var(--info-blue, #3b82c4);
+    background: #1a0066;
+    border-color: #1a0066;
+    color: #fff;
 }
 
 .llr-pagination {
@@ -341,7 +344,7 @@ function llr_build_page_url(int $pageNum, string $search): string {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    margin-top: 16px;
+    margin-top: 20px;
     flex-wrap: wrap;
     width: 100%;
     min-width: 0;
@@ -351,48 +354,51 @@ function llr_build_page_url(int $pageNum, string $search): string {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    padding: 0 10px;
-    border-radius: 8px;
-    border: 1px solid var(--border, #e4e8ee);
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
     background: #fff;
-    color: var(--text-700, #3b4252);
-    font-size: 0.82rem;
-    font-weight: 600;
+    color: #374151;
+    font-size: 0.8125rem;
+    font-weight: 500;
     cursor: pointer;
     text-decoration: none;
-    transition: all .15s ease;
-    min-height: 34px;
+    transition: all 0.15s ease;
+    min-height: 36px;
+    letter-spacing: 0.01em;
 }
 
 .llr-page-btn:hover:not(:disabled) {
-    border-color: var(--info-blue, #3b82c4);
-    color: var(--info-blue, #3b82c4);
+    border-color: #111827;
+    color: #111827;
+    background: #f9fafb;
 }
 
 .llr-page-btn:disabled {
-    background: var(--paper, #eef1f5);
-    border-color: var(--hairline, #dde3ea);
-    color: var(--text-400, #8b95a4);
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #9ca3af;
     cursor: not-allowed;
 }
 
 .llr-page-btn.active {
-    background: var(--info-blue, #3b82c4);
-    border-color: var(--info-blue, #3b82c4);
+    background: #2563eb;
+    border-color: #2563eb;
     color: #fff;
+    font-weight: 600;
 }
 
 .llr-page-ellipsis {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 34px;
-    height: 34px;
-    color: var(--text-400, #8b93a1);
-    font-size: 0.82rem;
-    min-height: 34px;
+    min-width: 36px;
+    height: 36px;
+    color: #9ca3af;
+    font-size: 0.8125rem;
+    min-height: 36px;
 }
 
 .llr-card-body {
@@ -416,11 +422,13 @@ function llr_build_page_url(int $pageNum, string $search): string {
     .llr-card-head {
         flex-direction: column;
         align-items: stretch;
-        gap: 10px;
+        gap: 12px;
+        padding-bottom: 14px;
     }
 
     .llr-card-head h3 {
         width: 100%;
+        font-size: 0.9375rem;
     }
 
     .llr-table-search {
@@ -430,15 +438,15 @@ function llr_build_page_url(int $pageNum, string $search): string {
     .llr-table-search input {
         width: 100%;
         min-width: 0;
-        padding-right: 36px;
     }
 
     .llr-item {
-        padding: 12px;
+        padding: 14px 16px;
     }
 
     .llr-card {
-        padding: 12px;
+        padding: 16px;
+        border-radius: 4px;
     }
 
     .llr-page-btn {
@@ -459,93 +467,88 @@ function llr_build_page_url(int $pageNum, string $search): string {
 
 @media (max-width: 576px) {
     .llr-item {
-        padding: 12px;
+        padding: 14px 16px;
     }
 
     .llr-card {
-        padding: 12px;
+        padding: 16px;
     }
 
     .llr-item-title {
-        font-size: 0.9rem;
+        font-size: 0.875rem;
     }
 
     .llr-item-meta {
-        gap: 4px;
+        gap: 3px;
     }
 
     .llr-item-ref,
     .llr-item-date {
-        font-size: 0.76rem;
+        font-size: 0.78125rem;
     }
 }
 
 @media (max-width: 380px) {
     .llr-card {
-        padding: 10px;
-        border-radius: 12px;
+        padding: 14px;
+        border-radius: 3px;
     }
 
     .llr-item {
-        padding: 10px;
-        border-radius: 8px;
+        padding: 12px 14px;
     }
 
     .llr-item-title {
-        font-size: 0.86rem;
+        font-size: 0.8125rem;
     }
 
     .llr-item-ref,
     .llr-item-date {
-        font-size: 0.73rem;
+        font-size: 0.75rem;
     }
 
     .llr-item-preview {
-        font-size: 0.78rem;
+        font-size: 0.8125rem;
     }
 
     .llr-card-head h3 {
-        font-size: 0.92rem;
+        font-size: 0.875rem;
     }
 
     .llr-table-search input {
-        font-size: 0.76rem;
+        font-size: 0.78125rem;
     }
 
     .llr-action-btn {
-        font-size: 0.73rem;
+        font-size: 0.75rem;
         min-height: 38px;
     }
 
     .llr-page-btn {
-        min-width: 36px;
-        min-height: 36px;
-        font-size: 0.78rem;
-        padding: 0 8px;
+        min-width: 38px;
+        min-height: 38px;
+        font-size: 0.78125rem;
+        padding: 0 10px;
     }
 
     .llr-page-ellipsis {
-        min-width: 36px;
-        min-height: 36px;
-        font-size: 0.78rem;
+        min-width: 38px;
+        min-height: 38px;
+        font-size: 0.78125rem;
     }
 }
 </style>
 
 <section class="llr-module">
     <div class="llr-card">
-        <div class="llr-card-head">
-            <h3><i class="bi bi-bank2"></i> Labor Law References</h3>
-            <form class="llr-table-search" method="get" action="" data-skip>
-                <input type="hidden" name="page" value="labor-law-references">
-                <input type="hidden" name="page_num" value="1">
-                <i class="bi bi-search" aria-hidden="true"></i>
-                <input type="text" name="search" placeholder="Search references..." value="<?= htmlspecialchars($search) ?>" aria-label="Search labor law references">
-                <?php if ($search !== ''): ?>
-                    <a href="?page=labor-law-references" class="llr-search-clear" title="Clear search" aria-label="Clear search">&times;</a>
-                <?php endif; ?>
-            </form>
-        </div>
+        <form class="llr-table-search" method="get" action="" data-skip>
+            <input type="hidden" name="page" value="labor-law-references">
+            <input type="hidden" name="page_num" value="1">
+            <input type="text" name="search" placeholder="Search references..." value="<?= htmlspecialchars($search) ?>" aria-label="Search labor law references">
+            <?php if ($search !== ''): ?>
+                <a href="?page=labor-law-references" class="llr-search-clear" title="Clear search" aria-label="Clear search">&times;</a>
+            <?php endif; ?>
+        </form>
         <div class="llr-card-body">
             <?php if (empty($paginatedReferences)): ?>
                 <div class="llr-empty">No labor law references found.</div>
@@ -601,9 +604,7 @@ function llr_build_page_url(int $pageNum, string $search): string {
                         <div class="llr-item-preview"><?= htmlspecialchars($preview) ?></div>
                     <?php endif; ?>
                     <div class="llr-item-actions">
-                        <a href="?page=labor-law-reference-detail&id=<?= (int) ($ref['id'] ?? 0) ?>" class="llr-action-btn">
-                            <i class="bi bi-eye"></i> View Details
-                        </a>
+                        <a href="?page=labor-law-reference-detail&id=<?= (int) ($ref['id'] ?? 0) ?>" class="llr-action-btn">View Details</a>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -612,11 +613,9 @@ function llr_build_page_url(int $pageNum, string $search): string {
             <?php if ($totalPages > 1): ?>
             <div class="llr-pagination" id="llrPagination">
                 <?php if ($page > 1): ?>
-                    <a class="llr-page-btn" href="<?= htmlspecialchars(llr_build_page_url($page - 1, $search)) ?>" aria-label="Previous page">
-                        <i class="bi bi-chevron-left"></i>
-                    </a>
+                    <a class="llr-page-btn" href="<?= htmlspecialchars(llr_build_page_url($page - 1, $search)) ?>" aria-label="Previous page">Prev</a>
                 <?php else: ?>
-                    <button class="llr-page-btn" disabled aria-label="Previous page"><i class="bi bi-chevron-left"></i></button>
+                    <button class="llr-page-btn" disabled aria-label="Previous page">Prev</button>
                 <?php endif; ?>
 
                 <?php
@@ -639,11 +638,9 @@ function llr_build_page_url(int $pageNum, string $search): string {
                 ?>
 
                 <?php if ($page < $totalPages): ?>
-                    <a class="llr-page-btn" href="<?= htmlspecialchars(llr_build_page_url($page + 1, $search)) ?>" aria-label="Next page">
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
+                    <a class="llr-page-btn" href="<?= htmlspecialchars(llr_build_page_url($page + 1, $search)) ?>" aria-label="Next page">Next</a>
                 <?php else: ?>
-                    <button class="llr-page-btn" disabled aria-label="Next page"><i class="bi bi-chevron-right"></i></button>
+                    <button class="llr-page-btn" disabled aria-label="Next page">Next</button>
                 <?php endif; ?>
             </div>
             <?php endif; ?>
@@ -653,3 +650,5 @@ function llr_build_page_url(int $pageNum, string $search): string {
 </section>
 
 <script src="js/pages/labor-law-references.js"></script>
+
+

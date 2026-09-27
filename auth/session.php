@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $timeout = 1800;
 
 // Helper to detect API/fetch requests
-$isApiRequest = $_SERVER['REQUEST_METHOD'] === 'POST' ||
+$isApiRequest = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' ||
     !empty($_SERVER['HTTP_X_REQUESTED_WITH']);
 
 // Redirect to login if not authenticated

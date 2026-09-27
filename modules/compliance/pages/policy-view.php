@@ -31,7 +31,15 @@ $pending = (int) ($stats['pending'] ?? 0);
 $overdue = (int) ($stats['overdue'] ?? 0);
 $rate = $total > 0 ? round($ack / $total * 100, 1) : 0;
 
-$assignments = $policy->getAssignments($policyId);
+$perPage = 10;
+$currentPage = isset($_GET['assign_page']) ? max(1, (int) $_GET['assign_page']) : 1;
+$totalAssignments = $policy->countAssignments($policyId);
+$totalPages = ($perPage > 0 && $totalAssignments > 0) ? (int) ceil($totalAssignments / $perPage) : 1;
+if ($currentPage > $totalPages) {
+    $currentPage = $totalPages;
+}
+$offset = ($currentPage - 1) * $perPage;
+$assignments = $policy->getAssignments($policyId, [], $perPage, $offset);
 
 $filterStatus = '';
 $filterAckStatus = '';
@@ -43,7 +51,7 @@ $filterAckStatus = '';
     <div class="policy-col-main">
       <div class="policy-card">
         <div class="policy-card-head">
-          <h3><i class="bi bi-info-circle"></i> Policy Details</h3>
+          <h3>Policy Details</h3>
         </div>
         <div class="policy-card-body">
           <div class="form-row">
@@ -98,13 +106,12 @@ $filterAckStatus = '';
               <label>Policy Content</label>
               <div class="policy-content-box"><?= htmlspecialchars(strip_tags($policyData['content'])) ?></div>
             </div>
-           <?php endif; ?>
-        </div>
+          <?php endif; ?>
+          </div>
       </div>
-
       <div class="policy-card">
         <div class="policy-card-head">
-          <h3><i class="bi bi-people"></i> Assignments (<?= count($assignments) ?>)</h3>
+          <h3>Assignments (<?= number_format($totalAssignments) ?>)</h3>
         </div>
         <div class="policy-card-body">
           <?php if (empty($assignments)): ?>
@@ -164,18 +171,51 @@ $filterAckStatus = '';
             </table>
           </div>
           <?php endif; ?>
+          <?php if ($totalPages > 1): ?>
+          <div class="policy-pagination">
+            <span class="policy-pagination-info">
+              Showing <?= number_format($offset + 1) ?>–<?= number_format(min($offset + $perPage, $totalAssignments)) ?> of <?= number_format($totalAssignments) ?> records
+            </span>
+            <nav class="policy-pagination-nav" role="navigation" aria-label="Assignments pagination">
+              <?php
+              $baseUrl = '?page=policy-view';
+              $qs = ['id' => (int) $policyId];
+              $baseQs = $baseUrl . '&' . http_build_query($qs);
+              $prevPage = $currentPage - 1;
+              $nextPage = $currentPage + 1;
+              ?>
+              <a href="<?= $prevPage >= 1 ? $baseQs . '&assign_page=' . $prevPage : '#' ?>"
+                 class="policy-page-btn" <?= $prevPage < 1 ? 'aria-disabled="true"' : '' ?>>
+                <i class="bi bi-chevron-left"></i>
+              </a>
+              <?php
+              $range = 2;
+              $start = max(1, $currentPage - $range);
+              $end = min($totalPages, $currentPage + $range);
+              for ($i = $start; $i <= $end; $i++):
+              ?>
+              <a href="<?= $baseQs . '&assign_page=' . $i ?>"
+                 class="policy-page-btn <?= $i === $currentPage ? 'policy-page-btn--active' : '' ?>"><?= $i ?></a>
+              <?php endfor; ?>
+              <a href="<?= $nextPage <= $totalPages ? $baseQs . '&assign_page=' . $nextPage : '#' ?>"
+                 class="policy-page-btn" <?= $nextPage > $totalPages ? 'aria-disabled="true"' : '' ?>>
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </nav>
+          </div>
+          <?php endif; ?>
         </div>
       </div>
     </div>
 
     <div class="policy-actions-menu" id="policyActionsMenu" hidden>
-      <a href="#" data-menu-link="view"><i class="bi bi-eye"></i> View</a>
-      <a href="#" data-menu-link="remind"><i class="bi bi-bell"></i> Remind</a>
+      <a href="#" data-menu-link="view">View</a>
+      <a href="#" data-menu-link="remind">Remind</a>
     </div>
 
     <div class="policy-col-side">
       <div class="policy-side-card">
-        <h4><i class="bi bi-bar-chart"></i> Acknowledgement Stats</h4>
+        <h4>Acknowledgement Stats</h4>
         <div class="policy-quick-stat">
           <span class="policy-quick-label">Total Assigned</span>
           <span class="policy-quick-value"><?= number_format($total) ?></span>
@@ -199,7 +239,7 @@ $filterAckStatus = '';
       </div>
 
       <div class="policy-side-card">
-        <h4><i class="bi bi-info-circle"></i> Policy Info</h4>
+        <h4>Policy Info</h4>
         <div class="policy-quick-stat">
           <span class="policy-quick-label">Code</span>
           <span class="policy-quick-value"><?= htmlspecialchars($policyData['policy_code']) ?></span>
@@ -223,13 +263,13 @@ $filterAckStatus = '';
       </div>
 
       <div class="policy-side-card">
-        <h4><i class="bi bi-lightbulb"></i> Actions</h4>
+        <h4>Actions</h4>
         <div class="policy-side-actions">
           <a href="?page=acknowledgement-report&id=<?= (int) $policyId ?>" class="policy-side-action policy-side-action-secondary">
-            <i class="bi bi-bar-chart"></i> View Report
+            View Report
           </a>
           <a href="?page=policy-management" class="policy-side-action policy-side-action-secondary">
-            <i class="bi bi-arrow-left"></i> Back to List
+            Back to List
           </a>
         </div>
       </div>
@@ -250,6 +290,13 @@ $filterAckStatus = '';
   font-size: 0.9rem;
   line-height: 1.6;
 }
+.policy-pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; flex-wrap:wrap; font-size:0.75rem; color:var(--text-500,#64748b); }
+.policy-pagination-info { font-size:0.75rem; color:var(--text-500,#64748b); white-space:nowrap; }
+.policy-pagination-nav { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border,#e4e8ee); border-radius:6px; overflow:hidden; }
+.policy-pagination-nav .policy-page-btn { display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px; border:0; background:transparent; font-size:0.75rem; color:var(--text-700,#334155); cursor:pointer; text-decoration:none; transition:background-color .1s ease; }
+.policy-pagination-nav .policy-page-btn:hover:not(.policy-page-btn--active) { background:var(--slate-100,#f1f5f9); }
+.policy-pagination-nav .policy-page-btn[aria-disabled="true"] { opacity:0.35; cursor:not-allowed; pointer-events:none; }
+.policy-pagination-nav .policy-page-btn--active { background:#2563eb; color:#fff; }
 </style>
 
 <script>

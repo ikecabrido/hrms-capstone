@@ -354,212 +354,853 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'searc
 }
 ?>
 <style>
-.govreg-module { padding: 4px 2px 24px; }
-.govreg-breadcrumb { margin-bottom:10px; }
-.govreg-breadcrumb .breadcrumb { background:transparent; padding:0; margin:0; font-size:0.8rem; }
-.govreg-breadcrumb .breadcrumb-item a { color:var(--info-blue,#3b82c4); text-decoration:none; }
-.govreg-breadcrumb .breadcrumb-item a:hover { text-decoration:underline; }
-.govreg-breadcrumb .breadcrumb-item.active { color:var(--text-500,#6b7280); }
-
-.govreg-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:14px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:14px; }
-.govreg-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-.govreg-card-head h3 { margin:0; font-size:0.98rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
-.govreg-empty { padding:24px; text-align:center; color:var(--text-400,#8b93a1); font-size:0.84rem; }
-
- .govreg-card-body { display:flex; flex-direction:column; max-height: 540px; overflow: hidden; }
- @media (min-width: 769px) {
-   .govreg-card-body { max-height: none; overflow: visible; }
- }
- .govreg-table-wrap { overflow: auto; flex: 1 1 auto; }
- @media (min-width: 769px) {
-   .govreg-table-wrap { overflow: visible; }
- }
- .govreg-table { width:100%; border-collapse:collapse; font-size:0.82rem; table-layout: auto; min-width: 900px; }
- .govreg-table thead th { position: sticky; top: 0; z-index: 2; }
- .govreg-table th { text-align:left; padding:10px 12px; font-size:0.72rem; font-weight:700; text-transform:uppercase; color:var(--text-400,#8b93a1); border-bottom:1px solid var(--border,#e4e8ee); background:#fafbfc; }
- .govreg-table td { padding:10px 12px; border-bottom:1px solid var(--border,#e4e8ee); vertical-align:middle; }
- .govreg-table tr:last-child td { border-bottom:none; }
-.govreg-stamp { display:inline-block; font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
-.govreg-stamp-complete { background:rgba(47,158,110,.12); color:#1f7a52; }
-.govreg-stamp-partial { background:rgba(217,154,43,.14); color:#a86b13; }
-.govreg-stamp-missing { background:rgba(214,72,74,.12); color:#a3272a; }
-
-.govreg-filter-bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
-.govreg-filter-bar select { padding:7px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.78rem; outline:none; background:#fff; min-width:140px; }
-.govreg-filter-bar select:focus { border-color:var(--seal-gold,#a8791f); box-shadow:0 0 0 3px rgba(168,121,31,.12); }
-.govreg-filter-bar .govreg-search-wrap { position:relative; }
-.govreg-filter-bar .govreg-search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-400,#8b93a1); font-size:0.85rem; pointer-events:none; }
-.govreg-filter-bar .govreg-search-input { padding:7px 28px 7px 30px; border-radius:8px; border:1px solid var(--border,#e4e8ee); background:#fff; font-size:0.8rem; min-width:200px; }
-.govreg-filter-bar .govreg-search-input:focus { outline:none; border-color:var(--info-blue,#3b82c4); box-shadow:0 0 0 3px rgba(59,130,196,.1); }
-.govreg-filter-bar .govreg-search-clear { position:absolute; right:8px; font-size:1rem; color:var(--text-400,#8b93a1); text-decoration:none; line-height:1; }
-.govreg-filter-bar .govreg-search-clear:hover { color:var(--text-900,#1b2430); }
-
-.govreg-action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 12px;
-    height: 34px;
-    border-radius: 8px;
-    border: 1px solid var(--border, #e4e8ee);
-    background: #fff;
-    color: var(--text-700, #3b4252);
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.15s ease;
-    text-decoration: none;
-    gap: 6px;
-}
-.govreg-action-btn:hover:not(:disabled) {
-    border-color: var(--seal-gold, #a8791f);
-    color: var(--seal-gold, #a8791f);
-    box-shadow: 0 0 0 3px rgba(168, 121, 31, 0.08);
-}
-.govreg-action-btn:disabled {
-    background: var(--paper, #eef1f5);
-    border-color: var(--hairline, #dde3ea);
-    color: var(--text-400, #8b95a4);
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.govreg-pagination { display:flex; justify-content:center; align-items:center; gap:6px; margin:16px 0; flex-wrap:wrap; }
-.govreg-pagination .govreg-page-info { font-size:0.78rem; color:var(--text-600,#5b6472); }
-.govreg-pagination .govreg-page-btn,
-.govreg-pagination .govreg-page-link { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:34px; padding:0 8px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.8rem; text-decoration:none; color:var(--text-900,#1b2430); background:#fff; transition:all .15s ease; }
-.govreg-pagination .govreg-page-link:hover { background:var(--seal-gold-light,#f4e6c9); border-color:var(--seal-gold,#a8791f); color:var(--seal-gold,#a8791f); }
-.govreg-pagination .govreg-page-btn.active { background:var(--seal-gold,#a8791f); color:#fff; border-color:var(--seal-gold,#a8791f); }
-.govreg-pagination .govreg-page-btn:hover:not(.active) { background:var(--seal-gold-light,#f4e6c9); border-color:var(--seal-gold,#a8791f); color:var(--seal-gold,#a8791f); }
-.govreg-pagination .govreg-page-btn:disabled { background:var(--paper,#eef1f5); border-color:var(--hairline,#dde3ea); color:var(--text-400,#8b95a4); cursor:not-allowed; }
-
-.govreg-id-field { font-size:0.78rem; color:var(--text-600,#5b6472); font-family:monospace; }
-.govreg-notice { background:rgba(59,130,196,.06); border:1px solid rgba(59,130,196,.2); border-radius:10px; padding:12px 16px; margin-bottom:14px; font-size:0.82rem; color:var(--text-700,#3b4252); display:flex; align-items:flex-start; gap:8px; }
-.govreg-notice i { color:var(--info-blue,#3b82c4); margin-top:2px; }
-
-.govreg-agency-bar { display:flex; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
-.govreg-agency-item { display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:14px; background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); flex:1; min-width:180px; text-decoration:none; color:inherit; transition:all .15s ease; cursor:pointer; }
-.govreg-agency-item:hover { border-color:var(--seal-gold,#a8791f); box-shadow:0 0 0 3px rgba(168,121,31,.08); }
-.govreg-agency-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
-.govreg-agency-icon.gray { background:rgba(107,114,128,.12); color:#4b5563; }
-.govreg-agency-logo { width:28px; height:28px; object-fit:contain; }
-.govreg-agency-value { font-size:1.25rem; font-weight:800; color:var(--text-900,#1b2430); line-height:1; }
-.govreg-agency-label { font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); margin-top:4px; }
-.govreg-rate-bar { height:6px; border-radius:999px; background:#e5e7eb; margin-top:8px; overflow:hidden; }
-.govreg-rate-fill { height:100%; border-radius:999px; background:var(--seal-gold,#a8791f); }
-
-@media (max-width: 1100px) {
-  .govreg-table-wrap { overflow-x: auto; }
-}
-
 /* ============================================
-   RESPONSIVE OVERRIDES
+   Government Registration — Enterprise Styles
    ============================================ */
 
-/* Prevent horizontal overflow */
 .govreg-module {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+    --gov-surface: #ffffff;
+    --gov-text: #20252b;
+    --gov-text-secondary: #667085;
+    --gov-text-muted: #8b93a1;
+    --gov-border: #dfe3e8;
+    --gov-border-light: #eef1f5;
+    --gov-accent: #1b18be;
+    --gov-accent-hover: #40b4d1;
+    --gov-accent-light: #faf6f0;
+    --gov-success: #1f7a52;
+    --gov-success-bg: rgba(47,158,110,.08);
+    --gov-warning: #a86b13;
+    --gov-warning-bg: rgba(217,154,43,.08);
+    --gov-danger: #a3272a;
+    --gov-danger-bg: rgba(214,72,74,.08);
+    --gov-radius: 6px;
+    --gov-radius-md: 8px;
+    --gov-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    color: var(--gov-text);
+    padding: 4px 2px 24px;
 }
 
+/* Page Header */
+.govreg-page-header {
+    margin-bottom: 20px;
+}
+
+.govreg-breadcrumb {
+    font-size: 10px;
+    color: var(--gov-text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.govreg-breadcrumb a {
+    color: var(--gov-accent);
+    text-decoration: none;
+}
+
+.govreg-breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.govreg-page-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gov-text);
+    margin: 0 0 2px;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+}
+
+.govreg-page-subtitle {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Cards */
 .govreg-card {
-    box-sizing: border-box;
-    max-width: 100%;
+    background: var(--gov-surface);
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius);
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.govreg-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.govreg-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gov-text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.3;
+}
+
+.govreg-card-title i {
+    font-size: 15px;
+    color: var(--gov-accent);
+}
+
+.govreg-card-meta {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    line-height: 1.4;
+}
+
+.govreg-card-meta strong {
+    color: var(--gov-text);
+    font-weight: 600;
+}
+
+/* Compliance Overview Grid */
+.govreg-agency-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--gov-border);
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius);
     overflow: hidden;
 }
 
-/* Agency bar: tablet 2-col, mobile 2-col grid */
-@media (max-width: 1100px) {
-    .govreg-agency-bar {
-        gap: 10px;
-    }
-    .govreg-agency-item {
-        min-width: 0;
-        flex: 1 1 calc(50% - 10px);
-        max-width: calc(50% - 10px);
-    }
-    .govreg-agency-item > div {
-        min-width: 0;
-    }
+.govreg-agency-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--gov-surface);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.12s ease;
 }
 
-@media (max-width: 768px) {
-    .govreg-agency-bar {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-    .govreg-agency-item {
-        min-width: 0;
-        max-width: 100%;
-        flex: 1 1 auto;
-    }
-    .govreg-agency-item > div {
-        min-width: 0;
-    }
-    .govreg-agency-value {
-        font-size: 1.1rem;
-    }
+.govreg-agency-item:hover {
+    background: var(--gov-accent-light);
 }
 
-@media (max-width: 400px) {
-    .govreg-agency-bar {
-        grid-template-columns: 1fr;
-    }
+.govreg-agency-item.is-active {
+    background: var(--gov-accent-light);
+    outline: 1px solid var(--gov-accent);
+    outline-offset: -1px;
 }
 
-/* Card head wrapping */
-.govreg-card-head {
-    flex-wrap: wrap;
-    gap: 8px;
+.govreg-agency-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--gov-radius);
+    background: var(--gov-border-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid var(--gov-border);
 }
 
-/* Filter bar responsive readiness */
-.govreg-filter-bar {
-    flex-wrap: wrap;
-    gap: 8px;
+.govreg-agency-icon img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
 }
-.govreg-filter-bar select,
-.govreg-filter-bar .govreg-search-input {
+
+.govreg-agency-icon i {
+    font-size: 1rem;
+    color: var(--gov-text-muted);
+}
+
+.govreg-agency-body {
+    flex: 1;
     min-width: 0;
 }
-@media (max-width: 768px) {
-    .govreg-filter-bar select,
-    .govreg-filter-bar .govreg-search-input {
-        width: 100%;
-        max-width: 100%;
-        flex: 1 1 auto;
-    }
-}
-@media (min-width: 769px) {
-    .govreg-filter-bar select {
-        width: auto;
-        min-width: 140px;
-        flex: 0 0 auto;
-    }
-    .govreg-filter-bar .govreg-search-input {
-        width: auto;
-        min-width: 200px;
-        flex: 1 1 auto;
-        max-width: 400px;
-    }
+
+.govreg-agency-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gov-text);
+    margin-bottom: 2px;
+    line-height: 1.3;
 }
 
-/* ============================================
-   MOBILE CARD TABLE (max-width: 768px)
-   ============================================ */
+.govreg-agency-meta {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    margin-bottom: 6px;
+    line-height: 1.4;
+}
+
+.govreg-agency-stats {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--gov-text);
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.govreg-agency-rate {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--gov-border-light);
+    overflow: hidden;
+}
+
+.govreg-agency-rate-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--gov-accent);
+    transition: width 0.2s ease;
+}
+
+/* Filter Bar */
+.govreg-filter-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.govreg-search-wrap {
+    position: relative;
+    flex: 1 1 220px;
+    max-width: 320px;
+}
+
+.govreg-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gov-text-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.govreg-search-input {
+    width: 100%;
+    padding: 7px 10px 7px 30px;
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius-md);
+    background: var(--gov-surface);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--gov-text);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    line-height: 1.3;
+}
+
+.govreg-search-input:focus {
+    border-color: var(--gov-accent);
+    box-shadow: 0 0 0 3px rgba(168,121,31,.1);
+}
+
+.govreg-search-input::placeholder {
+    color: var(--gov-text-muted);
+}
+
+.govreg-select {
+    padding: 7px 28px 7px 10px;
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius-md);
+    background: var(--gov-surface);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--gov-text);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667085' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    line-height: 1.3;
+}
+
+.govreg-select:focus {
+    border-color: var(--gov-accent);
+    box-shadow: 0 0 0 3px rgba(168,121,31,.1);
+}
+
+.govreg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--gov-radius-md);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.12s ease;
+    text-decoration: none;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.govreg-btn-primary {
+    background: var(--gov-accent);
+    color: #fff;
+    border-color: var(--gov-accent);
+}
+
+.govreg-btn-primary:hover {
+    background: var(--gov-accent-hover);
+    border-color: var(--gov-accent-hover);
+}
+
+.govreg-btn-secondary {
+    background: var(--gov-surface);
+    color: var(--gov-text);
+    border-color: var(--gov-border);
+}
+
+.govreg-btn-secondary:hover {
+    background: var(--gov-border-light);
+    border-color: var(--gov-text-muted);
+}
+
+/* Table */
+.govreg-table-wrap {
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius);
+    overflow: hidden;
+}
+
+.govreg-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    table-layout: auto;
+}
+
+.govreg-table thead {
+    background: var(--gov-border-light);
+}
+
+.govreg-table th {
+    text-align: left;
+    padding: 9px 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--gov-text-muted);
+    border-bottom: 1px solid var(--gov-border);
+    white-space: nowrap;
+    user-select: none;
+    line-height: 1.3;
+}
+
+.govreg-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--gov-border-light);
+    vertical-align: middle;
+    color: var(--gov-text);
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.govreg-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.govreg-table tbody tr:hover {
+    background: rgba(168,121,31,.02);
+}
+
+.govreg-table tbody tr {
+    transition: background 0.08s ease;
+}
+
+/* Table column specific */
+.govreg-col-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.govreg-col-name {
+    font-weight: 500;
+    font-size: 11.5px;
+    color: var(--gov-text);
+    line-height: 1.4;
+}
+
+.govreg-col-dept {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    line-height: 1.4;
+}
+
+.govreg-col-id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.govreg-col-date {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gov-text-muted);
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+/* Status */
+.govreg-status {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.govreg-status-complete {
+    background: rgba(59,130,196,.08);
+    color: #1c5a8a;
+}
+
+.govreg-status-partial {
+    background: var(--gov-warning-bg);
+    color: var(--gov-warning);
+}
+
+.govreg-status-missing {
+    background: var(--gov-danger-bg);
+    color: var(--gov-danger);
+}
+
+/* Missing requirements */
+.govreg-missing {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    line-height: 1.4;
+}
+
+.govreg-missing--has-missing {
+    color: var(--gov-danger);
+    font-weight: 600;
+}
+
+.govreg-missing-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.govreg-missing-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    opacity: 0.9;
+    transition: opacity 0.12s ease;
+}
+
+.govreg-missing-icon:hover {
+    opacity: 1;
+}
+
+/* Action buttons */
+.govreg-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.govreg-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--gov-radius);
+    color: var(--gov-text-secondary);
+    text-decoration: none;
+    transition: all 0.12s ease;
+    border: 1px solid transparent;
+}
+
+.govreg-action-link:hover {
+    background: var(--gov-border-light);
+    color: var(--gov-accent);
+    border-color: var(--gov-border);
+}
+
+.govreg-action-link i {
+    font-size: 0.9rem;
+}
+
+.govreg-action-link--disabled {
+    color: var(--gov-text-muted);
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.5;
+    background: transparent;
+    border-color: transparent;
+}
+
+/* Pagination */
+.govreg-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.govreg-page-info {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    margin-right: 8px;
+    line-height: 1.4;
+}
+
+.govreg-page-link,
+.govreg-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--gov-text);
+    background: var(--gov-surface);
+    transition: all 0.12s ease;
+    line-height: 1.2;
+}
+
+.govreg-page-link:hover,
+.govreg-page-btn:hover {
+    background: var(--gov-accent-light);
+    border-color: var(--gov-accent);
+    color: var(--gov-accent);
+}
+
+.govreg-page-btn.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+    font-weight: 600;
+}
+
+.govreg-page-link[aria-disabled="true"],
+.govreg-page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.govreg-page-ellipsis {
+    padding: 0 4px;
+    color: var(--gov-text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* Modal */
+#govregModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(0,0,0,.4);
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+#govregModal.govreg-modal-open {
+    display: flex;
+}
+
+.govreg-modal-overlay {
+    background: var(--gov-surface);
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius);
+    box-shadow: 0 8px 24px rgba(14,28,51,.12);
+    width: 100%;
+    max-width: 640px;
+    max-height: calc(100vh - 48px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.govreg-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--gov-border);
+}
+
+.govreg-modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gov-text);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.govreg-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--gov-text-muted);
+    cursor: pointer;
+    padding: 2px 6px;
+    line-height: 1.2;
+    border-radius: var(--gov-radius);
+    transition: all 0.12s ease;
+}
+
+.govreg-modal-close:hover {
+    background: var(--gov-border-light);
+    color: var(--gov-text);
+}
+
+.govreg-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+
+.govreg-modal-description {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--gov-text-secondary);
+    margin: 0 0 16px;
+    line-height: 1.4;
+}
+
+.govreg-form-group {
+    margin-bottom: 14px;
+}
+
+.govreg-form-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--gov-text);
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.govreg-form-label .govreg-required {
+    color: var(--gov-danger);
+    margin-left: 2px;
+}
+
+.govreg-form-input,
+.govreg-form-select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius-md);
+    background: var(--gov-surface);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--gov-text);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    line-height: 1.3;
+}
+
+.govreg-form-input:focus,
+.govreg-form-select:focus {
+    border-color: var(--gov-accent);
+    box-shadow: 0 0 0 3px rgba(168,121,31,.1);
+}
+
+.govreg-form-input::placeholder {
+    color: var(--gov-text-muted);
+}
+
+.govreg-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.govreg-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--gov-border-light);
+}
+
+.govreg-form-message {
+    font-size: 10px;
+    font-weight: 500;
+    margin-right: 8px;
+    line-height: 1.4;
+}
+
+.govreg-form-message--success {
+    color: var(--gov-success);
+}
+
+.govreg-form-message--error {
+    color: var(--gov-danger);
+}
+
+/* Employee search results */
+.govreg-employee-search-wrap {
+    position: relative;
+}
+
+.govreg-employee-results {
+    border: 1px solid var(--gov-border);
+    border-radius: var(--gov-radius-md);
+    margin-top: 4px;
+    background: var(--gov-surface);
+    display: none;
+    max-height: 220px;
+    overflow: auto;
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(14,28,51,.08);
+}
+
+.govreg-employee-result {
+    padding: 8px 12px;
+    font-size: 11.5px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 1px solid var(--gov-border-light);
+    transition: background 0.08s ease;
+    line-height: 1.4;
+}
+
+.govreg-employee-result:last-child {
+    border-bottom: none;
+}
+
+.govreg-employee-result:hover {
+    background: var(--gov-border-light);
+}
+
+.govreg-employee-result-name {
+    font-weight: 600;
+    color: var(--gov-text);
+}
+
+.govreg-employee-result-meta {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gov-text-muted);
+    margin-top: 1px;
+    line-height: 1.4;
+}
+
+.govreg-employee-info {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gov-text-muted);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+/* Empty state */
+.govreg-empty {
+    padding: 32px 24px;
+    text-align: center;
+    color: var(--gov-text-muted);
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .govreg-agency-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 
 @media (max-width: 768px) {
-    .govreg-card-body {
-        max-height: none !important;
-        overflow: visible !important;
+    .govreg-module {
+        padding: 4px 2px 20px;
     }
 
+    .govreg-page-title {
+        font-size: 15px;
+    }
+
+    .govreg-card {
+        padding: 12px;
+        border-radius: var(--gov-radius-md);
+    }
+
+    .govreg-filter-bar {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .govreg-search-wrap {
+        flex: 1 1 100%;
+        max-width: none;
+    }
+
+    .govreg-select {
+        flex: 1 1 auto;
+        width: auto;
+    }
+
+    .govreg-agency-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .govreg-agency-item {
+        padding: 12px 14px;
+    }
+
+    /* Mobile table cards */
     .govreg-table-wrap {
-        overflow: visible !important;
-        flex: none !important;
+        border: none;
+        border-radius: 0;
+        overflow: visible;
     }
 
     .govreg-table,
@@ -570,7 +1211,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'searc
     .govreg-table tr {
         display: block;
         width: 100%;
-        min-width: 0;
     }
 
     .govreg-table {
@@ -582,26 +1222,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'searc
         display: none;
     }
 
-    .govreg-table tr {
-        background: var(--card-bg, #fff);
-        border: 1px solid var(--border, #e4e8ee);
-        border-radius: 12px;
+    .govreg-table tbody tr {
+        background: var(--gov-surface);
+        border: 1px solid var(--gov-border);
+        border-radius: var(--gov-radius-md);
         padding: 12px 14px;
-        margin-bottom: 12px;
-        box-shadow: var(--shadow-soft, 0 1px 2px rgba(13,27,46,.04));
+        margin-bottom: 10px;
+        box-shadow: 0 1px 2px rgba(13,27,46,.03);
     }
 
     .govreg-table td {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--hairline, #dde3ea);
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--gov-border-light);
         text-align: right;
-        min-width: 0;
-        overflow-wrap: anywhere;
-        word-break: break-word;
     }
 
     .govreg-table td:last-child {
@@ -611,305 +1248,318 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'searc
 
     .govreg-table td::before {
         content: attr(data-label);
-        font-weight: 700;
-        font-size: 0.72rem;
+        font-weight: 600;
+        font-size: 10px;
         text-transform: uppercase;
-        color: var(--text-400, #8b93a1);
+        letter-spacing: 0.03em;
+        color: var(--gov-text-muted);
         text-align: left;
         flex-shrink: 0;
-        margin-right: 8px;
+        line-height: 1.3;
     }
 
     .govreg-table td:last-child {
         justify-content: flex-end;
     }
 
-    .govreg-id-field {
-        text-align: right;
-        overflow-wrap: anywhere;
-        word-break: break-word;
+    .govreg-col-code,
+    .govreg-col-id,
+    .govreg-col-date {
+        font-size: 12px;
     }
 
-    .govreg-stamp {
-        font-size: 0.72rem;
-        padding: 3px 10px;
+    .govreg-status {
+        font-size: 11px;
+        padding: 2px 7px;
     }
 
-    .govreg-action-btn {
-        height: 40px;
-        min-width: 40px;
-        padding: 0 12px;
-    }
-}
-
-/* ============================================
-   PAGINATION RESPONSIVE
-   ============================================ */
-
-@media (max-width: 768px) {
     .govreg-pagination {
-        flex-wrap: wrap;
-        gap: 6px;
-        justify-content: center;
+        gap: 4px;
     }
-    .govreg-pagination .govreg-page-link,
-    .govreg-pagination .govreg-page-btn {
-        min-width: 36px;
-        height: 36px;
-        padding: 0 8px;
-        font-size: 0.78rem;
+
+    .govreg-page-link,
+    .govreg-page-btn {
+        min-width: 34px;
+        height: 34px;
+        font-size: 11.5px;
     }
-    .govreg-pagination .govreg-page-info {
+
+    .govreg-page-info {
         width: 100%;
         text-align: center;
-        margin-top: 4px;
-        font-size: 0.75rem;
+        margin-top: 6px;
+        font-size: 11px;
     }
-}
 
-/* ============================================
-   MODAL RESPONSIVE
-   ============================================ */
+    /* Modal responsive */
+    #govregModal {
+        padding: 16px;
+        align-items: flex-end;
+    }
 
-@media (max-width: 768px) {
-    #govregModal > div {
-        width: calc(100% - 24px) !important;
-        max-width: 700px !important;
-        max-height: calc(100vh - 24px) !important;
-        border-radius: 12px !important;
-        margin: auto !important;
+    @media (min-width: 769px) {
+        #govregModal {
+            align-items: center;
+        }
     }
-    #govregModalBody {
-        padding: 16px !important;
+
+    .govreg-modal-overlay {
+        max-height: calc(100vh - 32px);
+        border-radius: var(--gov-radius-md);
     }
-    #govregModal h5 {
-        font-size: 0.95rem;
+
+    .govreg-modal-header {
+        padding: 12px 16px;
     }
-    #govregModal button[type="button"][onclick="govregCloseModal()"] {
-        font-size: 1.1rem;
+
+    .govreg-modal-body {
+        padding: 16px;
+    }
+
+    .govreg-form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .govreg-form-actions {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .govreg-form-message {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 4px;
+        text-align: center;
     }
 }
 
 @media (max-width: 400px) {
-    #govregModal > div {
-        width: calc(100% - 16px) !important;
-        max-height: calc(100vh - 16px) !important;
+    .govreg-modal-overlay {
+        max-height: calc(100vh - 16px);
     }
-    #govregModalBody {
-        padding: 12px !important;
-    }
-}
 
-/* Modal form inputs */
-#govregForm input[type="text"] {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-    #govregForm input[type="text"] {
-        min-height: 44px;
-        font-size: 0.9rem;
-    }
-    #govregForm button[type="submit"] {
-        width: 100%;
-        justify-content: center;
-    }
-    #govregForm button[type="button"] {
-        flex: 1;
-        text-align: center;
-        justify-content: center;
-    }
-    #govregForm > div:last-child {
-        flex-wrap: wrap;
-        gap: 8px;
+    .govreg-modal-body {
+        padding: 14px;
     }
 }
 </style>
 
 <section class="govreg-module">
-
-    <div class="govreg-card">
-        <div class="govreg-card-head">
-            <h3><i class="bi bi-bar-chart"></i> Compliance Overview</h3>
-            <div style="font-size:0.82rem; color:var(--text-600,#5b6472);">
-                Compliance Rate: <strong><?= number_format($complianceRate, 2) ?>%</strong>
-            </div>
-        </div>
-        <div class="govreg-agency-bar">
-            <?php foreach ($agencyCounts as $key => $agency):
-                $agencyUrl = '?page=government-registration&agency=' . urlencode($key);
-                $missing = $agency['completed'];
-                $total = $agency['total'];
-                $pct = $total > 0 ? round(($missing / $total) * 100, 2) : 0;
-            ?>
-                <a class="govreg-agency-item" href="<?= $agencyUrl ?>" style="text-decoration:none; color:inherit;">
-                    <div class="govreg-agency-icon gray">
-                        <?php if (!empty($agencyLogos[$key])): ?>
-                            <img src="<?= htmlspecialchars($agencyLogos[$key]) ?>" alt="<?= htmlspecialchars($agency['label']) ?>" class="govreg-agency-logo">
-                        <?php else: ?>
-                            <i class="bi bi-building"></i>
-                        <?php endif; ?>
+    <!-- Compliance Overview -->
+<div class="govreg-card">
+    <div class="govreg-agency-grid">
+        <?php foreach ($agencyCounts as $key => $agency):
+            $agencyUrl = '?page=government-registration&agency=' . urlencode($key);
+            $missing = $agency['completed'];
+            $total = $agency['total'];
+            $pct = $total > 0 ? round(($missing / $total) * 100, 2) : 0;
+        ?>
+            <a class="govreg-agency-item" href="<?= $agencyUrl ?>" aria-label="<?= htmlspecialchars($agency['label']) ?> missing">
+                <div class="govreg-agency-icon">
+                    <?php if (!empty($agencyLogos[$key])): ?>
+                        <img src="<?= htmlspecialchars($agencyLogos[$key]) ?>" alt="<?= htmlspecialchars($agency['label']) ?>" class="govreg-agency-logo">
+                    <?php else: ?>
+                        <i class="bi bi-building"></i>
+                    <?php endif; ?>
+                </div>
+                <div class="govreg-agency-body">
+                    <div class="govreg-agency-name"><?= htmlspecialchars($agency['label']) ?></div>
+                    <div class="govreg-agency-meta"><?= number_format($missing) ?> of <?= number_format($total) ?> employees missing</div>
+                    <div class="govreg-agency-rate">
+                        <div class="govreg-agency-rate-fill" style="width: <?= (int) $pct ?>%;"></div>
                     </div>
-                    <div style="flex:1; min-width:140px;">
-                        <div class="govreg-agency-value"><?= number_format($missing) ?>/<?= number_format($total) ?></div>
-                        <div class="govreg-agency-label"><?= htmlspecialchars($agency['label']) ?> Missing - <?= number_format($pct, 2) ?>%</div>
-                        <div class="govreg-rate-bar"><div class="govreg-rate-fill" style="width: <?= (int) $pct ?>%;"></div></div>
-                    </div>
-                </a>
-            <?php endforeach; ?>
-        </div>
+                </div>
+                <div class="govreg-agency-stats"><?= number_format($missing) ?>/<?= number_format($total) ?></div>
+            </a>
+        <?php endforeach; ?>
     </div>
+</div>
 
-    <div class="govreg-card">
-        <div class="govreg-card-head">
-            <h3><i class="bi bi-person-badge"></i> Employee Government IDs</h3>
-        </div>
+<!-- Employee Table -->
+<div class="govreg-card" style="padding: 0; overflow: hidden;">
+    <div class="govreg-table-wrap">
+        <table class="govreg-table" id="govregEmployeeTable">
+            <thead>
+                <tr>
+                    <th>Employee No.</th>
+                    <th>Employee Name</th>
+                    <th>SSS</th>
+                    <th>PhilHealth</th>
+                    <th>Pag-IBIG</th>
+                    <th>TIN</th>
+                    <th>Status</th>
+                    <th>Missing</th>
+                    <th>Updated</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($paginatedEmployees)): ?>
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 32px; color: var(--gov-text-muted);">
+                            No employee records found matching your criteria.
+                        </td>
+                    </tr>
+                <?php else: ?>
+                    <?php foreach ($paginatedEmployees as $emp):
+                        $fullName = trim(($emp['first_name'] ?? '') . ' ' . ($emp['middle_name'] ?? '') . ' ' . ($emp['last_name'] ?? ''));
+                        $hasSss = !empty($emp['sss_no']);
+                        $hasPhilhealth = !empty($emp['philhealth_no']);
+                        $hasPagibig = !empty($emp['pagibig_no']);
+                        $hasTin = !empty($emp['tin_no']);
+                        $allFilled = $hasSss && $hasPhilhealth && $hasPagibig && $hasTin;
+                        $anyFilled = $hasSss || $hasPhilhealth || $hasPagibig || $hasTin;
+                        if ($allFilled) {
+                            $overall = 'Complete';
+                            $overallCls = 'complete';
+                        } elseif ($anyFilled) {
+                            $overall = 'Partial';
+                            $overallCls = 'partial';
+                        } else {
+                            $overall = 'Missing';
+                            $overallCls = 'missing';
+                        }
 
-        <div class="govreg-card-body">
-            <?php if (empty($paginatedEmployees)): ?>
-                <div class="govreg-empty">No employee records found matching your criteria.</div>
-            <?php else: ?>
-            <div class="govreg-table-wrap">
-                <table class="govreg-table" id="govregEmployeeTable">
-                    <thead>
-                        <tr>
-                            <th>Employee No.</th>
-                            <th>Employee Name</th>
-                            <th>Department</th>
-                            <th>SSS No.</th>
-                            <th>PhilHealth No.</th>
-                            <th>Pag-IBIG No.</th>
-                            <th>TIN</th>
-                            <th>Status</th>
-                            <th>Missing Requirements</th>
-                            <th>Last Updated</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($paginatedEmployees as $emp):
-                            $fullName = trim(($emp['first_name'] ?? '') . ' ' . ($emp['middle_name'] ?? '') . ' ' . ($emp['last_name'] ?? ''));
-                            $hasSss = !empty($emp['sss_no']);
-                            $hasPhilhealth = !empty($emp['philhealth_no']);
-                            $hasPagibig = !empty($emp['pagibig_no']);
-                            $hasTin = !empty($emp['tin_no']);
-                            $allFilled = $hasSss && $hasPhilhealth && $hasPagibig && $hasTin;
-                            $anyFilled = $hasSss || $hasPhilhealth || $hasPagibig || $hasTin;
-                            if ($allFilled) {
-                                $overall = 'Complete';
-                                $overallCls = 'complete';
-                            } elseif ($anyFilled) {
-                                $overall = 'Partial';
-                                $overallCls = 'partial';
-                            } else {
-                                $overall = 'Missing';
-                                $overallCls = 'missing';
-                            }
+                        $missingList = [];
+                        if (!$hasSss) $missingList[] = 'SSS';
+                        if (!$hasPhilhealth) $missingList[] = 'PhilHealth';
+                        if (!$hasPagibig) $missingList[] = 'Pag-IBIG';
+                        if (!$hasTin) $missingList[] = 'TIN';
+                        $missingCls = !empty($missingList) ? 'govreg-missing govreg-missing--has-missing' : 'govreg-missing';
 
-                            $missingList = [];
-                            if (!$hasSss) $missingList[] = 'SSS';
-                            if (!$hasPhilhealth) $missingList[] = 'PhilHealth';
-                            if (!$hasPagibig) $missingList[] = 'Pag-IBIG';
-                            if (!$hasTin) $missingList[] = 'TIN';
-                            $missingText = !empty($missingList) ? implode(', ', $missingList) : 'None';
-
-                            $lastUpdated = !empty($emp['gov_updated']) ? date('M d, Y H:i', strtotime($emp['gov_updated'])) : 'Not yet registered';
-                        ?>
-                        <tr>
-                            <td data-label="Employee No."><?= htmlspecialchars($emp['employee_code'] ?? '—') ?></td>
-                            <td data-label="Employee Name"><?= htmlspecialchars($fullName ?: 'Unknown') ?></td>
-                            <td data-label="Department"><?= htmlspecialchars($emp['department_name'] ?? '—') ?></td>
-                            <td data-label="SSS No."><span class="govreg-id-field"><?= htmlspecialchars($emp['sss_no'] ?? '—') ?></span></td>
-                            <td data-label="PhilHealth No."><span class="govreg-id-field"><?= htmlspecialchars($emp['philhealth_no'] ?? '—') ?></span></td>
-                            <td data-label="Pag-IBIG No."><span class="govreg-id-field"><?= htmlspecialchars($emp['pagibig_no'] ?? '—') ?></span></td>
-                            <td data-label="TIN"><span class="govreg-id-field"><?= htmlspecialchars($emp['tin_no'] ?? '—') ?></span></td>
-                            <td data-label="Status"><span class="govreg-stamp govreg-stamp-<?= $overallCls ?>"><?= htmlspecialchars($overall) ?></span></td>
-                            <td data-label="Missing Requirements"><?= htmlspecialchars($missingText) ?></td>
-                            <td data-label="Last Updated"><?= htmlspecialchars($lastUpdated) ?></td>
-                            <td data-label="Action">
-                                <?php if ($overallCls !== 'complete'):
-                                    $grSubject = 'Action Required: Government Registration Documents - ' . $fullName;
-                                    $missingBodyList = [];
-                                    if (!$hasSss) $missingBodyList[] = '- SSS Number (Missing)';
-                                    if (!$hasPhilhealth) $missingBodyList[] = '- PhilHealth Number (Missing)';
-                                    if (!$hasPagibig) $missingBodyList[] = '- Pag-IBIG Number (Missing)';
-                                    if (!$hasTin) $missingBodyList[] = '- TIN (Missing)';
-                                    $missingBodyText = !empty($missingBodyList) ? implode("\n", $missingBodyList) : 'None listed.';
-                                    $grBody = "Dear {$fullName},\n\n";
-                                    $grBody .= "This is a reminder regarding your government registration documents. Our records indicate that your registration is currently marked as \"{$overall}\".\n\n";
-                                    $grBody .= "Employee Information:\n";
-                                    $grBody .= "- Employee No.: " . ($emp['employee_code'] ?? '—') . "\n";
-                                    $grBody .= "- Department: " . ($emp['department_name'] ?? '—') . "\n";
-                                    $grBody .= "- Overall Status: {$overall}\n\n";
-                                    $grBody .= "Government IDs Requiring Attention:\n{$missingBodyText}\n\n";
-                                    $grBody .= "Please submit the required documents to the HR department at your earliest convenience. If you have any questions or need assistance, feel free to reach out to us.\n\n";
-                                    $grBody .= "Best regards,\nHR Department";
-                                ?>
-                                    <a class="govreg-action-btn" href="?mode=reply&notification_id=0&page=notification-compose&to_recipient_no=<?= (int)$emp['employee_id'] ?>&to_recipient_name=<?= urlencode($fullName) ?>&subject=<?= urlencode($grSubject) ?>&body=<?= urlencode($grBody) ?>" title="Send Notification">
+                        $lastUpdated = !empty($emp['gov_updated']) ? date('M d, Y H:i', strtotime($emp['gov_updated'])) : 'Not yet registered';
+                    ?>
+                    <tr>
+                        <td data-label="Employee No." class="govreg-col-code"><?= htmlspecialchars($emp['employee_code'] ?? '—') ?></td>
+                        <td data-label="Employee Name" class="govreg-col-name"><?= htmlspecialchars($fullName ?: 'Unknown') ?></td>
+                        <td data-label="SSS" class="govreg-col-id"><?= $hasSss ? htmlspecialchars($emp['sss_no']) : '<span style="color: var(--gov-text-muted);">—</span>' ?></td>
+                        <td data-label="PhilHealth" class="govreg-col-id"><?= $hasPhilhealth ? htmlspecialchars($emp['philhealth_no']) : '<span style="color: var(--gov-text-muted);">—</span>' ?></td>
+                        <td data-label="Pag-IBIG" class="govreg-col-id"><?= $hasPagibig ? htmlspecialchars($emp['pagibig_no']) : '<span style="color: var(--gov-text-muted);">—</span>' ?></td>
+                        <td data-label="TIN" class="govreg-col-id"><?= $hasTin ? htmlspecialchars($emp['tin_no']) : '<span style="color: var(--gov-text-muted);">—</span>' ?></td>
+                        <td data-label="Status">
+                            <span class="govreg-status govreg-status-<?= $overallCls ?>">
+                                <?= htmlspecialchars($overall) ?>
+                            </span>
+                        </td>
+                        <td data-label="Missing" class="<?= $missingCls ?>">
+                            <?php if (!empty($missingList)): ?>
+                                <div class="govreg-missing-icons">
+                                    <?php foreach ($missingList as $missingAgency): ?>
+                                        <?php if (!empty($agencyLogos[$missingAgency])): ?>
+                                            <img src="<?= htmlspecialchars($agencyLogos[$missingAgency]) ?>" alt="<?= htmlspecialchars($missingAgency) ?>" class="govreg-missing-icon" title="<?= htmlspecialchars($missingAgency) ?> missing">
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                None
+                            <?php endif; ?>
+                        </td>
+                        <td data-label="Updated" class="govreg-col-date"><?= htmlspecialchars($lastUpdated) ?></td>
+                        <td data-label="Action">
+                            <div class="govreg-actions">
+                                <?php if ($overallCls === 'complete'): ?>
+                                    <span class="govreg-action-link govreg-action-link--disabled" aria-disabled="true" title="No action required">
+                                        <i class="bi bi-envelope"></i>
+                                    </span>
+                                <?php else: ?>
+                                    <?php
+                                        $grSubject = 'Action Required: Government Registration Documents - ' . $fullName;
+                                        $missingBodyList = [];
+                                        if (!$hasSss) $missingBodyList[] = '- SSS Number (Missing)';
+                                        if (!$hasPhilhealth) $missingBodyList[] = '- PhilHealth Number (Missing)';
+                                        if (!$hasPagibig) $missingBodyList[] = '- Pag-IBIG Number (Missing)';
+                                        if (!$hasTin) $missingBodyList[] = '- TIN (Missing)';
+                                        $missingBodyText = !empty($missingBodyList) ? implode("\n", $missingBodyList) : 'None listed.';
+                                        $grBody = "Dear {$fullName},\n\n";
+                                        $grBody .= "This is a reminder regarding your government registration documents. Our records indicate that your registration is currently marked as \"{$overall}\".\n\n";
+                                        $grBody .= "Employee Information:\n";
+                                        $grBody .= "- Employee No.: " . ($emp['employee_code'] ?? '—') . "\n";
+                                        $grBody .= "- Department: " . ($emp['department_name'] ?? '—') . "\n";
+                                        $grBody .= "- Overall Status: {$overall}\n\n";
+                                        $grBody .= "Government IDs Requiring Attention:\n{$missingBodyText}\n\n";
+                                        $grBody .= "Please submit the required documents to the HR department at your earliest convenience. If you have any questions or need assistance, feel free to reach out to us.\n\n";
+                                        $grBody .= "Best regards,\nHR Department";
+                                    ?>
+                                    <a class="govreg-action-link" href="?mode=reply&notification_id=0&page=notification-compose&to_recipient_no=<?= (int)$emp['employee_id'] ?>&to_recipient_name=<?= urlencode($fullName) ?>&subject=<?= urlencode($grSubject) ?>&body=<?= urlencode($grBody) ?>" title="Send Notification" aria-label="Send notification to <?= htmlspecialchars($fullName) ?>">
                                         <i class="bi bi-envelope"></i>
                                     </a>
                                 <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php endif; ?>
-            <?php if ($totalPages > 1): ?>
-            <nav class="govreg-pagination" role="navigation" aria-label="Employee table pagination">
-                <?php
-                $baseUrl = '?page=government-registration';
-                $qs = [];
-                if ($filterStatus !== 'all') $qs[] = 'status=' . urlencode($filterStatus);
-                if ($filterDept !== 'all') $qs[] = 'department=' . urlencode($filterDept);
-                if ($searchTerm !== '') $qs[] = 'search=' . urlencode($searchTerm);
-                if ($filterAgency !== '') $qs[] = 'agency=' . urlencode($filterAgency);
-                $baseQs = $baseUrl . ($qs ? '&' . implode('&', $qs) : '');
-                $prevPage = $page - 1;
-                $nextPage = $page + 1;
-                ?>
-                <a href="<?= $prevPage >= 1 ? $baseQs . '&gov_page=' . $prevPage : '#' ?>" class="govreg-page-link" <?= $prevPage < 1 ? 'aria-disabled="true"' : '' ?>>⟨⟨</a>
-                <?php
-                $range = 2;
-                $start = max(1, $page - $range);
-                $end = min($totalPages, $page + $range);
-                for ($i = $start; $i <= $end; $i++):
-                ?>
-                    <a href="<?= $baseQs . '&gov_page=' . $i ?>" class="govreg-page-btn <?= $i === $page ? 'active' : '' ?>"><?= $i ?></a>
-                <?php endfor; ?>
-                <a href="<?= $nextPage <= $totalPages ? $baseQs . '&gov_page=' . $nextPage : '#' ?>" class="govreg-page-link" <?= $nextPage > $totalPages ? 'aria-disabled="true"' : '' ?>>⟩⟩</a>
-                <span class="govreg-page-info">Page <?= $page ?> of <?= $totalPages ?> (<?= $totalRows ?> records)</span>
-            </nav>
-            <?php endif; ?>
-        </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
+</div>
+
+<!-- Pagination -->
+<?php if ($totalPages > 1): ?>
+<nav class="govreg-pagination" role="navigation" aria-label="Employee table pagination">
+    <?php
+    $baseUrl = '?page=government-registration';
+    $qs = [];
+    if ($filterStatus !== 'all') $qs[] = 'status=' . urlencode($filterStatus);
+    if ($filterDept !== 'all') $qs[] = 'department=' . urlencode($filterDept);
+    if ($searchTerm !== '') $qs[] = 'search=' . urlencode($searchTerm);
+    if ($filterAgency !== '') $qs[] = 'agency=' . urlencode($filterAgency);
+    $baseQs = $baseUrl . ($qs ? '&' . implode('&', $qs) : '');
+    $prevPage = $page - 1;
+    $nextPage = $page + 1;
+    ?>
+    <span class="govreg-page-info">Showing <?= number_format(($page - 1) * $perPage + 1) ?>–<?= number_format(min($page * $perPage, $totalRows)) ?> of <?= number_format($totalRows) ?> employees</span>
+    <a href="<?= $prevPage >= 1 ? $baseQs . '&gov_page=' . $prevPage : '#' ?>" class="govreg-page-link" <?= $prevPage < 1 ? 'aria-disabled="true"' : '' ?>>&laquo; Previous</a>
+    <?php
+    $range = 2;
+    $start = max(1, $page - $range);
+    $end = min($totalPages, $page + $range);
+    if ($start > 1): ?>
+        <a href="<?= $baseQs . '&gov_page=1' ?>" class="govreg-page-btn">1</a>
+        <?php if ($start > 2): ?>
+            <span class="govreg-page-ellipsis">…</span>
+        <?php endif; ?>
+    <?php endif;
+    for ($i = $start; $i <= $end; $i++):
+    ?>
+        <a href="<?= $baseQs . '&gov_page=' . $i ?>" class="govreg-page-btn <?= $i === $page ? 'active' : '' ?>" <?= $i === $page ? 'aria-current="page"' : '' ?>><?= $i ?></a>
+    <?php endfor;
+    if ($end < $totalPages): ?>
+        <?php if ($end < $totalPages - 1): ?>
+            <span class="govreg-page-ellipsis">…</span>
+        <?php endif; ?>
+        <a href="<?= $baseQs . '&gov_page=' . $totalPages ?>" class="govreg-page-btn"><?= $totalPages ?></a>
+    <?php endif; ?>
+    <a href="<?= $nextPage <= $totalPages ? $baseQs . '&gov_page=' . $nextPage : '#' ?>" class="govreg-page-link" <?= $nextPage > $totalPages ? 'aria-disabled="true"' : '' ?>>Next &raquo;</a>
+</nav>
+<?php endif; ?>
 </section>
 
-<div id="govregModal" style="display:none; position:fixed; inset:0; z-index:1050; background:rgba(0,0,0,.5); align-items:center; justify-content:center;">
-  <div style="background:var(--card-bg,#fff); border-radius:14px; box-shadow:var(--shadow-lg,0 12px 32px rgba(14,28,51,.14)); width:90%; max-width:700px; max-height:85vh; display:flex; flex-direction:column; margin:auto;">
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border,#e4e8ee);">
-      <h5 style="margin:0; font-size:1rem; font-weight:700; color:var(--text-900,#1b2430);">Add Government ID</h5>
-      <button type="button" onclick="govregCloseModal()" style="background:none; border:none; font-size:1.25rem; color:var(--text-400,#8b93a1); cursor:pointer; padding:4px; line-height:1;">&times;</button>
+<!-- Modal -->
+<div id="govregModal" role="dialog" aria-modal="true" aria-labelledby="govregModalTitle">
+    <div class="govreg-modal-overlay">
+        <div class="govreg-modal-header">
+            <h5 class="govreg-modal-title" id="govregModalTitle">Add Government ID</h5>
+            <button type="button" class="govreg-modal-close" onclick="govregCloseModal()" aria-label="Close modal">&times;</button>
+        </div>
+        <div id="govregModalBody" class="govreg-modal-body">
+            <div class="govreg-empty">Loading...</div>
+        </div>
     </div>
-    <div id="govregModalBody" style="padding:20px; overflow-y:auto; flex:1 1 auto;">
-      <div class="govreg-empty">Loading...</div>
-    </div>
-  </div>
 </div>
 
 <script>
 var govregModal = document.getElementById('govregModal');
 
 function govregCloseModal() {
+    govregModal.classList.remove('govreg-modal-open');
     govregModal.setAttribute('aria-hidden', 'true');
-    govregModal.style.display = 'none';
     document.body.style.overflow = '';
 }
 
 function govregOpenModal() {
-    govregModal.style.display = 'flex';
+    govregModal.classList.add('govreg-modal-open');
     document.body.style.overflow = 'hidden';
     govregModal.setAttribute('aria-hidden', 'false');
     govregLoadForm();
@@ -921,39 +1571,44 @@ function govregLoadForm() {
     var html = '<form id="govregForm">';
     html += '<input type="hidden" name="action" value="add_government_id">';
     html += '<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">';
+    html += '<p class="govreg-modal-description">Update an employee\'s government registration information.</p>';
 
-    html += '<div style="margin-bottom:14px;">';
-    html += '<label style="font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); margin-bottom:4px; display:block;">Employee</label>';
-    html += '<input type="text" id="govregEmployeeSearch" placeholder="Search employee name or code..." autocomplete="off" style="width:100%; padding:8px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.85rem; outline:none; box-sizing:border-box;" required>';
+    html += '<div class="govreg-form-group">';
+    html += '<label class="govreg-form-label" for="govregEmployeeSearch">Employee <span class="govreg-required">*</span></label>';
+    html += '<div class="govreg-employee-search-wrap">';
+    html += '<input type="text" id="govregEmployeeSearch" placeholder="Search employee name or code..." autocomplete="off" class="govreg-form-input" required>';
     html += '<input type="hidden" name="employee_id" id="govregEmployeeId">';
-    html += '<div id="govregEmployeeInfo" style="font-size:0.78rem; color:var(--text-400,#8b93a1); margin-top:4px;"></div>';
-    html += '<div id="govregEmployeeResults" style="border:1px solid var(--border,#e4e8ee); border-radius:8px; margin-top:4px; background:#fff; display:none; max-height:200px; overflow:auto; position:relative; z-index:10;"></div>';
+    html += '<div id="govregEmployeeInfo" class="govreg-employee-info"></div>';
+    html += '<div id="govregEmployeeResults" class="govreg-employee-results"></div>';
+    html += '</div>';
     html += '</div>';
 
-    html += '<div style="margin-bottom:14px;">';
-    html += '<label style="font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); margin-bottom:4px; display:block;">SSS Number</label>';
-    html += '<input type="text" name="sss_no" placeholder="e.g. 34-1234567-0" style="width:100%; padding:8px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.85rem; outline:none; box-sizing:border-box;">';
+    html += '<div class="govreg-form-row">';
+    html += '<div class="govreg-form-group">';
+    html += '<label class="govreg-form-label" for="govregSss">SSS Number</label>';
+    html += '<input type="text" name="sss_no" id="govregSss" placeholder="e.g. 34-1234567-0" class="govreg-form-input">';
+    html += '</div>';
+    html += '<div class="govreg-form-group">';
+    html += '<label class="govreg-form-label" for="govregPhil">PhilHealth Number</label>';
+    html += '<input type="text" name="philhealth_no" id="govregPhil" placeholder="e.g. 100012345678" class="govreg-form-input">';
+    html += '</div>';
     html += '</div>';
 
-    html += '<div style="margin-bottom:14px;">';
-    html += '<label style="font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); margin-bottom:4px; display:block;">PhilHealth Number</label>';
-    html += '<input type="text" name="philhealth_no" placeholder="e.g. 100012345678" style="width:100%; padding:8px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.85rem; outline:none; box-sizing:border-box;">';
+    html += '<div class="govreg-form-row">';
+    html += '<div class="govreg-form-group">';
+    html += '<label class="govreg-form-label" for="govregPag">Pag-IBIG Number</label>';
+    html += '<input type="text" name="pagibig_no" id="govregPag" placeholder="e.g. 1234-5678-9012" class="govreg-form-input">';
+    html += '</div>';
+    html += '<div class="govreg-form-group">';
+    html += '<label class="govreg-form-label" for="govregTin">TIN</label>';
+    html += '<input type="text" name="tin_no" id="govregTin" placeholder="e.g. 123-456-789-000" class="govreg-form-input">';
+    html += '</div>';
     html += '</div>';
 
-    html += '<div style="margin-bottom:14px;">';
-    html += '<label style="font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); margin-bottom:4px; display:block;">Pag-IBIG Number</label>';
-    html += '<input type="text" name="pagibig_no" placeholder="e.g. 1234-5678-9012" style="width:100%; padding:8px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.85rem; outline:none; box-sizing:border-box;">';
-    html += '</div>';
-
-    html += '<div style="margin-bottom:14px;">';
-    html += '<label style="font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); margin-bottom:4px; display:block;">TIN</label>';
-    html += '<input type="text" name="tin_no" placeholder="e.g. 123-456-789-000" style="width:100%; padding:8px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.85rem; outline:none; box-sizing:border-box;">';
-    html += '</div>';
-
-    html += '<div style="display:flex; justify-content:flex-end; gap:10px;">';
-    html += '<button type="button" onclick="govregCloseModal()" style="padding:8px 16px; border-radius:8px; border:1px solid var(--border,#e4e8ee); background:#fff; font-size:0.85rem; cursor:pointer; color:var(--text-700,#3b4252);">Cancel</button>';
-    html += '<button type="submit" class="govreg-action-btn" style="width:auto; padding:8px 16px; font-size:0.85rem;">Save</button>';
-    html += '<span id="govregSaveMsg" style="margin-left:10px; font-size:0.85rem;"></span>';
+    html += '<div class="govreg-form-actions">';
+    html += '<span id="govregSaveMsg" class="govreg-form-message"></span>';
+    html += '<button type="button" class="govreg-btn govreg-btn-secondary" onclick="govregCloseModal()">Cancel</button>';
+    html += '<button type="submit" class="govreg-btn govreg-btn-primary">Save Government ID</button>';
     html += '</div>';
 
     html += '</form>';
@@ -981,28 +1636,32 @@ function govregLoadForm() {
             xhr.onload = function() {
                 var res = JSON.parse(xhr.responseText);
                 if (!res.success) {
-                    resultsBox.innerHTML = '<div style="padding:8px 10px; font-size:0.82rem; color:#a3272a;">Unable to load employees.</div>';
+                    resultsBox.innerHTML = '<div class="govreg-employee-result" style="color:var(--gov-danger);">Unable to load employees.</div>';
                     resultsBox.style.display = 'block';
                     return;
                 }
                 var items = res.results || [];
                 if (!items.length) {
-                    resultsBox.innerHTML = '<div style="padding:8px 10px; font-size:0.82rem; color:var(--text-400,#8b93a1);">No matching employees.</div>';
+                    resultsBox.innerHTML = '<div class="govreg-employee-result" style="color:var(--gov-text-muted);">No matching employees.</div>';
                     resultsBox.style.display = 'block';
                     return;
                 }
                 var out = '';
                 items.forEach(function(item) {
-                    out += '<div data-id="' + item.id + '" style="padding:8px 10px; font-size:0.82rem; cursor:pointer; border-bottom:1px solid var(--border,#e4e8ee);">' + item.text + '</div>';
+                    out += '<div class="govreg-employee-result" data-id="' + item.id + '">';
+                    out += '<div class="govreg-employee-result-name">' + item.text + '</div>';
+                    out += '<div class="govreg-employee-result-meta">' + item.employee_code + ' &middot; ' + item.department_name + '</div>';
+                    out += '</div>';
                 });
                 resultsBox.innerHTML = out;
                 resultsBox.style.display = 'block';
-                resultsBox.querySelectorAll('[data-id]').forEach(function(el) {
+                resultsBox.querySelectorAll('.govreg-employee-result').forEach(function(el) {
                     el.addEventListener('mousedown', function(e) {
                         e.preventDefault();
                         var id = this.getAttribute('data-id');
                         employeeIdInput.value = id;
-                        searchInput.value = this.textContent;
+                        var nameEl = this.querySelector('.govreg-employee-result-name');
+                        searchInput.value = nameEl ? nameEl.textContent : this.textContent;
                         infoEl.textContent = 'Selected employee ID: ' + id;
                         resultsBox.style.display = 'none';
                     });
@@ -1022,7 +1681,7 @@ function govregLoadForm() {
         e.preventDefault();
         if (!employeeIdInput.value) {
             var msgEl = document.getElementById('govregSaveMsg');
-            msgEl.style.color = '#a3272a';
+            msgEl.className = 'govreg-form-message govreg-form-message--error';
             msgEl.textContent = 'Please select an employee.';
             return;
         }
@@ -1033,11 +1692,11 @@ function govregLoadForm() {
             var res = JSON.parse(xhr.responseText);
             var msgEl = document.getElementById('govregSaveMsg');
             if (res.success) {
-                msgEl.style.color = '#1f7a52';
+                msgEl.className = 'govreg-form-message govreg-form-message--success';
                 msgEl.textContent = res.message;
                 setTimeout(function() { location.reload(); }, 800);
             } else {
-                msgEl.style.color = '#a3272a';
+                msgEl.className = 'govreg-form-message govreg-form-message--error';
                 msgEl.textContent = res.message;
             }
         };
@@ -1056,4 +1715,47 @@ document.addEventListener('keydown', function(e) {
         govregCloseModal();
     }
 });
+
+(() => {
+    const grid = document.querySelector('.govreg-agency-grid');
+    if (!grid) return;
+
+    const ACTIVE_CLASS = 'is-active';
+    const DOUBLE_CLICK_DELAY = 300;
+    let lastClickedItem = null;
+    let lastClickTime = 0;
+    let clickTimer = null;
+
+    grid.addEventListener('click', (e) => {
+        const card = e.target.closest('.govreg-agency-item');
+        if (!card) return;
+
+        const now = Date.now();
+
+        if (lastClickedItem === card && (now - lastClickTime) < DOUBLE_CLICK_DELAY) {
+            clearTimeout(clickTimer);
+            clickTimer = null;
+            lastClickedItem = null;
+            lastClickTime = 0;
+            window.location.href = '/hrms-capstone/modules/compliance/index.php?page=government-registration';
+            return;
+        }
+
+        clearTimeout(clickTimer);
+        lastClickedItem = card;
+        lastClickTime = now;
+
+        clickTimer = setTimeout(() => {
+            clickTimer = null;
+            if (card.classList.contains(ACTIVE_CLASS)) {
+                card.classList.remove(ACTIVE_CLASS);
+            } else {
+                grid.querySelectorAll(`.${ACTIVE_CLASS}`).forEach((el) => el.classList.remove(ACTIVE_CLASS));
+                card.classList.add(ACTIVE_CLASS);
+            }
+            lastClickedItem = null;
+            lastClickTime = 0;
+        }, DOUBLE_CLICK_DELAY);
+    });
+})();
 </script>

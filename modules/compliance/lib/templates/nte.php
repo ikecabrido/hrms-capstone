@@ -70,6 +70,33 @@ $incidentLocation   = isset($_GET['incident_location']) ? trim((string) $_GET['i
 $incidentDescription = isset($_GET['incident_description']) ? trim((string) $_GET['incident_description']) : '';
 $policyViolated     = isset($_GET['policy_violated']) ? trim((string) $_GET['policy_violated']) : '';
 
+if (($incidentDate === '' && $incidentTime === '' && $incidentLocation === '' && $incidentDescription === '') && isset($db) && $employeeId !== '') {
+    $complaintId = isset($_GET['complaint_id']) ? (int) $_GET['complaint_id'] : 0;
+    if ($complaintId > 0) {
+        $stmt = $db->prepare('SELECT incident_date, incident_time, location, description FROM lc_complaints WHERE id = :id LIMIT 1');
+        $stmt->execute([':id' => $complaintId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $incidentDate = $incidentDate !== '' ? $incidentDate : (string) ($row['incident_date'] ?? '');
+            $incidentTime = $incidentTime !== '' ? $incidentTime : (string) ($row['incident_time'] ?? '');
+            $incidentLocation = $incidentLocation !== '' ? $incidentLocation : (string) ($row['location'] ?? '');
+            $incidentDescription = $incidentDescription !== '' ? $incidentDescription : (string) ($row['description'] ?? '');
+        }
+    }
+}
+
+if ($incidentDate === '' && $incidentTime === '' && $incidentLocation === '' && $incidentDescription === '' && isset($db) && $employeeId !== '') {
+    $stmt = $db->prepare('SELECT incident_date, incident_time, location, description FROM lc_complaints WHERE employee_id = :eid ORDER BY id DESC LIMIT 1');
+    $stmt->execute([':eid' => $employeeId]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) {
+        $incidentDate = $incidentDate !== '' ? $incidentDate : (string) ($row['incident_date'] ?? '');
+        $incidentTime = $incidentTime !== '' ? $incidentTime : (string) ($row['incident_time'] ?? '');
+        $incidentLocation = $incidentLocation !== '' ? $incidentLocation : (string) ($row['location'] ?? '');
+        $incidentDescription = $incidentDescription !== '' ? $incidentDescription : (string) ($row['description'] ?? '');
+    }
+}
+
 $policyOptions = [
     'Labor Code',
     'DOLE Standard',
@@ -130,7 +157,7 @@ foreach (['hr_signatory', 'contract_start_date', 'contract_end_date', 'contract_
             color:#666;
             font-size:14px;
         ">
-            Administrative Due Process Notice Requiring Written Explanation
+            Administrative Due Process Notice Requiring Letter of Intent
         </p>
 
         <hr style="margin:0 0 30px;">
@@ -183,7 +210,7 @@ foreach (['hr_signatory', 'contract_start_date', 'contract_end_date', 'contract_
             </p>
 
             <p>
-                You are hereby directed to submit a written explanation regarding the alleged act, omission, incident, or policy violation described below. This notice is issued to provide you with a fair and reasonable opportunity to present your side before any administrative action or decision is made.
+                You are hereby required to personally appear before the Human Resources Department to explain your side regarding the alleged act, omission, incident, or policy violation described below. This notice is issued to provide you with a fair and reasonable opportunity to be heard before any administrative action or decision is made.
             </p>
 
         </div>
@@ -253,18 +280,17 @@ foreach (['hr_signatory', 'contract_start_date', 'contract_end_date', 'contract_
         ">
 
             <p>
-                You are directed to submit your written explanation together with any supporting documents, evidence, or witness statements within the period prescribed by the Human Resources Department.
+                You are hereby directed to report to the HR Office immediately to discuss this matter and submit your letter of intent together with any supporting documents, evidence, or witness statements.
             </p>
 
             <p>
-                Failure to submit your explanation within the prescribed period, without a valid reason, may be considered a waiver of your opportunity to explain. The Company may proceed with the administrative evaluation based on the available records and evidence.
+                Failure to report to the HR Office within the prescribed period, without a valid reason, may be considered a waiver of your opportunity to explain. The Company may proceed with the administrative evaluation based on the available records and evidence.
             </p>
 
             <p>
                 Please be advised that the issuance of this Notice does <strong>not</strong> constitute a finding of guilt nor the imposition of disciplinary action. It is issued solely to ensure compliance with the requirements of administrative due process and to provide you with an opportunity to be heard.
             </p>
-
-    
+        
         <div style="margin-top:60px;">
 
             <div style="margin-bottom:40px;">

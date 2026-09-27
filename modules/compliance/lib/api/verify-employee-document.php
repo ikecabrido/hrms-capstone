@@ -28,19 +28,30 @@ try {
     $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
     if ($action === 'verify') {
-        $stmt = $db->prepare("
-            UPDATE em_documents
+        $userId = (int) ($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? 0);
+        $uid = $userId > 0 ? $userId : null;
+
+        $db->prepare("
+            UPDATE lc_document_verification
             SET verification_status = 'Verified',
                 verified_by = :uid,
                 verified_at = NOW(),
                 updated_at = NOW()
             WHERE document_id = :id
               AND verification_status IN ('Pending', 'Rejected')
-        ");
-        $userId = (int) ($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? 0);
-        $stmt->execute([':uid' => $userId > 0 ? $userId : null, ':id' => $documentId]);
+        ")->execute([':uid' => $uid, ':id' => $documentId]);
 
-        if ($stmt->rowCount() > 0) {
+        if ((int)$db->query("SELECT COUNT(*) FROM lc_document_verification WHERE document_id = " . (int)$documentId)->fetchColumn() === 0) {
+            $db->prepare("
+                INSERT INTO lc_document_verification (document_id, verification_status, verified_by, verified_at, verification_notes)
+                VALUES (:id, 'Verified', :uid, NOW(), NULL)
+            ")->execute([':uid' => $uid, ':id' => $documentId]);
+        }
+
+        $stmt = $db->query("SELECT verification_status FROM lc_document_verification WHERE document_id = " . (int)$documentId . " LIMIT 1");
+        $newStatus = $stmt && ($row = $stmt->fetch(PDO::FETCH_ASSOC)) ? ($row['verification_status'] ?? 'Pending') : 'Pending';
+
+        if ($newStatus === 'Verified') {
             echo json_encode(['success' => true, 'message' => 'Document verified successfully.']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Document not found or already verified.']);

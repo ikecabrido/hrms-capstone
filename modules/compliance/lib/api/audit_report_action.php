@@ -81,7 +81,7 @@ function generate_report_pdf(PDO $db, string $reportKey, string $reportCode): ?s
         <title><?= htmlspecialchars($reportTitle) ?></title>
         <style>
             *, *::before, *::after { box-sizing: border-box; }
-            body { font-family: DejaVu Sans, sans-serif; font-size: 9pt; color: #1b2430; margin: 0; padding: 0; line-height: 1.35; }
+            body { font-family: Arial, sans-serif; font-size: 9pt; color: #1b2430; margin: 0; padding: 0; line-height: 1.35; }
             table { width: 100%; border-collapse: collapse; margin-top: 8px; table-layout: fixed; }
             th, td { padding: 4px 5px; border-bottom: 1px solid #eef1f5; font-size: 8pt; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: normal; vertical-align: top; }
             th { background: #f3f5f9; text-align: left; border-bottom: 2px solid #dde3ea; color: #5b6472; text-transform: uppercase; font-weight: bold; }

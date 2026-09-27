@@ -93,7 +93,7 @@ $today = date('F d, Y');
 
     <div class="document-header">
         <h2 class="document-title">NOTICE TO EXPLAIN (NTE)</h2>
-        <p class="document-subtitle">Administrative Due Process Notice Requiring Written Explanation</p>
+        <p class="document-subtitle">Administrative Due Process Notice Requiring Letter of Intent</p>
     </div>
 
     <hr class="document-separator">
@@ -138,7 +138,7 @@ $today = date('F d, Y');
         </p>
 
         <p>
-            You are hereby directed to submit a written explanation regarding the alleged act, omission, incident, or policy violation described below. This notice is issued to provide you with a fair and reasonable opportunity to present your side before any administrative action or decision is made.
+            You are hereby directed to submit a letter of intent regarding the alleged act, omission, incident, or policy violation described below. This notice is issued to provide you with a fair and reasonable opportunity to present your side before any administrative action or decision is made.
         </p>
 
     </div>
@@ -191,7 +191,7 @@ $today = date('F d, Y');
     <div class="document-body">
 
         <p>
-            You are directed to submit your written explanation together with any supporting documents, evidence, or witness statements within the period prescribed by the Human Resources Department.
+            You are directed to submit your letter of intent together with any supporting documents, evidence, or witness statements within the period prescribed by the Human Resources Department.
         </p>
 
         <p>

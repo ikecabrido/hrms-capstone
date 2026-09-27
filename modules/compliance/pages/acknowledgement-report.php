@@ -32,7 +32,15 @@ $pending = (int) ($stats['pending'] ?? 0);
 $overdue = (int) ($stats['overdue'] ?? 0);
 $rate = $total > 0 ? round($ack / $total * 100, 1) : 0;
 
-$acknowledgements = $policy->getAcknowledgements($policyId);
+$perPage = 10;
+$currentPage = isset($_GET['emp_page']) ? max(1, (int) $_GET['emp_page']) : 1;
+$totalRows = $policy->countAcknowledgements($policyId);
+$totalPages = ($perPage > 0 && $totalRows > 0) ? (int) ceil($totalRows / $perPage) : 1;
+if ($currentPage > $totalPages) {
+    $currentPage = $totalPages;
+}
+$offset = ($currentPage - 1) * $perPage;
+$acknowledgements = $policy->getAcknowledgements($policyId, [], $perPage, $offset);
 
 ?>
 
@@ -41,14 +49,12 @@ $acknowledgements = $policy->getAcknowledgements($policyId);
 <section class="policy-module">
   <div class="policy-summary-bar">
     <div class="policy-summary-item">
-      <div class="policy-summary-icon blue"><i class="bi bi-people"></i></div>
       <div>
         <div class="policy-summary-value"><?= number_format($total) ?></div>
         <div class="policy-summary-label">Total Assigned</div>
       </div>
     </div>
     <div class="policy-summary-item">
-      <div class="policy-summary-icon green"><i class="bi bi-check2-all"></i></div>
       <div>
         <div class="policy-summary-value"><?= number_format($ack) ?></div>
         <div class="policy-summary-label">Acknowledged</div>
@@ -56,7 +62,6 @@ $acknowledgements = $policy->getAcknowledgements($policyId);
       </div>
     </div>
     <div class="policy-summary-item">
-      <div class="policy-summary-icon amber"><i class="bi bi-clock-history"></i></div>
       <div>
         <div class="policy-summary-value"><?= number_format($pending) ?></div>
         <div class="policy-summary-label">Pending</div>
@@ -64,7 +69,6 @@ $acknowledgements = $policy->getAcknowledgements($policyId);
       </div>
     </div>
     <div class="policy-summary-item">
-      <div class="policy-summary-icon red"><i class="bi bi-exclamation-circle"></i></div>
       <div>
         <div class="policy-summary-value"><?= number_format($overdue) ?></div>
         <div class="policy-summary-label">Overdue</div>
@@ -75,7 +79,7 @@ $acknowledgements = $policy->getAcknowledgements($policyId);
 
   <div class="policy-card">
     <div class="policy-card-head">
-      <h3><i class="bi bi-bar-chart"></i> Acknowledgement Rate</h3>
+      <h3>Acknowledgement Rate</h3>
     </div>
     <div class="policy-card-body">
       <div class="policy-progress">
@@ -90,7 +94,7 @@ $acknowledgements = $policy->getAcknowledgements($policyId);
 
   <div class="policy-card">
     <div class="policy-card-head">
-      <h3><i class="bi bi-people"></i> Employee List</h3>
+      <h3>Employee List</h3>
     </div>
     <div class="policy-table-wrap">
       <table class="policy-table">
@@ -127,5 +131,32 @@ $acknowledgements = $policy->getAcknowledgements($policyId);
         </tbody>
       </table>
     </div>
+    <?php if ($totalPages > 1): ?>
+    <div class="policy-pagination">
+      <span class="policy-pagination-info">
+        Showing <?= number_format($offset + 1) ?>–<?= number_format(min($offset + $perPage, $totalRows)) ?> of <?= number_format($totalRows) ?> records
+      </span>
+      <nav class="policy-pagination-nav" role="navigation" aria-label="Employee list pagination">
+        <?php
+        $baseUrl = '?page=acknowledgement-report&id=' . $policyId;
+        $prevPage = $currentPage - 1;
+        $nextPage = $currentPage + 1;
+        ?>
+        <a href="<?= $prevPage >= 1 ? $baseUrl . '&emp_page=' . $prevPage : '#' ?>"
+           class="policy-page-btn" <?= $prevPage < 1 ? 'aria-disabled="true"' : '' ?>>Prev</a>
+        <?php
+        $range = 2;
+        $start = max(1, $currentPage - $range);
+        $end = min($totalPages, $currentPage + $range);
+        for ($i = $start; $i <= $end; $i++):
+        ?>
+        <a href="<?= $baseUrl . '&emp_page=' . $i ?>"
+           class="policy-page-btn <?= $i === $currentPage ? 'policy-page-btn--active' : '' ?>"><?= $i ?></a>
+        <?php endfor; ?>
+        <a href="<?= $nextPage <= $totalPages ? $baseUrl . '&emp_page=' . $nextPage : '#' ?>"
+           class="policy-page-btn" <?= $nextPage > $totalPages ? 'aria-disabled="true"' : '' ?>>Next</a>
+      </nav>
+    </div>
+    <?php endif; ?>
   </div>
 </section>

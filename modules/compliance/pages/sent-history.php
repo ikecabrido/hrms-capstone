@@ -211,33 +211,14 @@ function formatNotificationDate($createdAt, $tz) {
 
   <?php if ($fetchError): ?>
     <div class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle"></i>
       <?php echo $fetchError; ?>
     </div>
   <?php endif; ?>
 
-  <div class="nc-sh-cards">
-    <div class="nc-sh-card">
-      <div class="nc-sh-card-label">Total Sent</div>
-      <div class="nc-sh-card-value"><?php echo number_format($totalSent); ?></div>
-    </div>
-    <div class="nc-sh-card">
-      <div class="nc-sh-card-label">Sent Today</div>
-      <div class="nc-sh-card-value"><?php echo number_format($sentToday); ?></div>
-    </div>
-    <div class="nc-sh-card">
-      <div class="nc-sh-card-label">This Month</div>
-      <div class="nc-sh-card-value"><?php echo number_format($sentThisMonth); ?></div>
-    </div>
-    <div class="nc-sh-card">
-      <div class="nc-sh-card-label">Unread Notifications</div>
-      <div class="nc-sh-card-value"><?php echo number_format($unreadCount); ?></div>
-    </div>
-  </div>
 
   <?php if (empty($sentNotifications) && !$fetchError): ?>
     <div class="nc-empty-state">
-      <div class="nc-empty-icon"><i class="bi bi-clock-history"></i></div>
+      <div class="nc-empty-icon"></div>
       <h3>
         <?php if ($search !== '' || $type !== '' || $date !== '' || $fromDate !== '' || $toDate !== ''): ?>
           No notifications match your current filters.
@@ -255,8 +236,8 @@ function formatNotificationDate($createdAt, $tz) {
       <?php if ($search !== '' || $type !== '' || $date !== '' || $fromDate !== '' || $toDate !== ''): ?>
         <a href="?page=sent-history" class="nc-toolbar-btn">Clear Filters</a>
       <?php else: ?>
-        <a href="?page=notification-compose&mode=new" class="nc-toolbar-btn">
-          <i class="bi bi-plus-lg"></i> Compose Notification
+        <a href="?page=notification-compose&mode=new" class="nc-toolbar-btn nc-toolbar-btn--primary">
+          Compose Notification
         </a>
       <?php endif; ?>
     </div>
@@ -264,8 +245,8 @@ function formatNotificationDate($createdAt, $tz) {
     <div class="nc-grid-2 nc-history-grid">
       <div class="nc-history-wrap">
         <div class="nc-history-header">
-        <a href="?page=notification-compose&mode=new" class="nc-toolbar-btn">
-          <i class="bi bi-plus-lg"></i> Compose Notification
+        <a href="?page=notification-compose&mode=new" class="nc-toolbar-btn nc-toolbar-btn--primary">
+          Compose Notification
         </a>
       </div>
       <div class="nc-history-list" id="ncHistoryList">
@@ -308,7 +289,6 @@ function formatNotificationDate($createdAt, $tz) {
               </div>
               <div class="nc-history-card-mid">
                 <div class="nc-history-card-recipient">
-                  <i class="bi bi-person"></i>
                   <span class="nc-history-card-name"><?php echo escapeHtml($displayName); ?></span>
                   <?php if ($email !== ''): ?>
                     <span class="nc-history-card-email">&lt;<?php echo escapeHtml($email); ?>&gt;</span>
@@ -350,7 +330,7 @@ function formatNotificationDate($createdAt, $tz) {
 
       <aside class="nc-preview-sidebar" id="ncPreviewSidebar">
         <div class="nc-preview-header">
-          <i class="bi bi-eye"></i> Email Preview
+          Email Preview
           <span class="nc-preview-hint">Live preview</span>
         </div>
         <div class="nc-preview-body" id="ncPreviewBody">
@@ -416,9 +396,9 @@ function formatNotificationDate($createdAt, $tz) {
         html += '<div class="nc-preview-info-row"><span class="nc-preview-info-label">Sent</span><span class="nc-preview-info-value">' + escapeHtml(date) + '<br><span class="nc-sh-detail-time">' + escapeHtml(time) + '</span></span></div>';
         html += '<div class="nc-preview-info-row"><span class="nc-preview-info-label">Status</span><span class="nc-preview-info-value"><span class="badge ' + statusBadge + '">' + escapeHtml(status) + '</span></span></div>';
         html += '</div>';
-        html += '<div class="nc-preview-section-label"><i class="bi bi-chat-left-text"></i> Message</div>';
-        html += '<div class="nc-preview-body-content">';
-        html += '<p>' + escapeHtml(message).replace(/(On\s+\d{2}\/\d{2}\/\d{4},\s+\d{2}:\d{2}:\d{2}),\s*[\s\S]*?wrote:/g, '$1').replace(/\n/g, '<br>') + '</p>';
+        html += '<div class="nc-sh-detail-message">';
+        html += '<div class="nc-sh-detail-label">Message</div>';
+        html += '<div class="nc-sh-detail-text">' + escapeHtml(message).replace(/(On\s+\d{2}\/\d{2}\/\d{4},\s+\d{2}:\d{2}:\d{2}),\s*[\s\S]*?wrote:/g, '$1').replace(/\n/g, '<br>') + '</div>';
         html += '</div>';
         html += '</div>';
 

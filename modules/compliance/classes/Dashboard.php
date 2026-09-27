@@ -74,21 +74,21 @@ class Dashboard
     public function getDocumentStats()
     {
         try {
-            $total      = (int) $this->conn->query("SELECT COUNT(*) FROM employee_documents")->fetchColumn();
-            $valid      = (int) $this->conn->query("SELECT COUNT(*) FROM employee_documents WHERE verification_status = 'Verified'")->fetchColumn();
-            $expiring30 = (int) $this->conn->query("
-                SELECT COUNT(*) FROM employee_documents
-                WHERE verification_status = 'Verified'
-                  AND expiry_date IS NOT NULL
-                  AND expiry_date >= CURDATE()
-                  AND expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-            ")->fetchColumn();
+            $total      = (int) $this->conn->query("SELECT COUNT(*) FROM em_documents")->fetchColumn();
             $expired    = (int) $this->conn->query("
-                SELECT COUNT(*) FROM employee_documents
+                SELECT COUNT(*) FROM em_documents
                 WHERE expiry_date IS NOT NULL
                   AND expiry_date < CURDATE()
             ")->fetchColumn();
-            $rate       = $total > 0 ? round(($valid / $total) * 100) : 0;
+            $expiring30 = (int) $this->conn->query("
+                SELECT COUNT(*) FROM em_documents
+                WHERE expiry_date IS NOT NULL
+                  AND expiry_date >= CURDATE()
+                  AND expiry_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+            ")->fetchColumn();
+            $valid = $total - $expired - $expiring30;
+            if ($valid < 0) $valid = 0;
+            $rate = $total > 0 ? round(($valid / $total) * 100) : 0;
 
             return [
                 'total'      => $total,
@@ -135,28 +135,38 @@ class Dashboard
     {
         try {
             $agencies = [
-                ['name' => 'SSS', 'table' => 'lc_sss_contributions', 'verified_status' => 'Submitted'],
-                ['name' => 'PhilHealth', 'table' => 'lc_philhealth_contributions', 'verified_status' => 'Submitted'],
-                ['name' => 'Pag-IBIG', 'table' => 'lc_pagibig_contributions', 'verified_status' => 'Submitted'],
-                ['name' => 'BIR', 'table' => 'lc_bir_contributions', 'verified_status' => 'Submitted'],
+                ['name' => 'SSS', 'table' => 'lc_sss_contributions'],
+                ['name' => 'PhilHealth', 'table' => 'lc_philhealth_contributions'],
+                ['name' => 'Pag-IBIG', 'table' => 'lc_pagibig_contributions'],
+                ['name' => 'BIR', 'table' => 'lc_bir_contributions'],
             ];
 
             $result = [];
             foreach ($agencies as $agency) {
                 $table = $agency['table'];
-                $verifiedStatus = $agency['verified_status'];
 
                 $total = (int) $this->conn->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
-                $verified = (int) $this->conn->query("SELECT COUNT(*) FROM `$table` WHERE status = " . $this->conn->quote($verifiedStatus))->fetchColumn();
+                $submitted = (int) $this->conn->query("SELECT COUNT(*) FROM `$table` WHERE status != 'Pending'")->fetchColumn();
+                $verified = (int) $this->conn->query("SELECT COUNT(*) FROM `$table` WHERE status IN ('Submitted', 'Paid')")->fetchColumn();
+                $outstanding = $total - $submitted;
+                if ($outstanding < 0) $outstanding = 0;
+                $submissionRate = $total > 0 ? round(($submitted / $total) * 100, 1) : 0;
+                $verificationRate = $submitted > 0 ? round(($verified / $submitted) * 100, 1) : 0;
 
-                $pct = $total > 0 ? round(($verified / $total) * 100) : 0;
                 $result[] = [
-                    'name'    => $agency['name'],
-                    'total'   => $total,
+                    'name' => $agency['name'],
+                    'required' => $total,
+                    'submitted' => $submitted,
+                    'outstanding' => $outstanding,
                     'verified' => $verified,
-                    'pct'     => $pct,
+                    'submissionRate' => $submissionRate,
+                    'verificationRate' => $verificationRate,
                 ];
             }
+
+            usort($result, function ($a, $b) {
+                return $b['outstanding'] <=> $a['outstanding'];
+            });
 
             return $result;
         } catch (Exception $e) {
@@ -194,9 +204,173 @@ class Dashboard
         try {
             $sql = "SELECT incident_type, COUNT(*) as cnt FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed') GROUP BY incident_type ORDER BY cnt DESC";
             $stmt = $this->conn->query($sql);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $total = 0;
+            foreach ($rows as $row) {
+                $total += (int) ($row['cnt'] ?? 0);
+            }
+            foreach ($rows as &$row) {
+                $row['total'] = $total;
+                $row['share'] = $total > 0 ? round(($row['cnt'] / $total) * 100, 1) : 0;
+            }
+            return $rows;
         } catch (Exception $e) {
             return [];
+        }
+    }
+
+    public function getIncidentOccurrenceData($year = null, $month = null)
+    {
+        try {
+            $year = $year ?: (int) date('Y');
+            $month = $month ?: (int) date('m');
+
+            $sql = "SELECT incident_date, incident_type, severity, COUNT(*) as cnt
+                    FROM lc_incident_report
+                    WHERE status NOT IN ('resolved', 'closed')
+                      AND incident_date IS NOT NULL
+                      AND YEAR(incident_date) = :year
+                      AND MONTH(incident_date) = :month
+                    GROUP BY incident_date, incident_type, severity
+                    ORDER BY incident_date ASC";
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute([':year' => $year, ':month' => $month]);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $byDate = [];
+            $total = 0;
+            $activeDays = 0;
+            $peakDay = null;
+            $peakCount = 0;
+            $missingCount = 0;
+
+            foreach ($rows as $row) {
+                $date = $row['incident_date'];
+                $cnt = (int) $row['cnt'];
+                $total += $cnt;
+
+                if (!isset($byDate[$date])) {
+                    $byDate[$date] = [
+                        'date' => $date,
+                        'total' => 0,
+                        'categories' => [],
+                        'severities' => [],
+                    ];
+                }
+                $byDate[$date]['total'] += $cnt;
+                $byDate[$date]['categories'][$row['incident_type']] = ($byDate[$date]['categories'][$row['incident_type']] ?? 0) + $cnt;
+                if (!empty($row['severity'])) {
+                    $byDate[$date]['severities'][$row['severity']] = ($byDate[$date]['severities'][$row['severity']] ?? 0) + $cnt;
+                }
+
+                if ($cnt > $peakCount) {
+                    $peakCount = $cnt;
+                    $peakDay = $date;
+                }
+            }
+
+            $activeDays = count($byDate);
+
+            $missingSql = "SELECT COUNT(*) FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed') AND incident_date IS NULL";
+            $missingCount = (int) $this->conn->query($missingSql)->fetchColumn();
+
+            if ($total === 0) {
+                $latestSql = "SELECT YEAR(incident_date) as yr, MONTH(incident_date) as mo, COUNT(*) as cnt
+                              FROM lc_incident_report
+                              WHERE status NOT IN ('resolved', 'closed')
+                                AND incident_date IS NOT NULL
+                              GROUP BY YEAR(incident_date), MONTH(incident_date)
+                              ORDER BY yr DESC, mo DESC
+                              LIMIT 1";
+                $latest = $this->conn->query($latestSql)->fetch(PDO::FETCH_ASSOC);
+                if ($latest) {
+                    return $this->getIncidentOccurrenceData((int) $latest['yr'], (int) $latest['mo']);
+                }
+            }
+
+            return [
+                'year' => $year,
+                'month' => $month,
+                'total' => $total,
+                'activeDays' => $activeDays,
+                'peakDay' => $peakDay,
+                'peakCount' => $peakCount,
+                'averagePerActiveDay' => $activeDays > 0 ? round($total / $activeDays, 1) : null,
+                'days' => $byDate,
+                'missingCount' => $missingCount,
+            ];
+        } catch (Exception $e) {
+            return [
+                'year' => $year ?: (int) date('Y'),
+                'month' => $month ?: (int) date('m'),
+                'total' => 0,
+                'activeDays' => 0,
+                'peakDay' => null,
+                'peakCount' => 0,
+                'averagePerActiveDay' => null,
+                'days' => [],
+                'missingCount' => 0,
+            ];
+        }
+    }
+
+    public function getIncidentSeveritySummary()
+    {
+        try {
+            $sql = "SELECT severity, COUNT(*) as cnt FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed') GROUP BY severity ORDER BY cnt DESC";
+            $stmt = $this->conn->query($sql);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $result = [];
+            foreach ($rows as $row) {
+                $result[] = [
+                    'severity' => $row['severity'],
+                    'cnt' => (int) $row['cnt'],
+                ];
+            }
+            return $result;
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    public function getIncidentAgingSummary()
+    {
+        try {
+            $sql = "SELECT id, created_at FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed')";
+            $stmt = $this->conn->query($sql);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $buckets = [
+                '0-7 days' => 0,
+                '8-30 days' => 0,
+                '31-90 days' => 0,
+                '90+ days' => 0,
+            ];
+
+            $now = new DateTime();
+            foreach ($rows as $row) {
+                if (empty($row['created_at'])) continue;
+                $created = new DateTime($row['created_at']);
+                $diff = $now->diff($created)->days;
+                if ($diff <= 7) {
+                    $buckets['0-7 days']++;
+                } elseif ($diff <= 30) {
+                    $buckets['8-30 days']++;
+                } elseif ($diff <= 90) {
+                    $buckets['31-90 days']++;
+                } else {
+                    $buckets['90+ days']++;
+                }
+            }
+
+            return $buckets;
+        } catch (Exception $e) {
+            return [
+                '0-7 days' => 0,
+                '8-30 days' => 0,
+                '31-90 days' => 0,
+                '90+ days' => 0,
+            ];
         }
     }
 
@@ -297,7 +471,7 @@ class Dashboard
         }
     }
 
-    public function getActionRequired($limit = 8)
+    public function getActionAnalytics($limit = 8)
     {
         $items = [];
 
@@ -305,7 +479,7 @@ class Dashboard
             $stmt = $this->conn->prepare("
                 SELECT pa.id, pa.due_date, pa.status,
                        CONCAT(e.first_name, ' ', e.last_name) as person_name,
-                       p.title as policy_title,
+                       p.title as item_title,
                        'Policy Acknowledgement' as item_type,
                        'warning' as severity
                 FROM lc_policy_assignments pa
@@ -324,7 +498,7 @@ class Dashboard
 
         try {
             $stmt = $this->conn->prepare("
-                SELECT ci.id, ci.due_date, ci.status, ci.name, ci.category,
+                SELECT ci.id, ci.due_date, ci.status, ci.name as item_title, ci.category,
                        CONCAT(e.first_name, ' ', e.last_name) as person_name,
                        'Compliance Item' as item_type,
                        CASE WHEN ci.status = 'Overdue' THEN 'danger' ELSE 'warning' END as severity
@@ -345,14 +519,14 @@ class Dashboard
 
         try {
             $stmt = $this->conn->prepare("
-                SELECT ed.id, ed.expiry_date, ed.verification_status as status,
+                SELECT ed.id, ed.expiry_date as due_date, 'Expired' as status,
                        CONCAT(e.first_name, ' ', e.last_name) as person_name,
-                       ed.document_name, ed.document_type,
-                       'Document Verification' as item_type,
-                       'warning' as severity
-                FROM employee_documents ed
+                       ed.document_name as item_title, ed.document_type as item_category,
+                       'Document Expiry' as item_type,
+                       'danger' as severity
+                FROM em_documents ed
                 LEFT JOIN em_employees e ON e.employee_id = ed.employee_id
-                WHERE ed.verification_status IN ('Pending', 'Pending Upload', 'Rejected')
+                WHERE ed.expiry_date < CURDATE()
                 ORDER BY ed.expiry_date ASC
                 LIMIT :limit
             ");
@@ -364,12 +538,88 @@ class Dashboard
         } catch (Exception $e) {}
 
         usort($items, function ($a, $b) {
-            $dateA = $a['due_date'] ?? $a['expiry_date'] ?? '9999-12-31';
-            $dateB = $b['due_date'] ?? $b['expiry_date'] ?? '9999-12-31';
+            $dateA = $a['due_date'] ?? '9999-12-31';
+            $dateB = $b['due_date'] ?? '9999-12-31';
             return strcmp($dateA, $dateB);
         });
 
-        return array_slice($items, 0, $limit);
+        $today = new DateTime('today');
+        $dueSoonThreshold = new DateInterval('P7D');
+        $urgencyCounts = [
+            'overdue' => 0,
+            'today' => 0,
+            'soon' => 0,
+            'upcoming' => 0,
+            'unscheduled' => 0,
+        ];
+
+        $groups = [];
+        foreach ($items as $item) {
+            $dueDate = $item['due_date'] ?? null;
+            $status = strtolower($item['status'] ?? 'pending');
+            $title = $item['item_title'] ?? 'Untitled';
+            $type = $item['item_type'] ?? 'Action';
+            $person = $item['person_name'] ?? 'Unassigned';
+
+            $urgency = 'unscheduled';
+            if ($dueDate) {
+                $due = new DateTime($dueDate);
+                $diff = $today->diff($due)->days;
+                if ($due < $today && $status !== 'completed') {
+                    $urgency = 'overdue';
+                } elseif ($due == $today && $status !== 'completed') {
+                    $urgency = 'today';
+                } elseif ($due > $today && $diff <= 7 && $status !== 'completed') {
+                    $urgency = 'soon';
+                } elseif ($status !== 'completed') {
+                    $urgency = 'upcoming';
+                }
+            }
+
+            $urgencyCounts[$urgency]++;
+
+            $groupKey = md5($type . '|' . $title . '|' . $dueDate . '|' . $status);
+            if (!isset($groups[$groupKey])) {
+                $url = null;
+                if ($type === 'Policy Acknowledgement') {
+                    $url = '/hrms-capstone/modules/compliance/index.php?page=policy-management';
+                } elseif ($type === 'Compliance Item') {
+                    $url = '/hrms-capstone/modules/compliance/index.php?page=labor-compliance';
+                } elseif ($type === 'Document Expiry') {
+                    $url = '/hrms-capstone/modules/compliance/index.php?page=employee-documents';
+                }
+
+                $groups[$groupKey] = [
+                    'title' => $title,
+                    'type' => $type,
+                    'due_date' => $dueDate,
+                    'status' => $item['status'] ?? 'Pending',
+                    'urgency' => $urgency,
+                    'severity' => $item['severity'] ?? 'warning',
+                    'people_count' => 0,
+                    'people' => [],
+                    'url' => $url,
+                ];
+            }
+            $groups[$groupKey]['people_count']++;
+            if (!in_array($person, $groups[$groupKey]['people'])) {
+                $groups[$groupKey]['people'][] = $person;
+            }
+        }
+
+        $sortedGroups = array_values($groups);
+        usort($sortedGroups, function ($a, $b) {
+            $order = ['overdue' => 0, 'today' => 1, 'soon' => 2, 'upcoming' => 3, 'unscheduled' => 4];
+            return ($order[$a['urgency']] ?? 5) <=> ($order[$b['urgency']] ?? 5);
+        });
+
+        $totalPending = array_sum($urgencyCounts);
+
+        return [
+            'total' => $totalPending,
+            'urgency' => $urgencyCounts,
+            'groups' => array_slice($sortedGroups, 0, $limit),
+        ];
     }
 
     public function getAlerts()
@@ -377,12 +627,14 @@ class Dashboard
         $alerts = [];
 
         try {
-            $expiringDocs = (int) $this->conn->query("SELECT COUNT(*) FROM employee_documents WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND verification_status != 'Expired'")->fetchColumn();
+            $expiringDocs = (int) $this->conn->query("SELECT COUNT(*) FROM em_documents WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)")->fetchColumn();
             if ($expiringDocs > 0) {
                 $alerts[] = [
                     'priority' => 'Warning',
                     'icon'     => 'fa-file-circle-exclamation',
                     'message'  => $expiringDocs . ' employee documents are approaching expiration within 30 days.',
+                    'count'    => $expiringDocs,
+                    'label'    => 'Expiring Documents',
                 ];
             }
         } catch (Exception $e) {}
@@ -394,6 +646,8 @@ class Dashboard
                     'priority' => 'Information',
                     'icon'     => 'fa-clipboard-check',
                     'message'  => $pendingAcks . ' policy acknowledgements are still pending.',
+                    'count'    => $pendingAcks,
+                    'label'    => 'Pending Acknowledgements',
                 ];
             }
         } catch (Exception $e) {}
@@ -405,6 +659,8 @@ class Dashboard
                     'priority' => 'Danger',
                     'icon'     => 'fa-magnifying-glass',
                     'message'  => $openFindings . ' open audit findings require attention.',
+                    'count'    => $openFindings,
+                    'label'    => 'Open Audit Findings',
                 ];
             }
         } catch (Exception $e) {}
@@ -416,6 +672,8 @@ class Dashboard
                     'priority' => 'Danger',
                     'icon'     => 'fa-triangle-exclamation',
                     'message'  => $openIncidents . ' unresolved compliance incidents require attention.',
+                    'count'    => $openIncidents,
+                    'label'    => 'Unresolved Incidents',
                 ];
             }
         } catch (Exception $e) {}
@@ -427,10 +685,100 @@ class Dashboard
                     'priority' => 'Warning',
                     'icon'     => 'fa-clock',
                     'message'  => $overdueItems . ' overdue compliance items need review.',
+                    'count'    => $overdueItems,
+                    'label'    => 'Overdue Items',
                 ];
             }
         } catch (Exception $e) {}
 
         return $alerts;
+    }
+
+    // ============================================================
+    // Legal Case Dashboard Helpers
+    // ============================================================
+
+    public function getOpenLegalCases(): int
+    {
+        try {
+            return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE current_status = 'Open'")->fetchColumn();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getExternalCases(): int
+    {
+        try {
+            return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE external_agency IS NOT NULL AND external_agency <> ''")->fetchColumn();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getCasesRequiringAction(): int
+    {
+        try {
+            return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE due_date <= NOW() AND current_status NOT IN ('Resolved','Closed','Cancelled')")->fetchColumn();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getOverdueCases(): int
+    {
+        try {
+            return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE due_date < NOW() AND current_status NOT IN ('Resolved','Closed','Cancelled')")->fetchColumn();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getCasesUnderMonitoring(): int
+    {
+        try {
+            return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE current_status = 'Monitoring'")->fetchColumn();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getUpcomingConferences(): int
+    {
+        try {
+            return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_case_conferences WHERE conference_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY)")->fetchColumn();
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    public function getRecentlyResolvedCases(int $limit = 5): array
+    {
+        try {
+            $stmt = $this->conn->prepare("
+                SELECT case_id, case_number, case_title, current_status, date_resolved, date_closed
+                FROM lc_legal_cases
+                WHERE current_status IN ('Resolved', 'Closed')
+                ORDER BY date_resolved DESC, date_closed DESC, updated_at DESC
+                LIMIT :limit
+            ");
+            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    public function getLegalCaseStats(): array
+    {
+        return [
+            'open'      => $this->getOpenLegalCases(),
+            'external'  => $this->getExternalCases(),
+            'action'    => $this->getCasesRequiringAction(),
+            'overdue'   => $this->getOverdueCases(),
+            'monitoring'=> $this->getCasesUnderMonitoring(),
+            'conferences' => $this->getUpcomingConferences(),
+        ];
     }
 }

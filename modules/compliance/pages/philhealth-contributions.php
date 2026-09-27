@@ -216,360 +216,153 @@ $recentActivity = array_slice($recent, 0, 6);
 .philhealth-breadcrumb .breadcrumb-item a:hover { text-decoration:underline; }
 .philhealth-breadcrumb .breadcrumb-item.active { color:var(--text-500,#6b7280); }
 
-.philhealth-summary-bar { display:flex; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
-.philhealth-summary-item { display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:14px; background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); flex:1; min-width:180px; text-decoration:none; color:inherit; transition:all .15s ease; cursor:pointer; }
-.philhealth-summary-item:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft,0 4px 12px rgba(13,27,46,.08)); border-color:var(--info-blue,#3b82c4); }
-.philhealth-summary-active { outline:2px solid var(--info-blue,#3b82c4); outline-offset:-2px; box-shadow:0 0 0 3px rgba(59,130,196,.15) !important; }
-.philhealth-summary-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
-.philhealth-summary-icon.green { background:rgba(47,158,110,.12); color:#1f7a52; }
-.philhealth-summary-icon.blue { background:rgba(59,130,196,.12); color:#1c5a8a; }
-.philhealth-summary-icon.amber { background:rgba(217,154,43,.14); color:#a86b13; }
-.philhealth-summary-icon.red { background:rgba(214,72,74,.12); color:#a3272a; }
-.philhealth-summary-icon.seal { background:rgba(168,121,31,.12); color:#8a6318; }
-.philhealth-summary-value { font-size:1.2rem; font-weight:800; color:var(--text-900,#1b2430); line-height:1; }
-.philhealth-summary-label { font-size:0.72rem; font-weight:700; color:var(--text-700,#3b4252); margin-top:4px; }
-.philhealth-summary-desc { font-size:0.62rem; color:var(--text-400,#8b93a1); margin-top:2px; font-weight:600; }
+.philhealth-summary-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:nowrap; }
+.philhealth-summary-item { display:flex; align-items:center; gap:6px; padding:20px 14px; border-radius:2px; background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); flex:1; min-width:auto; text-decoration:none; color:inherit; transition:border-color .1s ease; cursor:pointer; font-family: Arial, sans-serif; }
+.philhealth-summary-item:hover { border-color:#cbd5e1; }
+.philhealth-summary-active { border-color:var(--info-blue,#3b82c4); background:#fafbfc; }
+.philhealth-summary-value { font-size:1.1rem; color:var(--text-900,#1b2430); line-height:1.5; font-family: Arial, sans-serif; }
+.philhealth-summary-label { font-size:0.6rem; color:var(--text-700,#3b4252); margin-top:2px; font-family: Arial, sans-serif; }
+.philhealth-summary-desc { font-size:0.55rem; color:var(--text-400,#8b93a1); margin-top:1px; font-family: Arial, sans-serif; }
 
 .philhealth-row { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
-.philhealth-col-main { min-width:0; }
+.philhealth-col-main { min-width:0; font-family: Arial, sans-serif; }
 .philhealth-col-side { width:380px; flex-shrink:0; }
 
-.philhealth-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; }
-.philhealth-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-.philhealth-card-head h3 { margin:0; font-size:0.98rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
-.philhealth-empty { padding:24px; text-align:center; color:var(--text-400,#8b93a1); font-size:0.84rem; }
-
-.philhealth-card-body {
-  display:flex;
-  flex-direction:column;
-  max-height: 540px;
-  overflow: hidden;
-}
-.philhealth-table-wrap {
-  overflow: auto;
-  flex: 1 1 auto;
-}
-.philhealth-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-.philhealth-table th { text-align:left; padding:10px 12px; font-size:0.72rem; font-weight:700; text-transform:uppercase; color:var(--text-400,#8b93a1); border-bottom:1px solid var(--border,#e4e8ee); background:#fafbfc; }
-.philhealth-table td { padding:10px 12px; border-bottom:1px solid var(--border,#e4e8ee); }
+.philhealth-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:6px; padding:14px; box-shadow:none; margin-bottom:12px; }
+.philhealth-card-head { margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border,#e4e8ee); }
+.philhealth-card-head h3 { margin:0; font-size:0.88rem; font-weight:600; color:var(--text-900,#1b2430); letter-spacing:-.01em; }
+.philhealth-empty { padding:14px; text-align:center; color:var(--text-500,#64748b); font-size:10px; line-height:1.4; }
+.philhealth-card-body { display:flex; flex-direction:column; max-height:540px; overflow:hidden; }
+.philhealth-table-wrap { overflow:auto; flex:1 1 auto; min-height:0; }
+.philhealth-table { width:100%; border-collapse:collapse; font-size:11.5px; font-family:Arial, sans-serif; }
+.philhealth-table th { text-align:left; padding:8px 10px; font-size:10px; font-weight:600; text-transform:uppercase; color:var(--text-500,#64748b); border-bottom:1px solid var(--border,#e4e8ee); letter-spacing:.04em; line-height:1.3; }
+.philhealth-table td { padding:9px 10px; border-bottom:1px solid var(--border,#e4e8ee); color:var(--text-800,#1e293b); font-size:11.5px; line-height:1.4; }
+.philhealth-table tbody tr:hover { background:var(--slate-50,#f8fafc); }
 .philhealth-table tr:last-child td { border-bottom:none; }
-.philhealth-stamp { display:inline-block; font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
-.philhealth-stamp-compliant { background:rgba(47,158,110,.12); color:#1f7a52; }
-.philhealth-stamp-pending { background:rgba(217,154,43,.14); color:#a86b13; }
-  .philhealth-stamp-violation { background:rgba(214,72,74,.12); color:#a3272a; }
-
-  /* PhilHealth Pagination */
-  .philhealth-pagination { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px; flex-wrap:wrap; font-size:0.8rem; color:var(--text-600,#4a505a); }
-  .philhealth-pagination-info { font-size:0.8rem; color:var(--text-600,#4a505a); white-space:nowrap; }
-  .philhealth-pagination-nav { display:inline-flex; align-items:center; gap:4px; background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:8px; overflow:hidden; }
-  .philhealth-pagination-nav .philhealth-page-btn { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:34px; padding:0 8px; border:none; background:transparent; font-size:0.8rem; color:var(--text-700,#3b4252); cursor:pointer; transition:all .15s ease; }
-  .philhealth-pagination-nav .philhealth-page-btn:hover { background:rgba(59,130,196,.08); color:var(--info-blue,#3b82c4); }
-  .philhealth-pagination-nav .philhealth-page-btn:disabled { opacity:0.4; cursor:not-allowed; }
-  .philhealth-pagination-nav .philhealth-page-btn--active { background:var(--info-blue,#3b82c4); color:#fff; font-weight:600; }
-  .philhealth-pagination-nav .philhealth-page-ellipsis { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; font-size:0.8rem; color:var(--text-400,#8b93a1); user-select:none; }
-
-  .philhealth-email-payroll-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid var(--border, #e4e8ee);
-  background: #fff;
-  color: var(--text-700, #3b4252);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-.philhealth-email-payroll-btn:hover:not(:disabled) {
-  border-color: var(--seal-gold, #a8791f);
-  color: var(--seal-gold, #a8791f);
-  box-shadow: 0 0 0 3px rgba(168, 121, 31, 0.08);
-}
-.philhealth-email-payroll-btn:disabled {
-  background: var(--paper, #eef1f5);
-  border-color: var(--hairline, #dde3ea);
-  color: var(--text-400, #8b95a4);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
+.philhealth-stamp { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px; white-space:nowrap; letter-spacing:.01em; line-height:1.3; }
+.philhealth-stamp-compliant { background:var(--success-50,#ecfdf5); color:var(--success-700,#047857); }
+.philhealth-stamp-pending { background:var(--warning-50,#fffbeb); color:var(--warning-700,#b45309); }
+.philhealth-stamp-violation { background:var(--danger-50,#fef2f2); color:var(--danger-700,#b91c1c); }
+.philhealth-pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; flex-wrap:wrap; font-size:0.75rem; color:var(--text-500,#64748b); }
+.philhealth-pagination-info { font-size:0.75rem; color:var(--text-500,#64748b); white-space:nowrap; }
+.philhealth-pagination-nav { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border,#e4e8ee); border-radius:6px; overflow:hidden; }
+.philhealth-pagination-nav .philhealth-page-btn { display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px; border:0; background:transparent; font-size:0.75rem; color:var(--text-700,#334155); cursor:pointer; text-decoration:none; transition:background-color .1s ease; }
+.philhealth-pagination-nav .philhealth-page-btn:hover:not(.philhealth-page-btn--active) { background:var(--slate-100,#f1f5f9); }
+.philhealth-pagination-nav .philhealth-page-btn[aria-disabled="true"] { opacity:0.35; cursor:not-allowed; pointer-events:none; }
+.philhealth-pagination-nav .philhealth-page-btn--active { background:#2563eb; color:#fff; font-weight:600; }
+.philhealth-pagination-nav .philhealth-page-ellipsis { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem; color:var(--text-500,#64748b); }
+.philhealth-portal-link { font-size:0.72rem; font-weight:600; color:var(--info-600,#0891b2); text-decoration:none; padding:2px 0; border-bottom:1px solid transparent; transition:border-color .1s ease; }
+.philhealth-portal-link:hover { border-bottom-color:var(--info-600,#0891b2); }
+.philhealth-table-search { position:relative; }
+.philhealth-table-search input { padding:6px 10px; border:1px solid var(--border,#e4e8ee); border-radius:6px; font-size:0.75rem; outline:none; width:200px; transition:border-color .1s ease; background:var(--card-bg,#fff); }
+.philhealth-table-search input:focus { border-color:var(--text-400,#94a3b8); }
 .philhealth-finder-card { border-color:var(--seal-gold-light,#f4e6c9); }
-.philhealth-finder-form { margin-bottom:14px; }
-.philhealth-finder-label { display:block; font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); margin-bottom:6px; }
-.philhealth-finder-input-wrap { display:flex; align-items:center; gap:8px; border:1px solid var(--border,#e4e8ee); border-radius:10px; padding:10px 12px; background:#fff; transition:border-color .15s ease, box-shadow .15s ease; }
-.philhealth-finder-input-wrap:focus-within { border-color:var(--seal-gold,#a8791f); box-shadow:0 0 0 3px rgba(168,121,31,.12); }
-.philhealth-finder-prefix { font-weight:700; color:var(--text-900,#1b2430); font-size:0.95rem; }
-.philhealth-finder-input { flex:1; border:0; outline:none; font-size:1rem; font-weight:700; color:var(--text-900,#1b2430); background:transparent; min-width:0; }
+.philhealth-finder-form { margin-bottom:10px; }
+.philhealth-finder-label { display:block; font-size:0.72rem; font-weight:600; color:var(--text-700,#334155); margin-bottom:4px; }
+.philhealth-finder-input-wrap { display:flex; align-items:center; gap:6px; border:1px solid var(--border,#e4e8ee); border-radius:6px; padding:8px 10px; background:#fff; transition:border-color .1s ease; }
+.philhealth-finder-input-wrap:focus-within { border-color:var(--seal-gold,#a8791f); }
+.philhealth-finder-prefix { font-weight:700; color:var(--text-900,#1b2430); font-size:0.85rem; }
+.philhealth-finder-input { flex:1; border:0; outline:none; font-size:0.9rem; font-weight:700; color:var(--text-900,#1b2430); background:transparent; }
 .philhealth-finder-input::placeholder { color:var(--text-400,#8b93a1); font-weight:500; }
-
-.philhealth-finder-result { background:var(--paper,#eef1f5); border:1px solid var(--border,#e4e8ee); border-radius:12px; padding:14px; }
-.philhealth-finder-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.philhealth-finder-key { font-size:0.76rem; font-weight:700; color:var(--text-600,#5a6779); text-transform:uppercase; letter-spacing:.4px; }
-.philhealth-finder-val { font-size:0.82rem; font-weight:700; color:var(--text-900,#1b2430); }
-.philhealth-finder-divider { height:1px; background:var(--border,#e4e8ee); margin:10px 0; }
-.philhealth-finder-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.philhealth-finder-cell { display:flex; flex-direction:column; gap:2px; padding:10px; background:#fff; border-radius:8px; border:1px solid var(--border,#e4e8ee); }
-.philhealth-finder-cell--total { background:rgba(168,121,31,.08); border-color:rgba(168,121,31,.25); }
-.philhealth-finder-cell-label { font-size:0.68rem; font-weight:700; color:var(--text-400,#8b93a1); text-transform:uppercase; letter-spacing:.3px; }
-.philhealth-finder-cell-value { font-size:0.95rem; font-weight:800; color:var(--text-900,#1b2430); }
+.philhealth-finder-result { background:var(--paper,#eef1f5); border:1px solid var(--border,#e4e8ee); border-radius:8px; padding:12px; }
+.philhealth-finder-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.philhealth-finder-key { font-size:0.7rem; font-weight:700; color:var(--text-500,#64748b); text-transform:uppercase; letter-spacing:.4px; }
+.philhealth-finder-val { font-size:0.78rem; font-weight:700; color:var(--text-900,#1b2430); }
+.philhealth-finder-divider { height:1px; background:var(--border,#e4e8ee); margin:8px 0; }
+.philhealth-finder-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.philhealth-finder-cell { display:flex; flex-direction:column; gap:1px; padding:8px; background:#fff; border-radius:6px; border:1px solid var(--border,#e4e8ee); }
+.philhealth-finder-cell--total { background:rgba(168,121,31,.06); border-color:rgba(168,121,31,.2); }
+.philhealth-finder-cell-label { font-size:0.62rem; font-weight:700; color:var(--text-500,#64748b); text-transform:uppercase; letter-spacing:.3px; }
+.philhealth-finder-cell-value { font-size:0.85rem; font-weight:800; color:var(--text-900,#1b2430); }
 .philhealth-ee { color:#1c5a8a; }
 .philhealth-er { color:#1f7a52; }
 .philhealth-total { color:#8a6318; }
-.philhealth-finder-empty { display:flex; align-items:center; gap:8px; padding:16px; color:var(--text-400,#8b93a1); font-size:0.82rem; text-align:center; justify-content:center; }
-.philhealth-finder-empty i { font-size:1rem; }
-
-.philhealth-bracket-placeholder { display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:28px 16px; }
-.philhealth-bracket-placeholder i { font-size:1.6rem; color:var(--text-400,#8b93a1); }
-.philhealth-bracket-title { font-size:0.9rem; font-weight:700; color:var(--text-900,#1b2430); }
-.philhealth-bracket-desc { font-size:0.78rem; color:var(--text-500,#6b7280); line-height:1.5; }
-.philhealth-bracket-link { margin-top:6px; font-size:0.78rem; font-weight:600; color:var(--info-blue,#3b82c4); text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.philhealth-finder-empty { display:flex; align-items:center; gap:6px; padding:12px; color:var(--text-500,#64748b); font-size:0.75rem; text-align:center; justify-content:center; }
+.philhealth-view-all { font-size:0.72rem; font-weight:600; color:var(--info-600,#0891b2); text-decoration:none; }
+.philhealth-view-all:hover { text-decoration:underline; }
+.philhealth-activity-list { display:flex; flex-direction:column; }
+.philhealth-activity-item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--border,#e4e8ee); }
+.philhealth-activity-item:last-child { border-bottom:none; }
+.philhealth-activity-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+.philhealth-activity-dot-compliant { background:#1f7a52; }
+.philhealth-activity-dot-pending { background:#d99a2b; }
+.philhealth-activity-dot-violation { background:#d6484a; }
+.philhealth-activity-body { flex:1; min-width:0; }
+.philhealth-activity-text { font-size:0.78rem; font-weight:600; color:var(--text-900,#1b2430); line-height:1.3; }
+.philhealth-activity-meta { display:flex; gap:8px; margin-top:2px; font-size:0.68rem; color:var(--text-500,#64748b); font-family:Arial, sans-serif; }
+.philhealth-activity-name { font-weight:600; color:var(--text-600,#475569); }
+.philhealth-bracket-placeholder { display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; padding:24px 12px; }
+.philhealth-bracket-placeholder i { display:none; }
+.philhealth-bracket-title { font-size:0.82rem; font-weight:700; color:var(--text-900,#1b2430); }
+.philhealth-bracket-desc { font-size:0.72rem; color:var(--text-500,#64748b); line-height:1.4; }
+.philhealth-bracket-link { margin-top:4px; font-size:0.72rem; font-weight:600; color:var(--info-600,#0891b2); text-decoration:none; }
 .philhealth-bracket-link:hover { text-decoration:underline; }
-
-@media (max-width: 1100px) {
+@media (max-width:1100px) {
   .philhealth-row { grid-template-columns:1fr; }
   .philhealth-col-side { position:static; width:auto; min-width:0; }
 }
-
-/* ============================================
-   PhilHealth RESPONSIVE OVERRIDES
-   ============================================ */
-
-/* Prevent horizontal overflow */
-.philhealth-module {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+.philhealth-module,
+.philhealth-card { box-sizing:border-box; max-width:100%; overflow:hidden; }
+.philhealth-summary-item { min-width:0; flex:1 1 calc(50% - 8px); max-width:calc(50% - 8px); }
+.philhealth-card-head { flex-wrap:wrap; gap:8px; }
+.philhealth-table-search input { max-width:100%; }
+@media (max-width:768px) {
+  .philhealth-table-search input { width:100%; max-width:100%; }
+  .philhealth-card-body { max-height:none !important; overflow:visible !important; }
+  .philhealth-table-wrap { overflow:visible !important; flex:none !important; }
+  .philhealth-table,
+  .philhealth-table thead,
+  .philhealth-table tbody,
+  .philhealth-table th,
+  .philhealth-table td,
+  .philhealth-table tr { display:block; width:100%; min-width:0; }
+  .philhealth-table { border-collapse:separate; border-spacing:0; }
+  .philhealth-table thead { display:none; }
+  .philhealth-table tr { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:8px; padding:10px 12px; margin-bottom:10px; box-shadow:none; }
+  .philhealth-table td { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--border,#e4e8ee); text-align:right; min-width:0; overflow-wrap:anywhere; word-break:break-word; }
+  .philhealth-table td:last-child { border-bottom:none; padding-bottom:0; }
+  .philhealth-table td::before { content:attr(data-label); font-weight:600; font-size:0.68rem; text-transform:uppercase; color:var(--text-500,#64748b); text-align:left; flex-shrink:0; margin-right:6px; }
+  .philhealth-table td:last-child { justify-content:flex-end; }
+  .philhealth-stamp { font-size:0.7rem; padding:2px 8px; }
+  .philhealth-portal-link { font-size:0.78rem; }
 }
-
-.philhealth-card {
-    box-sizing: border-box;
-    max-width: 100%;
-    overflow: hidden;
+@media (max-width:400px) {
+  .philhealth-finder-grid { grid-template-columns:1fr; }
+  .philhealth-finder-cell--total { order:-1; }
 }
-
-/* Summary bar: tablet/mobile responsive */
-@media (max-width: 1100px) {
-    .philhealth-summary-bar {
-        gap: 10px;
-    }
-    .philhealth-summary-item {
-        min-width: 0;
-        flex: 1 1 calc(50% - 10px);
-        max-width: calc(50% - 10px);
-        padding: 14px 16px;
-    }
-    .philhealth-summary-item > div {
-        min-width: 0;
-    }
-    .philhealth-summary-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
-    .philhealth-summary-value {
-        font-size: 1.1rem;
-    }
-    .philhealth-summary-label {
-        font-size: 0.7rem;
-    }
-    .philhealth-summary-desc {
-        font-size: 0.6rem;
-    }
-}
-
-@media (max-width: 400px) {
-    .philhealth-summary-bar {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    .philhealth-summary-item {
-        max-width: 100%;
-        flex: 1 1 auto;
-    }
-}
-
-/* Card head wrapping */
-.philhealth-card-head {
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-/* ============================================
-   MOBILE CARD TABLE (max-width: 768px)
-   ============================================ */
-@media (max-width: 768px) {
-    .philhealth-card-body {
-        max-height: none !important;
-        overflow: visible !important;
-    }
-
-    .philhealth-table-wrap {
-        overflow: visible !important;
-        flex: none !important;
-    }
-
-    .philhealth-table,
-    .philhealth-table thead,
-    .philhealth-table tbody,
-    .philhealth-table th,
-    .philhealth-table td,
-    .philhealth-table tr {
-        display: block;
-        width: 100%;
-        min-width: 0;
-    }
-
-    .philhealth-table {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .philhealth-table thead {
-        display: none;
-    }
-
-    .philhealth-table tr {
-        background: var(--card-bg, #fff);
-        border: 1px solid var(--border, #e4e8ee);
-        border-radius: 12px;
-        padding: 12px 14px;
-        margin-bottom: 12px;
-        box-shadow: var(--shadow-soft, 0 1px 2px rgba(13,27,46,.04));
-    }
-
-    .philhealth-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--hairline, #dde3ea);
-        text-align: right;
-        min-width: 0;
-        overflow-wrap: anywhere;
-        word-break: break-word;
-    }
-
-    .philhealth-table td:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    .philhealth-table td::before {
-        content: attr(data-label);
-        font-weight: 700;
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        color: var(--text-400, #8b93a1);
-        text-align: left;
-        flex-shrink: 0;
-        margin-right: 8px;
-    }
-
-    .philhealth-table td:last-child {
-        justify-content: flex-end;
-    }
-
-    .philhealth-stamp {
-        font-size: 0.72rem;
-        padding: 3px 10px;
-    }
-
-    .philhealth-email-payroll-btn {
-        height: 40px;
-        min-width: 40px;
-        width: 40px;
-        font-size: 1rem;
-    }
-}
-
-/* ============================================
-   PAGINATION RESPONSIVE
-   ============================================ */
-@media (max-width: 768px) {
-    .philhealth-pagination {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-    }
-    .philhealth-pagination-info {
-        text-align: center;
-        order: 1;
-    }
-    .philhealth-pagination-nav {
-        order: 0;
-    }
-}
-
-/* ============================================
-   FINDER GRID RESPONSIVE
-   ============================================ */
-@media (max-width: 400px) {
-    .philhealth-finder-grid {
-        grid-template-columns: 1fr;
-    }
-    .philhealth-finder-cell--total {
-        order: -1;
-    }
-}
-
-.philhealth-finder-input {
-    min-width: 0;
-}
-
-/* Finder result value wrapping */
-.philhealth-finder-val {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-/* Finder row wrapping */
-.philhealth-finder-row {
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.philhealth-finder-key {
-    flex-shrink: 0;
-}
+.philhealth-finder-input { min-width:0; }
+.philhealth-finder-val { overflow-wrap:anywhere; word-break:break-word; }
+.philhealth-finder-row { flex-wrap:wrap; gap:6px; }
+.philhealth-finder-key { flex-shrink:0; }
 </style>
 
 <section class="philhealth-module">
   <div class="philhealth-summary-bar">
     <a class="philhealth-summary-item <?= $filter === 'all' ? 'philhealth-summary-active' : '' ?>" href="?page=philhealth-contributions&filter=all">
-      <div class="philhealth-summary-icon blue"><i class="bi bi-people"></i></div>
       <div>
         <div class="philhealth-summary-value"><?= number_format($totalEmployees) ?></div>
         <div class="philhealth-summary-label">Total Employees</div>
       </div>
     </a>
     <a class="philhealth-summary-item <?= $filter === 'submitted' ? 'philhealth-summary-active' : '' ?>" href="?page=philhealth-contributions&filter=submitted">
-      <div class="philhealth-summary-icon green"><i class="bi bi-check-circle"></i></div>
       <div>
         <div class="philhealth-summary-value"><?= number_format($submitted) ?></div>
         <div class="philhealth-summary-label">Submitted</div>
       </div>
     </a>
     <a class="philhealth-summary-item <?= $filter === 'pending' ? 'philhealth-summary-active' : '' ?>" href="?page=philhealth-contributions&filter=pending">
-      <div class="philhealth-summary-icon amber"><i class="bi bi-clock-history"></i></div>
       <div>
         <div class="philhealth-summary-value"><?= number_format($pending) ?></div>
         <div class="philhealth-summary-label">Pending</div>
       </div>
     </a>
     <a class="philhealth-summary-item <?= $filter === 'rejected' ? 'philhealth-summary-active' : '' ?>" href="?page=philhealth-contributions&filter=rejected">
-      <div class="philhealth-summary-icon red"><i class="bi bi-x-circle"></i></div>
       <div>
         <div class="philhealth-summary-value"><?= number_format($rejected) ?></div>
         <div class="philhealth-summary-label">Rejected</div>
       </div>
     </a>
     <div class="philhealth-summary-item">
-      <div class="philhealth-summary-icon seal"><i class="bi bi-calendar-check"></i></div>
       <div>
         <div class="philhealth-summary-value"><?= htmlspecialchars($remittanceDateStr) ?></div>
         <div class="philhealth-summary-label"><?= htmlspecialchars($remittanceLabel) ?></div>
@@ -582,7 +375,7 @@ $recentActivity = array_slice($recent, 0, 6);
     <div class="philhealth-col-main">
       <div class="philhealth-card">
         <div class="philhealth-card-head">
-          <h3><i class="bi bi-list-ul"></i> Recent PhilHealth Submissions</h3>
+          <h3>Recent PhilHealth Submissions</h3>
         </div>
         <div class="philhealth-card-body">
           <?php if (empty($recent)): ?>
@@ -641,7 +434,7 @@ $recentActivity = array_slice($recent, 0, 6);
     <div class="philhealth-col-side">
       <div class="philhealth-card philhealth-finder-card">
         <div class="philhealth-card-head">
-          <h3><i class="bi bi-cash-coin"></i> PhilHealth Contribution Reference</h3>
+          <h3>PhilHealth Contribution Reference</h3>
         </div>
         <div class="philhealth-card-body">
           <div class="philhealth-finder-form">
@@ -680,12 +473,11 @@ $recentActivity = array_slice($recent, 0, 6);
       </div>
       <div class="philhealth-card" id="philhealthBracketCard">
         <div class="philhealth-card-head">
-          <h3><i class="bi bi-cash-stack"></i> PhilHealth Contribution Brackets</h3>
+          <h3>PhilHealth Contribution Brackets</h3>
         </div>
         <div class="philhealth-card-body">
           <div class="philhealth-bracket-placeholder">
-            <i class="bi bi-cash-stack"></i>
-            <div class="philhealth-bracket-title">PhilHealth Contribution Bracket</div>
+                        <div class="philhealth-bracket-title">PhilHealth Contribution Bracket</div>
             <div class="philhealth-bracket-desc">View the complete PhilHealth contribution schedule by monthly salary credit.</div>
             <a href="?page=government-contribution-brackets&type=philhealth" class="philhealth-bracket-link">Open PhilHealth Contribution Table <i class="bi bi-arrow-right-short"></i></a>
           </div>
@@ -697,6 +489,7 @@ $recentActivity = array_slice($recent, 0, 6);
 
 <script>
 (function() {
+  var filter = '<?= htmlspecialchars((string)($filter ?? 'all')) ?>';
   var brackets = <?= $phBracketsJson ?>;
   var salaryInput = document.getElementById('philhealthSalaryInput');
   var resultBox = document.getElementById('philhealthFinderResult');
@@ -775,7 +568,7 @@ $recentActivity = array_slice($recent, 0, 6);
     var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
     if (rows.length === 0) return;
 
-    var pageSize = 15;
+    var pageSize = 13;
     var totalItems = rows.length;
     var totalPages = Math.ceil(totalItems / pageSize);
     var currentPage = 1;
@@ -784,7 +577,9 @@ $recentActivity = array_slice($recent, 0, 6);
     var navEl = document.getElementById('philhealthPaginationNav');
     var paginationEl = document.getElementById('philhealthRecentPagination');
 
-    paginationEl.style.display = 'flex';
+    if (filter === 'all') {
+      paginationEl.style.display = 'flex';
+    }
 
     function startIdx() { return (currentPage - 1) * pageSize; }
     function endIdx() { return Math.min(startIdx() + pageSize, totalItems); }

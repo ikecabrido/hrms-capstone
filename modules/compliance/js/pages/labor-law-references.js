@@ -28,26 +28,27 @@
     var SCROLL_KEY = 'llr_scroll_' + (new URL(location).searchParams.get('page') || 'labor-compliance');
 
     function saveScroll() {
-        var container = document.querySelector('.container');
-        if (container) {
-            try { sessionStorage.setItem(SCROLL_KEY, container.scrollTop); } catch (e) {}
-        }
+        try { sessionStorage.setItem(SCROLL_KEY, String(window.scrollY)); } catch (e) {}
     }
 
     function restoreScroll() {
-        var container = document.querySelector('.container');
-        if (container) {
-            try {
-                var saved = sessionStorage.getItem(SCROLL_KEY);
-                if (saved !== null) {
-                    container.scrollTop = parseInt(saved, 10);
-                    sessionStorage.removeItem(SCROLL_KEY);
-                }
-            } catch (e) {}
-        }
+        try {
+            var saved = sessionStorage.getItem(SCROLL_KEY);
+            if (saved !== null) {
+                window.scrollTo(0, parseInt(saved, 10));
+                sessionStorage.removeItem(SCROLL_KEY);
+            }
+        } catch (e) {}
     }
 
-    window.addEventListener('scroll', saveScroll, { passive: true });
+    var llrScrollTimer = null;
+    window.addEventListener('scroll', function() {
+        if (llrScrollTimer) return;
+        llrScrollTimer = setTimeout(function() {
+            llrScrollTimer = null;
+            saveScroll();
+        }, 100);
+    }, { passive: true });
     window.addEventListener('beforeunload', saveScroll);
 
     if (document.readyState === 'loading') {

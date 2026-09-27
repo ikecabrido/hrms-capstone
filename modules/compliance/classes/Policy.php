@@ -237,7 +237,7 @@ class Policy
         return $stmt->execute([':policy_id' => (int) $policyId]);
     }
 
-    public function getAssignments($policyId, $filters = [])
+    public function getAssignments($policyId, $filters = [], $limit = null, $offset = null)
     {
         $sql = "SELECT a.*, e.employee_code AS employee_no, e.first_name, e.middle_name, e.last_name,
                        d.department_name, COALESCE(p.position_name, 'N/A') AS position_name
@@ -258,12 +258,42 @@ class Policy
         }
 
         $sql .= " ORDER BY a.assigned_at DESC";
+
+        if ($limit !== null && $offset !== null) {
+            $sql .= " LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
+        }
+
         $stmt = $this->conn->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getAcknowledgements($policyId, $filters = [])
+    public function countAssignments($policyId, $filters = [])
+    {
+        $sql = "SELECT COUNT(*) AS total
+                FROM lc_policy_assignments a
+                WHERE a.policy_id = :policy_id";
+        $params = [':policy_id' => (int) $policyId];
+
+        if (!empty($filters['status'])) {
+            $sql .= " AND a.status = :status";
+            $params[':status'] = $filters['status'];
+        }
+        if (!empty($filters['search'])) {
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM em_employees e
+                WHERE e.employee_id = a.employee_id
+                  AND (e.first_name LIKE :search OR e.last_name LIKE :search OR e.employee_code LIKE :search)
+            )";
+            $params[':search'] = '%' . $filters['search'] . '%';
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function getAcknowledgements($policyId, $filters = [], $limit = null, $offset = null)
     {
         $sql = "SELECT a.*, e.first_name, e.middle_name, e.last_name,
                        d.department_name, COALESCE(p.position_name, 'N/A') AS position_name,
@@ -288,9 +318,45 @@ class Policy
         }
 
         $sql .= " ORDER BY a.assigned_at DESC";
+
+        if ($limit !== null && $offset !== null) {
+            $sql .= " LIMIT :limit OFFSET :offset";
+            $stmt = $this->conn->prepare($sql);
+            foreach ($params as $k => $v) {
+                $stmt->bindValue($k, $v);
+            }
+            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int) $offset, PDO::PARAM_INT);
+            $stmt->execute();
+        } else {
+            $stmt = $this->conn->prepare($sql);
+            $stmt->execute($params);
+        }
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countAcknowledgements($policyId, $filters = [])
+    {
+        $sql = "SELECT COUNT(*) AS total
+                FROM lc_policy_assignments a
+                INNER JOIN em_employees e ON a.employee_id = e.employee_id
+                LEFT JOIN em_departments d ON e.department_id = d.department_id
+                LEFT JOIN em_positions p ON e.position_id = p.position_id
+                WHERE a.policy_id = :policy_id";
+        $params = [':policy_id' => (int) $policyId];
+
+        if (!empty($filters['status'])) {
+            $sql .= " AND a.status = :status";
+            $params[':status'] = $filters['status'];
+        }
+        if (!empty($filters['search'])) {
+            $sql .= " AND (e.first_name LIKE :search OR e.last_name LIKE :search)";
+            $params[':search'] = '%' . $filters['search'] . '%';
+        }
+
         $stmt = $this->conn->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return (int) $stmt->fetchColumn();
     }
 
     public function getMyPolicies($employeeId, $filters = [])

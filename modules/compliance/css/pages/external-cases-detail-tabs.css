@@ -1,0 +1,166 @@
+/* ==========================================================================
+   External Case Detail - Tab Navigation & Panel System
+   Bestlink College of the Philippines (BCP) - Compliance Module
+   ========================================================================== */
+
+/* ─── Tab Navigation Container ────────────────────────────────────────────── */
+.ec-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: none;
+  margin-bottom: 0;
+  flex-wrap: nowrap;
+  justify-content: stretch;
+  background: var(--slate-50, #f8fafc);
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Individual Tab Button ───────────────────────────────────────────────── */
+.ec-tab {
+  flex: 1 1 auto;
+  padding: 10px 16px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-500, #64748b);
+  cursor: pointer;
+  border: 1px solid var(--hairline, #e4e8ee);
+  border-bottom: 1px solid var(--hairline, #e4e8ee);
+  border-radius: 6px 6px 0 0;
+  background: var(--slate-50, #f8fafc);
+  transition: background-color 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+  text-align: center;
+  position: relative;
+  min-width: 0;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+/* ─── Tab Hover State ─────────────────────────────────────────────────────── */
+.ec-tab:hover {
+  background: #f1f5f9;
+  color: var(--text-900, #1b2430);
+}
+
+/* ─── Active Tab ──────────────────────────────────────────────────────────── */
+.ec-tab.ec-tab--active {
+  background: #fff;
+  color: var(--text-900, #1b2430);
+  border-color: var(--hairline, #e4e8ee);
+  border-bottom: 1px solid #fff;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ─── Keyboard Focus Indicator ────────────────────────────────────────────── */
+.ec-tab:focus-visible {
+  outline: 2px solid var(--info-blue, #3b82c4);
+  outline-offset: -2px;
+  z-index: 3;
+}
+
+/* ─── Tab Content Panels ──────────────────────────────────────────────────── */
+.ec-tab-panel {
+  display: none;
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  background: #f0f0f0;
+  margin: 12px;
+  border-radius: 8px;
+}
+
+.ec-tab-panel.ec-tab-panel--active {
+  display: block;
+  padding: 0;
+}
+
+/* ─── First Child Card Connection ─────────────────────────────────────────── */
+.ec-tab-panel--active > .lc-card:first-child,
+.ec-tab-panel--active > .ec-table-wrap:first-child {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  margin-top: 0;
+  border-top: none;
+}
+
+/* ─── Subsequent Cards & Tables ───────────────────────────────────────────── */
+.ec-tab-panel--active > .lc-card,
+.ec-tab-panel--active > .ec-table-wrap {
+  margin-top: 0;
+}
+
+/* Add spacing between multiple cards in the same panel */
+.ec-tab-panel--active > .lc-card + .lc-card,
+.ec-tab-panel--active > .lc-card + .ec-table-wrap,
+.ec-tab-panel--active > .ec-table-wrap + .lc-card,
+.ec-tab-panel--active > .ec-table-wrap + .ec-table-wrap {
+  margin-top: 12px;
+}
+
+/* ─── Responsive: Tablet ───────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .ec-tab {
+    padding: 10px 12px;
+    font-size: 0.74rem;
+  }
+
+  .ec-tabs {
+    gap: 1px;
+  }
+}
+
+/* ─── Responsive: Mobile ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .ec-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .ec-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ec-tab {
+    flex: 0 0 auto;
+    padding: 12px 16px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+
+  .ec-tab-panel--active > .lc-card:first-child,
+  .ec-tab-panel--active > .ec-table-wrap:first-child {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+/* ─── High Contrast / Accessibility ───────────────────────────────────────── */
+@media (forced-colors: active) {
+  .ec-tab.ec-tab--active {
+    border: 2px solid Highlight;
+    border-bottom-color: #fff;
+  }
+
+  .ec-tab:focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
+
+/* ─── Reduced Motion ───────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .ec-tab {
+    transition: none;
+  }
+}

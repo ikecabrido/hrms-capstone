@@ -25,7 +25,7 @@ try {
         $action = $_GET['action'] ?? 'list';
 
         if ($action === 'unread-count') {
-            $stmt = $pdo->query("SELECT COUNT(*) AS cnt FROM lc_notifications WHERE is_read = 0 AND (notification_type IS NULL OR notification_type != 'email')");
+            $stmt = $pdo->query("SELECT COUNT(*) AS cnt FROM lc_notifications WHERE is_read = 0");
             $count = (int)$stmt->fetchColumn();
 
             echo json_encode(['success' => true, 'unread_count' => $count]);
@@ -45,7 +45,7 @@ try {
 
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 200;
         $limit = max(1, min($limit, 500));
-        $stmt = $pdo->prepare('SELECT id, title, message, type, module, is_read, created_at, email, sender_email, employee_id FROM lc_notifications WHERE (notification_type IS NULL OR notification_type != "email") ORDER BY created_at DESC LIMIT :limit');
+        $stmt = $pdo->prepare('SELECT id, title, message, type, module, is_read, created_at, email, sender_email, employee_id, notification_type FROM lc_notifications WHERE is_read = 0 ORDER BY created_at DESC LIMIT :limit');
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -70,7 +70,7 @@ try {
         }
 
         if ($action === 'mark-all-read') {
-            $stmt = $pdo->prepare('UPDATE lc_notifications SET is_read = 1, updated_at = NOW() WHERE is_read = 0 AND (notification_type IS NULL OR notification_type != "email")');
+            $stmt = $pdo->prepare('UPDATE lc_notifications SET is_read = 1, updated_at = NOW() WHERE is_read = 0');
             $stmt->execute();
 
             echo json_encode(['success' => true]);

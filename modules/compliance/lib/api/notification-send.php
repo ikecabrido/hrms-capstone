@@ -54,6 +54,8 @@ $body = trim((string) ($input['body'] ?? ''));
 $attachmentUrl = trim((string) ($input['attachment_url'] ?? ''));
 $attachmentName = trim((string) ($input['attachment_name'] ?? ''));
 $department = trim((string) ($input['department'] ?? ''));
+$complaintId = isset($input['complaint_id']) ? (int) $input['complaint_id'] : 0;
+$replyToNotificationId = isset($input['reply_to_notification_id']) ? (int) $input['reply_to_notification_id'] : 0;
 
 if (!in_array($mode, ['reply', 'forward', 'new'], true)) {
     echo json_encode(['success' => false, 'message' => 'Invalid mode']);
@@ -61,6 +63,9 @@ if (!in_array($mode, ['reply', 'forward', 'new'], true)) {
 }
 if ($mode === 'reply' && $notificationId <= 0) {
     $notificationId = 0;
+}
+if ($mode === 'reply' && $notificationId > 0 && $replyToNotificationId <= 0) {
+    $replyToNotificationId = $notificationId;
 }
 if ($notificationKey === '') {
     $notificationKey = 'notification';
@@ -125,23 +130,48 @@ if ($mode === 'reply' || $mode === 'forward') {
 try {
     $db->beginTransaction();
 
+    $hasComplaintId = false;
+    $hasReplyToId = false;
+    try {
+        $cols = $db->query("SHOW COLUMNS FROM lc_notifications WHERE Field IN ('complaint_id','reply_to_notification_id')")->fetchAll(PDO::FETCH_COLUMN);
+        $hasComplaintId = in_array('complaint_id', $cols, true);
+        $hasReplyToId = in_array('reply_to_notification_id', $cols, true);
+    } catch (Throwable $e) {}
+
+    $notifColumns = ['employee_id', 'title', 'message', 'type', 'module', 'email', 'sender_email', 'is_read', 'notification_type', 'created_at', 'updated_at'];
+    $notifValues = [':employee_id', ':title', ':message', ':type', ':module', ':email', ':sender_email', ':is_read', '"email"', 'NOW()', 'NOW()'];
+    $notifParams = [
+        ':employee_id'   => $senderId,
+        ':title'         => $subject,
+        ':message'       => $body,
+        ':type'          => $notificationKey,
+        ':module'        => 'compliance',
+        ':email'         => $recipient,
+        ':sender_email'  => $senderEmail,
+        ':is_read'       => 0,
+    ];
+
+    if ($hasComplaintId) {
+        $notifColumns[] = 'complaint_id';
+        $notifValues[] = ':complaint_id';
+        $notifParams[':complaint_id'] = $complaintId > 0 ? $complaintId : null;
+    }
+    error_log('notification-send: complaintId=' . $complaintId . ' hasComplaintIdCol=' . ($hasComplaintId ? 'yes' : 'no') . ' columns=' . implode(',', $notifColumns));
+    if ($hasReplyToId) {
+        $notifColumns[] = 'reply_to_notification_id';
+        $notifValues[] = ':reply_to_notification_id';
+        $notifParams[':reply_to_notification_id'] = $replyToNotificationId > 0 ? $replyToNotificationId : null;
+    }
+
     foreach ($validRecipients as $recipient) {
+        $notifParams[':email'] = $recipient;
         $stmt = $db->prepare('
             INSERT INTO lc_notifications
-                (employee_id, title, message, type, module, email, sender_email, is_read, notification_type, created_at, updated_at)
+                (' . implode(', ', $notifColumns) . ')
             VALUES
-                (:employee_id, :title, :message, :type, :module, :email, :sender_email, :is_read, "email", NOW(), NOW())
+                (' . implode(', ', $notifValues) . ')
         ');
-        $stmt->execute([
-            ':employee_id'   => $senderId,
-            ':title'         => $subject,
-            ':message'       => $body,
-            ':type'          => $notificationKey,
-            ':module'        => 'compliance',
-            ':email'         => $recipient,
-            ':sender_email'  => $senderEmail,
-            ':is_read'       => 0,
-        ]);
+        $stmt->execute($notifParams);
 
         $db->prepare('
             INSERT INTO lc_sent_history
@@ -235,10 +265,12 @@ $employeeIdFromPayload = trim((string) ($input['employee_id'] ?? ''));
 $contractId = isset($input['contract_id']) ? (int) $input['contract_id'] : 0;
 
 $disciplineTemplateMap = [
-    'written_warning'            => 'closed_warning_issued',
-    'suspension_notice'          => 'closed_suspension',
-    'termination_decision'       => 'closed_termination_recommended',
-    'notice_of_decision'         => 'closed_termination_recommended',
+    'written_warning'             => 'closed_warning_issued',
+    'second_written_warning'      => 'closed_second_written_warning',
+    'final_written_warning'       => 'closed_final_written_warning',
+    'suspension_notice'           => 'closed_suspension',
+    'termination_decision'        => 'closed_termination_recommended',
+    'notice_of_decision'          => 'closed_termination_recommended',
 ];
 
 $autoCloseStatus = $disciplineTemplateMap[$templateCode] ?? null;
@@ -321,7 +353,7 @@ function nc_resolve_employee_id(PDO $db, string $email): ?int {
 }
 
 function nc_auto_close_complaint_after_email(PDO $db, int $employeeId, string $closeStatus, string $templateCode, int $performedBy): void {
-    $closedStatuses = ['closed','closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved'];
+    $closedStatuses = ['closed','closed_no_violation','closed_warning_issued','closed_second_written_warning','closed_final_written_warning','closed_suspension','closed_termination_recommended','closed_resolved'];
     try {
         $placeholders = array_map(fn($i) => ":closed_$i", array_keys($closedStatuses));
         $stmt = $db->prepare("SELECT id, status FROM lc_complaints WHERE employee_id = :eid AND status NOT IN (" . implode(',', $placeholders) . ") ORDER BY id DESC LIMIT 1");
@@ -340,9 +372,11 @@ function nc_auto_close_complaint_after_email(PDO $db, int $employeeId, string $c
         $complaintId = (int) ($complaint['id'] ?? 0);
 
         $humanLabels = [
-            'closed_warning_issued'     => 'Written Warning Issued',
-            'closed_suspension'         => 'Suspension Issued',
-            'closed_termination_recommended' => 'Termination Recommended',
+            'closed_warning_issued'         => 'Written Warning Issued',
+            'closed_second_written_warning' => 'Second Written Warning Issued',
+            'closed_final_written_warning'  => 'Final Written Warning Issued',
+            'closed_suspension'             => 'Suspension Issued',
+            'closed_termination_recommended'=> 'Termination Recommended',
         ];
         $decisionLabel = $humanLabels[$closeStatus] ?? 'Closed';
 

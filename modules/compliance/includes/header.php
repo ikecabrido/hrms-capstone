@@ -52,7 +52,7 @@
             --slate-800: #1e293b;
             --slate-900: #0f172a;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, Serif; }
         body { background: var(--color9); }
         .main-content { margin-left: var(--sidebar-width); margin-top: var(--header-height); min-height: calc(100vh - var(--header-height)); padding: 2rem; position: relative; transition: margin-left 0.3s ease; }
         .main-content.sidebar-collapsed { margin-left: 0; }
@@ -86,6 +86,10 @@
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/case-records.css?v=2">
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/document-requests.css?v=11">
     <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/onboarding-package.css?v=2">
+    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/decision-actions.css?v=1">
+
+    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/external-cases.css?v=1">
+    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/external-cases-detail-tabs.css?v=1">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -157,5 +161,4 @@
         </div>
         <div class="notif-detail-body" id="notifDetailBody"></div>
     </div>
-
 

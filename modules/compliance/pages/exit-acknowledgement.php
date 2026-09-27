@@ -41,7 +41,7 @@ $employmentType = 'N/A';
 $hireDateDisplay = '—';
 if (!empty($exit['employee_id'])) {
     try {
-        $stmt = $db->prepare('SELECT employee_code, employment_type, hire_date FROM em_employees WHERE employee_id = :eid LIMIT 1');
+        $stmt = $db->prepare('SELECT e.employee_code, e.employment_type, e.hire_date, e.email, e.employment_status, u.last_login FROM em_employees e LEFT JOIN user_account u ON u.employee_id = e.employee_id WHERE e.employee_id = :eid LIMIT 1');
         $stmt->execute([':eid' => $exit['employee_id']]);
         $employeeInfo = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
         $employeeNo = $employeeInfo['employee_code'] ?? ('EMP' . str_pad((string)($exit['employee_id'] ?? 0), 4, '0', STR_PAD_LEFT));
@@ -244,94 +244,358 @@ $isExitAcknowledged = !empty($exit['confirmed_at']) || strtolower($exit['legal_s
 $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
 ?>
 <style>
-.cw-module { padding: 4px 2px 24px; }
-.cw-row { display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start; }
-.cw-col-main { min-width:0; }
-.cw-col-side { width:360px; flex-shrink:0; }
-@media (max-width: 1100px) {
-  .cw-row { grid-template-columns:1fr; }
-  .cw-col-side { position:static; width:auto; }
+:root {
+    --cw-bg: #f4f5f7;
+    --cw-card: #ffffff;
+    --cw-border: #e1e4e8;
+    --cw-border-light: #e8eaed;
+    --cw-text: #2f3439;
+    --cw-muted: #737b83;
+    --cw-primary: #2f6fa8;
+    --cw-primary-hover: #285f91;
+    --cw-success: #3f8053;
+    --cw-danger: #b34b4b;
+    --cw-radius: 6px;
 }
 
-.cw-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; }
-.cw-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-.cw-card-head h3 { margin:0; font-size:0.98rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
-.cw-card-body { display:flex; flex-direction:column; }
-.cw-empty { padding:24px; text-align:center; color:var(--text-400,#8b93a1); font-size:0.84rem; }
+.cw-module {
+    background: var(--cw-bg);
+    padding: 0;
+}
 
-.cw-info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
-.cw-info-item label { display:block; font-size:0.72rem; font-weight:700; color:var(--text-400,#8b93a1); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
-.cw-info-item div { font-size:0.84rem; font-weight:600; color:var(--text-900,#1b2430); }
+.cw-flash {
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    margin-top: 10px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+}
+.cw-flash:first-child { margin-top: 0; }
+.cw-flash.success {
+    display: flex;
+    background: #f6fbf7;
+    color: var(--cw-success);
+    border: 1px solid #c8e6d0;
+}
+.cw-flash.error {
+    display: block;
+    background: #fdf6f6;
+    color: var(--cw-danger);
+    border: 1px solid #f5c6c6;
+}
+
+.cw-row {
+    display: grid;
+    grid-template-columns: 31% 1fr;
+    gap: 16px;
+    align-items: start;
+}
+.cw-col-main { min-width: 0; }
+.cw-col-side { min-width: 0; }
+@media (max-width: 768px) {
+    .cw-row { grid-template-columns: 1fr; }
+    .cw-col-side { position: static; width: auto; }
+}
+
+.cw-card {
+    background: var(--cw-card);
+    border: 1px solid var(--cw-border);
+    border-radius: var(--cw-radius);
+    box-shadow: none;
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+.cw-card-head {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--cw-border-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.cw-card-head h3 {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--cw-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: Arial, serif;
+}
+.cw-card-body {
+    padding: 12px 15px;
+}
+
+.cw-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px 15px;
+}
+.cw-info-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 600px) {
+    .cw-info-grid, .cw-info-grid-3 { grid-template-columns: 1fr; }
+}
+.cw-info-item label {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 9.5px;
+    line-height: 1.2;
+    font-weight: 500;
+    color: var(--cw-muted);
+    opacity: 0.85;
+}
+.cw-info-item div {
+    font-size: 11px;
+    line-height: 1.3;
+    font-weight: 400;
+    color: var(--cw-text);
+    opacity: 0.92;
+}
+.cw-info-item {
+    border-bottom: 1px solid var(--cw-border-light);
+    padding-bottom: 8px;
+}
+.cw-info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.cw-info-item:nth-child(odd) {
+    border-right: 1px solid var(--cw-border-light);
+    padding-right: 12px;
+}
+.cw-info-item:last-child:nth-child(odd) {
+    border-right: none;
+    padding-right: 0;
+}
 .cw-case-desc { margin-top:12px; }
-.cw-case-desc label { display:block; font-size:0.72rem; font-weight:700; color:var(--text-400,#8b93a1); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
-.cw-case-desc p { margin:0; font-size:0.84rem; color:var(--text-700,#3b4252); line-height:1.5; white-space:pre-wrap; }
+.cw-case-desc label { display:block; font-size:0.72rem; font-weight:600; color:#6b7280; margin-bottom:6px; }
+.cw-case-desc p { margin:0; font-size:0.84rem; color:#374151; line-height:1.5; white-space:pre-wrap; }
 
-.cw-stamp { display:inline-block; font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
-.cw-stamp-compliant { background:rgba(47,158,110,.12); color:#1f7a52; }
-.cw-stamp-pending { background:rgba(217,154,43,.14); color:#a86b13; }
-.cw-stamp-info { background:rgba(59,130,196,.12); color:#1c5a8a; }
+.cw-stamp { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px; white-space: nowrap; }
+.cw-stamp-compliant { background: #f6fbf7; color: var(--cw-success); border: 1px solid #c8e6d0; }
+.cw-stamp-pending { background: #fffbf0; color: #8a6d1a; border: 1px solid #f0e4a8; }
+.cw-stamp-info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
 
-.cw-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; border:1px solid var(--border,#e4e8ee); background:#fff; color:var(--text-700,#3b4252); font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s ease; text-decoration:none; }
-.cw-btn:hover { border-color:var(--info-blue,#3b82c4); color:var(--info-blue,#3b82c4); box-shadow:0 0 0 3px rgba(59,130,196,.08); }
-.cw-btn.primary { background:rgba(59,130,196,.08); border-color:rgba(59,130,196,.25); color:#1c5a8a; }
-.cw-btn.primary:hover { background:rgba(59,130,196,.14); }
-.cw-btn.danger { background:rgba(214,72,74,.08); border-color:rgba(214,72,74,.25); color:#a3272a; }
-.cw-btn.danger:hover { background:rgba(214,72,74,.14); }
+.cw-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 33px;
+    padding: 6px 11px;
+    border: 1px solid var(--cw-border);
+    border-radius: 4px;
+    background: var(--cw-card);
+    color: var(--cw-text);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .15s ease, background .15s ease, color .15s ease;
+    text-decoration: none;
+}
+.cw-btn:hover {
+    border-color: var(--cw-primary);
+    color: var(--cw-primary);
+}
+.cw-btn:active {
+    background: #f3f4f6;
+}
+.cw-btn:focus-visible {
+    outline: 2px solid var(--cw-primary);
+    outline-offset: 2px;
+}
+.cw-btn.primary {
+    background: var(--cw-primary);
+    border-color: var(--cw-primary);
+    color: #ffffff;
+}
+.cw-btn.primary:hover {
+    background: var(--cw-primary-hover);
+    border-color: var(--cw-primary-hover);
+    color: #ffffff;
+}
+.cw-btn.danger {
+    background: #fdf6f6;
+    border-color: #f5c6c6;
+    color: #991b1b;
+}
+.cw-btn.danger:hover {
+    background: #fef2f2;
+    border-color: #f87171;
+    color: #991b1b;
+}
 
-.cw-action-status { display:inline-block; font-size:.78rem; font-weight:600; margin-left:8px; vertical-align:middle; }
-.cw-action-status.success { color:#1f7a5c; }
-.cw-action-status.error { color:#a3272a; }
+.cw-action-status { display:inline-block; font-size:.78rem; font-weight:400; margin-left:8px; vertical-align:middle; }
+.cw-action-status.success { color:#065f46; }
+.cw-action-status.error { color:#991b1b; }
 
-.cw-flash { padding:12px 16px; border-radius:10px; font-size:0.84rem; font-weight:600; margin-bottom:12px; }
-.cw-flash.success { background:rgba(47,158,110,.1); color:#1f7a52; border:1px solid rgba(47,158,110,.2); }
-.cw-flash.warning { background:rgba(217,154,43,.1); color:#a86b13; border:1px solid rgba(217,154,43,.2); }
-.cw-flash.error { background:rgba(214,72,74,.1); color:#a3272a; border:1px solid rgba(214,72,74,.2); }
-
-.cw-profile { text-align:center; padding:12px 0 16px; border-bottom:1px solid var(--border,#e4e8ee); margin-bottom:12px; }
-.cw-profile-avatar { width:56px; height:56px; border-radius:50%; background:rgba(13,27,46,.06); display:inline-flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:800; color:var(--text-600,#5b6472); margin-bottom:6px; }
-.cw-profile-name { font-size:.92rem; font-weight:700; color:var(--text-900,#1b2430); }
-.cw-profile-no { font-size:.78rem; color:var(--text-500,#6b7280); }
+.cw-profile { text-align:center; padding:10px 0 12px; border-bottom:1px solid var(--cw-border-light); margin-bottom:10px; }
+.cw-profile-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #eef1f5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #5b6472;
+    margin-bottom: 6px;
+}
+.cw-profile-name {
+    margin-top: 6px;
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--cw-text);
+    word-break: break-word;
+}
+.cw-profile-no {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--cw-muted);
+}
+.cw-profile-meta {
+    margin-top: 6px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--cw-muted);
+}
+.cw-profile-status {
+    margin-top: 8px;
+}
+.cw-profile-stats {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--cw-border-light);
+}
+.cw-profile-stat {
+    margin-bottom: 10px;
+}
+.cw-profile-stat:last-child { margin-bottom: 0; }
+.cw-profile-stat-value {
+    font-size: 11.5px;
+    color: #41484f;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+.cw-profile-stat-label {
+    font-size: 10px;
+    color: var(--cw-muted);
+    margin-bottom: 3px;
+    font-weight: 600;
+}
 
 .cw-dh-list { display:flex; flex-direction:column; gap:0; position:relative; }
-.cw-dh-list::before { content:''; position:absolute; left:17px; top:8px; bottom:8px; width:2px; background:var(--border,#e4e8ee); }
+.cw-dh-list::before { content:''; position:absolute; left:17px; top:8px; bottom:8px; width:2px; background:var(--cw-border); }
 .cw-dh-item { display:flex; align-items:flex-start; gap:12px; padding:10px 0; position:relative; }
-.cw-dh-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:5px; position:relative; z-index:1; border:2px solid #fff; box-shadow:0 0 0 1px var(--border,#e4e8ee); }
-.cw-dh-dot.status-change { background:#3b82c4; }
+.cw-dh-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:5px; position:relative; z-index:1; border:2px solid #fff; background:var(--cw-border); }
+.cw-dh-dot.status-change { background:#3b82c6; }
 .cw-dh-dot.reopen { background:#f59e0b; }
-.cw-dh-dot.close { background:#1f7a52; }
-.cw-dh-dot.pending { background:#c97f1d; }
-.cw-dh-body { flex:1 1 auto; min-width:0; padding-bottom:6px; border-bottom:1px solid rgba(228,232,238,.5); }
+.cw-dh-dot.close { background:#065f46; }
+.cw-dh-dot.pending { background:#92400e; }
+.cw-dh-body { flex:1 1 auto; min-width:0; padding-bottom:6px; border-bottom:1px solid var(--cw-border-light); }
 .cw-dh-body:last-child { border-bottom:none; }
-.cw-dh-label { font-weight:700; color:var(--text-900,#1b2430); font-size:0.85rem; }
-.cw-dh-meta { font-size:0.72rem; color:var(--text-500,#6b7280); margin-top:3px; display:flex; flex-wrap:wrap; gap:6px; }
-.cw-dh-badge { display:inline-block; padding:1px 7px; border-radius:4px; font-size:0.7rem; font-weight:600; }
+.cw-dh-label { font-weight:400; color:#111827; font-size:0.85rem; }
+.cw-dh-meta { font-size:0.72rem; color:#6b7280; margin-top:3px; display:flex; flex-wrap:wrap; gap:6px; }
+.cw-dh-badge { display:inline-block; padding:1px 7px; border-radius:4px; font-size:0.7rem; font-weight:400; }
 .cw-dh-badge.old { background:#f3f4f6; color:#6b7280; }
-.cw-dh-badge.new { background:#d1fae5; color:#1f7a52; }
-.cw-dh-arrow { color:var(--text-400,#9ca3af); font-size:0.7rem; }
-.cw-dh-empty { text-align:center; padding:20px 0; color:var(--text-500,#6b7280); font-size:0.82rem; }
+.cw-dh-badge.new { background:#d1fae5; color:#065f46; }
+.cw-dh-arrow { color:#9ca3af; font-size:0.7rem; }
+.cw-dh-empty { text-align:center; padding:20px 0; color:#6b7280; font-size:0.82rem; }
 
-.cw-textarea { width:100%; border:1px solid var(--hairline,#dde3ea); border-radius:10px; padding:12px; font-family:inherit; font-size:0.9rem; resize:vertical; min-height:140px; }
-.cw-textarea:focus { outline:none; border-color:var(--focus-ring,#b6c3d6); box-shadow:0 0 0 3px rgba(37,99,235,.08); }
+.cw-textarea {
+    width: 100%;
+    border: 1px solid var(--cw-border);
+    border-radius: 4px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 140px;
+}
+.cw-textarea:focus {
+    outline: none;
+    border-color: var(--cw-primary);
+    box-shadow: 0 0 0 2px rgba(47, 111, 168, 0.08);
+}
 
-.cw-info-box { padding:14px; border-radius:10px; border:1px solid var(--border,#e4e8ee); background:rgba(13,27,46,.02); }
-.cw-info-box.green { background:rgba(47,158,110,.06); border-color:rgba(47,158,110,.18); }
-.cw-info-box.blue { background:rgba(59,130,196,.06); border-color:rgba(59,130,196,.18); }
-.cw-info-box p { margin:0; font-size:0.82rem; color:var(--text-700,#3b4252); font-weight:600; line-height:1.5; }
-.cw-info-box.green p { color:#1f7a52; }
-.cw-info-box.blue p { color:#1e40af; }
+.cw-info-box {
+    padding: 14px;
+    border-radius: 6px;
+    border: 1px solid var(--cw-border-light);
+    background: #f9fafb;
+}
+.cw-info-box.compact {
+    padding: 4px 10px;
+    margin-top: 10px;
+}
+.cw-info-box.compact p {
+    margin: 0;
+    line-height: 1.25;
+    font-size: 0.78rem;
+}
+.cw-info-box.green {
+    background: #f6fbf7;
+    border-color: #c8e6d0;
+}
+.cw-info-box.blue {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+.cw-info-box p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #374151;
+    font-weight: 400;
+    line-height: 1.5;
+}
+.cw-info-box.green p { color: #065f46; }
+.cw-info-box.blue p { color: #1e40af; }
 
-.cw-modal-overlay { position:fixed; inset:0; background:rgba(13,27,46,.45); z-index:9999; display:flex; align-items:center; justify-content:center; opacity:0; visibility:hidden; transition:opacity .25s ease, visibility .25s ease; }
-.cw-modal-overlay.active { opacity:1; visibility:visible; }
-.cw-modal { background:#fff; border-radius:16px; box-shadow:0 24px 48px rgba(13,27,46,.18); max-width:540px; width:92%; max-height:88vh; overflow-y:auto; transform:translateY(12px) scale(.98); transition:transform .25s ease; }
-.cw-modal-overlay.active .cw-modal { transform:translateY(0) scale(1); }
-.cw-modal-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border,#e4e8ee); }
-.cw-modal-head h3 { margin:0; font-size:0.95rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
-.cw-modal-head .cw-modal-close { background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--text-400,#8b93a1); line-height:1; padding:4px; border-radius:6px; transition:all .15s ease; }
-.cw-modal-head .cw-modal-close:hover { color:var(--text-900,#1b2430); background:rgba(13,27,46,.05); }
-.cw-modal-body { padding:16px 20px 20px; }
-.cw-modal-progress { height:3px; background:var(--border,#e4e8ee); border-radius:2px; margin-top:14px; overflow:hidden; }
-.cw-modal-progress-bar { height:100%; background:#1f7a52; width:100%; transform-origin:left; transform:scaleX(1); transition:transform 3s linear; }
-.cw-modal-overlay.active .cw-modal-progress-bar { transform:scaleX(0); }
+.cw-modal-overlay { position:fixed; inset:0; background:rgba(15, 23, 42, 0.45); z-index:1050; display:none; align-items:center; justify-content:center; padding:16px; }
+.cw-modal-overlay.active { display:flex; }
+.cw-modal { background:#fff; border-radius:6px; box-shadow:0 4px 20px rgba(15, 23, 42, 0.12); max-width:480px; width:100%; max-height:calc(100vh - 32px); overflow-y:auto; }
+.cw-modal-head { display:flex; align-items:center; justify-content:space-between; padding:12px 15px; border-bottom:1px solid var(--cw-border-light); }
+.cw-modal-head h3 { margin:0; font-size:15px; font-weight:600; color:var(--cw-text); }
+.cw-modal-close { background:none; border:none; font-size:1.1rem; cursor:pointer; color:var(--cw-muted); line-height:1; padding:3px 5px; border-radius:4px; }
+.cw-modal-close:hover { color:var(--cw-text); background:#f3f4f6; }
+.cw-modal-body { padding:14px 15px; }
+.cw-modal .profile-field { margin-bottom:10px; }
+.cw-modal .profile-field:last-child { margin-bottom:0; }
+.cw-modal .profile-field label { display:block; font-size:10.5px; font-weight:600; color:var(--cw-text); margin-bottom:4px; }
+.cw-modal .profile-field input { width:100%; box-sizing:border-box; padding:6px 9px; border:1px solid var(--cw-border); border-radius:4px; font-size:12.5px; outline:none; background:var(--cw-card); color:var(--cw-text); }
+.cw-modal .profile-field input:focus { border-color:var(--cw-primary); box-shadow:0 0 0 2px rgba(47, 111, 168, 0.08); }
+.cw-modal-footer { display:flex; align-items:center; justify-content:flex-end; gap:8px; padding:10px 15px; border-top:1px solid var(--cw-border-light); }
+.cw-modal-progress { height:3px; background:var(--cw-border); border-radius:2px; margin-top:14px; overflow:hidden; }
+.cw-modal-progress-bar { height:100%; background:#1f7f52; width:100%; transform-origin:left; transform:scaleX(1); }
+
+@media (max-width: 900px) {
+    .cw-row { grid-template-columns: 1fr; }
+    .cw-col-side { position: static; width: auto; }
+}
+@media (max-width: 600px) {
+    .cw-row { grid-template-columns: 1fr; }
+    .cw-col-side { position: static; width: auto; }
+    .cw-info-grid, .cw-info-grid-3 { grid-template-columns: 1fr; }
+    .cw-card-head { padding: 10px 12px; }
+    .cw-card-body { padding: 10px 12px; }
+    .cw-profile-avatar { width: 50px; height: 50px; font-size: 15px; }
+}
+@media (max-width: 480px) {
+    .cw-card-actions { flex-direction: column; }
+    .cw-card-actions .cw-btn { width: 100%; justify-content: center; }
+}
 </style>
 
 <section class="cw-module">
@@ -341,12 +605,81 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
   <?php endif; ?>
 
   <div class="cw-row">
+    <div class="cw-col cw-col-side">
+      <!-- Employee Profile -->
+      <div class="cw-card">
+        <div class="cw-card-head">
+          <h3>Employee Profile</h3>
+        </div>
+        <div class="cw-card-body">
+          <div class="cw-profile">
+            <div class="cw-profile-avatar"><?= htmlspecialchars(strtoupper(substr($exit['employee_name'] ?? 'UN', 0, 2))) ?></div>
+            <div class="cw-profile-name"><?= htmlspecialchars($exit['employee_name'] ?: 'Unknown Employee') ?></div>
+            <div class="cw-profile-no"><?= htmlspecialchars($employeeNo, ENT_QUOTES) ?></div>
+          </div>
+          <div class="cw-info-grid" style="margin-bottom:0;">
+            <div class="cw-info-item">
+              <label>Department</label>
+              <div><?= htmlspecialchars($exit['department_name'] ?? 'N/A', ENT_QUOTES) ?></div>
+            </div>
+            <div class="cw-info-item">
+              <label>Position</label>
+              <div><?= htmlspecialchars($exit['position_name'] ?? 'N/A', ENT_QUOTES) ?></div>
+            </div>
+            <div class="cw-info-item">
+              <label>Employment Type</label>
+              <div><?= htmlspecialchars($employmentType, ENT_QUOTES) ?></div>
+            </div>
+            <div class="cw-info-item">
+              <label>Date Hired</label>
+              <div><?= $hireDateDisplay ?></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exit Summary -->
+      <div class="cw-card">
+        <div class="cw-card-head">
+          <h3>Exit Summary</h3>
+        </div>
+        <div class="cw-card-body">
+          <div class="cw-info-grid" style="margin-bottom:0;">
+            <div class="cw-info-item">
+              <label>Exit Type</label>
+              <div><?= htmlspecialchars($exit['type_of_separation'] ?? 'N/A', ENT_QUOTES) ?></div>
+            </div>
+            <div class="cw-info-item">
+              <label>Last Working Day</label>
+              <div><?= htmlspecialchars($exit['last_working_day'] ?? 'N/A', ENT_QUOTES) ?></div>
+            </div>
+            <div class="cw-info-item">
+              <label>Legal Status</label>
+              <div><?= $isExitAcknowledged ? 'Acknowledged' : 'Pending' ?></div>
+            </div>
+            <div class="cw-info-item">
+              <label>Request Date</label>
+              <div><?= !empty($exit['created_at']) ? date('M d, Y', strtotime($exit['created_at'])) : 'N/A' ?></div>
+            </div>
+          </div>
+          <div class="cw-info-box compact <?= $isExitAcknowledged ? 'green' : '' ?>" style="margin-top:12px;">
+            <p>
+              <?php if ($isExitAcknowledged): ?>
+                Exit has been acknowledged and recorded.
+              <?php else: ?>
+                Awaiting compliance verification and acknowledgement.
+              <?php endif; ?>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="cw-col cw-col-main">
       <!-- Employee Information -->
       <div class="cw-card">
         <div class="cw-card-head">
-          <h3><i class="bi bi-person"></i> Employee Information</h3>
-          <span class="cw-stamp cw-stamp-<?= $isExitAcknowledged ? 'compliant' : 'pending' ?>"><?= $isExitAcknowledged ? 'Acknowledged' : 'Pending' ?></span>
+          <h3>Employee Information</h3>
         </div>
         <div class="cw-card-body">
           <div class="cw-info-grid">
@@ -386,10 +719,6 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
               <label>Exit Reason</label>
               <div><?= htmlspecialchars($exit['separation_notes'] ?? 'N/A', ENT_QUOTES) ?></div>
             </div>
-            <div class="cw-info-item">
-              <label>Processed By</label>
-              <div><?= htmlspecialchars($exit['immediate_supervisor'] ?? 'N/A', ENT_QUOTES) ?></div>
-            </div>
           </div>
         </div>
       </div>
@@ -397,10 +726,10 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
       <!-- Compliance Verification -->
       <div class="cw-card">
         <div class="cw-card-head">
-          <h3><i class="bi bi-shield-check"></i> Compliance Verification</h3>
+          <h3>Compliance Verification</h3>
         </div>
         <div class="cw-card-body">
-          <div class="cw-info-grid">
+          <div class="cw-info-grid cw-info-grid-3" style="margin-top:10px;">
             <?php foreach ($complianceItems as $item): ?>
               <?php
                 $stampCls = 'cw-stamp-pending';
@@ -414,12 +743,12 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
               </div>
             <?php endforeach; ?>
           </div>
-          <div class="cw-info-box <?= $allComplianceClear ? 'green' : '' ?>" style="margin-top:10px;<?= !$allComplianceClear ? ' background:rgba(217,154,43,.06); border-color:rgba(217,154,43,.18);' : '' ?>">
+          <div class="cw-info-box compact <?= $allComplianceClear ? 'green' : '' ?>" style="<?= !$allComplianceClear ? ' background:rgba(217,154,43,.06); border-color:rgba(217,154,43,.18);' : '' ?>">
             <p style="<?= !$allComplianceClear ? 'color:#a86b13;' : '' ?>">
               <?php if ($allComplianceClear): ?>
-                <i class="bi bi-check-circle"></i> All compliance requirements completed. Employee is eligible for Exit Acknowledgement.
+                All compliance requirements completed. Employee is eligible for Exit Acknowledgement.
               <?php else: ?>
-                <i class="bi bi-exclamation-triangle"></i> Some compliance requirements are pending. Please resolve before acknowledging.
+                Some compliance requirements are pending. Please resolve before acknowledging.
               <?php endif; ?>
             </p>
           </div>
@@ -429,11 +758,11 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
       <!-- Activity Timeline -->
       <div class="cw-card">
         <div class="cw-card-head">
-          <h3><i class="bi bi-clock-history"></i> Activity Timeline</h3>
+          <h3>Activity Timeline</h3>
         </div>
         <div class="cw-card-body">
           <?php if (empty($timeline)): ?>
-            <div class="cw-dh-empty"><i class="bi bi-calendar-x"></i> No activity records found.</div>
+            <div class="cw-dh-empty">No activity records found.</div>
           <?php else: ?>
             <div class="cw-dh-list">
               <?php foreach ($timeline as $act): ?>
@@ -473,7 +802,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
       <!-- Job Opening Update -->
       <div class="cw-card">
         <div class="cw-card-head">
-          <h3><i class="bi bi-building"></i> Job Opening Update</h3>
+          <h3>Job Opening Update</h3>
         </div>
         <div class="cw-card-body">
           <?php
@@ -481,7 +810,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
             $hasJobRecords = !empty($vacantPosition) || !empty($jobPosting) || !empty($positionJobPosts) || !empty($openRecruitments);
           ?>
           <?php if (!$hasJobRecords && !$isExitAcknowledged): ?>
-            <div class="cw-dh-empty"><i class="bi bi-building"></i> No vacant position information available.</div>
+            <div class="cw-dh-empty">No vacant position information available.</div>
           <?php endif; ?>
 
           <?php if ($isExitAcknowledged): ?>
@@ -501,10 +830,6 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
               <div class="cw-info-item">
                 <label>Employment Type</label>
                 <div><?= htmlspecialchars($employmentType, ENT_QUOTES) ?></div>
-              </div>
-              <div class="cw-info-item">
-                <label>Status</label>
-                <div><span class="cw-stamp cw-stamp-compliant">Open</span></div>
               </div>
             </div>
           <?php endif; ?>
@@ -535,7 +860,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
           <?php endif; ?>
 
           <?php if ($positionJobPosts): ?>
-            <h4 style="margin:16px 0 10px;font-size:0.85rem;font-weight:700;color:var(--text-700,#3b4252);">Job Posting Requests for this Position</h4>
+            <h4 style="margin:16px 0 10px;font-size:0.85rem;font-weight:700;color:var(--cw-text,#3b4252);">Job Posting Requests for this Position</h4>
             <?php foreach ($positionJobPosts as $jp): ?>
               <div class="cw-info-grid" style="margin-bottom:10px;">
                 <div class="cw-info-item">
@@ -567,7 +892,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
           <?php endif; ?>
 
           <?php if ($openRecruitments): ?>
-            <h4 style="margin:16px 0 10px;font-size:0.85rem;font-weight:700;color:var(--text-700,#3b4252);">Open Recruitment Postings</h4>
+            <h4 style="margin:16px 0 10px;font-size:0.85rem;font-weight:700;color:var(--cw-text,#3b4252);">Open Recruitment Postings</h4>
             <?php foreach ($openRecruitments as $rec): ?>
               <div class="cw-info-grid" style="margin-bottom:10px;">
                 <div class="cw-info-item">
@@ -605,11 +930,11 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
 
           <?php if ($hasJobRecords || $isExitAcknowledged): ?>
             <div class="cw-info-box blue" style="margin-top:10px;">
-              <p><i class="bi bi-info-circle"></i> Workforce team has been notified to update the job opening.</p>
+              <p>Workforce team has been notified to update the job opening.</p>
             </div>
             <?php if ($isExitAcknowledged): ?>
               <div class="cw-info-box green" style="margin-top:10px;">
-                <p><i class="bi bi-check-circle"></i> Exit has been confirmed. This position is now open for job posting.</p>
+          <p>Exit has been confirmed.</p>
               </div>
             <?php endif; ?>
           <?php endif; ?>
@@ -619,98 +944,29 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
       <!-- Acknowledgement Actions -->
       <div class="cw-card">
         <div class="cw-card-head">
-          <h3><i class="bi bi-check2-circle"></i> Acknowledgement Actions</h3>
+          <h3>Acknowledgement Actions</h3>
         </div>
         <div class="cw-card-body">
-          <p style="margin:0 0 12px;font-size:0.82rem;color:var(--text-600,#5b6472);">Verify compliance, acknowledge the exit, or return the record to Exit Management for clarification.</p>
+          <p style="margin:0 0 12px;font-size:0.82rem;color:var(--cw-muted,#5b6472);">Verify compliance, acknowledge the exit, or return the record to Exit Management for clarification.</p>
           <form method="POST" action="" id="eaActionForm" data-api-url="/hrms-capstone/modules/compliance/lib/api/exit_acknowledgement_action.php" data-skip>
             <input type="hidden" name="exit_id" value="<?= (int)$exit['id'] ?>">
             <?php if ($legalStatus !== 'confirmed'): ?>
               <button type="submit" name="acknowledge_exit" class="cw-btn primary" id="eaBtnAcknowledge" style="background:rgba(47,158,110,.08);border-color:rgba(47,158,110,.25);color:#1f7a52;">
-                <i class="bi bi-check2-all"></i> Acknowledge Exit
+                Acknowledge Exit
               </button>
             <?php endif; ?>
             <?php if ($legalStatus !== 'returned'): ?>
               <button type="submit" name="return_exit" class="cw-btn danger" id="eaBtnReturn">
-                <i class="bi bi-arrow-return-left"></i> Return to Exit Management
+                Return to Exit Management
               </button>
+              <button type="button" class="cw-btn" id="eaToggleRemarks" style="margin-left:1px;">Add Remarks</button>
             <?php endif; ?>
             <span id="eaActionStatus" class="cw-action-status" style="margin-left:10px;"></span>
-            <div style="margin-top:12px;">
-              <label style="font-size:0.78rem;font-weight:600;color:var(--text-700,#3b4252);">Remarks</label>
+            <div id="eaRemarksWrap" style="display:none; margin-top:12px;">
+              <label style="font-size:0.78rem;font-weight:600;color:var(--cw-text,#3b4252);">Remarks</label>
               <textarea name="legal_remarks" class="cw-textarea" rows="2" placeholder="Enter review remarks..." style="font-size:0.82rem;"><?= htmlspecialchars($exit['legal_remarks'] ?? '', ENT_QUOTES) ?></textarea>
             </div>
           </form>
-        </div>
-      </div>
-    </div>
-
-    <div class="cw-col cw-col-side">
-      <!-- Employee Profile -->
-      <div class="cw-card">
-        <div class="cw-card-head">
-          <h3><i class="bi bi-person-badge"></i> Employee Profile</h3>
-        </div>
-        <div class="cw-card-body">
-          <div class="cw-profile">
-            <div class="cw-profile-avatar"><?= htmlspecialchars(strtoupper(substr($exit['employee_name'] ?? 'UN', 0, 2))) ?></div>
-            <div class="cw-profile-name"><?= htmlspecialchars($exit['employee_name'] ?: 'Unknown Employee') ?></div>
-            <div class="cw-profile-no"><?= htmlspecialchars($employeeNo, ENT_QUOTES) ?></div>
-          </div>
-          <div class="cw-info-grid" style="margin-bottom:0;">
-            <div class="cw-info-item">
-              <label>Department</label>
-              <div><?= htmlspecialchars($exit['department_name'] ?? 'N/A', ENT_QUOTES) ?></div>
-            </div>
-            <div class="cw-info-item">
-              <label>Position</label>
-              <div><?= htmlspecialchars($exit['position_name'] ?? 'N/A', ENT_QUOTES) ?></div>
-            </div>
-            <div class="cw-info-item">
-              <label>Employment Type</label>
-              <div><?= htmlspecialchars($employmentType, ENT_QUOTES) ?></div>
-            </div>
-            <div class="cw-info-item">
-              <label>Date Hired</label>
-              <div><?= $hireDateDisplay ?></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Exit Summary -->
-      <div class="cw-card">
-        <div class="cw-card-head">
-          <h3><i class="bi bi-shield-exclamation"></i> Exit Summary</h3>
-        </div>
-        <div class="cw-card-body">
-          <div class="cw-info-grid" style="margin-bottom:0;">
-            <div class="cw-info-item">
-              <label>Exit Type</label>
-              <div><?= htmlspecialchars($exit['type_of_separation'] ?? 'N/A', ENT_QUOTES) ?></div>
-            </div>
-            <div class="cw-info-item">
-              <label>Last Working Day</label>
-              <div><?= htmlspecialchars($exit['last_working_day'] ?? 'N/A', ENT_QUOTES) ?></div>
-            </div>
-            <div class="cw-info-item">
-              <label>Legal Status</label>
-              <div><span class="cw-stamp cw-stamp-<?= $isExitAcknowledged ? 'compliant' : 'pending' ?>"><?= $isExitAcknowledged ? 'Acknowledged' : 'Pending' ?></span></div>
-            </div>
-            <div class="cw-info-item">
-              <label>Request Date</label>
-              <div><?= !empty($exit['created_at']) ? date('M d, Y', strtotime($exit['created_at'])) : 'N/A' ?></div>
-            </div>
-          </div>
-          <div class="cw-info-box <?= $isExitAcknowledged ? 'green' : '' ?>" style="margin-top:12px;">
-            <p>
-              <?php if ($isExitAcknowledged): ?>
-                <i class="bi bi-check-circle"></i> Exit has been acknowledged and recorded.
-              <?php else: ?>
-                <i class="bi bi-hourglass-split"></i> Awaiting compliance verification and acknowledgement.
-              <?php endif; ?>
-            </p>
-          </div>
         </div>
       </div>
     </div>
@@ -718,8 +974,8 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
   <div class="cw-modal-overlay" id="cwJobOpeningModal" role="dialog" aria-modal="true" aria-labelledby="cwModalTitle">
     <div class="cw-modal">
       <div class="cw-modal-head">
-        <h3 id="cwModalTitle"><i class="bi bi-building"></i> Job Opening Update</h3>
-        <button type="button" class="cw-modal-close" id="cwModalClose" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+        <h3 id="cwModalTitle">Job Opening Update</h3>
+        <button type="button" class="cw-modal-close" id="cwModalClose" aria-label="Close"></button>
       </div>
       <div class="cw-modal-body">
         <div class="cw-info-grid">
@@ -739,16 +995,12 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
             <label>Employment Type</label>
             <div id="cwModalEmploymentType"><?= htmlspecialchars($employmentType, ENT_QUOTES) ?></div>
           </div>
-          <div class="cw-info-item">
-            <label>Status</label>
-            <div><span class="cw-stamp cw-stamp-compliant" id="cwModalStatus">Open</span></div>
-          </div>
         </div>
         <div class="cw-info-box green" style="margin-top:10px;">
-          <p><i class="bi bi-check-circle"></i> Exit has been confirmed. This position is now open for job posting.</p>
+          <p>Exit has been confirmed. This position is now open for job posting.</p>
         </div>
         <div class="cw-info-box blue" style="margin-top:10px;">
-          <p><i class="bi bi-info-circle"></i> Workforce team has been notified to update the job opening.</p>
+          <p>Workforce team has been notified to update the job opening.</p>
         </div>
         <div class="cw-modal-progress"><div class="cw-modal-progress-bar" id="cwModalProgressBar"></div></div>
       </div>
@@ -762,7 +1014,17 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
   window.eaShowJobOpeningModal = function() {
     var modal = document.getElementById('cwJobOpeningModal');
     if (!modal) return;
+    var bar = document.getElementById('cwModalProgressBar');
+    if (bar) {
+      bar.style.transition = 'none';
+      bar.style.transform = 'scaleX(1)';
+    }
     modal.classList.add('active');
+    if (bar) {
+      bar.offsetHeight;
+      bar.style.transition = 'transform 3s linear';
+      bar.style.transform = 'scaleX(0)';
+    }
     setTimeout(function() {
       modal.classList.remove('active');
       setTimeout(function(){ window.location.reload(); }, 300);
@@ -781,6 +1043,16 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
       setTimeout(function(){ window.location.reload(); }, 300);
     }
   });
+
+  var eaRemarksWrap = document.getElementById('eaRemarksWrap');
+  var eaToggleRemarks = document.getElementById('eaToggleRemarks');
+  if (eaToggleRemarks && eaRemarksWrap) {
+    eaToggleRemarks.addEventListener('click', function() {
+      var isHidden = eaRemarksWrap.style.display === 'none';
+      eaRemarksWrap.style.display = isHidden ? 'block' : 'none';
+      eaToggleRemarks.textContent = isHidden ? 'Hide Remarks' : 'Add Remarks';
+    });
+  }
 
   window.eaSubmitAction = function(action, btn) {
     if (!confirm('Update exit status? This action will be recorded in the activity log.')) return;
@@ -851,3 +1123,6 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
 })();
 </script>
 <?php ob_end_flush(); ?>
+
+
+

@@ -151,7 +151,19 @@ $reportConfig = [
         'table' => 'rao_jobs',
         'title' => 'Job Posting Approval',
     ],
-   
+    'legal_case_summary' => [
+        'type' => 'legal_case_summary',
+        'title' => 'External Case Summary',
+    ],
+    'legal_case_status' => [
+        'type' => 'legal_case_status',
+        'title' => 'Case Status Report',
+    ],
+    'legal_case_agency' => [
+        'type' => 'legal_case_agency',
+        'title' => 'Agency Report',
+    ],
+    
 ];
 
 if (!isset($reportConfig[$key])) {
@@ -230,6 +242,66 @@ if (isset($config['type'])) {
             $summaryData = ['Total Risks' => count($rows)];
             $columns = ['id' => 'Risk ID', 'risk_type' => 'Risk Type', 'severity' => 'Severity', 'status' => 'Status', 'employee_name' => 'Employee', 'owner_name' => 'Owner', 'investigator_name' => 'Investigator', 'created_at' => 'Created', 'description' => 'Description'];
             break;
+
+        case 'legal_case_summary':
+            $sql = "SELECT lc.case_number, lc.case_title, lc.case_type, lc.case_source, lc.external_agency,
+                           lc.external_reference_no, lc.docket_no, lc.priority, lc.current_status, lc.current_stage,
+                           lc.date_received, lc.date_filed, lc.date_resolved, lc.date_closed,
+                           COALESCE(CONCAT(e.first_name, ' ', e.last_name), '—') AS employee_name,
+                           COALESCE(CONCAT(o.first_name, ' ', o.last_name), 'Unassigned') AS assigned_name
+                    FROM lc_legal_cases lc
+                    LEFT JOIN em_employees e ON e.employee_id = lc.employee_id
+                    LEFT JOIN em_employees o ON o.employee_id = lc.assigned_to
+                    ORDER BY lc.created_at DESC
+                    LIMIT 500";
+            $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+            $summaryData = [
+                'Total Cases' => count($rows),
+                'Open' => (int) pv_value($db, "SELECT COUNT(*) FROM lc_legal_cases WHERE current_status NOT IN ('Closed','Cancelled','Resolved')"),
+                'Closed' => (int) pv_value($db, "SELECT COUNT(*) FROM lc_legal_cases WHERE current_status IN ('Closed','Resolved')"),
+                'Monitoring' => (int) pv_value($db, "SELECT COUNT(*) FROM lc_legal_cases WHERE current_status = 'Monitoring'"),
+            ];
+            $columns = ['case_number' => 'Case Number', 'case_title' => 'Title', 'case_type' => 'Type', 'case_source' => 'Source', 'external_agency' => 'Agency', 'employee_name' => 'Employee', 'current_status' => 'Status', 'current_stage' => 'Stage', 'priority' => 'Priority', 'assigned_name' => 'Assigned To', 'date_received' => 'Date Received', 'date_filed' => 'Date Filed'];
+            break;
+
+        case 'legal_case_status':
+            $sql = "SELECT lc.case_number, lc.case_title, lc.current_status, lc.current_stage, lc.priority,
+                           lc.date_received, lc.date_resolved, lc.date_closed,
+                           COALESCE(CONCAT(e.first_name, ' ', e.last_name), '—') AS employee_name,
+                           COALESCE(CONCAT(o.first_name, ' ', o.last_name), 'Unassigned') AS assigned_name
+                    FROM lc_legal_cases lc
+                    LEFT JOIN em_employees e ON e.employee_id = lc.employee_id
+                    LEFT JOIN em_employees o ON o.employee_id = lc.assigned_to
+                    ORDER BY lc.created_at DESC
+                    LIMIT 500";
+            $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+            $summaryData = [
+                'Total Cases' => count($rows),
+                'Open' => (int) pv_value($db, "SELECT COUNT(*) FROM lc_legal_cases WHERE current_status NOT IN ('Closed','Cancelled','Resolved')"),
+                'Under Investigation' => (int) pv_value($db, "SELECT COUNT(*) FROM lc_legal_cases WHERE current_status IN ('Under Assessment','Under Investigation','Document Collection','External Coordination')"),
+                'Resolved / Closed' => (int) pv_value($db, "SELECT COUNT(*) FROM lc_legal_cases WHERE current_status IN ('Resolved','Closed')"),
+            ];
+            $columns = ['case_number' => 'Case Number', 'case_title' => 'Title', 'current_status' => 'Status', 'current_stage' => 'Stage', 'employee_name' => 'Employee', 'assigned_name' => 'Assigned To', 'date_received' => 'Date Received', 'date_resolved' => 'Date Resolved', 'date_closed' => 'Date Closed'];
+            break;
+
+        case 'legal_case_agency':
+            $sql = "SELECT lc.case_number, lc.case_title, lc.external_agency, lc.external_reference_no,
+                           lc.current_status, lc.current_stage, lc.priority, lc.date_received,
+                           COALESCE(CONCAT(e.first_name, ' ', e.last_name), '—') AS employee_name
+                    FROM lc_legal_cases lc
+                    LEFT JOIN em_employees e ON e.employee_id = lc.employee_id
+                    WHERE lc.external_agency IS NOT NULL AND lc.external_agency <> ''
+                    ORDER BY lc.created_at DESC
+                    LIMIT 500";
+            $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+            $agencies = [];
+            foreach ($rows as $r) {
+                $a = $r['external_agency'] ?? 'Unknown';
+                $agencies[$a] = ($agencies[$a] ?? 0) + 1;
+            }
+            $summaryData = ['Total External Cases' => count($rows)] + $agencies;
+            $columns = ['case_number' => 'Case Number', 'case_title' => 'Title', 'external_agency' => 'Agency', 'external_reference_no' => 'Reference No', 'current_status' => 'Status', 'employee_name' => 'Employee', 'date_received' => 'Date Received'];
+            break;
     }
 } elseif (isset($config['table'])) {
     try {
@@ -251,7 +323,7 @@ if (isset($config['type'])) {
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: Arial, sans-serif;
             font-size: 13px;
             color: #1b2430;
             background: #f3f5f9;

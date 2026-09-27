@@ -1,5 +1,9 @@
 <?php
 
+@apache_setenv('no-gzip', '1');
+@ini_set('zlib.output_compression', 0);
+@ini_set('output_buffering', 'off');
+
 require_once __DIR__ . '/../../../../auth/session.php';
 
 header('Content-Type: application/json');
@@ -101,6 +105,12 @@ try {
         $totalNew++;
     }
 
+    function send_progress(string $dept): void {
+        echo json_encode(['type' => 'progress', 'department' => $dept]) . "\n";
+        if (ob_get_length()) ob_flush();
+        flush();
+    }
+
     // =====================================================================
     // 1. RECRUITMENT & ONBOARDING RISK DETECTION
     // =====================================================================
@@ -167,6 +177,7 @@ try {
         $warnings[] = 'Onboarding detector skipped: employee_requirements table not available.';
     }
     $departments['recruitment_onboarding'] = $recruitmentOnboardingCount;
+    send_progress('Recruitment & Onboarding');
 
     // =====================================================================
     // 3. EMPLOYEE MANAGEMENT RISK DETECTION
@@ -246,6 +257,7 @@ try {
         $warnings[] = 'Employee Management detector skipped: em_employees table not available.';
     }
     $departments['employee_management'] = $employeeManagementCount;
+    send_progress('Employee Management');
 
     // =====================================================================
     // 4. PAYROLL RISK DETECTION
@@ -303,6 +315,7 @@ try {
         $warnings[] = 'Payroll detector skipped: pr_payslips table not available.';
     }
     $departments['payroll'] = $payrollCount;
+    send_progress('Payroll');
 
     // =====================================================================
     // 5. LEGAL & COMPLIANCE RISK DETECTION
@@ -418,6 +431,7 @@ try {
     }
 
     $departments['compliance'] = $complianceCount;
+    send_progress('Legal & Compliance');
 
     // =====================================================================
     // 6. EMPLOYEE PORTAL RISK DETECTION
@@ -447,6 +461,7 @@ try {
         }
     }
     $departments['employee_portal'] = $portalCount;
+    send_progress('Employee Portal');
 
     // =====================================================================
     // 7. ADMIN PORTAL RISK DETECTION
@@ -476,6 +491,7 @@ try {
         }
     }
     $departments['admin_portal'] = $adminCount;
+    send_progress('Admin Portal');
 
     // =====================================================================
     // 8. TIME AND ATTENDANCE RISK DETECTION
@@ -549,6 +565,7 @@ try {
         $warnings[] = 'Attendance detector skipped: ta_attendance table not available.';
     }
     $departments['attendance'] = $attendanceCount;
+    send_progress('Time and Attendance');
 
     // =====================================================================
     // 9. WORKFORCE MANAGEMENT RISK DETECTION
@@ -586,6 +603,7 @@ try {
         $warnings[] = 'Workforce detector skipped: required tables not available.';
     }
     $departments['workforce'] = $workforceCount;
+    send_progress('Workforce Management');
 
     // =====================================================================
     // 10. PERFORMANCE MANAGEMENT RISK DETECTION
@@ -667,6 +685,7 @@ try {
     }
 
     $departments['performance'] = $performanceCount;
+    send_progress('Performance Management');
 
     // =====================================================================
     // 11. ENGAGEMENT MANAGEMENT RISK DETECTION
@@ -726,6 +745,7 @@ try {
     }
 
     $departments['engagement'] = $engagementCount;
+    send_progress('Engagement Management');
 
     // =====================================================================
     // 12. CLINIC / HEALTH RISK DETECTION
@@ -787,6 +807,7 @@ try {
     }
 
     $departments['clinic'] = $clinicCount;
+    send_progress('Clinic / Health');
 
     // =====================================================================
     // 13. EXIT MANAGEMENT RISK DETECTION
@@ -842,6 +863,7 @@ try {
     }
 
     $departments['exit'] = $exitCount;
+    send_progress('Exit Management');
 
     // =====================================================================
     // 14. LEARNING AND DEVELOPMENT RISK DETECTION
@@ -903,6 +925,7 @@ try {
     }
 
     $departments['learning_development'] = $trainingCount;
+    send_progress('Learning and Development');
 
     // =====================================================================
     // INSERT ALL RISKS WITH DUPLICATE PREVENTION
@@ -917,16 +940,17 @@ try {
     }
 
     echo json_encode([
+        'type' => 'complete',
         'success' => true,
         'message' => $message,
-        'total_scanned' => 14,
+        'total_scanned' => 13,
         'total_detected' => count($allRisks),
         'total_new' => $totalNew,
         'total_existing' => $totalExisting,
         'warnings' => $warnings,
         'departments' => $departments,
-    ]);
+    ]) . "\n";
 
 } catch (Throwable $e) {
-    echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['type' => 'error', 'success' => false, 'message' => 'Server error: ' . $e->getMessage()]) . "\n";
 }

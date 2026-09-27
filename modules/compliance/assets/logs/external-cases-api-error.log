@@ -1,0 +1,10 @@
+[2026-09-27 01:39:05] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'hrms.lc_external_case_events' doesn't exist
+[2026-09-27 01:43:03] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'hrms.lc_external_case_events' doesn't exist
+[2026-09-27 01:44:42] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'hrms.lc_external_case_events' doesn't exist
+[2026-09-27 01:47:14] SQLSTATE[42S02]: Base table or view not found: 1146 Table 'hrms.lc_external_case_events' doesn't exist
+[2026-09-27 10:35:04] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'specific_case_type' in 'field list'
+[2026-09-27 10:35:39] SQLSTATE[42S22]: Column not found: 1054 Unknown column 'specific_case_type' in 'field list'
+[2026-09-27 13:18:05] SQLSTATE[HY000]: General error: 1436 Thread stack overrun:  267136 bytes used of a 299008 byte stack, and 32000 bytes needed.  Use 'mysqld --thread_stack=#' to specify a bigger stack
+[2026-09-27 13:18:52] SQLSTATE[HY000]: General error: 1436 Thread stack overrun:  267136 bytes used of a 299008 byte stack, and 32000 bytes needed.  Use 'mysqld --thread_stack=#' to specify a bigger stack
+[2026-09-27 13:19:18] SQLSTATE[HY000]: General error: 1436 Thread stack overrun:  267136 bytes used of a 299008 byte stack, and 32000 bytes needed.  Use 'mysqld --thread_stack=#' to specify a bigger stack
+[2026-09-27 13:19:20] SQLSTATE[HY000]: General error: 1436 Thread stack overrun:  267136 bytes used of a 299008 byte stack, and 32000 bytes needed.  Use 'mysqld --thread_stack=#' to specify a bigger stack

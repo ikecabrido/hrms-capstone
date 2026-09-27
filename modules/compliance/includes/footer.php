@@ -3,6 +3,7 @@
         <p>&copy; <?php echo date('Y'); ?> School Management System. All rights reserved.</p>
     </footer>
 </div>
+    <?php include __DIR__ . '/../includes/lala-ai-widget.php'; ?>
     <link rel="stylesheet" href="css/components/calendar.css?v=2">
     <script src="js/fullcalendar.global.min.js"></script>
     <script src="js/calendar.js"></script>

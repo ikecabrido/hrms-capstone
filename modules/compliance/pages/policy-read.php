@@ -84,15 +84,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isAcknowledged && isset($_POST['a
             <div style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #e5e7eb;">
                 <div>
                     <small style="color:var(--text-400,#8b93a1);">Effective Date</small>
-                    <div><strong><?= $policyData['effective_date'] ? date('F d, Y', strtotime($policyData['effective_date'])) : '—' ?></strong></div>
+                    <div><?= $policyData['effective_date'] ? date('F d, Y', strtotime($policyData['effective_date'])) : '—' ?></div>
                 </div>
                 <div>
                     <small style="color:var(--text-400,#8b93a1);">Acknowledgement Deadline</small>
-                    <div><strong><?= $policyData['acknowledgement_deadline'] ? date('F d, Y', strtotime($policyData['acknowledgement_deadline'])) : '—' ?></strong></div>
+                    <div><?= $policyData['acknowledgement_deadline'] ? date('F d, Y', strtotime($policyData['acknowledgement_deadline'])) : '—' ?></div>
                 </div>
                 <div>
                     <small style="color:var(--text-400,#8b93a1);">Status</small>
-                    <div><strong><?= htmlspecialchars($policyData['status']) ?></strong></div>
+                    <div><?= htmlspecialchars($policyData['status']) ?></div>
                 </div>
             </div>
 

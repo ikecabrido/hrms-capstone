@@ -8,6 +8,8 @@ $mode = strtolower((string) ($_GET['mode'] ?? ($_POST['mode'] ?? '')));
 $notificationKey = (string) ($_GET['notification_key'] ?? ($_POST['notification_key'] ?? ''));
 $notificationId = isset($_GET['notification_id']) ? (int) $_GET['notification_id'] : 0;
 $notificationId = max($notificationId, isset($_POST['notification_id']) ? (int) $_POST['notification_id'] : 0);
+$complaintId = isset($_GET['complaint_id']) ? (int) $_GET['complaint_id'] : 0;
+$complaintId = max($complaintId, isset($_POST['complaint_id']) ? (int) $_POST['complaint_id'] : 0);
 
 if ($mode === '') {
     http_response_code(400);
@@ -481,7 +483,8 @@ if ($requestedTemplateCode !== '' && $composeEmployeeId !== '') {
         $attachmentName = $friendlyDocName . '_' . preg_replace('/[^A-Za-z0-9]/', '', $composeRecipientName ?: 'Employee') . '.pdf';
     }
 
-    if ($composeBody === '' || str_starts_with($composeBody, 'Dear ')) {
+    $explicitComposeBody = trim((string) ($_GET['body'] ?? ''));
+    if (($composeBody === '' || str_starts_with($composeBody, 'Dear ')) && $explicitComposeBody === '') {
         $composeBody = "Dear " . ($composeRecipientName ?: 'Employee') . ",\n\n";
         $composeBody .= "Please find attached the " . $friendlyDocName . " for your review and signature.\n\n";
         $composeBody .= "This document contains the relevant terms and details pertaining to your employment and compliance with company policies. Kindly review the document carefully. If you have any questions or require clarification on any of the terms, please do not hesitate to contact the Human Resources Department.\n\n";
@@ -515,7 +518,7 @@ if ($requestedTemplateCode === 'nte' && $composeEmployeeId !== '') {
     $fullName = $employeeData['full_name'] ?: $composeRecipientName;
 
     $composeBody = "NOTICE TO EXPLAIN (NTE)\n";
-    $composeBody .= "Administrative Due Process Notice Requiring Written Explanation\n\n";
+    $composeBody .= "Administrative Due Process Notice Requiring Letter of Intent\n\n";
     $composeBody .= "Date Issued: {$today}\n";
     $composeBody .= "Employee Name: {$fullName}\n";
     $composeBody .= "Employee Number: " . ($employeeData['employee_no'] ?: '________________') . "\n";
@@ -523,15 +526,14 @@ if ($requestedTemplateCode === 'nte' && $composeEmployeeId !== '') {
     $composeBody .= "Position: " . ($employeeData['position_name'] ?: '________________') . "\n\n";
     $composeBody .= "Dear {$fullName},\n\n";
     $composeBody .= "This Notice to Explain (NTE) is issued in accordance with the Company's Code of Conduct, disciplinary procedures, the Philippine Labor Code, applicable Department of Labor and Employment (DOLE) regulations, and the principles of administrative due process.\n\n";
-    $composeBody .= "You are hereby directed to submit a written explanation regarding the alleged act, omission, incident, or policy violation described below. This notice is issued to provide you with a fair and reasonable opportunity to present your side before any administrative action or decision is made.\n\n";
+    $composeBody .= "You are hereby required to personally appear before the Human Resources Department to explain your side regarding the incident described below. This notice is issued to provide you with a fair and reasonable opportunity to be heard before any administrative action or decision is made.\n\n";
     $composeBody .= "Details of the Alleged Incident\n\n";
     $composeBody .= "Date of Incident: " . ($incidentDate ?: '______________________________________________') . "\n";
     $composeBody .= "Time: " . ($incidentTime ?: '______________________________________________') . "\n";
     $composeBody .= "Location: " . ($incidentLocation ?: '______________________________________________') . "\n";
-    $composeBody .= "Incident Description: " . ($incidentDescription ?: '______________________________________________') . "\n";
-    $composeBody .= "Policy / Rule Violated: " . ($policyViolated ?: '[Not specified]') . "\n\n";
-    $composeBody .= "You are directed to submit your written explanation together with any supporting documents, evidence, or witness statements within the period prescribed by the Human Resources Department.\n\n";
-    $composeBody .= "Failure to submit your explanation within the prescribed period, without a valid reason, may be considered a waiver of your opportunity to explain. The Company may proceed with the administrative evaluation based on the available records and evidence.\n\n";
+    $composeBody .= "Incident Description: " . ($incidentDescription ?: '______________________________________________') . "\n\n";
+    $composeBody .= "You are directed to report to the HR Office immediately to discuss this matter and submit your letter of intent together with any supporting documents, evidence, or witness statements.\n\n";
+    $composeBody .= "Failure to report to the HR Office within the prescribed period, without a valid reason, may be considered a waiver of your opportunity to explain. The Company may proceed with the administrative evaluation based on the available records and evidence.\n\n";
     $composeBody .= "Please be advised that the issuance of this Notice does not constitute a finding of guilt nor the imposition of disciplinary action. It is issued solely to ensure compliance with the requirements of administrative due process and to provide you with an opportunity to be heard.\n\n";
     $composeBody .= "Please refer to the attached Notice to Explain (NTE) document for the complete details, formal record, and further instructions related to this notice.\n\n";
     $composeBody .= "Regards,\n";
@@ -543,7 +545,7 @@ if ($requestedTemplateCode === 'nte' && $composeEmployeeId !== '') {
     if ($attachmentUrl === '' && $composeEmployeeId !== '') {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $attachmentUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/generate-document.php?employee_id=' . urlencode($composeEmployeeId) . '&document_type=nte&template=nte.php&template_code=nte&hr_signatory=' . urlencode($_GET['hr_signatory'] ?? '') . '&incident_date=' . urlencode($_GET['incident_date'] ?? '') . '&incident_time=' . urlencode($_GET['incident_time'] ?? '') . '&incident_location=' . urlencode($_GET['incident_location'] ?? '') . '&policy_violated=' . urlencode($_GET['policy_violated'] ?? '') . '&incident_description=' . urlencode($_GET['incident_description'] ?? '') . '&generate=1';
+        $attachmentUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/generate-document.php?employee_id=' . urlencode($composeEmployeeId) . '&document_type=nte&template=nte.php&template_code=nte&hr_signatory=' . urlencode($_GET['hr_signatory'] ?? '') . '&incident_date=' . urlencode($_GET['incident_date'] ?? '') . '&incident_time=' . urlencode($_GET['incident_time'] ?? '') . '&incident_location=' . urlencode($_GET['incident_location'] ?? '') . '&policy_violated=' . urlencode($_GET['policy_violated'] ?? '') . '&incident_description=' . urlencode($_GET['incident_description'] ?? '') . ($complaintId > 0 ? '&complaint_id=' . (int) $complaintId : '') . '&generate=1';
         $attachmentName = 'NTE_' . preg_replace('/[^A-Za-z0-9]/', '', $fullName) . '.pdf';
     }
 }
@@ -643,13 +645,12 @@ $webBase = '/hrms-capstone/modules/compliance/';
           <span class="nc-step-label">Sender Information</span>
           <div class="nc-toolbar-right">
             <a href="/hrms-capstone/modules/compliance/index.php?page=sent-history" class="nc-toolbar-btn">
-              <i class="bi bi-clock-history"></i> Sent History
+              Sent History
             </a>
           </div>
         </div>
         <div class="nc-step-body nc-step-body--info">
           <div class="nc-info-card">
-            <div class="nc-info-card-icon"><i class="bi bi-person"></i></div>
             <div class="nc-info-card-body">
               <div class="nc-info-card-label">Sender</div>
               <div class="nc-info-card-name"><?php echo htmlspecialchars($senderInfoName); ?></div>
@@ -670,12 +671,11 @@ $webBase = '/hrms-capstone/modules/compliance/';
         <div class="nc-step-body">
           <div class="nc-recipient-chips" id="ncRecipientChips">
             <button type="button" class="nc-add-chip-btn" id="ncAddChipBtn">
-              <i class="bi bi-plus-lg"></i> Add Recipient
+              Add Recipient
             </button>
           </div>
 
           <div class="nc-search-icon-wrap" id="ncSearchWrap" style="display:none;">
-            <i class="bi bi-search"></i>
             <input type="text" id="ncRecipientSearch" class="nc-recipient-search-input" placeholder="Search by name, ID, or email..." autocomplete="off" />
           </div>
 
@@ -715,14 +715,13 @@ $webBase = '/hrms-capstone/modules/compliance/';
         </div>
         <div class="nc-step-body nc-step-body--atts">
           <div class="nc-attachment-dropzone" id="ncAttachmentDropzone">
-            <i class="bi bi-cloud-arrow-up"></i>
             <div class="nc-attachment-dropzone-text">Drop files here or <strong>browse files</strong></div>
             <div class="nc-attachment-dropzone-sub">PDF, DOCX, PNG, JPG — max 5MB each, up to 3 files</div>
             <div class="nc-attachment-types">
-              <span class="nc-attachment-type-badge"><i class="bi bi-filetype-pdf"></i> PDF</span>
-              <span class="nc-attachment-type-badge"><i class="bi bi-filetype-docx"></i> DOCX</span>
-              <span class="nc-attachment-type-badge"><i class="bi bi-filetype-png"></i> PNG</span>
-              <span class="nc-attachment-type-badge"><i class="bi bi-filetype-jpg"></i> JPG</span>
+              <span class="nc-attachment-type-badge">PDF</span>
+              <span class="nc-attachment-type-badge">DOCX</span>
+              <span class="nc-attachment-type-badge">PNG</span>
+              <span class="nc-attachment-type-badge">JPG</span>
             </div>
             <input type="file" id="lcAttachmentInput" style="display:none;" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif" />
           </div>
@@ -730,7 +729,6 @@ $webBase = '/hrms-capstone/modules/compliance/';
 
           <?php if ($hasForwardAttachment): ?>
           <div class="nc-forwarded-chip" id="lcAttachmentChip">
-            <i class="bi bi-paperclip"></i>
             <span class="nc-attachment-name"><?php echo htmlspecialchars($attachmentName ?: 'contract.pdf'); ?></span>
             <span class="nc-forwarded-note">Forwarded from original notification</span>
           </div>
@@ -741,12 +739,12 @@ $webBase = '/hrms-capstone/modules/compliance/';
       <?php if ($notificationId > 0 && ($notifMessage !== '' || $notifType !== '' || $notificationKey !== '')): ?>
       <div class="nc-step">
         <div class="nc-step-header">
-          <span class="nc-step-number"><i class="bi bi-info-lg"></i></span>
+          <span class="nc-step-number">5</span>
           <span class="nc-step-label">Original Notification</span>
         </div>
         <div class="nc-step-body">
           <button type="button" class="nc-original-toggle" id="ncOriginalToggle">
-            <i class="bi bi-chevron-right"></i> Show original notification details
+            Show original notification details
           </button>
           <div class="nc-original-content" id="ncOriginalContent">
             <div class="nc-original-card">
@@ -779,15 +777,14 @@ $webBase = '/hrms-capstone/modules/compliance/';
 
       <div class="nc-sticky-footer">
         <div class="nc-footer-left">
-          <i class="bi bi-check-circle nc-footer-icon--success"></i>
           <span id="ncDraftStatus">Ready to send</span>
         </div>
         <div class="nc-footer-right">
           <button type="button" class="nc-btn nc-btn-ghost" onclick="window.location.href='<?= !empty($_SERVER['HTTP_REFERER']) ? htmlspecialchars($_SERVER['HTTP_REFERER'], ENT_QUOTES, 'UTF-8') : 'javascript:history.back()'; ?>'">
-            <i class="bi bi-x-lg"></i> Cancel
+            Cancel
           </button>
           <button type="button" class="nc-btn nc-btn-primary" onclick="window.ncSubmitCompose()">
-            <i class="bi bi-send"></i> Send
+            Send
           </button>
         </div>
       </div>
@@ -826,6 +823,7 @@ window.__ncConfig = {
     preselectedName: '<?php echo addslashes($composeRecipientName); ?>',
     preselectedEmail: '<?php echo addslashes($composeRecipientEmail); ?>',
     composeEmployeeId: '<?php echo addslashes($composeEmployeeId); ?>',
+   complaintId: <?php echo (int) $complaintId; ?>,
    contractId: <?php echo (int) $contractId; ?>,
    redirectTo: '<?php echo addslashes($redirectTo); ?>',
    contractSalaryInput: '<?php echo addslashes((string) ($_GET['contract_salary_input'] ?? '')); ?>',

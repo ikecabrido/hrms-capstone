@@ -608,10 +608,11 @@ document.addEventListener('DOMContentLoaded', function() {
        template_code: NC.templateCode,
        document_type: NC.documentType,
        employee_id: NC.composeEmployeeId,
+       complaint_id: NC.complaintId || 0,
        contract_salary_input: NC.contractSalaryInput,
        contract_id: NC.contractId,
        department: NC.recipientDept || ''
-    };
+     };
 
     if (NC.attachmentContractId > 0) {
       payload.attachment_contract_id = NC.attachmentContractId;

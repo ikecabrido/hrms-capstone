@@ -3,6 +3,9 @@ ob_start();
 
 require_once __DIR__ . '/../../../database/db.php';
 
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+header('Pragma: no-cache');
+
 $pageTitle   = 'Complaint Workflow';
 $activeGroup = 'Incident Reporting';
 $activePage  = 'case-records';
@@ -19,15 +22,48 @@ if (!($db ?? null) instanceof PDO) {
 /** @var PDO $db */
 
 try {
-    $cols = $db->query("SHOW COLUMNS FROM lc_complaints WHERE Field IN ('employee_response','employee_response_date')")->fetchAll(PDO::FETCH_COLUMN);
-    $missing = array_diff(['employee_response','employee_response_date'], $cols);
-    if ($missing !== []) {
+     $cols = $db->query("SHOW COLUMNS FROM lc_complaints WHERE Field IN ('employee_response','employee_response_date','termination_reply','termination_review_status','termination_loi_pdf_path','termination_loi_submitted_at')")->fetchAll(PDO::FETCH_COLUMN);
+     $missing = array_diff(['employee_response','employee_response_date','termination_reply','termination_review_status','termination_loi_pdf_path','termination_loi_submitted_at'], $cols);
+     if ($missing !== []) {
+         $db->beginTransaction();
+         if (in_array('employee_response', $missing, true)) {
+             $db->exec("ALTER TABLE lc_complaints ADD COLUMN employee_response TEXT DEFAULT NULL");
+         }
+         if (in_array('employee_response_date', $missing, true)) {
+             $db->exec("ALTER TABLE lc_complaints ADD COLUMN employee_response_date DATETIME DEFAULT NULL");
+         }
+         if (in_array('termination_reply', $missing, true)) {
+             $db->exec("ALTER TABLE lc_complaints ADD COLUMN termination_reply TEXT DEFAULT NULL");
+         }
+         if (in_array('termination_review_status', $missing, true)) {
+             $db->exec("ALTER TABLE lc_complaints ADD COLUMN termination_review_status ENUM('pending','rejected','considered') DEFAULT 'pending'");
+         }
+         if (in_array('termination_recommended_at', $missing, true)) {
+             $db->exec("ALTER TABLE lc_complaints ADD COLUMN termination_recommended_at DATETIME DEFAULT NULL");
+         }
+         if (in_array('termination_loi_pdf_path', $missing, true)) {
+             $db->exec("ALTER TABLE lc_complaints ADD COLUMN termination_loi_pdf_path VARCHAR(255) DEFAULT NULL AFTER termination_recommended_at");
+         }
+         if (in_array('termination_loi_submitted_at', $missing, true)) {
+             $db->exec("ALTER TABLE lc_complaints ADD COLUMN termination_loi_submitted_at DATETIME DEFAULT NULL AFTER termination_loi_pdf_path");
+         }
+         $db->commit();
+     }
+
+    $statusCol = $db->query("SHOW COLUMNS FROM lc_complaints WHERE Field = 'status'")->fetch(PDO::FETCH_ASSOC);
+    if ($statusCol && stripos($statusCol['Type'] ?? '', 'closed_second_written_warning') === false) {
+        $db->exec("ALTER TABLE lc_complaints MODIFY COLUMN status ENUM('under_initial_review','under_investigation','nte_issued','pending_employee_response','for_decision','closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved','closed','closed_second_written_warning','closed_final_written_warning','termination_employee_reply','termination_reviewed') DEFAULT 'under_initial_review'");
+    }
+
+    $notifCols = $db->query("SHOW COLUMNS FROM lc_notifications WHERE Field IN ('complaint_id','reply_to_notification_id')")->fetchAll(PDO::FETCH_COLUMN);
+    $notifMissing = array_diff(['complaint_id','reply_to_notification_id'], $notifCols);
+    if ($notifMissing !== []) {
         $db->beginTransaction();
-        if (in_array('employee_response', $missing, true)) {
-            $db->exec("ALTER TABLE lc_complaints ADD COLUMN employee_response TEXT DEFAULT NULL");
+        if (in_array('complaint_id', $notifMissing, true)) {
+            $db->exec("ALTER TABLE lc_notifications ADD COLUMN complaint_id INT(11) DEFAULT NULL AFTER employee_id, ADD KEY idx_complaint_id (complaint_id)");
         }
-        if (in_array('employee_response_date', $missing, true)) {
-            $db->exec("ALTER TABLE lc_complaints ADD COLUMN employee_response_date DATETIME DEFAULT NULL");
+        if (in_array('reply_to_notification_id', $notifMissing, true)) {
+            $db->exec("ALTER TABLE lc_notifications ADD COLUMN reply_to_notification_id INT(11) DEFAULT NULL AFTER complaint_id, ADD KEY idx_reply_to_notification_id (reply_to_notification_id)");
         }
         $db->commit();
     }
@@ -76,9 +112,28 @@ function ch_label(?string $s): string {
 function ch_date(?string $d, string $fmt = 'M d, Y'): string {
     return !empty($d) ? date($fmt, strtotime($d)) : '';
 }
+function ch_employee_email(PDO $db, int $employeeId): string {
+    if (empty($employeeId)) return '';
+    $row = ch_row($db, "SELECT email FROM em_employees WHERE employee_id = " . (int)$employeeId . " LIMIT 1");
+    return $row['email'] ?? '';
+}
+function ch_respondent_email(PDO $db, ?int $respondentId, string $respondentName = ''): string {
+    if (!empty($respondentId)) {
+        $row = ch_row($db, "SELECT email FROM em_employees WHERE employee_id = " . (int)$respondentId . " LIMIT 1");
+        return $row['email'] ?? '';
+    }
+    return '';
+}
+function ch_respondent_name(PDO $db, ?int $respondentId, string $respondentName = ''): string {
+    if (!empty($respondentName)) return $respondentName;
+    if (!empty($respondentId)) {
+        return ch_employee_name($db, (int)$respondentId);
+    }
+    return '';
+}
 function ch_employee_name(PDO $db, int $employeeId): string {
     if (empty($employeeId)) return '';
-      $row = ch_row($db, "SELECT CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) AS full_name FROM em_employees WHERE employee_id = " . (int)$employeeId . " LIMIT 1");
+    $row = ch_row($db, "SELECT CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) AS full_name FROM em_employees WHERE employee_id = " . (int)$employeeId . " LIMIT 1");
     return $row['full_name'] ?? '';
 }
 function ch_employee_no(PDO $db, int $employeeId): string {
@@ -88,10 +143,10 @@ function ch_employee_no(PDO $db, int $employeeId): string {
 }
 function ch_status_class(string $status): string {
     $s = strtolower($status);
-    if (in_array($s, ['closed', 'resolved', 'closed_no_violation', 'closed_warning_issued', 'closed_suspension', 'closed_termination_recommended', 'closed_resolved'], true)) return 'cw-stamp cw-stamp-compliant';
-    if (in_array($s, ['for_decision', 'pending_employee_response'], true)) return 'cw-stamp cw-stamp-pending';
-    if (in_array($s, ['under_investigation', 'under_initial_review'], true)) return 'cw-stamp cw-stamp-info';
-    return 'cw-stamp cw-stamp-pending';
+    if (in_array($s, ['closed','resolved','closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved','closed_second_written_warning','closed_final_written_warning','termination_reviewed'], true)) return 'irwf-badge status-closed';
+    if (in_array($s, ['for_decision','pending_employee_response','termination_employee_reply'], true)) return 'irwf-badge status-escalated';
+    if (in_array($s, ['under_investigation','under_initial_review','nte_issued'], true)) return 'irwf-badge status-investigation';
+    return 'irwf-badge status-submitted';
 }
 
 $complaintTable = 'lc_complaints';
@@ -117,33 +172,34 @@ if (!$case) {
 $currentStatus = strtolower($case['status'] ?? 'under_initial_review');
 
 $workflowSteps = [
-    ['key' => 'complaint_submitted',  'label' => 'Complaint Submitted',           'icon' => 'bi bi-file-earmark-text'],
-    ['key' => 'legal_receives',       'label' => 'Received by Legal & Compliance', 'icon' => 'bi bi-inbox'],
-    ['key' => 'assign_officer',       'label' => 'Assign Compliance Officer',     'icon' => 'bi bi-person-badge'],
-    ['key' => 'initial_assessment',   'label' => 'Initial Case Assessment',       'icon' => 'bi bi-search'],
-    ['key' => 'investigation',        'label' => 'Investigation Conducted',       'icon' => 'bi bi-magnifying-glass'],
-    ['key' => 'evidence_collection',  'label' => 'Evidence & Statements',         'icon' => 'bi bi-paperclip'],
-    ['key' => 'conference_hearing',   'label' => 'Conference / Hearing',          'icon' => 'bi bi-bank'],
-    ['key' => 'findings_prepared',    'label' => 'Findings Prepared',             'icon' => 'bi bi-clipboard-check'],
-    ['key' => 'nte_issued',           'label' => 'NTE Issued to Employee',        'icon' => 'bi bi-envelope'],
-    ['key' => 'employee_response',    'label' => 'Employee Response Received',    'icon' => 'bi bi-reply'],
-    ['key' => 'explanation_reviewed', 'label' => 'Explanation Reviewed',          'icon' => 'bi bi-question-diamond'],
-    ['key' => 'decision_made',        'label' => 'Decision Made',                 'icon' => 'bi bi-gavel'],
-    ['key' => 'disciplinary_action',  'label' => 'Disciplinary Action Applied',   'icon' => 'bi bi-wrench'],
-    ['key' => 'case_closed',          'label' => 'Case Closed',                   'icon' => 'bi bi-archive'],
+    ['key' => 'assign_officer',        'label' => 'Assign Compliance Officer'],
+    ['key' => 'evidence_check',        'label' => 'Check Evidence and Complainant Testimony'],
+    ['key' => 'nte_issued',            'label' => 'Send NTE (Notice to Explain) to the Employee'],
+    ['key' => 'employee_hearing',      'label' => 'Hearing (Recording Employee Response)'],
+    ['key' => 'decision_made',         'label' => 'Decision'],
 ];
 
+if (in_array($currentStatus, ['closed_termination_recommended','termination_employee_reply','termination_reviewed'], true)) {
+    $workflowSteps[] = ['key' => 'termination_employee_reply', 'label' => 'Letter of Intent'];
+    $workflowSteps[] = ['key' => 'termination_review', 'label' => 'Review Action'];
+}
+
 $statusStepMap = [
-    'under_initial_review'          => 'initial_assessment',
-    'under_investigation'           => 'investigation',
-    'pending_employee_response'     => 'employee_response',
-    'for_decision'                  => 'decision_made',
-    'closed_no_violation'           => 'disciplinary_action',
-    'closed_warning_issued'         => 'disciplinary_action',
-    'closed_suspension'             => 'disciplinary_action',
-    'closed_termination_recommended'=> 'disciplinary_action',
-    'closed_resolved'               => 'disciplinary_action',
-    'closed'                        => 'case_closed',
+    'under_initial_review'             => 'assign_officer',
+    'under_investigation'              => 'evidence_check',
+    'nte_issued'                       => 'nte_issued',
+    'pending_employee_response'        => 'employee_hearing',
+    'for_decision'                     => 'decision_made',
+    'closed_no_violation'              => 'decision_made',
+    'closed_warning_issued'            => 'decision_made',
+    'closed_second_written_warning'    => 'decision_made',
+    'closed_final_written_warning'     => 'decision_made',
+    'closed_suspension'                => 'decision_made',
+    'closed_termination_recommended'   => 'termination_employee_reply',
+    'termination_employee_reply'       => 'termination_review',
+    'termination_reviewed'             => 'termination_review',
+    'closed_resolved'                  => 'decision_made',
+    'closed'                           => 'decision_made',
 ];
 
 $targetStep = $statusStepMap[$currentStatus] ?? 'complaint_submitted';
@@ -155,16 +211,143 @@ foreach ($workflowSteps as $idx => $step) {
     }
 }
 
-$investigatorName = !empty($case['assigned_to']) ? ch_employee_name($db, $case['assigned_to']) : '';
+if (empty($case['assigned_to']) && $currentStatus === 'under_initial_review') {
+    foreach ($workflowSteps as $idx => $step) {
+        if ($step['key'] === 'assign_officer') {
+            $currentStepIndex = $idx;
+            $targetStep = 'assign_officer';
+            break;
+        }
+    }
+}
 
+function ch_employee_profile(PDO $db, int $employeeId): array {
+    $row = ch_row($db, "SELECT e.first_name, e.middle_name, e.last_name, e.email, e.employee_code, d.department_name, p.position_name FROM em_employees e LEFT JOIN em_departments d ON d.department_id = e.department_id LEFT JOIN em_positions p ON p.position_id = e.position_id WHERE e.employee_id = " . (int)$employeeId . " LIMIT 1");
+    return $row ?: [];
+}
+
+$respondentEmployeeId = (int)($case['respondent_employee_id'] ?? 0);
+$respondentProfile = [];
+if ($respondentEmployeeId > 0) {
+    $respondentProfile = ch_employee_profile($db, $respondentEmployeeId);
+}
+
+$previousCases = [];
+try {
+    $employeeId = (int)($case['employee_id'] ?? 0);
+    $respondentId = (int)($case['respondent_employee_id'] ?? 0);
+    
+    $sql = "SELECT DISTINCT c.id, c.type, c.status, c.created_at, 
+                   d.decision_label, d.new_status, d.created_at AS decision_date
+            FROM lc_complaints c
+            LEFT JOIN lc_complaint_decision_history d ON d.complaint_id = c.id
+            WHERE (c.employee_id = :eid OR c.respondent_employee_id = :rid)
+              AND c.id != :current_id
+            ORDER BY c.created_at DESC
+            LIMIT 20";
+    
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        ':eid' => $employeeId,
+        ':rid' => $respondentId,
+        ':current_id' => $complaintId
+    ]);
+    $previousCases = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    $previousCases = [];
+}
+
+$respondentCaseCounts = [
+    'total' => 0,
+    'warning_first' => 0,
+    'warning_second' => 0,
+    'warning_final' => 0,
+    'suspension' => 0,
+];
+
+if ($respondentEmployeeId > 0) {
+    try {
+        $countSql = "SELECT 
+                        COUNT(*) AS total,
+                        SUM(CASE WHEN status IN ('closed_warning_issued','closed_second_written_warning','closed_final_written_warning','closed_suspension','closed_termination_recommended','closed_no_violation','closed_resolved','closed') THEN 1 ELSE 0 END) AS decided,
+                        SUM(CASE WHEN status IN ('closed_warning_issued') THEN 1 ELSE 0 END) AS warning_first,
+                        SUM(CASE WHEN status IN ('closed_second_written_warning') THEN 1 ELSE 0 END) AS warning_second,
+                        SUM(CASE WHEN status IN ('closed_final_written_warning') THEN 1 ELSE 0 END) AS warning_final,
+                        SUM(CASE WHEN status IN ('closed_suspension') THEN 1 ELSE 0 END) AS suspension
+                    FROM lc_complaints
+                    WHERE respondent_employee_id = :rid
+                      AND id != :current_id";
+        $stmt = $db->prepare($countSql);
+        $stmt->execute([
+            ':rid' => $respondentEmployeeId,
+            ':current_id' => $complaintId,
+        ]);
+        $counts = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($counts) {
+            $respondentCaseCounts['total'] = (int)($counts['total'] ?? 0);
+            $respondentCaseCounts['warning_first'] = (int)($counts['warning_first'] ?? 0);
+            $respondentCaseCounts['warning_second'] = (int)($counts['warning_second'] ?? 0);
+            $respondentCaseCounts['warning_final'] = (int)($counts['warning_final'] ?? 0);
+            $respondentCaseCounts['suspension'] = (int)($counts['suspension'] ?? 0);
+        }
+    } catch (Throwable $e) {
+        $respondentCaseCounts = [
+            'total' => 0,
+            'warning_first' => 0,
+            'warning_second' => 0,
+            'warning_final' => 0,
+            'suspension' => 0,
+        ];
+    }
+}
+
+$investigatorName = !empty($case['assigned_to']) ? ch_employee_name($db, $case['assigned_to']) : '';
 $employeeName = ch_employee_name($db, $case['employee_id'] ?? 0);
 $employeeNo = ch_employee_no($db, $case['employee_id'] ?? 0);
+$employeeEmail = ch_employee_email($db, $case['employee_id'] ?? 0);
+$respondentName = !empty($case['respondent_name']) ? $case['respondent_name'] : ch_employee_name($db, $case['respondent_employee_id'] ?? 0);
+$respondentEmail = ch_respondent_email($db, $case['respondent_employee_id'] ?? 0, $case['respondent_name'] ?? '');
+$respondentNo = !empty($case['respondent_employee_id']) ? ch_employee_no($db, $case['respondent_employee_id']) : '';
 
 $statsTotal = (int) ch_value($db, "SELECT COUNT(*) FROM `$complaintTable` WHERE employee_id = " . (int)($case['employee_id'] ?? 0), 0);
-$statsOpen = (int) ch_value($db, "SELECT COUNT(*) FROM `$complaintTable` WHERE employee_id = " . (int)($case['employee_id'] ?? 0) . " AND status NOT IN ('closed','closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved')", 0);
-$statsInvestigation = (int) ch_value($db, "SELECT COUNT(*) FROM `$complaintTable` WHERE employee_id = " . (int)($case['employee_id'] ?? 0) . " AND status IN ('under_initial_review','under_investigation','pending_employee_response','for_decision')", 0);
+$statsOpen = (int) ch_value($db, "SELECT COUNT(*) FROM `$complaintTable` WHERE employee_id = " . (int)($case['employee_id'] ?? 0) . " AND status NOT IN ('closed','closed_no_violation','closed_warning_issued','closed_second_written_warning','closed_final_written_warning','closed_suspension','closed_termination_recommended','closed_resolved')", 0);
+$statsInvestigation = (int) ch_value($db, "SELECT COUNT(*) FROM `$complaintTable` WHERE employee_id = " . (int)($case['employee_id'] ?? 0) . " AND status IN ('under_initial_review','under_investigation','nte_issued','pending_employee_response','for_decision')", 0);
 $statsDecision = (int) ch_value($db, "SELECT COUNT(*) FROM `$complaintTable` WHERE employee_id = " . (int)($case['employee_id'] ?? 0) . " AND status = 'for_decision'", 0);
-$statsClosed = (int) ch_value($db, "SELECT COUNT(*) FROM `$complaintTable` WHERE employee_id = " . (int)($case['employee_id'] ?? 0) . " AND status IN ('closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved','closed')", 0);
+$statsClosed = (int) ch_value($db, "SELECT COUNT(*) FROM `$complaintTable` WHERE employee_id = " . (int)($case['employee_id'] ?? 0) . " AND status IN ('closed_no_violation','closed_warning_issued','closed_second_written_warning','closed_final_written_warning','closed_suspension','closed_termination_recommended','closed_resolved','closed')", 0);
+
+$evidenceCounts = [];
+$stepEvidenceItems = [];
+$evidenceStepAliases = [
+    'under_initial_review' => 'evidence_check',
+];
+try {
+    $row = $case;
+    $stepKey = $evidenceStepAliases[$currentStatus] ?? 'evidence_check';
+    $item = $row['evidence_item'] ?? $row['evidence_path'] ?? $row['image_path'] ?? '';
+    $notes = $row['evidence_notes'] ?? $row['notes'] ?? ($row['workflow_progress'] ?? '');
+    $status = $row['evidence_status'] ?? ($row['status'] ?? 'Pending');
+    $uploadedAt = $row['evidence_uploaded_at'] ?? ($row['created_at'] ?? '');
+    $uploadedBy = !empty($row['evidence_uploaded_by']) ? (int) $row['evidence_uploaded_by'] : (!empty($row['assigned_to']) ? (int) $row['assigned_to'] : null);
+    $imagePath = $row['evidence_image_path'] ?? $row['image_path'] ?? $row['evidence_path'] ?? '';
+    if (!$item && $imagePath) {
+        $item = basename($imagePath);
+    }
+    if ($item || $imagePath || $notes) {
+        $evidenceCounts[$stepKey] = ($evidenceCounts[$stepKey] ?? 0) + 1;
+        $stepEvidenceItems[$stepKey][] = [
+            'workflow_step_key' => $stepKey,
+            'evidence_item' => (string) $item,
+            'required' => true,
+            'status' => (string) $status,
+            'notes' => (string) $notes,
+            'image_path' => $imagePath !== '' ? (string) $imagePath : null,
+            'uploaded_by' => $uploadedBy,
+            'uploaded_at' => $uploadedAt !== '' ? (string) $uploadedAt : null,
+            'created_at' => (string) ($row['created_at'] ?? date('Y-m-d H:i:s')),
+            'updated_at' => (string) ($row['updated_at'] ?? date('Y-m-d H:i:s')),
+        ];
+    }
+} catch (Throwable $e) {}
 
 $disciplinarySummary = ['nte' => 0, 'written_warning' => 0, 'final_warning' => 0, 'suspension' => 0, 'termination' => 0];
 try {
@@ -190,1345 +373,1251 @@ $notificationBaseUrl = '?page=notification-compose&mode=reply&notification_key=w
     . '&hr_signatory=' . rawurlencode($investigatorName ?: '');
 
 $jsNotificationUrl = json_encode($notificationBaseUrl, ENT_QUOTES);
+
+$assignableOfficers = [];
+try {
+    $assignableOfficers = ch_q($db, "SELECT employee_id, CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) AS full_name, employee_code FROM em_employees WHERE status IS NULL OR status = 'active' ORDER BY full_name ASC");
+} catch (Throwable $e) {}
 ?>
-<section class="cw-module">
-   <?php if (!empty($flash)): ?>
-     <?php [$fc, $fm] = explode('|', $flash, 2); ?>
-     <div class="cw-flash <?= htmlspecialchars($fc) ?>"><?= htmlspecialchars($fm) ?></div>
-   <?php endif; ?>
+<!-- Confirm Modal -->
+<div id="chwfConfirmModal" class="lc-modal-backdrop irwf-confirm-backdrop" onclick="if(event.target===this)chwfConfirmModal(false)">
+  <div class="lc-modal irwf-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="chwfConfirmTitle" aria-describedby="chwfConfirmDesc">
+    <div class="irwf-confirm-body">
+      <p id="chwfConfirmTitle" class="irwf-confirm-title"></p>
+      <p id="chwfConfirmDesc" class="irwf-confirm-desc"></p>
+      <p id="chwfConfirmTransition" class="irwf-confirm-transition"></p>
+      <div class="irwf-confirm-actions">
+        <button type="button" class="cc-btn irwf-confirm-cancel" onclick="chwfConfirmModal(false)">Cancel</button>
+        <button type="button" class="cc-btn primary irwf-confirm-submit" onclick="chwfConfirmModal(true)">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-     <div class="cw-row">
-      <div class="cw-col cw-col-main">
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-diagram-3"></i> Case Information</h3>
-            <span class="cw-stamp <?= ch_status_class($case['status'] ?? '') ?>"><?= ch_label($case['status'] ?? 'Under Initial Review') ?></span>
-          </div>
-          <div class="cw-card-body">
-            <div class="cw-info-grid">
-              <div class="cw-info-item">
-                <label>Case Number</label>
-                <div><?= htmlspecialchars('CMP-' . str_pad($case['id'], 5, '0', STR_PAD_LEFT)) ?></div>
-              </div>
-              <div class="cw-info-item">
-                <label>Complaint Type</label>
-                <div><?= htmlspecialchars($case['type'] ?? '—') ?></div>
-              </div>
-              <div class="cw-info-item">
-                <label>Severity</label>
-                <div><?= htmlspecialchars(ucfirst($case['severity'] ?? 'medium')) ?></div>
-              </div>
-              <div class="cw-info-item">
-                <label>Date Filed</label>
-                <div><?= ch_date($case['created_at'] ?? null, 'M d, Y g:i A') ?></div>
-              </div>
-              <div class="cw-info-item">
-                <label>Employee</label>
-                <div><?= htmlspecialchars($employeeName ?: '—') ?> <?= !empty($employeeNo) ? '<small>(' . htmlspecialchars($employeeNo) . ')</small>' : '' ?></div>
-              </div>
-              <div class="cw-info-item">
-                <label>Assigned Officer</label>
-                <div><?= htmlspecialchars($investigatorName ?: 'Unassigned') ?></div>
-              </div>
-            </div>
-            <div class="cw-case-desc">
-              <label>Description</label>
-              <p><?= nl2br(htmlspecialchars($case['description'] ?? '')) ?></p>
-            </div>
-            <?php if (!empty($case['mitigation_plan'])): ?>
-            <div class="cw-case-desc">
-              <label>Mitigation Plan</label>
-              <p><?= nl2br(htmlspecialchars($case['mitigation_plan'])) ?></p>
-            </div>
-            <?php endif; ?>
+<!-- Evidence Modal -->
+<div id="chwfEvidenceModal" class="lc-modal-backdrop" onclick="if(event.target===this)chwfCloseModal('chwfEvidenceModal')">
+  <div class="lc-modal" style="max-width:640px;">
+    <div class="lc-modal-header">
+      <div class="lc-modal-title">Workflow Evidence</div>
+      <button type="button" class="lc-modal-close" onclick="chwfCloseModal('chwfEvidenceModal')">&times;</button>
+    </div>
+    <div class="lc-modal-body" id="chwfEvidenceBody">
+      <div class="irwf-evidence-loading">Loading...</div>
+    </div>
+    <div class="lc-modal-body" style="border-top:1px solid var(--hairline, #e4e8ee); padding-top:12px;">
+      <span id="chwfEvidenceStatus" class="irwf-action-status"></span>
+    </div>
+  </div>
+</div>
 
-            <div class="chwf-investigator-select" style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border,#e4e8ee);">
-              <label for="chwfInvestigatorSearch" style="display:block; font-size:0.72rem; font-weight:700; color:var(--text-400,#8b93a1); text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px;">Assigned Investigator</label>
-              <div class="chwf-investigator-search-wrap" style="display:<?= empty($case['assigned_to']) ? 'block' : 'none' ?>;">
-                <input type="text" id="chwfInvestigatorSearch" name="chwf_investigator_search" class="chwf-investigator-search" placeholder="Search HR employee by name, ID, or email…" autocomplete="off" data-complaint-id="<?= (int)($case['id'] ?? 0) ?>" />
-                 <div class="chwf-investigator-results" style="display:none; position:absolute; top:100%; left:0; z-index:10; width:100%; max-height:220px; overflow:auto; background:#fff; border:1px solid var(--border,#e4e8ee); border-radius:8px; box-shadow:0 8px 24px rgba(13,27,46,.12); margin-top:4px;"></div>
-              </div>
-              <div class="chwf-investigator-selected" style="display:<?= empty($case['assigned_to']) ? 'none' : 'flex' ?>; align-items:center; gap:10px; padding:10px; background:rgba(31,122,92,.06); border:1px solid rgba(31,122,92,.18); border-radius:8px;">
-                <div style="width:28px; height:28px; border-radius:50%; background:rgba(31,122,92,.12); display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:#1f7a5c; flex-shrink:0;">
-                  <i class="bi bi-person-check" style="font-size:0.85rem;"></i>
-                </div>
-                <div style="flex:1; min-width:0;">
-                   <div class="chwf-investigator-selected-name" style="font-weight:600; color:var(--text-900,#1b2430); font-size:0.82rem;"><?= htmlspecialchars($investigatorName) ?></div>
-                  <div style="font-size:0.72rem; color:var(--text-500,#6b7280);">Investigator assigned</div>
-                </div>
-                <button type="button" class="cw-btn" style="padding:4px 8px; font-size:0.72rem;" onclick="chwfClearInvestigator(<?= (int)$case['id'] ?>)">
-                  <i class="bi bi-x-circle"></i> Remove
-                </button>
-              </div>
-              <div class="chwf-investigator-status" style="font-size:0.78rem; margin-top:6px;"></div>
-            </div>
-          </div>
-        </div>
+<!-- Decision Email Modal -->
+<div id="chwfDecisionEmailModal" class="lc-modal-backdrop" onclick="if(event.target===this)chwfCloseModal('chwfDecisionEmailModal')">
+  <div class="lc-modal" style="max-width:720px;">
+    <div class="lc-modal-header">
+      <div class="lc-modal-title">Decision Email</div>
+      <button type="button" class="lc-modal-close" onclick="chwfCloseModal('chwfDecisionEmailModal')">&times;</button>
+    </div>
+    <div class="lc-modal-body">
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">To</label>
+        <input type="text" id="chwfDecisionEmailTo" readonly style="width:100%; padding:8px 10px; border:1px solid #e4e8ee; background:#f6f8fb; font-size:0.85rem; color:#3b4252;" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">Subject</label>
+        <input type="text" id="chwfDecisionEmailSubject" style="width:100%; padding:8px 10px; border:1px solid #e4e8ee; font-size:0.85rem; color:#1b2430;" />
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">Message</label>
+        <textarea id="chwfDecisionEmailBody" rows="10" style="width:100%; padding:10px 12px; border:1px solid #e4e8ee; font-size:0.85rem; color:#1b2430; font-family:inherit; resize:vertical;"></textarea>
+      </div>
+      <div id="chwfDecisionEmailStatus" class="irwf-action-status" style="margin-bottom:8px;"></div>
+    </div>
+    <div class="lc-modal-body" style="border-top:1px solid var(--hairline, #e4e8ee); padding-top:12px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+      <button type="button" class="cc-btn" onclick="chwfCloseModal('chwfDecisionEmailModal')">Cancel</button>
+      <button type="button" class="cc-btn" onclick="chRecordDecisionOnly()">Record Decision Only</button>
+      <button type="button" class="cc-btn primary" onclick="chSendDecisionEmail()">Send Email & Record Decision</button>
+    </div>
+  </div>
+</div>
 
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-paperclip"></i> Evidence &amp; Documents</h3>
+<section class="irwf-page">
+  <div class="irwf-dashboard">
+    <div class="irwf-main">
+      <div class="irwf-card">
+        <h3>Complaint Information</h3>
+        <div class="irwf-grid">
+          <div class="irwf-field">
+            <div class="irwf-label">Case Number</div>
+            <div class="irwf-value mono"><?= htmlspecialchars('CMP-' . str_pad($case['id'], 5, '0', STR_PAD_LEFT)) ?></div>
           </div>
-          <div class="cw-card-body">
-            <div class="cw-evidence-loading" id="cwEvidenceLoading">Loading evidence...</div>
-            <div class="cw-evidence-empty" id="cwEvidenceEmpty" style="display:none;">
-              <i class="bi bi-info-circle"></i>
-              <span>No evidence uploaded yet.</span>
-            </div>
-            <div class="cw-evidence-list" id="cwEvidenceList"></div>
-            <span id="cwEvidenceStatus" class="cw-action-status"></span>
+          <div class="irwf-field">
+            <div class="irwf-label">Complaint Type</div>
+            <div class="irwf-value"><?= htmlspecialchars($case['type'] ?? '—') ?></div>
           </div>
-        </div>
-
-        <?php if (!empty($case['employee_response'])): ?>
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-reply"></i> Employee Response</h3>
-            <?php if (!empty($case['employee_response_date'])): ?>
-              <span class="cw-stamp cw-stamp-info">Received <?= ch_date($case['employee_response_date'], 'M d, Y g:i A') ?></span>
-            <?php endif; ?>
+          <div class="irwf-field">
+            <div class="irwf-label">Severity</div>
+            <div class="irwf-value"><?= htmlspecialchars(ucfirst($case['severity'] ?? 'medium')) ?></div>
           </div>
-          <div class="cw-card-body">
-            <p style="margin:0; font-size:0.84rem; color:var(--text-700,#3b4252); line-height:1.6; white-space:pre-wrap;"><?= nl2br(htmlspecialchars($case['employee_response'])) ?></p>
+          <div class="irwf-field">
+            <div class="irwf-label">Date Filed</div>
+            <div class="irwf-value"><?= ch_date($case['created_at'] ?? null, 'M d, Y g:i A') ?></div>
           </div>
-        </div>
-        <?php endif; ?>
-
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-list-check"></i> Workflow Actions</h3>
+          <div class="irwf-field">
+            <div class="irwf-label">Employee</div>
+            <div class="irwf-value"><?= htmlspecialchars($employeeName ?: '—') ?> <?= !empty($employeeNo) ? '<small>(' . htmlspecialchars($employeeNo) . ')</small>' : '' ?></div>
           </div>
-          <div class="cw-card-body">
-            <p style="margin:0 0 12px;font-size:0.82rem;color:var(--text-600,#5b6472);">
-              Advance, reopen, or route this complaint to a decision. Status changes are recorded in the workflow history.
-            </p>
-            <div style="margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-              <?php if ($currentStatus === 'under_initial_review'): ?>
-                <button class="cw-btn primary" onclick="chSubmitAction('advance', this)">
-                  <i class="bi bi-check2-circle"></i> Accept for Review
-                </button>
-                <button class="cw-btn danger" onclick="chSubmitAction('close', this)">
-                  <i class="bi bi-x-circle"></i> Close Complaint
-                </button>
-              <?php elseif ($currentStatus === 'under_investigation'): ?>
-                <button class="cw-btn primary" onclick="chSubmitAction('advance', this)">
-                  <i class="bi bi-check2-circle"></i> Complete Investigation
-                </button>
-                <a class="cw-btn" href="?page=preview-document&employee_id=<?= htmlspecialchars($case['employee_id'] ?? '') ?>&document_type=nte&template_code=nte&hr_signatory=<?= htmlspecialchars($investigatorName ?: '') ?>&policy_violated=<?= urlencode($case['type'] ?? '') ?>&incident_description=<?= urlencode($case['description'] ?? '') ?>" target="_blank" rel="noopener">
-                  <i class="bi bi-envelope"></i> Send NTE
-                </a>
-                <button class="cw-btn" onclick="chSubmitAction('reopen', this)">
-                  <i class="bi bi-arrow-counterclockwise"></i> Reopen Review
-                </button>
-                <button class="cw-btn danger" onclick="chSubmitAction('close', this)">
-                  <i class="bi bi-x-circle"></i> Close Complaint
-                </button>
-              <?php elseif ($currentStatus === 'pending_employee_response'): ?>
-                <button class="cw-btn primary" onclick="chSubmitAction('advance', this)">
-                  <i class="bi bi-check2-circle"></i> Proceed to Decision
-                </button>
-                <button class="cw-btn" onclick="chSubmitAction('reopen', this)">
-                  <i class="bi bi-arrow-counterclockwise"></i> Reopen Investigation
-                </button>
-                <button class="cw-btn danger" onclick="chSubmitAction('close', this)">
-                  <i class="bi bi-x-circle"></i> Close Complaint
-                </button>
-                <button class="cw-btn" onclick="chShowResponseForm()" style="background:rgba(59,130,196,.08); border-color:rgba(59,130,196,.25); color:#1c5a8a;">
-                  <i class="bi bi-reply"></i> Record Employee Response
-                </button>
-            <?php elseif ($currentStatus === 'for_decision'): ?>
-                <div class="cw-action-grid">
-                  <div class="cw-action-cell">
-                    <label for="chStatusSelect" style="display:block; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-500,#6b7280); margin-bottom:6px;">Update Case Status</label>
-                    <select id="chStatusSelect" class="cw-form-select">
-                      <option value="">— Select Status —</option>
-                      <option value="closed_no_violation">No Violation</option>
-                      <option value="closed_warning_issued">Warning Issued</option>
-                      <option value="closed_suspension">Suspension</option>
-                      <option value="closed_termination_recommended">Termination Recommended</option>
-                      <option value="closed_resolved">Resolved</option>
-                    </select>
-                  </div>
-
-                  <div class="cw-action-cell">
-                    <button class="cw-btn danger" id="chApplyStatusBtn" onclick="chApplyStatus()">
-                      <i class="bi bi-check2-circle"></i> Apply
-                    </button>
-                  </div>
-
-                  <div class="cw-action-cell">
-                    <button class="cw-btn primary" onclick="chSubmitDecision('closed_no_violation', this)" style="width:100%;">
-                      <i class="bi bi-x-circle"></i> Dismiss Complaint
-                    </button>
-                  </div>
-
-                  <div class="cw-action-cell">
-                    <button class="cw-btn" onclick="chSubmitAction('reopen', this)" style="width:100%;">
-                      <i class="bi bi-arrow-counterrefresh"></i> Reopen Investigation
-                    </button>
-                  </div>
-
-                  <div class="cw-action-cell cw-action-full">
-                    <div id="chLetterSelectionWrap" style="display:none;">
-                      <label for="chLetterSelect" style="display:block; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-500,#6b7280); margin-bottom:6px;">Select Letter Type</label>
-                      <p style="margin:0 0 8px;font-size:0.78rem;color:var(--text-600,#5b6472);">
-                        Case status updated. Choose a letter to send:
-                      </p>
-                      <select id="chLetterSelect" class="cw-form-select">
-                        <option value="">— Select Letter —</option>
-                        <option value="written_warning">Written Warning Letter</option>
-                        <option value="suspension_notice">Suspension Letter</option>
-                        <option value="termination_decision">Termination Letter</option>
-                      </select>
-                      <button class="cw-btn" id="chSendLetterBtn" style="width:100%; margin-top:8px;" onclick="chSendLetter()">
-                        <i class="bi bi-envelope"></i> Send Letter
-                      </button>
-                      <span id="chLetterStatus" class="cw-action-status"></span>
-                    </div>
-                  </div>
-
-                  <span id="chwfActionStatus" class="cw-action-status"></span>
-                </div>
-              <?php elseif (in_array($currentStatus, ['closed_no_violation','closed_warning_issued','closed_suspension','closed_termination_recommended','closed_resolved'], true)): ?>
-                <button class="cw-btn" onclick="chSubmitAction('reopen', this)">
-                  <i class="bi bi-arrow-counterclockwise"></i> Reopen Case
-                </button>
-              <?php endif; ?>
-              <span id="chwfActionStatus" class="cw-action-status"></span>
-            </div>
+          <div class="irwf-field">
+            <div class="irwf-label">Respondent</div>
+            <div class="irwf-value"><?= htmlspecialchars($respondentName ?: '—') ?> <?= !empty($respondentNo) ? '<small>(' . htmlspecialchars($respondentNo) . ')</small>' : '' ?></div>
           </div>
-        </div>
-
-        <div class="cw-card" id="chwfResponseCard" style="display:none;">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-reply"></i> Record Employee Response</h3>
-            <button type="button" class="cw-btn cw-btn--sm" onclick="chHideResponseForm()">
-              <i class="bi bi-x"></i> Cancel
-            </button>
+          <div class="irwf-field">
+            <div class="irwf-label">Incident Date</div>
+            <div class="irwf-value"><?= ch_date($case['incident_date'] ?? null, 'M d, Y') ?></div>
           </div>
-          <div class="cw-card-body">
-            <p style="margin:0 0 12px;font-size:0.82rem;color:var(--text-600,#5b6472);">
-              Record the employee's written explanation or response to the NTE. This will be attached to the case record and the status will remain as <strong>Pending Employee Response</strong> until you advance it.
-            </p>
-            <textarea id="chwfResponseText" rows="6" placeholder="Enter the employee's response here..." style="width:100%; box-sizing:border-box; padding:10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.84rem; color:var(--text-900,#1b2430); resize:vertical;"></textarea>
-            <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
-              <button type="button" class="cw-btn" onclick="chHideResponseForm()">Cancel</button>
-              <button type="button" class="cw-btn primary" onclick="chSubmitResponse()">
-                <i class="bi bi-check2-circle"></i> Save Response
-              </button>
-            </div>
-            <span id="chwfResponseStatus" class="cw-action-status" style="margin-left:8px;"></span>
+          <div class="irwf-field">
+            <div class="irwf-label">Incident Time</div>
+            <div class="irwf-value"><?= htmlspecialchars($case['incident_time'] ?? '—') ?></div>
           </div>
-        </div>
-
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-journal-text"></i> Decision History</h3>
-            <button class="cw-btn cw-btn--sm" id="cwReloadHistoryBtn" title="Refresh">
-              <i class="bi bi-arrow-clockwise"></i>
-            </button>
+          <div class="irwf-field">
+            <div class="irwf-label">Assigned Officer</div>
+            <div class="irwf-value"><?= htmlspecialchars($investigatorName ?: '—') ?></div>
           </div>
-          <div class="cw-card-body">
-            <div id="cwDecisionHistoryList">
-              <div class="cw-evidence-loading"><i class="bi bi-hourglass-split"></i> Loading…</div>
-            </div>
+          <?php if (!empty($case['mitigation_plan'])): ?>
+          <div class="irwf-field full">
+            <div class="irwf-label">Mitigation Plan</div>
+            <div class="irwf-value"><?= nl2br(htmlspecialchars($case['mitigation_plan'])) ?></div>
           </div>
-        </div>
-
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-clock-history"></i> Workflow Tracker</h3>
-          </div>
-          <div class="cw-card-body">
-            <div class="cw-table-wrap">
-              <table class="cw-table">
-                <thead>
-                  <tr>
-                    <th>Step</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php foreach ($workflowSteps as $idx => $step):
-                    $isCompleted = $idx < $currentStepIndex;
-                    $isCurrent = $idx === $currentStepIndex;
-                    $stampCls = $isCurrent ? 'pending' : ($isCompleted ? 'compliant' : 'info');
-                    $stampLabel = $isCurrent ? 'Current' : ($isCompleted ? 'Completed' : 'Pending');
-                  ?>
-                  <tr>
-                    <td>
-                      <div style="display:flex; align-items:center; gap:8px;">
-                        <span class="cw-step-icon"><i class="<?= $step['icon'] ?>"></i></span>
-                        <?= htmlspecialchars($step['label'], ENT_QUOTES) ?>
-                      </div>
-                    </td>
-                    <td><span class="cw-stamp cw-stamp-<?= $stampCls ?>"><?= $stampLabel ?></span></td>
-                    <td><?= $isCompleted || $isCurrent ? ch_date($case['updated_at'] ?? null, 'M d, Y g:i A') : '—' ?></td>
-                  </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <?php endif; ?>
         </div>
       </div>
 
-      <div class="cw-col cw-col-side">
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-person-badge"></i> Employee Profile</h3>
-          </div>
-          <div class="cw-card-body">
-            <div class="cw-profile">
-              <div class="cw-profile-avatar"><?= htmlspecialchars(strtoupper(substr($employeeName, 0, 2))) ?></div>
-              <div class="cw-profile-name"><?= htmlspecialchars($employeeName ?: 'Unknown Employee') ?></div>
-              <div class="cw-profile-no"><?= htmlspecialchars($employeeNo ?: 'EMP-???') ?></div>
-            </div>
-            <div class="cw-profile-stats">
-              <div class="cw-profile-stat">
-                <div class="cw-profile-stat-value"><?= number_format($statsTotal) ?></div>
-                <div class="cw-profile-stat-label">Total Complaints</div>
-              </div>
-              <div class="cw-profile-stat">
-                <div class="cw-profile-stat-value"><?= number_format($statsOpen) ?></div>
-                <div class="cw-profile-stat-label">Open</div>
-              </div>
-              <div class="cw-profile-stat">
-                <div class="cw-profile-stat-value"><?= number_format($statsClosed) ?></div>
-                <div class="cw-profile-stat-label">Closed</div>
-              </div>
-            </div>
-            <div class="cw-discipline-section">
-              <div class="cw-discipline-title">Disciplinary Summary</div>
-              <div class="cw-discipline-list">
-                <div class="cw-discipline-item">
-                  <span>Notice to Explain</span>
-                  <span class="cw-discipline-count"><?= number_format($disciplinarySummary['nte']) ?></span>
-                </div>
-                <div class="cw-discipline-item">
-                  <span>Written Warning</span>
-                  <span class="cw-discipline-count"><?= number_format($disciplinarySummary['written_warning']) ?></span>
-                </div>
-                <div class="cw-discipline-item">
-                  <span>Final Written Warning</span>
-                  <span class="cw-discipline-count"><?= number_format($disciplinarySummary['final_warning']) ?></span>
-                </div>
-                <div class="cw-discipline-item">
-                  <span>Suspension</span>
-                  <span class="cw-discipline-count"><?= number_format($disciplinarySummary['suspension']) ?></span>
-                </div>
-                <div class="cw-discipline-item">
-                  <span>Termination</span>
-                  <span class="cw-discipline-count"><?= number_format($disciplinarySummary['termination']) ?></span>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div class="irwf-card">
+        <h3>Complaint Workflow</h3>
+        <?php if (!empty($case['description'])): ?>
+        <div class="irwf-workflow-summary">
+          <div class="irwf-workflow-summary-label">Description</div>
+          <div class="irwf-workflow-summary-value"><?= nl2br(htmlspecialchars($case['description'])) ?></div>
         </div>
+        <?php endif; ?>
+        <div class="irwf-flow">
+           <?php foreach ($workflowSteps as $idx => $step):
+             $stepClass = '';
+             $badgeClass = 'badge-pending';
+             $badgeText = 'Pending';
+             if ($idx < $currentStepIndex) {
+               $stepClass = 'completed';
+               $badgeClass = 'badge-completed';
+               $badgeText = 'Completed';
+             } elseif ($idx === $currentStepIndex) {
+               $stepClass = 'current';
+               $badgeClass = 'badge-current';
+               $badgeText = 'Current';
+             } else {
+               $stepClass = 'pending';
+             }
+           ?>
+            <div class="irwf-flow-step <?= $stepClass ?>" data-step-index="<?= $idx ?>" data-step-key="<?= htmlspecialchars($step['key'], ENT_QUOTES) ?>">
+              <div class="irwf-flow-dot"></div>
+              <div class="irwf-flow-body">
+                <div class="irwf-flow-title">
+                  <?= htmlspecialchars($step['label'], ENT_QUOTES) ?>
+                  <span class="irwf-flow-badge <?= $badgeClass ?>"><?= $badgeText ?></span>
+                  <?php $stepEvCount = $evidenceCounts[$step['key']] ?? 0; ?>
+                   <?php if ($stepEvCount > 0): ?>
+                     <span class="irwf-evidence-badge" title="<?= $stepEvCount ?> evidence item(s)" onclick="chwfToggleStepActions(this, '<?= htmlspecialchars($step['key'], ENT_QUOTES) ?>')"><?= $stepEvCount > 99 ? '99+' : $stepEvCount ?></span>
+                   <?php endif; ?>
+                 </div>
+                  <?php if ($step['key'] === 'evidence_check' && !empty($stepEvidenceItems['evidence_check']) && ($stepClass === 'current' || $stepClass === 'completed')): ?>
+                <div class="irwf-step-evidence">
+                  <?php foreach ($stepEvidenceItems['evidence_check'] as $ev): ?>
+                      <?php
+                        $evImgSrc = null;
+                        $assetBase = '/hrms-capstone/modules/compliance/assets/';
+                        if (!empty($ev['image_path'])) {
+                          $img = $ev['image_path'];
+                          if (preg_match('/^[a-zA-Z]:\\|^\//', $img)) {
+                            $img = str_replace('\\', '/', $img);
+                            $serverRoot = 'C:/xampp/htdocs/hrms-capstone/';
+                            if (stripos($img, $serverRoot) === 0) {
+                              $img = substr($img, strlen($serverRoot));
+                            }
+                          }
+                          if ($img) {
+                            if (stripos($img, 'modules/compliance/assets/') === 0) {
+                               $evImgSrc = $assetBase . substr($img, strlen('modules/compliance/assets/'));
+                            } else {
+                               $evImgSrc = $img;
+                            }
+                          }
+                        }
+                         if (!$evImgSrc && !empty($ev['notes'])) {
+                           if (preg_match('/(modules\/compliance\/assets\/[^\s"\']+)/', $ev['notes'], $m)) {
+                             $evImgSrc = $assetBase . substr($m[1], strlen('modules/compliance/assets/'));
+                           }
+                         }
+                         if (!$evImgSrc && !empty($ev['evidence_item'])) {
+                           $item = $ev['evidence_item'];
+                           if (preg_match('/\.(jpg|jpeg|png|gif|webp|bmp)$/i', $item)) {
+                             $evImgSrc = $assetBase . ltrim($item, '/');
+                           } elseif (strpos($item, 'modules/compliance/') === 0) {
+                             $evImgSrc = $assetBase . substr($item, strlen('modules/compliance/assets/'));
+                           }
+                         }
+                      ?>
+                    <div class="irwf-step-evidence-item">
+                      <div class="irwf-step-evidence-name"><?= htmlspecialchars($ev['evidence_item'] ?? 'Evidence') ?></div>
+                      <?php if (!empty($ev['notes'])): ?>
+                        <div class="irwf-step-evidence-notes"><?= nl2br(htmlspecialchars($ev['notes'])) ?></div>
+                      <?php endif; ?>
+                       <?php if ($evImgSrc): ?>
+                         <div class="irwf-step-evidence-img">
+                           <a href="<?= htmlspecialchars($evImgSrc) ?>" target="_blank" rel="noopener noreferrer" title="View full image">
+                             <img src="<?= htmlspecialchars($evImgSrc) ?>" alt="<?= htmlspecialchars($ev['evidence_item'] ?? 'Evidence') ?>" onerror="this.style.display='none'" />
+                           </a>
+                         </div>
+                       <?php endif; ?>
+                    </div>
+                   <?php endforeach; ?>
+                   </div>
+                    <?php endif; ?>
 
-        <div class="cw-card">
-          <div class="cw-card-head">
-            <h3><i class="bi bi-shield-exclamation"></i> Progressive Discipline Matrix</h3>
+                  <div class="irwf-step-actions" data-step-index="<?= $idx ?>" data-step-key="<?= htmlspecialchars($step['key'], ENT_QUOTES) ?>">
+                  <button type="button" class="irwf-step-actions-toggle" aria-expanded="<?= ($idx === $currentStepIndex || $stepClass === 'completed' || ($step['key'] === 'employee_hearing' && empty($case['employee_response']))) ? 'true' : 'false' ?>">
+                    <span class="irwf-step-actions-toggle-text">Actions</span>
+                    <span class="irwf-step-actions-toggle-icon" aria-hidden="true">▸</span>
+                  </button>
+                    <div class="irwf-step-actions-panel" <?= ($idx === $currentStepIndex || $stepClass === 'completed' || !empty($evidenceCounts[$step['key']]) || $step['key'] === 'employee_hearing') ? '' : 'hidden' ?>>
+                       <?php if ($idx === $currentStepIndex || ($step['key'] === 'employee_hearing' && $stepClass === 'completed')): ?>
+                         <?php if ($step['key'] === 'evidence_check'): ?>
+
+                           <button class="cc-btn primary" onclick="chSubmitAction('advance', this)">Advance</button>
+                           <button class="cc-btn danger" onclick="chSubmitAction('close', this)">Close Complaint</button>
+                         <?php elseif ($step['key'] === 'assign_officer'): ?>
+                           <?php if (empty($case['assigned_to'])): ?>
+                             <div class="chwf-officer-search" data-complaint-id="<?= (int)$case['id'] ?>">
+                               <input type="text" class="chwf-officer-search-input" placeholder="Search employees by name, code, or position..." autocomplete="off">
+                               <div class="chwf-officer-results"></div>
+                               <div class="chwf-officer-status"></div>
+                             </div>
+                            <?php else: ?>
+                             <button class="cc-btn primary" onclick="chSubmitAction('advance', this)">Advance</button>
+                            <?php endif; ?>
+                          <?php elseif ($step['key'] === 'nte_issued'): ?>
+                            <button class="cc-btn" onclick="window.location.href='?page=notification-compose&mode=forward&notification_key=warning&to_recipient_email=<?= urlencode($respondentEmail) ?>&to_recipient_name=<?= urlencode($respondentName) ?>&template_code=nte&scenario=general&employee_id=<?= (int)($case['employee_id'] ?? 0) ?>&complaint_id=<?= (int)($case['id'] ?? 0) ?>&incident_date=<?= urlencode($case['incident_date'] ?? '') ?>&incident_time=<?= urlencode($case['incident_time'] ?? '') ?>&incident_location=<?= urlencode($case['location'] ?? '') ?>&policy_violated=&incident_description=<?= urlencode($case['description'] ?? '') ?>&hr_signatory=<?= rawurlencode($investigatorName ?: '') ?>'">Send Email NTE</button>
+                            <button class="cc-btn primary" onclick="chSubmitAction('advance', this)">Advance</button>
+                            <button class="cc-btn danger" onclick="chSubmitAction('close', this)">Close Complaint</button>
+                            <?php elseif ($step['key'] === 'employee_hearing'): ?>
+                              <?php $hearingDisabled = $stepClass === 'completed' ? 'disabled' : ''; ?>
+                              <div class="irwf-hearing-grid">
+                                <div class="irwf-hearing-actions">
+                                  <button type="button" class="cc-btn primary" onclick="chShowInlineResponseForm()" <?= $hearingDisabled ?>>Record Response</button>
+                                  <button type="button" class="cc-btn" onclick="chSubmitAction('advance', this)" <?= $hearingDisabled ?>>Advance to Review</button>
+                                  <button type="button" class="cc-btn danger" onclick="chSubmitAction('close', this)" <?= $hearingDisabled ?>>Close Complaint</button>
+                                </div>
+                                <div class="irwf-hearing-response">
+                                  <div id="chwfInlineResponseCard" class="irwf-response-panel">
+                                    <div class="irwf-response-panel-header">
+                                       <span class="irwf-response-panel-title">Respondent Explanation</span>
+                                      <button type="button" class="irwf-response-panel-close" onclick="chHideInlineResponseForm()" aria-label="Close response form">&times;</button>
+                                    </div>
+                                    <div class="irwf-response-panel-body">
+                                       <h3 style="display:none;">Recorded Respondent Explanation</h3>
+                                      <?php if (!empty($case['employee_response'])): ?>
+                                       <div class="irwf-response-saved">
+                                         <div class="irwf-response-saved-meta">Recorded on <?= htmlspecialchars(date('M d, Y g:i A', strtotime($case['employee_response_date'] ?? 'now'))) ?></div>
+                                         <div class="irwf-response-saved-text"><?= nl2br(htmlspecialchars($case['employee_response'])) ?></div>
+                                       </div>
+                                      <?php endif; ?>
+                                      <div class="irwf-response-form" <?= !empty($case['employee_response']) ? 'style="display:none;"' : '' ?> id="chwfResponseForm">
+                                         <label class="irwf-form-label" for="chwfInlineResponseText">Respondent Explanation</label>
+                                          <textarea id="chwfInlineResponseText" placeholder="Enter or update the respondent explanation here..."><?= htmlspecialchars($case['employee_response'] ?? '') ?></textarea>
+                                        <div class="irwf-response-form-actions">
+                                           <button class="cc-btn primary" onclick="chSubmitInlineResponse()"><?= !empty($case['employee_response']) ? 'Update Respondent Explanation' : 'Submit Respondent Explanation' ?></button>
+                                          <span id="chwfInlineResponseStatus" class="irwf-action-status"></span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                         <?php elseif ($step['key'] === 'decision_made'): ?>
+                            <div class="irwf-decision-actions">
+                              <button class="cc-btn" data-decision-status="closed_warning_issued" onclick="chHandleDecision('closed_warning_issued', this)">Written Warning</button>
+                              <button class="cc-btn" data-decision-status="closed_second_written_warning" onclick="chHandleDecision('closed_second_written_warning', this)">Second Written Warning</button>
+                              <button class="cc-btn" data-decision-status="closed_final_written_warning" onclick="chHandleDecision('closed_final_written_warning', this)">Final Written Warning</button>
+                              <button class="cc-btn danger" data-decision-status="closed_termination_recommended" onclick="chHandleDecision('closed_termination_recommended', this)">Termination</button>
+                            </div>
+                          <?php elseif ($step['key'] === 'termination_employee_reply'): ?>
+                             <?php $loiSubmitted = !empty($case['termination_reply']) || !empty($case['termination_loi_submitted_at']); ?>
+                             <?php if ($loiSubmitted): ?>
+                               <div class="irwf-loi-saved">
+                                 <div style="font-size:0.75rem; color:#6b7280; margin-bottom:4px;">Letter of Intent received on <?= htmlspecialchars(date('M d, Y g:i A', strtotime($case['termination_loi_submitted_at'] ?? 'now'))) ?></div>
+                                 <div style="white-space:pre-wrap; word-break:break-word; font-size:0.85rem; color:#1b2430; border:1px solid #e4e8ee; padding:10px; background:#f6f8fb;"><?= nl2br(htmlspecialchars($case['termination_reply'] ?? '')) ?></div>
+                                 <?php if (!empty($case['termination_loi_pdf_path'])): ?>
+                                   <div style="margin-top:6px;"><a href="<?= htmlspecialchars($case['termination_loi_pdf_path']) ?>" target="_blank" class="cc-btn" style="text-decoration:none;">View Saved Letter</a></div>
+                                 <?php endif; ?>
+                               </div>
+                             <?php else: ?>
+                               <button class="cc-btn primary" onclick="chShowLOIForm()">Record Letter of Intent</button>
+                             <?php endif; ?>
+                             <button class="cc-btn" onclick="chSubmitAction('advance', this)" <?= $loiSubmitted ? '' : 'disabled' ?> title="<?= $loiSubmitted ? '' : 'Record Letter of Intent first' ?>">Advance to Review</button>
+                             <button class="cc-btn danger" onclick="chSubmitAction('close', this)">Close Complaint</button>
+                         <?php elseif ($step['key'] === 'termination_review'): ?>
+                            <?php $hasLOI = !empty($case['termination_reply']); ?>
+                            <?php if (!$hasLOI): ?>
+                              <span class="irwf-action-status" style="color:#a3272a;">Letter of Intent required before review.</span>
+                            <?php else: ?>
+                              <div class="irwf-loi-saved" style="margin-bottom:8px;">
+                                <div style="font-size:0.75rem; color:#6b7280; margin-bottom:4px;">Letter of Intent submitted on <?= htmlspecialchars(date('M d, Y g:i A', strtotime($case['termination_loi_submitted_at'] ?? 'now'))) ?></div>
+                                <div style="white-space:pre-wrap; word-break:break-word; font-size:0.85rem; color:#1b2430; border:1px solid #e4e8ee; padding:10px; background:#f6f8fb; max-height:120px; overflow:auto;"><?= nl2br(htmlspecialchars($case['termination_reply'] ?? '')) ?></div>
+                              </div>
+                              <button class="cc-btn primary" onclick="chShowReconsiderationEmailModal()">Considered</button>
+                              <button class="cc-btn danger" onclick="chShowRejectionWarningModal()">Rejected</button>
+                            <?php endif; ?>
+                         <?php else: ?>
+                          <button class="cc-btn primary" onclick="chSubmitAction('advance', this)">Advance</button>
+                          <button class="cc-btn danger" onclick="chSubmitAction('close', this)">Close Complaint</button>
+                        <?php endif; ?>
+                        <span class="irwf-action-status" data-action-status-for="<?= htmlspecialchars($step['key'], ENT_QUOTES) ?>"></span>
+                       <?php else: ?>
+                        <span class="irwf-step-actions-empty">No actions for this step.</span>
+                      <?php endif; ?>
+                  </div>
+                </div>
+              </div>
+            </div>
+           <?php endforeach; ?>
+         </div>
+       </div>
+
+          <div id="chwfLOICard" style="display:none;">
+            <div class="irwf-card">
+              <h3>Record Letter of Intent</h3>
+              <div class="irwf-response-form">
+                <div style="margin-bottom:8px;">
+                  <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">Received From</label>
+                  <input type="text" id="chwfLOIFrom" value="<?= htmlspecialchars($respondentName ?: $respondentEmail ?: '') ?>" readonly style="width:100%; padding:8px 10px; border:1px solid #e4e8ee; background:#f6f8fb; font-size:0.85rem; color:#3b4252;" />
+                </div>
+                <div style="margin-bottom:8px;">
+                  <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">Notes / Content</label>
+                  <textarea id="chwfLOIText" rows="5" placeholder="Paste or summarize the Letter of Intent content received from the respondent..."></textarea>
+                </div>
+                <div style="margin-bottom:8px;">
+                  <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">Attach PDF / Screenshot Copy</label>
+                  <input type="file" id="chwfLOIFile" accept=".pdf,image/*" style="width:100%; padding:6px 0; font-size:0.85rem; color:#3b4252;" />
+                </div>
+                 <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                   <button class="cc-btn primary" onclick="chSubmitLOI()">Save Letter of Intent</button>
+                   <button class="cc-btn" onclick="chHideLOIForm()">Cancel</button>
+                   <span id="chwfLOIStatus" class="irwf-action-status"></span>
+                 </div>
+              </div>
+            </div>
           </div>
-          <div class="cw-card-body">
-            <table class="cw-matrix-table">
-              <thead>
-                <tr>
-                  <th>Previous Record</th>
-                  <th>Suggested Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>First Offense</td><td>Notice to Explain</td></tr>
-                <tr><td>Minor First Offense</td><td>Written Warning</td></tr>
-                <tr><td>Second Similar Offense</td><td>Final Written Warning</td></tr>
-                <tr><td>Third Similar Offense</td><td>Suspension</td></tr>
-                <tr><td>Repeated Serious Offense</td><td>Final Decision</td></tr>
-                <tr><td>Gross Misconduct</td><td>Immediate Formal Investigation</td></tr>
-              </tbody>
-            </table>
-            <p class="cw-matrix-note">The matrix is a guide. The Compliance Officer may override the recommendation based on facts, school policies, and applicable labor laws.</p>
+
+         <div id="chwfReconsiderationEmailModal" class="lc-modal-backdrop" onclick="if(event.target===this)chwfCloseModal('chwfReconsiderationEmailModal')">
+           <div class="lc-modal" style="max-width:720px;">
+             <div class="lc-modal-header">
+               <div class="lc-modal-title">Send Reconsideration Email</div>
+               <button type="button" class="lc-modal-close" onclick="chwfCloseModal('chwfReconsiderationEmailModal')">&times;</button>
+             </div>
+             <div class="lc-modal-body">
+               <div style="margin-bottom:12px;">
+                 <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">To</label>
+                 <input type="text" id="chwfReconsiderationEmailTo" style="width:100%; padding:8px 10px; border:1px solid #e4e8ee; font-size:0.85rem; color:#3b4252;" />
+               </div>
+               <div style="margin-bottom:12px;">
+                 <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">Subject</label>
+                 <input type="text" id="chwfReconsiderationEmailSubject" style="width:100%; padding:8px 10px; border:1px solid #e4e8ee; font-size:0.85rem; color:#3b4252;" />
+               </div>
+               <div style="margin-bottom:12px;">
+                 <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">Message</label>
+                 <textarea id="chwfReconsiderationEmailBody" rows="10" style="width:100%; padding:10px 12px; border:1px solid #e4e8ee; font-size:0.85rem; color:#3b4252; font-family:inherit; resize:vertical;"></textarea>
+               </div>
+               <div id="chwfReconsiderationEmailStatus" class="irwf-action-status" style="margin-bottom:8px;"></div>
+             </div>
+             <div class="lc-modal-body" style="border-top:1px solid var(--hairline, #e4e8ee); padding-top:12px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+               <button type="button" class="cc-btn" onclick="chwfCloseModal('chwfReconsiderationEmailModal')">Cancel</button>
+               <button type="button" class="cc-btn primary" onclick="chSendReconsiderationEmail()">Send Email & Close Case</button>
+             </div>
+           </div>
+         </div>
+
+         <div id="chwfRejectionWarningModal" class="lc-modal-backdrop" onclick="if(event.target===this)chwfCloseModal('chwfRejectionWarningModal')">
+           <div class="lc-modal" style="max-width:520px;">
+             <div class="lc-modal-header">
+               <div class="lc-modal-title" style="color:#a3272a;">Confirm Rejection</div>
+               <button type="button" class="lc-modal-close" onclick="chwfCloseModal('chwfRejectionWarningModal')">&times;</button>
+             </div>
+             <div class="lc-modal-body">
+               <p style="font-size:0.85rem; color:#1b2430; margin-bottom:12px;">You are about to <strong>reject</strong> the Letter of Intent. This action will return the case to the decision stage.</p>
+               <p style="font-size:0.8rem; color:#a3272a; margin-bottom:12px;">This is a <strong>final, firm decision</strong>. Please confirm that you wish to proceed with the rejection.</p>
+               <div style="margin-bottom:12px;">
+                 <label style="font-size:0.8rem; font-weight:600; color:#1b2430; display:block; margin-bottom:4px;">Rejection Notes (optional)</label>
+                 <textarea id="chwfRejectionNotes" rows="3" placeholder="Add any notes for the rejection..." style="width:100%; padding:8px 10px; border:1px solid #e4e8ee; font-size:0.85rem; color:#3b4252; font-family:inherit; resize:vertical;"></textarea>
+               </div>
+               <div id="chwfRejectionWarningStatus" class="irwf-action-status" style="margin-bottom:8px;"></div>
+             </div>
+             <div class="lc-modal-body" style="border-top:1px solid var(--hairline, #e4e8ee); padding-top:12px; display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+               <button type="button" class="cc-btn" onclick="chwfCloseModal('chwfRejectionWarningModal')">Cancel</button>
+               <button type="button" class="cc-btn danger" onclick="chSubmitTerminationReviewDecision('rejected')">Confirm Rejection</button>
+             </div>
+           </div>
+         </div>
+      </div>
+
+     <div class="irwf-sidebar">
+       <div class="irwf-card">
+         <h3>Respondent Profile</h3>
+          <div class="irwf-grid-stack">
+           <div class="irwf-field">
+             <div class="irwf-label">Name</div>
+             <div class="irwf-value"><?= htmlspecialchars($respondentProfile['first_name'] ?? '') ?> <?= htmlspecialchars($respondentProfile['middle_name'] ?? '') ?> <?= htmlspecialchars($respondentProfile['last_name'] ?? '') ?></div>
+           </div>
+           <div class="irwf-field">
+             <div class="irwf-label">Employee No.</div>
+             <div class="irwf-value mono"><?= htmlspecialchars($respondentProfile['employee_code'] ?? '—') ?></div>
+           </div>
+           <div class="irwf-field">
+             <div class="irwf-label">Email</div>
+             <div class="irwf-value"><?= htmlspecialchars($respondentProfile['email'] ?? '—') ?></div>
+           </div>
+           <div class="irwf-field">
+             <div class="irwf-label">Department</div>
+             <div class="irwf-value"><?= htmlspecialchars($respondentProfile['department_name'] ?? '—') ?></div>
+           </div>
+             <div class="irwf-field">
+               <div class="irwf-label">Position</div>
+               <div class="irwf-value"><?= htmlspecialchars($respondentProfile['position_name'] ?? '—') ?></div>
+             </div>
+           </div>
+         </div>
+
+          <div class="irwf-card">
+            <h3>Case History</h3>
+            <div class="irwf-grid-stack">
+              <div class="irwf-field">
+                <div class="irwf-label">Total Cases</div>
+                <div class="irwf-value mono"><?= (int)($respondentCaseCounts['total'] ?? 0) ?></div>
+              </div>
+              <div class="irwf-field">
+                <div class="irwf-label">1st Warning</div>
+                <div class="irwf-value mono"><?= (int)($respondentCaseCounts['warning_first'] ?? 0) ?></div>
+              </div>
+              <div class="irwf-field">
+                <div class="irwf-label">2nd Warning</div>
+                <div class="irwf-value mono"><?= (int)($respondentCaseCounts['warning_second'] ?? 0) ?></div>
+              </div>
+              <div class="irwf-field">
+                <div class="irwf-label">Final Warning</div>
+                <div class="irwf-value mono"><?= (int)($respondentCaseCounts['warning_final'] ?? 0) ?></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 </section>
 
-<style>
-.cw-module { padding: 4px 2px 24px; }
-
-.cw-summary-bar { display:flex; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
-.cw-summary-item { display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:14px; background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); flex:1; min-width:160px; transition:all .15s ease; }
-.cw-summary-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
-.cw-summary-icon.green { background:rgba(47,158,110,.12); color:#1f7a52; }
-.cw-summary-icon.blue { background:rgba(59,130,196,.12); color:#1c5a8a; }
-.cw-summary-icon.amber { background:rgba(217,154,43,.14); color:#a86b13; }
-.cw-summary-icon.red { background:rgba(214,72,74,.12); color:#a3272a; }
-.cw-summary-icon.seal { background:rgba(168,121,31,.12); color:#8a6318; }
-.cw-summary-value { font-size:1.5rem; font-weight:800; color:var(--text-900,#1b2430); line-height:1; }
-.cw-summary-label { font-size:0.8rem; font-weight:700; color:var(--text-700,#3b4252); margin-top:4px; }
-
-.cw-row { display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start; }
-.cw-col-main { min-width:0; }
-.cw-col-side { width:360px; flex-shrink:0; }
-@media (max-width: 1100px) {
-  .cw-row { grid-template-columns:1fr; }
-  .cw-col-side { position:static; width:auto; }
-}
-
-.cw-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; }
-.cw-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-.cw-card-head h3 { margin:0; font-size:0.98rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
-.cw-card-body { display:flex; flex-direction:column; }
-.cw-empty { padding:24px; text-align:center; color:var(--text-400,#8b93a1); font-size:0.84rem; }
-
-.cw-info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:16px; }
-.cw-info-item label { display:block; font-size:0.72rem; font-weight:700; color:var(--text-400,#8b93a1); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
-.cw-info-item div { font-size:0.84rem; font-weight:600; color:var(--text-900,#1b2430); }
-.cw-case-desc { margin-top:12px; }
-.cw-case-desc label { display:block; font-size:0.72rem; font-weight:700; color:var(--text-400,#8b93a1); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
-.cw-case-desc p { margin:0; font-size:0.84rem; color:var(--text-700,#3b4252); line-height:1.5; white-space:pre-wrap; }
-
-.cw-stamp { display:inline-block; font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
-.cw-stamp-compliant { background:rgba(47,158,110,.12); color:#1f7a52; }
-.cw-stamp-pending { background:rgba(217,154,43,.14); color:#a86b13; }
-.cw-stamp-info { background:rgba(59,130,196,.12); color:#1c5a8a; }
-
-.cw-status-flow { display:flex; flex-wrap:wrap; align-items:center; gap:0; padding:8px 0; }
-.cw-status-step { display:flex; align-items:center; gap:6px; padding:6px 12px; border-radius:20px; background:#fafbfc; border:1px solid var(--border,#e4e8ee); font-size:.76rem; font-weight:600; color:var(--text-900); white-space:nowrap; }
-.cw-status-step--done { background:rgba(47,158,110,.08); border-color:rgba(47,158,110,.25); color:#1f7a52; }
-.cw-status-dot { width:8px; height:8px; border-radius:50%; background:var(--text-400,#8b93a1); }
-.cw-status-step--done .cw-status-dot { background:#1f7a52; }
-.cw-status-arrow { margin:0 6px; color:var(--text-400,#8b93a1); font-size:.75rem; }
-
-.cw-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; border:1px solid var(--border,#e4e8ee); background:#fff; color:var(--text-700,#3b4252); font-size:0.78rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s ease; text-decoration:none; }
-.cw-btn:hover { border-color:var(--info-blue,#3b82c4); color:var(--info-blue,#3b82c4); box-shadow:0 0 0 3px rgba(59,130,196,.08); }
-.cw-btn.primary { background:rgba(59,130,196,.08); border-color:rgba(59,130,196,.25); color:#1c5a8a; }
-.cw-btn.primary:hover { background:rgba(59,130,196,.14); }
-.cw-btn.danger { background:rgba(214,72,74,.08); border-color:rgba(214,72,74,.25); color:#a3272a; }
-.cw-btn.danger:hover { background:rgba(214,72,74,.14); }
-.cw-btn--doc { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; border:1px solid var(--border,#e4e8ee); background:#fff; color:var(--text-900,#1b2430); font-size:.82rem; font-weight:600; text-decoration:none; width:100%; box-sizing:border-box; }
-.cw-btn--doc:hover { background:rgba(13,27,46,.03); border-color:var(--text-400,#8b93a1); }
-.cw-btn--doc i { color:var(--text-500,#6b7280); }
-
-.cw-action-status { display:inline-block; font-size:.78rem; font-weight:600; margin-left:8px; vertical-align:middle; }
-.cw-action-status.success { color:#1f7a5c; }
-.cw-action-status.error { color:#a3272a; }
-
-.cw-table-wrap { overflow:auto; }
-.cw-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-.cw-table th { text-align:left; padding:10px 12px; font-size:0.72rem; font-weight:700; text-transform:uppercase; color:var(--text-400,#8b93a1); border-bottom:1px solid var(--border,#e4e8ee); background:#fafbfc; }
-.cw-table td { padding:10px 12px; border-bottom:1px solid var(--border,#e4e8ee); }
-.cw-table tr:last-child td { border-bottom:none; }
-.cw-step-icon { width:28px; height:28px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; background:rgba(13,27,46,.04); color:var(--text-600,#5b6472); font-size:.85rem; }
-
-.cw-profile { text-align:center; padding:12px 0 16px; border-bottom:1px solid var(--border,#e4e8ee); margin-bottom:12px; }
-.cw-profile-avatar { width:56px; height:56px; border-radius:50%; background:rgba(13,27,46,.06); display:inline-flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:800; color:var(--text-600,#5b6472); margin-bottom:6px; }
-.cw-profile-name { font-size:.92rem; font-weight:700; color:var(--text-900,#1b2430); }
-.cw-profile-no { font-size:.78rem; color:var(--text-500,#6b7280); }
-.cw-profile-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; }
-.cw-profile-stat { text-align:center; padding:8px; background:rgba(13,27,46,.02); border-radius:8px; border:1px solid var(--border,#e4e8ee); }
-.cw-profile-stat-value { font-size:1.1rem; font-weight:800; color:var(--text-900,#1b2430); }
-.cw-profile-stat-label { font-size:.66rem; font-weight:600; color:var(--text-500,#6b7280); text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
-
-.cw-discipline-section { display:block; }
-.cw-discipline-title { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--text-500,#6b7280); margin-bottom:8px; }
-.cw-discipline-list { display:flex; flex-direction:column; gap:6px; }
-.cw-discipline-item { display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:rgba(13,27,46,.02); border-radius:6px; border:1px solid var(--border,#e4e8ee); font-size:.78rem; color:var(--text-700,#3b4252); }
-.cw-discipline-count { font-size:.85rem; font-weight:700; color:var(--text-900,#1b2430); }
-
-.cw-matrix-table { width:100%; border-collapse:collapse; font-size:.78rem; }
-.cw-matrix-table th { text-align:left; padding:8px; background:rgba(13,27,46,.03); border-bottom:2px solid var(--border,#e4e8ee); font-size:.68rem; text-transform:uppercase; letter-spacing:.06em; color:var(--text-500,#6b7280); }
-.cw-matrix-table td { padding:8px; border-bottom:1px solid var(--border,#e4e8ee); color:var(--text-700,#3b4252); }
-.cw-matrix-table tr:last-child td { border-bottom:none; }
-.cw-matrix-note { font-size:.72rem; color:var(--text-500,#6b7280); margin-top:8px; line-height:1.4; }
-
-.cw-routing-note { font-size:.78rem; color:var(--text-600,#5b6472); margin-bottom:10px; }
-.cw-routing-buttons { display:flex; flex-direction:column; gap:8px; }
-
-.cw-action-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  align-items: end;
-}
-.cw-action-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 140px;
-}
-.cw-action-cell.cw-action-full {
-  grid-column: 1 / -1;
-}
-
-@media (max-width: 768px) {
-  .cw-action-grid {
-    grid-template-columns: 1fr;
-  }
-  .cw-action-cell {
-    min-width: 100%;
-  }
-}
-
-.sr-item:hover { background:rgba(13,27,46,.03); }
-
-.chwf-investigator-select { position:relative; }
-.chwf-investigator-search-wrap { position:relative; }
-.chwf-investigator-search { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:.82rem; color:var(--text-900,#1b2430); background:#fff; }
-.chwf-investigator-search:focus { outline:none; border-color:var(--focus-ring,#b6c3d6); box-shadow:0 0 0 3px rgba(37,99,235,.08); }
-.chwf-investigator-results { position:absolute; z-index:20; top:100%; left:0; }
-.chwf-investigator-status { color:var(--text-500,#6b7280); }
-.chwf-investigator-status.success { color:#1f7a5c; }
-.chwf-investigator-status.error { color:#a3272a; }
-
-.cw-evidence-loading, .cw-evidence-empty { text-align:center; padding:28px 0; color:var(--text-500,#6b7280); }
-.cw-evidence-empty i { font-size:32px; color:var(--hairline,#dde3ea); display:block; margin-bottom:8px; }
-.cw-evidence-list { display:flex; flex-direction:column; gap:10px; }
-.cw-evidence-item { display:flex; align-items:flex-start; gap:12px; padding:12px; border:1px solid var(--border,#e4e8ee); border-radius:10px; background:rgba(13,27,46,.015); }
-.cw-evidence-icon { width:36px; height:36px; border-radius:8px; background:rgba(13,27,46,.04); display:inline-flex; align-items:center; justify-content:center; color:var(--text-600,#5b6472); font-size:1.1rem; flex-shrink:0; }
-.cw-evidence-details { flex:1 1 auto; min-width:0; }
-.cw-evidence-name { font-weight:700; color:var(--text-900,#1b2430); font-size:0.9rem; word-break:break-word; }
-.cw-evidence-name a { color:var(--info-blue,#3b82c4); text-decoration:none; }
-.cw-evidence-name a:hover { text-decoration:underline; }
-.cw-evidence-desc { font-size:0.82rem; color:var(--text-700,#3b4252); margin-top:4px; }
-.cw-evidence-meta { font-size:0.72rem; color:var(--text-500,#6b7280); margin-top:4px; }
-
-.cw-dh-list { display:flex; flex-direction:column; gap:0; position:relative; }
-.cw-dh-list::before { content:''; position:absolute; left:17px; top:8px; bottom:8px; width:2px; background:var(--border,#e4e8ee); }
-.cw-dh-item { display:flex; align-items:flex-start; gap:12px; padding:10px 0; position:relative; }
-.cw-dh-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; margin-top:5px; position:relative; z-index:1; border:2px solid #fff; box-shadow:0 0 0 1px var(--border,#e4e8ee); }
-.cw-dh-dot.status-change { background:#3b82c4; }
-.cw-dh-dot.reopen { background:#f59e0b; }
-.cw-dh-dot.close { background:#1f7a52; }
-.cw-dh-body { flex:1 1 auto; min-width:0; padding-bottom:6px; border-bottom:1px solid rgba(228,232,238,.5); }
-.cw-dh-body:last-child { border-bottom:none; }
-.cw-dh-label { font-weight:700; color:var(--text-900,#1b2430); font-size:0.85rem; }
-.cw-dh-meta { font-size:0.72rem; color:var(--text-500,#6b7280); margin-top:3px; display:flex; flex-wrap:wrap; gap:6px; }
-.cw-dh-badge { display:inline-block; padding:1px 7px; border-radius:4px; font-size:0.7rem; font-weight:600; }
-.cw-dh-badge.old { background:#f3f4f6; color:#6b7280; }
-.cw-dh-badge.new { background:#d1fae5; color:#1f7a52; }
-.cw-dh-arrow { color:var(--text-400,#9ca3af); font-size:0.7rem; }
-.cw-dh-empty { text-align:center; padding:20px 0; color:var(--text-500,#6b7280); font-size:0.82rem; }
-.cw-dh-error { color:#a3272a; font-size:0.82rem; }
-.cw-btn--sm { padding:4px 10px; font-size:0.75rem; border-radius:6px; }
-.cw-form-select { width:100%; box-sizing:border-box; padding:7px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:0.82rem; color:var(--text-900,#1b2430); background:#fff; height:38px; }
-.cw-form-select:focus { outline:none; border-color:var(--focus-ring,#b6c3d6); box-shadow:0 0 0 3px rgba(37,99,235,.08); }
-</style>
-
 <script>
-(function(){
-  window.chIssueDocument = function(templateCode, extraParams, btn) {
-    var statusEl = document.getElementById('chwfActionStatus');
-    if (!statusEl) return;
-
-    var actionLabels = {
-      'written_warning':        'Issue Written Warning',
-      'suspension_notice':      'Issue Suspension',
-      'termination_decision':   'Final Decision'
-    };
-    var label = actionLabels[templateCode] || ('Submit ' + templateCode);
-
-    if (!confirm(label + '? This will record the document request and open the email composer.')) return;
-
-    statusEl.textContent = 'Saving document request...';
-    if (btn) btn.disabled = true;
-
-    var complaintId = '<?= (int)$case['id'] ?>';
-    var employeeId  = '<?= (int)($case['employee_id'] ?? 0) ?>';
-    var hrSignatory = <?= json_encode($investigatorName ?: '') ?>;
-
-    var formData = new FormData();
-    formData.append('action', 'save_document_request');
-    formData.append('complaint_id', complaintId);
-    formData.append('employee_id', employeeId);
-    formData.append('document_type', templateCode);
-    formData.append('template_code', templateCode);
-    formData.append('hr_signatory', hrSignatory);
-
-    if (extraParams) {
-      for (var key in extraParams) {
-        if (Object.prototype.hasOwnProperty.call(extraParams, key)) {
-          formData.append(key, extraParams[key]);
-        }
-      }
-    }
-
-    var path = window.location.pathname;
-    var parts = path.split('/').filter(Boolean);
-    var lcIndex = parts.indexOf('hrms-capstone');
-    var apiUrl = '';
-    if (lcIndex !== -1) {
-      apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/disciplinary_action_save.php';
-    } else {
-      var dirs = parts.slice(0, -2);
-      apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/disciplinary_action_save.php';
-    }
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', apiUrl, true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        statusEl.textContent = 'Request failed (' + xhr.status + '). Check console.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-        return;
-      }
-      var data;
-      try {
-        data = JSON.parse(xhr.responseText);
-      } catch (e) {
-        statusEl.textContent = 'Invalid server response.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-        return;
-      }
-      if (data.success) {
-        statusEl.textContent = data.message || 'Document request saved.';
-        statusEl.className = 'cw-action-status success';
-        if (data.redirect) {
-          window.location.href = data.redirect;
-        }
-      } else {
-        statusEl.textContent = data.message || 'Save failed.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-      }
-    };
-    xhr.onerror = function() {
-      statusEl.textContent = 'Network error. Check console.';
-      statusEl.className = 'cw-action-status error';
-      if (btn) btn.disabled = false;
-    };
-     xhr.send(formData);
-   };
-
-   window.chApplyStatus = function() {
-     var select = document.getElementById('chStatusSelect');
-     var statusEl = document.getElementById('chwfActionStatus');
-     if (!select || !statusEl) return;
-
-     var newStatus = select.value;
-     if (!newStatus) {
-       statusEl.textContent = 'Please select a status.';
-       statusEl.className = 'cw-action-status error';
-       return;
-     }
-
-     var statusLabelMap = {
-       'closed_no_violation': 'No Violation',
-       'closed_warning_issued': 'Warning Issued',
-       'closed_suspension': 'Suspension',
-       'closed_termination_recommended': 'Termination Recommended',
-       'closed_resolved': 'Resolved'
-     };
-     var label = statusLabelMap[newStatus] || newStatus.replace(/_/g, ' ');
-
-     if (!confirm('Apply status "' + label + '"? This will update the case status and record the decision.')) return;
-
-     statusEl.textContent = 'Updating status...';
-     var btn = document.getElementById('chApplyStatusBtn');
-     if (btn) btn.disabled = true;
-
-     var apiUrl = '';
-     var path = window.location.pathname;
-     var parts = path.split('/').filter(Boolean);
-     var lcIndex = parts.indexOf('hrms-capstone');
-     if (lcIndex !== -1) {
-       apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/complaint_workflow_action.php';
-     } else {
-       var dirs = parts.slice(0, -2);
-       apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/complaint_workflow_action.php';
-     }
-
-     var formData = new FormData();
-     formData.append('complaint_id', '<?= (int)$case['id'] ?>');
-     formData.append('action', 'finalize_decision');
-     formData.append('target_status', newStatus);
-
-     var xhr = new XMLHttpRequest();
-     xhr.open('POST', apiUrl, true);
-     xhr.setRequestHeader('Accept', 'application/json');
-     xhr.onreadystatechange = function() {
-       if (xhr.readyState !== 4) return;
-       if (btn) btn.disabled = false;
-       if (xhr.status < 200 || xhr.status >= 300) {
-         statusEl.textContent = 'Request failed (' + xhr.status + ').';
-         statusEl.className = 'cw-action-status error';
-         return;
-       }
-       try {
-         var data = JSON.parse(xhr.responseText);
-       } catch (e) {
-         statusEl.textContent = 'Invalid server response.';
-         statusEl.className = 'cw-action-status error';
-         return;
-       }
-        if (data.success) {
-          statusEl.textContent = data.message || 'Status updated successfully.';
-          statusEl.className = 'cw-action-status success';
-          setTimeout(function() {
-            statusEl.textContent = '';
-            if (confirm('Case status updated. Would you like to send an email notification for this decision?')) {
-              chShowLetterSelection();
-            } else {
-              var applyBtn = document.getElementById('chApplyStatusBtn');
-              if (applyBtn) applyBtn.disabled = false;
-            }
-          }, 300);
-        } else {
-          statusEl.textContent = data.message || 'Update failed.';
-          statusEl.className = 'cw-action-status error';
-        }
-      };
-      xhr.onerror = function() {
-        if (btn) btn.disabled = false;
-        statusEl.textContent = 'Network error.';
-        statusEl.className = 'cw-action-status error';
-      };
-      xhr.send(formData);
-    };
-
-   window.chShowLetterSelection = function() {
-     var wrap = document.getElementById('chLetterSelectionWrap');
-     if (wrap) {
-       wrap.style.display = 'block';
-     }
-     var letterSelect = document.getElementById('chLetterSelect');
-     if (letterSelect) letterSelect.value = '';
-     var letterStatus = document.getElementById('chLetterStatus');
-     if (letterStatus) { letterStatus.textContent = ''; letterStatus.className = 'cw-action-status'; }
-     var applyBtn = document.getElementById('chApplyStatusBtn');
-     if (applyBtn) applyBtn.disabled = false;
-   };
-
-   window.chSendLetter = function() {
-     var select = document.getElementById('chLetterSelect');
-     var statusEl = document.getElementById('chLetterStatus');
-     if (!select || !statusEl) return;
-
-     var letterCode = select.value;
-     if (!letterCode) {
-       statusEl.textContent = 'Please select a letter type.';
-       statusEl.className = 'cw-action-status error';
-       return;
-     }
-
-     var letterLabels = {
-       'written_warning': 'Written Warning',
-       'suspension_notice': 'Suspension',
-       'termination_decision': 'Termination'
-     };
-     var label = letterLabels[letterCode] || letterCode;
-
-     if (!confirm('Send ' + label + ' letter via email? This will open the email composer with the selected template.')) return;
-
-     statusEl.textContent = 'Redirecting to email composer...';
-
-     var baseUrl = <?= $jsNotificationUrl; ?>;
-     var url = baseUrl + '&template_code=' + encodeURIComponent(letterCode) + '&document_type=' + encodeURIComponent(letterCode);
-
-     window.location.href = url;
-   };
-
-    window.chSubmitAction = function(action, btn) {
-      var statusEl = document.getElementById('chwfActionStatus');
-    if (!statusEl) return;
-    if (!confirm('Update complaint status? This will advance the workflow accordingly.')) return;
-
-    statusEl.textContent = 'Updating...';
-    if (btn) btn.disabled = true;
-
-    var apiUrl = '?page=complaint-workflow&id=<?= (int)$case['id'] ?>';
-    var path = window.location.pathname;
-    var parts = path.split('/').filter(Boolean);
-    var lcIndex = parts.indexOf('hrms-capstone');
-    if (lcIndex !== -1) {
-      apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/complaint_workflow_action.php';
-    } else {
-      var dirs = parts.slice(0, -2);
-      apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/complaint_workflow_action.php';
-    }
-
-    var formData = new FormData();
-    formData.append('complaint_id', '<?= (int)$case['id'] ?>');
-    formData.append('action', action);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', apiUrl, true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      statusEl.textContent = 'Server responded: ' + xhr.status + ' ' + xhr.statusText;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        statusEl.textContent = 'Request failed (' + xhr.status + '). Check console.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-        return;
-      }
-      try {
-        var data = JSON.parse(xhr.responseText);
-      } catch (e) {
-        statusEl.textContent = 'Invalid server response.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-        return;
-      }
-      if (data.success) {
-        statusEl.textContent = data.message || 'Status updated successfully.';
-        statusEl.className = 'cw-action-status success';
-        setTimeout(function() { location.reload(); }, 900);
-      } else {
-        statusEl.textContent = data.message || 'Update failed.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-      }
-    };
-    xhr.onerror = function() {
-      statusEl.textContent = 'Network error. Check console for details.';
-      statusEl.className = 'cw-action-status error';
-      if (btn) btn.disabled = false;
-    };
-    xhr.send(formData);
-  };
-
-  window.chSubmitDecision = function(targetStatus, btn) {
-    var statusEl = document.getElementById('chwfActionStatus');
-    if (!statusEl) return;
-    var decisionLabel = btn ? btn.textContent.trim() : 'Apply decision';
-    if (!confirm(decisionLabel + '? This will update the complaint status and record the decision.')) return;
-
-    statusEl.textContent = 'Recording decision...';
-    if (btn) btn.disabled = true;
-
-    var apiUrl = '';
-    var path = window.location.pathname;
-    var parts = path.split('/').filter(Boolean);
-    var lcIndex = parts.indexOf('hrms-capstone');
-    if (lcIndex !== -1) {
-      apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/complaint_workflow_action.php';
-    } else {
-      var dirs = parts.slice(0, -2);
-      apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/complaint_workflow_action.php';
-    }
-
-    var formData = new FormData();
-    formData.append('complaint_id', '<?= (int)$case['id'] ?>');
-    formData.append('action', 'finalize_decision');
-    formData.append('target_status', targetStatus);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', apiUrl, true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      statusEl.textContent = 'Server responded: ' + xhr.status + ' ' + xhr.statusText;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        statusEl.textContent = 'Request failed (' + xhr.status + '). Check console.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-        return;
-      }
-      try {
-        var data = JSON.parse(xhr.responseText);
-      } catch (e) {
-        statusEl.textContent = 'Invalid server response.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-        return;
-      }
-      if (data.success) {
-        statusEl.textContent = data.message || 'Decision recorded successfully.';
-        statusEl.className = 'cw-action-status success';
-        setTimeout(function() { location.reload(); }, 900);
-      } else {
-        statusEl.textContent = data.message || 'Decision failed.';
-        statusEl.className = 'cw-action-status error';
-        if (btn) btn.disabled = false;
-      }
-    };
-    xhr.onerror = function() {
-      statusEl.textContent = 'Network error. Check console for details.';
-      statusEl.className = 'cw-action-status error';
-      if (btn) btn.disabled = false;
-    };
-    xhr.send(formData);
-  };
-
-  window.cwLoadDecisionHistory = function() {
-    function esc(t) {
-      if (t == null) return '';
-      return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
-
-    var listEl = document.getElementById('cwDecisionHistoryList');
-    if (!listEl) return;
-
-    var apiUrl = '';
-    var path = window.location.pathname;
-    var parts = path.split('/').filter(Boolean);
-    var lcIndex = parts.indexOf('hrms-capstone');
-    if (lcIndex !== -1) {
-      apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/get_lc_complaint_decision_history.php';
-    } else {
-      var dirs = parts.slice(0, -2);
-      apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/get_lc_complaint_decision_history.php';
-    }
-
-    listEl.innerHTML = '<div class="cw-dh-empty"><i class="bi bi-hourglass-split"></i><br>Loading…</div>';
-
-    var complaintId = '<?= (int)$case['id'] ?>';
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', apiUrl + '?complaint_id=' + encodeURIComponent(complaintId), true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        listEl.innerHTML = '<div class="cw-dh-error">Failed to load history (' + xhr.status + ').</div>';
-        return;
-      }
-      try {
-        var data = JSON.parse(xhr.responseText);
-      } catch (e) {
-        listEl.innerHTML = '<div class="cw-dh-error">Invalid server response.</div>';
-        return;
-      }
-      if (!data.success || !Array.isArray(data.data) || !data.data.length) {
-        listEl.innerHTML = '<div class="cw-dh-empty">No decision records yet.</div>';
-        return;
-      }
-
-      function dotCls(action, ns) {
-        if (action === 'reopen') return 'reopen';
-        if (ns === 'closed' || ns === 'closed_no_violation' || ns === 'closed_warning_issued' || ns === 'closed_suspension' || ns === 'closed_termination_recommended' || ns === 'closed_resolved') return 'close';
-        return 'status-change';
-      }
-
-      function fmtDate(d) {
-        if (!d) return '—';
-        var dt = new Date(d.replace(' ', 'T'));
-        if (isNaN(dt.getTime())) return d;
-        return dt.toLocaleString('en-PH', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-      }
-
-      listEl.innerHTML = '<div class="cw-dh-list">' + data.data.map(function(r) {
-        var cls = dotCls(r.action, r.new_status);
-        var badges = '';
-        if (r.old_status) {
-          badges += '<span class="cw-dh-badge old">' + escapeHtml(r.old_status.replace(/_/g,' ')) + '</span>';
-        }
-        if (r.new_status) {
-          badges += '<span class="cw-dh-arrow">→</span><span class="cw-dh-badge new">' + escapeHtml(r.new_status.replace(/_/g,' ')) + '</span>';
-        }
-        return '<div class="cw-dh-item">'
-          + '<div class="cw-dh-dot ' + cls + '"></div>'
-          + '<div class="cw-dh-body">'
-          + '<div class="cw-dh-label">' + esc(r.decision_label || r.action) + '</div>'
-          + '<div class="cw-dh-meta">'
-          + '<span><i class="bi bi-person"></i> ' + esc(r.performer_name || 'User #' + r.performed_by) + '</span>'
-          + '<span><i class="bi bi-calendar"></i> ' + fmtDate(r.created_at) + '</span>'
-          + (badges ? '<span>' + badges + '</span>' : '')
-          + '</div>'
-          + (r.notes ? '<div style="font-size:0.75rem;color:var(--text-500,#6b7280);margin-top:3px;">' + esc(r.notes) + '</div>' : '')
-          + '</div>'
-          + '</div>';
-      }).join('') + '</div>';
-    };
-    xhr.onerror = function() {
-      listEl.innerHTML = '<div class="cw-dh-error">Network error. Check console for details.</div>';
-    };
-    xhr.send();
-  };
-
-  window.chwfInvestigatorSearch = function() {
-    var container = document.querySelector('.chwf-investigator-select');
-    if (!container) return;
-    var searchEl = container.querySelector('.chwf-investigator-search');
-    var resultsEl = container.querySelector('.chwf-investigator-results');
-    var statusEl = container.querySelector('.chwf-investigator-status');
-    var complaintId = parseInt((searchEl ? searchEl.getAttribute('data-complaint-id') : '0') || '0', 10);
-    var debounceT = null;
-
-    function buildItem(emp, idx) {
-      var name = emp.full_name || 'Employee';
-      var initials = name.split(' ').map(function(n){ return n.charAt(0); }).join('').substring(0,2).toUpperCase();
-      var dept = emp.department || '';
-      var pos = emp.job_title || emp.position_name || '';
-      var sub = [dept, pos].filter(Boolean).join(' · ') || (emp.email || '');
-      return '<div class="sr-item" role="option" tabindex="0" data-emp-index="' + idx + '" data-employee-id="' + (emp.employee_id || emp.id || '') + '" data-emp-name="' + name.replace(/"/g, '&quot;') + '" style="display:flex; align-items:center; gap:10px; padding:8px 10px; cursor:pointer;">'
-        + '<div style="width:28px; height:28px; border-radius:50%; background:rgba(13,27,46,.06); display:inline-flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:var(--text-600,#5b6472); flex-shrink:0;">' + initials + '</div>'
-        + '<div style="flex:1; min-width:0;">'
-        + '<div class="sr-item-name" style="font-weight:600; color:var(--text-900,#1b2430); font-size:0.82rem;">' + name + '</div>'
-        + '<div style="font-size:0.72rem; color:var(--text-500,#6b7280);">' + (sub || '') + '</div>'
-        + '</div>'
-        + '</div>';
-    }
-
-    function renderResults(items) {
-      if (!resultsEl) return;
-      if (!items.length) {
-        resultsEl.innerHTML = '<div style="padding:10px; font-size:0.82rem; color:var(--text-500,#6b7280);">No em_employees found.</div>';
-        resultsEl.style.display = 'block';
-        return;
-      }
-      resultsEl.innerHTML = items.map(buildItem).join('');
-      resultsEl.style.display = 'block';
-      resultsEl.querySelectorAll('.sr-item').forEach(function(el) {
-        el.addEventListener('click', function() {
-          var eid = el.getAttribute('data-employee-id');
-          var name = el.getAttribute('data-emp-name') || '';
-          if (eid) chwfAssignInvestigator(complaintId, eid, name);
-        });
-      });
-    }
-
-    if (searchEl) {
-      searchEl.addEventListener('input', function() {
-        var q = (searchEl.value || '').trim();
-        if (debounceT) clearTimeout(debounceT);
-        if (q.length < 2) { resultsEl.innerHTML = ''; resultsEl.style.display = 'none'; if (statusEl) statusEl.textContent = ''; return; }
-        if (statusEl) { statusEl.textContent = 'Searching…'; statusEl.className = 'chwf-investigator-status'; }
-        debounceT = setTimeout(function() {
-          var apiUrl = '';
-          var path = window.location.pathname;
-          var parts = path.split('/').filter(Boolean);
-          var lcIndex = parts.indexOf('hrms-capstone');
-          if (lcIndex !== -1) {
-            apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/search_hr_employees.php';
-          } else {
-            var dirs = parts.slice(0, -2);
-            apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/search_hr_employees.php';
-          }
-          var xhr = new XMLHttpRequest();
-          xhr.open('GET', apiUrl + '?q=' + encodeURIComponent(q) + '&department_id=', true);
-          xhr.setRequestHeader('Accept', 'application/json');
-          xhr.onreadystatechange = function() {
-            if (xhr.readyState !== 4) return;
-            if (xhr.status < 200 || xhr.status >= 300) {
-              if (statusEl) { statusEl.textContent = 'Search failed (' + xhr.status + ').'; statusEl.className = 'chwf-investigator-status error'; }
-              return;
-            }
-            try {
-              var data = JSON.parse(xhr.responseText);
-            } catch (e) {
-              if (statusEl) { statusEl.textContent = 'Search failed.'; statusEl.className = 'chwf-investigator-status error'; }
-              return;
-            }
-            var items = (data && data.success && Array.isArray(data.data)) ? data.data : [];
-            renderResults(items);
-            if (statusEl && !items.length) { statusEl.textContent = ''; statusEl.className = 'chwf-investigator-status'; }
-          };
-          xhr.onerror = function() {
-            if (statusEl) { statusEl.textContent = 'Network error.'; statusEl.className = 'chwf-investigator-status error'; }
-          };
-          xhr.send();
-        }, 250);
-      });
-    }
-  };
-
-  window.chwfAssignInvestigator = function(complaintId, employeeId, fullName) {
-    var container = document.querySelector('.chwf-investigator-select');
-    var statusEl = container ? container.querySelector('.chwf-investigator-status') : document.querySelector('.chwf-investigator-status');
-    if (!statusEl) return;
-    if (!confirm('Assign ' + fullName + ' as investigator for this complaint?')) return;
-
-    statusEl.textContent = 'Assigning…';
-    statusEl.className = 'chwf-investigator-status';
-
-    var apiUrl = '';
-    var path = window.location.pathname;
-    var parts = path.split('/').filter(Boolean);
-    var lcIndex = parts.indexOf('hrms-capstone');
-    if (lcIndex !== -1) {
-      apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/complaint_workflow_action.php';
-    } else {
-      var dirs = parts.slice(0, -2);
-      apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/complaint_workflow_action.php';
-    }
-
-    var formData = new FormData();
-    formData.append('complaint_id', String(complaintId));
-    formData.append('action', 'assign_investigator');
-    formData.append('employee_id', String(employeeId));
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', apiUrl, true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      statusEl.textContent = 'Server responded: ' + xhr.status + ' ' + xhr.statusText;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        statusEl.textContent = 'Request failed (' + xhr.status + '). Check console.';
-        statusEl.className = 'chwf-investigator-status error';
-        return;
-      }
-      try {
-        var data = JSON.parse(xhr.responseText);
-      } catch (e) {
-        statusEl.textContent = 'Invalid server response. Check console.';
-        statusEl.className = 'chwf-investigator-status error';
-        console.error('Invalid JSON', xhr.responseText);
-        return;
-      }
-      if (data.success) {
-        statusEl.textContent = 'Investigator assigned.';
-        statusEl.className = 'chwf-investigator-status success';
-        if (container) {
-          var wrap = container.querySelector('.chwf-investigator-search-wrap');
-          var selected = container.querySelector('.chwf-investigator-selected');
-          var nameEl = container.querySelector('.chwf-investigator-selected-name');
-          if (wrap) wrap.style.display = 'none';
-          if (selected) selected.style.display = 'flex';
-          if (nameEl) nameEl.textContent = fullName;
-        } else {
-          setTimeout(function() { location.reload(); }, 600);
-        }
-      } else {
-        statusEl.textContent = data.message || 'Failed to assign investigator.';
-        statusEl.className = 'chwf-investigator-status error';
-      }
-    };
-    xhr.onerror = function() {
-      console.error('Assign investigator network error. URL:', apiUrl);
-      statusEl.textContent = 'Network error. Check console for details.';
-      statusEl.className = 'chwf-investigator-status error';
-    };
-    xhr.send(formData);
-  };
-
-  window.chwfClearInvestigator = function(complaintId) {
-    var container = document.querySelector('.chwf-investigator-select');
-    var statusEl = container ? container.querySelector('.chwf-investigator-status') : document.querySelector('.chwf-investigator-status');
-    if (!statusEl) return;
-    if (!confirm('Remove the assigned investigator?')) return;
-
-    statusEl.textContent = 'Removing…';
-    statusEl.className = 'chwf-investigator-status';
-
-    var apiUrl = '';
-    var path = window.location.pathname;
-    var parts = path.split('/').filter(Boolean);
-    var lcIndex = parts.indexOf('hrms-capstone');
-    if (lcIndex !== -1) {
-      apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/complaint_workflow_action.php';
-    } else {
-      var dirs = parts.slice(0, -2);
-      apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/complaint_workflow_action.php';
-    }
-
-    var formData = new FormData();
-    formData.append('complaint_id', String(complaintId));
-    formData.append('action', 'clear_investigator');
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', apiUrl, true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      statusEl.textContent = 'Server responded: ' + xhr.status + ' ' + xhr.statusText;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        statusEl.textContent = 'Request failed (' + xhr.status + '). Check console.';
-        statusEl.className = 'chwf-investigator-status error';
-        return;
-      }
-      try {
-        var data = JSON.parse(xhr.responseText);
-      } catch (e) {
-        statusEl.textContent = 'Invalid server response. Check console.';
-        statusEl.className = 'chwf-investigator-status error';
-        console.error('Invalid JSON', xhr.responseText);
-        return;
-      }
-      if (data.success) {
-        statusEl.textContent = 'Investigator removed.';
-        statusEl.className = 'chwf-investigator-status success';
-        if (container) {
-          var wrap = container.querySelector('.chwf-investigator-search-wrap');
-          var selected = container.querySelector('.chwf-investigator-selected');
-          if (wrap) wrap.style.display = 'block';
-          if (selected) selected.style.display = 'none';
-          var searchInput = container.querySelector('.chwf-investigator-search');
-          if (searchInput) searchInput.value = '';
-          var results = container.querySelector('.chwf-investigator-results');
-          if (results) { results.innerHTML = ''; results.style.display = 'none'; }
-        } else {
-          setTimeout(function() { location.reload(); }, 600);
-        }
-      } else {
-        statusEl.textContent = data.message || 'Failed to remove investigator.';
-        statusEl.className = 'chwf-investigator-status error';
-      }
-    };
-    xhr.onerror = function() {
-      console.error('Clear investigator network error. URL:', apiUrl);
-      statusEl.textContent = 'Network error. Check console for details.';
-      statusEl.className = 'chwf-investigator-status error';
-    };
-    xhr.send(formData);
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', chwfInvestigatorSearch);
-  } else {
-    chwfInvestigatorSearch();
-  }
-
-  window.cwLoadEvidence = function() {
-    var listEl = document.getElementById('cwEvidenceList');
-    var loadingEl = document.getElementById('cwEvidenceLoading');
-    var emptyEl = document.getElementById('cwEvidenceEmpty');
-    var statusEl = document.getElementById('cwEvidenceStatus');
-    if (!listEl) return;
-
-    var apiUrl = '';
-    var path = window.location.pathname;
-    var parts = path.split('/').filter(Boolean);
-    var lcIndex = parts.indexOf('hrms-capstone');
-    if (lcIndex !== -1) {
-      apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/complaint_evidence.php?complaint_id=<?= (int)$case['id'] ?>';
-    } else {
-      var dirs = parts.slice(0, -2);
-      apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/complaint_evidence.php?complaint_id=<?= (int)$case['id'] ?>';
-    }
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', apiUrl, true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (listEl) listEl.innerHTML = '<div class="cw-evidence-empty"><i class="bi bi-exclamation-triangle"></i><span>Failed to load evidence.</span></div>';
-        return;
-      }
-      try {
-        var data = JSON.parse(xhr.responseText);
-      } catch (e) {
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (listEl) listEl.innerHTML = '<div class="cw-evidence-empty"><i class="bi bi-exclamation-triangle"></i><span>Invalid server response.</span></div>';
-        return;
-      }
-      if (loadingEl) loadingEl.style.display = 'none';
-      if (!data.success || !data.evidence || !data.evidence.length) {
-        if (emptyEl) emptyEl.style.display = '';
-        if (listEl) listEl.innerHTML = '';
-        return;
-      }
-      if (emptyEl) emptyEl.style.display = 'none';
-      var html = '';
-      for (var i = 0; i < data.evidence.length; i++) {
-        var ev = data.evidence[i];
-        var sizeText = ev.file_size ? Math.round(ev.file_size / 1024) + ' KB' : '';
-        var fileUrl = './' + ev.file_path;
-        html += '<div class="cw-evidence-item">'
-          + '<div class="cw-evidence-icon"><i class="bi bi-file-earmark"></i></div>'
-          + '<div class="cw-evidence-details">'
-          + '<div class="cw-evidence-name"><a href="' + fileUrl + '" target="_blank" rel="noopener">' + ev.file_name + '</a></div>';
-        if (ev.description) html += '<div class="cw-evidence-desc">' + ev.description + '</div>';
-        html += '<div class="cw-evidence-meta">' + (ev.file_type || '') + ' &middot; ' + sizeText + ' &middot; Uploaded ' + ev.uploaded_at + '</div>'
-          + '</div>'
-          + '</div>';
-      }
-      if (listEl) listEl.innerHTML = html;
-    };
-    xhr.send();
-  };
-
-  cwLoadEvidence();
-
-  cwLoadDecisionHistory();
-  var reloadBtn = document.getElementById('cwReloadHistoryBtn');
-  if (reloadBtn) {
-    reloadBtn.addEventListener('click', function() {
-      cwLoadDecisionHistory();
-    });
-  }
-
-  window.chShowResponseForm = function() {
-    var card = document.getElementById('chwfResponseCard');
-    if (card) card.style.display = 'block';
-    var textarea = document.getElementById('chwfResponseText');
-    if (textarea) textarea.focus();
-  };
-
-  window.chHideResponseForm = function() {
-    var card = document.getElementById('chwfResponseCard');
-    var textarea = document.getElementById('chwfResponseText');
-    var statusEl = document.getElementById('chwfResponseStatus');
-    if (card) card.style.display = 'none';
-    if (textarea) textarea.value = '';
-    if (statusEl) { statusEl.textContent = ''; statusEl.className = 'cw-action-status'; }
-  };
-
-  window.chSubmitResponse = function() {
-    var textarea = document.getElementById('chwfResponseText');
-    var statusEl = document.getElementById('chwfResponseStatus');
-    if (!textarea || !statusEl) return;
-
-    var responseText = textarea.value.trim();
-    if (responseText === '') {
-      statusEl.textContent = 'Response text is required.';
-      statusEl.className = 'cw-action-status error';
-      return;
-    }
-
-    statusEl.textContent = 'Saving response...';
-    statusEl.className = 'cw-action-status';
-
-    var apiUrl = '';
-    var path = window.location.pathname;
-    var parts = path.split('/').filter(Boolean);
-    var lcIndex = parts.indexOf('hrms-capstone');
-    if (lcIndex !== -1) {
-      apiUrl = window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/complaint_workflow_action.php';
-    } else {
-      var dirs = parts.slice(0, -2);
-      apiUrl = window.location.origin + '/' + dirs.join('/') + '/api/complaint_workflow_action.php';
-    }
-
-    var formData = new FormData();
-    formData.append('complaint_id', '<?= (int)$case['id'] ?>');
-    formData.append('action', 'record_response');
-    formData.append('employee_response', responseText);
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', apiUrl, true);
-    xhr.setRequestHeader('Accept', 'application/json');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState !== 4) return;
-      if (xhr.status < 200 || xhr.status >= 300) {
-        statusEl.textContent = 'Request failed (' + xhr.status + '). Check console.';
-        statusEl.className = 'cw-action-status error';
-        return;
-      }
-      try {
-        var data = JSON.parse(xhr.responseText);
-      } catch (e) {
-        statusEl.textContent = 'Invalid server response.';
-        statusEl.className = 'cw-action-status error';
-        return;
-      }
-      if (data.success) {
-        statusEl.textContent = data.message || 'Response recorded successfully.';
-        statusEl.className = 'cw-action-status success';
-        setTimeout(function() { location.reload(); }, 900);
-      } else {
-        statusEl.textContent = data.message || 'Failed to record response.';
-        statusEl.className = 'cw-action-status error';
-      }
-    };
-    xhr.onerror = function() {
-      statusEl.textContent = 'Network error. Check console for details.';
-      statusEl.className = 'cw-action-status error';
-    };
-    xhr.send(formData);
-  };
-  })();
+window.CHWF_CONFIG = {
+    complaintId: <?= (int)$case['id'] ?>,
+    currentStepKey: <?= json_encode($targetStep) ?>,
+    status: <?= json_encode($case['status'] ?? 'under_initial_review') ?>,
+    investigatorName: <?= json_encode($investigatorName ?: '') ?>,
+    employeeName: <?= json_encode($employeeName ?: '') ?>,
+    employeeId: <?= json_encode($case['employee_id'] ?? '') ?>,
+    respondentEmployeeId: <?= json_encode($case['respondent_employee_id'] ?? '') ?>,
+    respondentName: <?= json_encode($respondentName ?: '') ?>,
+    respondentEmail: <?= json_encode($respondentEmail ?: '') ?>,
+    caseNumber: <?= json_encode('CMP-' . str_pad($case['id'], 5, '0', STR_PAD_LEFT)) ?>,
+    complaintType: <?= json_encode($case['type'] ?? '') ?>,
+    severity: <?= json_encode($case['severity'] ?? '') ?>,
+    description: <?= json_encode($case['description'] ?? '') ?>,
+    assignedTo: <?= json_encode($case['assigned_to'] ?? '') ?>,
+    assetBaseUrl: '/hrms-capstone/modules/compliance/assets/',
+    assignableOfficers: <?= json_encode(array_values(array_map(function($o) {
+        return ['id' => (int)$o['employee_id'], 'name' => $o['full_name'], 'code' => $o['employee_code']];
+    }, $assignableOfficers)), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
+    terminationReply: <?= json_encode($case['termination_reply'] ?? '') ?>,
+    terminationLoiSubmittedAt: <?= json_encode($case['termination_loi_submitted_at'] ?? '') ?>,
+    terminationLoiPdfPath: <?= json_encode($case['termination_loi_pdf_path'] ?? '') ?>,
+};
 </script>
+<script src="js/pages/complaint-workflow-interactive.js?v=<?= time() ?>"></script>
+
+<style>
+  .irwf-page { padding: 0; font-family: Arial, serif; }
+  .irwf-dashboard { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  .irwf-main { min-width: 0; }
+  .irwf-sidebar { width: 320px; flex-shrink: 0; }
+  .irwf-card { background: #fff; border: 1px solid #e4e8ee; border-radius: 0; padding: 16px; margin-bottom: 16px; }
+  .irwf-card h3 { margin: 0 0 12px; font-size: 0.95rem; font-weight: 400; color: #1b2430; }
+  .irwf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .irwf-grid-stack { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .irwf-field { border: 1px solid #e4e8ee; padding: 10px 12px; }
+  .irwf-field.full { grid-column: 1 / -1; }
+  .irwf-label { font-size: 0.7rem; color: #6b7280; margin-bottom: 2px; }
+  .irwf-value { font-size: 0.85rem; color: #1b2430; word-break: break-word; font-weight: 400; }
+  .irwf-value.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+
+  .irwf-flow { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 24px; }
+  .irwf-flow-step { position: relative; padding-bottom: 20px; }
+  .irwf-flow-step:last-child { padding-bottom: 0; }
+  .irwf-flow-step::before { content: ''; position: absolute; left: -18px; top: 0; bottom: 0; width: 1px; background: #dde3ea; }
+  .irwf-flow-step:last-child::before { bottom: 50%; }
+  .irwf-flow-step.completed::before { background: #1f7a5c; }
+  .irwf-flow-step.completed:not(:last-child)::before { background: #1f7a5c; }
+  .irwf-flow-step.current::before { background: repeating-linear-gradient(180deg, #c97f1d 0 6px, #dde3ea 6px 12px); }
+  .irwf-flow-dot { position: absolute; left: -22px; top: 2px; width: 10px; height: 10px; border-radius: 50%; background: #dde3ea; border: 1px solid #fff; box-shadow: 0 0 0 1px #dde3ea; z-index: 1; }
+  .irwf-flow-step.completed .irwf-flow-dot { background: #1f7a5c; box-shadow: 0 0 0 1px #1f7a5c; }
+  .irwf-flow-step.current .irwf-flow-dot { background: #c97f1d; box-shadow: 0 0 0 1px #c97f1d, 0 0 0 4px rgba(201,127,29,.15); }
+  .irwf-flow-body { padding-left: 6px; }
+  .irwf-flow-title { font-size: 0.85rem; color: #1b2430; display: flex; align-items: center; gap: 8px; font-weight: 400; }
+  .irwf-flow-meta { font-size: 0.75rem; color: #6b7280; margin-top: 2px; padding-left: 0; }
+  .irwf-flow-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 0; font-size: 0.65rem; font-weight: 400; margin-left: auto; }
+  .irwf-flow-badge.badge-completed { background: rgba(31,122,92,.08); color: #1f7a5c; }
+  .irwf-flow-badge.badge-current { background: rgba(201,127,29,.08); color: #c97f1d; }
+  .irwf-flow-badge.badge-pending { background: rgba(107,125,158,.08); color: #6b7d9e; }
+  .irwf-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 0; font-size: 0.7rem; font-weight: 400; }
+  .irwf-badge.severity-critical { background: rgba(178,58,58,.08); color: #b23a3a; }
+  .irwf-badge.severity-high { background: rgba(201,127,29,.08); color: #c97f1d; }
+  .irwf-badge.severity-medium { background: rgba(43,122,142,.08); color: #2b7a8e; }
+  .irwf-badge.severity-low { background: rgba(107,125,158,.08); color: #6b7d9e; }
+  .irwf-badge.status-submitted { background: rgba(107,125,158,.08); color: #6b7d9e; }
+  .irwf-badge.status-under_initial_review { background: rgba(59,130,196,.08); color: #3b82c4; }
+  .irwf-badge.status-under_investigation { background: rgba(107,79,158,.08); color: #6b4f9e; }
+  .irwf-badge.status-for_decision { background: rgba(201,127,29,.08); color: #c97f1d; }
+  .irwf-badge.status-pending_employee_response { background: rgba(201,127,29,.08); color: #c97f1d; }
+  .irwf-badge.status-closed { background: rgba(31,122,92,.1); color: #145a42; }
+  .irwf-badge.status-closed_no_violation { background: rgba(31,122,92,.1); color: #145a42; }
+  .irwf-badge.status-closed_warning_issued { background: rgba(31,122,92,.1); color: #145a42; }
+  .irwf-badge.status-closed_suspension { background: rgba(31,122,92,.1); color: #145a42; }
+  .irwf-badge.status-closed_termination_recommended { background: rgba(31,122,92,.1); color: #145a42; }
+  .irwf-badge.status-closed_resolved { background: rgba(31,122,92,.1); color: #145a42; }
+
+  .irwf-decision { border-left: 1px solid #c97f1d; padding-left: 12px; margin: 6px 0; }
+  .irwf-decision-title { font-size: 0.75rem; color: #c97f1d; font-weight: 400; }
+  .irwf-decision-options { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+  .irwf-decision-opt { font-size: 0.75rem; color: #6b7280; font-weight: 400; }
+  .irwf-decision-opt.active { color: #1f7a5c; font-weight: 600; }
+  .irwf-section-title { font-size: 0.9rem; color: #1b2430; margin-bottom: 12px; font-weight: 400; }
+
+  .cc-btn { font-size: 0.72rem; font-weight: 400; padding: 4px 10px; border-radius: 0; border: 1px solid #e4e8ee; background: #fff; color: #5b6472; cursor: pointer; text-decoration: none; white-space: nowrap; transition: background 150ms ease, border-color 150ms ease, color 150ms ease; display: inline-flex; align-items: center; gap: 6px; height: 32px; }
+  .cc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .cc-btn:hover { background: #f3f5f9; border-color: #d3d9e2; }
+  .cc-btn.primary { background: #3b82c4; color: #fff; border-color: #3b82c4; }
+  .cc-btn.primary:hover { background: #1c5a8a; border-color: #1c5a8a; color: #fff; }
+  .cc-btn.danger { background: #fff; color: #a3272a; border-color: #f5c6cb; }
+  .cc-btn.danger:hover { background: #fff5f5; border-color: #a3272a; }
+  .irwf-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .irwf-action-status { font-size: 0.75rem; margin-left: 6px; font-weight: 400; }
+  .irwf-action-status.success { color: #1f7a5c; }
+  .irwf-action-status.error { color: #a3272a; }
+
+  .irwf-step-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    max-width: calc(100vw - 24px);
+    background: #ffffff;
+    border: 1px solid #e4e8ee;
+    border-radius: 6px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    font-family: Arial, sans-serif;
+    z-index: 1050;
+    opacity: 0;
+    transform: translateX(18px);
+    transition: opacity 250ms ease, transform 250ms ease;
+    pointer-events: none;
+  }
+  .irwf-step-notification.is-visible {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+  .irwf-step-notification-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1b2430;
+    margin: 0 0 4px;
+    padding-left: 14px;
+    position: relative;
+  }
+  .irwf-step-notification-title::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 3px;
+    bottom: 3px;
+    width: 3px;
+    border-radius: 2px;
+    background: #3b82c4;
+  }
+  .irwf-step-notification-message {
+    font-size: 12px;
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.4;
+  }
+  @media (max-width: 480px) {
+    .irwf-step-notification {
+      left: 12px;
+      right: 12px;
+      width: auto;
+      top: 12px;
+    }
+  }
+   @media (prefers-reduced-motion: reduce) {
+      .irwf-step-notification {
+        transform: none;
+        transition: opacity 200ms ease;
+      }
+      .irwf-step-notification.is-visible {
+        transform: none;
+      }
+    }
+    @media (max-width: 1024px) {
+      .irwf-dashboard { grid-template-columns: 1fr; }
+      .irwf-sidebar { width: auto; }
+    }
+
+  .irwf-step-actions {
+     margin-top: 10px;
+     padding-top: 10px;
+     border-top: 1px solid #e4e8ee;
+   }
+  .irwf-step-actions-toggle {
+     display: inline-flex;
+     align-items: center;
+     gap: 6px;
+     background: transparent;
+     border: none;
+     padding: 0;
+     font-size: 0.75rem;
+     font-weight: 600;
+     color: #3b82c4;
+     cursor: pointer;
+     font-family: inherit;
+   }
+  .irwf-step-actions-toggle:hover {
+     text-decoration: underline;
+   }
+  .irwf-step-actions-toggle[aria-expanded="true"] .irwf-step-actions-toggle-icon {
+     display: inline-block;
+     transform: rotate(90deg);
+   }
+  .irwf-step-actions-toggle-icon {
+     display: inline-block;
+     font-size: 0.65rem;
+     transition: transform 150ms ease;
+   }
+  .irwf-step-actions-panel {
+     margin-top: 8px;
+     display: flex;
+     flex-wrap: wrap;
+     gap: 8px;
+     align-items: center;
+  }
+  .irwf-step-actions-panel > .chwf-officer-search {
+     flex: 1 1 100%;
+  }
+  .irwf-step-actions-panel[hidden] {
+     display: none;
+   }
+  .irwf-flow-step:not(.current) .irwf-decision {
+     display: none;
+   }
+   .irwf-step-actions-empty {
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+  html {
+    scroll-behavior: smooth;
+  }
+  .irwf-flow-step.current {
+    scroll-margin-top: 24px;
+    scroll-margin-bottom: 24px;
+  }
+  .irwf-flow-step.current .irwf-flow-dot {
+    outline: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  .irwf-flow-step.completed .irwf-flow-body,
+  .irwf-flow-step.pending .irwf-flow-body {
+    opacity: 0.85;
+  }
+  .irwf-flow-step.completed .irwf-flow-title,
+  .irwf-flow-step.pending .irwf-flow-title {
+    color: #6b7280;
+  }
+  .irwf-flow-step.completed .irwf-decision,
+  .irwf-flow-step.pending .irwf-decision {
+    opacity: 0.75;
+  }
+  .irwf-flow-step.completed .irwf-decision-opt,
+  .irwf-flow-step.pending .irwf-decision-opt {
+    cursor: default;
+  }
+
+  .irwf-evidence-upload {
+    margin-bottom: 10px;
+  }
+  .irwf-evidence-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .irwf-evidence-item {
+    font-size: 0.8rem;
+    color: #3b4252;
+    padding: 4px 8px;
+    border: 1px solid #e4e8ee;
+    background: #fff;
+  }
+  .irwf-step-summary {
+    border: 1px solid #1f7a5c;
+    padding: 14px;
+    background: rgba(31,122,92,.04);
+  }
+  .irwf-summary-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1f7a5c;
+    margin-bottom: 10px;
+  }
+  .irwf-summary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .irwf-summary-item {
+    font-size: 0.8rem;
+    color: #1b2430;
+  }
+  .irwf-summary-check {
+    color: #1f7a5c;
+    margin-right: 6px;
+  }
+  .irwf-summary-missing {
+    font-size: 0.8rem;
+    color: #a3272a;
+    padding: 8px;
+    border: 1px solid #f5c6cb;
+    background: #fff5f5;
+  }
+
+  .irwf-confirm-modal {
+    max-width: 220px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.10), 0 0 1px rgba(0, 0, 0, 0.06);
+    margin-left: calc(var(--sidebar-width, 252px) / 2 + 60px);
+    margin-right: 80px;
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .lc-modal-backdrop.open .irwf-confirm-modal {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .irwf-confirm-body {
+    padding: 22px 14px 16px;
+    text-align: center;
+  }
+
+  .irwf-confirm-title {
+    margin: 0;
+    font-family: Arial, serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #1f2937;
+    text-align: center;
+  }
+
+  .irwf-confirm-desc {
+    margin: 8px 0 0;
+    font-family: Arial, serif;
+    font-size: 0.94rem;
+    line-height: 1.45;
+    color: #6b7280;
+    text-align: center;
+  }
+
+  .irwf-confirm-transition {
+    margin: 12px 0 0;
+    font-size: 0.90rem;
+    color: #6b7280;
+    text-align: center;
+    display: none;
+  }
+
+  .irwf-confirm-transition .irwf-confirm-status-current {
+    font-weight: 500;
+    color: #6b7280;
+  }
+
+  .irwf-confirm-transition .irwf-confirm-status-arrow {
+    margin: 0 4px;
+    color: #9ca3af;
+  }
+
+  .irwf-confirm-transition .irwf-confirm-status-next {
+    font-weight: 500;
+    color: #3b82c4;
+  }
+
+  .irwf-confirm-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .irwf-confirm-actions .cc-btn {
+    min-width: auto;
+    padding: 7px 14px;
+    font-size: 0.84rem;
+    transition: all 150ms ease;
+  }
+
+  .chwf-assign-select { box-sizing:border-box; padding:8px 12px; border:1px solid #e4e8ee; border-radius:6px; font-size:0.85rem; color:#1b2430; background:#fff; height:38px; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+
+  .irwf-confirm-submit {
+    position: relative;
+  }
+
+  .irwf-confirm-submit:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  .irwf-confirm-submit::after {
+    content: '';
+    display: none;
+    width: 10px;
+    height: 10px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: irwf-spin 0.6s linear infinite;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+
+  .irwf-confirm-submit.is-loading::after {
+    display: inline-block;
+  }
+
+  .irwf-confirm-submit.is-success {
+    background: #1f7a5c !important;
+    border-color: #1f7a5c !important;
+    color: #fff !important;
+  }
+
+  .irwf-confirm-submit.is-error {
+    background: #fff !important;
+    border-color: #a3272a !important;
+    color: #a3272a !important;
+  }
+
+  .irwf-confirm-cancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  @keyframes irwf-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .irwf-confirm-modal {
+      transition: none;
+    }
+    .irwf-confirm-submit::after {
+      animation: none;
+    }
+  }
+
+  .lc-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease;
+  }
+  .lc-modal-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .lc-modal {
+    background: #fff;
+    border: 1px solid #e4e8ee;
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.12);
+    width: calc(100% - 32px);
+    max-width: 520px;
+    max-height: calc(100vh - 32px);
+    overflow: auto;
+  }
+  .lc-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #e4e8ee;
+  }
+  .lc-modal-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1b2430;
+  }
+  .lc-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: #6b7280;
+    cursor: pointer;
+  }
+  .lc-modal-body {
+    padding: 14px 16px;
+  }
+
+  .chwf-officer-search { position: relative; margin-bottom: 8px; }
+  .chwf-officer-search-input { box-sizing: border-box; width: 100%; padding: 8px 12px; border: 1px solid #e4e8ee; border-radius: 6px; font-size: 0.85rem; color: #1b2430; background: #fff; height: 38px; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+  .chwf-officer-results { position: absolute; left: 0; right: 0; top: calc(100% + 6px); border: 1px solid #e4e8ee; border-radius: 8px; max-height: 220px; overflow-y: auto; background: #fff; z-index: 20; display: none; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.10); }
+  .chwf-officer-result-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f1f4f9; font-size: 0.82rem; color: #1b2430; transition: background 0.1s ease; }
+  .chwf-officer-result-item:hover { background: #f3f6fb; }
+  .chwf-officer-result-item.is-selected { background: #eef2ff; }
+  .chwf-officer-result-item:focus-visible { outline: 2px solid #4f6ef7; outline-offset: -2px; }
+  .chwf-officer-result-item:last-child { border-bottom: none; border-radius: 0 0 8px 8px; }
+  .chwf-result-name { font-weight: 600; font-size: 0.86rem; color: var(--text-900, #1b2430); line-height: 1.3; }
+  .chwf-result-id { font-size: 0.76rem; color: var(--text-500, #64748b); line-height: 1.3; margin-top: 1px; }
+  .chwf-result-details { font-size: 0.76rem; color: var(--text-500, #64748b); line-height: 1.3; margin-top: 1px; }
+  .chwf-officer-status { font-size: 0.75rem; color: #6b7280; margin-top: 4px; }
+  .chwf-officer-status.error { color: #a3272a; }
+  .chwf-officer-status.success { color: #1f7a5c; }
+
+  .irwf-evidence-loading, .irwf-evidence-empty { text-align: center; padding: 20px 0; color: #6b7280; }
+  .irwf-evidence-list { display: flex; flex-direction: column; gap: 8px; }
+  .irwf-evidence-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid #e4e8ee; background: transparent; }
+  .irwf-evidence-details { flex: 1 1 auto; min-width: 0; }
+  .irwf-evidence-name { color: #1b2430; font-size: 0.85rem; word-break: break-word; font-weight: 600; }
+  .irwf-evidence-name a { color: #3b82c4; text-decoration: none; }
+  .irwf-evidence-name a:hover { text-decoration: underline; }
+  .irwf-evidence-desc { font-size: 0.8rem; color: #3b4252; margin-top: 3px; }
+  .irwf-evidence-meta { font-size: 0.7rem; color: #6b7280; margin-top: 3px; }
+
+  .irwf-evidence-item img { display: block; }
+
+  .irwf-evidence-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    margin-left: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #fff;
+    background: #2563eb;
+    border-radius: 999px;
+    cursor: pointer;
+    vertical-align: middle;
+  }
+  .irwf-evidence-badge:hover { background: #1d4ed8; }
+
+   .irwf-workflow-summary { margin-bottom: 12px; padding: 10px 12px; border: 1px solid #e4e8ee; background: rgba(31,122,92,.02); }
+    .irwf-workflow-summary-label { font-size: 0.7rem; color: #6b7280; margin-bottom: 2px; }
+    .irwf-workflow-summary-value { font-size: 0.82rem; color: #1b2430; line-height: 1.45; }
+
+  .irwf-response-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e4e8ee;
+    border-radius: 0;
+    font-size: 0.85rem;
+    color: #1b2430;
+    background: #fff;
+    font-family: inherit;
+    resize: vertical;
+    flex: 1;
+    min-height: 112px;
+  }
+  .irwf-response-form textarea:focus {
+    outline: none;
+    border-color: #3b82c4;
+    box-shadow: 0 0 0 2px rgba(59,130,196,.15);
+  }
+
+  .irwf-actions-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    background: #fafbfc;
+    border: 1px solid #e4e8ee;
+    border-radius: 6px;
+    margin-top: 10px;
+  }
+  .irwf-actions-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .irwf-step-actions-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .irwf-hearing-grid {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 10px;
+    align-items: stretch;
+    width: 100%;
+  }
+  .irwf-hearing-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    align-self: stretch;
+  }
+  .irwf-hearing-actions .cc-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .irwf-hearing-response {
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    align-self: stretch;
+    display: flex;
+  }
+  .irwf-hearing-actions .irwf-action-status {
+    margin-top: 4px;
+    text-align: center;
+  }
+
+  .irwf-response-panel {
+    border: 1px solid #e4e8ee;
+    border-radius: 6px;
+    background: #fff;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .irwf-response-panel-body {
+    padding: 12px;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .irwf-response-form textarea {
+    border-radius: 4px;
+    width: 100%;
+  }
+  .irwf-response-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e4e8ee;
+    background: #fafbfc;
+  }
+  .irwf-response-panel-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1b2430;
+  }
+  .irwf-response-panel-close {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 150ms ease, color 150ms ease;
+  }
+  .irwf-response-panel-close:hover {
+    background: #f3f5f9;
+    color: #1b2430;
+  }
+  .irwf-response-panel-body {
+    padding: 12px;
+  }
+  .irwf-response-saved {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f6f8fb;
+    border: 1px solid #e4e8ee;
+  }
+  .irwf-response-saved-meta {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+  .irwf-response-saved-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.85rem;
+    color: #1b2430;
+    line-height: 1.5;
+  }
+  .irwf-form-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+  .irwf-response-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+  .irwf-response-form textarea {
+    border-radius: 4px;
+    width: 100%;
+  }
+  .irwf-response-form-actions {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .irwf-flow-step .irwf-step-evidence {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .irwf-flow-step .irwf-step-evidence-item {
+    padding: 6px 8px;
+    border: 1px solid #e4e8ee;
+    background: #fff;
+  }
+  .irwf-flow-step .irwf-step-evidence-name {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #1b2430;
+  }
+  .irwf-flow-step .irwf-step-evidence-notes {
+    font-size: 0.7rem;
+    color: #3b4252;
+    margin-top: 2px;
+    line-height: 1.35;
+  }
+  .irwf-flow-step .irwf-step-evidence-img {
+    margin-top: 4px;
+  }
+  .irwf-flow-step .irwf-step-evidence-img img {
+    max-width: 100%;
+    max-height: 120px;
+    display: block;
+    border: 1px solid #e4e8ee;
+    background: #f3f5f9;
+    cursor: pointer;
+  }
+  .irwf-flow-step .irwf-step-evidence-img img:hover {
+    opacity: 0.85;
+  }
+
+  .irwf-sidebar .irwf-table-wrap {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid #e4e8ee;
+    border-radius: 6px;
+    background: #fff;
+  }
+  .irwf-sidebar .irwf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+  .irwf-sidebar .irwf-table th {
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 1px solid #e4e8ee;
+    background: #fafbfc;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .irwf-sidebar .irwf-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f4f9;
+    vertical-align: middle;
+  }
+  .irwf-sidebar .irwf-table tr:last-child td {
+    border-bottom: none;
+  }
+  .irwf-sidebar .irwf-table tr:hover td {
+    background: #fafbfc;
+  }
+  .irwf-sidebar .irwf-empty {
+    padding: 16px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 0.8rem;
+  }
+  .irwf-loi-saved {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #f6f8fb;
+    border: 1px solid #e4e8ee;
+  }
+  .irwf-loi-saved a {
+    font-size: 0.8rem;
+    color: #3b82c4;
+    text-decoration: none;
+  }
+  .irwf-loi-saved a:hover {
+    text-decoration: underline;
+  }
+ </style>
 <?php ob_end_flush(); ?>
-
-

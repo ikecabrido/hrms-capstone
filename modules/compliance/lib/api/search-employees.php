@@ -25,7 +25,7 @@ if ($q === '') {
 $params = [];
 $conds = [];
 
-$conds[] = 'e.first_name LIKE :q OR e.last_name LIKE :q OR e.employee_code LIKE :q OR e.email LIKE :q';
+$conds[] = 'e.first_name LIKE :q OR e.last_name LIKE :q OR e.employee_code LIKE :q OR e.email LIKE :q OR p.position_name LIKE :q';
 $params[':q'] = '%' . $q . '%';
 
 $sql = 'SELECT e.employee_id, e.first_name, e.last_name, e.employee_code AS employee_no, e.email,

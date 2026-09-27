@@ -106,9 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $firstName = trim((string) ($_POST['first_name'] ?? ''));
             $lastName = trim((string) ($_POST['last_name'] ?? ''));
             $middleName = trim((string) ($_POST['middle_name'] ?? ''));
+            $emailInput = trim((string) ($_POST['email'] ?? ''));
 
             if ($firstName === '' || $lastName === '') {
                 $errorMessage = 'First name and last name are required.';
+            } elseif ($emailInput === '' || !filter_var($emailInput, FILTER_VALIDATE_EMAIL)) {
+                $errorMessage = 'A valid email is required.';
             } elseif (!$db instanceof PDO) {
                 $errorMessage = 'Database connection is not available.';
             } else {
@@ -117,13 +120,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         UPDATE em_employees
                         SET first_name = :first_name,
                             last_name = :last_name,
-                            middle_name = :middle_name
+                            middle_name = :middle_name,
+                            email = :email
                         WHERE employee_id = :id
                     ");
                     $stmt->execute([
                         ':first_name' => $firstName,
                         ':last_name' => $lastName,
                         ':middle_name' => $middleName,
+                        ':email' => $emailInput,
                         ':id' => $employeeId,
                     ]);
 
@@ -140,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             ':record_id' => $employeeId,
                             ':action' => 'UPDATE',
                             ':user_type' => 'Employee',
-                            ':description' => 'Updated profile name from "' . $oldName . '" to "' . $newName . '"',
+                            ':description' => 'Updated profile name from "' . $oldName . '" to "' . $newName . '" and email to "' . $emailInput . '"',
                         ]);
                     } catch (Throwable $auditEx) {
                         error_log('ProfileSettings audit trail error: ' . $auditEx->getMessage());
@@ -150,6 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $profile['first_name'] = $firstName;
                     $profile['last_name'] = $lastName;
                     $profile['middle_name'] = $middleName;
+                    $profile['email'] = $emailInput;
                 } catch (Throwable $e) {
                     error_log('ProfileSettings update error: ' . $e->getMessage());
                     $errorMessage = 'Unable to update your profile. Please try again.';
@@ -258,128 +264,13 @@ $middleName = htmlspecialchars((string) ($profile['middle_name'] ?? ''));
 ?>
 <section class="cw-module">
     <div class="cw-row">
-        <div class="cw-col cw-col-main">
-            <!-- Personal Information -->
-            <div class="cw-card">
-                <div class="cw-card-head">
-                    <h3><i class="fa-regular fa-user"></i> Personal Information</h3>
-                </div>
-                <div class="cw-card-body">
-                    <form id="profileForm" method="post" autocomplete="off" data-skip>
-                        <input type="hidden" name="action" value="update_profile">
-                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-                        <div class="cw-info-grid">
-                            <div class="cw-info-item">
-                                <label>First Name</label>
-                                <input type="text" name="first_name" value="<?= $firstName ?>" required>
-                            </div>
-                            <div class="cw-info-item">
-                                <label>Last Name</label>
-                                <input type="text" name="last_name" value="<?= $lastName ?>" required>
-                            </div>
-                            <div class="cw-info-item">
-                                <label>Middle Name</label>
-                                <input type="text" name="middle_name" value="<?= $middleName ?>">
-                            </div>
-                            <div class="cw-info-item">
-                                <label>Email</label>
-                                <input type="email" value="<?= $email ?>" readonly>
-                            </div>
-                        </div>
-                        <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
-                            <button type="button" class="cw-btn primary" onclick="document.getElementById('profileForm').submit();"><i class="bi bi-check2-circle"></i> Save Changes</button>
-                            <a href="?page=dashboard-overview" class="cw-btn"><i class="bi bi-x-circle"></i> Cancel</a>
-                        </div>
-                        <?php if ($successMessage): ?>
-                            <div class="cw-flash success" style="margin-top:12px;"><?= htmlspecialchars($successMessage) ?></div>
-                        <?php endif; ?>
-                        <?php if ($errorMessage): ?>
-                            <div class="cw-flash error" style="margin-top:12px;"><?= htmlspecialchars($errorMessage) ?></div>
-                        <?php endif; ?>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Employment Information -->
-            <div class="cw-card">
-                <div class="cw-card-head">
-                    <h3><i class="fa-solid fa-briefcase"></i> Employment Information</h3>
-                    <span class="cw-stamp cw-stamp-<?= $statusBadgeClass ?>"><?= $statusLabel !== '' ? $statusLabel : 'Unknown' ?></span>
-                </div>
-                <div class="cw-card-body">
-                    <div class="cw-info-grid">
-                        <div class="cw-info-item">
-                            <label>Employee ID</label>
-                            <div><?= $employeeCode !== '' ? $employeeCode : '—' ?></div>
-                        </div>
-                        <div class="cw-info-item">
-                            <label>Department</label>
-                            <div><?= $department !== '' ? $department : '—' ?></div>
-                        </div>
-                        <div class="cw-info-item">
-                            <label>Position</label>
-                            <div><?= $position !== '' ? $position : '—' ?></div>
-                        </div>
-                        <div class="cw-info-item">
-                            <label>Employment Status</label>
-                            <div><?= $employmentStatus !== '' ? $employmentStatus : '—' ?></div>
-                        </div>
-                        <div class="cw-info-item">
-                            <label>Employment Type</label>
-                            <div><?= $employmentType !== 'N/A' ? $employmentType : '—' ?></div>
-                        </div>
-                        <div class="cw-info-item">
-                            <label>Date Hired</label>
-                            <div><?= $hireDate !== 'N/A' ? $hireDate : '—' ?></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Account Security -->
-            <div class="cw-card">
-                <div class="cw-card-head">
-                    <h3><i class="fa-solid fa-lock"></i> Account Security</h3>
-                </div>
-                <div class="cw-card-body">
-                    <?php if ($passwordSuccess): ?>
-                        <div class="cw-flash success" style="margin-bottom:12px;"><?= htmlspecialchars($passwordSuccess) ?></div>
-                    <?php endif; ?>
-                    <?php if ($passwordError): ?>
-                        <div class="cw-flash error" style="margin-bottom:12px;"><?= htmlspecialchars($passwordError) ?></div>
-                    <?php endif; ?>
-                    <div class="cw-info-grid">
-                        <div class="cw-info-item">
-                            <label>Account Email</label>
-                            <div><?= $email !== '' ? $email : '—' ?></div>
-                        </div>
-                        <div class="cw-info-item">
-                            <label>Password Status</label>
-                            <div><?= $hasUserAccount ? 'Set' : 'Not set' ?></div>
-                        </div>
-                        <div class="cw-info-item">
-                            <label>Last Password Change</label>
-                            <div><?= $passwordChanged !== null ? $passwordChanged : 'Never changed' ?></div>
-                        </div>
-                    </div>
-                    <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
-                        <?php if ($hasUserAccount): ?>
-                            <button type="button" class="cw-btn primary" onclick="pwOpenModal()">
-                                <i class="fa-solid fa-key"></i> Change Password
-                            </button>
-                        <?php else: ?>
-                            <span style="font-size:0.85rem; color:var(--text-500,#6b7280);">No linked user account found.</span>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="cw-col cw-col-side">
             <!-- Profile Summary -->
-            <div class="cw-card">
+            <div class="cw-card cw-profile-card">
                 <div class="cw-card-head">
-                    <h3><i class="fa-regular fa-user"></i> Profile</h3>
+                    <div class="cw-card-head-content">
+                        <h3>Profile</h3>
+                    </div>
                 </div>
                 <div class="cw-card-body">
                     <div class="cw-profile">
@@ -392,27 +283,148 @@ $middleName = htmlspecialchars((string) ($profile['middle_name'] ?? ''));
                         </div>
                         <div class="cw-profile-name"><?= htmlspecialchars($displayName) ?></div>
                         <div class="cw-profile-no"><?= $employeeCode !== '' ? $employeeCode : 'EMP-???' ?></div>
-                        <div style="font-size:.78rem; color:var(--text-500,#6b7280); margin-top:4px;">
+                        <div class="cw-profile-meta">
                             <?= $position !== '' ? $position : '' ?>
                             <?php if ($position !== '' && $department !== ''): ?>
                                 <br>
                             <?php endif; ?>
                             <?= $department !== '' ? $department : '' ?>
                         </div>
-                        <div style="margin-top:8px;">
+                        <div class="cw-profile-status">
                             <span class="cw-stamp cw-stamp-<?= $statusBadgeClass ?>"><?= $statusLabel !== '' ? $statusLabel : 'Unknown' ?></span>
                         </div>
                     </div>
-                    <div class="cw-profile-stats" style="grid-template-columns:1fr;">
+                    <div class="cw-profile-stats">
                         <div class="cw-profile-stat">
                             <div class="cw-profile-stat-label">Email</div>
-                            <div class="cw-profile-stat-value" style="font-size:.82rem; font-weight:600;"><?= $email !== '' ? $email : '—' ?></div>
+                            <div class="cw-profile-stat-value"><?= $email !== '' ? $email : '—' ?></div>
                         </div>
                         <?php if ($lastLogin): ?>
                         <div class="cw-profile-stat">
                             <div class="cw-profile-stat-label">Last Login</div>
-                            <div class="cw-profile-stat-value" style="font-size:.82rem; font-weight:600;"><?= $lastLogin ?></div>
+                            <div class="cw-profile-stat-value"><?= $lastLogin ?></div>
                         </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cw-col cw-col-main">
+            <!-- Personal Information -->
+            <div class="cw-card">
+                <div class="cw-card-head">
+                    <div class="cw-card-head-content">
+                        <h3>Personal Information</h3>
+                    </div>
+                </div>
+                <div class="cw-card-body">
+                    <form id="profileForm" method="post" autocomplete="off" data-skip>
+                        <input type="hidden" name="action" value="update_profile">
+                        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+                        <div class="cw-info-grid">
+                            <div class="cw-info-item">
+                                <label>First Name</label>
+                                <input type="text" name="first_name" value="<?= $firstName ?>" required readonly>
+                            </div>
+                            <div class="cw-info-item">
+                                <label>Last Name</label>
+                                <input type="text" name="last_name" value="<?= $lastName ?>" required readonly>
+                            </div>
+                            <div class="cw-info-item">
+                                <label>Middle Name</label>
+                                <input type="text" name="middle_name" value="<?= $middleName ?>" readonly>
+                            </div>
+                            <div class="cw-info-item cw-email-field">
+                                <label>Email</label>
+                                <input type="email" name="email" value="<?= $email ?>" aria-invalid="false">
+                                <div class="cw-field-feedback" aria-live="polite"></div>
+                            </div>
+                        </div>
+                        <div class="cw-card-actions">
+                            <button type="button" class="cw-btn primary" onclick="if(validateEmailField()){document.getElementById('profileForm').submit();}">Save Changes</button>
+                        </div>
+                        <?php if ($successMessage): ?>
+                            <div class="cw-flash success"><?= htmlspecialchars($successMessage) ?></div>
+                        <?php endif; ?>
+                        <?php if ($errorMessage): ?>
+                            <div class="cw-flash error"><?= htmlspecialchars($errorMessage) ?></div>
+                        <?php endif; ?>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Employment Information -->
+            <div class="cw-card">
+                <div class="cw-card-head">
+                    <div class="cw-card-head-content">
+                        <h3>Employment Information</h3>
+                    </div>
+                    <span class="cw-stamp cw-stamp-badge-success"><span class="cw-status-dot"></span> <?= $statusLabel !== '' ? $statusLabel : 'Unknown' ?></span>
+                </div>
+                <div class="cw-card-body">
+                    <div class="cw-info-grid cw-employment-grid">
+                        <div class="cw-info-item">
+                            <label>Employee ID</label>
+                            <div class="cw-value cw-value-id"><?= $employeeCode !== '' ? $employeeCode : '—' ?></div>
+                        </div>
+                        <div class="cw-info-item">
+                            <label>Department</label>
+                            <div class="cw-value"><?= $department !== '' ? $department : '—' ?></div>
+                        </div>
+                        <div class="cw-info-item">
+                            <label>Position</label>
+                            <div class="cw-value"><?= $position !== '' ? $position : '—' ?></div>
+                        </div>
+                        <div class="cw-info-item">
+                            <label>Employment Status</label>
+                            <div class="cw-value"><span class="cw-status-indicator"></span> <?= $employmentStatus !== '' ? $employmentStatus : '—' ?></div>
+                        </div>
+                        <div class="cw-info-item">
+                            <label>Employment Type</label>
+                            <div class="cw-value cw-value-type"><?= $employmentType !== 'N/A' ? $employmentType : '—' ?></div>
+                        </div>
+                        <div class="cw-info-item">
+                            <label>Date Hired</label>
+                            <div class="cw-value"><?= $hireDate !== 'N/A' ? $hireDate : '—' ?></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Security -->
+            <div class="cw-card">
+                <div class="cw-card-head">
+                    <div class="cw-card-head-content">
+                        <h3>Account Security</h3>
+                    </div>
+                </div>
+                <div class="cw-card-body">
+                    <?php if ($passwordSuccess): ?>
+                        <div class="cw-flash success"><?= htmlspecialchars($passwordSuccess) ?></div>
+                    <?php endif; ?>
+                    <?php if ($passwordError): ?>
+                        <div class="cw-flash error"><?= htmlspecialchars($passwordError) ?></div>
+                    <?php endif; ?>
+                    <div class="cw-info-grid">
+                        <div class="cw-info-item">
+                            <label>Account Email</label>
+                            <div class="cw-value"><?= $email !== '' ? $email : '—' ?></div>
+                        </div>
+                        <div class="cw-info-item">
+                            <label>Password Status</label>
+                            <div class="cw-value"><?= $hasUserAccount ? 'Set' : 'Not set' ?></div>
+                        </div>
+                        <div class="cw-info-item">
+                            <label>Last Password Change</label>
+                            <div class="cw-value"><?= $passwordChanged !== null ? $passwordChanged : 'Never changed' ?></div>
+                        </div>
+                    </div>
+                    <div class="cw-card-actions">
+                        <?php if ($hasUserAccount): ?>
+                            <button type="button" class="cw-btn primary" onclick="pwOpenModal()">Change Password</button>
+                        <?php else: ?>
+                            <span class="cw-text-muted">No linked user account found.</span>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -425,8 +437,7 @@ $middleName = htmlspecialchars((string) ($profile['middle_name'] ?? ''));
 <div class="cw-modal-overlay" id="pwModalBackdrop" onclick="if(event.target===this)pwCloseModal()">
     <div class="cw-modal" role="dialog" aria-modal="true" aria-labelledby="pwModalTitle">
         <div class="cw-modal-head">
-            <h3 id="pwModalTitle"><i class="fa-solid fa-key"></i> Change Password</h3>
-            <button type="button" class="cw-modal-close" onclick="pwCloseModal()">&times;</button>
+            <h3 id="pwModalTitle">Change Password</h3>
         </div>
         <form id="pwModalForm" method="post" autocomplete="off" data-skip>
             <div class="cw-modal-body">
@@ -577,87 +588,516 @@ if (window.location.hash === '#change-password') {
 
     newPwInput.addEventListener('input', validateRequirements);
 })();
+
+(function(){
+    var flashes = document.querySelectorAll('.cw-flash.success');
+    flashes.forEach(function(el){
+        requestAnimationFrame(function(){
+            el.style.display = 'flex';
+            el.offsetHeight;
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        });
+        setTimeout(function(){
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-4px)';
+            el.style.maxHeight = '0';
+            el.style.marginTop = '0';
+            el.style.marginBottom = '0';
+            el.style.paddingTop = '0';
+            el.style.paddingBottom = '0';
+            el.style.overflow = 'hidden';
+            setTimeout(function(){ el.remove(); }, 320);
+        }, 5000);
+    });
+})();
+
+(function(){
+    var emailInput = document.querySelector('input[name="email"]');
+    if (!emailInput) return;
+    var feedback = emailInput.parentElement.querySelector('.cw-field-feedback') || document.createElement('div');
+    if (!feedback.parentElement) {
+        emailInput.parentElement.appendChild(feedback);
+    }
+    feedback.className = 'cw-field-feedback';
+    var timer = null;
+    var currentSuggestion = null;
+
+    var typoMap = {
+        'gmail.comm': 'gmail.com',
+        'gmail.con': 'gmail.com',
+        'gmail.co': 'gmail.com',
+        'yahooo.com': 'yahoo.com',
+        'hotmial.com': 'hotmail.com',
+        'outlok.com': 'outlook.com',
+        'gmail.cmo': 'gmail.com',
+        'gmail.cim': 'gmail.com',
+        'gmail.cpm': 'gmail.com',
+        'gmail.c0m': 'gmail.com',
+        'yahoo.cm': 'yahoo.com',
+        'yaho.com': 'yahoo.com',
+        'hotmail.cm': 'hotmail.com',
+        'hotmial.cm': 'hotmail.com',
+        'outlook.cm': 'outlook.com',
+        'outlok.cm': 'outlook.com'
+    };
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function validate() {
+        var val = emailInput.value.trim();
+        emailInput.classList.remove('is-valid', 'is-invalid', 'is-warning');
+        feedback.className = 'cw-field-feedback';
+        feedback.innerHTML = '';
+        emailInput.setAttribute('aria-invalid', 'false');
+        currentSuggestion = null;
+
+        if (val === '') {
+            return true;
+        }
+
+        if (/\s/.test(val)) {
+            showState('invalid', '<span>Please enter a valid email address.</span>');
+            emailInput.setAttribute('aria-invalid', 'true');
+            return false;
+        }
+
+        var atCount = 0;
+        var atPos = -1;
+        for (var i = 0; i < val.length; i++) {
+            if (val[i] === '@') {
+                atCount++;
+                atPos = i;
+            }
+        }
+
+        if (atCount !== 1 || atPos === 0 || atPos === val.length - 1) {
+            showState('invalid', '<span>Please enter a valid email address.</span>');
+            emailInput.setAttribute('aria-invalid', 'true');
+            return false;
+        }
+
+        var local = val.substring(0, atPos);
+        var domain = val.substring(atPos + 1).toLowerCase();
+
+        if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/.test(local)) {
+            showState('invalid', '<span>Please enter a valid email address.</span>');
+            emailInput.setAttribute('aria-invalid', 'true');
+            return false;
+        }
+
+        if (!/^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+$/.test(domain) || domain.startsWith('.') || domain.endsWith('.') || domain.includes('..')) {
+            showState('invalid', '<span>Please enter a valid email address.</span>');
+            emailInput.setAttribute('aria-invalid', 'true');
+            return false;
+        }
+
+        var suggestion = typoMap[domain];
+        if (suggestion) {
+            currentSuggestion = local + '@' + suggestion;
+            showState('warning', '<span>Did you mean <a href="mailto:' + escapeHtml(currentSuggestion) + '">' + escapeHtml(currentSuggestion) + '</a>?</span>');
+            return true;
+        }
+
+        showState('valid', '<span>Valid email address</span>');
+        return true;
+    }
+
+    function showState(state, html) {
+        emailInput.classList.add('is-' + state);
+        feedback.innerHTML = html;
+        feedback.classList.add('visible');
+        feedback.classList.add(state);
+    }
+
+    function isValid() {
+        return emailInput.classList.contains('is-valid') || emailInput.classList.contains('is-warning');
+    }
+
+    emailInput.addEventListener('input', function() {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(validate, 200);
+    });
+
+    emailInput.addEventListener('blur', function() {
+        if (timer) clearTimeout(timer);
+        validate();
+    });
+
+    window.validateEmailField = function() {
+        var val = emailInput.value.trim();
+        if (val === '') return true;
+        validate();
+        return isValid() || emailInput.classList.contains('is-warning');
+    };
+})();
 </script>
 
 <style>
-.cw-module { padding: 4px 2px 24px; }
-.cw-flash { padding:10px 14px; border-radius:10px; font-size:.84rem; font-weight:600; margin-bottom:14px; display:none; }
-.cw-flash.success { display:block; background:var(--success-50,#ecfdf5); color:var(--success-700,#047857); border:1px solid rgba(16,185,129,.25); }
-.cw-flash.error { display:block; background:var(--danger-50,#fef2f2); color:var(--danger-700,#b91c1c); border:1px solid rgba(239,68,68,.25); }
-
-.cw-row { display:grid; grid-template-columns:1fr 360px; gap:16px; align-items:start; }
-.cw-col-main { min-width:0; }
-.cw-col-side { width:360px; flex-shrink:0; }
-@media (max-width: 1100px) {
-    .cw-row { grid-template-columns:1fr; }
-    .cw-col-side { position:static; width:auto; }
+:root {
+    --cw-bg: #f4f5f7;
+    --cw-card: #ffffff;
+    --cw-border: #e1e4e8;
+    --cw-border-light: #e8eaed;
+    --cw-text: #2f3439;
+    --cw-muted: #737b83;
+    --cw-primary: #2f6fa8;
+    --cw-primary-hover: #285f91;
+    --cw-success: #3f8053;
+    --cw-danger: #b34b4b;
+    --cw-radius: 6px;
 }
 
-.cw-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; }
-.cw-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-.cw-card-head h3 { margin:0; font-size:.98rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
-.cw-card-body { display:flex; flex-direction:column; }
+.cw-module {
+    background: var(--cw-bg);
+    padding: 0;
+}
 
-.cw-info-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
-.cw-info-item label { display:block; font-size:.72rem; font-weight:700; color:var(--text-400,#8b93a1); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
-.cw-info-item input { width:100%; box-sizing:border-box; padding:8px 10px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:.82rem; color:var(--text-900,#1b2430); background:#fff; }
-.cw-info-item input[readonly] { background:var(--slate-50,#f8fafc); color:var(--text-500,#6b7280); cursor:not-allowed; }
-.cw-info-item input:focus { outline:none; border-color:var(--info-blue,#3b82c4); box-shadow:0 0 0 3px rgba(59,130,196,.08); }
+.cw-flash {
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    margin-top: 10px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.4;
+}
+.cw-flash:first-child { margin-top: 0; }
+.cw-flash.success {
+    display: flex;
+    background: #f6fbf7;
+    color: var(--cw-success);
+    border: 1px solid #c8e6d0;
+}
+.cw-flash.error {
+    display: block;
+    background: #fdf6f6;
+    color: var(--cw-danger);
+    border: 1px solid #f5c6c6;
+}
 
-.cw-stamp { display:inline-block; font-size:.66rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
-.cw-stamp-success { background:rgba(16,185,129,.12); color:#047857; }
-.cw-stamp-warning { background:rgba(245,158,11,.12); color:#b45309; }
-.cw-stamp-danger { background:rgba(239,68,68,.12); color:#b91c1c; }
-.cw-stamp-secondary { background:rgba(100,116,139,.12); color:#334155; }
+.cw-row {
+    display: grid;
+    grid-template-columns: 31% 1fr;
+    gap: 16px;
+    align-items: start;
+}
+.cw-col-main { min-width: 0; }
+.cw-col-side { min-width: 0; }
+@media (max-width: 768px) {
+    .cw-row { grid-template-columns: 1fr; }
+    .cw-col-side { position: static; width: auto; }
+}
 
-.cw-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; border:1px solid var(--border,#e4e8ee); background:#fff; color:var(--text-700,#3b4252); font-size:.78rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s ease; text-decoration:none; }
-.cw-btn:hover { border-color:var(--info-blue,#3b82c4); color:var(--info-blue,#3b82c4); box-shadow:0 0 0 3px rgba(59,130,196,.08); }
-.cw-btn.primary { background:rgba(59,130,196,.08); border-color:rgba(59,130,196,.25); color:#1c5a8a; }
-.cw-btn.primary:hover { background:rgba(59,130,196,.14); }
+.cw-card {
+    background: var(--cw-card);
+    border: 1px solid var(--cw-border);
+    border-radius: var(--cw-radius);
+    box-shadow: none;
+    overflow: hidden;
+    margin-bottom: 14px;
+}
+.cw-card-head {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--cw-border-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.cw-card-head-content { flex: 1; min-width: 0; }
+.cw-card-head-content h3 {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--cw-text);
+}
+.cw-card-body {
+    padding: 12px 15px;
+}
 
-.cw-profile { text-align:center; padding:12px 0 16px; border-bottom:1px solid var(--border,#e4e8ee); margin-bottom:12px; }
-.cw-profile-avatar { width:56px; height:56px; border-radius:50%; background:rgba(13,27,46,.06); display:inline-flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:800; color:var(--text-600,#5b6472); margin-bottom:6px; overflow:hidden; }
-.cw-profile-name { font-size:.92rem; font-weight:700; color:var(--text-900,#1b2430); }
-.cw-profile-no { font-size:.78rem; color:var(--text-500,#6b7280); }
-.cw-profile-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; }
-.cw-profile-stat { text-align:center; padding:8px; background:rgba(13,27,46,.02); border-radius:8px; border:1px solid var(--border,#e4e8ee); }
-.cw-profile-stat-value { font-size:1.1rem; font-weight:800; color:var(--text-900,#1b2430); }
-.cw-profile-stat-label { font-size:.66rem; font-weight:600; color:var(--text-500,#6b7280); text-transform:uppercase; letter-spacing:.04em; margin-top:2px; }
+.cw-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px 15px;
+}
+@media (max-width: 600px) {
+    .cw-info-grid { grid-template-columns: 1fr; }
+}
+.cw-info-item label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 10.5px;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--cw-muted);
+}
+.cw-info-item input {
+    width: 100%;
+    height: 38px;
+    padding: 6px 9px;
+    border: 1px solid var(--cw-border);
+    border-radius: 4px;
+    background: var(--cw-card);
+    color: var(--cw-text);
+    font-size: 12.5px;
+    line-height: 1.3;
+    box-sizing: border-box;
+    outline: none;
+}
+.cw-info-item input:focus {
+    border-color: #8ba9c5;
+    box-shadow: 0 0 0 2px rgba(37, 99, 166, 0.08);
+}
+.cw-info-item input[readonly] {
+    background: #f7f8f9;
+    color: #4e555c;
+}
+.cw-email-field { position: relative; }
+.cw-field-feedback {
+    margin-top: 4px;
+    font-size: 10.5px;
+    line-height: 1.35;
+    font-weight: 600;
+    min-height: 14px;
+}
+.cw-field-feedback.success { color: var(--cw-success); }
+.cw-field-feedback.error { color: var(--cw-danger); }
+.cw-field-feedback.warning { color: #8a6d1a; }
+.cw-field-feedback a { color: inherit; text-decoration: underline; font-weight: 700; }
 
-.cw-modal-overlay { display:none; position:fixed; inset:0; background:rgba(13,27,46,.45); z-index:1050; align-items:center; justify-content:center; padding:16px; }
-.cw-modal-overlay.active { display:flex; }
-.cw-modal { background:#fff; border-radius:14px; box-shadow:0 24px 48px rgba(13,27,46,.18); max-width:480px; width:100%; max-height:calc(100vh - 32px); overflow-y:auto; }
-.cw-modal-head { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border,#e4e8ee); }
-.cw-modal-head h3 { margin:0; font-size:1rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
-.cw-modal-head h3 i { color:var(--info-blue,#3b82c4); }
-.cw-modal-close { background:none; border:none; font-size:1.25rem; cursor:pointer; color:var(--text-400,#8b93a1); line-height:1; padding:4px; border-radius:6px; transition:all .15s ease; }
-.cw-modal-close:hover { color:var(--text-900,#1b2430); background:rgba(13,27,46,.05); }
-.cw-modal-body { padding:16px 20px 20px; }
-.cw-modal .profile-field { margin-bottom:12px; }
-.cw-modal .profile-field:last-child { margin-bottom:0; }
-.cw-modal .profile-field label { display:block; font-size:.72rem; font-weight:700; color:var(--text-700,#3b4252); text-transform:uppercase; letter-spacing:.3px; margin-bottom:6px; }
-.cw-modal .profile-field input { width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid var(--border,#e4e8ee); border-radius:8px; font-size:.88rem; outline:none; background:#fff; color:var(--text-900,#1b2430); transition:border-color .15s ease, box-shadow .15s ease; }
-.cw-modal .profile-field input:focus { border-color:var(--info-blue,#3b82c4); box-shadow:0 0 0 3px rgba(59,130,196,.12); }
-.cw-modal-footer { display:flex; align-items:center; justify-content:flex-end; gap:10px; padding:12px 20px 16px; border-top:1px solid var(--border,#e4e8ee); }
-.pw-field-wrap { position:relative; }
-.pw-field-feedback { font-size:.78rem; font-weight:600; margin-top:6px; margin-bottom:8px; display:none; }
-.pw-field-feedback.success { display:block; color:#047857; }
-.pw-field-feedback.error { display:block; color:#b91c1c; }
-.pw-field-wrap.is-valid .profile-field input { border-color:#10b981; box-shadow:0 0 0 3px rgba(16,185,129,.12); }
-.pw-field-wrap.is-invalid .profile-field input { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.12); }
-.pw-requirements { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
-.pw-req { font-size:.72rem; font-weight:600; color:var(--text-400,#8b93a1); display:flex; align-items:center; gap:6px; }
-.pw-req::before { content:'○'; font-size:.85rem; }
-.pw-req.met { color:#047857; }
-.pw-req.met::before { content:'●'; }
+.cw-email-field input.is-valid {
+    border-color: var(--cw-success);
+    box-shadow: 0 0 0 2px rgba(63, 128, 83, 0.08);
+}
+.cw-email-field input.is-invalid {
+    border-color: var(--cw-danger);
+    box-shadow: 0 0 0 2px rgba(179, 75, 75, 0.08);
+}
+.cw-email-field input.is-warning {
+    border-color: #8a6d1a;
+    box-shadow: 0 0 0 2px rgba(138, 109, 26, 0.08);
+}
 
-@media (max-width: 640px) {
-    .cw-row { grid-template-columns:1fr; }
-    .cw-col-side { position:static; width:auto; }
-    .cw-info-grid { grid-template-columns:1fr; }
+.cw-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
 }
 @media (max-width: 480px) {
-    .cw-card { padding:14px; }
-    .cw-btn { width:100%; justify-content:center; }
+    .cw-card-actions { flex-direction: column; }
+    .cw-card-actions .cw-btn { width: 100%; justify-content: center; }
+}
+
+.cw-stamp { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 4px; white-space: nowrap; }
+.cw-stamp-success { background: #f6fbf7; color: var(--cw-success); border: 1px solid #c8e6d0; }
+.cw-stamp-warning { background: #fffbf0; color: #8a6d1a; border: 1px solid #f0e4a8; }
+.cw-stamp-danger { background: #fdf6f6; color: var(--cw-danger); border: 1px solid #f5c6c6; }
+.cw-stamp-secondary { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+.cw-stamp-badge-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    background: #f6fbf7;
+    color: var(--cw-success);
+    border: 1px solid #c8e6d0;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+.cw-status-dot {
+    width: 6px;
+    height: 6px;
+    display: inline-block;
+    border-radius: 50%;
+    background: var(--cw-success);
+    margin-right: 4px;
+}
+.cw-card-head .cw-stamp { margin-left: auto; }
+
+.cw-employment-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+    .cw-employment-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+    .cw-employment-grid { grid-template-columns: 1fr; }
+}
+.cw-value {
+    font-size: 12.5px;
+    line-height: 1.4;
+    font-weight: 500;
+    color: var(--cw-text);
+}
+.cw-value-id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+}
+.cw-status-indicator {
+    width: 6px;
+    height: 6px;
+    display: inline-block;
+    border-radius: 50%;
+    background: var(--cw-success);
+    margin-right: 4px;
+}
+.cw-value-type {
+    font-size: 12px;
+    color: var(--cw-muted);
+}
+
+.cw-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 33px;
+    padding: 6px 11px;
+    border: 1px solid var(--cw-border);
+    border-radius: 4px;
+    background: var(--cw-card);
+    color: var(--cw-text);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .15s ease, background .15s ease, color .15s ease;
+    text-decoration: none;
+}
+.cw-btn:hover {
+    border-color: var(--cw-primary);
+    color: var(--cw-primary);
+}
+.cw-btn:active {
+    background: #f3f4f6;
+}
+.cw-btn:focus-visible {
+    outline: 2px solid var(--cw-primary);
+    outline-offset: 2px;
+}
+.cw-btn.primary {
+    background: var(--cw-primary);
+    border-color: var(--cw-primary);
+    color: #ffffff;
+}
+.cw-btn.primary:hover {
+    background: var(--cw-primary-hover);
+    border-color: var(--cw-primary-hover);
+    color: #ffffff;
+}
+
+.cw-profile {
+    text-align: center;
+    padding: 10px 0 12px;
+    border-bottom: 1px solid var(--cw-border-light);
+    margin-bottom: 10px;
+}
+.cw-profile-avatar {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: #eef1f5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    font-weight: 600;
+    color: #5b6472;
+    margin-bottom: 8px;
+    overflow: hidden;
+}
+.cw-profile-name {
+    margin-top: 6px;
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 600;
+    color: var(--cw-text);
+    word-break: break-word;
+}
+.cw-profile-no {
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--cw-muted);
+}
+.cw-profile-meta {
+    margin-top: 6px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--cw-muted);
+}
+.cw-profile-status {
+    margin-top: 8px;
+}
+.cw-profile-stats {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--cw-border-light);
+}
+.cw-profile-stat {
+    margin-bottom: 10px;
+}
+.cw-profile-stat:last-child { margin-bottom: 0; }
+.cw-profile-stat-value {
+    font-size: 11.5px;
+    color: #41484f;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+.cw-profile-stat-label {
+    font-size: 10px;
+    color: var(--cw-muted);
+    margin-bottom: 3px;
+    font-weight: 600;
+}
+
+.cw-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 1050; align-items: center; justify-content: center; padding: 16px; }
+.cw-modal-overlay.active { display: flex; }
+.cw-modal { background: #fff; border-radius: 6px; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12); max-width: 480px; width: 100%; max-height: calc(100vh - 32px); overflow-y: auto; }
+.cw-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid var(--cw-border-light); }
+.cw-modal-head h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--cw-text); }
+.cw-modal-close { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: var(--cw-muted); line-height: 1; padding: 3px 5px; border-radius: 4px; }
+.cw-modal-close:hover { color: var(--cw-text); background: #f3f4f6; }
+.cw-modal-body { padding: 14px 15px; }
+.cw-modal .profile-field { margin-bottom: 10px; }
+.cw-modal .profile-field:last-child { margin-bottom: 0; }
+.cw-modal .profile-field label { display: block; font-size: 10.5px; font-weight: 600; color: var(--cw-text); margin-bottom: 4px; }
+.cw-modal .profile-field input { width: 100%; box-sizing: border-box; padding: 6px 9px; border: 1px solid var(--cw-border); border-radius: 4px; font-size: 12.5px; outline: none; background: var(--cw-card); color: var(--cw-text); }
+.cw-modal .profile-field input:focus { border-color: var(--cw-primary); box-shadow: 0 0 0 2px rgba(47, 111, 168, 0.08); }
+.cw-modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 10px 15px; border-top: 1px solid var(--cw-border-light); }
+.pw-field-wrap { position: relative; }
+.pw-field-feedback { font-size: 10.5px; font-weight: 600; margin-top: 4px; margin-bottom: 6px; display: none; }
+.pw-field-feedback.success { display: block; color: var(--cw-success); }
+.pw-field-feedback.error { display: block; color: var(--cw-danger); }
+.pw-field-wrap.is-valid .profile-field input { border-color: var(--cw-success); box-shadow: 0 0 0 2px rgba(63, 128, 83, 0.08); }
+.pw-field-wrap.is-invalid .profile-field input { border-color: var(--cw-danger); box-shadow: 0 0 0 2px rgba(179, 75, 75, 0.08); }
+.pw-requirements { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.pw-req { font-size: 10.5px; font-weight: 600; color: var(--cw-muted); display: flex; align-items: center; gap: 5px; }
+.pw-req::before { content: '○'; font-size: 0.8rem; }
+.pw-req.met { color: var(--cw-success); }
+.pw-req.met::before { content: '●'; }
+
+.cw-text-muted {
+    font-size: 11.5px;
+    color: var(--cw-muted);
+    line-height: 1.4;
+}
+
+@media (max-width: 600px) {
+    .cw-row { grid-template-columns: 1fr; }
+    .cw-col-side { position: static; width: auto; }
+    .cw-info-grid { grid-template-columns: 1fr; }
+    .cw-card-head { padding: 10px 12px; }
+    .cw-card-body { padding: 10px 12px; }
+    .cw-profile-avatar { width: 50px; height: 50px; font-size: 15px; }
 }
 </style>

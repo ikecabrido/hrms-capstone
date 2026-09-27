@@ -2,10 +2,10 @@
 class Page
 {
     private $default = 'dashboard-overview';
-    private $pagesDir;
+    private ?string $pagesDir = null;
     private $allowed = [];
 
-    private $labels = [
+    private array $labels = [
         'dashboard-overview' => 'Dashboard Overview',
         'sent-history' => 'Sent History',
 
@@ -16,7 +16,7 @@ class Page
         'pagibig_monitoring' => 'Pag-IBIG Compliance',
         'bir-monitoring' => 'BIR Compliance',
         'salary-compliance' => 'Salary Compliance',
-        'labor-compliance' => 'Labor Law Resources',
+        'labor-compliance' => 'Labor Law References',
         'salary-adjustments' => 'Salary Compliance & Adjustments',
         'policy-management' => 'Policy Management',
         'policy-create' => 'Create Policy',
@@ -24,6 +24,7 @@ class Page
         'policy-acknowledge' => 'My Policies',
         'policy-read' => 'Read Policy',
         'acknowledgement-report' => 'Acknowledgement Report',
+     
 
         'generate-document' => 'Generate Document',
         'document-requests' => 'Document Services',
@@ -36,13 +37,14 @@ class Page
         'incident-workflow' => 'Incident Workflow',
         'case-records' => 'Complaint Management',
         'complaint-workflow' => 'Complaint Workflow',
+        'external-cases' => 'Legal Affairs',
 
         'risk-register' => 'Risk Assessment',
 
         'exit-acknowledgement' => 'Exit Acknowledgement',
         'exit-documents' => 'Exit Management',
 
-        'audit-trail' => 'Reporting',
+        'audit-trail' => 'Audit & Reporting',
     ];
 
     private $sections = [
@@ -72,6 +74,10 @@ class Page
         'incident-reporting' => [
             'incident-reports',
             'case-records',
+        ],
+
+        'external-cases' => [
+            'external-cases',
         ],
 
         'risk-assessment' => [
@@ -169,10 +175,11 @@ class Page
     private $sectionLabels = [
         'labor-law-compliance' => 'Labor Law Compliance',
         'policy-documentation' => 'Legal Documents',
-        'incident-reporting' => 'Incident Reporting',
+        'incident-reporting' => 'Complaints & Legal',
+        'external-cases' => 'Legal Affairs',
         'risk-assessment' => 'Risk Assessment',
         'exit-acknowledgement' => 'Exit Acknowledgement',
-        'audits-reporting' => 'Reporting',
+        'audits-reporting' => 'Audit & Reporting',
     ];
 
     public function renderNav()
@@ -187,6 +194,7 @@ class Page
             'labor-law-compliance',
             'policy-documentation',
             'incident-reporting',
+            'external-cases',
             'risk-assessment',
             'exit-acknowledgement',
             'audits-reporting',

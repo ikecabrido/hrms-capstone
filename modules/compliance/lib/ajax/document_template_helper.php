@@ -515,7 +515,7 @@ function dg_get_signature_image(int $height = 90): string {
         return '<img src="' . $src . '" alt="Signature" style="height:' . $height . 'px; vertical-align:middle; display:inline-block;">';
     }
 
-    return '<div style="display:inline-block; vertical-align:middle; text-align:center; font-family:Georgia, serif; font-style:italic; color:#1b2430; line-height:1.2;">Blythe Enriquez, HR Directress<div style="border-bottom:1px solid #1b2430; width:140px; margin-top:2px;"></div></div>';
+    return '<div style="display:inline-block; vertical-align:middle; text-align:center; font-family:Arial, sans-serif; font-style:italic; color:#1b2430; line-height:1.2;">Blythe Enriquez, HR Directress<div style="border-bottom:1px solid #1b2430; width:140px; margin-top:2px;"></div></div>';
 }
 
 if (!function_exists('lc_get_signature_image')) {
@@ -589,7 +589,7 @@ Employee: _________________________
 {{employee_name}}
 Date: {{execution_date}}",
 
-        'nte' => $employerName . "\n\nNOTICE TO EXPLAIN (NTE)\n\nDate: {{execution_date}}\n\nTo: {{employee_name}}\nEmployee ID: {{employee_no}}\nPosition: {{employee_position}}\nDepartment: {{employee_department}}\n\nSubject: Notice to Explain — Administrative Incident\n\nDear {{employee_name}},\n\nThis Notice to Explain (NTE) is being issued to you in connection with the following incident:\n\nViolation: ___________________________________________\nDate of Incident: {{contract_start_date}}\nLocation: ___________________________________________\n\nYou are hereby required to submit a written explanation to the Human Resources Department within five (5) calendar days from receipt of this notice. Your explanation should include any evidence or witnesses that may support your side of the story.\n\nFailure to submit your explanation within the prescribed period shall be interpreted as an admission of the charge and the Employer shall take the appropriate administrative action based on its findings.\n\nPlease be advised that this notice is part of the due process required under the Philippine Labor Code and company policies.\n\nFor your information and compliance.\n\n_________________________________________\n{{hr_signatory}}\n" . $employerName . "\n\nReceived by:\n\nEmployee: _________________________\n{{employee_name}}\nDate: {{execution_date}}",
+        'nte' => $employerName . "\n\nNOTICE TO EXPLAIN (NTE)\n\nDate: {{execution_date}}\n\nTo: {{employee_name}}\nEmployee ID: {{employee_no}}\nPosition: {{employee_position}}\nDepartment: {{employee_department}}\n\nSubject: Notice to Explain — Administrative Incident\n\nDear {{employee_name}},\n\nThis Notice to Explain (NTE) is being issued to you in connection with the following incident:\n\nViolation: ___________________________________________\nDate of Incident: {{contract_start_date}}\nLocation: ___________________________________________\n\nYou are hereby required to submit a letter of intent to the Human Resources Department within five (5) calendar days from receipt of this notice. Your letter of intent should include any evidence or witnesses that may support your side of the story.\n\nFailure to submit your letter of intent within the prescribed period shall be interpreted as an admission of the charge and the Employer shall take the appropriate administrative action based on its findings.\n\nPlease be advised that this notice is part of the due process required under the Philippine Labor Code and company policies.\n\nFor your information and compliance.\n\n_________________________________________\n{{hr_signatory}}\n" . $employerName . "\n\nReceived by:\n\nEmployee: _________________________\n{{employee_name}}\nDate: {{execution_date}}",
 
         'written_warning' => $employerName . "\n\nWRITTEN WARNING\n\nDate: {{execution_date}}\n\nTo: {{employee_name}}\nEmployee ID: {{employee_no}}\nPosition: {{employee_position}}\nDepartment: {{employee_department}}\n\nSubject: Written Warning — Policy Violation\n\nDear {{employee_name}},\n\nThis is your first/second written warning. Further violation of company policies may result in a more severe administrative penalty, up to and including termination of employment.\n\nWe expect you to immediately rectify this behavior and comply with all institutional policies moving forward.\n\n_________________________________________\n{{hr_signatory}}\n" . $employerName . "\n\nAcknowledged by:\n\nEmployee: _________________________\n{{employee_name}}\nDate: {{execution_date}}",
 
@@ -1879,7 +1879,7 @@ function op_generate_package_html(PDO $db, array $employee): string {
         max-width: 900px;
         margin: 24px auto;
         padding: 0 16px;
-        font-family: "Times New Roman", Times, serif;
+        font-family: Arial, sans-serif;
         color: #111;
     }
     .pkg-section {
@@ -1956,7 +1956,7 @@ function op_generate_package_html(PDO $db, array $employee): string {
     $html .= '</div>';
     $html .= $contractHtml;
     $html .= '<div style="page-break-inside:avoid; margin-top:12px; padding:10px; border:1px solid #b45309; border-radius:4px; background:#fffbeb;">';
-    $html .= '<p style="margin:0; color:#78350f; font-family:&quot;Times New Roman&quot;, Times, serif; font-size:0.7rem; line-height:1.4;">';
+    $html .= '<p style="margin:0; color:#78350f; font-family:Arial, sans-serif; font-size:0.7rem; line-height:1.4;">';
     $html .= '<strong>THESIS DISCLAIMER:</strong> This document is generated for <strong>academic and thesis purposes only</strong>. It is intended for system demonstration and evaluation and should not be considered official legal advice or a substitute for professional legal or HR review. All information and sample data should be validated and updated before actual use.';
     $html .= '</p>';
     $html .= '</div>';
@@ -1968,7 +1968,7 @@ function op_generate_package_html(PDO $db, array $employee): string {
     $html .= '<img src="' . $notarySrc . '" class="pkg-watermark" alt="">';
     $html .= $handbookHtml;
     $html .= '<div style="page-break-inside:avoid; margin-top:12px; padding:10px; border:1px solid #b45309; border-radius:4px; background:#fffbeb;">';
-    $html .= '<p style="margin:0; color:#78350f; font-family:&quot;Times New Roman&quot;, Times, serif; font-size:0.7rem; line-height:1.4;">';
+    $html .= '<p style="margin:0; color:#78350f; font-family:Arial, sans-serif; font-size:0.7rem; line-height:1.4;">';
     $html .= '<strong>THESIS DISCLAIMER:</strong> This document is generated for <strong>academic and thesis purposes only</strong>. It is intended for system demonstration and evaluation and should not be considered official legal advice or a substitute for professional legal or HR review. All information and sample data should be validated and updated before actual use.';
     $html .= '</p>';
     $html .= '</div>';
@@ -1980,7 +1980,7 @@ function op_generate_package_html(PDO $db, array $employee): string {
     $html .= '<img src="' . $notarySrc . '" class="pkg-watermark" alt="">';
     $html .= $ndaHtml;
     $html .= '<div style="page-break-inside:avoid; margin-top:12px; padding:10px; border:1px solid #b45309; border-radius:4px; background:#fffbeb;">';
-    $html .= '<p style="margin:0; color:#78350f; font-family:&quot;Times New Roman&quot;, Times, serif; font-size:0.7rem; line-height:1.4;">';
+    $html .= '<p style="margin:0; color:#78350f; font-family:Arial, sans-serif; font-size:0.7rem; line-height:1.4;">';
     $html .= '<strong>THESIS DISCLAIMER:</strong> This document is generated for <strong>academic and thesis purposes only</strong>. It is intended for system demonstration and evaluation and should not be considered official legal advice or a substitute for professional legal or HR review. All information and sample data should be validated and updated before actual use.';
     $html .= '</p>';
     $html .= '</div>';

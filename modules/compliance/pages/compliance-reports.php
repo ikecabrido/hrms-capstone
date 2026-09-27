@@ -38,7 +38,22 @@
             <div class="report-card">
                 <h3>Exit Compliance Report</h3>
                 <p>Exit clearance and acknowledgement summary.</p>
-                <button class="btn btn-primary" onclick="generateReport('exit-compliance')">Generate Report</button>
+                <button class="btn btn-primary" onclick="window.location.href='?page=preview-document&key=exit-compliance'">Generate Report</button>
+            </div>
+            <div class="report-card">
+                <h3>External Case Summary</h3>
+                <p>Complete summary of all legal and external compliance cases.</p>
+                <button class="btn btn-primary" onclick="window.location.href='../lib/api/preview_report.php?key=legal_case_summary&export=export_report'">Generate Report</button>
+            </div>
+            <div class="report-card">
+                <h3>Case Status Report</h3>
+                <p>Grouped view of case statuses, stages, and resolution timelines.</p>
+                <button class="btn btn-primary" onclick="window.location.href='../lib/api/preview_report.php?key=legal_case_status&export=export_report'">Generate Report</button>
+            </div>
+            <div class="report-card">
+                <h3>Agency Report</h3>
+                <p>Cases by external agency (DOLE, NLRC, SSS, PhilHealth, Pag-IBIG, BIR).</p>
+                <button class="btn btn-primary" onclick="window.location.href='../lib/api/preview_report.php?key=legal_case_agency&export=export_report'">Generate Report</button>
             </div>
         </div>
     </div>

@@ -166,7 +166,7 @@ $settlementWords = $settlementAmount !== '' ? numberToWords($settlementAmount) .
         border:1px solid #d7dbe3;
         border-radius:8px;
         background:#fff;
-        font-family:'Times New Roman', Times, serif;
+        font-family: Arial, sans-serif;
         font-size:13px;
         line-height:1.8;
         color:#222;

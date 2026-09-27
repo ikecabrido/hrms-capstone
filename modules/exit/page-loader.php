@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/../../auth/guard.php';
 require_once 'classes/Page.php';
 
 $pageController = new Page();

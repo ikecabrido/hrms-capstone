@@ -5,21 +5,24 @@ class Page {
     private $allowed = [];
 
     private $labels = [
-        'dashboard-overview'          => 'Dashboard',
-        'absence_late_management'             => 'Absence & Late Management',
-        'shifts'  => 'Shift Management',
-        'qr_scanner'   => 'Attendance Scanner',
-        'employee_qr_list'=> 'Employee QR',
-        'schedule_calendar'=> 'Schedule Calendar',
-        'holidays'     => 'Holidays',
-        'leave_approvals'     => 'Leave Management',
+        'dashboard-overview'          => 'Dashboard Overview',
+        'account-creation'            => 'Account Creation',
+        'job-list'                    => 'Job Lists',
+        'applications'                => 'Applications',
+        'parsed-resumes'              => 'Parsed Resumes',
+        'schedule-tracker'            => 'Schedule Tracker',
+        'interview-results'           => 'Interview Results',
+        'offered-list'                => 'Offered Lists',
+        'offer'                       => 'Offer',
+        'Onboarding'                  => 'Onboarding',
     ];
 
     private $sections = [
         'top'             => ['dashboard-overview'],
-        'Attendance'  => ['qr_scanner', 'employee_qr_list', 'absence_late_management'],
-        'Scheduling & Shifts'      => ['shifts', 'schedule_calendar'],
-        'Leave & Holidays'       => ['holidays', 'leave_approvals']
+        'user-management' => ['account-creation'],
+        'recruitment'     => ['job-list', 'applications', 'parsed-resumes'],
+        'interviews'      => ['schedule-tracker', 'interview-results'],
+        'hiring'          => ['offered-list', 'offer', 'onboarding'],
     ];
 
     public function __construct($pagesDir = null) {
@@ -42,42 +45,12 @@ class Page {
     }
 
     public function render() {
-        $this->runAttendanceDetectionIfDue();
-
         $page = $this->getPage();
         $file = $this->pagesDir . '/' . $page . '.php';
         if (file_exists($file)) {
             include $file;
         } else {
             include $this->pagesDir . '/' . $this->default . '.php';
-        }
-    }
-
-    /**
-     * Auto-runs absence/late detection (throttled to once every 5 minutes) on
-     * every page load in this module - not just Absence & Late Management -
-     * so status is always fresh regardless of which page a user opens first.
-     * See AttendanceDetectionRunner.php for why this exists instead of relying
-     * on an external OS scheduler.
-     */
-    private function runAttendanceDetectionIfDue() {
-        $runnerPath = dirname(__DIR__) . '/app/helpers/AttendanceDetectionRunner.php';
-        if (!file_exists($runnerPath)) {
-            return;
-        }
-
-        $throttleFile = dirname(__DIR__) . '/logs/last_absence_detection_run.txt';
-        $lastRun = file_exists($throttleFile) ? (int)@file_get_contents($throttleFile) : 0;
-        if ((time() - $lastRun) < 300) { // 5 minutes
-            return;
-        }
-
-        require_once $runnerPath;
-        try {
-            AttendanceDetectionRunner::run(date('Y-m-d'));
-            @file_put_contents($throttleFile, (string)time());
-        } catch (\Throwable $e) {
-            error_log('Auto absence/late detection failed: ' . $e->getMessage());
         }
     }
 
@@ -96,7 +69,7 @@ class Page {
         }
 
         // Grouped sections
-        $sectionOrder = ['Attendance', 'Scheduling & Shifts', 'Leave & Holidays'];
+        $sectionOrder = ['user-management','recruitment', 'interviews', 'hiring'];
         foreach ($sectionOrder as $section) {
             echo '<div class="separator"></div>';
             echo '<h3>' . ucwords(str_replace('-', ' ', $section)) . '</h3>';

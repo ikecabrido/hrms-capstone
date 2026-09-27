@@ -30,6 +30,9 @@ $reportTables = [
     'disciplinary_actions' => 'lc_disciplinary_actions',
     'anonymous_reports' => 'lc_complaints',
     'legal_cases' => 'lc_compliance_violations',
+    'legal_case_summary' => 'lc_legal_cases',
+    'legal_case_status' => 'lc_legal_cases',
+    'legal_case_agency' => 'lc_legal_cases',
     'recruitment_summary' => 'rao_applications',
     'new_employees' => 'rao_onboarding',
     'exit_clearance' => 'exit_resignations',
@@ -103,7 +106,7 @@ if ($format === 'pdf') {
         <title><?= htmlspecialchars($reportTitle) ?></title>
         <style>
             *, *::before, *::after { box-sizing: border-box; }
-            body { font-family: DejaVu Sans, sans-serif; font-size: 9pt; color: #1b2430; margin: 0; padding: 0; line-height: 1.35; }
+            body { font-family: Arial, sans-serif; font-size: 9pt; color: #1b2430; margin: 0; padding: 0; line-height: 1.35; }
             table { width: 100%; border-collapse: collapse; margin-top: 8px; table-layout: fixed; }
             th, td { padding: 4px 5px; border-bottom: 1px solid #eef1f5; font-size: 8pt; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: normal; vertical-align: top; }
             th { background: #f3f5f9; text-align: left; border-bottom: 2px solid #dde3ea; color: #5b6472; text-transform: uppercase; font-weight: bold; }
@@ -194,7 +197,7 @@ $safeDate = htmlspecialchars($exportDate, ENT_QUOTES, 'UTF-8');
     <meta charset="UTF-8">
     <title><?= $safeTitle ?></title>
     <style>
-        body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 10px; color: #1b2430; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; color: #1b2430; box-sizing: border-box; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: auto; }
         th { background: #f3f5f9; text-align: left; padding: 5px 6px; border-bottom: 2px solid #dde3ea; font-size: 0.65rem; text-transform: uppercase; color: #5b6472; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; }
         td { padding: 5px 6px; border-bottom: 1px solid #eef1f5; font-size: 0.7rem; word-wrap: break-word; overflow-wrap: break-word; white-space: normal; }

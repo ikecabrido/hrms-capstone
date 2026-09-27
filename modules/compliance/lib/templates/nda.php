@@ -76,7 +76,7 @@ $today = date('F d, Y');
         border:1px solid #d7dbe3;
         border-radius:8px;
         background:#fff;
-        font-family:'Times New Roman', Times, serif;
+        font-family: Arial, sans-serif;
         font-size:12px;
         line-height:1.65;
         color:#222;

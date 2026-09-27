@@ -39,7 +39,7 @@ try {
         FROM em_employees e
         LEFT JOIN em_departments d ON d.department_id = e.department_id
         LEFT JOIN em_positions p ON p.position_id = e.position_id
-        WHERE (CONCAT(e.first_name, ' ', e.last_name) LIKE :q1 OR e.employee_code LIKE :q2 OR e.email LIKE :q3)
+        WHERE (CONCAT(e.first_name, ' ', e.last_name) LIKE :q1 OR e.employee_code LIKE :q2 OR e.email LIKE :q3 OR p.position_name LIKE :q4)
           AND e.employment_status NOT IN ('Resigned', 'Terminated')
         ORDER BY full_name ASC
         LIMIT 20
@@ -50,6 +50,7 @@ try {
         ':q1' => $searchTerm,
         ':q2' => $searchTerm,
         ':q3' => $searchTerm,
+        ':q4' => $searchTerm,
     ]);
 
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

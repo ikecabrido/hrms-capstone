@@ -29,16 +29,20 @@ $current = $stmt->fetch(PDO::FETCH_ASSOC);
 $currentStatus = $current['status'] ?? '';
 
 $validTransitions = [
-    'under_initial_review'        => ['under_investigation', 'closed', 'for_decision'],
-    'under_investigation'         => ['pending_employee_response', 'closed', 'under_initial_review', 'for_decision', 'closed_no_violation', 'closed_warning_issued', 'closed_suspension', 'closed_termination_recommended', 'closed_resolved'],
-    'pending_employee_response'   => ['for_decision', 'under_investigation', 'closed'],
-    'for_decision'                => ['closed_no_violation', 'closed_warning_issued', 'closed_suspension', 'closed_termination_recommended', 'closed_resolved', 'closed', 'under_investigation'],
-    'closed_no_violation'         => ['under_investigation', 'under_initial_review'],
-    'closed_warning_issued'       => ['under_investigation', 'under_initial_review'],
-    'closed_suspension'           => ['under_investigation', 'under_initial_review'],
-    'closed_termination_recommended' => ['under_investigation', 'under_initial_review'],
-    'closed_resolved'             => ['under_investigation', 'under_initial_review'],
-    'closed'                      => ['under_investigation', 'under_initial_review', 'for_decision'],
+    'under_initial_review'           => ['under_investigation', 'closed', 'for_decision'],
+    'under_investigation'            => ['pending_employee_response', 'closed', 'under_initial_review', 'for_decision', 'closed_no_violation', 'closed_warning_issued', 'closed_suspension', 'closed_termination_recommended', 'closed_resolved'],
+    'pending_employee_response'      => ['for_decision', 'under_investigation', 'closed'],
+    'for_decision'                   => ['closed_no_violation', 'closed_warning_issued', 'closed_second_written_warning', 'closed_final_written_warning', 'closed_suspension', 'closed_termination_recommended', 'closed_resolved', 'closed', 'under_investigation'],
+    'closed_no_violation'            => ['under_investigation', 'under_initial_review'],
+    'closed_warning_issued'          => ['under_investigation', 'under_initial_review'],
+    'closed_second_written_warning'  => ['under_investigation', 'under_initial_review'],
+    'closed_final_written_warning'   => ['under_investigation', 'under_initial_review'],
+    'closed_suspension'              => ['under_investigation', 'under_initial_review'],
+    'closed_termination_recommended' => ['under_investigation', 'under_initial_review', 'termination_employee_reply'],
+    'termination_employee_reply'     => ['termination_reviewed', 'under_investigation', 'under_initial_review', 'for_decision'],
+    'termination_reviewed'           => ['for_decision', 'under_investigation', 'under_initial_review'],
+    'closed_resolved'                => ['under_investigation', 'under_initial_review'],
+    'closed'                         => ['under_investigation', 'under_initial_review', 'for_decision'],
 ];
 
 if (!in_array($targetStatus, $validTransitions[$currentStatus] ?? [], true)) {
@@ -47,12 +51,14 @@ if (!in_array($targetStatus, $validTransitions[$currentStatus] ?? [], true)) {
 }
 
 $HUMAN_LABELS = [
-    'closed_no_violation'          => 'Dismissed - No Violation',
-    'closed_warning_issued'        => 'Written Warning Issued',
-    'closed_suspension'            => 'Suspension Issued',
-    'closed_termination_recommended' => 'Final Decision - Termination Recommended',
-    'closed_resolved'              => 'Resolved',
-    'closed'                       => 'Closed',
+    'closed_no_violation'             => 'Dismissed - No Violation',
+    'closed_warning_issued'           => 'Written Warning Issued',
+    'closed_second_written_warning'   => 'Second Written Warning Issued',
+    'closed_final_written_warning'    => 'Final Written Warning Issued',
+    'closed_suspension'               => 'Suspension Issued',
+    'closed_termination_recommended'  => 'Final Decision - Termination Recommended',
+    'closed_resolved'                 => 'Resolved',
+    'closed'                          => 'Closed',
 ];
 
 $decisionLabel = $HUMAN_LABELS[$targetStatus] ?? ucfirst(str_replace('_', ' ', $targetStatus));

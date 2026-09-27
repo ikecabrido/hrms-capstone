@@ -74,12 +74,15 @@ textarea.form-control { resize:vertical; min-height:80px; }
 .policy-actions { position:relative; display:inline-block; }
 .policy-actions-toggle { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; border:1px solid var(--border,#e4e8ee); background:#fff; color:var(--text-700,#3b4252); font-size:1rem; font-weight:700; cursor:pointer; white-space:nowrap; transition:all 0.15s ease; }
 .policy-actions-toggle:hover { background:var(--paper,#eef1f5); }
-.policy-actions-menu { display:none; position:absolute; right:0; top:calc(100% + 6px); background:#fff; border:1px solid var(--border,#e4e8ee); border-radius:10px; box-shadow:0 10px 30px rgba(13,27,46,.12); min-width:170px; z-index:50; padding:6px; }
+.policy-actions-menu { display:none; position:absolute; right:0; top:calc(100% + 6px); background:#fff; border:1px solid var(--border,#e4e8ee); border-radius:6px; box-shadow:0 1px 3px rgba(13,27,46,.08); min-width:150px; z-index:50; padding:4px; }
 .policy-actions-menu.show { display:block; }
-.policy-actions-menu a, .policy-actions-menu button { display:flex; align-items:center; gap:10px; width:100%; padding:9px 12px; border-radius:8px; border:none; background:transparent; color:var(--text-900,#1b2430); font-size:0.84rem; font-weight:600; cursor:pointer; text-decoration:none; transition:background .12s ease; }
-.policy-actions-menu a:hover, .policy-actions-menu button:hover { background:var(--paper,#eef1f5); }
-.policy-actions-menu .policy-action-danger { color:#ef4444; }
-.policy-actions-menu .policy-action-danger:hover { background:rgba(239,68,68,.08); }
+
+.policy-actions-menu a, .policy-actions-menu button { display:flex; align-items:center; width:100%; padding:6px 10px; border-radius:4px; border:none; background:transparent; color:var(--text-900,#1b2430); font-size:11.5px; font-weight:500; cursor:pointer; text-decoration:none; transition:background .12s ease; }
+
+.policy-actions-menu a:hover, .policy-actions-menu button:hover { background:#f4f5f7; }
+
+.policy-actions-menu .policy-action-danger { color: #1d4ed8; }
+.policy-actions-menu .policy-action-danger:hover { background:rgba(239,68,68,.06); }
 
 .policy-stamp { display:inline-block; font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
 .policy-stamp-draft { background:rgba(217,154,43,.14); color:#a86b13; }

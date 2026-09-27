@@ -23,7 +23,7 @@
   width: 100%;
   padding: 0;
   background: var(--bg-page, #f3f5f9);
-  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-family: var(--font-body, Arial, sans-serif);
   color: var(--text-900, #1b2430);
   box-sizing: border-box;
 }
@@ -394,7 +394,7 @@
   border-radius: 8px;
   border: 1px solid var(--border, #e4e8ee);
   font-size: 0.9rem;
-  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-family: var(--font-body, Arial, sans-serif);
   outline: none;
   color: var(--text-900, #1b2430);
   background: var(--card-bg, #ffffff);
@@ -623,7 +623,7 @@
   border-radius: 8px;
   border: 1px solid var(--border, #e4e8ee);
   font-size: 0.88rem;
-  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-family: var(--font-body, Arial, sans-serif);
   color: var(--text-900, #1b2430);
   background: var(--card-bg, #ffffff);
   transition: border-color 140ms ease, box-shadow 140ms ease;
@@ -647,7 +647,7 @@
   font-size: 0.88rem;
   cursor: pointer;
   transition: background 140ms ease, transform 140ms ease;
-  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-family: var(--font-body, Arial, sans-serif);
   line-height: 1.4;
 }
 
@@ -686,7 +686,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, sans-serif);
+  font-family: var(--font-body, Arial, sans-serif);
   line-height: 1.4;
 }
 
@@ -1224,7 +1224,7 @@
   box-shadow: 0 1px 2px rgba(47, 158, 110, 0.25);
   width: 100%;
   transition: background 140ms ease, transform 140ms ease;
-  font-family: var(--font-body, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-family: var(--font-body, Arial, sans-serif);
   line-height: 1.4;
 }
 

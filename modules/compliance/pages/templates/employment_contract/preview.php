@@ -622,7 +622,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
     border: 1px solid #d7dbe3;
     border-radius: 8px;
     box-sizing: border-box;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 10.5px;
     line-height: 1.45;
     color: #222;
@@ -635,7 +635,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 }
 
 .document-institution {
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 12px;
     font-weight: 700;
     text-transform: uppercase;
@@ -645,7 +645,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 }
 
 .document-dept {
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -657,7 +657,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 .document-title {
     margin: 0;
     text-align: center;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 18px;
     font-weight: 700;
     text-transform: uppercase;
@@ -668,7 +668,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 .document-subtitle {
     margin: 4px 0 0;
     text-align: center;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 10px;
     line-height: 1.5;
     color: #666;
@@ -684,7 +684,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 8px;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
 }
 
 .document-information td {
@@ -710,7 +710,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
     border-radius: 8px;
     background: #fafbfc;
     text-align: center;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 10px;
     line-height: 1.45;
     color: #666;
@@ -721,7 +721,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 }
 
 .document-body {
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 10.5px;
     line-height: 1.45;
     color: #222;
@@ -743,7 +743,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 .section-number {
     display: inline;
     margin: 0;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 12px;
     font-weight: 700;
     color: #111;
@@ -752,7 +752,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 .section-title {
     display: inline;
     margin: 0;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 12px;
     font-weight: 700;
     color: #111;
@@ -782,7 +782,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 .signatures-title {
     margin: 0 0 4px;
     text-align: center;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -802,7 +802,7 @@ $hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compli
 
 .signature-group-title {
     margin: 0 0 3px;
-    font-family: "Times New Roman", Times, serif;
+    font-family: Arial, sans-serif;
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;

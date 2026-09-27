@@ -197,361 +197,154 @@ if ($birBracketsJson === false) {
 .bir-breadcrumb .breadcrumb-item a:hover { text-decoration:underline; }
 .bir-breadcrumb .breadcrumb-item.active { color:var(--text-500,#6b7280); }
 
-.bir-summary-bar { display:flex; gap:14px; margin-bottom:16px; flex-wrap:wrap; }
-.bir-summary-item { display:flex; align-items:center; gap:14px; padding:16px 20px; border-radius:14px; background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); flex:1; min-width:180px; text-decoration:none; color:inherit; transition:all .15s ease; cursor:pointer; }
-.bir-summary-item:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft,0 4px 12px rgba(13,27,46,.08)); border-color:var(--info-blue,#3b82c4); }
-.bir-summary-active { outline:2px solid var(--info-blue,#3b82c4); outline-offset:-2px; box-shadow:0 0 0 3px rgba(59,130,196,.15) !important; }
-.bir-summary-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
-.bir-summary-icon.green { background:rgba(47,158,110,.12); color:#1f7a52; }
-.bir-summary-icon.blue { background:rgba(59,130,196,.12); color:#1c5a8a; }
-.bir-summary-icon.amber { background:rgba(217,154,43,.14); color:#a86b13; }
-.bir-summary-icon.red { background:rgba(214,72,74,.12); color:#a3272a; }
-.bir-summary-icon.seal { background:rgba(168,121,31,.12); color:#8a6318; }
-.bir-summary-value { font-size:1.2rem; font-weight:800; color:var(--text-900,#1b2430); line-height:1; }
-.bir-summary-label { font-size:0.72rem; font-weight:700; color:var(--text-700,#3b4252); margin-top:4px; }
-.bir-summary-desc { font-size:0.62rem; color:var(--text-400,#8b93a1); margin-top:2px; font-weight:600; }
+.bir-summary-bar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:nowrap; }
+.bir-summary-item { display:flex; align-items:center; gap:6px; padding:20px 14px; border-radius:2px; background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); flex:1; min-width:auto; text-decoration:none; color:inherit; transition:border-color .1s ease; cursor:pointer; font-family: Arial, sans-serif; }
+.bir-summary-item:hover { border-color:#cbd5e1; }
+.bir-summary-active { border-color:var(--info-blue,#3b82c4); background:#fafbfc; }
+.bir-summary-value { font-size:1.1rem; color:var(--text-900,#1b2430); line-height:1.5; font-family: Arial, sans-serif; }
+.bir-summary-label { font-size:0.6rem; color:var(--text-700,#3b4252); margin-top:2px; font-family: Arial, sans-serif; }
+.bir-summary-desc { font-size:0.55rem; color:var(--text-400,#8b93a1); margin-top:1px; font-family: Arial, sans-serif; }
 
 .bir-row { display:grid; grid-template-columns:1fr 380px; gap:16px; align-items:start; }
-.bir-col-main { min-width:0; }
+.bir-col-main { min-width:0; font-family: Arial, sans-serif; }
 .bir-col-side { width:380px; flex-shrink:0; }
 
-.bir-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:14px; padding:18px; box-shadow:var(--shadow-soft,0 1px 2px rgba(13,27,46,.04)); margin-bottom:16px; }
-.bir-card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-.bir-card-head h3 { margin:0; font-size:0.98rem; font-weight:700; color:var(--text-900,#1b2430); display:flex; align-items:center; gap:8px; }
-.bir-empty { padding:24px; text-align:center; color:var(--text-400,#8b93a1); font-size:0.84rem; }
-
-.bir-card-body {
-  display:flex;
-  flex-direction:column;
-  max-height: 540px;
-  overflow: hidden;
-}
-.bir-table-wrap {
-  overflow: auto;
-  flex: 1 1 auto;
-}
-.bir-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
-.bir-table th { text-align:left; padding:10px 12px; font-size:0.72rem; font-weight:700; text-transform:uppercase; color:var(--text-400,#8b93a1); border-bottom:1px solid var(--border,#e4e8ee); background:#fafbfc; }
-.bir-table td { padding:10px 12px; border-bottom:1px solid var(--border,#e4e8ee); }
+.bir-card { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:6px; padding:14px; box-shadow:none; margin-bottom:12px; }
+.bir-card-head { margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border,#e4e8ee); }
+.bir-card-head h3 { margin:0; font-size:0.88rem; font-weight:600; color:var(--text-900,#1b2430); letter-spacing:-.01em; }
+.bir-empty { padding:14px; text-align:center; color:var(--text-500,#64748b); font-size:10px; line-height:1.4; }
+.bir-card-body { display:flex; flex-direction:column; max-height:540px; overflow:hidden; }
+.bir-table-wrap { overflow:auto; flex:1 1 auto; min-height:0; }
+.bir-table { width:100%; border-collapse:collapse; font-size:11.5px; font-family:Arial, sans-serif; }
+.bir-table th { text-align:left; padding:8px 10px; font-size:10px; font-weight:600; text-transform:uppercase; color:var(--text-500,#64748b); border-bottom:1px solid var(--border,#e4e8ee); letter-spacing:.04em; line-height:1.3; }
+.bir-table td { padding:9px 10px; border-bottom:1px solid var(--border,#e4e8ee); color:var(--text-800,#1e293b); font-size:11.5px; line-height:1.4; }
+.bir-table tbody tr:hover { background:var(--slate-50,#f8fafc); }
 .bir-table tr:last-child td { border-bottom:none; }
-.bir-stamp { display:inline-block; font-size:0.66rem; font-weight:700; padding:3px 10px; border-radius:999px; white-space:nowrap; }
-.bir-stamp-compliant { background:rgba(47,158,110,.12); color:#1f7a52; }
-.bir-stamp-pending { background:rgba(217,154,43,.14); color:#a86b13; }
-.bir-stamp-violation { background:rgba(214,72,74,.12); color:#a3272a; }
-
-/* BIR Pagination */
-.bir-pagination { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px; flex-wrap:wrap; font-size:0.8rem; color:var(--text-600,#4a505a); }
-.bir-pagination-info { font-size:0.8rem; color:var(--text-600,#4a505a); white-space:nowrap; }
-.bir-pagination-nav { display:inline-flex; align-items:center; gap:4px; background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:8px; overflow:hidden; }
-.bir-pagination-nav .bir-page-btn { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:34px; padding:0 8px; border:none; background:transparent; font-size:0.8rem; color:var(--text-700,#3b4252); cursor:pointer; transition:all .15s ease; }
-.bir-pagination-nav .bir-page-btn:hover { background:rgba(59,130,196,.08); color:var(--info-blue,#3b82c4); }
-.bir-pagination-nav .bir-page-btn:disabled { opacity:0.4; cursor:not-allowed; }
-.bir-pagination-nav .bir-page-btn--active { background:var(--info-blue,#3b82c4); color:#fff; font-weight:600; }
-.bir-pagination-nav .bir-page-ellipsis { width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; font-size:0.8rem; color:var(--text-400,#8b93a1); user-select:none; }
-
-.bir-email-payroll-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: 1px solid var(--border, #e4e8ee);
-  background: #fff;
-  color: var(--text-700, #3b4252);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.15s ease;
-}
-.bir-email-payroll-btn:hover:not(:disabled) {
-  border-color: var(--seal-gold, #a8791f);
-  color: var(--seal-gold, #a8791f);
-  box-shadow: 0 0 0 3px rgba(168, 121, 31, 0.08);
-}
-.bir-email-payroll-btn:disabled {
-  background: var(--paper, #eef1f5);
-  border-color: var(--hairline, #dde3ea);
-  color: var(--text-400, #8b95a4);
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
+.bir-stamp { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px; white-space:nowrap; letter-spacing:.01em; line-height:1.3; }
+.bir-stamp-compliant { background:var(--success-50,#ecfdf5); color:var(--success-700,#047857); }
+.bir-stamp-pending { background:var(--warning-50,#fffbeb); color:var(--warning-700,#b45309); }
+.bir-stamp-violation { background:var(--danger-50,#fef2f2); color:var(--danger-700,#b91c1c); }
+.bir-pagination { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; flex-wrap:wrap; font-size:0.75rem; color:var(--text-500,#64748b); }
+.bir-pagination-info { font-size:0.75rem; color:var(--text-500,#64748b); white-space:nowrap; }
+.bir-pagination-nav { display:inline-flex; align-items:center; gap:4px; background:transparent; border:1px solid var(--border,#e4e8ee); border-radius:6px; overflow:hidden; }
+.bir-pagination-nav .bir-page-btn { display:inline-flex; align-items:center; justify-content:center; min-width:30px; height:30px; padding:0 8px; border:0; background:transparent; font-size:0.75rem; color:var(--text-700,#334155); cursor:pointer; text-decoration:none; transition:background-color .1s ease; }
+.bir-pagination-nav .bir-page-btn:hover:not(.bir-page-btn--active) { background:var(--slate-100,#f1f5f9); }
+.bir-pagination-nav .bir-page-btn[aria-disabled="true"] { opacity:0.35; cursor:not-allowed; pointer-events:none; }
+.bir-pagination-nav .bir-page-btn--active { background:#2563eb; color:#fff; font-weight:600; }
+.bir-pagination-nav .bir-page-ellipsis { width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; font-size:0.75rem; color:var(--text-500,#64748b); }
+.bir-portal-link { font-size:0.72rem; font-weight:600; color:var(--info-600,#0891b2); text-decoration:none; padding:2px 0; border-bottom:1px solid transparent; transition:border-color .1s ease; }
+.bir-portal-link:hover { border-bottom-color:var(--info-600,#0891b2); }
+.bir-table-search { position:relative; }
+.bir-table-search input { padding:6px 10px; border:1px solid var(--border,#e4e8ee); border-radius:6px; font-size:0.75rem; outline:none; width:200px; transition:border-color .1s ease; background:var(--card-bg,#fff); }
+.bir-table-search input:focus { border-color:var(--text-400,#94a3b8); }
 .bir-finder-card { border-color:var(--seal-gold-light,#f4e6c9); }
-.bir-finder-form { margin-bottom:14px; }
-.bir-finder-label { display:block; font-size:0.78rem; font-weight:700; color:var(--text-700,#3b4252); margin-bottom:6px; }
-.bir-finder-input-wrap { display:flex; align-items:center; gap:8px; border:1px solid var(--border,#e4e8ee); border-radius:10px; padding:10px 12px; background:#fff; transition:border-color .15s ease, box-shadow .15s ease; }
-.bir-finder-input-wrap:focus-within { border-color:var(--seal-gold,#a8791f); box-shadow:0 0 0 3px rgba(168,121,31,.12); }
-.bir-finder-prefix { font-weight:700; color:var(--text-900,#1b2430); font-size:0.95rem; }
-.bir-finder-input { flex:1; border:0; outline:none; font-size:1rem; font-weight:700; color:var(--text-900,#1b2430); background:transparent; min-width:0; }
+.bir-finder-form { margin-bottom:10px; }
+.bir-finder-label { display:block; font-size:0.72rem; font-weight:600; color:var(--text-700,#334155); margin-bottom:4px; }
+.bir-finder-input-wrap { display:flex; align-items:center; gap:6px; border:1px solid var(--border,#e4e8ee); border-radius:6px; padding:8px 10px; background:#fff; transition:border-color .1s ease; }
+.bir-finder-input-wrap:focus-within { border-color:var(--seal-gold,#a8791f); }
+.bir-finder-prefix { font-weight:700; color:var(--text-900,#1b2430); font-size:0.85rem; }
+.bir-finder-input { flex:1; border:0; outline:none; font-size:0.9rem; font-weight:700; color:var(--text-900,#1b2430); background:transparent; }
 .bir-finder-input::placeholder { color:var(--text-400,#8b93a1); font-weight:500; }
-
-.bir-finder-result { background:var(--paper,#eef1f5); border:1px solid var(--border,#e4e8ee); border-radius:12px; padding:14px; }
-.bir-finder-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.bir-finder-key { font-size:0.76rem; font-weight:700; color:var(--text-600,#5a6779); text-transform:uppercase; letter-spacing:.4px; }
-.bir-finder-val { font-size:0.82rem; font-weight:700; color:var(--text-900,#1b2430); }
-.bir-finder-divider { height:1px; background:var(--border,#e4e8ee); margin:10px 0; }
-.bir-finder-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.bir-finder-cell { display:flex; flex-direction:column; gap:2px; padding:10px; background:#fff; border-radius:8px; border:1px solid var(--border,#e4e8ee); }
-.bir-finder-cell--total { background:rgba(168,121,31,.08); border-color:rgba(168,121,31,.25); }
-.bir-finder-cell-label { font-size:0.68rem; font-weight:700; color:var(--text-400,#8b93a1); text-transform:uppercase; letter-spacing:.3px; }
-.bir-finder-cell-value { font-size:0.95rem; font-weight:800; color:var(--text-900,#1b2430); }
+.bir-finder-result { background:var(--paper,#eef1f5); border:1px solid var(--border,#e4e8ee); border-radius:8px; padding:12px; }
+.bir-finder-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.bir-finder-key { font-size:0.7rem; font-weight:700; color:var(--text-500,#64748b); text-transform:uppercase; letter-spacing:.4px; }
+.bir-finder-val { font-size:0.78rem; font-weight:700; color:var(--text-900,#1b2430); }
+.bir-finder-divider { height:1px; background:var(--border,#e4e8ee); margin:8px 0; }
+.bir-finder-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.bir-finder-cell { display:flex; flex-direction:column; gap:1px; padding:8px; background:#fff; border-radius:6px; border:1px solid var(--border,#e4e8ee); }
+.bir-finder-cell--total { background:rgba(168,121,31,.06); border-color:rgba(168,121,31,.2); }
+.bir-finder-cell-label { font-size:0.62rem; font-weight:700; color:var(--text-500,#64748b); text-transform:uppercase; letter-spacing:.3px; }
+.bir-finder-cell-value { font-size:0.85rem; font-weight:800; color:var(--text-900,#1b2430); }
 .bir-range { color:#1c5a8a; }
 .bir-base { color:#1f7a52; }
 .bir-rate { color:#8a6318; }
 .bir-total { color:#8a6318; }
-.bir-finder-empty { display:flex; align-items:center; gap:8px; padding:16px; color:var(--text-400,#8b93a1); font-size:0.82rem; text-align:center; justify-content:center; }
-.bir-finder-empty i { font-size:1rem; }
-
-.bir-bracket-placeholder { display:flex; flex-direction:column; align-items:center; text-align:center; gap:8px; padding:28px 16px; }
-.bir-bracket-placeholder i { font-size:1.6rem; color:var(--text-400,#8b93a1); }
-.bir-bracket-title { font-size:0.9rem; font-weight:700; color:var(--text-900,#1b2430); }
-.bir-bracket-desc { font-size:0.78rem; color:var(--text-500,#6b7280); line-height:1.5; }
-.bir-bracket-link { margin-top:6px; font-size:0.78rem; font-weight:600; color:var(--info-blue,#3b82c4); text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.bir-finder-empty { display:flex; align-items:center; gap:6px; padding:12px; color:var(--text-500,#64748b); font-size:0.75rem; text-align:center; justify-content:center; }
+.bir-view-all { font-size:0.72rem; font-weight:600; color:var(--info-600,#0891b2); text-decoration:none; }
+.bir-view-all:hover { text-decoration:underline; }
+.bir-activity-list { display:flex; flex-direction:column; }
+.bir-activity-item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--border,#e4e8ee); }
+.bir-activity-item:last-child { border-bottom:none; }
+.bir-activity-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+.bir-activity-dot-compliant { background:#1f7a52; }
+.bir-activity-dot-pending { background:#d99a2b; }
+.bir-activity-dot-violation { background:#d6484a; }
+.bir-activity-body { flex:1; min-width:0; }
+.bir-activity-text { font-size:0.78rem; font-weight:600; color:var(--text-900,#1b2430); line-height:1.3; }
+.bir-activity-meta { display:flex; gap:8px; margin-top:2px; font-size:0.68rem; color:var(--text-500,#64748b); font-family:Arial, sans-serif; }
+.bir-activity-name { font-weight:600; color:var(--text-600,#475569); }
+.bir-bracket-placeholder { display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; padding:24px 12px; }
+.bir-bracket-placeholder i { display:none; }
+.bir-bracket-title { font-size:0.82rem; font-weight:700; color:var(--text-900,#1b2430); }
+.bir-bracket-desc { font-size:0.72rem; color:var(--text-500,#64748b); line-height:1.4; }
+.bir-bracket-link { margin-top:4px; font-size:0.72rem; font-weight:600; color:var(--info-600,#0891b2); text-decoration:none; }
 .bir-bracket-link:hover { text-decoration:underline; }
-
-@media (max-width: 1100px) {
+@media (max-width:1100px) {
   .bir-row { grid-template-columns:1fr; }
   .bir-col-side { position:static; width:auto; min-width:0; }
 }
-
-/* ============================================
-   BIR RESPONSIVE OVERRIDES
-   ============================================ */
-
-/* Prevent horizontal overflow */
-.bir-module {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+.bir-module,
+.bir-card { box-sizing:border-box; max-width:100%; overflow:hidden; }
+.bir-summary-item { min-width:0; flex:1 1 calc(50% - 8px); max-width:calc(50% - 8px); }
+.bir-card-head { flex-wrap:wrap; gap:8px; }
+.bir-table-search input { max-width:100%; }
+@media (max-width:768px) {
+  .bir-table-search input { width:100%; max-width:100%; }
+  .bir-card-body { max-height:none !important; overflow:visible !important; }
+  .bir-table-wrap { overflow:visible !important; flex:none !important; }
+  .bir-table,
+  .bir-table thead,
+  .bir-table tbody,
+  .bir-table th,
+  .bir-table td,
+  .bir-table tr { display:block; width:100%; min-width:0; }
+  .bir-table { border-collapse:separate; border-spacing:0; }
+  .bir-table thead { display:none; }
+  .bir-table tr { background:var(--card-bg,#fff); border:1px solid var(--border,#e4e8ee); border-radius:8px; padding:10px 12px; margin-bottom:10px; box-shadow:none; }
+  .bir-table td { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--border,#e4e8ee); text-align:right; min-width:0; overflow-wrap:anywhere; word-break:break-word; }
+  .bir-table td:last-child { border-bottom:none; padding-bottom:0; }
+  .bir-table td::before { content:attr(data-label); font-weight:600; font-size:0.68rem; text-transform:uppercase; color:var(--text-500,#64748b); text-align:left; flex-shrink:0; margin-right:6px; }
+  .bir-table td:last-child { justify-content:flex-end; }
+  .bir-stamp { font-size:0.7rem; padding:2px 8px; }
+  .bir-portal-link { font-size:0.78rem; }
 }
-
-.bir-card {
-    box-sizing: border-box;
-    max-width: 100%;
-    overflow: hidden;
+@media (max-width:400px) {
+  .bir-finder-grid { grid-template-columns:1fr; }
+  .bir-finder-cell--total { order:-1; }
 }
-
-/* Summary bar: tablet/mobile responsive */
-@media (max-width: 1100px) {
-    .bir-summary-bar {
-        gap: 10px;
-    }
-    .bir-summary-item {
-        min-width: 0;
-        flex: 1 1 calc(50% - 10px);
-        max-width: calc(50% - 10px);
-        padding: 14px 16px;
-    }
-    .bir-summary-item > div {
-        min-width: 0;
-    }
-    .bir-summary-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
-    .bir-summary-value {
-        font-size: 1.1rem;
-    }
-    .bir-summary-label {
-        font-size: 0.7rem;
-    }
-    .bir-summary-desc {
-        font-size: 0.6rem;
-    }
-}
-
-@media (max-width: 400px) {
-    .bir-summary-bar {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    .bir-summary-item {
-        max-width: 100%;
-        flex: 1 1 auto;
-    }
-}
-
-/* Card head wrapping */
-.bir-card-head {
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-/* ============================================
-   MOBILE CARD TABLE (max-width: 768px)
-   ============================================ */
-@media (max-width: 768px) {
-    .bir-card-body {
-        max-height: none !important;
-        overflow: visible !important;
-    }
-
-    .bir-table-wrap {
-        overflow: visible !important;
-        flex: none !important;
-    }
-
-    .bir-table,
-    .bir-table thead,
-    .bir-table tbody,
-    .bir-table th,
-    .bir-table td,
-    .bir-table tr {
-        display: block;
-        width: 100%;
-        min-width: 0;
-    }
-
-    .bir-table {
-        border-collapse: separate;
-        border-spacing: 0;
-    }
-
-    .bir-table thead {
-        display: none;
-    }
-
-    .bir-table tr {
-        background: var(--card-bg, #fff);
-        border: 1px solid var(--border, #e4e8ee);
-        border-radius: 12px;
-        padding: 12px 14px;
-        margin-bottom: 12px;
-        box-shadow: var(--shadow-soft, 0 1px 2px rgba(13,27,46,.04));
-    }
-
-    .bir-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--hairline, #dde3ea);
-        text-align: right;
-        min-width: 0;
-        overflow-wrap: anywhere;
-        word-break: break-word;
-    }
-
-    .bir-table td:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    .bir-table td::before {
-        content: attr(data-label);
-        font-weight: 700;
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        color: var(--text-400, #8b93a1);
-        text-align: left;
-        flex-shrink: 0;
-        margin-right: 8px;
-    }
-
-    .bir-table td:last-child {
-        justify-content: flex-end;
-    }
-
-    .bir-stamp {
-        font-size: 0.72rem;
-        padding: 3px 10px;
-    }
-
-    .bir-email-payroll-btn {
-        height: 40px;
-        min-width: 40px;
-        width: 40px;
-        font-size: 1rem;
-    }
-}
-
-/* ============================================
-   PAGINATION RESPONSIVE
-   ============================================ */
-@media (max-width: 768px) {
-    .bir-pagination {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-    }
-    .bir-pagination-info {
-        text-align: center;
-        order: 1;
-    }
-    .bir-pagination-nav {
-        order: 0;
-    }
-}
-
-/* ============================================
-   FINDER GRID RESPONSIVE
-   ============================================ */
-@media (max-width: 400px) {
-    .bir-finder-grid {
-        grid-template-columns: 1fr;
-    }
-    .bir-finder-cell--total {
-        order: -1;
-    }
-}
-
-.bir-finder-input {
-    min-width: 0;
-}
-
-/* Finder result value wrapping */
-.bir-finder-val {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-/* Finder row wrapping */
-.bir-finder-row {
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.bir-finder-key {
-    flex-shrink: 0;
-}
+.bir-finder-input { min-width:0; }
+.bir-finder-val { overflow-wrap:anywhere; word-break:break-word; }
+.bir-finder-row { flex-wrap:wrap; gap:6px; }
+.bir-finder-key { flex-shrink:0; }
 </style>
 
-<div class="bir-module">
+<section class="bir-module">
   <div class="bir-summary-bar">
     <a class="bir-summary-item <?= $filter === 'all' ? 'bir-summary-active' : '' ?>" href="?page=bir-monitoring&filter=all">
-      <div class="bir-summary-icon blue"><i class="bi bi-people"></i></div>
       <div>
         <div class="bir-summary-value"><?= number_format($totalEmployees) ?></div>
         <div class="bir-summary-label">Total Employees</div>
       </div>
     </a>
     <a class="bir-summary-item <?= $filter === 'submitted' ? 'bir-summary-active' : '' ?>" href="?page=bir-monitoring&filter=submitted">
-      <div class="bir-summary-icon green"><i class="bi bi-check-circle"></i></div>
       <div>
         <div class="bir-summary-value"><?= number_format($submitted) ?></div>
         <div class="bir-summary-label">Submitted</div>
       </div>
     </a>
     <a class="bir-summary-item <?= $filter === 'pending' ? 'bir-summary-active' : '' ?>" href="?page=bir-monitoring&filter=pending">
-      <div class="bir-summary-icon amber"><i class="bi bi-clock-history"></i></div>
       <div>
         <div class="bir-summary-value"><?= number_format($pending) ?></div>
         <div class="bir-summary-label">Pending</div>
       </div>
     </a>
-     <a class="bir-summary-item <?= $filter === 'rejected' ? 'bir-summary-active' : '' ?>" href="?page=bir-monitoring&filter=rejected">
-       <div class="bir-summary-icon red"><i class="bi bi-x-circle"></i></div>
-       <div>
-         <div class="bir-summary-value"><?= number_format($rejected) ?></div>
-         <div class="bir-summary-label">Rejected</div>
-       </div>
-     </a>
+    <a class="bir-summary-item <?= $filter === 'rejected' ? 'bir-summary-active' : '' ?>" href="?page=bir-monitoring&filter=rejected">
+      <div>
+        <div class="bir-summary-value"><?= number_format($rejected) ?></div>
+        <div class="bir-summary-label">Rejected</div>
+      </div>
+    </a>
     <div class="bir-summary-item">
-      <div class="bir-summary-icon seal"><i class="bi bi-calendar-check"></i></div>
       <div>
         <div class="bir-summary-value"><?= htmlspecialchars($deadlineDateStr) ?></div>
         <div class="bir-summary-label"><?= htmlspecialchars($deadlineLabel) ?></div>
@@ -564,7 +357,7 @@ if ($birBracketsJson === false) {
     <div class="bir-col bir-col-main">
       <div class="bir-card">
         <div class="bir-card-head">
-          <h3><i class="bi bi-list-ul"></i> Recent BIR Submissions</h3>
+          <h3>Recent BIR Submissions</h3>
         </div>
         <div class="bir-card-body">
           <?php if (empty($recent)): ?>
@@ -625,7 +418,7 @@ if ($birBracketsJson === false) {
     <div class="bir-col bir-col-side">
       <div class="bir-card bir-finder-card">
         <div class="bir-card-head">
-          <h3><i class="bi bi-cash-coin"></i> BIR Withholding Tax Reference</h3>
+          <h3>BIR Withholding Tax Reference</h3>
         </div>
         <div class="bir-card-body">
           <div class="bir-finder-form">
@@ -668,12 +461,11 @@ if ($birBracketsJson === false) {
       </div>
       <div class="bir-card" id="birBracketCard">
         <div class="bir-card-head">
-          <h3><i class="bi bi-cash-stack"></i> BIR Tax Brackets</h3>
+          <h3>BIR Tax Brackets</h3>
         </div>
         <div class="bir-card-body">
           <div class="bir-bracket-placeholder">
-            <i class="bi bi-cash-stack"></i>
-            <div class="bir-bracket-title">BIR Withholding Tax Table</div>
+                        <div class="bir-bracket-title">BIR Withholding Tax Table</div>
             <div class="bir-bracket-desc">View the current BIR withholding tax schedule based on monthly compensation.</div>
             <a href="?page=government-contribution-brackets&type=bir" class="bir-bracket-link">Open BIR Tax Table <i class="bi bi-arrow-right-short"></i></a>
           </div>
@@ -681,10 +473,11 @@ if ($birBracketsJson === false) {
       </div>
     </div>
   </div>
-</div>
+</section>
 
 <script>
 (function() {
+  var filter = '<?= htmlspecialchars((string)($filter ?? 'all')) ?>';
   var brackets = <?= $birBracketsJson ?>;
   var salaryInput = document.getElementById('birSalaryInput');
   var resultBox = document.getElementById('birFinderResult');
@@ -782,7 +575,7 @@ if ($birBracketsJson === false) {
     var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
     if (rows.length === 0) return;
 
-    var pageSize = 15;
+    var pageSize = 13;
     var totalItems = rows.length;
     var totalPages = Math.ceil(totalItems / pageSize);
     var currentPage = 1;
@@ -791,7 +584,9 @@ if ($birBracketsJson === false) {
     var navEl = document.getElementById('birPaginationNav');
     var paginationEl = document.getElementById('birRecentPagination');
 
-    paginationEl.style.display = 'flex';
+    if (filter === 'all') {
+      paginationEl.style.display = 'flex';
+    }
 
     function startIdx() { return (currentPage - 1) * pageSize; }
     function endIdx() { return Math.min(startIdx() + pageSize, totalItems); }
