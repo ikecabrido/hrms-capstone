@@ -15,12 +15,12 @@ if (!isset($_SESSION['employee_id']) || !isset($_SESSION['role'])) {
         header('Content-Type: application/json');
 
         echo json_encode([
-            'redirect' => '/hrms-capstone/auth/login.php'
+            'redirect' => '/auth/login.php'
         ]);
 
         exit();
     }
 
-    header('Location: /hrms-capstone/auth/login.php');
+    header('Location: /auth/login.php');
     exit();
 }
