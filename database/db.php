@@ -30,9 +30,9 @@ class Database
     {
         $this->host = 'localhost';
         $this->port = '3306';
-        $this->db   = 'bcp';
-        $this->user = 'root';
-        $this->pass = '';
+        $this->db   = 'payr_bcp';
+        $this->user = 'payr_bestlink';
+        $this->pass = '12345';
 
         $configFile = dirname(__DIR__) . '/db_config.php';
         if (file_exists($configFile)) {
