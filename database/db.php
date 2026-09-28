@@ -28,11 +28,27 @@ class Database
 
     public function __construct(string $database = '')
     {
-        $this->host = getenv('DB_HOST') ?: 'localhost';
-        $this->port = getenv('DB_PORT') ?: '3306';
-        $this->db   = $database ?: (getenv('DB_NAME') ?: 'bcp');
-        $this->user = getenv('DB_USER') ?: 'root';
-        $this->pass = getenv('DB_PASS') ?: '';
+        $this->host = 'localhost';
+        $this->port = '3306';
+        $this->db   = 'bcp';
+        $this->user = 'root';
+        $this->pass = '';
+
+        $configFile = dirname(__DIR__) . '/db_config.php';
+        if (file_exists($configFile)) {
+            $config = require $configFile;
+            $this->host = $config['host'] ?? $this->host;
+            $this->port = $config['port'] ?? $this->port;
+            $this->db   = $config['database'] ?? $this->db;
+            $this->user = $config['username'] ?? $this->user;
+            $this->pass = $config['password'] ?? $this->pass;
+        }
+
+        if (getenv('DB_HOST')) $this->host = getenv('DB_HOST');
+        if (getenv('DB_PORT')) $this->port = getenv('DB_PORT');
+        if (getenv('DB_NAME')) $this->db   = getenv('DB_NAME');
+        if (getenv('DB_USER')) $this->user = getenv('DB_USER');
+        if (getenv('DB_PASS')) $this->pass = getenv('DB_PASS');
 
         $usingDefaults = ($this->user === 'root' && $this->pass === '') || $this->user === 'CHANGE_ME';
 
@@ -52,7 +68,7 @@ class Database
             );
 
             if ($usingDefaults) {
-                error_log('WARNING: Database connection using default credentials. Update database/.env with production credentials.');
+                error_log('WARNING: Database connection using default credentials. Update database/.env or db_config.php with production credentials.');
             }
         } catch (PDOException $e) {
             $this->connectionError = $e->getMessage();
@@ -62,7 +78,7 @@ class Database
                 header('Content-Type: application/json');
                 $msg = 'Database connection unavailable.';
                 if ($usingDefaults) {
-                    $msg = 'Database configuration error. Update database/.env with production credentials.';
+                    $msg = 'Database configuration error. Update database/.env or db_config.php with production credentials.';
                 }
                 echo json_encode(['success' => false, 'message' => $msg]);
                 exit;
