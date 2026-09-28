@@ -211,7 +211,7 @@ class DocumentPreviewController
         try {
             $stmt = $this->db->prepare("
                 SELECT request_id, employee_id, document_type, template_code, request_status, priority, notes, requires_signature, signature_status, created_at
-                FROM lc_document_requests
+                FROM em_lc_document_requests
                 WHERE request_id = :id
                 LIMIT 1
             ");
@@ -1016,7 +1016,7 @@ HTML;
             ]);
 
             $this->db->prepare("
-                DELETE FROM lc_document_requests
+                DELETE FROM em_lc_document_requests
                 WHERE employee_id = :eid
                   AND document_type = 'Contract Renewal'
                   AND template_code = 'contract_renewal'

@@ -1686,7 +1686,7 @@ function op_create_document_request_from_rao_hired(PDO $db, int $raoHiredId, str
         $db->beginTransaction();
 
         $stmt = $db->prepare("
-            INSERT INTO lc_document_requests
+            INSERT INTO em_lc_document_requests
                 (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code, created_by)
             VALUES
                 (:employee_id, :rao_hired_id, :document_type, 'Pending', 'Medium', :notes, 1, 'none', :template_code, :created_by)

@@ -2,12 +2,16 @@
 // auth/login.php
 include "../database/db.php";
 
-$db   = new Database();
+header('Content-Type: application/json');
+
+$db = new Database();
+if ($db->hasConnectionError()) {
+    echo json_encode(['success' => false, 'message' => 'Database connection unavailable.']);
+    exit();
+}
 $conn = $db->getConnection();
 
 session_start();
-
-header('Content-Type: application/json');
 
 define('MAX_ATTEMPTS', 3);
 define('LOCKOUT_TIME', 60); // 60 seconds lockout

@@ -170,7 +170,7 @@ try {
         ]);
 
         $stmt = $db->prepare("
-            INSERT INTO lc_document_requests (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code)
+            INSERT INTO em_lc_document_requests (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code)
             VALUES (:employee_id, :rao_hired_id, :document_type, 'completed', 'Medium', NULL, 1, 'none', :template_code)
         ");
         if ($stmt === false) {
@@ -185,7 +185,7 @@ try {
         $contractRequestId = (int) $db->lastInsertId();
 
         $stmt = $db->prepare("
-            INSERT INTO lc_document_requests (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code)
+            INSERT INTO em_lc_document_requests (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code)
             VALUES (:employee_id, :rao_hired_id, :document_type, 'completed', 'Medium', NULL, 1, 'none', :template_code)
         ");
         if ($stmt === false) {
@@ -200,7 +200,7 @@ try {
         $handbookRequestId = (int) $db->lastInsertId();
 
         $stmt = $db->prepare("
-            INSERT INTO lc_document_requests (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code)
+            INSERT INTO em_lc_document_requests (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code)
             VALUES (:employee_id, :rao_hired_id, :document_type, 'completed', 'Medium', NULL, 1, 'none', :template_code)
         ");
         if ($stmt === false) {

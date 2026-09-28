@@ -102,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isAcknowledged && isset($_POST['a
                 </div>
             <?php endif; ?>
 
-            <div style="margin-top:20px; line-height:1.8; white-space:pre-wrap; font-family:inherit;"><?= htmlspecialchars($policyData['content']) ?></div>
+            <div style="margin-top:20px; line-height:1.8; white-space:pre-wrap; font-family:inherit;"><?= $policy->formatPolicyContent($policyData['content']) ?></div>
 
             <?php if (!empty($policyData['attachment_path'])): ?>
                 <div style="margin-top:20px; padding-top:16px; border-top:1px solid #e5e7eb;">

@@ -21,7 +21,7 @@ if ($requestId !== '') {
             $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         }
-        $stmt = $db->prepare("SELECT document_form_data FROM lc_document_requests WHERE request_id = :id LIMIT 1");
+        $stmt = $db->prepare("SELECT document_form_data FROM em_lc_document_requests WHERE request_id = :id LIMIT 1");
         $stmt->execute([':id' => $requestId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row && !empty($row['document_form_data'])) {

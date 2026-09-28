@@ -42,14 +42,14 @@ $senderInfoRole = '';
 $senderInfoEmail = $_SESSION['email'] ?? '';
 
 if ($employeeId) {
-    $stmt = $db->prepare('SELECT CONCAT(e.first_name, IFNULL(CONCAT(" ", e.middle_name, " "), " "), e.last_name) AS full_name, r.role_name FROM em_employees e LEFT JOIN user_account ua ON e.employee_id = ua.employee_id LEFT JOIN em_roles r ON ua.role_id = r.role_id WHERE e.employee_id = :employee_id LIMIT 1');
+    $stmt = $db->prepare('SELECT CONCAT(e.first_name, IFNULL(CONCAT(" ", e.middle_name, " "), " "), e.last_name) AS full_name FROM em_employees e WHERE e.employee_id = :employee_id LIMIT 1');
     $stmt->execute(['employee_id' => $employeeId]);
     $sRow = $stmt->fetch(PDO::FETCH_ASSOC);
     if ($sRow) {
         $senderInfoName = trim((string) $sRow['full_name']);
-        $senderInfoRole = trim((string) ($sRow['role_name'] ?? ''));
     }
 }
+$senderInfoRole = $_SESSION['role_name'] ?? '';
 
 $senderEmail = '';
 $notifMessage = '';

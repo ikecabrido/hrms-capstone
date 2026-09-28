@@ -36,7 +36,7 @@ try {
     $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
     $stmt = $db->prepare("
-        UPDATE lc_document_requests 
+        UPDATE em_lc_document_requests 
         SET document_form_data = :form_data,
             updated_at = NOW()
         WHERE request_id = :request_id

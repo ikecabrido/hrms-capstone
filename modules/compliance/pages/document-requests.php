@@ -327,7 +327,7 @@ if ($docType !== '') {
                                     $recordDocType = (string)($r['document_type'] ?? '');
                                     $templateCodeKey = $docTypeLabelToCode[$recordDocType] ?? $recordDocType;
                                     $templateInfo = $nonContractTemplateMap[$templateCodeKey] ?? ['template' => $templateCodeKey . '.php', 'template_code' => $templateCodeKey];
-                                    $rowHref = '?page=preview-document&employee_id=' . urlencode($employeeId) . '&document_type=' . urlencode($recordDocType) . '&template=' . urlencode($templateInfo['template']) . '&template_code=' . urlencode($templateInfo['template_code']);
+                                    $rowHref = '?page=preview-document&request_id=' . urlencode($rid) . '&employee_id=' . urlencode($employeeId) . '&document_type=' . urlencode($recordDocType) . '&template=' . urlencode($templateInfo['template']) . '&template_code=' . urlencode($templateInfo['template_code']);
                                     $status = strtolower((string)($r['request_status'] ?? 'pending'));
                                     $stampCls = 'pending';
                                     if ($status === 'completed') $stampCls = 'compliant';

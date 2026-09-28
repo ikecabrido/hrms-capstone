@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isLegalUser) {
                 $employerName = (string) ($employer['name'] ?? 'Bestlink College of the Philippines');
 
                 $db->prepare("
-                    INSERT INTO lc_document_requests
+                    INSERT INTO em_lc_document_requests
                         (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code)
                     VALUES
                         (:employee_id, :rao_hired_id, :document_type, 'Pending', 'Medium', NULL, 1, 'none', 'employee_handbook')

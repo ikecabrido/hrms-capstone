@@ -29,7 +29,7 @@ if ($allExist) {
     die('External case tables already exist.');
 }
 
-$sql = file_get_contents(__DIR__ . '/../../../sql/external_cases.sql');
+$sql = file_get_contents(__DIR__ . '/../../sql/external_cases.sql');
 if ($sql === false) {
     die('Could not read SQL migration file.');
 }

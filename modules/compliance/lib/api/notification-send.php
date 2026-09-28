@@ -311,7 +311,7 @@ if ($templateCode === 'contract_renewal') {
             ]);
 
             $db->prepare("
-                DELETE FROM lc_document_requests
+                DELETE FROM em_lc_document_requests
                 WHERE employee_id = :eid
                   AND (rao_hired_id IS NULL OR rao_hired_id = 0)
                   AND document_type = 'Contract Renewal'

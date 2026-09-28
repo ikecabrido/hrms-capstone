@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../../../auth/session.php';
 
 header('Content-Type: application/json');
 
-$db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
+$db = new PDO('mysql:host=localhost;dbname=bcp;charset=utf8mb4', 'root', '');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 

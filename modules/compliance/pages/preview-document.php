@@ -12,9 +12,10 @@ if (!isset($user) || empty($user)) {
     $user = $_SESSION['user'] ?? [];
 }
 if (!isset($db) || empty($db)) {
-    $db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $db = (new Database())->getConnection();
+}
+if ($db === null) {
+    throw new RuntimeException('Database connection is unavailable.');
 }
 
 $controller = new DocumentPreviewController($db, $user ?? []);

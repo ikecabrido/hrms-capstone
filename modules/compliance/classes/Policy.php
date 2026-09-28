@@ -564,6 +564,30 @@ class Policy
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function formatPolicyContent($content)
+    {
+        $raw = strip_tags((string) $content);
+        $lines = explode("\n", $raw);
+        $out = [];
+        $first = true;
+        foreach ($lines as $line) {
+            $trimmed = ltrim($line);
+            if ($first && $trimmed !== '') {
+                $out[] = '<strong>' . htmlspecialchars($line) . '</strong>';
+                $first = false;
+            } elseif (preg_match('/^\s*\d+\.\s+.+/', $line)) {
+                $out[] = '<strong>' . htmlspecialchars($line) . '</strong>';
+            } elseif (preg_match('/Employees are expected to:/', $line)) {
+                $out[] = '<strong><em>' . htmlspecialchars($line) . '</em></strong>';
+            } elseif (preg_match('/Employees must not engage in conduct that may:/', $line)) {
+                $out[] = '<strong><em>' . htmlspecialchars($line) . '</em></strong>';
+            } else {
+                $out[] = htmlspecialchars($line);
+            }
+        }
+        return implode("\n", $out);
+    }
 }
 
 

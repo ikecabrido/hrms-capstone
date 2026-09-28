@@ -1,5 +1,21 @@
 <?php
 
+if (file_exists(__DIR__ . '/.env')) {
+    $lines = file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        $parts = explode('=', $line, 2);
+        if (count($parts) === 2) {
+            $key = trim($parts[0]);
+            $value = trim($parts[1]);
+            if (!getenv($key)) {
+                putenv("$key=$value");
+                $_ENV[$key] = $value;
+            }
+        }
+    }
+}
+
 class Database
 {
     private $host;
@@ -8,14 +24,17 @@ class Database
     private $user;
     private $pass;
     private $conn;
+    private $connectionError = null;
 
-    public function __construct()
+    public function __construct(string $database = '')
     {
-        $this->host = 'localhost';
-        $this->port = '3306';
-        $this->db   = 'hrms';
-        $this->user = 'root';
-        $this->pass = '';
+        $this->host = getenv('DB_HOST') ?: 'localhost';
+        $this->port = getenv('DB_PORT') ?: '3306';
+        $this->db   = $database ?: (getenv('DB_NAME') ?: 'bcp');
+        $this->user = getenv('DB_USER') ?: 'root';
+        $this->pass = getenv('DB_PASS') ?: '';
+
+        $usingDefaults = ($this->user === 'root' && $this->pass === '') || $this->user === 'CHANGE_ME';
 
         try {
             $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db};charset=utf8mb4";
@@ -31,23 +50,54 @@ class Database
                 PDO::ATTR_DEFAULT_FETCH_MODE,
                 PDO::FETCH_ASSOC
             );
+
+            if ($usingDefaults) {
+                error_log('WARNING: Database connection using default credentials. Update database/.env with production credentials.');
+            }
         } catch (PDOException $e) {
-            die("DB Connection failed: " . $e->getMessage());
+            $this->connectionError = $e->getMessage();
+            error_log('DB Connection failed: ' . $e->getMessage());
+
+            if (isset($_SERVER['REQUEST_METHOD']) && ($_SERVER['REQUEST_METHOD'] === 'POST' || !empty($_SERVER['HTTP_X_REQUESTED_WITH']))) {
+                header('Content-Type: application/json');
+                $msg = 'Database connection unavailable.';
+                if ($usingDefaults) {
+                    $msg = 'Database configuration error. Update database/.env with production credentials.';
+                }
+                echo json_encode(['success' => false, 'message' => $msg]);
+                exit;
+            }
         }
+    }
+
+    public function getConnection()
+    {
+        if ($this->conn === null) {
+            throw new RuntimeException('Database connection unavailable. ' . ($this->connectionError ?? ''));
+        }
+        return $this->conn;
+    }
+
+    public function hasConnectionError(): bool
+    {
+        return $this->connectionError !== null;
+    }
+
+    public function getConnectionError(): ?string
+    {
+        return $this->connectionError;
     }
 
     public function getRoles()
     {
+        if ($this->conn === null) {
+            throw new RuntimeException('Database connection unavailable.');
+        }
         $query = "SELECT role_id, role_name FROM em_roles ORDER BY role_id";
 
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
 
         return $stmt->fetchAll();
-    }
-
-    public function getConnection()
-    {
-        return $this->conn;
     }
 }

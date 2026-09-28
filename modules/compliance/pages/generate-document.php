@@ -316,7 +316,7 @@ if (isset($_GET['generate']) && $_GET['generate'] === '1') {
         $db->prepare("UPDATE lc_contracts SET file_path = :file_path, file_name = :file_name WHERE contract_id = :id")->execute([':file_path' => $fileUrl, ':file_name' => $contractFilename, ':id' => $contractId]);
         $requestDocType = ucwords(str_replace('_', ' ', $documentType));
         $requestTemplateCode = $templateCode !== '' ? $templateCode : null;
-        $db->prepare("INSERT INTO lc_document_requests (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code) VALUES (:employee_id, :rao_hired_id, :document_type, 'completed', 'Medium', NULL, 1, 'none', :template_code)")->execute([
+        $db->prepare("INSERT INTO em_lc_document_requests (employee_id, rao_hired_id, document_type, request_status, priority, notes, requires_signature, signature_status, template_code) VALUES (:employee_id, :rao_hired_id, :document_type, 'completed', 'Medium', NULL, 1, 'none', :template_code)")->execute([
             ':employee_id' => (int) $employeeId,
             ':rao_hired_id' => $sourceTable === 'rao_hired' ? (int) $employeeId : null,
             ':document_type' => $requestDocType,

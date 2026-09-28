@@ -74,14 +74,14 @@ try {
     $db->beginTransaction();
 
     $maxId = 0;
-    $idCheck = $db->query('SELECT COALESCE(MAX(request_id), 0) AS max_id FROM lc_document_requests');
+    $idCheck = $db->query('SELECT COALESCE(MAX(request_id), 0) AS max_id FROM em_lc_document_requests');
     if ($idRow = $idCheck->fetch(PDO::FETCH_ASSOC)) {
         $maxId = (int) ($idRow['max_id'] ?? 0);
     }
     $newRequestId = $maxId + 1;
 
     $stmt = $db->prepare("
-        INSERT INTO lc_document_requests
+        INSERT INTO em_lc_document_requests
             (request_id, employee_id, rao_hired_id, document_type, request_status, archived, signature_status, requires_signature,
              created_at, required_by, assigned_to, priority, notes, template_code)
         VALUES

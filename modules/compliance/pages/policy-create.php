@@ -107,8 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db instanceof PDO && $policy insta
         $assignByPosition = isset($_POST['assign_by_position']);
         $selectedEmployees = isset($_POST['em_employees']) && is_array($_POST['em_employees']) ? $_POST['em_employees'] : [];
 
-        if ($assignAll && !empty($selectedEmployees)) {
-            $policy->assignPolicy($policyId, $selectedEmployees, $data['acknowledgement_deadline']);
+        if ($assignAll) {
+            $allEmployees = $policy->getEmployeesForAssignment();
+            $empIds = array_column($allEmployees, 'employee_id');
+            $policy->assignPolicy($policyId, $empIds, $data['acknowledgement_deadline']);
         } elseif ($assignByDept && !empty($_POST['department_ids'])) {
             $deptEmps = $db->prepare("SELECT employee_id FROM em_employees WHERE department_id = :dept_id AND employment_status = 'Active'");
             foreach ((array) $_POST['department_ids'] as $deptId) {
@@ -294,12 +296,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db instanceof PDO && $policy insta
                     <textarea id="description" name="description" rows="2" class="pc-form-control"><?= htmlspecialchars($_POST['description'] ?? '') ?></textarea>
                    </div>
 
-                   <div class="pc-form-group">
-                    <label for="content">Policy Content</label>
-                    <textarea id="content" name="content" rows="8" class="pc-form-control"><?= htmlspecialchars($_POST['content'] ?? '') ?></textarea>
-                   </div>
+                    <div class="pc-form-group">
+                     <label for="content">Policy Content</label>
+                     <textarea id="content" name="content" rows="8" class="pc-form-control"><?= htmlspecialchars($_POST['content'] ?? '') ?></textarea>
+                    </div>
 
-                   <div class="pc-form-row">
+                    <div class="pc-form-group">
+                      <label>Policy Assignment</label>
+                      <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 10px;">
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12.5px; color:var(--pc-text);">
+                          <input type="checkbox" id="assignAllCheck" name="assign_all" value="1" <?= isset($_POST['assign_all']) ? 'checked' : '' ?> style="width:14px; height:14px; accent-color:var(--pc-primary);">
+                          <span>Assign to All Employees</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12.5px; color:var(--pc-text);">
+                          <input type="checkbox" id="assignDeptCheck" name="assign_by_department" value="1" <?= isset($_POST['assign_by_department']) ? 'checked' : '' ?> style="width:14px; height:14px; accent-color:var(--pc-primary);">
+                          <span>By Department</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12.5px; color:var(--pc-text);">
+                          <input type="checkbox" id="assignPosCheck" name="assign_by_position" value="1" <?= isset($_POST['assign_by_position']) ? 'checked' : '' ?> style="width:14px; height:14px; accent-color:var(--pc-primary);">
+                          <span>By Position</span>
+                        </label>
+                      </div>
+
+                      <div id="employeeSelectGroup" class="pc-form-group" style="margin-top: 8px;">
+                        <label for="em_employees">Select Employees</label>
+                        <select id="em_employees" name="em_employees[]" class="pc-form-control" multiple size="6">
+                          <?php foreach ($em_employees as $emp): ?>
+                            <option value="<?= (int) $emp['employee_id'] ?>" <?= (isset($_POST['em_employees']) && in_array((string) $emp['employee_id'], (array) $_POST['em_employees']) ? 'selected' : '') ?>>
+                              <?= htmlspecialchars(($emp['first_name'] ?? '') . ' ' . ($emp['last_name'] ?? '') . ' (' . ($emp['employee_code'] ?? '') . ')') ?>
+                            </option>
+                          <?php endforeach; ?>
+                        </select>
+                        <small style="font-size:10.5px; color:var(--pc-muted); margin-top:4px; line-height:1.35;">Hold Ctrl/Cmd to select multiple employees.</small>
+                      </div>
+
+                      <div id="deptSelectGroup" class="pc-form-group" style="display:none; margin-top: 8px;">
+                        <label for="department_ids">Select Departments</label>
+                        <select id="department_ids" name="department_ids[]" class="pc-form-control" multiple size="4">
+                          <?php foreach ($em_departments as $dept): ?>
+                            <option value="<?= (int) $dept['id'] ?>" <?= (isset($_POST['department_ids']) && in_array((string) $dept['id'], (array) $_POST['department_ids']) ? 'selected' : '') ?>>
+                              <?= htmlspecialchars($dept['department_name'] ?? ('Department ' . $dept['id'])) ?>
+                            </option>
+                          <?php endforeach; ?>
+                        </select>
+                        <small style="font-size:10.5px; color:var(--pc-muted); margin-top:4px; line-height:1.35;">Hold Ctrl/Cmd to select multiple departments.</small>
+                      </div>
+
+                      <div id="posSelectGroup" class="pc-form-group" style="display:none; margin-top: 8px;">
+                        <label for="position_ids">Select Positions</label>
+                        <select id="position_ids" name="position_ids[]" class="pc-form-control" multiple size="4">
+                          <?php foreach ($positions as $pos): ?>
+                            <option value="<?= (int) $pos['position_id'] ?>" <?= (isset($_POST['position_ids']) && in_array((string) $pos['position_id'], (array) $_POST['position_ids']) ? 'selected' : '') ?>>
+                              <?= htmlspecialchars($pos['position_name'] ?? ('Position ' . $pos['position_id'])) ?>
+                            </option>
+                          <?php endforeach; ?>
+                        </select>
+                        <small style="font-size:10.5px; color:var(--pc-muted); margin-top:4px; line-height:1.35;">Hold Ctrl/Cmd to select multiple positions.</small>
+                      </div>
+                    </div>
+
+                    <div class="pc-form-row">
                       <div class="pc-form-group">
                        <label for="status">Status</label>
                        <select id="status" name="status" class="pc-form-control">

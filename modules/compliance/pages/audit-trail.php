@@ -13,7 +13,7 @@ if (!isset($user) || empty($user)) {
     $user = $_SESSION['user'] ?? [];
 }
 
-$db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
+$db = new PDO('mysql:host=localhost;dbname=bcp;charset=utf8mb4', 'root', '');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
@@ -699,16 +699,20 @@ $totalAudit = count($auditTrail);
    t._timer = setTimeout(function () { t.classList.remove('show'); }, 3500);
  }
 
- function getApiBase() {
-   var path = window.location.pathname;
-   var parts = path.split('/').filter(Boolean);
-   var lcIndex = parts.indexOf('hrms-capstone');
-   if (lcIndex !== -1) {
-     return window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/';
-   }
-   var dirs = parts.slice(0, -2);
-   return window.location.origin + '/' + dirs.join('/') + '/lib/api/';
- }
+  function getApiBase() {
+    var path = window.location.pathname;
+    var parts = path.split('/').filter(Boolean);
+    var lcIndex = parts.indexOf('hrms-capstone');
+    if (lcIndex !== -1) {
+      return window.location.origin + '/' + parts.slice(0, lcIndex + 1).join('/') + '/modules/compliance/lib/api/';
+    }
+    var complianceIndex = parts.indexOf('compliance');
+    if (complianceIndex !== -1) {
+      return window.location.origin + '/' + parts.slice(0, complianceIndex + 1).join('/') + '/lib/api/';
+    }
+    var dirs = parts.slice(0, -2);
+    return window.location.origin + '/' + dirs.join('/') + '/lib/api/';
+  }
 
  function postForm(url, form, successMsg) {
    var fd = form instanceof FormData ? form : new FormData(form);

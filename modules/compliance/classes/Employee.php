@@ -4,7 +4,7 @@ include_once __DIR__ . '/../../../database/db.php';
 
 class Employee
 {
-    private $conn;
+    private ?PDO $conn = null;
     private $employeeid;
     private $firstname;
     private $lastname;
@@ -70,6 +70,10 @@ class Employee
             session_start();
         }
 
+        if (!empty($_SESSION['employee_name'])) {
+            return $_SESSION['employee_name'];
+        }
+
         $employeeId = $_SESSION['employee_id'] ?? null;
 
         if ($employeeId) {
@@ -85,9 +89,7 @@ class Employee
             $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($employee) {
-                return htmlspecialchars(
-                    $employee['first_name'] . ' ' . $employee['last_name']
-                );
+                return $employee['first_name'] . ' ' . $employee['last_name'];
             }
         }
 
@@ -101,6 +103,10 @@ class Employee
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
+        }
+
+        if (!empty($_SESSION['position_name'])) {
+            return $_SESSION['position_name'];
         }
 
         $employeeId = $_SESSION['employee_id'] ?? null;
@@ -119,8 +125,8 @@ class Employee
 
             $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            if ($employee) {
-                return htmlspecialchars($employee['position_name']);
+            if ($employee && !empty($employee['position_name'])) {
+                return $employee['position_name'];
             }
         }
 

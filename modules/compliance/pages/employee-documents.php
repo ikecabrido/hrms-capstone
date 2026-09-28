@@ -51,9 +51,9 @@ try {
     }
 
     if ($currentFilter === 'Pending') {
-        $whereSql .= " AND (lv.verification_status = 'Pending' OR lv.verification_status = 'Rejected' OR lv.verification_status IS NULL)";
+        $whereSql .= " AND (d.verification_status = 'Pending' OR d.verification_status = 'Rejected')";
     } elseif ($currentFilter === 'Verified') {
-        $whereSql .= " AND lv.verification_status = 'Verified'";
+        $whereSql .= " AND d.verification_status = 'Verified'";
     }
 
     if ($currentFilter === 'Expiring Soon') {
@@ -92,7 +92,7 @@ try {
         $params[':q'] = '%' . strtolower($search) . '%';
     }
 
-    $verificationSelect = "COALESCE(lv.verification_status, 'Pending') AS verification_status";
+    $verificationSelect = "d.verification_status";
 
     $countSql = "
         SELECT COUNT(*)
@@ -100,7 +100,6 @@ try {
         INNER JOIN em_employees e ON e.employee_id = d.employee_id
         LEFT JOIN em_departments dep ON dep.department_id = e.department_id
         LEFT JOIN em_positions pos ON pos.position_id = e.position_id
-        LEFT JOIN lc_document_verification lv ON lv.document_id = d.document_id
         $whereSql
     ";
     $countStmt = $db->prepare($countSql);
@@ -121,6 +120,9 @@ try {
             d.expiry_date,
             $verificationSelect,
             d.created_at AS upload_date,
+            d.verified_by,
+            d.verified_at,
+            d.verification_notes,
             CONCAT(e.first_name, ' ', e.last_name) AS full_name,
             e.employee_code AS employee_no,
             e.email,
@@ -131,7 +133,6 @@ try {
         INNER JOIN em_employees e ON e.employee_id = d.employee_id
         LEFT JOIN em_departments dep ON dep.department_id = e.department_id
         LEFT JOIN em_positions pos ON pos.position_id = e.position_id
-        LEFT JOIN lc_document_verification lv ON lv.document_id = d.document_id
         $whereSql
         ORDER BY d.created_at DESC
         LIMIT :limit OFFSET :offset
@@ -187,8 +188,8 @@ $kpiExpiring = 0;
 $kpiExpired = 0;
 try {
   $kpiTotal = (int)$db->query("SELECT COUNT(*) FROM em_documents d INNER JOIN em_employees e ON e.employee_id = d.employee_id")->fetchColumn();
-  $kpiPending = (int)$db->query("SELECT COUNT(*) FROM em_documents d INNER JOIN em_employees e ON e.employee_id = d.employee_id LEFT JOIN lc_document_verification lv ON lv.document_id = d.document_id WHERE lv.verification_status = 'Pending' OR lv.verification_status = 'Rejected' OR lv.verification_status IS NULL")->fetchColumn();
-  $kpiVerified = (int)$db->query("SELECT COUNT(*) FROM em_documents d INNER JOIN em_employees e ON e.employee_id = d.employee_id LEFT JOIN lc_document_verification lv ON lv.document_id = d.document_id WHERE lv.verification_status = 'Verified'")->fetchColumn();
+  $kpiPending = (int)$db->query("SELECT COUNT(*) FROM em_documents d INNER JOIN em_employees e ON e.employee_id = d.employee_id WHERE d.verification_status = 'Pending' OR d.verification_status = 'Rejected'")->fetchColumn();
+  $kpiVerified = (int)$db->query("SELECT COUNT(*) FROM em_documents d INNER JOIN em_employees e ON e.employee_id = d.employee_id WHERE d.verification_status = 'Verified'")->fetchColumn();
   $kpiExpiring = (int)$db->query("SELECT COUNT(*) FROM em_documents d INNER JOIN em_employees e ON e.employee_id = d.employee_id WHERE d.expiry_date IS NOT NULL AND d.expiry_date >= CURDATE() AND DATEDIFF(d.expiry_date, CURDATE()) BETWEEN 1 AND 30")->fetchColumn();
   $kpiExpired = (int)$db->query("SELECT COUNT(*) FROM em_documents d INNER JOIN em_employees e ON e.employee_id = d.employee_id WHERE d.expiry_date IS NOT NULL AND d.expiry_date < CURDATE()")->fetchColumn();
 } catch (Throwable $e) {
