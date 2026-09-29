@@ -96,7 +96,7 @@ $documentTitle = 'Certificate of Employment';
     </div>
 
         <div class="document-notary">
-        <img src="/hrms-capstone/modules/compliance/assets/notary.png" alt="Notary Seal">
+        <img src="/modules/compliance/assets/notary.png" alt="Notary Seal">
     </div>
 <div class="document-signature">
 
@@ -124,6 +124,7 @@ $documentTitle = 'Certificate of Employment';
         This document is a <strong>system-generated sample document</strong> developed solely for academic, research, and demonstration purposes as part of the <strong>Human Resource Management System with Legal Compliance Module</strong> undergraduate thesis project.
     </div>
 </div>
+
 
 
 

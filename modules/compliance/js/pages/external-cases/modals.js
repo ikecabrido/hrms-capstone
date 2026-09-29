@@ -458,7 +458,7 @@ function initCreateCase() {
                     typeParam = relatedTypeSelect.value === 'none' ? '' : relatedTypeSelect.value;
                 }
                 relatedTimer = setTimeout(function() {
-                    var url = '/hrms-capstone/modules/compliance/lib/api/search-related-records.php?q=' + encodeURIComponent(q);
+                    var url = '/modules/compliance/lib/api/search-related-records.php?q=' + encodeURIComponent(q);
                     if (typeParam) {
                         url += '&type=' + encodeURIComponent(typeParam);
                     }
@@ -912,3 +912,4 @@ function initDateInputs() {
     }
     formatDateInput(resolutionDate);
 }
+

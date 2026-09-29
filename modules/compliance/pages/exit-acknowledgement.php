@@ -948,7 +948,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
         </div>
         <div class="cw-card-body">
           <p style="margin:0 0 12px;font-size:0.82rem;color:var(--cw-muted,#5b6472);">Verify compliance, acknowledge the exit, or return the record to Exit Management for clarification.</p>
-          <form method="POST" action="" id="eaActionForm" data-api-url="/hrms-capstone/modules/compliance/lib/api/exit_acknowledgement_action.php" data-skip>
+          <form method="POST" action="" id="eaActionForm" data-api-url="/modules/compliance/lib/api/exit_acknowledgement_action.php" data-skip>
             <input type="hidden" name="exit_id" value="<?= (int)$exit['id'] ?>">
             <?php if ($legalStatus !== 'confirmed'): ?>
               <button type="submit" name="acknowledge_exit" class="cw-btn primary" id="eaBtnAcknowledge" style="background:rgba(47,158,110,.08);border-color:rgba(47,158,110,.25);color:#1f7a52;">
@@ -1123,6 +1123,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
 })();
 </script>
 <?php ob_end_flush(); ?>
+
 
 
 

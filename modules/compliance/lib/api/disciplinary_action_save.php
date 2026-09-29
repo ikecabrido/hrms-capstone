@@ -141,7 +141,7 @@ if ($incidentDate !== '') {
 }
 $redirectParams['template_code'] = $templateCode;
 
-$redirect = '/hrms-capstone/modules/compliance/index.php?page=notification-compose&' . http_build_query($redirectParams);
+$redirect = '/modules/compliance/index.php?page=notification-compose&' . http_build_query($redirectParams);
 
 dcsj_send_json([
     'success'    => true,
@@ -149,3 +149,4 @@ dcsj_send_json([
     'redirect'   => $redirect,
     'request_id' => (int) $newRequestId,
 ]);
+

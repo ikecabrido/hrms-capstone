@@ -504,11 +504,11 @@ function dg_get_signature_image(int $height = 90): string {
 
     $src = '';
     if (file_exists($basePath . 'images.png')) {
-        $src = $protocol . $host . '/hrms-capstone/modules/compliance/assets/images.png';
+        $src = $protocol . $host . '/modules/compliance/assets/images.png';
     } elseif (file_exists($basePath . 'signature.svg')) {
-        $src = $protocol . $host . '/hrms-capstone/assets/img/signature.svg';
+        $src = $protocol . $host . '/assets/img/signature.svg';
     } elseif (file_exists($basePath . 'signature.png')) {
-        $src = $protocol . $host . '/hrms-capstone/assets/img/signature.png';
+        $src = $protocol . $host . '/assets/img/signature.png';
     }
 
     if ($src !== '') {
@@ -1861,7 +1861,7 @@ function op_generate_package_html(PDO $db, array $employee): string {
 
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
-    $notarySrc = $protocol . $host . '/hrms-capstone/modules/compliance/assets/notary.png';
+    $notarySrc = $protocol . $host . '/modules/compliance/assets/notary.png';
 
     $pageBreakStyle = 'style="page-break-after: always; break-after: page;"';
 
@@ -1991,5 +1991,6 @@ function op_generate_package_html(PDO $db, array $employee): string {
 
     return $html;
 }
+
 
 

@@ -1,7 +1,7 @@
 <?php
 
 $pageTitle = 'BIR Monitoring';
-$moduleHeaderImage = '/hrms-capstone/modules/compliance/assets/bir.png';
+$moduleHeaderImage = '/modules/compliance/assets/bir.png';
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
@@ -669,4 +669,5 @@ if ($birBracketsJson === false) {
   })();
 })();
 </script>
+
 

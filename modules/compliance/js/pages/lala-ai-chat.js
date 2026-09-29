@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var ENDPOINT = '/hrms-capstone/modules/compliance/lib/ajax/lala-ai-chat.php?cb=' + Date.now();
+    var ENDPOINT = '/modules/compliance/lib/ajax/lala-ai-chat.php?cb=' + Date.now();
     var CHAR_LIMIT = 2000;
     var SCROLL_THROTTLE = 50;
 
@@ -784,3 +784,4 @@
 
     init();
 })();
+

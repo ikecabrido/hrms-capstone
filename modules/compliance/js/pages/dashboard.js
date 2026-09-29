@@ -77,7 +77,7 @@ async function ensureChartJs() {
 
     return new Promise((resolve) => {
         const script = document.createElement('script');
-        script.src = '/hrms-capstone/modules/compliance/lib/chart.js/chart.umd.min.js';
+        script.src = '/modules/compliance/lib/chart.js/chart.umd.min.js';
         script.onload = () => resolve(true);
         script.onerror = () => resolve(false);
         document.head.appendChild(script);
@@ -986,3 +986,4 @@ function initActionComplianceOverview() {
 }
 
 export { initDashboard, initDeptComplianceChart, initIncidentAnalytics, initActionComplianceOverview, DASHBOARD_PAGE };
+

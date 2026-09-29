@@ -161,7 +161,7 @@ function generate_report_pdf(PDO $db, string $reportKey, string $reportCode): ?s
 
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    return $protocol . $host . '/hrms-capstone/modules/compliance/assets/documents/reports/' . $filename;
+    return $protocol . $host . '/modules/compliance/assets/documents/reports/' . $filename;
 }
 
 try {
@@ -247,3 +247,4 @@ try {
 } catch (Throwable $e) {
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage(), 'debug' => $debug]);
 }
+

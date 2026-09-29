@@ -1,6 +1,6 @@
 import { qs, qsa, esc, cleanJSON } from './helpers.js';
 
-const RELATED_SEARCH_API = '/hrms-capstone/modules/compliance/lib/api/search-related-records.php';
+const RELATED_SEARCH_API = '/modules/compliance/lib/api/search-related-records.php';
 
 export function initEditRelatedSearch() {
     var typeSelect = qs('#ecEditRelatedType');
@@ -86,3 +86,4 @@ export function initEditRelatedSearch() {
         }, 300);
     });
 }
+

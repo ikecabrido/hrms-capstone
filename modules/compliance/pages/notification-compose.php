@@ -266,7 +266,7 @@ if ($mode === 'forward' && $attachmentContractId > 0 && ($attachmentName === '' 
             $attachmentName = $pdfName;
         }
         if ($attachmentUrl === '') {
-            $attachmentUrl = '/hrms-capstone/modules/compliance/pages/labor-law-compliance/uploads/contracts/' . rawurlencode($pdfName);
+            $attachmentUrl = '/modules/compliance/pages/labor-law-compliance/uploads/contracts/' . rawurlencode($pdfName);
         }
     }
 }
@@ -463,7 +463,7 @@ if ($requestedTemplateCode !== '' && $composeEmployeeId !== '') {
     if ($attachmentUrl === '') {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $attachmentUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/generate-document.php?employee_id=' . urlencode($composeEmployeeId) . '&document_type=' . urlencode($documentType) . '&template=' . urlencode($templateFile) . '&template_code=' . urlencode($requestedTemplateCode) . '&hr_signatory=' . urlencode($_GET['hr_signatory'] ?? '') . '&generate=1';
+        $attachmentUrl = $protocol . $host . '/modules/compliance/pages/generate-document.php?employee_id=' . urlencode($composeEmployeeId) . '&document_type=' . urlencode($documentType) . '&template=' . urlencode($templateFile) . '&template_code=' . urlencode($requestedTemplateCode) . '&hr_signatory=' . urlencode($_GET['hr_signatory'] ?? '') . '&generate=1';
 
         if (in_array($requestedTemplateCode, ['employment_contract', 'contract_renewal', 'contract_extension'], true)) {
             $attachmentUrl .= '&contract_type=' . urlencode((string) ($_GET['contract_type'] ?? 'Regular'));
@@ -545,7 +545,7 @@ if ($requestedTemplateCode === 'nte' && $composeEmployeeId !== '') {
     if ($attachmentUrl === '' && $composeEmployeeId !== '') {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $attachmentUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/generate-document.php?employee_id=' . urlencode($composeEmployeeId) . '&document_type=nte&template=nte.php&template_code=nte&hr_signatory=' . urlencode($_GET['hr_signatory'] ?? '') . '&incident_date=' . urlencode($_GET['incident_date'] ?? '') . '&incident_time=' . urlencode($_GET['incident_time'] ?? '') . '&incident_location=' . urlencode($_GET['incident_location'] ?? '') . '&policy_violated=' . urlencode($_GET['policy_violated'] ?? '') . '&incident_description=' . urlencode($_GET['incident_description'] ?? '') . ($complaintId > 0 ? '&complaint_id=' . (int) $complaintId : '') . '&generate=1';
+        $attachmentUrl = $protocol . $host . '/modules/compliance/pages/generate-document.php?employee_id=' . urlencode($composeEmployeeId) . '&document_type=nte&template=nte.php&template_code=nte&hr_signatory=' . urlencode($_GET['hr_signatory'] ?? '') . '&incident_date=' . urlencode($_GET['incident_date'] ?? '') . '&incident_time=' . urlencode($_GET['incident_time'] ?? '') . '&incident_location=' . urlencode($_GET['incident_location'] ?? '') . '&policy_violated=' . urlencode($_GET['policy_violated'] ?? '') . '&incident_description=' . urlencode($_GET['incident_description'] ?? '') . ($complaintId > 0 ? '&complaint_id=' . (int) $complaintId : '') . '&generate=1';
         $attachmentName = 'NTE_' . preg_replace('/[^A-Za-z0-9]/', '', $fullName) . '.pdf';
     }
 }
@@ -632,7 +632,7 @@ if ($notificationKey === 'policy_reminder') {
 $sendToMany = true;
 $replySenderEmailAllowed = true;
 
-$webBase = '/hrms-capstone/modules/compliance/';
+$webBase = '/modules/compliance/';
 
 ?>
 <section class="cc-module">
@@ -644,7 +644,7 @@ $webBase = '/hrms-capstone/modules/compliance/';
           <span class="nc-step-number">1</span>
           <span class="nc-step-label">Sender Information</span>
           <div class="nc-toolbar-right">
-            <a href="/hrms-capstone/modules/compliance/index.php?page=sent-history" class="nc-toolbar-btn">
+            <a href="/modules/compliance/index.php?page=sent-history" class="nc-toolbar-btn">
               Sent History
             </a>
           </div>
@@ -832,5 +832,6 @@ window.__ncConfig = {
   companyAddress: '<?php echo addslashes((string) ($emailConfig['company_address'] ?? 'Quirino Highway, Brgy. Minuyan Proper, City of San Jose del Monte, Bulacan')); ?>'
 };
 </script>
+
 
 

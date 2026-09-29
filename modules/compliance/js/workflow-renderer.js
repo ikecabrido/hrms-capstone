@@ -1,5 +1,5 @@
 export class WorkflowRenderer {
-  constructor(containerId, apiBase = '/hrms-capstone/modules/compliance/lib/api') {
+  constructor(containerId, apiBase = '/modules/compliance/lib/api') {
     this.container = document.getElementById(containerId);
     this.apiBase = apiBase;
     this.caseId = null;
@@ -270,3 +270,4 @@ export class WorkflowRenderer {
     });
   }
 }
+

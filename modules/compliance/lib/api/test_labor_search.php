@@ -1,6 +1,6 @@
 <?php
 require_once 'C:/xampp/htdocs/hrms-capstone/database/db.php';
-require_once 'C:/xampp/htdocs/hrms-capstone/modules/compliance/classes/LaborLawReference.php';
+require_once 'C:/xampp/htdocs/modules/compliance/classes/LaborLawReference.php';
 $model = new LaborLawReference((new Database())->getConnection());
 $tests = ['maternity leave', 'paternity leave', 'night differential', '13th month pay', 'philhealth', 'pagibig', 'employee termination'];
 foreach ($tests as $q) {
@@ -12,3 +12,4 @@ foreach ($tests as $q) {
         }
     }
 }
+

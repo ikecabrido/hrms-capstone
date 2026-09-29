@@ -210,7 +210,7 @@ $documentTitle = 'Clearance Survey';
 
             <div style="margin-bottom:40px;">
 
-                                <img src="/hrms-capstone/modules/compliance/assets/notary.png" style="width:340px;height:auto;display:inline-block;opacity:0.5;mix-blend-mode:multiply;">
+                                <img src="/modules/compliance/assets/notary.png" style="width:340px;height:auto;display:inline-block;opacity:0.5;mix-blend-mode:multiply;">
 <div style="position: relative; display: inline-block;">
                     <div style="position: absolute; top: 0; left: 0; z-index: 2;">
                         <?= $hrSignatory ?>
@@ -282,6 +282,7 @@ $documentTitle = 'Clearance Survey';
         </div>
 
         </div>
+
 
 
 

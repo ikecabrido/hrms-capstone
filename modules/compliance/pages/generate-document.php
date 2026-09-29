@@ -312,7 +312,7 @@ if (isset($_GET['generate']) && $_GET['generate'] === '1') {
         file_put_contents($savePath, $pdfOutput);
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $fileUrl = $protocol . $host . '/hrms-capstone/modules/compliance/assets/uploads/contracts/' . $contractFilename;
+        $fileUrl = $protocol . $host . '/modules/compliance/assets/uploads/contracts/' . $contractFilename;
         $db->prepare("UPDATE lc_contracts SET file_path = :file_path, file_name = :file_name WHERE contract_id = :id")->execute([':file_path' => $fileUrl, ':file_name' => $contractFilename, ':id' => $contractId]);
         $requestDocType = ucwords(str_replace('_', ' ', $documentType));
         $requestTemplateCode = $templateCode !== '' ? $templateCode : null;
@@ -701,5 +701,6 @@ ob_start();
 })();
 </script>
 <?php
+
 
 

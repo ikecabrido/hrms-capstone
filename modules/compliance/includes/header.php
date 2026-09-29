@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -71,30 +71,30 @@
         @media print { .sidebar, header, footer, .hamburger { display: none; } .main-content { margin-left: 0; margin-top: 0; } }
     </style>
 
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/layout/sidebar.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/layout/footer.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/layout/header.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/layout/module-container.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/components/dropdown.css?v=3">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/components/calendar.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/components/list_action_buttons.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/dashboard.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/notification-compose.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/notification-detail.css?v=1">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/labor-law-references.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/sent-history.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/case-records.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/document-requests.css?v=11">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/onboarding-package.css?v=2">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/decision-actions.css?v=1">
+    <link rel="stylesheet" href="/modules/compliance/css/layout/sidebar.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/layout/footer.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/layout/header.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/layout/module-container.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/components/dropdown.css?v=3">
+    <link rel="stylesheet" href="/modules/compliance/css/components/calendar.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/components/list_action_buttons.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/dashboard.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/notification-compose.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/notification-detail.css?v=1">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/labor-law-references.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/sent-history.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/case-records.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/document-requests.css?v=11">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/onboarding-package.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/decision-actions.css?v=1">
 
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/external-cases.css?v=1">
-    <link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/external-cases-detail-tabs.css?v=1">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/external-cases.css?v=1">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/external-cases-detail-tabs.css?v=1">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="icon" type="image/png" href="/hrms-capstone/modules/compliance/assets/bcp_logo.png">
+    <link rel="icon" type="image/png" href="/modules/compliance/assets/bcp_logo.png">
     <title>Legal & Compliance</title>
 </head>
 <body>
@@ -145,7 +145,7 @@
                 </li>
                 <li class="divider"></li>
                 <li>
-                    <a href="/hrms-capstone/auth/logout.php" class="signout-link">
+                    <a href="/auth/logout.php" class="signout-link">
                         <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                     </a>
                 </li>
@@ -161,4 +161,5 @@
         </div>
         <div class="notif-detail-body" id="notifDetailBody"></div>
     </div>
+
 

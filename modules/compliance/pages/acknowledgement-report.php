@@ -44,7 +44,7 @@ $acknowledgements = $policy->getAcknowledgements($policyId, [], $perPage, $offse
 
 ?>
 
-<link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/acknowledgement-report.css?v=2">
+<link rel="stylesheet" href="/modules/compliance/css/pages/acknowledgement-report.css?v=2">
 
 <section class="policy-module">
   <div class="policy-summary-bar">

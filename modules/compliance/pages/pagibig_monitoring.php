@@ -1,7 +1,7 @@
 <?php
 
 $pageTitle = 'Pag-IBIG Monitoring';
-$moduleHeaderImage = '/hrms-capstone/modules/compliance/assets/pagibig.webp';
+$moduleHeaderImage = '/modules/compliance/assets/pagibig.webp';
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
@@ -533,4 +533,5 @@ $recentActivity = array_slice($recent, 0, 6);
   })();
 })();
 </script>
+
 

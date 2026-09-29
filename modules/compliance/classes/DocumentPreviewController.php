@@ -424,7 +424,7 @@ class DocumentPreviewController
 
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $absGenerateUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/' . $generateUrl;
+        $absGenerateUrl = $protocol . $host . '/modules/compliance/pages/' . $generateUrl;
 
         $attachmentName = 'Onboarding_Package_' . preg_replace('/[^A-Za-z0-9]/', '', ($employee['full_name'] ?? 'Employee')) . '.html';
 
@@ -531,7 +531,7 @@ class DocumentPreviewController
 
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $absGenerateUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/' . $generateUrl;
+        $absGenerateUrl = $protocol . $host . '/modules/compliance/pages/' . $generateUrl;
 
         $attachmentNameMap = [
             'coe' => 'COE',
@@ -1141,5 +1141,6 @@ HTML;
         echo '<div class="dg-template-frame"><div class="dg-empty">' . htmlspecialchars($message) . '</div></div>';
     }
 }
+
 
 

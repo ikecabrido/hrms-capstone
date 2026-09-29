@@ -1,7 +1,7 @@
 <?php
 
 $pageTitle = 'SSS Monitoring';
-$moduleHeaderImage = '/hrms-capstone/modules/compliance/assets/sss.png';
+$moduleHeaderImage = '/modules/compliance/assets/sss.png';
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
@@ -599,4 +599,5 @@ $recent = sss_all($db, $recentQuery, []);
   /* SSS Recent Table Pagination is handled server-side */
 })();
 </script>
+
 

@@ -100,10 +100,10 @@ $agencyStats = [
     'TIN' => ['label' => 'TIN', 'column' => 'tin_no'],
 ];
 $agencyLogos = [
-    'SSS' => '/hrms-capstone/modules/compliance/assets/sss.png',
-    'PhilHealth' => '/hrms-capstone/modules/compliance/assets/philhealth.webp',
-    'Pag-IBIG' => '/hrms-capstone/modules/compliance/assets/pagibig.webp',
-    'TIN' => '/hrms-capstone/modules/compliance/assets/bir.png',
+    'SSS' => '/modules/compliance/assets/sss.png',
+    'PhilHealth' => '/modules/compliance/assets/philhealth.webp',
+    'Pag-IBIG' => '/modules/compliance/assets/pagibig.webp',
+    'TIN' => '/modules/compliance/assets/bir.png',
 ];
 $agencyCounts = [];
 foreach ($agencyStats as $key => $meta) {
@@ -1737,7 +1737,7 @@ document.addEventListener('keydown', function(e) {
             clickTimer = null;
             lastClickedItem = null;
             lastClickTime = 0;
-            window.location.href = '/hrms-capstone/modules/compliance/index.php?page=government-registration';
+            window.location.href = '/modules/compliance/index.php?page=government-registration';
             return;
         }
 
@@ -1759,3 +1759,4 @@ document.addEventListener('keydown', function(e) {
     });
 })();
 </script>
+

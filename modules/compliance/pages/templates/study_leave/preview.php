@@ -135,7 +135,7 @@ if ($templateRecord && !empty($templateRecord['template_content'])) {
     </div>
 
         <div class="document-notary">
-        <img src="<?= $protocol . $host . '/hrms-capstone/modules/compliance/assets/notary.png' ?>" alt="Notary Seal">
+        <img src="<?= $protocol . $host . '/modules/compliance/assets/notary.png' ?>" alt="Notary Seal">
     </div>
 <div class="document-signature">
 
@@ -163,6 +163,7 @@ if ($templateRecord && !empty($templateRecord['template_content'])) {
         This document is a <strong>system-generated sample document</strong> developed solely for academic, research, and demonstration purposes as part of the <strong>Human Resource Management System with Legal Compliance Module</strong> undergraduate thesis project.
     </div>
 </div>
+
 
 
 

@@ -334,7 +334,7 @@ $pageTitle = 'Legal Affairs';
                  <h3><i class="bi bi-info-circle"></i> Case Details</h3>
                  <nav class="ec-breadcrumb" aria-label="breadcrumb">
                    <ol class="breadcrumb">
-                     <li class="breadcrumb-item"><a href="/hrms-capstone/modules/compliance/index.php?page=external-cases" id="ecBreadcrumbList">Legal Affairs</a></li>
+                     <li class="breadcrumb-item"><a href="/modules/compliance/index.php?page=external-cases" id="ecBreadcrumbList">Legal Affairs</a></li>
                      <li class="breadcrumb-item active" aria-current="page" id="ecBreadcrumbCurrent">Case Information</li>
                    </ol>
                  </nav>
@@ -902,11 +902,12 @@ $pageTitle = 'Legal Affairs';
 
   <script>
 window.EC = {
-  api: '/hrms-capstone/modules/compliance/lib/api/external-cases-api.php',
+  api: '/modules/compliance/lib/api/external-cases-api.php',
   csrf: '<?= htmlspecialchars(hm_csrf_token()) ?>',
   caseId: null,
   page: 1,
   filters: { search: '', status: '', agency: '' }
 };
   </script>
-   <script type="module" src="/hrms-capstone/modules/compliance/js/pages/external-cases/index.js" defer></script>
+   <script type="module" src="/modules/compliance/js/pages/external-cases/index.js" defer></script>
+

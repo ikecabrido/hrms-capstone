@@ -3,7 +3,7 @@
 function dg_get_signature_image(int $height = 90): string {
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $src = $protocol . $host . '/hrms-capstone/assets/img/signature.png';
+    $src = $protocol . $host . '/assets/img/signature.png';
     return '<img src="' . $src . '" alt="Signature" style="height:' . $height . 'px; vertical-align:middle; display:inline-block;">';
 }
 

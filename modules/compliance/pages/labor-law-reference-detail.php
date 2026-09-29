@@ -34,7 +34,7 @@ $reference = $model->getReferenceById($referenceId);
 
 if (!$reference) {
     $pdfDir = __DIR__ . '/../assets/labor-law-pdf/';
-    $pdfBaseUrl = '/hrms-capstone/modules/compliance/assets/labor-law-pdf/';
+    $pdfBaseUrl = '/modules/compliance/assets/labor-law-pdf/';
     if (is_dir($pdfDir)) {
         foreach (glob($pdfDir . '*.pdf') as $pdfPath) {
             $filename = basename($pdfPath);
@@ -104,7 +104,7 @@ if ($sourceUrl && strpos($sourceUrl, '://') === false && strpos($sourceUrl, '/')
 
 ?>
 
-<link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/labor-law-reference-detail.css">
+<link rel="stylesheet" href="/modules/compliance/css/pages/labor-law-reference-detail.css">
 
 <section class="llr-detail-module">
     <div class="llr-detail-card">
@@ -176,5 +176,6 @@ if ($sourceUrl && strpos($sourceUrl, '://') === false && strpos($sourceUrl, '/')
         </div>
     </div>
 </section>
+
 
 

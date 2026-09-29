@@ -226,7 +226,7 @@ function lc_report_status_class(string $s): string {
             </div>
 
             <div class="kpi-strip">
-                <a href="/hrms-capstone/modules/compliance/lib/api/preview_report.php?key=employee_master_list&export=export_report" class="kpi-box-link">
+                <a href="/modules/compliance/lib/api/preview_report.php?key=employee_master_list&export=export_report" class="kpi-box-link">
                     <div class="kpi-box">
                         <div class="kpi-box-label">Total Employees</div>
                         <div class="kpi-box-value"><?= number_format($totalEmployees) ?></div>
@@ -1198,3 +1198,4 @@ function lc_report_status_class(string $s): string {
 
 
 <script src="js/pages/legal-case-chat.js"></script>
+

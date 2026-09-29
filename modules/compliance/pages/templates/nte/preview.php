@@ -203,7 +203,7 @@ $today = date('F d, Y');
         </p>
 
         <div class="document-notary">
-        <img src="<?= $protocol . $host . '/hrms-capstone/modules/compliance/assets/notary.png' ?>" alt="Notary Seal">
+        <img src="<?= $protocol . $host . '/modules/compliance/assets/notary.png' ?>" alt="Notary Seal">
     </div>
 <div class="document-signature">
 
@@ -242,6 +242,7 @@ $today = date('F d, Y');
     </div>
 
 </div>
+
 
 
 

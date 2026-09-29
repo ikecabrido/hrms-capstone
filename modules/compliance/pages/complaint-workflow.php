@@ -532,7 +532,7 @@ try {
                   <?php foreach ($stepEvidenceItems['evidence_check'] as $ev): ?>
                       <?php
                         $evImgSrc = null;
-                        $assetBase = '/hrms-capstone/modules/compliance/assets/';
+                        $assetBase = '/modules/compliance/assets/';
                         if (!empty($ev['image_path'])) {
                           $img = $ev['image_path'];
                           if (preg_match('/^[a-zA-Z]:\\|^\//', $img)) {
@@ -835,7 +835,7 @@ window.CHWF_CONFIG = {
     severity: <?= json_encode($case['severity'] ?? '') ?>,
     description: <?= json_encode($case['description'] ?? '') ?>,
     assignedTo: <?= json_encode($case['assigned_to'] ?? '') ?>,
-    assetBaseUrl: '/hrms-capstone/modules/compliance/assets/',
+    assetBaseUrl: '/modules/compliance/assets/',
     assignableOfficers: <?= json_encode(array_values(array_map(function($o) {
         return ['id' => (int)$o['employee_id'], 'name' => $o['full_name'], 'code' => $o['employee_code']];
     }, $assignableOfficers)), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
@@ -1621,3 +1621,4 @@ window.CHWF_CONFIG = {
   }
  </style>
 <?php ob_end_flush(); ?>
+

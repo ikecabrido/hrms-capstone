@@ -415,7 +415,7 @@ if ($docType !== '') {
                         <p><a href="?page=document-requests&doc_type=return_to_work_agreement">Return-to-Work Agreement</a></p>
                         <p><a href="?page=document-requests&doc_type=clearance_survey">Clearance Survey</a></p>
                         <p><a href="?page=document-requests&doc_type=exit_clearance">Exit Clearance</a></p>
-                        <p><a href="/hrms-capstone/modules/compliance/assets/documents/onboarding/onboarding.html">New Hire Documents</a></p>
+                        <p><a href="/modules/compliance/assets/documents/onboarding/onboarding.html">New Hire Documents</a></p>
                     </div>
                 </div>
             </div>
@@ -1044,3 +1044,4 @@ if ($docType !== '') {
      }
  })();
  </script>
+

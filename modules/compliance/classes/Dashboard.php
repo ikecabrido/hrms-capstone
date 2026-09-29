@@ -582,11 +582,11 @@ class Dashboard
             if (!isset($groups[$groupKey])) {
                 $url = null;
                 if ($type === 'Policy Acknowledgement') {
-                    $url = '/hrms-capstone/modules/compliance/index.php?page=policy-management';
+                    $url = '/modules/compliance/index.php?page=policy-management';
                 } elseif ($type === 'Compliance Item') {
-                    $url = '/hrms-capstone/modules/compliance/index.php?page=labor-compliance';
+                    $url = '/modules/compliance/index.php?page=labor-compliance';
                 } elseif ($type === 'Document Expiry') {
-                    $url = '/hrms-capstone/modules/compliance/index.php?page=employee-documents';
+                    $url = '/modules/compliance/index.php?page=employee-documents';
                 }
 
                 $groups[$groupKey] = [
@@ -782,3 +782,4 @@ class Dashboard
         ];
     }
 }
+

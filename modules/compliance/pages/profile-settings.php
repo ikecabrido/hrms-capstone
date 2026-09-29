@@ -12,7 +12,7 @@ if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
 $employeeId = $_SESSION['employee_id'] ?? null;
 
 if (!$employeeId) {
-    header('Location: /hrms-capstone/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -520,7 +520,7 @@ if (window.location.hash === '#change-password') {
         var formData = new FormData();
         formData.append('password', val);
 
-        fetch('/hrms-capstone/modules/compliance/lib/api/verify_current_password.php', {
+        fetch('/modules/compliance/lib/api/verify_current_password.php', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
@@ -1101,3 +1101,4 @@ if (window.location.hash === '#change-password') {
     .cw-profile-avatar { width: 50px; height: 50px; font-size: 15px; }
 }
 </style>
+

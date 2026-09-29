@@ -9,7 +9,7 @@ if (!isset($user) || empty($user)) {
     $user = $_SESSION['user'] ?? [];
 }
 
-$webBase = '/hrms-capstone/modules/compliance/';
+$webBase = '/modules/compliance/';
 
 $documentName = $_GET['document_name'] ?? 'Sample Document';
 $employeeName = $_GET['employee_name'] ?? 'Juan Dela Cruz';
@@ -120,3 +120,4 @@ function generateSamplePdf(string $documentName, string $employeeName, string $d
 
     return $output;
 }
+

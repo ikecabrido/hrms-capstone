@@ -4,7 +4,7 @@
     var chatInput = document.getElementById('lcChatInput');
     var chatSend = document.getElementById('lcChatSend');
     var chatMessages = document.getElementById('lcChatMessages');
-    var chatEndpoint = '/hrms-capstone/modules/compliance/lib/ajax/legal-case-chat.php';
+    var chatEndpoint = '/modules/compliance/lib/ajax/legal-case-chat.php';
 
     if (!chatInput || !chatSend || !chatMessages) return;
 
@@ -81,3 +81,4 @@
         }
     });
 })();
+
