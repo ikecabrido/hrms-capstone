@@ -46,10 +46,11 @@ class Recognition extends BaseModel
 
         $parts = [];
 
-        if ($this->tableHasColumns('pm_performance_reports', ['report_id', 'employee_id', 'overall_rating', 'period_end'])) {
+        if ($this->tableHasColumns('pm_performance_reports', ['report_id', 'employee_id', 'review_period', 'period_start', 'period_end', 'overall_rating', 'kpi_health_score', 'summary', 'employee_name'])) {
             $parts[] = "SELECT
                         pr.report_id,
                         pr.employee_id,
+                        pr.employee_name as source_employee_name,
                         pr.review_period as evaluation_period,
                         pr.period_start,
                         pr.period_end,
@@ -74,10 +75,12 @@ class Recognition extends BaseModel
                     FROM pm_performance_reports pr";
         }
 
-        if ($this->tableHasColumns('pm_reports', ['report_id', 'employee_id', 'final_rating_percent', 'final_grade', 'period_end'])) {
+        if ($this->tableHasColumns('pm_reports', ['report_id', 'employee_id', 'evaluation_period', 'period_start', 'final_rating_percent', 'final_grade', 'period_end'])) {
+            $sourceEmployeeName = $this->hasColumn('pm_reports', 'employee_name') ? 'pr.employee_name' : 'NULL';
             $parts[] = "SELECT 
                         pr.report_id,
                         pr.employee_id,
+                        $sourceEmployeeName as source_employee_name,
                         pr.evaluation_period,
                         pr.period_start,
                         pr.period_end,
@@ -96,10 +99,12 @@ class Recognition extends BaseModel
                     FROM pm_reports pr";
         }
 
-        if ($this->tableHasColumns('pm_appraisals', ['appraisal_id', 'employee_id', 'overall_rating'])) {
+        if ($this->tableHasColumns('pm_appraisals', ['appraisal_id', 'employee_id', 'overall_rating', 'due_date', 'created_at'])) {
+            $sourceEmployeeName = $this->hasColumn('pm_appraisals', 'employee_name') ? 'pa.employee_name' : 'NULL';
             $parts[] = "SELECT
                         pa.appraisal_id as report_id,
                         pa.employee_id,
+                        $sourceEmployeeName as source_employee_name,
                         NULL as evaluation_period,
                         pa.due_date as period_start,
                         pa.due_date as period_end,
@@ -132,8 +137,14 @@ class Recognition extends BaseModel
 
         $sql = "SELECT 
                     pr.report_id,
-                    pr.employee_id,
-                    COALESCE(CONCAT_WS(' ', e.first_name, e.middle_name, e.last_name), CONCAT('Employee #', pr.employee_id)) as employee_name,
+                    COALESCE(e.employee_id, (
+                        SELECT matched.employee_id
+                        FROM em_employees matched
+                        WHERE LOWER(TRIM(CONCAT_WS(' ', matched.first_name, matched.middle_name, matched.last_name))) = LOWER(TRIM(pr.source_employee_name))
+                        ORDER BY matched.employee_id ASC
+                        LIMIT 1
+                    ), pr.employee_id) as employee_id,
+                    COALESCE(NULLIF(CONCAT_WS(' ', e.first_name, e.middle_name, e.last_name), ''), NULLIF(pr.source_employee_name, ''), CONCAT('Employee #', pr.employee_id)) as employee_name,
                     pr.evaluation_period,
                     pr.period_start,
                     pr.period_end,
@@ -158,6 +169,15 @@ class Recognition extends BaseModel
 
     public function sendRecognition($sender_id, $receiver_id, $message, $points)
     {
+        $receiverId = (int)$receiver_id;
+        $receiverExists = $this->execute(
+            'SELECT employee_id FROM em_employees WHERE employee_id = :employee_id LIMIT 1',
+            ['employee_id' => $receiverId]
+        )->fetchColumn();
+        if (!$receiverExists) {
+            throw new \RuntimeException('The selected employee is no longer available. Refresh the page and select an employee from the current list.');
+        }
+
         $existingRecognition = $this->execute(
             "SELECT eer_recognition_id
              FROM eer_recognitions
@@ -166,7 +186,7 @@ class Recognition extends BaseModel
                AND created_at >= DATE_FORMAT(CURRENT_DATE, '%Y-%m-01')
                AND created_at < DATE_ADD(DATE_FORMAT(CURRENT_DATE, '%Y-%m-01'), INTERVAL 1 MONTH)
              LIMIT 1",
-            ['receiver_id' => (int)$receiver_id]
+            ['receiver_id' => $receiverId]
         )->fetchColumn();
 
         if ($existingRecognition) {
@@ -184,12 +204,15 @@ class Recognition extends BaseModel
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             WHERE e.employee_id = :receiver_id";
         
-        $this->execute($sql, [
+        $insert = $this->execute($sql, [
             'sender_id' => $sender_id,
-            'receiver_id' => $receiver_id,
+            'receiver_id' => $receiverId,
             'message' => $message,
             'points' => $points
         ]);
+        if ($insert->rowCount() !== 1) {
+            throw new \RuntimeException('Recognition was not saved. Refresh the page and select an employee from the current list.');
+        }
         
         $recognitionId = (int)$this->db->lastInsertId();
 
@@ -222,8 +245,8 @@ class Recognition extends BaseModel
         }
 
         $notification = new Notification();
-        $notification->notifyEmployees([(int)$receiver_id], 'You received a recognition: ' . $message, 'recognition');
-        $notification->notifyHr('A recognition was sent to employee #' . (int)$receiver_id . '.', 'recognition', [(int)$sender_id, (int)$receiver_id]);
+        $notification->notifyEmployees([$receiverId], 'You received a recognition: ' . $message, 'recognition');
+        $notification->notifyHr('A recognition was sent to employee #' . $receiverId . '.', 'recognition', [(int)$sender_id, $receiverId]);
 
         return $recognitionId;
     }

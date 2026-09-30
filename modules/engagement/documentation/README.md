@@ -132,7 +132,7 @@ These are the visible pages inside the module:
   Displays surveys and their results.
 
 - [../pages/social.php](../pages/social.php)  
-  Supports social posts, collaboration, and employee communications.
+  Provides a Social overview dashboard with recent posts, sentiment and engagement analytics, discussion forums, team groups, project collaboration, reports and moderation, and an admin activity log. Forum and project cards open detail dialogs, while group cards open member management.
 
 - [../pages/recognition.php](../pages/recognition.php)  
   Displays recognition, awards, and employee appreciation.
@@ -279,14 +279,17 @@ Key actions:
 
 ### 6.3 Social and collaboration
 Purpose:
-- create social interaction among employees
-- allow posts and interaction around workplace topics
+- provide a shared overview for employee posts and collaboration spaces
+- support employee interaction, team organization, and project coordination
 
 Key actions:
-- create post
-- comment or react
-- view feed history
-- track employee engagement activity
+- publish posts and share supported file attachments
+- comment on posts, reply, and add reactions
+- create discussion forums and open a forum card to read its full description
+- create team groups, view their members, and assign employees through the group-members dialog
+- create project spaces and open a project card to view its description, status, and deadline
+- review sentiment and engagement analytics, moderation items, and the admin activity log
+- create and refresh Social content without a full-page reload
 
 ### 6.4 Recognition and rewards
 Purpose:

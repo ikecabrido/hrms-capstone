@@ -17,7 +17,7 @@ class Database
         // Look for Railway's environment variables first, default to local if missing
         $this->host = getenv('DB_HOST') ?: "localhost";
         $this->port = getenv('DB_PORT') ?: "3306"; // Default MySQL port
-        $this->db   = getenv('DB_DATABASE') ?: "hrms_new";
+        $this->db   = getenv('DB_DATABASE') ?: "payr_bcp";
         $this->user = getenv('DB_USER') ?: "root";
         $this->pass = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : "";
 

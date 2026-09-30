@@ -9,22 +9,35 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 
 function resolveCommunicationEmployeeId()
 {
-    $employeeId = $_SESSION['employee_id'] ?? $_SESSION['user']['employee_id'] ?? null;
-    if (!empty($employeeId)) {
-        return (int)$employeeId;
-    }
-
     $userId = $_SESSION['user_id'] ?? $_SESSION['user']['id'] ?? $_SESSION['user']['user_id'] ?? null;
-    if (empty($userId)) {
-        return null;
+    $db = \Database::getInstance()->getConnection();
+    if (!empty($userId)) {
+        $stmt = $db->prepare('SELECT e.employee_id
+            FROM user_account ua
+            INNER JOIN em_employees e ON e.employee_id = ua.employee_id
+            WHERE ua.user_id = :user_id
+            LIMIT 1');
+        $stmt->execute(['user_id' => $userId]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!empty($row['employee_id'])) {
+            return (int)$row['employee_id'];
+        }
     }
 
-    $db = \Database::getInstance()->getConnection();
-    $stmt = $db->prepare('SELECT employee_id FROM user_account WHERE user_id = :user_id LIMIT 1');
-    $stmt->execute(['user_id' => $userId]);
-    $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+    foreach ([$_SESSION['user']['employee_id'] ?? null, $_SESSION['employee_id'] ?? null] as $employeeId) {
+        if (empty($employeeId)) {
+            continue;
+        }
 
-    return !empty($row['employee_id']) ? (int)$row['employee_id'] : null;
+        $stmt = $db->prepare('SELECT employee_id FROM em_employees WHERE employee_id = :employee_id LIMIT 1');
+        $stmt->execute(['employee_id' => $employeeId]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!empty($row['employee_id'])) {
+            return (int)$row['employee_id'];
+        }
+    }
+
+    return null;
 }
 
 $action = $_GET['action'] ?? 'list';

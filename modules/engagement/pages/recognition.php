@@ -169,7 +169,9 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                                   <?php endforeach; ?>
                                 </ul>
                               <?php else: ?>
-                                <p class="text-muted text-center m-2">No recommendations available yet.</p>
+                                <div class="text-center m-2">
+                                  <p class="text-muted">No performance recommendations available yet.</p>
+                                </div>
                               <?php endif; ?>
                             </div>
                             <nav id="performance-recommendations-pagination" class="mt-2"></nav>
@@ -751,7 +753,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
     <div class="modal-header"><h5 class="modal-title" id="sendRecognitionModalLabel"><i class="fas fa-award mr-2"></i>Recognize Employee</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="sendRecognitionModal"><span>&times;</span></button></div>
     <form id="send-recognition-form" data-skip="true">
       <div class="modal-body">
-        <div class="form-group"><label for="rec-receiver">Employee</label><select id="rec-receiver" class="form-control" required><option value="">Select employee</option></select></div>
+        <div class="form-group"><label for="rec-receiver-name">Employee</label><input type="text" id="rec-receiver-name" class="form-control" readonly aria-readonly="true" placeholder="Select employee from a recommendation"><input type="hidden" id="rec-receiver" required></div>
         <div class="form-group"><label for="rec-message">Message</label><textarea id="rec-message" class="form-control" rows="4" required placeholder="Why are you recognizing this employee?"></textarea></div>
         <div class="form-group"><label for="rec-points">Points</label><input id="rec-points" class="form-control" type="number" min="1" value="10" required></div>
       </div>

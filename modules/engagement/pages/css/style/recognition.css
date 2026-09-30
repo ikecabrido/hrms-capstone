@@ -1903,6 +1903,142 @@ body.modal-open {
   box-shadow: none;
 }
 
+.recognition-area,
+.recognition-area .recognition-card,
+.recognition-area .recognition-tabs-body,
+.recognition-area .tab-content,
+.recognition-area .recognition-main-grid,
+.recognition-area .recognition-left-column,
+.recognition-area .recognition-right-column {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.recognition-area .recognition-card {
+  width: 100%;
+}
+
+.recognition-area .recognition-nav-tabs {
+  max-width: 100%;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.recognition-area .recognition-nav-tabs .nav-item {
+  flex: 0 0 auto;
+}
+
+.recognition-area .recognition-nav-tabs .nav-link {
+  white-space: nowrap;
+}
+
+.recognition-area .leaderboard-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.recognition-area .leaderboard-table-scroll table {
+  min-width: 760px;
+}
+
+@media (max-width: 991.98px) {
+  .recognition-area .recognition-main-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recognition-area .recognition-right-column {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .recognition-area .recognition-right-column > .card:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .recognition-area .recognition-right-column > .card {
+    height: auto;
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .recognition-area .recognition-subgrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recognition-area .recognition-right-column {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .recognition-area .recognition-right-column > .card:first-child {
+    grid-column: auto;
+  }
+
+  .recognition-area .recognition-tabs-body {
+    padding: 0.75rem 0.65rem;
+  }
+
+  .recognition-area .tab-content {
+    padding-top: 0.75rem;
+  }
+
+  .recognition-area .recognition-nav-tabs .nav-link {
+    min-height: 46px;
+    padding: 0.7rem 0.85rem !important;
+    font-size: 0.88rem;
+  }
+
+  .recognition-area .recognition-left-column > .card,
+  .recognition-area .recognition-right-column > .card,
+  .recognition-area .recognition-subgrid > div > .card {
+    height: auto;
+  }
+
+  .recognition-area .card-header {
+    padding: 0.85rem 1rem !important;
+  }
+
+  .recognition-area .card-body {
+    padding: 0.9rem 1rem !important;
+  }
+
+  .recognition-area .recommend-recognize {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 420px) {
+  .recognition-area .recognition-nav-tabs .nav-link {
+    gap: 0.35rem;
+    padding: 0.65rem 0.7rem !important;
+    font-size: 0.82rem;
+  }
+
+  .recognition-area .recognition-nav-tabs .nav-link i {
+    margin-right: 0 !important;
+  }
+
+  .recognition-area .quick-stats-row {
+    gap: 0.5rem;
+  }
+
+  .recognition-area .quick-stats-item {
+    min-height: 84px;
+    padding: 0.7rem 0.45rem;
+  }
+
+  .recognition-area .quick-stats-label {
+    font-size: 0.75rem;
+  }
+}
+
 /* Tabs body */
 .recognition-tabs-body {
   padding: 22px 20px 18px;

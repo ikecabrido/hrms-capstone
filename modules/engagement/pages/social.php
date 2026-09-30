@@ -70,6 +70,39 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
   </div>
 </div>
 
+<div class="modal fade" id="forumDetailsModal" tabindex="-1" role="dialog" aria-labelledby="forumDetailsModalTitle" aria-hidden="true">
+  <div class="modal-dialog forum-details-dialog" role="document">
+    <div class="modal-content forum-details-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="forumDetailsModalTitle"><i class="fas fa-comments mr-2"></i>Forum details</h5>
+        <button type="button" class="close" aria-label="Close" onclick="window.closeSocialModal('forumDetailsModal')"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <span id="forumDetailsModalCategory" class="forum-details-category"></span>
+        <p id="forumDetailsModalDescription" class="forum-details-description mb-0"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="projectDetailsModal" tabindex="-1" role="dialog" aria-labelledby="projectDetailsModalTitle" aria-hidden="true">
+  <div class="modal-dialog forum-details-dialog" role="document">
+    <div class="modal-content forum-details-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="projectDetailsModalTitle"><i class="fas fa-sitemap mr-2"></i>Project details</h5>
+        <button type="button" class="close" aria-label="Close" onclick="window.closeSocialModal('projectDetailsModal')"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="project-details-meta">
+          <span id="projectDetailsModalStatus" class="forum-details-category"></span>
+          <span id="projectDetailsModalDeadline" class="project-details-deadline"></span>
+        </div>
+        <p id="projectDetailsModalDescription" class="forum-details-description mb-0"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Create Post Modal -->
 <div class="modal fade" id="createPostModal" tabindex="-1" role="dialog" aria-labelledby="createPostModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -135,8 +168,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
           $projectCount = count($payload['projects'] ?? []);
           $postCount = count($payload['feed'] ?? []);
           $analyticsPosts = $payload['feed'] ?? [];
-          $analyticsComments = 0;
-          $analyticsReactions = 0;
           $sentimentCounts = ['positive' => 0, 'neutral' => 0, 'negative' => 0];
           $moderationCounts = ['negative' => 0, 'resolved' => 0];
           $employeeSentimentSummary = [];
@@ -147,8 +178,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
           $negativeWords = ['bad', 'sad', 'angry', 'terrible', 'hate', 'poor', 'worst', 'problem', 'putang', 'gago', 'tanga', 'bwisit', 'pangit', 'galit', 'inis', 'problema', 'ayaw'];
 
           foreach ($analyticsPosts as $analyticsPost) {
-            $analyticsComments += count($analyticsPost['comments'] ?? []);
-            $analyticsReactions += (int)($analyticsPost['like_count'] ?? 0) + (int)($analyticsPost['heart_count'] ?? 0) + (int)($analyticsPost['wow_count'] ?? 0);
             $analyticsText = strtolower((string)($analyticsPost['content'] ?? '') . ' ' . implode(' ', array_column($analyticsPost['comments'] ?? [], 'comment')));
             $employeeName = trim((string)($analyticsPost['author_name'] ?? 'Unknown'));
             if ($employeeName === '') {
@@ -394,33 +423,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             </div>
           </div>
 
-          <div class="social-side-column">
-            <div class="card social-panel" id="sentiment-section">
-              <div class="card-header social-section-header">
-                <h3 class="card-title"><i class="fas fa-chart-line mr-2"></i>Sentiment Analysis</h3>
-              </div>
-              <div class="card-body">
-                <div id="sentiment-analysis" class="analytics-stat-grid">
-                  <div class="analytics-stat analytics-stat-positive"><strong><?= $sentimentCounts['positive'] ?></strong><span>Positive</span></div>
-                  <div class="analytics-stat analytics-stat-neutral"><strong><?= $sentimentCounts['neutral'] ?></strong><span>Neutral</span></div>
-                  <div class="analytics-stat analytics-stat-negative"><strong><?= $sentimentCounts['negative'] ?></strong><span>Negative</span></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="card social-panel" id="analytics-section">
-              <div class="card-header social-section-header">
-                <h3 class="card-title"><i class="fas fa-chart-bar mr-2"></i>Engagement Analytics</h3>
-              </div>
-              <div class="card-body">
-                <div id="engagement-analytics" class="analytics-stat-grid">
-                  <div class="analytics-stat"><strong><?= count($analyticsPosts) ?></strong><span>Posts</span></div>
-                  <div class="analytics-stat"><strong><?= $analyticsComments ?></strong><span>Comments</span></div>
-                  <div class="analytics-stat"><strong><?= $analyticsReactions ?></strong><span>Reactions</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div class="social-feature-grid">
@@ -437,7 +439,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
               <div class="social-list-compact social-scroll-list">
                 <?php if (!empty($recentForums)): ?>
                   <?php foreach ($recentForums as $forum): ?>
-                    <div class="social-mini-item" data-social-item="forum">
+                    <div class="social-mini-item social-forum-item" data-social-item="forum" data-forum-title="<?= htmlspecialchars((string)($forum['title'] ?? 'Untitled Forum'), ENT_QUOTES, 'UTF-8') ?>" data-forum-category="<?= htmlspecialchars((string)($forum['category'] ?? 'General'), ENT_QUOTES, 'UTF-8') ?>" data-forum-description="<?= htmlspecialchars((string)($forum['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" role="button" tabindex="0" onclick="window.openSocialForumDetails(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.openSocialForumDetails(this); }">
                       <div class="social-mini-text">
                         <h6><?= htmlspecialchars($forum['title'] ?? 'Untitled Forum') ?></h6>
                         <small><?= htmlspecialchars($forum['category'] ?? 'General') ?></small>
@@ -455,7 +457,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             <div class="card-header social-section-header">
               <h3 class="card-title"><i class="fas fa-users mr-2"></i>Team Groups</h3>
               <div class="card-tools">
-                <button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#createGroupModal">
+                <button type="button" class="btn btn-primary btn-sm" data-open-group-modal>
                   <i class="fas fa-plus mr-1"></i>Create Group
                 </button>
               </div>
@@ -466,7 +468,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                   <?php foreach (array_slice($payload['groups'], 0, 4) as $group): ?>
                     <?php $groupId = (int)($group['eer_group_id'] ?? 0); ?>
                     <?php $groupMembers = $payload['group_members'][$groupId] ?? []; ?>
-                    <div class="social-mini-item social-group-item" data-social-item="group" data-group-id="<?= $groupId ?>" data-group-name="<?= htmlspecialchars((string)($group['name'] ?? 'Untitled Group'), ENT_QUOTES, 'UTF-8') ?>" data-group-members="<?= htmlspecialchars(json_encode($groupMembers), ENT_QUOTES, 'UTF-8') ?>" role="button" tabindex="0" onclick="openGroupMembersModal(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openGroupMembersModal(this); }">
+                    <div class="social-mini-item social-group-item" data-social-item="group" data-group-id="<?= $groupId ?>" data-group-name="<?= htmlspecialchars((string)($group['name'] ?? 'Untitled Group'), ENT_QUOTES, 'UTF-8') ?>" data-group-members="<?= htmlspecialchars(json_encode($groupMembers), ENT_QUOTES, 'UTF-8') ?>" role="button" tabindex="0" onclick="window.openGroupMembersModal(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.openGroupMembersModal(this); }">
                       <div class="social-mini-text">
                         <h6><?= htmlspecialchars($group['name'] ?? 'Untitled Group') ?></h6>
                         <small class="group-member-count"><?= count($groupMembers) ?> members</small>
@@ -493,7 +495,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
               <div class="social-list-compact social-scroll-list">
                 <?php if (!empty($recentProjects)): ?>
                   <?php foreach ($recentProjects as $project): ?>
-                    <div class="social-mini-item" data-social-item="project">
+                    <div class="social-mini-item social-project-item" data-social-item="project" data-project-name="<?= htmlspecialchars((string)($project['name'] ?? 'Untitled Project'), ENT_QUOTES, 'UTF-8') ?>" data-project-status="<?= htmlspecialchars((string)($project['status'] ?? 'planning'), ENT_QUOTES, 'UTF-8') ?>" data-project-description="<?= htmlspecialchars((string)($project['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-project-deadline="<?= htmlspecialchars((string)($project['deadline'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" role="button" tabindex="0" onclick="window.openSocialProjectDetails(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.openSocialProjectDetails(this); }">
                       <div class="social-mini-text">
                         <h6><?= htmlspecialchars($project['name'] ?? 'Untitled Project') ?></h6>
                         <small><?= htmlspecialchars($project['status'] ?? 'planning') ?></small>

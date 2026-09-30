@@ -42,19 +42,73 @@ function escapeHtml(text) {
   window.closeSocialModal = closeSocialModal;
 
   document.addEventListener('click', function(event) {
-    var modal = document.getElementById('groupMembersModal');
-    if (modal && modal.classList.contains('show') && event.target === modal) {
-      window.closeSocialModal('groupMembersModal');
-    }
+    ['groupMembersModal', 'forumDetailsModal', 'projectDetailsModal'].forEach(function(modalId) {
+      var modal = document.getElementById(modalId);
+      if (modal && modal.classList.contains('show') && event.target === modal) {
+        window.closeSocialModal(modalId);
+      }
+    });
   });
 
   document.addEventListener('keydown', function(event) {
     if (event.key !== 'Escape') return;
-    var modal = document.getElementById('groupMembersModal');
-    if (modal && modal.classList.contains('show')) {
-      window.closeSocialModal('groupMembersModal');
-    }
+    ['groupMembersModal', 'forumDetailsModal', 'projectDetailsModal'].forEach(function(modalId) {
+      var modal = document.getElementById(modalId);
+      if (modal && modal.classList.contains('show')) {
+        window.closeSocialModal(modalId);
+      }
+    });
   });
+
+  window.openSocialForumDetails = function(forumItem) {
+    var modal = document.getElementById('forumDetailsModal');
+    if (!modal || !forumItem) return;
+
+    var title = document.getElementById('forumDetailsModalTitle');
+    var category = document.getElementById('forumDetailsModalCategory');
+    var description = document.getElementById('forumDetailsModalDescription');
+    if (title) title.innerHTML = '<i class="fas fa-comments mr-2"></i>' + escapeHtml(forumItem.dataset.forumTitle || 'Forum details');
+    if (category) category.textContent = forumItem.dataset.forumCategory || 'General';
+    if (description) description.textContent = forumItem.dataset.forumDescription || 'No description provided.';
+
+    if (window.bootstrap && window.bootstrap.Modal) {
+      (window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal)).show();
+    } else if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+      window.jQuery(modal).modal('show');
+    } else {
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+  };
+
+  window.openSocialProjectDetails = function(projectItem) {
+    var modal = document.getElementById('projectDetailsModal');
+    if (!modal || !projectItem) return;
+
+    var title = document.getElementById('projectDetailsModalTitle');
+    var status = document.getElementById('projectDetailsModalStatus');
+    var deadline = document.getElementById('projectDetailsModalDeadline');
+    var description = document.getElementById('projectDetailsModalDescription');
+    if (title) title.innerHTML = '<i class="fas fa-sitemap mr-2"></i>' + escapeHtml(projectItem.dataset.projectName || 'Project details');
+    if (status) status.textContent = projectItem.dataset.projectStatus || 'planning';
+    if (deadline) deadline.textContent = projectItem.dataset.projectDeadline
+      ? 'Deadline: ' + projectItem.dataset.projectDeadline
+      : 'No deadline set';
+    if (description) description.textContent = projectItem.dataset.projectDescription || 'No description provided.';
+
+    if (window.bootstrap && window.bootstrap.Modal) {
+      (window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal)).show();
+    } else if (window.jQuery && typeof window.jQuery.fn.modal === 'function') {
+      window.jQuery(modal).modal('show');
+    } else {
+      modal.classList.add('show');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+    }
+  };
 
   window.openGroupMembersModal = function(groupItem) {
     var modal = document.getElementById('groupMembersModal');
@@ -394,6 +448,7 @@ function escapeHtml(text) {
 
     window.addEventListener('page:loaded', function(event) {
       if (event && event.detail && event.detail.page === 'social') {
+        initializeGroupModal();
         initializeForumModal();
         initializeProjectModal();
         resetSocialTabObserver();
@@ -419,37 +474,26 @@ function escapeHtml(text) {
     modal.dataset.groupModalBound = '1';
 
     function openGroupModal() {
-      if (window.bootstrap && window.bootstrap.Modal) {
-        var instance = window.bootstrap.Modal.getInstance(modal) || new window.bootstrap.Modal(modal);
-        instance.show();
-        return;
-      }
-
       modal.classList.add('show');
       modal.setAttribute('aria-hidden', 'false');
+      modal.setAttribute('aria-modal', 'true');
+      modal.style.display = 'flex';
       document.body.classList.add('modal-open');
       var nameInput = document.getElementById('groupName');
       if (nameInput) nameInput.focus();
     }
 
     function closeGroupModal() {
-      if (window.bootstrap && window.bootstrap.Modal) {
-        var instance = window.bootstrap.Modal.getInstance(modal);
-        if (instance) {
-          instance.hide();
-          return;
-        }
-      }
-
       modal.classList.remove('show');
       modal.setAttribute('aria-hidden', 'true');
+      modal.removeAttribute('aria-modal');
+      modal.style.display = 'none';
       document.body.classList.remove('modal-open');
     }
 
     document.addEventListener('click', function(event) {
-      var trigger = event.target.closest('[data-target="#createGroupModal"]');
-      var toggleTrigger = event.target.closest('[data-toggle="modal"][data-target="#createGroupModal"]');
-      if (trigger || toggleTrigger) {
+      var trigger = event.target.closest('[data-open-group-modal]');
+      if (trigger) {
         event.preventDefault();
         event.stopPropagation();
         openGroupModal();
@@ -1307,7 +1351,7 @@ function escapeHtml(text) {
       }).join('');
 
       setFeedHtml(html);
-      updateAnalytics(socialPosts);
+      updateModerationInsights(socialPosts);
     }
 
     function updateReactionCount(postId, reactionType, increment) {
@@ -1492,7 +1536,7 @@ function escapeHtml(text) {
         })
         .catch(function() {
           setFeedHtml('<p class="text-danger">Failed to load social feed.</p>');
-          updateAnalytics([]);
+          updateModerationInsights([]);
         });
     }
 
@@ -1531,18 +1575,7 @@ function escapeHtml(text) {
       return counts;
     }
 
-    function updateAnalytics(posts) {
-      var totalPosts = Array.isArray(posts) ? posts.length : 0;
-      var totalComments = 0;
-      var totalReactions = 0;
-
-      if (Array.isArray(posts)) {
-        posts.forEach(function(post) {
-          totalComments += Array.isArray(post.comments) ? post.comments.length : 0;
-          totalReactions += (parseInt(post.like_count,10)||0) + (parseInt(post.heart_count,10)||0) + (parseInt(post.wow_count,10)||0) + (parseInt(post.angry_count,10)||0);
-        });
-      }
-
+    function updateModerationInsights(posts) {
       var sentiment = computeSentimentSummary(posts);
       var moderationCounts = {
         negative: sentiment.negative,
@@ -1588,22 +1621,6 @@ function escapeHtml(text) {
           }
         }
       });
-
-      var engagementHtml = '<div class="analytics-stat-grid">'
-        + '<div class="analytics-stat"><strong>' + totalPosts + '</strong><span>Posts</span></div>'
-        + '<div class="analytics-stat"><strong>' + totalComments + '</strong><span>Comments</span></div>'
-        + '<div class="analytics-stat"><strong>' + totalReactions + '</strong><span>Reactions</span></div>'
-        + '</div>';
-
-      document.getElementById('engagement-analytics').innerHTML = engagementHtml;
-
-      var sentimentHtml = '<div class="analytics-stat-grid">'
-        + '<div class="analytics-stat analytics-stat-positive"><strong>' + sentiment.positive + '</strong><span>Positive</span></div>'
-        + '<div class="analytics-stat analytics-stat-neutral"><strong>' + sentiment.neutral + '</strong><span>Neutral</span></div>'
-        + '<div class="analytics-stat analytics-stat-negative"><strong>' + sentiment.negative + '</strong><span>Negative</span></div>'
-        + '</div>';
-
-      document.getElementById('sentiment-analysis').innerHTML = sentimentHtml;
     }
 
     function escapeHtml(text) {
@@ -1886,13 +1903,7 @@ function escapeHtml(text) {
               if (descriptionInput) descriptionInput.value = '';
               if (categoryInput) categoryInput.value = '';
               closeSocialModal('createForumModal');
-              var forum = data.data || {title: title, description: description, category: category};
-              var forumsList = document.getElementById('forums-list');
-              if (forumsList) {
-                var emptyState = forumsList.querySelector('.alert-info');
-                if (emptyState) emptyState.remove();
-                forumsList.insertAdjacentHTML('afterbegin', '<div class="card mb-3 forum-card"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><div><h5 class="mb-1" style="font-weight:600;">' + escapeHtml(forum.title) + '</h5><p class="mb-1 text-muted">' + escapeHtml(forum.description) + '</p><small class="text-muted">Category: ' + escapeHtml(forum.category) + '</small></div></div><div class="d-flex justify-content-between text-muted small"><span>Created by: You</span><span>' + escapeHtml(forum.created_at || 'Just now') + '</span></div></div></div>');
-              }
+              loadSocialPageData();
             } else {
               alert(data.message || 'Failed to create forum.');
             }
@@ -1997,17 +2008,7 @@ function escapeHtml(text) {
               if (statusInput) statusInput.value = 'planning';
               closeSocialModal('createProjectModal');
 
-              var projectsList = document.querySelector('#projects-section .social-scroll-list');
-              if (projectsList) {
-                var emptyState = projectsList.querySelector('.text-muted.mb-0');
-                if (emptyState) {
-                  emptyState.remove();
-                }
-
-                var projectStatus = status && status.trim() ? status : 'planning';
-                var newProjectHtml = '<div class="social-mini-item" data-social-item="project"><div class="social-mini-text"><h6>' + escapeHtml(name) + '</h6><small>' + escapeHtml(projectStatus) + '</small></div></div>';
-                projectsList.innerHTML = newProjectHtml + projectsList.innerHTML;
-              }
+              loadSocialPageData();
             } else {
               alert(data.message || 'Failed to create project.');
             }
@@ -2161,36 +2162,51 @@ function escapeHtml(text) {
   function loadSocialPageData() {
     bindSocialGroupForms();
     const apiUrl = window.location.pathname.split('/modules/engagement/')[0] + '/modules/engagement/api/social.php?action=page_data';
-    const groupApiUrl = new URL('../api/group.php', engagementScript.src).href;
 
     function renderForums(forums) {
-      const forumsList = document.getElementById('forums-list');
+      const forumsList = document.querySelector('#forums-section .social-scroll-list');
       if (!forumsList || !Array.isArray(forums)) return;
-      forumsList.innerHTML = forums.length ? forums.map(function(forum) {
-        return '<div class="card mb-3 forum-card"><div class="card-body"><h5 class="mb-1" style="font-weight:600;">' + escapeHtml(forum.title || 'Untitled Forum') + '</h5><p class="mb-1 text-muted">' + escapeHtml(forum.description || '') + '</p><small class="text-muted">Category: ' + escapeHtml(forum.category || 'General') + '</small><div class="d-flex justify-content-between text-muted small"><span>Created by: ' + escapeHtml(forum.creator_name || forum.created_by_employee_id || 'Unknown') + '</span><span>' + escapeHtml(forum.created_at || '') + '</span></div></div></div>';
+      forumsList.innerHTML = forums.length ? forums.slice(0, 3).map(function(forum) {
+        const title = forum.title || 'Untitled Forum';
+        const category = forum.category || 'General';
+        return '<div class="social-mini-item social-forum-item" data-social-item="forum" data-forum-title="' + escapeHtml(title) + '" data-forum-category="' + escapeHtml(category) + '" data-forum-description="' + escapeHtml(forum.description || '') + '" role="button" tabindex="0" onclick="window.openSocialForumDetails(this)" onkeydown="if (event.key === \'Enter\' || event.key === \' \') { event.preventDefault(); window.openSocialForumDetails(this); }"><div class="social-mini-text"><h6>' + escapeHtml(title) + '</h6><small>' + escapeHtml(category) + '</small></div></div>';
       }).join('') : '<div class="alert alert-info">No forums available yet.</div>';
     }
 
     function renderGroups(groups, groupMembers) {
-      const groupsGrid = document.querySelector('.existing-groups-grid');
-      if (!groupsGrid || !Array.isArray(groups)) return;
+      const groupsList = document.querySelector('#groups-section .social-scroll-list');
+      if (!groupsList || !Array.isArray(groups)) return;
       const membersByGroup = groupMembers || {};
-      groupsGrid.innerHTML = groups.length ? groups.map(function(group) {
+      groupsList.innerHTML = groups.length ? groups.slice(0, 4).map(function(group) {
         const groupId = Number(group.eer_group_id || 0);
         const members = membersByGroup[groupId] || [];
-        const memberMarkup = members.length
-          ? '<ul class="list-group list-group-flush">' + members.map(function(member) { return '<li class="list-group-item py-1">Employee ID: ' + escapeHtml(member.employee_id || 'N/A') + (member.full_name ? ' - ' + escapeHtml(member.full_name) : '') + '</li>'; }).join('') + '</ul>'
-          : '<p class="text-muted mb-0">No members yet.</p>';
-        return '<div class="existing-group-card" data-group-id="' + groupId + '"><h5 class="mb-1">' + escapeHtml(group.name || 'Untitled Group') + '</h5><p class="mb-1 text-muted">ID: ' + groupId + '</p><p class="mb-1"><strong>Members:</strong></p><div id="group-members-' + groupId + '">' + memberMarkup + '</div></div>';
-      }).join('') : '<p class="text-muted">No groups created yet.</p>';
+        const groupName = group.name || 'Untitled Group';
+        const encodedMembers = escapeHtml(JSON.stringify(members));
+        return '<div class="social-mini-item social-group-item" data-social-item="group" data-group-id="' + groupId + '" data-group-name="' + escapeHtml(groupName) + '" data-group-members="' + encodedMembers + '" role="button" tabindex="0" onclick="window.openGroupMembersModal(this)" onkeydown="if (event.key === \'Enter\' || event.key === \' \') { event.preventDefault(); window.openGroupMembersModal(this); }"><div class="social-mini-text"><h6>' + escapeHtml(groupName) + '</h6><small class="group-member-count">' + members.length + ' members</small></div></div>';
+      }).join('') : '<p class="text-muted mb-0">No groups created yet.</p>';
     }
 
-    fetch(groupApiUrl, {credentials: 'same-origin', cache: 'no-store'})
-      .then(function(response) { return response.ok ? response.json() : null; })
-      .then(function(result) {
-        if (result && result.success && Array.isArray(result.data)) renderGroups(result.data, {});
-      })
-      .catch(function(error) { console.warn('[Social] Unable to load groups:', error.message); });
+    function renderProjects(projects) {
+      const projectsList = document.querySelector('#projects-section .social-scroll-list');
+      if (!projectsList || !Array.isArray(projects)) return;
+      projectsList.innerHTML = projects.length ? projects.slice(0, 3).map(function(project) {
+        const name = project.name || 'Untitled Project';
+        const status = project.status || 'planning';
+        return '<div class="social-mini-item social-project-item" data-social-item="project" data-project-name="' + escapeHtml(name) + '" data-project-status="' + escapeHtml(status) + '" data-project-description="' + escapeHtml(project.description || '') + '" data-project-deadline="' + escapeHtml(project.deadline || '') + '" role="button" tabindex="0" onclick="window.openSocialProjectDetails(this)" onkeydown="if (event.key === \'Enter\' || event.key === \' \') { event.preventDefault(); window.openSocialProjectDetails(this); }"><div class="social-mini-text"><h6>' + escapeHtml(name) + '</h6><small>' + escapeHtml(status) + '</small></div></div>';
+      }).join('') : '<p class="text-muted mb-0">No project spaces created yet.</p>';
+    }
+
+    function renderSocialCounts(data) {
+      const counts = [
+        Array.isArray(data.feed) ? data.feed.length : 0,
+        Array.isArray(data.forums) ? data.forums.length : 0,
+        Array.isArray(data.groups) ? data.groups.length : 0,
+        Array.isArray(data.projects) ? data.projects.length : 0
+      ];
+      document.querySelectorAll('.social-overview-grid .social-stat-card strong').forEach(function(element, index) {
+        if (index < counts.length) element.textContent = String(counts[index]);
+      });
+    }
 
     fetch(apiUrl, { credentials: 'same-origin', cache: 'no-store' })
       .then(function(response) {
@@ -2203,18 +2219,9 @@ function escapeHtml(text) {
         const feed = document.getElementById('social-feed');
         if (feed && data.current_employee_id) feed.dataset.employeeId = data.current_employee_id;
 
-        if (Array.isArray(data.forums) && data.forums.length > 0) {
-          renderForums(data.forums);
-        }
-
-        const projects = document.getElementById('projects-list');
-        if (projects && Array.isArray(data.projects)) {
-          projects.innerHTML = data.projects.length ? data.projects.map(function(project) {
-            const status = String(project.status || 'unknown').toLowerCase();
-            const statusClass = {active: 'badge-success', completed: 'badge-primary', 'on-hold': 'badge-warning', planning: 'badge-info'}[status] || 'badge-secondary';
-            return '<div class="card mb-3 project-card"><div class="card-body"><h5 class="mb-1" style="font-weight:600;">' + escapeHtml(project.name || 'Untitled Project') + '</h5><p class="mb-1 text-muted">' + escapeHtml(project.description || '') + '</p><span class="badge ' + statusClass + '">' + escapeHtml(status.charAt(0).toUpperCase() + status.slice(1)) + '</span><small class="text-muted ml-3">Deadline: ' + escapeHtml(project.deadline || 'Not set') + '</small><div class="d-flex justify-content-between text-muted small"><span>Created by: ' + escapeHtml(project.creator_name || project.created_by_employee_id || 'Unknown') + '</span><span>' + escapeHtml(project.created_at || '') + '</span></div></div></div>';
-          }).join('') : '<div class="alert alert-info">No project spaces available yet.</div>';
-        }
+        renderForums(data.forums);
+        renderProjects(data.projects);
+        renderSocialCounts(data);
 
         const groupSelect = document.getElementById('group-id');
         if (groupSelect && Array.isArray(data.groups)) {
@@ -2238,40 +2245,13 @@ function escapeHtml(text) {
       });
   }
 
-  function loadForumsFromDatabase() {
-    const forumsList = document.getElementById('forums-list');
-    if (!forumsList) return;
-
-    fetch(window.location.origin + '/hrms-capstone/modules/engagement/api/forum.php?action=list&_=' + Date.now(), {
-      credentials: 'same-origin',
-      cache: 'no-store'
-    })
-      .then(function(response) {
-        if (!response.ok) throw new Error('Forum API returned HTTP ' + response.status);
-        return response.json();
-      })
-      .then(function(result) {
-        if (!result || result.success !== true || !Array.isArray(result.data)) {
-          throw new Error(result && result.message ? result.message : 'Invalid forum API response.');
-        }
-        forumsList.innerHTML = result.data.length ? result.data.map(function(forum) {
-            return '<div class="card mb-3 forum-card"><div class="card-body"><h5 class="mb-1" style="font-weight:600;">' + escapeHtml(forum.title || 'Untitled Forum') + '</h5><p class="mb-1 text-muted">' + escapeHtml(forum.description || '') + '</p><small class="text-muted">Category: ' + escapeHtml(forum.category || 'General') + '</small><div class="d-flex justify-content-between text-muted small"><span>Created by: ' + escapeHtml(forum.creator_name || forum.created_by_employee_id || 'Unknown') + '</span><span>' + escapeHtml(forum.created_at || '') + '</span></div></div></div>';
-          }).join('') : '<div class="alert alert-info">No forums available yet.</div>';
-      })
-      .catch(function(error) {
-        console.warn('[Social Forums] Unable to load database records:', error.message);
-      });
-  }
-
   document.addEventListener('DOMContentLoaded', function() {
     initializeSocialFeed();
-    loadForumsFromDatabase();
     loadSocialPageData();
   }, { once: true });
   window.addEventListener('page:loaded', function(event) {
     if (event.detail && event.detail.page === 'social') {
       initializeSocialFeed();
-      loadForumsFromDatabase();
       loadSocialPageData();
     }
   });

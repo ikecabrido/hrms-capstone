@@ -37,6 +37,44 @@ $payload['groups'] = $groupCtrl->getGroups();
 $payload['notifications'] = [];
 $payload['notifications'] = $communicationCtrl->getNotifications();
 
+$socialAnalysis = [
+  'posts' => count($payload['feed'] ?? []),
+  'comments' => 0,
+  'reactions' => 0,
+  'positive' => 0,
+  'neutral' => 0,
+  'negative' => 0,
+  'needs_review' => 0,
+];
+$positiveWords = ['good', 'great', 'love', 'excellent', 'awesome', 'happy', 'nice', 'amazing'];
+$negativeWords = ['bad', 'sad', 'angry', 'terrible', 'hate', 'poor', 'worst', 'problem', 'putang', 'gago', 'tanga', 'bwisit', 'pangit', 'galit', 'inis', 'problema', 'ayaw'];
+
+foreach ($payload['feed'] ?? [] as $socialPost) {
+  $postComments = $socialPost['comments'] ?? [];
+  $socialAnalysis['comments'] += count($postComments);
+  $socialAnalysis['reactions'] += (int)($socialPost['like_count'] ?? 0)
+    + (int)($socialPost['heart_count'] ?? 0)
+    + (int)($socialPost['wow_count'] ?? 0);
+
+  $socialText = strtolower((string)($socialPost['content'] ?? '') . ' ' . implode(' ', array_column($postComments, 'comment')));
+  $hasPositive = false;
+  $hasNegative = false;
+  foreach ($positiveWords as $word) {
+    $hasPositive = $hasPositive || strpos($socialText, $word) !== false;
+  }
+  foreach ($negativeWords as $word) {
+    $hasNegative = $hasNegative || strpos($socialText, $word) !== false;
+  }
+
+  if ($hasPositive && !$hasNegative) {
+    $socialAnalysis['positive']++;
+  } elseif ($hasNegative && !$hasPositive && ($socialPost['moderation_status'] ?? 'open') !== 'resolved') {
+    $socialAnalysis['negative']++;
+    $socialAnalysis['needs_review']++;
+  } else {
+    $socialAnalysis['neutral']++;
+  }
+}
 
 // Data will be loaded via API using JavaScript
 // var_dump($payload);
@@ -206,6 +244,54 @@ $payload['notifications'] = $communicationCtrl->getNotifications();
           </div>
           <div class="card-body" style="min-height:260px;">
             <canvas id="dashboardGrievanceChart" data-grievance-labels="<?= htmlspecialchars(json_encode($grievanceLabels)) ?>" data-grievance-values="<?= htmlspecialchars(json_encode($grievanceValues)) ?>" style="max-height:240px;"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+      $socialPostTotal = max(1, (int)$socialAnalysis['posts']);
+      $positivePercent = (int)round($socialAnalysis['positive'] / $socialPostTotal * 100);
+      $neutralPercent = (int)round($socialAnalysis['neutral'] / $socialPostTotal * 100);
+      $negativePercent = (int)round($socialAnalysis['negative'] / $socialPostTotal * 100);
+    ?>
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card social-analysis-dashboard-card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0"><i class="fas fa-chart-line mr-2 text-primary"></i>Social Analysis</h5>
+            <span class="badge badge-light">Keyword-based estimate</span>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-6 col-lg-3 mb-3 mb-lg-0">
+                <div class="social-analysis-metric"><span>Posts</span><strong><?= (int)$socialAnalysis['posts'] ?></strong></div>
+              </div>
+              <div class="col-sm-6 col-lg-3 mb-3 mb-lg-0">
+                <div class="social-analysis-metric"><span>Comments</span><strong><?= (int)$socialAnalysis['comments'] ?></strong></div>
+              </div>
+              <div class="col-sm-6 col-lg-3 mb-3 mb-sm-0">
+                <div class="social-analysis-metric"><span>Reactions</span><strong><?= (int)$socialAnalysis['reactions'] ?></strong></div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="social-analysis-metric social-analysis-metric-review"><span>Needs review</span><strong><?= (int)$socialAnalysis['needs_review'] ?></strong></div>
+              </div>
+            </div>
+            <div class="social-sentiment-summary mt-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <strong>Post sentiment</strong>
+                <small class="text-muted"><?= (int)$socialAnalysis['posts'] ?> posts analyzed</small>
+              </div>
+              <div class="social-sentiment-bar" role="img" aria-label="Positive <?= (int)$socialAnalysis['positive'] ?>, neutral <?= (int)$socialAnalysis['neutral'] ?>, negative <?= (int)$socialAnalysis['negative'] ?>">
+                <span class="social-sentiment-positive" style="width: <?= $positivePercent ?>%"></span>
+                <span class="social-sentiment-neutral" style="width: <?= $neutralPercent ?>%"></span>
+                <span class="social-sentiment-negative" style="width: <?= $negativePercent ?>%"></span>
+              </div>
+              <div class="social-sentiment-legend">
+                <span><i class="social-sentiment-dot social-sentiment-positive"></i>Positive <strong><?= (int)$socialAnalysis['positive'] ?></strong></span>
+                <span><i class="social-sentiment-dot social-sentiment-neutral"></i>Neutral <strong><?= (int)$socialAnalysis['neutral'] ?></strong></span>
+                <span><i class="social-sentiment-dot social-sentiment-negative"></i>Negative <strong><?= (int)$socialAnalysis['negative'] ?></strong></span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

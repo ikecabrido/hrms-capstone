@@ -1,8 +1,8 @@
-@import url('style/communication.css');
-@import url('style/dashboard.css');
+@import url('style/communication.css?v=20260929-announcement-badge-v3');
+@import url('style/dashboard.css?v=20260929-dashboard-layout-v2');
 @import url('style/grievance-override.css');
 @import url('style/grievance.css');
 @import url('style/policy_detail.css');
-@import url('style/recognition.css');
+@import url('style/recognition.css?v=20260929-recognition-responsive-v1');
 @import url('style/social.css?v=20260908-fontawesome47');
 @import url('style/survey.css');

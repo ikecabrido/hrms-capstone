@@ -882,3 +882,370 @@
   font-weight: 700;
   color: #16407c;
 }
+
+/* Compact responsive polish for the existing communication tabs and cards. */
+.communication-area .communication-tabs-card {
+	min-width: 0;
+	border: 1px solid #dfe7f1 !important;
+	border-radius: 14px !important;
+	background: #ffffff;
+	box-shadow: 0 8px 24px rgba(25, 55, 88, 0.06) !important;
+}
+
+.communication-area .communication-tabs-card > .card-header {
+	position: relative;
+	top: auto;
+	overflow: hidden;
+	border-radius: 14px 14px 0 0 !important;
+	background: #ffffff !important;
+}
+
+.communication-area .communication-tabs-card .nav-tabs {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 0.25rem;
+	width: 100%;
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: 0 0.75rem;
+	scrollbar-width: thin;
+	-webkit-overflow-scrolling: touch;    background: transparent !important;
+    padding: 16px 20px !important;
+}
+
+.communication-area .communication-tabs-card .nav-item {
+	flex: 0 0 auto;
+}
+
+.communication-area .communication-tabs-card .nav-link {
+	min-height: 54px;
+	margin: 0 !important;
+	padding: 0.8rem 1.2rem !important;
+	white-space: nowrap;
+	font-size: 1rem;
+	font-weight: 600;
+	color: #2f4051;
+	gap: 0.6rem;
+}
+
+.communication-area .communication-tabs-body,
+.communication-area .tab-content {
+	min-width: 0;
+	min-height: 0;
+	padding: 1.1rem 1rem !important;
+}
+
+.communication-area .tab-pane > .row > .col-md-4 .card,
+.communication-area .tab-pane > .row > .col-md-8 .card {
+	min-height: 0;
+	margin: 0;
+	border: 1px solid #e1e9f2 !important;
+	border-radius: 12px !important;
+	background: #ffffff;
+}
+
+.communication-area .tab-pane > .row > .col-md-4 .card-header,
+.communication-area .tab-pane > .row > .col-md-8 .card-header {
+	min-height: 54px;
+	padding: 0.85rem 1rem !important;
+}
+
+.communication-area .tab-pane > .row > .col-md-4 .card-header .card-title,
+.communication-area .tab-pane > .row > .col-md-8 .card-header .card-title {
+	margin: 0;
+	font-size: 1rem;
+}
+
+.communication-area .tab-pane > .row > .col-md-4 .card-body,
+.communication-area .tab-pane > .row > .col-md-8 .card-body {
+	padding: 1rem !important;
+}
+
+.communication-area #announcements .col-md-4 .form-group,
+.communication-area #announcements .col-md-4 .form-control,
+.communication-area #messaging .col-md-4 .form-group,
+.communication-area #messaging .col-md-4 .form-control {
+	width: 100%;
+	max-width: 100%;
+}
+
+.communication-area #announcements .form-group,
+.communication-area #messaging .form-group {
+	margin-bottom: 0.9rem;
+}
+
+.communication-area #announcements textarea.form-control,
+.communication-area #messaging textarea.form-control {
+	min-height: 104px;
+	resize: vertical;
+}
+
+.communication-area #announcements .btn-block,
+.communication-area #messaging .btn-block {
+	min-height: 42px;
+	padding: 0.6rem 1rem;
+}
+
+.communication-area .announcement-card {
+	width: 100%;
+	max-width: 100%;
+	min-height: 0;
+	margin: 0 0 0.7rem;
+	border: 1px solid #e2eaf3 !important;
+	border-radius: 10px !important;
+	background: #ffffff !important;
+}
+
+.communication-area .announcement-card .card-body {
+	margin-top: 0;
+	padding: 0.95rem 1rem !important;
+}
+
+.communication-area .announcement-card .card-body > .d-flex {
+	display: grid !important;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: start;
+	gap: 0.45rem 0.75rem;
+}
+
+.communication-area .announcement-card .card-title {
+	grid-column: 1;
+	grid-row: 1;
+	min-width: 0;
+	margin: 0;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
+}
+
+.communication-area .announcement-card .badge {
+	grid-column: 2;
+	grid-row: 1;
+	position: static;
+	flex: 0 0 auto;
+	align-self: start;
+	margin: 0;
+	padding: 0.28rem 0.65rem;
+	border: 1px solid transparent;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	line-height: 1.2;
+	white-space: nowrap;
+	background: #eaf2fb !important;
+	color: #164a7b !important;
+}
+
+.communication-area .announcement-card .badge-info {
+	border-color: #d5e6f6;
+	background: #eaf2fb !important;
+	color: #164a7b !important;
+}
+
+.communication-area .announcement-card .badge-warning {
+	border-color: #f2dfad;
+	background: #fff6dc !important;
+	color: #795b12 !important;
+}
+
+.communication-area .announcement-card .badge-danger {
+	border-color: #f0caca;
+	background: #fff0f0 !important;
+	color: #9b3434 !important;
+}
+
+.communication-area .announcement-card .badge-secondary {
+	border-color: #dce3eb;
+	background: #f1f4f7 !important;
+	color: #536273 !important;
+}
+
+.communication-area .announcement-card .card-text.text-muted {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.7rem;
+	margin: 0.45rem 0 0.65rem !important;
+	color: #6b7c90 !important;
+	font-size: 0.8rem;
+	line-height: 1.45;
+}
+
+.communication-area .announcement-card .card-text:not(.text-muted) {
+	margin-bottom: 0;
+	color: #34495e;
+	line-height: 1.55;
+	overflow-wrap: anywhere;
+}
+
+.communication-area #notifications .notification-item {
+	min-height: 0;
+	margin: 0 0 0.65rem;
+	padding: 0.9rem 1rem;
+	border: 1px solid #e2eaf3;
+	border-left: 3px solid #aab8c7;
+	border-radius: 10px;
+	background: #fafbfd;
+}
+
+.communication-area #notifications .notification-item.notification-unread {
+	border-left-color: #2877b8;
+	background: #f3f8fd;
+}
+
+.communication-area #notifications .notification-item.notification-read {
+	border-left-color: #c6d0da;
+	background: #fbfcfd;
+}
+
+.communication-area #notifications .notification-item h6 {
+	flex: 1 1 auto;
+	font-size: 0.98rem;
+}
+
+.communication-area #notifications .notification-item .flex-grow-1 > p.text-muted {
+	font-size: 0.78rem;
+}
+
+.communication-area #notifications .notification-item .flex-grow-1 > p.mb-2 {
+	color: #3d5064;
+	font-size: 0.92rem;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+
+.communication-area #messaging .col-md-8 .card {
+	min-height: 0;
+	padding: 0;
+}
+
+.communication-area #messaging .card-header {
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.communication-area #messaging .message-search-wrap {
+	min-width: 0;
+	width: min(100%, 280px);
+}
+
+.communication-area #messaging .message-thread {
+	min-height: 0;
+	padding: 0.85rem !important;
+}
+
+.communication-area #messaging #messages-container {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	max-height: 540px;
+	padding: 0.25rem;
+	overscroll-behavior: contain;
+}
+
+.communication-area #messaging .message-bubble {
+	width: fit-content;
+	max-width: min(88%, 680px);
+	margin: 0;
+	padding: 0;
+	border: 1px solid #e2eaf3;
+	border-radius: 12px;
+	background: #f4f7fa;
+	box-shadow: 0 1px 2px rgba(20, 45, 70, 0.04);
+	overflow-wrap: anywhere;
+}
+
+.communication-area #messaging .message-bubble.sent {
+	align-self: flex-end;
+	border-color: #c8def1;
+	background: #eaf4fc;
+}
+
+.communication-area #messaging .message-bubble.received {
+	align-self: flex-start;
+	background: #f5f7f9;
+}
+
+.communication-area #messaging .message-bubble > div {
+	padding: 0.7rem 0.85rem !important;
+}
+
+.communication-area #messaging .message-bubble .d-flex {
+	flex-wrap: wrap;
+	gap: 0.25rem 0.8rem;
+}
+
+.communication-area #messaging .message-bubble small.text-muted {
+	color: #63778d !important;
+	font-size: 0.72rem;
+}
+
+.communication-area #messaging .message-bubble p {
+	margin-top: 0.2rem;
+	color: #26394d;
+	font-size: 0.93rem;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+	.communication-area {
+		padding: 0.75rem 0 1.25rem;
+	}
+
+	.communication-area .communication-tabs-card {
+		border-radius: 12px !important;
+	}
+
+	.communication-area .communication-tabs-card .nav-tabs {
+		padding: 0 0.45rem;
+	}
+
+	.communication-area .communication-tabs-card .nav-link {
+		min-height: 50px;
+		padding: 0.7rem 0.95rem !important;
+		font-size: 0.92rem;
+	}
+
+	.communication-area .communication-tabs-body,
+	.communication-area .tab-content {
+		padding: 0.75rem 0.65rem !important;
+	}
+
+	.communication-area .tab-pane > .row > .col-md-4,
+	.communication-area .tab-pane > .row > .col-md-8 {
+		flex: 0 0 100%;
+		max-width: 100%;
+		padding: 0 0 0.7rem;
+	}
+
+	.communication-area .tab-pane > .row > .col-md-4 .card,
+	.communication-area .tab-pane > .row > .col-md-8 .card {
+		min-height: 0;
+	}
+
+	.communication-area #notifications .notification-item > .d-flex {
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.communication-area #notifications .notification-item > .d-flex > .ml-3 {
+		width: 100%;
+	}
+
+	.communication-area #notifications .notification-actions {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+	}
+
+	.communication-area #messaging .card-header {
+		align-items: flex-start;
+	}
+
+	.communication-area #messaging .message-search-wrap {
+		width: 100%;
+	}
+
+	.communication-area #messaging .message-bubble {
+		max-width: 96%;
+	}
+}

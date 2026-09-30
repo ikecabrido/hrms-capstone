@@ -350,7 +350,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             <div class="form-group"><label>Status</label><select class="form-control" id="report-status"><option value="">All Status</option><option value="Pending">Pending</option><option value="Resolved">Resolved</option><option value="Closed">Closed</option><option value="Escalated">Escalated</option></select></div>
             <div class="form-group"><label>Format</label><select class="form-control" id="report-format"><option value="pdf">PDF</option><option value="excel">Excel</option></select></div>
           </div>
-          <button type="button" class="btn btn-primary" onclick="generateCustomReport()"><i class="fas fa-download mr-1"></i> Generate Report</button>
+          <button type="button" class="btn btn-primary" id="generate-grievance-report" onclick="generateCustomReport()"><i class="fas fa-download mr-1"></i> Generate Report</button>
+          <div id="grievance-report-empty-state" class="alert alert-info mt-3 mb-0 d-none" role="status" aria-live="polite"></div>
         </form>
         <div id="generated-report" class="card mb-3 hidden">
           <div class="card-header"><h3 class="card-title"><i class="fas fa-file-alt"></i> Generated Report Result</h3></div>

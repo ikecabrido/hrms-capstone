@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 23, 2026 at 10:41 PM
+-- Generation Time: Sep 29, 2026 at 01:05 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -298,7 +298,8 @@ CREATE TABLE `eer_announcements` (
 
 INSERT INTO `eer_announcements` (`eer_announcements_id`, `title`, `content`, `created_by_employee_id`, `created_at`, `target_audience`, `type`, `department`, `priority`, `category`) VALUES
 (1, 'Welcome Announcement', 'Welcome to the new engagement portal!', 37, '2026-04-07 10:00:00', 'all', 'announcement', NULL, 'normal', 'general'),
-(2, 'Recognition Spotlight', 'Congratulations to the monthly recognition winner!', 37, '2026-04-07 11:30:00', 'all', 'announcement', NULL, 'normal', 'general');
+(2, 'Recognition Spotlight', 'Congratulations to the monthly recognition winner!', 37, '2026-04-07 11:30:00', 'all', 'announcement', NULL, 'normal', 'general'),
+(26, 'qwerty', '123', 37, '2026-09-29 18:40:15', 'all', 'announcement', NULL, 'normal', 'general');
 
 -- --------------------------------------------------------
 
@@ -328,7 +329,7 @@ CREATE TABLE `eer_award_history` (
 --
 
 INSERT INTO `eer_award_history` (`eer_award_history_id`, `employee_id`, `award_name`, `created_at`, `reason`, `nominated_by`, `updated_at`, `award_type`, `points`, `status`, `vote_count`, `performance_score`, `month_year`, `award_icon`) VALUES
-(19, 1, 'Employee of the Month Nomination', '2026-09-23 19:44:31', '1', 37, '2026-09-23 19:44:31', 'employee_of_month', 0, 'nominated', 0, 95.00, '2026-09', 'fas fa-trophy');
+(19, 1, 'Employee of the Month Nomination', '2026-09-23 19:44:31', '1', 37, '2026-09-23 20:42:30', 'employee_of_month', 10, 'nominated', 1, 95.00, '2026-09', 'fas fa-trophy');
 
 -- --------------------------------------------------------
 
@@ -343,6 +344,13 @@ CREATE TABLE `eer_award_votes` (
   `nominee_employee_id` int(11) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `eer_award_votes`
+--
+
+INSERT INTO `eer_award_votes` (`eer_award_vote_id`, `award_history_id`, `voter_user_id`, `nominee_employee_id`, `created_at`) VALUES
+(1, 19, 9, 1, '2026-09-24 04:42:30');
 
 -- --------------------------------------------------------
 
@@ -395,7 +403,7 @@ CREATE TABLE `eer_comments` (
 --
 
 INSERT INTO `eer_comments` (`eer_comment_id`, `post_id`, `employee_id`, `comment`, `created_at`, `user_id`, `user_type`) VALUES
-(1, 1, NULL, 'Looks great!', '2026-04-07 10:40:00', 9, 'user');
+(1, 2, 37, '123', '2026-09-24 11:26:04', 9, 'employee');
 
 -- --------------------------------------------------------
 
@@ -481,7 +489,7 @@ CREATE TABLE `eer_grievances` (
 
 INSERT INTO `eer_grievances` (`eer_grievance_id`, `employee_id`, `subject`, `description`, `status`, `resolution_of_complaint`, `created_at`, `priority`, `category`, `anonymous`, `attachment_path`, `confidential`, `action_taken`, `satisfaction_rating`, `satisfaction_comment`, `resolved_at`, `escalation_level`, `escalation_reason`, `updated_at`, `created_by_employee_id`, `payslip_id`, `gross_pay`, `total_deductions`, `net_pay`, `payslip_information`) VALUES
 (1, 34, 'Payroll discrepancy', 'There is a problem with the latest payroll calculation.', 'pending', 'ZXCZ', '2026-04-07 11:05:00', 'medium', 'Payroll Issues', 0, NULL, 0, 'CZXC', NULL, NULL, '2026-07-18 14:41:22', '4', '12', '2026-07-18 06:42:59', 37, NULL, NULL, NULL, NULL, NULL),
-(4, 30, '1', 'have a bad manners\r\n', 'Escalated', 'zxc', '2026-07-13 11:38:23', 'medium', 'Workplace Harassment', 1, '', 0, 'xcz', NULL, NULL, '2026-07-18 14:40:49', '2', '123', '2026-07-18 07:23:59', 37, NULL, NULL, NULL, NULL, NULL),
+(4, 30, '1', 'have a bad manners\r\n', 'pending', '312', '2026-07-13 11:38:23', 'medium', 'Workplace Harassment', 1, '', 0, '123', NULL, NULL, '2026-07-18 14:40:49', NULL, NULL, '2026-09-24 07:27:26', 37, NULL, NULL, NULL, NULL, NULL),
 (6, 35, 'System freezes frequently during development.', 'cszzxc', 'Resolved', 'ASDSA', '2026-07-18 10:45:32', 'medium', 'Payroll Issues', 0, NULL, 0, 'ASDSA', NULL, NULL, '2026-07-18 14:54:36', NULL, NULL, '2026-07-18 06:54:36', 37, 19, 1348.50, 620.00, 728.50, 'Payslip 19: gross=₱1348.50, deductions=₱620.00, net=₱728.50');
 
 -- --------------------------------------------------------
@@ -564,7 +572,9 @@ INSERT INTO `eer_grievance_updates` (`id`, `grievance_id`, `update_text`, `updat
 (8, 4, 'HR Remarks: adssa', 37, '2026-07-18 15:10:46'),
 (9, 4, 'Final Resolution: asdsa', 37, '2026-07-18 15:10:46'),
 (10, 4, 'HR Remarks: xcz', 37, '2026-07-18 15:23:59'),
-(11, 4, 'Final Resolution: zxc', 37, '2026-07-18 15:23:59');
+(11, 4, 'Final Resolution: zxc', 37, '2026-07-18 15:23:59'),
+(12, 4, 'HR Remarks: 123', 37, '2026-09-24 15:27:26'),
+(13, 4, 'Final Resolution: 312', 37, '2026-09-24 15:27:26');
 
 -- --------------------------------------------------------
 
@@ -585,7 +595,8 @@ CREATE TABLE `eer_groups` (
 
 INSERT INTO `eer_groups` (`eer_group_id`, `name`, `created_by_employee_id`, `created_at`) VALUES
 (1, 'Engagement Team', 37, '2026-04-07 10:05:00'),
-(5, '123321', 37, '2026-04-08 16:10:02');
+(5, '123321', 37, '2026-04-08 16:10:02'),
+(6, 'eer', NULL, '2026-09-24 14:24:45');
 
 -- --------------------------------------------------------
 
@@ -627,6 +638,7 @@ CREATE TABLE `eer_messages` (
 --
 
 INSERT INTO `eer_messages` (`eer_message_id`, `sender_id`, `receiver_id`, `message`, `timestamp`) VALUES
+(0, 37, 37, '123', '2026-09-29 18:40:29'),
 (1, 37, 37, 'Hi, how is the portal launch going?', '2026-04-07 10:10:00');
 
 -- --------------------------------------------------------
@@ -683,7 +695,7 @@ INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_rea
 (32, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
 (33, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
 (34, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 16:47:34'),
-(35, 37, 'You received a recognition: 132', 'recognition', 0, '2026-09-23 17:11:18'),
+(35, 37, 'You received a recognition: 132', 'recognition', 1, '2026-09-23 17:11:18'),
 (36, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
 (37, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
 (38, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
@@ -694,7 +706,7 @@ INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_rea
 (43, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
 (44, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
 (45, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:11:18'),
-(46, 37, 'You received a recognition: 123', 'recognition', 0, '2026-09-23 17:32:18'),
+(46, 37, 'You received a recognition: 123', 'recognition', 1, '2026-09-23 17:32:18'),
 (47, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
 (48, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
 (49, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 17:32:18'),
@@ -726,7 +738,7 @@ INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_rea
 (75, 36, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
 (76, 38, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
 (77, 39, 'A recognition was sent to employee #11.', 'recognition', 0, '2026-09-23 18:11:32'),
-(78, 37, 'You received a recognition: 123', 'recognition', 0, '2026-09-23 18:24:15'),
+(78, 37, 'You received a recognition: 123', 'recognition', 1, '2026-09-23 18:24:15'),
 (79, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
 (80, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
 (81, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
@@ -737,7 +749,7 @@ INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_rea
 (86, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
 (87, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
 (88, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:15'),
-(89, 37, 'You received a recognition: 123', 'recognition', 0, '2026-09-23 18:24:45'),
+(89, 37, 'You received a recognition: 123', 'recognition', 1, '2026-09-23 18:24:45'),
 (90, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
 (91, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
 (92, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
@@ -748,7 +760,7 @@ INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_rea
 (97, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
 (98, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
 (99, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:24:45'),
-(100, 37, 'You received a recognition: ok', 'recognition', 0, '2026-09-23 18:51:03'),
+(100, 37, 'You received a recognition: ok', 'recognition', 1, '2026-09-23 18:51:03'),
 (101, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
 (102, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
 (103, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
@@ -759,7 +771,7 @@ INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_rea
 (108, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
 (109, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
 (110, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:51:03'),
-(111, 37, 'You received a recognition: ok', 'recognition', 0, '2026-09-23 18:56:53'),
+(111, 37, 'You received a recognition: ok', 'recognition', 1, '2026-09-23 18:56:53'),
 (112, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
 (113, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
 (114, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
@@ -770,7 +782,7 @@ INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_rea
 (119, 36, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
 (120, 38, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
 (121, 39, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 18:56:53'),
-(122, 37, 'You received a recognition: qw', 'recognition', 0, '2026-09-23 19:08:31'),
+(122, 37, 'You received a recognition: qw', 'recognition', 1, '2026-09-23 19:08:31'),
 (123, 29, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
 (124, 30, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
 (125, 31, 'A recognition was sent to employee #37.', 'recognition', 0, '2026-09-23 19:08:31'),
@@ -813,7 +825,87 @@ INSERT INTO `eer_notifications` (`id`, `employee_id`, `message`, `type`, `is_rea
 (162, 35, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
 (163, 36, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
 (164, 38, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
-(165, 39, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06');
+(165, 39, 'A recognition was sent to employee #1.', 'recognition', 0, '2026-09-24 03:48:06'),
+(166, 29, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(167, 30, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(168, 31, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(169, 32, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(170, 33, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(171, 34, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(172, 35, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(173, 36, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(174, 38, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(175, 39, 'A new social post was published.', 'social', 0, '2026-09-24 11:44:45'),
+(176, 29, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(177, 30, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(178, 31, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(179, 32, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(180, 33, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(181, 34, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(182, 35, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(183, 36, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(184, 38, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(185, 39, 'A new social post was published.', 'social', 0, '2026-09-24 11:47:43'),
+(186, 29, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(187, 30, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(188, 31, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(189, 32, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(190, 33, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(191, 34, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(192, 35, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(193, 36, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(194, 38, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(195, 39, 'A new social post was published.', 'social', 0, '2026-09-24 11:48:43'),
+(196, 29, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(197, 30, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(198, 31, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(199, 32, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(200, 33, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(201, 34, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(202, 35, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(203, 36, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(204, 38, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(205, 39, 'A new social post was published.', 'social', 0, '2026-09-24 11:51:20'),
+(206, 29, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(207, 30, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(208, 31, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(209, 32, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(210, 33, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(211, 34, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(212, 35, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(213, 36, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(214, 38, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(215, 39, 'A new social post was published.', 'social', 0, '2026-09-24 11:52:09'),
+(216, 29, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(217, 30, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(218, 31, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(219, 32, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(220, 33, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(221, 34, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(222, 35, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(223, 36, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(224, 38, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(225, 39, 'A new social post was published.', 'social', 0, '2026-09-24 12:11:34'),
+(226, 29, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(227, 30, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(228, 31, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(229, 32, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(230, 33, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(231, 34, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(232, 35, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(233, 36, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(234, 38, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(235, 39, 'A new social post was published.', 'social', 0, '2026-09-24 12:15:41'),
+(236, 29, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(237, 30, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(238, 31, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(239, 32, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(240, 33, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(241, 34, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(242, 35, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(243, 36, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(244, 38, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49'),
+(245, 39, 'A new social post was published.', 'social', 0, '2026-09-24 12:35:49');
 
 -- --------------------------------------------------------
 
@@ -856,6 +948,14 @@ CREATE TABLE `eer_projects` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `eer_projects`
+--
+
+INSERT INTO `eer_projects` (`eer_project_id`, `name`, `description`, `deadline`, `status`, `created_by_employee_id`, `created_at`, `updated_at`) VALUES
+(1, '123', '312', '2026-09-27 14:02:00', 'on-hold', 37, '2026-09-24 14:02:22', '2026-09-24 14:02:22'),
+(2, '321', '123', '2026-09-27 02:17:00', 'planning', 37, '2026-09-24 14:17:33', '2026-09-24 14:17:33');
 
 -- --------------------------------------------------------
 
@@ -912,7 +1012,8 @@ CREATE TABLE `eer_recognitions` (
 --
 
 INSERT INTO `eer_recognitions` (`eer_recognition_id`, `sender_id`, `receiver_id`, `message`, `points`, `created_at`, `category`, `source`, `performance_report_id`, `status`, `leaderboard_position`, `department`, `updated_at`) VALUES
-(20, 37, 1, '1', 10, '2026-09-24 03:48:06', 'general', 'manual', 36, 'approved', 1, 'IT DEPARTMENT', '2026-09-23 19:48:06');
+(20, 37, 1, '1', 10, '2026-09-24 03:48:06', 'general', 'manual', 36, 'approved', 1, 'IT DEPARTMENT', '2026-09-23 19:48:06'),
+(21, 37, 1, 'Vote recognition', 5, '2026-09-24 04:42:30', 'vote', 'manual', NULL, 'approved', NULL, NULL, '2026-09-23 20:42:30');
 
 -- --------------------------------------------------------
 
@@ -938,8 +1039,7 @@ CREATE TABLE `eer_replies` (
 --
 
 INSERT INTO `eer_replies` (`eer_reply_id`, `comment_id`, `post_id`, `parent_reply_id`, `employee_id`, `user_id`, `user_type`, `content`, `mentioned_user_id`, `created_at`) VALUES
-(1, 1, 1, NULL, 1, NULL, 'employee', 'Thanks for the update!', NULL, '2026-04-07 10:50:00'),
-(7, 1, 1, 1, NULL, 9, 'user', 'asdsa', NULL, '2026-04-08 02:30:44');
+(7, 1, 2, NULL, 37, 9, 'employee', '123', NULL, '2026-09-24 11:39:23');
 
 -- --------------------------------------------------------
 
@@ -1008,6 +1108,7 @@ CREATE TABLE `eer_social_posts` (
   `file_size` int(11) DEFAULT NULL,
   `file_type` varchar(10) DEFAULT NULL,
   `description` text DEFAULT NULL,
+  `moderation_status` enum('open','resolved') NOT NULL DEFAULT 'open',
   `created_at` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -1015,8 +1116,14 @@ CREATE TABLE `eer_social_posts` (
 -- Dumping data for table `eer_social_posts`
 --
 
-INSERT INTO `eer_social_posts` (`eer_social_post_id`, `employee_id`, `user_id`, `author_type`, `item_type`, `content`, `file_name`, `file_path`, `file_size`, `file_type`, `description`, `created_at`) VALUES
-(1, 37, NULL, 'employee', 'post', 'Excited to use the new engagement portal!', NULL, NULL, NULL, NULL, NULL, '2026-04-07 10:35:00');
+INSERT INTO `eer_social_posts` (`eer_social_post_id`, `employee_id`, `user_id`, `author_type`, `item_type`, `content`, `file_name`, `file_path`, `file_size`, `file_type`, `description`, `moderation_status`, `created_at`) VALUES
+(1, 37, 9, 'employee', 'post', 'Excited to use the new engagement portal!', NULL, NULL, NULL, NULL, NULL, 'open', '2026-04-07 10:35:00'),
+(2, 37, 9, 'employee', 'post', '123', 'Screenshot__1_.png', 'uploads/social_files/1790220076_Screenshot__1_.png', 302009, 'png', '321', 'open', '2026-09-24 11:21:16'),
+(5, 37, 9, 'employee', 'post', 'thank you', NULL, NULL, NULL, NULL, 'I’m happy with our progress.', 'open', '2026-09-24 11:48:43'),
+(7, 37, 9, 'employee', 'post', 'bwisit kayo', NULL, NULL, NULL, NULL, '123', 'resolved', '2026-09-24 11:52:09'),
+(8, 37, 9, 'employee', 'post', 'gago ka pala eh', NULL, NULL, NULL, NULL, 'anlala nito', 'resolved', '2026-09-24 12:11:34'),
+(9, 37, 9, 'employee', 'post', 'bwisit', NULL, NULL, NULL, NULL, 'anlala nito', 'resolved', '2026-09-24 12:15:41'),
+(10, 37, 9, 'employee', 'post', 'bwisit bwisit', NULL, NULL, NULL, NULL, '123', 'open', '2026-09-24 12:35:49');
 
 -- --------------------------------------------------------
 
@@ -7230,7 +7337,7 @@ INSERT INTO `user_account` (`user_id`, `employee_id`, `role_id`, `password`, `th
 (6, 34, 9, '$2y$10$ridpEYIFsgjdYqFI3VTKF.MjSf8GX1H.XrzE/4UxmwWQXkJWHbkh6', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:38:34'),
 (7, 35, 7, '$2y$10$pZWeY6ODmnwb4VJuxQiCzOMBL4E42/iqg1Xc1tfCQ3IGFdhJ4O112', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:38:58'),
 (8, 36, 6, '$2y$10$aQ9sEVmIz.cbA5j5eYEIT.r2lCUkfrd6I8X.LY/BLkuo/TUK1Mce6', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:39:33'),
-(9, 37, 12, '$2y$10$88ez1flvZDHzMKv/jQdxE.HbveLfEt6x5fEDGjfX/T0GEqPT8iN0G', 'light', NULL, 'Active', '2026-09-23 19:47:58', NULL, 0, NULL, '2026-08-14 08:35:08', '2026-09-23 19:47:58'),
+(9, 37, 12, '$2y$10$88ez1flvZDHzMKv/jQdxE.HbveLfEt6x5fEDGjfX/T0GEqPT8iN0G', 'light', NULL, 'Active', '2026-09-29 10:27:58', NULL, 0, NULL, '2026-08-14 08:35:08', '2026-09-29 10:27:58'),
 (10, 38, 10, '$2y$10$DQB1tiH4sQ2RE7yWxOcz3OLUwoKvO6SghNeaDmT0.1nfJpJv/zJWG', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:40:40'),
 (11, 39, 11, '$2y$10$Htc.AaV0g3yW1hrOtux6fu1oOXiGgxz5WctWPfE/CjccN3EPwtYlG', 'light', NULL, 'Active', NULL, NULL, 0, NULL, '2026-08-14 08:35:08', '2026-08-14 08:41:10');
 
@@ -9613,13 +9720,19 @@ ALTER TABLE `cm_vital_signs`
 -- AUTO_INCREMENT for table `eer_announcements`
 --
 ALTER TABLE `eer_announcements`
-  MODIFY `eer_announcements_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `eer_announcements_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `eer_award_history`
 --
 ALTER TABLE `eer_award_history`
   MODIFY `eer_award_history_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- AUTO_INCREMENT for table `eer_comments`
+--
+ALTER TABLE `eer_comments`
+  MODIFY `eer_comment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `eer_forums`
@@ -9631,31 +9744,37 @@ ALTER TABLE `eer_forums`
 -- AUTO_INCREMENT for table `eer_grievance_updates`
 --
 ALTER TABLE `eer_grievance_updates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `eer_notifications`
 --
 ALTER TABLE `eer_notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=246;
 
 --
 -- AUTO_INCREMENT for table `eer_projects`
 --
 ALTER TABLE `eer_projects`
-  MODIFY `eer_project_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `eer_project_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `eer_recognitions`
 --
 ALTER TABLE `eer_recognitions`
-  MODIFY `eer_recognition_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
+  MODIFY `eer_recognition_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT for table `eer_replies`
+--
+ALTER TABLE `eer_replies`
+  MODIFY `eer_reply_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `eer_social_posts`
 --
 ALTER TABLE `eer_social_posts`
-  MODIFY `eer_social_post_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `eer_social_post_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `eer_surveys`

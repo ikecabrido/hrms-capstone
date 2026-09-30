@@ -38,8 +38,35 @@ function closeRecognitionModal() {
   setRecognitionModalVisibility('sendRecognitionModal', false);
 }
 
-function openRecognitionModal() {
-  setRecognitionModalVisibility('sendRecognitionModal', true);
+function openRecognitionModal(recommendedEmployee = null) {
+  loadRecognitionEmployees(true).then(function (employees) {
+    const receiverIdInput = document.getElementById('rec-receiver');
+    const receiverNameInput = document.getElementById('rec-receiver-name');
+    const matchingEmployeeId = recommendedEmployee
+      ? resolveRecommendationEmployeeId(recommendedEmployee, employees)
+      : '';
+    const matchingEmployee = employees.find(function (employee) {
+      return String(employee.employee_id) === matchingEmployeeId;
+    });
+    if (receiverIdInput) receiverIdInput.value = matchingEmployeeId;
+    if (receiverNameInput) {
+      const matchedName = matchingEmployee
+        ? ([matchingEmployee.first_name, matchingEmployee.middle_name, matchingEmployee.last_name].filter(Boolean).join(' ')
+          || matchingEmployee.full_name || matchingEmployee.employee_name || '')
+        : '';
+      receiverNameInput.value = matchingEmployeeId
+        ? matchedName + ' (' + matchingEmployeeId + ')'
+        : (recommendedEmployee ? recommendedEmployee.employee_name || '' : '');
+    }
+    const sendButton = document.getElementById('send-recognition-btn');
+    if (sendButton) sendButton.disabled = !matchingEmployeeId;
+    setRecognitionModalVisibility('sendRecognitionModal', true);
+  }).catch(function (error) {
+    console.warn('[Recognition] Could not load employees for the recipient list.', error);
+    const sendButton = document.getElementById('send-recognition-btn');
+    if (sendButton) sendButton.disabled = true;
+    setRecognitionModalVisibility('sendRecognitionModal', true);
+  });
 }
 
 function closeNominationModal() {
@@ -715,9 +742,7 @@ function bindRecognitionSendForm() {
       })
       .then(res => {
         if (res && (res.id || res.success)) {
-          const receiverName = receiverEl && receiverEl.selectedOptions.length
-            ? receiverEl.selectedOptions[0].textContent.replace(/\s*\([^)]*\)\s*$/, '')
-            : 'Employee';
+          const receiverName = document.getElementById('rec-receiver-name')?.value || 'Employee';
           ensureEmployeeInNominationList(receiverId, receiverName);
           closeRecognitionModal();
           if (messageEl) messageEl.value = '';
@@ -825,7 +850,7 @@ function bindRecognitionPageEvents() {
   });
 
   const form = document.querySelector('#sendRecognitionModal form');
-  const sel = document.getElementById('rec-receiver');
+  const receiverIdInput = document.getElementById('rec-receiver');
   const nominationSel = document.getElementById('nominate-employee');
   const nominationForm = document.getElementById('nomination-form');
   const sendBtn = document.getElementById('send-recognition-btn');
@@ -1007,40 +1032,12 @@ function bindRecognitionPageEvents() {
     if (oldInput) oldInput.remove();
   }
 
-  const employeeListApi = recognitionApiBase + '?resource=employee_list';
-
-  fetch(employeeListApi, { credentials: 'same-origin' })
-    .then(res => {
-      if (!res.ok) throw new Error('Failed to load employee list: ' + res.status);
-      return res.json();
-    })
-    .then(list => {
-      if (!sel) return;
-      sel.innerHTML = '<option value="">Select employee</option>';
-      list.forEach(emp => {
-        if (!sel) return;
-        const opt = document.createElement('option');
-        opt.value = emp.employee_id;
-        opt.setAttribute('data-employee-id', emp.employee_id);
-        opt.textContent = (emp.full_name || 'Employee') + ' (' + emp.employee_id + ')';
-        sel.appendChild(opt);
-      });
-      if (sel) sel.addEventListener('change', function() {
-        if (sendBtn) sendBtn.disabled = !sel.value;
-      });
-    }).catch(err => {
-      console.error('Failed to load employee list', err);
-      if (sel) {
-        sel.innerHTML = '<option value="">Unable to load employees</option>';
-      }
-    });
-
-  if (form && sel && sendBtn) {
+  if (form && receiverIdInput && sendBtn) {
     form.addEventListener('submit', function(e) {
-      if (!sel.value) {
+      if (!receiverIdInput.value) {
         e.preventDefault();
         sendBtn.disabled = true;
-        alert('Please select a receiver.');
+        alert('The selected recommendation does not match a current employee record.');
       }
     });
   }
@@ -1397,38 +1394,55 @@ function renderCurrentWinner(awardHistory, employees, candidates) {
     + (winner.reason ? '<div class="current-winner-reason"><span class="current-winner-reason-label">Reason</span><span>' + escapeHtml(winner.reason) + '</span></div>' : '');
 }
 
-const recognitionPerformanceCacheKey = 'engagement:recognition:performance-data';
-const recognitionPerformanceKeys = [
-  'recognition_recommendations',
-  'employees_without_reports',
-  'performance_leaderboard',
-  'comprehensive_leaderboard',
-  'department_leaderboard'
-];
+function resolveRecommendationEmployeeId(item, employees) {
+  const employeeList = Array.isArray(employees) ? employees : [];
+  const reportEmployeeId = String(item.employee_id || '');
+  const byId = employeeList.find(function (employee) {
+    return String(employee.employee_id) === reportEmployeeId;
+  });
+  if (byId) return String(byId.employee_id);
 
-function readRecognitionPerformanceCache() {
-  try {
-    const cached = JSON.parse(sessionStorage.getItem(recognitionPerformanceCacheKey) || '{}');
-    return cached && typeof cached === 'object' ? cached : {};
-  } catch (error) {
-    return {};
-  }
+  const normalizeName = function (value) {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  };
+  const reportName = normalizeName(item.employee_name);
+  if (!reportName) return '';
+
+  const byName = employeeList.find(function (employee) {
+    const name = [employee.first_name, employee.middle_name, employee.last_name]
+      .filter(Boolean)
+      .join(' ') || employee.full_name || employee.employee_name || '';
+    return normalizeName(name) === reportName;
+  });
+  return byName ? String(byName.employee_id) : '';
 }
 
-function saveRecognitionPerformanceCache(data) {
-  const cache = {};
-  recognitionPerformanceKeys.forEach(function (key) {
-    if (Array.isArray(data[key]) && data[key].length) {
-      cache[key] = data[key];
-    }
-  });
+function renderRecognitionRecommendation(item, employees) {
+  const employeeId = resolveRecommendationEmployeeId(item, employees);
+  const action = '<button type="button" class="btn btn-sm btn-outline-success recommend-recognize" data-employee-id="' + escapeHtml(employeeId) + '" data-employee-name="' + escapeHtml(item.employee_name || '') + '">Recognize</button>';
 
-  if (!Object.keys(cache).length) return;
-  try {
-    sessionStorage.setItem(recognitionPerformanceCacheKey, JSON.stringify(cache));
-  } catch (error) {
-    // Ignore storage limits and keep the live API response usable.
+  return '<li class="list-group-item d-flex justify-content-between align-items-center"><div><strong>'
+    + escapeHtml(item.employee_name || item.employee_id || 'Unknown') + '</strong><div class="text-muted small">'
+    + escapeHtml(item.evaluation_period || 'Performance Review') + ' • Grade: ' + escapeHtml(item.final_grade || 'N/A')
+    + ' • Score: ' + escapeHtml(item.final_rating_percent || 'N/A') + '%</div></div>' + action + '</li>';
+}
+
+function loadRecognitionEmployees(forceRefresh = false) {
+  if (!forceRefresh && Array.isArray(window.recognitionEmployees) && window.recognitionEmployees.length) {
+    return Promise.resolve(window.recognitionEmployees);
   }
+
+  const moduleRoot = window.location.pathname.split('/modules/engagement/')[0];
+  return fetch(moduleRoot + '/modules/engagement/api/employee_list.php', {
+    credentials: 'same-origin',
+    cache: 'no-store'
+  }).then(function (response) {
+    if (!response.ok) throw new Error('Unable to load employees.');
+    return response.json();
+  }).then(function (employees) {
+    window.recognitionEmployees = Array.isArray(employees) ? employees : [];
+    return window.recognitionEmployees;
+  });
 }
 
 function loadRecognitionPerformanceFallback(apiRoot) {
@@ -1447,12 +1461,11 @@ function loadRecognitionPerformanceFallback(apiRoot) {
   })).then(function (results) {
     const performanceData = {};
     results.forEach(function (entry) { performanceData[entry[0]] = entry[1]; });
-    saveRecognitionPerformanceCache(performanceData);
 
     const recommendations = document.getElementById('performance-recommendations-list');
     if (recommendations && performanceData.recognition_recommendations.length) {
       recommendations.innerHTML = '<ul class="list-group list-group-flush">' + performanceData.recognition_recommendations.map(function (item) {
-        return '<li class="list-group-item d-flex justify-content-between align-items-center"><div><strong>' + escapeHtml(item.employee_name || item.employee_id || 'Unknown') + '</strong><div class="text-muted small">' + escapeHtml(item.evaluation_period || 'Performance Report') + ' • Grade: ' + escapeHtml(item.final_grade || 'N/A') + ' • Score: ' + escapeHtml(item.final_rating_percent || 'N/A') + '%</div></div><button type="button" class="btn btn-sm btn-outline-success recommend-recognize" data-employee-id="' + escapeHtml(item.employee_id || '') + '" data-employee-name="' + escapeHtml(item.employee_name || '') + '">Recognize</button></li>';
+        return renderRecognitionRecommendation(item, window.recognitionEmployees);
       }).join('') + '</ul>';
     }
 
@@ -1479,22 +1492,7 @@ function loadRecognitionPageData() {
     })
     .then(function (response) {
       const apiData = response.data || {};
-      const cachedPerformanceData = readRecognitionPerformanceCache();
       const data = Object.assign({}, apiData);
-
-      recognitionPerformanceKeys.forEach(function (key) {
-        if ((!Array.isArray(data[key]) || data[key].length === 0) && Array.isArray(cachedPerformanceData[key]) && cachedPerformanceData[key].length) {
-          data[key] = cachedPerformanceData[key];
-        }
-      });
-      saveRecognitionPerformanceCache(data);
-
-      const hasPerformanceData = recognitionPerformanceKeys.some(function (key) {
-        return Array.isArray(data[key]) && data[key].length > 0;
-      });
-      if (!hasPerformanceData) {
-        loadRecognitionPerformanceFallback(apiRoot);
-      }
 
       window.recognitionPageData = data;
       window.recognitionEmployees = data.employees || [];
@@ -1507,9 +1505,9 @@ function loadRecognitionPageData() {
       if (recommendations && Array.isArray(data.recognition_recommendations)) {
         recommendations.innerHTML = data.recognition_recommendations.length
           ? '<ul class="list-group list-group-flush">' + data.recognition_recommendations.map(function (item) {
-              return '<li class="list-group-item d-flex justify-content-between align-items-center"><div><strong>' + escapeHtml(item.employee_name || item.employee_id || 'Unknown') + '</strong><div class="text-muted small">' + escapeHtml(item.evaluation_period || 'Performance Report') + ' • Grade: ' + escapeHtml(item.final_grade || 'N/A') + ' • Score: ' + escapeHtml(item.final_rating_percent || 'N/A') + '%</div></div><button type="button" class="btn btn-sm btn-outline-success recommend-recognize" data-employee-id="' + escapeHtml(item.employee_id || '') + '" data-employee-name="' + escapeHtml(item.employee_name || '') + '">Recognize</button></li>';
+              return renderRecognitionRecommendation(item, data.employees);
             }).join('') + '</ul>'
-          : '<p class="text-muted text-center m-2">No recommendations available yet.</p>';
+          : '<p class="text-muted text-center m-2">No performance recommendations available yet.</p>';
       }
 
       const withoutReports = document.getElementById('employees-without-reports-list');
@@ -1536,38 +1534,13 @@ function loadRecognitionPageData() {
 
 // Handle quick recognize clicks (show informational modal)
 document.addEventListener('click', function(e){
-  var target = e.target && e.target.closest ? e.target.closest('.recommend-recognize') : null;
+  const target = e.target && e.target.closest ? e.target.closest('.recommend-recognize') : null;
   if (target) {
     e.preventDefault();
-    var employeeId = target.getAttribute('data-employee-id');
-    var employeeName = target.getAttribute('data-employee-name') || 'Employee';
-    var btn = document.getElementById('send-recognition-btn');
-    // Set the receiver select to the recommended employee if available
-    const sel = document.getElementById('rec-receiver');
-    if (sel) {
-      // Try to find option by data-employee-id first, otherwise by value
-      let found = Array.from(sel.options).find(o => o.getAttribute('data-employee-id') === employeeId);
-      if (!found) found = Array.from(sel.options).find(o => o.value === employeeId || o.value === (employeeId + ''));
-      if (!found && employeeId) {
-        sel.innerHTML = '';
-        found = document.createElement('option');
-        found.value = employeeId;
-        found.setAttribute('data-employee-id', employeeId);
-        found.textContent = employeeName + ' (' + employeeId + ')';
-        sel.appendChild(found);
-      }
-      if (found) {
-        sel.value = found.value;
-        sel.disabled = true;
-        sel.setAttribute('aria-disabled', 'true');
-        if (btn) btn.disabled = false;
-      }
-    }
-    if (typeof window.jQuery === 'function' && window.jQuery.fn && window.jQuery.fn.modal) {
-      window.jQuery('#sendRecognitionModal').modal('show');
-    } else {
-      openRecognitionModal();
-    }
+    openRecognitionModal({
+      employee_id: target.getAttribute('data-employee-id') || '',
+      employee_name: target.getAttribute('data-employee-name') || ''
+    });
   }
 });
 
@@ -1721,6 +1694,7 @@ function loadRewards() {
       const feed = document.getElementById('rewards-feed');
       const editSelect = document.getElementById('edit-reward-select');
       if (!feed) return;
+      const selectedRewardId = editSelect ? editSelect.value : '';
       feed.innerHTML = '';
       if (editSelect) editSelect.innerHTML = '<option value="">Select reward</option>';
       if (res && res.data && res.data.length) {
@@ -1742,6 +1716,14 @@ function loadRewards() {
         });
       } else {
         feed.innerHTML = '<div class="text-muted">No rewards found.</div>';
+      }
+      if (editSelect) {
+        editSelect.value = selectedRewardId;
+        if (selectedRewardId && !editSelect.value) {
+          document.getElementById('edit-reward-name').value = '';
+          document.getElementById('edit-reward-description').value = '';
+          document.getElementById('edit-reward-points').value = '';
+        }
       }
     });
 }

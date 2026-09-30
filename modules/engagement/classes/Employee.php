@@ -58,7 +58,36 @@ class Employee
             session_start();
         }
 
-        return $_SESSION['employee_id'] ?? null;
+        $userId = $_SESSION['user_id'] ?? $_SESSION['user']['id'] ?? $_SESSION['user']['user_id'] ?? null;
+        if (!empty($userId)) {
+            $stmt = $this->conn->prepare('SELECT e.employee_id
+                FROM user_account ua
+                INNER JOIN em_employees e ON e.employee_id = ua.employee_id
+                WHERE ua.user_id = :user_id
+                LIMIT 1');
+            $stmt->execute(['user_id' => $userId]);
+            $employeeId = $stmt->fetchColumn();
+            if (!empty($employeeId)) {
+                $_SESSION['employee_id'] = (int)$employeeId;
+                return (int)$employeeId;
+            }
+        }
+
+        foreach ([$_SESSION['user']['employee_id'] ?? null, $_SESSION['employee_id'] ?? null] as $employeeId) {
+            if (empty($employeeId)) {
+                continue;
+            }
+
+            $stmt = $this->conn->prepare('SELECT employee_id FROM em_employees WHERE employee_id = :employee_id LIMIT 1');
+            $stmt->execute(['employee_id' => $employeeId]);
+            $validEmployeeId = $stmt->fetchColumn();
+            if (!empty($validEmployeeId)) {
+                $_SESSION['employee_id'] = (int)$validEmployeeId;
+                return (int)$validEmployeeId;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -70,7 +99,7 @@ class Employee
             session_start();
         }
 
-        $employeeId = $_SESSION['employee_id'] ?? null;
+        $employeeId = $this->getEmployeeId();
 
         if ($employeeId) {
             $sql = "SELECT 
@@ -105,7 +134,7 @@ class Employee
             session_start();
         }
 
-        $employeeId = $_SESSION['employee_id'] ?? null;
+        $employeeId = $this->getEmployeeId();
 
         if ($employeeId) {
             $sql = "SELECT 

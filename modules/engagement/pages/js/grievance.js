@@ -232,6 +232,7 @@
         console.error('Unable to load grievance report data', error);
       }
     }
+    updateGrievanceReportAvailability();
 
     // Retry logic for DOM readiness
     let retryCount = 0;
@@ -378,6 +379,7 @@
         const data = response.data || {};
         window.grievancesData = Array.isArray(data.grievances) ? data.grievances : [];
         window.reportData = window.grievancesData;
+        updateGrievanceReportAvailability();
         window.grievancePayslipsData = data.employeePayslips || {};
         renderGrievanceTable(window.grievancesData);
         renderGrievanceManagementOptions(window.grievancesData);
@@ -548,6 +550,7 @@ function openGrievanceReports() {
   if (!modal) return;
 
   resetAutomaticReportFilters();
+  updateGrievanceReportAvailability();
   const output = document.getElementById('generated-report');
   if (output) {
     output.classList.add('hidden');
@@ -560,6 +563,23 @@ function openGrievanceReports() {
   initReportEmployeeAutofill();
   const reportType = document.getElementById('report-type');
   if (reportType) reportType.focus();
+}
+
+function updateGrievanceReportAvailability(message = '') {
+  const reportButton = document.getElementById('generate-grievance-report');
+  const emptyState = document.getElementById('grievance-report-empty-state');
+  const reportData = Array.isArray(window.reportData) && window.reportData.length
+    ? window.reportData
+    : (Array.isArray(window.grievancesData) ? window.grievancesData : []);
+  const hasRecords = reportData.length > 0;
+
+  if (reportButton) reportButton.disabled = !hasRecords;
+  if (emptyState) {
+    emptyState.textContent = message || (hasRecords ? '' : 'Walang grievance records na puwedeng gawan ng report.');
+    emptyState.classList.toggle('d-none', hasRecords && !message);
+  }
+
+  return hasRecords;
 }
 
 function closeGrievanceReports() {
@@ -1112,8 +1132,12 @@ function generateCustomReport(downloadFile = true) {
   const outputCard = document.getElementById('generated-report');
   const summary = document.getElementById('generated-report-summary');
   const table = document.getElementById('generated-report-table');
-  const data = window.reportData || [];
+  const data = Array.isArray(window.reportData) ? window.reportData : [];
   const normalize = value => String(value || '').trim().toLowerCase();
+
+  if (!updateGrievanceReportAvailability()) return;
+  const emptyState = document.getElementById('grievance-report-empty-state');
+  if (emptyState) emptyState.classList.add('d-none');
 
   if (outputCard) {
     outputCard.classList.add('hidden');
@@ -1143,6 +1167,11 @@ function generateCustomReport(downloadFile = true) {
   }
   if (employee) {
     filtered = filtered.filter(item => normalize((item.employee_name || '') + ' ' + (item.subject || '')).includes(normalize(employee)));
+  }
+
+  if (!filtered.length) {
+    updateGrievanceReportAvailability('Walang grievance records na tumugma sa napiling filters.');
+    return;
   }
 
   const reportSummary = function (formatLabel) {

@@ -1,0 +1,76 @@
+@startuml Engagement Use Case Diagram
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor #F2F7FB
+  BorderColor #1F5A85
+  ArrowColor #52677D
+  FontColor #243447
+}
+
+actor Employee as employee
+actor "HR Administrator" as hr
+actor "Performance Module" as performance
+actor "Payroll / Attendance Modules" as hrRecords
+
+rectangle "Employee Engagement and Relations System" {
+  usecase "Log in" as login
+  usecase "View engagement dashboard" as dashboard
+  usecase "View announcements and notifications" as announcements
+  usecase "Create and manage surveys" as manageSurveys
+  usecase "Answer surveys" as answerSurveys
+  usecase "Give or receive HR feedback" as feedback
+  usecase "Send recognition" as sendRecognition
+  usecase "Manage awards, rewards and badges" as manageRewards
+  usecase "View recognition history and leaderboard" as recognitionHistory
+  usecase "Create post or discussion" as createPost
+  usecase "Comment, reply and react" as interactPost
+  usecase "Join groups and project spaces" as joinGroups
+  usecase "Submit grievance" as submitGrievance
+  usecase "Attach supporting document" as attachDocument
+  usecase "Track grievance status" as trackGrievance
+  usecase "Review and investigate grievance" as reviewGrievance
+  usecase "Update, escalate and resolve grievance" as resolveGrievance
+  usecase "Generate engagement reports" as reports
+  usecase "Manage groups and project spaces" as manageGroups
+  usecase "Authenticate user" as authenticate
+}
+
+employee --> login
+employee --> dashboard
+employee --> announcements
+employee --> answerSurveys
+employee --> feedback
+employee --> sendRecognition
+employee --> recognitionHistory
+employee --> createPost
+employee --> interactPost
+employee --> joinGroups
+employee --> submitGrievance
+employee --> trackGrievance
+
+hr --> login
+hr --> dashboard
+hr --> announcements
+hr --> manageSurveys
+hr --> feedback
+hr --> manageRewards
+hr --> reviewGrievance
+hr --> resolveGrievance
+hr --> reports
+hr --> manageGroups
+
+login ..> authenticate : <<include>>
+manageSurveys ..> reports : <<include>>
+submitGrievance ..> attachDocument : <<extend>>
+reviewGrievance ..> resolveGrievance : <<include>>
+sendRecognition ..> manageRewards : <<include>>
+createPost ..> attachDocument : <<extend>>
+
+performance --> manageRewards
+performance --> reports
+hrRecords --> reviewGrievance
+
+@enduml

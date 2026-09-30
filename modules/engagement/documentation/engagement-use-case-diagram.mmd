@@ -1,0 +1,74 @@
+%% Employee Engagement and Relations - Use Case Diagram
+%% Render with Mermaid as a flowchart because Mermaid has no native usecaseDiagram type.
+flowchart LR
+    employee["👤 Employee"]
+    hr["👤 HR Administrator"]
+    performance["⚙️ Performance Module"]
+    hrRecords["⚙️ Payroll / Attendance Modules"]
+
+    subgraph system["Employee Engagement and Relations System"]
+        login(["Log in"])
+        dashboard(["View engagement dashboard"])
+        announcements(["View announcements and notifications"])
+        manageSurveys(["Create and manage surveys"])
+        answerSurveys(["Answer surveys"])
+        feedback(["Give or receive HR feedback"])
+        sendRecognition(["Send recognition"])
+        manageRewards(["Manage awards, rewards and badges"])
+        recognitionHistory(["View recognition history and leaderboard"])
+        createPost(["Create post or discussion"])
+        interactPost(["Comment, reply and react"])
+        joinGroups(["Join groups and project spaces"])
+        manageGroups(["Manage groups and project spaces"])
+        submitGrievance(["Submit grievance"])
+        attachDocument(["Attach supporting document"])
+        trackGrievance(["Track grievance status"])
+        reviewGrievance(["Review and investigate grievance"])
+        resolveGrievance(["Update, escalate and resolve grievance"])
+        reports(["Generate engagement reports"])
+        authenticate(["Authenticate user"])
+    end
+
+    employee --- login
+    employee --- dashboard
+    employee --- announcements
+    employee --- answerSurveys
+    employee --- feedback
+    employee --- sendRecognition
+    employee --- recognitionHistory
+    employee --- createPost
+    employee --- interactPost
+    employee --- joinGroups
+    employee --- submitGrievance
+    employee --- trackGrievance
+
+    hr --- login
+    hr --- dashboard
+    hr --- announcements
+    hr --- manageSurveys
+    hr --- feedback
+    hr --- manageRewards
+    hr --- manageGroups
+    hr --- reviewGrievance
+    hr --- resolveGrievance
+    hr --- reports
+
+    performance --- manageRewards
+    performance --- reports
+    hrRecords --- reviewGrievance
+
+    login -. "include" .-> authenticate
+    manageSurveys -. "include" .-> reports
+    reviewGrievance -. "include" .-> resolveGrievance
+    sendRecognition -. "include" .-> manageRewards
+    submitGrievance -. "extend" .-> attachDocument
+    createPost -. "extend" .-> attachDocument
+
+    classDef actor fill:#FFF4D6,stroke:#B7791F,color:#243447,stroke-width:2px
+    classDef usecase fill:#F2F7FB,stroke:#1F5A85,color:#243447,stroke-width:1px
+    classDef external fill:#E8F5E9,stroke:#2E7D32,color:#243447,stroke-width:2px
+    class employee,hr actor
+    class performance,hrRecords external
+    class login,dashboard,announcements,manageSurveys,answerSurveys,feedback,sendRecognition,manageRewards,recognitionHistory,createPost,interactPost,joinGroups,manageGroups,submitGrievance,attachDocument,trackGrievance,reviewGrievance,resolveGrievance,reports,authenticate usecase
+
+    style system fill:#FFFFFF,stroke:#1F5A85,stroke-width:2px
