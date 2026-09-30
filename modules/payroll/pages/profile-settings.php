@@ -40,30 +40,30 @@
                     <div class="pfs-form-row">
                         <div class="pm-form-group">
                             <label for="pfsMobile">Mobile Number</label>
-                            <input type="text" id="pfsMobile" name="mobile_no" placeholder="09XXXXXXXXX">
+                            <input type="text" id="pfsMobile" name="mobile_no" disabled placeholder="09XXXXXXXXX">
                         </div>
                         <div class="pm-form-group">
                             <label for="pfsPhone">Phone Number</label>
-                            <input type="text" id="pfsPhone" name="phone_no" placeholder="(02) XXX XXXX">
+                            <input type="text" id="pfsPhone" name="phone_no" disabled placeholder="(02) XXX XXXX">
                         </div>
                     </div>
 
                     <div class="pm-form-group">
                         <label for="pfsCurrentAddress">Current Address</label>
-                        <textarea id="pfsCurrentAddress" name="current_address" rows="2" placeholder="House No., Street, Barangay, City/Municipality"></textarea>
+                        <textarea id="pfsCurrentAddress" name="current_address" disabled rows="2" placeholder="House No., Street, Barangay, City/Municipality"></textarea>
                     </div>
 
                     <div class="pm-form-group">
                         <label for="pfsPermanentAddress">Permanent Address</label>
-                        <textarea id="pfsPermanentAddress" name="permanent_address" rows="2" placeholder="House No., Street, Barangay, City/Municipality"></textarea>
+                        <textarea id="pfsPermanentAddress" name="permanent_address" disabled rows="2" placeholder="House No., Street, Barangay, City/Municipality"></textarea>
                     </div>
 
-                    <div class="pfs-form-actions">
+                    <!-- <div class="pfs-form-actions">
                         <button type="button" class="pm-btn pm-btn-outline" id="pfsResetBtn">Reset</button>
                         <button type="submit" class="pm-btn pm-btn-primary" id="pfsSaveBtn">
                             <i class="fa-solid fa-floppy-disk"></i> Save Changes
                         </button>
-                    </div>
+                    </div> -->
                 </form>
             </div>
 
