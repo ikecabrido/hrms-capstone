@@ -94,8 +94,8 @@ class Employee
         }
 
         $sql = "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.department AS department, p.position_name AS position
-            FROM hrms_employee e
-            LEFT JOIN hrms_position p ON p.position_id = e.position
+            FROM em_employees e
+            LEFT JOIN em_positions p ON p.position_id = e.position_id
             WHERE e.employee_id = :employee_id
             LIMIT 1";
 
@@ -189,11 +189,11 @@ class Employee
                     CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
                     e.department,
                     p.position_name AS position
-             FROM hrms_employee e
-             LEFT JOIN hrms_position p ON p.position_id = e.position
+             FROM em_employees e
+             LEFT JOIN em_positions p ON p.position_id = e.position_id
              WHERE e.employee_id = :employee_id
              LIMIT 1",
-                "SELECT e.employee_id,
+            "SELECT e.employee_id,
                     e.first_name,
                     e.middle_name,
                     e.last_name,
@@ -289,6 +289,4 @@ class Employee
     }
 }
 
-class TimeTemplateEmployee extends Employee
-{
-}
+class TimeTemplateEmployee extends Employee {}

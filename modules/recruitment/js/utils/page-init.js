@@ -2,7 +2,69 @@
     export function reinitPage(page) {
     initTabs();
     initForms();
+    if (page === 'schedule-tracker') initScheduleTracker();
+    if (page === 'interview-results') initInterviewResults();
     window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: page } }));
+    }
+
+    export function initInterviewResults() {
+    document.querySelectorAll('.interview-result-row').forEach(function (row) {
+        row.addEventListener('click', function (event) {
+        if (event.target.closest('a, button, input, select, textarea')) return;
+        window.location.href = row.dataset.resultUrl;
+        });
+
+        row.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        window.location.href = row.dataset.resultUrl;
+        });
+    });
+    }
+
+    export function initScheduleTracker() {
+    document.querySelectorAll('.schedule-row').forEach(function (row) {
+        row.addEventListener('click', function (event) {
+        if (event.target.closest('a, button, input, select, textarea')) return;
+        if (row.dataset.readOnly === 'true') return;
+        window.location.href = row.dataset.scheduleUrl;
+        });
+
+        row.addEventListener('keydown', function (event) {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        if (row.dataset.readOnly === 'true') return;
+        window.location.href = row.dataset.scheduleUrl;
+        });
+    });
+
+    document.querySelectorAll('.stage-filter').forEach(function (button) {
+        button.addEventListener('click', function () {
+        const selectedStage = this.dataset.stageFilter;
+
+        document.querySelectorAll('.stage-filter').forEach(function (filterButton) {
+            const isActive = filterButton === button;
+            filterButton.classList.toggle('active-all', isActive && selectedStage === 'all');
+            filterButton.classList.toggle('active-initial', isActive && selectedStage === '1');
+            filterButton.classList.toggle('active-technical', isActive && selectedStage === '2');
+            filterButton.classList.toggle('active-final', isActive && selectedStage === '3');
+            filterButton.classList.toggle('active-completed', isActive && selectedStage === 'completed');
+        });
+
+        const scheduleTable = document.querySelector('.schedule-table');
+        if (scheduleTable) {
+            scheduleTable.classList.toggle('completed-view', selectedStage === 'completed');
+        }
+
+        document.querySelectorAll('[data-interview-stage]').forEach(function (row) {
+            const isCompleted = row.dataset.interviewStatus === 'completed';
+            const matchesStage = (selectedStage === 'all' || row.dataset.interviewStage === selectedStage)
+                && !(selectedStage === '3' && isCompleted);
+            const matchesCompleted = selectedStage === 'completed' && isCompleted;
+            row.style.display = matchesStage || matchesCompleted ? '' : 'none';
+        });
+        });
+    });
     }
 
     // ─── Tab Switcher ─────────────────────────────────────────────────────────────

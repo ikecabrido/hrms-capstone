@@ -11,7 +11,38 @@
 
 /*Pages CSS*/
 @import url("pages/user-management.css");
+@import url("pages/job-list.css");
+@import url("pages/job-posting.css");
+@import url("pages/application.css");
+@import url("pages/parsed-resume.css");
+@import url("pages/create-new-applicant.css");
+@import url("pages/schedule-interview.css");
+@import url("pages/schedule-tracker.css");
+@import url("pages/onboarding-selection.css");
+@import url("pages/offered-list.css");
+
 /*Base CSS*/
 @import url("base/variables.css");
 @import url("base/reset.css");
 @import url("base/global.css");
+.ready-offer-btn {
+    border: none;
+    background: #2563eb;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.ready-offer-btn:hover {
+    background: #1d4ed8;
+}
+
+.ready-offer-btn:disabled {
+    background: #16a34a;
+    cursor: default;
+    opacity: 1;
+}

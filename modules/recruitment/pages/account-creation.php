@@ -38,28 +38,28 @@ $roles = $roleClass->getRoles();
 
         <div id="employee-list" class="tab-content active">
             <div class="form-section">
-                    <div class="form-section-header">
-                        <h3>Employee List</h3>
-                        <div class="employee-filters">
-                            <select id="filter-department">
-                                <option value="">All Departments</option>
-                                <?php foreach ($departments as $dept): ?>
-                                    <option value="<?= htmlspecialchars($dept['department_name']); ?>">
-                                        <?= htmlspecialchars($dept['department_name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <select id="filter-position">
-                                <option value="">All Positions</option>
-                                <?php foreach ($positions as $pos): ?>
-                                    <option value="<?= htmlspecialchars($pos['position_name']); ?>">
-                                        <?= htmlspecialchars($pos['position_name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <button id="filter-reset-btn">Reset</button>
-                        </div>
+                <div class="form-section-header">
+                    <h3>Employee List</h3>
+                    <div class="employee-filters">
+                        <select id="filter-department">
+                            <option value="">All Departments</option>
+                            <?php foreach ($departments as $dept): ?>
+                                <option value="<?= htmlspecialchars($dept['department_name']); ?>">
+                                    <?= htmlspecialchars($dept['department_name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <select id="filter-position">
+                            <option value="">All Positions</option>
+                            <?php foreach ($positions as $pos): ?>
+                                <option value="<?= htmlspecialchars($pos['position_name']); ?>">
+                                    <?= htmlspecialchars($pos['position_name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <button id="filter-reset-btn">Reset</button>
                     </div>
+                </div>
                 <div class="table-wrapper">
                     <table class="user-table">
                         <thead>
@@ -85,7 +85,9 @@ $roles = $roleClass->getRoles();
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <tr><td colspan="6">No employees found.</td></tr>
+                                <tr>
+                                    <td colspan="6">No employees found.</td>
+                                </tr>
                             <?php endif; ?>
                         </tbody>
                     </table>
@@ -106,20 +108,20 @@ $roles = $roleClass->getRoles();
                     <div class="registration-form-section">
                         <select name="employee" id="employee">
                             <option value="default">Select Employee</option>
-                                <?php foreach ($employees as $employee): ?>
-                                    <option value="<?= $employee['employee_id']; ?>">
-                                        <?= $employee['first_name'] . ' ' . $employee['last_name']; ?>
-                                    </option>
-                                <?php endforeach; ?>
+                            <?php foreach ($employees as $employee): ?>
+                                <option value="<?= $employee['employee_id']; ?>">
+                                    <?= $employee['first_name'] . ' ' . $employee['last_name']; ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
 
                         <select name="department" id="department">
                             <option value="default">Select Department</option>
-                                <?php foreach ($departments as $dept): ?>
-                                    <option value="<?= $dept['department_id']; ?>">
-                                        <?= $dept['department_name']; ?>
-                                    </option>
-                                <?php endforeach; ?>
+                            <?php foreach ($departments as $dept): ?>
+                                <option value="<?= $dept['department_id']; ?>">
+                                    <?= $dept['department_name']; ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
 
                         <select name="position" id="position" disabled>
