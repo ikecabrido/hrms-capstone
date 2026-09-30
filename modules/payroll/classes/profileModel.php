@@ -35,9 +35,6 @@ class ProfileModel
                 d.department_name,
                 p.position_name,
                 ua.user_id,
-                ua.theme,
-                ua.profile_pic,
-                ua.account_status,
                 ua.last_login,
                 ua.password_changed_at
             FROM em_employees AS e
