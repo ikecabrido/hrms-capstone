@@ -10,3 +10,24 @@ modules/assets/uploads/legal_cases/*
 # Runtime/error logs
 modules/compliance/assets/logs/*.log
 database/.env
+
+# Local/server backup files
+*.bak
+*.backup
+*.before-*
+*.current-backup
+*.stable.*
+*.final-backup.*
+
+# Generated compliance reports
+modules/compliance/assets/documents/reports/*.pdf
+
+# Composer dependencies generated on server
+modules/compliance/vendor/
+
+# Runtime/debug logs
+modules/compliance/assets/logs/*.log
+modules/compliance/lib/ajax/*.log
+
+# Local archives
+*.tar.gz
