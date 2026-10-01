@@ -531,19 +531,17 @@ function initLegalCasesChart() {
     ];
 
     legalChartInstance = new Chart(ctx, {
-        type: 'scatter',
+        type: 'bar',
         data: {
+            labels: labels,
             datasets: [{
                 label: 'Cases',
-                data: values.map(function (value, index) {
-                    return { x: index, y: value };
-                }),
+                data: values,
                 backgroundColor: backgroundColors.slice(0, labels.length),
                 borderColor: borderColors.slice(0, labels.length),
                 borderWidth: 1,
-                pointRadius: isMobileView() ? 5 : 7,
-                pointHoverRadius: isMobileView() ? 7 : 10,
-                pointBorderWidth: 2,
+                borderRadius: 6,
+                maxBarThickness: isMobileView() ? 32 : 48,
             }]
         },
         options: {
@@ -564,8 +562,7 @@ function initLegalCasesChart() {
                     callbacks: {
                         title: function (items) {
                             if (!items.length) return '';
-                            const index = items[0].parsed.x;
-                            return labels[index] || '';
+                            return items[0].label || '';
                         },
                         label: function (context) {
                             return ' ' + context.parsed.y + ' cases';
@@ -575,7 +572,6 @@ function initLegalCasesChart() {
             },
             scales: {
                 x: {
-                    type: 'linear',
                     position: 'bottom',
                     title: {
                         display: false
@@ -583,15 +579,10 @@ function initLegalCasesChart() {
                     grid: { display: false },
                     border: { display: false },
                     ticks: {
-                        stepSize: 1,
                         color: '#94a3b8',
                         font: { size: isMobileView() ? 9 : 11, family: 'Inter' },
                         maxRotation: isMobileView() ? 45 : 30,
                         minRotation: isMobileView() ? 45 : 30,
-                        callback: function (value) {
-                            const index = Math.round(value);
-                            return labels[index] || '';
-                        }
                     }
                 },
                 y: {
