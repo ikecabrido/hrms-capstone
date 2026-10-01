@@ -30,17 +30,23 @@ class Employee
     {
         $sql = "SELECT 
                     e.employee_id,
+                    e.employee_code,
                     e.first_name,
                     e.middle_name,
                     e.last_name,
                     d.department_name,
                     p.position_name,
-                    e.status
-                FROM hrms_employee AS e
-                LEFT JOIN hrms_department AS d
-                    ON e.department = d.department_id
-                LEFT JOIN hrms_position AS p
-                    ON e.position = p.position_id
+                    e.employment_status
+                FROM em_employees AS e
+
+                LEFT JOIN em_departments AS d
+                    ON e.department_id = d.department_id
+
+                LEFT JOIN em_positions AS p
+                    ON e.position_id = p.position_id
+
+                WHERE e.is_archived = 0
+
                 ORDER BY e.employee_id";
 
         $stmt = $this->conn->prepare($sql);
@@ -73,8 +79,10 @@ class Employee
         $employeeId = $_SESSION['employee_id'] ?? null;
 
         if ($employeeId) {
-            $sql = "SELECT first_name, last_name
-                    FROM hrms_employee
+            $sql = "SELECT 
+                        first_name,
+                        last_name
+                    FROM em_employees
                     WHERE employee_id = :employee_id
                     LIMIT 1";
 
@@ -106,10 +114,13 @@ class Employee
         $employeeId = $_SESSION['employee_id'] ?? null;
 
         if ($employeeId) {
-            $sql = "SELECT p.position_name
-                    FROM hrms_employee AS e
-                    LEFT JOIN hrms_position AS p
-                        ON e.position = p.position_id
+            $sql = "SELECT 
+                        p.position_name
+                    FROM em_employees AS e
+
+                    LEFT JOIN em_positions AS p
+                        ON e.position_id = p.position_id
+
                     WHERE e.employee_id = :employee_id
                     LIMIT 1";
 
@@ -125,5 +136,34 @@ class Employee
         }
 
         return 'Unknown Position';
+    }
+    public function getEmployeeRole()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $employeeId = $_SESSION['employee_id'] ?? null;
+
+        if ($employeeId) {
+            $sql = "SELECT r.role_name
+                FROM em_employees AS e
+                LEFT JOIN em_roles AS r
+                    ON e.role_id = r.role_id
+                WHERE e.employee_id = :employee_id
+                LIMIT 1";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':employee_id', $employeeId);
+            $stmt->execute();
+
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($row && $row['role_name']) {
+                return htmlspecialchars($row['role_name']);
+            }
+        }
+
+        return 'Unknown Role';
     }
 }

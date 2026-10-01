@@ -1,5 +1,6 @@
 <?php
-class Page {
+class Page
+{
     private $default = 'dashboard-overview';
     private $pagesDir;
     private $allowed = [];
@@ -9,8 +10,8 @@ class Page {
         'period-manager'             => 'Period Manager',
         'payroll-processing'  => 'Payroll Processing',
         'payslips'   => 'Payslips',
-        'deductions'=> 'Deductions',
-        'reports'=> 'Reports',
+        'deductions' => 'Deductions Management',
+        'reports' => 'Payroll Reports',
         'final-settlement'     => 'Final Settlement',
     ];
 
@@ -22,26 +23,30 @@ class Page {
         'employee-exit-management' => ['final-settlement']
     ];
 
-    public function __construct($pagesDir = null) {
+    public function __construct($pagesDir = null)
+    {
         $this->pagesDir = $pagesDir ?? dirname(__DIR__) . '/pages';
         $this->discoverPages();
     }
 
-    private function discoverPages() {
+    private function discoverPages()
+    {
         if (!is_dir($this->pagesDir)) return;
         foreach (glob($this->pagesDir . '/*.php') as $file) {
             $this->allowed[] = basename($file, '.php');
         }
     }
 
-    public function getPage() {
+    public function getPage()
+    {
         if (!empty($_GET['page']) && in_array($_GET['page'], $this->allowed)) {
             return $_GET['page'];
         }
         return $this->default;
     }
 
-    public function render() {
+    public function render()
+    {
         $page = $this->getPage();
         $file = $this->pagesDir . '/' . $page . '.php';
         if (file_exists($file)) {
@@ -51,15 +56,18 @@ class Page {
         }
     }
 
-    public function isActive($page) {
+    public function isActive($page)
+    {
         return $this->getPage() === $page;
     }
 
-    public function getAllowedPages() {
+    public function getAllowedPages()
+    {
         return $this->allowed;
     }
 
-    public function renderNav() {
+    public function renderNav()
+    {
         // Top section (no heading/separator)
         foreach ($this->sections['top'] as $p) {
             $this->renderLink($p);
@@ -76,7 +84,8 @@ class Page {
         }
     }
 
-    private function renderLink($p) {
+    private function renderLink($p)
+    {
         $label = $this->labels[$p] ?? ucwords(str_replace('-', ' ', $p));
         if (in_array($p, $this->allowed)) {
             $class = $this->isActive($p) ? 'active-menu-link' : 'menu-link';

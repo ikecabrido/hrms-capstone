@@ -7,7 +7,7 @@ class Page
 
     private $labels = [
         'dashboard-overview'          => 'Dashboard Overview',
-        'employee'             => 'Employee',
+        'employee'             => 'Employee / Patient',
         'medical-records-history'  => 'Medical Records History',
         'emergency-cases'   => 'Emergency Cases',
         'medicines-inventory' => 'Medicines Inventory',

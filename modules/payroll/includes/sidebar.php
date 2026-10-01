@@ -13,6 +13,9 @@ $employeeClass = new Employee();
             <!-- Bell Icon + Notification Dropdown -->
             <div class="icon-wrapper" id="bellWrapper">
                 <i class="fa-regular fa-bell" id="bellBtn"></i>
+                <span class="notification-badge" id="notificationBadge">
+
+                </span>
                 <div class="icon-dropdown" id="bellDropdown">
                     <div class="dropdown-header">
                         <span>Notifications</span>
@@ -38,20 +41,20 @@ $employeeClass = new Employee();
                             </div>
                             <div>
                                 <strong><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></strong>
-                                <span><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></span>
+                                <span><?= htmlspecialchars($employeeClass->getEmployeeRole()) ?></span>
                             </div>
                         </div>
                     </div>
                     <ul class="user-menu">
                         <li>
-                            <a href="#"><i class="fa-regular fa-user"></i> Profile Settings</a>
+                            <a href="?page=profile-settings"><i class="fa-regular fa-user"></i> Profile Settings</a>
                         </li>
                         <li>
-                            <a href="#"><i class="fa-solid fa-lock"></i> Change Password</a>
+                            <a href="?page=change-password"><i class="fa-solid fa-lock"></i> Change Password</a>
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="/hrms-capstone/auth/logout.php" class="signout-link">
+                            <a href="/auth/logout.php" class="signout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                             </a>
                         </li>
@@ -64,7 +67,7 @@ $employeeClass = new Employee();
     <div class="sidebar-header">
         <div class="user_avatar"><?= substr(htmlspecialchars($employeeClass->getEmployeeName()), 0, 1) ?></div>
         <h1 class="employee_name"><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></h1>
-        <p class="employee_position"><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></p>
+        <p class="employee_position"><?= htmlspecialchars($employeeClass->getEmployeeRole()) ?></p>
     </div>
     <h2>Payroll Dashboard</h2>
     <ul>

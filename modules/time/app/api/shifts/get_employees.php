@@ -1,0 +1,78 @@
+<?php
+/**
+ * Get all employees for flexible schedule modal
+ * Returns employee list with assignment status (shift or flexible schedule)
+ */
+
+require_once __DIR__ . '/../../core/TimeDatabase.php';
+
+header('Content-Type: application/json');
+
+try {
+    $database = TimeDatabase::getInstance();
+    $db = $database->getConnection();
+
+    $query = "SELECT 
+                e.employee_id,
+                CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
+                COALESCE(d.department_name, '') AS department,
+                COALESCE(p.position_name, '') AS position,
+                CASE 
+                    WHEN fs.id IS NOT NULL THEN 1
+                    ELSE 0
+                END AS has_flexible_schedule_direct,
+                CASE 
+                    WHEN es.employee_shift_id IS NOT NULL 
+                        AND es.is_active = 1
+                        AND es.effective_from <= CURDATE()
+                        AND (es.effective_to IS NULL OR es.effective_to >= CURDATE())
+                    THEN 1
+                    ELSE 0
+                END AS has_shift,
+                CASE 
+                    WHEN fs.id IS NOT NULL OR (
+                        es.employee_shift_id IS NOT NULL 
+                        AND es.is_active = 1
+                        AND es.effective_from <= CURDATE()
+                        AND (es.effective_to IS NULL OR es.effective_to >= CURDATE())
+                    ) THEN 1
+                    ELSE 0
+                END AS has_flexible_schedule
+              FROM em_employees e
+              LEFT JOIN em_departments d ON e.department_id = d.department_id
+              LEFT JOIN em_positions p ON e.position_id = p.position_id
+              LEFT JOIN ta_flexible_schedules fs ON e.employee_id = fs.employee_id
+                  AND (
+                      fs.schedule_date = CURDATE()
+                      OR (
+                          fs.day_of_week IS NOT NULL
+                          AND fs.day_of_week = DAYOFWEEK(CURDATE()) - 1
+                          AND (fs.repeat_until IS NULL OR fs.repeat_until >= CURDATE())
+                          AND (fs.contract_end_date IS NULL OR fs.contract_end_date >= CURDATE())
+                      )
+                  )
+              LEFT JOIN ta_employee_shifts es ON e.employee_id = es.employee_id
+                  AND es.is_active = 1
+                  AND es.effective_from <= CURDATE()
+                  AND (es.effective_to IS NULL OR es.effective_to >= CURDATE())
+              WHERE e.employment_status = 'Active'
+              GROUP BY e.employee_id, e.first_name, e.middle_name, e.last_name, d.department_name, p.position_name
+              ORDER BY full_name ASC";
+
+    $stmt = $db->query($query);
+    $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode([
+        'success' => true,
+        'employees' => $employees,
+        'count' => count($employees)
+    ]);
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error fetching employees: ' . $e->getMessage()
+    ]);
+}
+?>

@@ -1,0 +1,1092 @@
+/* Calendar Schedule Styles */
+
+/* Calendar Container */
+#calendar-schedule-container {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+#calendar-schedule-container .card-header {
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%) !important;
+    padding: 20px;
+    border: none;
+}
+
+#calendar-schedule-container .card-header h5 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+#calendar-schedule-container .card-header small {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+}
+
+/* Form Enhancements */
+.form-control-lg {
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.form-control-lg:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25);
+}
+
+/* Search Results */
+#search-results {
+    border: 1px solid #e0e0e0;
+    border-top: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
+    background-color: #ffffff;
+    position: absolute;
+    width: 100%;
+    border-radius: 0 0 4px 4px;
+}
+
+#search-results .list-group-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    background-color: #ffffff;
+    color: #333;
+    border: 1px solid #f0f0f0;
+    transition: all 0.2s ease;
+}
+
+#search-results .list-group-item:hover {
+    background-color: #1976d2;
+    color: white;
+    border-color: #1976d2;
+}
+
+#search-results .employee-option {
+    padding: 12px 15px;
+    cursor: pointer;
+    background-color: #ffffff;
+    color: #333;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.2s ease;
+}
+
+#search-results .employee-option:hover {
+    background-color: #1976d2;
+    color: white;
+}
+
+#search-results .employee-option-name {
+    font-weight: 600;
+    color: inherit;
+}
+
+#search-results .employee-option-id {
+    font-size: 12px;
+    color: inherit;
+    opacity: 0.8;
+}
+
+body.dark-mode #search-results {
+    background-color: #232323 !important;
+    border-color: rgba(255,255,255,0.12) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35) !important;
+}
+
+body.dark-mode #search-results .list-group-item,
+body.dark-mode #search-results .employee-option {
+    background-color: #232323 !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode #search-results .list-group-item:hover,
+body.dark-mode #search-results .employee-option:hover {
+    background-color: #1565c0 !important;
+    color: white !important;
+    border-color: #1565c0 !important;
+}
+
+body.dark-mode #search-results .employee-option-name {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode #search-results .employee-option-id {
+    color: rgba(224,224,224,0.7) !important;
+}
+
+/* FullCalendar Customization */
+.fc {
+    font-family: inherit;
+}
+
+.fc-header-toolbar {
+    padding: 15px !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    background-color: #f8f9fa;
+}
+
+body.dark-mode .fc-header-toolbar {
+    background-color: #232323 !important;
+}
+
+body.dark-mode .fc,
+body.dark-mode .fc-theme-standard {
+    background-color: #1e1e1e !important;
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .fc .fc-button-primary:not(:disabled) {
+    background-color: #1565c0 !important;
+    border-color: #1565c0 !important;
+}
+
+body.dark-mode .fc .fc-daygrid-day {
+    background-color: #232323 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode .fc .fc-daygrid-day-other {
+    background-color: #1a1a1a !important;
+}
+
+body.dark-mode .fc .fc-daygrid-day.fc-day-today {
+    background-color: rgba(21,101,192,0.15) !important;
+}
+
+body.dark-mode .fc .fc-daygrid-day:hover {
+    background-color: #2f2f2f !important;
+    box-shadow: inset 0 0 0 1px #1565c0 !important;
+}
+
+body.dark-mode .fc .fc-daygrid-body {
+    background-color: #1e1e1e !important;
+}
+
+body.dark-mode .fc .fc-daygrid-body-cell {
+    background-color: #232323 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode .fc .fc-daygrid-body-unselected {
+    background-color: #1e1e1e !important;
+}
+
+body.dark-mode .fc-daygrid-body-cell {
+    background-color: #232323 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode .fc .fc-daygrid-day-number,
+body.dark-mode .fc .fc-daygrid-day-frame {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode .fc .fc-daygrid-day-event-container {
+    background-color: rgba(21,101,192,0.2) !important;
+}
+
+body.dark-mode .fc .fc-event-main {
+    background-color: #1565c0 !important;
+    border-color: #1565c0 !important;
+}
+
+body.dark-mode .fc .fc-timegrid-slot {
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode .fc .fc-timegrid-cell {
+    background-color: #232323 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* FullCalendar body row and grid container */
+body.dark-mode .fc .fc-daygrid-body-unselected td {
+    background-color: #232323 !important;
+}
+
+body.dark-mode .fc-daygrid {
+    background-color: #1e1e1e !important;
+}
+
+body.dark-mode .fc-table {
+    background-color: #1e1e1e !important;
+}
+
+body.dark-mode .fc tbody {
+    background-color: #1e1e1e !important;
+}
+
+body.dark-mode .fc tbody td,
+body.dark-mode .fc tbody th {
+    background-color: #232323 !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode .fc thead {
+    background-color: #1976d2 !important;
+}
+
+body.dark-mode .fc thead th {
+    background-color: #1976d2 !important;
+    color: #ffffff !important;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #0d47a1 !important;
+}
+
+#calendar {
+    min-height: 600px;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+body.dark-mode #calendar {
+    background-color: #1e1e1e !important;
+    border-color: rgba(255,255,255,0.12) !important;
+}
+
+.fc {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.fc-root {
+    width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+.fc-scroller {
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+}
+
+/* FullCalendar Grid and Cell Styling */
+.fc .fc-col-header-cell {
+    padding: 10px 2px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    background-color: #1976d2 !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    border-color: #1565c0 !important;
+    text-align: center !important;
+}
+
+.fc .fc-col-header-cell * {
+    color: #ffffff !important;
+}
+
+.fc .fc-col-header-cell .fc-col-header-cell {
+    color: #ffffff !important;
+}
+
+.fc .fc-daygrid-day-frame {
+    color: #ffffff !important;
+}
+
+.fc .fc-col-header-cell .fc-daygrid-day-number {
+    color: #ffffff !important;
+}
+
+.fc-daygrid-col-header {
+    background-color: #1976d2 !important;
+    color: #ffffff !important;
+}
+
+.fc-daygrid-col-header .fc-col-header-cell {
+    color: #ffffff !important;
+}
+    color: #ffffff !important;
+}
+
+.fc-daygrid-col-header .fc-col-header-cell {
+    color: #ffffff !important;
+}
+
+.fc .fc-daygrid-day-number {
+    padding: 8px 6px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+}
+
+.fc .fc-daygrid-day {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 110px !important;
+    position: relative;
+    border-color: #e0e0e0 !important;
+}
+
+.fc .fc-daygrid-day:hover {
+    background-color: #f0f7ff;
+    box-shadow: inset 0 0 0 1px #1976d2;
+}
+
+.fc .fc-daygrid-day.fc-day-other {
+    opacity: 0.4;
+    background-color: #fafafa;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+    background-color: #e3f2fd !important;
+}
+
+.fc .fc-daygrid-day-frame {
+    min-height: 100px !important;
+}
+
+/* Event styling in calendar cells */
+.fc .fc-daygrid-day-events {
+    margin-top: 6px !important;
+}
+
+.fc .fc-daygrid-event {
+    margin-bottom: 3px !important;
+}
+
+/* Ensure row heights are sufficient */
+.fc .fc-daygrid-body-unscrolled {
+    min-height: auto !important;
+}
+
+.fc .fc-daygrid-body {
+    position: relative !important;
+}
+
+.fc .fc-daygrid-body-cell {
+    vertical-align: top !important;
+    padding: 6px !important;
+}
+
+/* Event Styling */
+.fc-event {
+    border-radius: 4px;
+    padding: 2px 4px;
+    cursor: pointer;
+    opacity: 0.9;
+    font-weight: 500;
+    max-width: 100% !important;
+}
+
+.fc-event-title {
+    font-size: 11px !important;
+    white-space: normal !important;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    word-break: break-word;
+    line-height: 1.2;
+    padding: 2px 3px;
+}
+
+.shift-event {
+    background-color: #28a745 !important;
+    border-color: #1e7e34 !important;
+    color: white !important;
+    opacity: 0.95;
+}
+
+.shift-event .fc-event-title {
+    color: white !important;
+    font-weight: 600;
+}
+
+.shift-event:hover {
+    background-color: #218838 !important;
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+}
+
+/* FullCalendar v6 shift event background */
+.fc .fc-event.shift-event .fc-event-bg {
+    background-color: #28a745 !important;
+}
+
+.fc .fc-event.shift-event {
+    background-color: #28a745 !important;
+    border-color: #1e7e34 !important;
+}
+
+.fc-event.shift-event .fc-event-bg {
+    background-color: #28a745 !important;
+}
+
+.attendance-event {
+    background-color: #17a2b8 !important;
+    border-color: #0c5460 !important;
+    color: white !important;
+    opacity: 0.95;
+}
+
+.attendance-event .fc-event-title {
+    color: white !important;
+    font-weight: 600;
+}
+
+.attendance-event:hover {
+    background-color: #138496 !important;
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.4);
+}
+
+/* FullCalendar v6 attendance event background */
+.fc .fc-event.attendance-event .fc-event-bg {
+    background-color: #17a2b8 !important;
+}
+
+.fc .fc-event.attendance-event {
+    background-color: #17a2b8 !important;
+    border-color: #0c5460 !important;
+}
+
+.fc-event.attendance-event .fc-event-bg {
+    background-color: #17a2b8 !important;
+}
+
+.late-event {
+    background-color: #ffc107 !important;
+    border-color: #e0a800 !important;
+    color: #333 !important;
+    opacity: 0.95;
+}
+
+.late-event .fc-event-title {
+    color: #333 !important;
+    font-weight: 600;
+}
+
+/* FullCalendar v6 late event background */
+.fc .fc-event.late-event .fc-event-bg {
+    background-color: #ffc107 !important;
+}
+
+.fc .fc-event.late-event {
+    background-color: #ffc107 !important;
+    border-color: #e0a800 !important;
+}
+
+.fc-event.late-event .fc-event-bg {
+    background-color: #ffc107 !important;
+}
+
+.absent-event {
+    background-color: #dc3545 !important;
+    border-color: #a02622 !important;
+    color: white !important;
+    opacity: 0.95;
+}
+
+.absent-event .fc-event-title {
+    color: white !important;
+    font-weight: 600;
+}
+
+/* FullCalendar v6 absent event background */
+.fc .fc-event.absent-event .fc-event-bg {
+    background-color: #dc3545 !important;
+}
+
+.fc .fc-event.absent-event {
+    background-color: #dc3545 !important;
+    border-color: #a02622 !important;
+}
+
+.fc-event.absent-event .fc-event-bg {
+    background-color: #dc3545 !important;
+}
+
+.flex-event {
+    background-color: #9c27b0 !important;
+    border-color: #7b1fa2 !important;
+    color: white !important;
+    opacity: 0.95;
+}
+
+.flexible-event {
+    background-color: #9c27b0 !important;
+    border-color: #7b1fa2 !important;
+    color: white !important;
+    opacity: 0.95;
+}
+
+.flexible-event .fc-event-title {
+    color: white !important;
+    font-weight: 600;
+}
+
+.flexible-event:hover {
+    background-color: #7b1fa2 !important;
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(156, 39, 176, 0.4);
+}
+
+/* FullCalendar v6 event background color overrides */
+.fc .fc-event.flexible-event .fc-event-bg {
+    background-color: #9c27b0 !important;
+}
+
+.fc .fc-event.flexible-event {
+    background-color: #9c27b0 !important;
+    border-color: #7b1fa2 !important;
+}
+
+.fc-event.flex-event .fc-event-bg {
+    background-color: #9c27b0 !important;
+}
+
+.fc-event.flex-event {
+    background-color: #9c27b0 !important;
+    border-color: #7b1fa2 !important;
+}
+
+/* Week View */
+#week-calendar {
+    margin-top: 15px;
+}
+
+.week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.week-day {
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    min-height: 150px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.week-day:hover {
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+    border-color: #1976d2;
+    background-color: #fff;
+}
+
+.week-day-header {
+    font-weight: bold;
+    color: #0d47a1;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1976d2;
+}
+
+.week-day-date {
+    font-size: 12px;
+    color: #999;
+}
+
+.week-day-name {
+    font-size: 13px;
+    color: #333;
+    margin-top: 4px;
+}
+
+.week-day-shift {
+    background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+    border-left: 4px solid #4caf50;
+    padding: 6px 8px;
+    margin-top: 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: #2e7d32;
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.1);
+}
+
+.week-day-no-shift {
+    font-size: 12px;
+    color: #999;
+    margin-top: 8px;
+}
+
+/* Timeline Modal Styles */
+#dayTimelineModal .modal-body {
+    padding: 20px;
+}
+
+#timeline-container {
+    background: linear-gradient(to right, #f9f9f9 50px, transparent 50px);
+    background-size: 100% 50px;
+    background-position: 0 0;
+    background-repeat: repeat-y;
+}
+
+/* Timeline Canvas */
+#timeline-canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+.timeline-hour {
+    border-bottom: 1px solid #eee;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+    background-color: #fafafa;
+}
+
+.timeline-hour:nth-child(odd) {
+    background-color: #fff;
+}
+
+.timeline-hour-label {
+    width: 40px;
+    flex-shrink: 0;
+    text-align: right;
+    padding-right: 10px;
+}
+
+/* Shift Blocks in Timeline */
+.shift-block {
+    position: absolute;
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    border: 1px solid #2e7d32;
+    border-radius: 4px;
+    color: white;
+    font-size: 12px;
+    padding: 4px 8px;
+    cursor: move;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    user-select: none;
+    min-width: 150px;
+    z-index: 10;
+    transition: box-shadow 0.2s ease;
+}
+
+.shift-block:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+}
+
+.shift-block.selected {
+    border: 2px solid #ff9800;
+    box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+}
+
+.shift-block.resizing {
+    opacity: 0.8;
+}
+
+.shift-block-title {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.shift-block-time {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.shift-block-remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 18px;
+    height: 18px;
+    background-color: #f44336;
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.shift-block:hover .shift-block-remove {
+    display: flex;
+}
+
+/* Now Line in Timeline */
+.timeline-now-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #f44336;
+    z-index: 5;
+}
+
+.timeline-now-label {
+    position: absolute;
+    left: 10px;
+    font-size: 11px;
+    color: #f44336;
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .week-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .week-day {
+        min-height: 100px;
+    }
+
+    #dayTimelineModal .modal-dialog {
+        max-width: 95vw;
+    }
+
+    #dayTimelineModal .modal-body {
+        padding: 10px;
+    }
+}
+
+/* Loading State */
+.calendar-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner-border {
+    display: inline-block;
+}
+
+/* Message Styles */
+.alert-no-employee {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Tab Styling */
+.nav-tabs .nav-link {
+    color: #666;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background-color: transparent;
+}
+
+/* Button Styles */
+.btn-group {
+    gap: 5px;
+}
+
+.btn-group .btn {
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+/* Selected Employee Display */
+#selected-employee {
+    background-color: #e3f2fd;
+    padding: 10px 15px;
+    border-radius: 4px;
+    border-left: 4px solid #2196f3;
+}
+
+#selected-employee strong {
+    color: #1976d2;
+}
+
+/* Dropdown for autocomplete */
+.employee-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.employee-option {
+    padding: 10px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.employee-option:hover {
+    background-color: #f5f5f5;
+}
+
+.employee-option-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.employee-option-id {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Fix for FullCalendar header text visibility */
+.fc .fc-daygrid-day-frame .fc-daygrid-day-bg {
+    background-color: inherit !important;
+}
+
+.fc .fc-col-header-cell .fc-button-primary {
+    color: #ffffff !important;
+}
+
+/* Ensure all text in header is visible */
+.fc .fc-daygrid-col-header .fc-col-header-cell,
+.fc .fc-daygrid-col-header .fc-col-header-cell * {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Fix right side overflow */
+.fc-daygrid {
+    overflow-x: hidden !important;
+    width: 100% !important;
+}
+
+.fc-daygrid-body {
+    width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* ============================================================ */
+/* DARK MODE STYLING FOR CONTAINER CARDS AND SECTIONS */
+/* ============================================================ */
+
+/* Light mode for controls grid cards */
+#controls-grid > div {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%) !important;
+    border: 2px solid rgba(0, 61, 130, 0.08) !important;
+    box-shadow: 0 4px 16px rgba(0, 61, 130, 0.08) !important;
+}
+
+/* Light mode card headers */
+#controls-grid h6 {
+    color: #003d82 !important;
+}
+
+/* Light mode legend items text */
+#controls-grid span[style*="color: #333"] {
+    color: #333 !important;
+}
+
+/* Light mode view options buttons */
+#controls-grid .btn-group-vertical .btn {
+    background: #f8f9fa !important;
+    color: #003d82 !important;
+    border-color: #e0e0e0 !important;
+}
+
+#controls-grid .btn-group-vertical .btn:hover {
+    background: #e8f1ff !important;
+    border-color: #003d82 !important;
+}
+
+/* Light mode calendar section container */
+#calendar-section {
+    background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%) !important;
+    border: 2px solid rgba(0, 61, 130, 0.08) !important;
+    box-shadow: 0 4px 16px rgba(0, 61, 130, 0.08) !important;
+}
+
+/* Light mode calendar container */
+#calendar-container {
+    background: #ffffff !important;
+    border-color: #e0e0e0 !important;
+}
+
+/* Light mode day timeline container */
+#day-timeline-container {
+    background: #ffffff !important;
+    border-color: #e0e0e0 !important;
+}
+
+/* Light mode day timeline canvas */
+#day-timeline-canvas {
+    border-color: #e0e0e0 !important;
+}
+
+/* Light mode form controls in cards */
+#controls-grid .form-control {
+    background: #ffffff !important;
+    color: #333 !important;
+    border-color: #e0e0e0 !important;
+}
+
+#controls-grid .form-control::placeholder {
+    color: rgba(0,0,0,0.5) !important;
+}
+
+#controls-grid .form-control:focus {
+    background: #ffffff !important;
+    color: #333 !important;
+    border-color: #1976d2 !important;
+    box-shadow: 0 0 0 0.2rem rgba(25, 118, 210, 0.25) !important;
+}
+
+/* Light mode selected employee indicator */
+#selected-employee {
+    background: #e3f2fd !important;
+    border-left-color: #003d82 !important;
+}
+
+#selected-employee p {
+    color: #003d82 !important;
+}
+
+/* Light mode clear button */
+.btn-outline-secondary {
+    color: #003d82 !important;
+    border-color: #e0e0e0 !important;
+}
+
+.btn-outline-secondary:hover {
+    background: #1976d2 !important;
+    border-color: #1976d2 !important;
+    color: white !important;
+}
+
+/* Light mode text in control grid */
+#controls-grid p,
+#controls-grid span {
+    color: #333 !important;
+}
+
+#controls-grid i {
+    color: #003d82 !important;
+}
+
+/* Dark mode for controls grid cards */
+body.dark-mode #controls-grid > div {
+    background: linear-gradient(135deg, #1e1e1e 0%, #232323 100%) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Dark mode for card headers */
+body.dark-mode #controls-grid h6 {
+    color: #1976d2 !important;
+}
+
+/* Dark mode for legend items text */
+body.dark-mode #controls-grid span[style*="color: #333"] {
+    color: #e0e0e0 !important;
+}
+
+/* Dark mode for view options buttons */
+body.dark-mode #controls-grid .btn-group-vertical .btn {
+    background: #232323 !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-mode #controls-grid .btn-group-vertical .btn:hover {
+    background: #2f2f2f !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Dark mode for calendar section container */
+body.dark-mode #calendar-section {
+    background: linear-gradient(135deg, #1e1e1e 0%, #232323 100%) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Dark mode for calendar container */
+body.dark-mode #calendar-container {
+    background: #232323 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Dark mode for day timeline container */
+body.dark-mode #day-timeline-container {
+    background: #232323 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Dark mode for day timeline canvas */
+body.dark-mode #day-timeline-canvas {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Dark mode for form controls in cards */
+body.dark-mode #controls-grid .form-control {
+    background: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-mode #controls-grid .form-control::placeholder {
+    color: rgba(224, 224, 224, 0.5) !important;
+}
+
+body.dark-mode #controls-grid .form-control:focus {
+    background: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border-color: #1565c0 !important;
+    box-shadow: 0 0 0 0.2rem rgba(21, 101, 192, 0.25) !important;
+}
+
+/* Dark mode for selected employee indicator */
+body.dark-mode #selected-employee {
+    background: rgba(21, 101, 192, 0.2) !important;
+    border-left-color: #1976d2 !important;
+}
+
+body.dark-mode #selected-employee p {
+    color: #1976d2 !important;
+}
+
+/* Dark mode for clear button */
+body.dark-mode .btn-outline-secondary {
+    color: #e0e0e0 !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+body.dark-mode .btn-outline-secondary:hover {
+    background: #1565c0 !important;
+    border-color: #1565c0 !important;
+    color: white !important;
+}
+
+/* Ensure all text in control grid is readable */
+body.dark-mode #controls-grid p,
+body.dark-mode #controls-grid span {
+    color: #e0e0e0 !important;
+}
+
+body.dark-mode #controls-grid i {
+    color: #1976d2 !important;
+}

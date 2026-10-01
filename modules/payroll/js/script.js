@@ -1,6 +1,14 @@
-import './layout/hamburger.js';
-import './utils/main.js';
-import './layout/tab-content.js';
-import './layout/realtime.js';
-import './components/dropdown.js';
-
+import "./layout/hamburger.js";
+import "./utils/main.js";
+import "./layout/tab-content.js";
+import "./layout/realtime.js";
+import "./components/dropdown.js";
+import "./pages/period-manager.js";
+import "./pages/payroll-processing.js";
+import "./pages/payslips.js";
+import "./pages/deduction.js";
+import "./pages/reports.js";
+import "./pages/dashboard.js";
+import "./pages/final-settlement.js";
+import "./pages/profile-settings.js";
+import "./pages/change-password.js";

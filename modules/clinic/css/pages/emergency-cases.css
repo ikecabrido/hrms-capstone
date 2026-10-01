@@ -1,0 +1,951 @@
+.emergency-cases-module {
+    display: block;
+    width: 100%;
+    color: #0f172a;
+}
+
+.emergency-cases-module .module-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding: 1.75rem 2rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid rgba(59, 130, 246, 0.18);
+    border-radius: 22px;
+    box-shadow:
+        0 18px 40px rgba(37, 99, 235, 0.09),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.emergency-cases-module .module-header > div {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.emergency-cases-module .module-header h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(1.75rem, 2.2vw, 2.5rem);
+    letter-spacing: -0.04em;
+    line-height: 1.15;
+    font-weight: 800;
+}
+
+.emergency-cases-module .module-header p {
+    margin: 0.55rem 0 0;
+    color: #475569;
+    font-size: 0.98rem;
+}
+
+.emergency-cases-module .module-header .primary-btn {
+    margin-left: auto;
+    white-space: nowrap;
+    align-self: center;
+    flex-shrink: 0;
+}
+
+.emergency-cases-module .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.emergency-cases-module .summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+}
+
+.emergency-cases-module .summary-label {
+    display: block;
+    color: #64748b;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.emergency-cases-module .summary-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 0.6rem;
+}
+
+.emergency-cases-module .summary-meta {
+    display: block;
+    color: #64748b;
+    margin-top: 0.3rem;
+    font-size: 0.82rem;
+}
+
+.emergency-cases-module .toolbar-row {
+    display: grid;
+    grid-template-columns: minmax(240px, 1.6fr) repeat(5, minmax(125px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.emergency-cases-module .search-box,
+.emergency-cases-module .filter-box,
+.emergency-cases-module .date-field {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #f8fafc;
+    border: 1px solid #dfe7f1;
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+}
+
+.emergency-cases-module .search-box {
+    width: 100%;
+}
+
+.emergency-cases-module .search-box input,
+.emergency-cases-module .filter-box select,
+.emergency-cases-module .date-field input,
+.emergency-cases-module .form-grid input,
+.emergency-cases-module .form-grid select,
+.emergency-cases-module .form-grid textarea {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: #334155;
+    font: inherit;
+}
+
+.emergency-cases-module .filter-box select,
+.emergency-cases-module .date-field input {
+    min-width: 0;
+    padding: 0;
+    outline: none;
+    appearance: auto;
+}
+
+.emergency-cases-module .date-field {
+    min-width: 0;
+}
+
+.emergency-cases-module .date-field label {
+    flex: 0 0 auto;
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.emergency-cases-module .filter-box:has(.ghost-btn) {
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+
+.emergency-cases-module .filter-box .ghost-btn {
+    width: 100%;
+}
+
+.emergency-cases-module .search-box input:focus,
+.emergency-cases-module .filter-box select:focus,
+.emergency-cases-module .form-grid input:focus,
+.emergency-cases-module .form-grid select:focus,
+.emergency-cases-module .form-grid textarea:focus {
+    outline: none;
+}
+
+.emergency-cases-module .table-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.04);
+}
+
+.emergency-cases-module .table-wrapper::-webkit-scrollbar {
+    display: block;
+    height: 8px;
+}
+
+.emergency-cases-module .table-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+}
+
+.emergency-cases-module .table-wrapper {
+    overflow-x: auto;
+}
+
+.emergency-cases-module table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1200px;
+}
+
+.emergency-cases-module th,
+.emergency-cases-module td {
+    text-align: left;
+    padding: 0.9rem 0.8rem;
+    border-bottom: 1px solid #edf2f7;
+    vertical-align: top;
+}
+
+.emergency-cases-module th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.83rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.emergency-cases-module td {
+    color: #334155;
+    font-size: 0.95rem;
+}
+
+.emergency-cases-module .case-patient-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.emergency-cases-module .case-patient-meta span {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.emergency-cases-module .table-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.emergency-cases-module .tiny-btn {
+    padding: 0.38rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.emergency-cases-module .tiny-btn.danger {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+}
+
+.emergency-cases-module .state-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.38rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.emergency-cases-module .state-badge.primary { background: #dbeafe; color: #1d4ed8; }
+.emergency-cases-module .state-badge.success { background: #dcfce7; color: #166534; }
+.emergency-cases-module .state-badge.warning { background: #fef3c7; color: #92400e; }
+.emergency-cases-module .state-badge.danger { background: #fee2e2; color: #b91c1c; }
+.emergency-cases-module .state-badge.neutral { background: #e2e8f0; color: #334155; }
+.emergency-cases-module .state-badge.info { background: #e0f2fe; color: #0f766e; }
+
+.emergency-cases-module .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.56);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    z-index: 1000;
+}
+
+.emergency-cases-module .modal[hidden] {
+    display: none;
+}
+
+.emergency-cases-module .modal-dialog {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    width: min(660px, 90vw);
+    max-height: 86vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.3);
+}
+
+.emergency-cases-module .modal-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+.emergency-cases-module .modal-header h3 {
+    width: 100%;
+    margin: 0 0 0.25rem;
+    text-align: center;
+    font-size: 1.9rem;
+    line-height: 1.2;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.emergency-cases-module .modal-subtitle {
+    text-align: center;
+    margin: 0;
+    font-size: 0.78rem;
+    color: #64748b;
+    font-weight: 400;
+}
+
+.emergency-cases-module .close-btn {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.8rem;
+    border: none;
+    background: transparent;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.25rem 0.35rem;
+    transition: all 0.2s ease;
+}
+
+.emergency-cases-module .close-btn:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+    border-radius: 8px;
+}
+
+.emergency-cases-module .modal-body {
+    padding: 0.85rem 1.25rem 0.45rem;
+    max-height: calc(86vh - 145px);
+    overflow-y: auto;
+}
+
+.emergency-cases-module .modal-helper {
+    width: min(660px, 90vw);
+    padding: 0.55rem 0.8rem;
+    border: 1px solid #dbe6f1;
+    border-radius: 7px;
+    background: #eef4ff;
+    color: #475569;
+    font-size: 0.68rem;
+    line-height: 1.3;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+.emergency-cases-module .modal-helper i {
+    margin-right: 0.35rem;
+    color: #2563eb;
+}
+
+.emergency-cases-module .modal-helper strong {
+    color: #dc2626;
+}
+
+/* FORM SECTIONS */
+.emergency-cases-module .form-section {
+    margin-bottom: 0.65rem;
+    background: #ffffff;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.emergency-cases-module .form-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.emergency-cases-module .section-header {
+    display: none;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.6rem 0.8rem;
+    background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.emergency-cases-module .section-header i {
+    font-size: 0.9rem;
+    color: #2563eb;
+    min-width: 1.1rem;
+}
+
+.emergency-cases-module .section-header h4 {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.emergency-cases-module .section-content {
+    padding: 0;
+}
+
+/* PATIENT SEARCH CONTAINER */
+.emergency-cases-module .patient-search-container {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+}
+
+.emergency-cases-module .patient-search-container .secondary-btn {
+    flex: 0 0 40px;
+    width: 40px;
+    min-height: 39px;
+    padding: 0;
+    font-size: 0;
+}
+
+.emergency-cases-module .patient-search-container .secondary-btn i {
+    font-size: 0.85rem;
+}
+
+.emergency-cases-module .search-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.emergency-cases-module .search-input-wrapper i {
+    position: absolute;
+    left: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 0.78rem;
+}
+
+.emergency-cases-module .search-input-wrapper input {
+    width: 100%;
+    height: 39px;
+    padding: 0.45rem 0.6rem 0.45rem 2.1rem;
+    border: 1px solid #dbe6f1;
+    border-radius: 7px;
+    background: #fff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.8rem;
+}
+
+.emergency-cases-module .search-input-wrapper input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.emergency-cases-module .patient-search-results {
+    background: #f8fafc;
+    border: 1px solid #dbe6f1;
+    border-radius: 12px;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 0.4rem;
+    margin-bottom: 0.45rem;
+}
+
+.emergency-cases-module .patient-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #fff;
+    padding: 0.55rem 0.7rem;
+    margin-bottom: 0.35rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.emergency-cases-module .patient-option:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+.emergency-cases-module .patient-option strong {
+    display: block;
+    color: #0f172a;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.emergency-cases-module .patient-option span {
+    display: block;
+    color: #64748b;
+    font-size: 0.68rem;
+    line-height: 1.4;
+}
+
+/* PATIENT DISPLAY CARDS */
+.emergency-cases-module .selected-patient-display {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+
+.emergency-cases-module .patient-info-card {
+    background: #f8fafc;
+    border: 1.5px solid #dbe6f1;
+    border-radius: 7px;
+    padding: 0.55rem 0.65rem;
+    transition: all 0.2s ease;
+}
+
+.emergency-cases-module .patient-info-card:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+}
+
+.emergency-cases-module .patient-info-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+}
+
+.emergency-cases-module .patient-info-header i {
+    font-size: 1.05rem;
+    color: #2563eb;
+    margin-top: 0.1rem;
+}
+
+.emergency-cases-module .patient-info-label {
+    display: block;
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.emergency-cases-module .patient-info-value {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.emergency-cases-module .patient-details-content p {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+
+.emergency-cases-module .text-muted {
+    color: #94a3b8;
+}
+
+.emergency-cases-module .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.emergency-cases-module .form-grid:last-child {
+    margin-bottom: 0;
+}
+
+.emergency-cases-module .form-grid .full-width {
+    grid-column: 1 / -1;
+}
+
+.emergency-cases-module .form-grid label {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+    font-size: 0.76rem;
+}
+
+.emergency-cases-module .form-grid label .required {
+    color: #e11d48;
+    margin-left: 0.3rem;
+    font-weight: 700;
+}
+
+.emergency-cases-module .form-grid input,
+.emergency-cases-module .form-grid select,
+.emergency-cases-module .form-grid textarea {
+    width: 100%;
+    border: 1.5px solid #dbe6f1;
+    background: #fff;
+    border-radius: 7px;
+    padding: 0.48rem 0.6rem;
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    min-height: 39px;
+}
+
+.emergency-cases-module .form-grid input:focus,
+.emergency-cases-module .form-grid select:focus,
+.emergency-cases-module .form-grid textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.emergency-cases-module .form-grid input::placeholder,
+.emergency-cases-module .form-grid textarea::placeholder {
+    color: #cbd5e1;
+}
+
+.emergency-cases-module .form-grid textarea {
+    min-height: 68px;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* CHECKBOXES */
+.emergency-cases-module .checkboxes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.emergency-cases-module .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 0.65rem;
+    background: #f8fafc;
+    border: 1.5px solid #dbe6f1;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    color: #334155;
+    user-select: none;
+}
+
+.emergency-cases-module .checkbox-item:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+.emergency-cases-module .checkbox-item input[type="checkbox"] {
+    width: auto;
+    min-width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: #2563eb;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.emergency-cases-module .checkbox-item span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.emergency-cases-module .checkbox-item i {
+    font-size: 0.95rem;
+    color: #2563eb;
+}
+
+.emergency-cases-module .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.7rem 1.25rem 0.85rem;
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+    flex-wrap: wrap;
+}
+
+.emergency-cases-module .primary-btn,
+.emergency-cases-module .secondary-btn,
+.emergency-cases-module .ghost-btn,
+.emergency-cases-module .danger-btn {
+    border-radius: 10px;
+    min-height: 40px;
+    padding: 0.5rem 0.95rem;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+}
+
+.emergency-cases-module .primary-btn {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    border-color: rgba(29, 78, 216, 0.9);
+    box-shadow:
+        0 8px 20px rgba(37, 99, 235, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.emergency-cases-module .module-header .primary-btn {
+    border-radius: 16px;
+    min-height: 52px;
+    padding: 0.75rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 800;
+    gap: 0.6rem;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-color: #1e40af;
+    box-shadow:
+        0 22px 55px rgba(37, 99, 235, 0.42),
+        0 10px 22px rgba(37, 99, 235, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: visible;
+}
+
+.emergency-cases-module .module-header .primary-btn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, transparent 55%);
+    pointer-events: none;
+}
+
+.emergency-cases-module .module-header .primary-btn i {
+    font-size: 1.35rem;
+    font-weight: 900;
+}
+
+.emergency-cases-module .primary-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    box-shadow:
+        0 12px 28px rgba(37, 99, 235, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.emergency-cases-module .module-header .primary-btn:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 30px 70px rgba(37, 99, 235, 0.5),
+        0 14px 30px rgba(37, 99, 235, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.emergency-cases-module .primary-btn:active {
+    transform: translateY(0);
+    box-shadow:
+        0 4px 12px rgba(37, 99, 235, 0.22);
+}
+
+.emergency-cases-module .module-header .primary-btn:active {
+    transform: translateY(-1px);
+    box-shadow:
+        0 14px 35px rgba(37, 99, 235, 0.35),
+        0 6px 14px rgba(37, 99, 235, 0.2),
+        inset 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+.emergency-cases-module .secondary-btn {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.emergency-cases-module .secondary-btn:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+.emergency-cases-module .ghost-btn {
+    background: #fff;
+    color: #475569;
+    border-color: #cbd5e1;
+}
+
+.emergency-cases-module .ghost-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.emergency-cases-module .danger-btn {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+.emergency-cases-module .danger-btn:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+@media (max-width: 1000px) {
+    .emergency-cases-module .toolbar-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .emergency-cases-module .search-box {
+        grid-column: 1 / -1;
+    }
+
+    .emergency-cases-module .form-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .emergency-cases-module .selected-patient-display {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .emergency-cases-module .module-header {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 1.35rem 1.4rem;
+        gap: 1rem;
+        border-radius: 18px;
+    }
+
+    .emergency-cases-module .module-header .primary-btn {
+        width: 100%;
+        min-height: 48px;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.95rem;
+        box-shadow:
+            0 16px 40px rgba(37, 99, 235, 0.38),
+            0 8px 18px rgba(37, 99, 235, 0.22),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        justify-content: center;
+    }
+
+    .emergency-cases-module .toolbar-row {
+        grid-template-columns: 1fr;
+    }
+
+    .emergency-cases-module .search-box {
+        grid-column: auto;
+    }
+
+    .emergency-cases-module .modal-dialog {
+        width: min(95vw, 660px);
+    }
+
+    .emergency-cases-module .modal-header {
+        padding: 0.9rem 1rem 0.75rem;
+    }
+
+    .emergency-cases-module .modal-header h3 {
+        font-size: 1.7rem;
+    }
+
+    .emergency-cases-module .close-btn {
+        top: 0.55rem;
+        right: 0.65rem;
+    }
+
+    .emergency-cases-module .modal-body {
+        padding: 0.75rem 1rem 0.4rem;
+    }
+
+    .emergency-cases-module .form-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .emergency-cases-module .section-content {
+        padding: 0;
+    }
+
+    .emergency-cases-module .checkboxes-grid {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+    }
+
+    .emergency-cases-module .selected-patient-display {
+        grid-template-columns: 1fr;
+    }
+
+    .emergency-cases-module .patient-search-container {
+        flex-direction: column;
+    }
+
+    .emergency-cases-module .patient-search-container .secondary-btn {
+        width: 100%;
+        flex-basis: 38px;
+        font-size: 0.8rem;
+        padding: 0.45rem 0.9rem;
+    }
+
+    .emergency-cases-module .modal-actions {
+        flex-direction: column-reverse;
+    }
+
+    .emergency-cases-module .primary-btn,
+    .emergency-cases-module .secondary-btn,
+    .emergency-cases-module .ghost-btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .emergency-cases-module .modal-dialog {
+        width: 100%;
+        max-height: 100vh;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .emergency-cases-module .modal-header h3 {
+        font-size: 1.55rem;
+    }
+
+    .emergency-cases-module .modal-body {
+        padding: 0.7rem 0.75rem 0.35rem;
+    }
+
+    .emergency-cases-module .section-header {
+        padding: 0;
+    }
+
+    .emergency-cases-module .section-header i {
+        font-size: 0.95rem;
+    }
+
+    .emergency-cases-module .section-header h4 {
+        font-size: 0.8rem;
+    }
+
+    .emergency-cases-module .form-grid label {
+        font-size: 0.85rem;
+    }
+}

@@ -51,50 +51,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             user_account.user_id,
             user_account.employee_id,
             user_account.password,
-            hrms_employee.role,
-            hrms_employee.department,
-            hrms_roles.role_name,
-            hrms_department.department_name
+            em_employees.role_id AS role,
+            em_employees.department_id AS department,
+            em_employees.employment_status,
+            em_roles.role_name,
+            em_departments.department_name
         FROM user_account
-        INNER JOIN hrms_employee  ON hrms_employee.employee_id  = user_account.employee_id
-        INNER JOIN hrms_roles      ON hrms_roles.role_id          = hrms_employee.role
-        LEFT  JOIN hrms_department ON hrms_department.department_id = hrms_employee.department
+        INNER JOIN em_employees
+            ON em_employees.employee_id = user_account.employee_id
+        LEFT JOIN em_roles
+            ON em_roles.role_id = em_employees.role_id
+        LEFT JOIN em_departments
+            ON em_departments.department_id = em_employees.department_id
         WHERE user_account.employee_id = :employeeid
-        AND   hrms_employee.status      = 'active'
-=======
-        SELECT 
-            u.user_id, 
-            u.employee_id, 
-            u.role_id,
-            u.password,
-            u.account_status,
-            e.employee_code,
-            e.first_name,
-            e.middle_name,
-            e.last_name,
-            e.position_id,
-            e.department_id,
-            e.employment_status,
-            p.position_name,
-            r.role_name,
-            d.department_name
-        FROM user_account u
-        INNER JOIN em_employees e
-            ON e.employee_id = u.employee_id
-        INNER JOIN em_roles r
-            ON r.role_id = u.role_id
-        INNER JOIN em_positions p
-            ON p.position_id = e.position_id
-        LEFT JOIN em_departments d
-            ON d.department_id = e.department_id
-        WHERE (e.employee_code = :employeeid OR e.employee_id = :employeeid_num)
-        AND e.employment_status = 'Active'
->>>>>>> Stashed changes
         LIMIT 1
     ");
-    $stmt->bindParam(':employeeid', $employeeid);
-    $stmt->bindValue(':employeeid_num', (int) $employeeid, PDO::PARAM_INT);
-    $stmt->execute();
+
+    $stmt->execute([
+        ':employeeid' => $employeeid
+    ]);
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -109,18 +84,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['department_name'] = $user['department_name'];
 
         $redirectMap = [
-            1 => 'modules/recruitment/index.php',
-            2 => 'modules/employee/index.php',
-            3 => 'modules/payroll/index.php',
-            4 => 'modules/time/index.php',
-            5 => 'modules/performance/index.php',
-            6 => 'modules/learning/index.php',
-            7 => 'modules/compliance/index.php',
-            8 => 'modules/workforce/index.php',
-            9 => 'modules/exit/index.php',
-            10 => 'modules/clinic/index.php',
-            11 => 'modules/engagement/index.php',
-
+            2 => 'modules/recruitment/index.php',
+            3 => 'modules/employee/index.php',
+            4 => 'modules/payroll/index.php',
+            5 => 'modules/time/index.php',
+            6 => 'modules/performance/index.php',
+            7 => 'modules/learning/index.php',
+            8 => 'modules/compliance/index.php',
+            9 => 'modules/workforce/index.php',
+            10 => 'modules/exit/index.php',
+            11 => 'modules/clinic/index.php',
+            12 => 'modules/engagement/index.php',
+            13 => 'modules/portal/index.php'
         ];
 
         $role = (int) $user['role'];
