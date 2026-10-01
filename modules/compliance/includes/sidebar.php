@@ -49,16 +49,14 @@ $employeeClass = new Employee();
                     </div>
                     <ul class="user-menu">
                         <li>
-                            <a href="?page=profile-settings"><i class="fa-regular fa-user"></i> Profile Settings</a>
+                            <a href="?page=profile-settings">Profile Settings</a>
                         </li>
                         <li>
-                            <a href="?page=profile-settings#change-password"><i class="fa-solid fa-lock"></i> Change Password</a>
+                            <a href="?page=profile-settings#change-password">Change Password</a>
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="/auth/logout.php" class="signout-link">
-                                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
-                            </a>
+                            <a href="/auth/logout.php" class="signout-link">Sign Out</a>
                         </li>
                     </ul>
                 </div>
