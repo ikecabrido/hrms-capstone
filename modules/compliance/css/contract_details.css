@@ -529,3 +529,565 @@
         transform: none;
     }
 }
+
+/* =========================================================
+   Document Details — production UI refinement
+   ========================================================= */
+
+.card-x {
+    background: #fff;
+    border: 1px solid #e3e6ea;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    overflow: hidden;
+}
+
+.card-x .cx-head {
+    display: flex;
+    align-items: center;
+    min-height: 54px;
+    padding: 0 20px;
+    border-bottom: 1px solid #e8ebef;
+    background: #fff;
+}
+
+.card-x .cx-head h2 {
+    margin: 0;
+    color: #20252b;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+}
+
+.card-x .cx-body {
+    padding: 20px;
+}
+
+.card-x .cd-section-title {
+    margin: 0 0 14px;
+    color: #626b76;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.card-x .cd-field-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+}
+
+.card-x .cd-field {
+    min-width: 0;
+}
+
+.card-x .cd-field > label {
+    display: block;
+    margin: 0 0 6px;
+    color: #69727d;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.card-x .cd-readonly-value {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 9px 11px;
+    box-sizing: border-box;
+    border: 1px solid #e3e6ea;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: #252a31;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+.card-x .cd-section-divider {
+    height: 1px;
+    margin: 22px 0;
+    background: #e8ebef;
+}
+
+.card-x .cd-purpose-form {
+    margin: 0;
+}
+
+.card-x .cd-purpose-row {
+    display: block;
+    margin: 0;
+}
+
+.card-x .cd-purpose-select,
+.card-x .cd-purpose-other {
+    width: 100%;
+    min-height: 40px;
+    box-sizing: border-box;
+    padding: 8px 36px 8px 11px;
+    border: 1px solid #d6dae0;
+    border-radius: 6px;
+    background-color: #fff;
+    color: #252a31;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.45;
+    transition:
+        border-color 120ms ease,
+        box-shadow 120ms ease,
+        background-color 120ms ease;
+}
+
+.card-x .cd-purpose-select {
+    cursor: pointer;
+}
+
+.card-x .cd-purpose-other {
+    margin-top: 9px;
+    padding-right: 11px;
+}
+
+.card-x .cd-purpose-select:hover,
+.card-x .cd-purpose-other:hover {
+    border-color: #b9c0c8;
+}
+
+.card-x .cd-purpose-select:focus,
+.card-x .cd-purpose-other:focus {
+    outline: none;
+    border-color: #7d8792;
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.08);
+}
+
+.card-x .cd-purpose-select:disabled,
+.card-x .cd-purpose-other:disabled {
+    background: #f5f6f7;
+    color: #8a929b;
+    cursor: not-allowed;
+}
+
+.card-x .cd-field-help {
+    margin-top: 7px;
+    color: #7a838e;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.card-x .cd-purpose-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+.card-x .cd-btn-apply {
+    min-height: 36px;
+    padding: 0 15px;
+    border: 1px solid #2f3740;
+    border-radius: 6px;
+    background: #2f3740;
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        box-shadow 120ms ease;
+}
+
+.card-x .cd-btn-apply:hover {
+    background: #252c33;
+    border-color: #252c33;
+}
+
+.card-x .cd-btn-apply:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.14);
+}
+
+.card-x .cd-btn-apply:active {
+    background: #1f252b;
+    border-color: #1f252b;
+}
+
+.card-x .cd-field--split-actions-2 {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e8ebef;
+}
+
+.card-x .dg-btn-generate {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 36px;
+    padding: 0 14px;
+    box-sizing: border-box;
+    border: 1px solid #d6dae0;
+    border-radius: 6px;
+    background: #fff;
+    color: #3d4650;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        color 120ms ease;
+}
+
+.card-x .dg-btn-generate:hover {
+    background: #f7f8f9;
+    border-color: #bcc2c9;
+    color: #252a31;
+}
+
+.card-x .dg-btn-generate:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.10);
+}
+
+.card-x .dg-btn-generate i {
+    font-size: 13px;
+}
+
+@media (max-width: 767px) {
+    .card-x .cx-head {
+        min-height: 50px;
+        padding: 0 16px;
+    }
+
+    .card-x .cx-body {
+        padding: 16px;
+    }
+
+    .card-x .cd-field-row {
+        grid-template-columns: 1fr;
+        gap: 13px;
+    }
+
+    .card-x .cd-section-divider {
+        margin: 18px 0;
+    }
+
+    .card-x .cd-purpose-actions,
+    .card-x .cd-field--split-actions-2 {
+        justify-content: stretch;
+    }
+
+    .card-x .cd-btn-apply,
+    .card-x .dg-btn-generate {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   COE Actions — 2-column action grid
+   ========================================================= */
+
+.card-x .cd-purpose-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.card-x .cd-purpose-actions .cd-btn-apply,
+.card-x .cd-purpose-actions .dg-btn-generate {
+    width: 100%;
+    min-height: 38px;
+    box-sizing: border-box;
+}
+
+/* Move Send to Email into the same visual action group */
+.card-x .cd-field--split-actions-2 {
+    display: contents;
+}
+
+.card-x .cd-field--split-actions-2 .dg-btn-generate {
+    grid-column: 2;
+    grid-row: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 38px;
+    margin-top: 14px;
+    padding: 0 15px;
+    border: 1px solid #d6dae0;
+    border-radius: 6px;
+    background: #fff;
+    color: #3d4650;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.card-x .cd-field--split-actions-2 .dg-btn-generate:hover {
+    background: #f7f8f9;
+    border-color: #bcc2c9;
+    color: #252a31;
+}
+
+.card-x .cd-field--split-actions-2 .dg-btn-generate:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.10);
+}
+
+.card-x .cd-purpose-actions .cd-btn-apply {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+    .card-x .cd-purpose-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .card-x .cd-purpose-actions .cd-btn-apply,
+    .card-x .cd-field--split-actions-2 .dg-btn-generate {
+        grid-column: 1;
+        width: 100%;
+    }
+
+    .card-x .cd-purpose-actions .cd-btn-apply {
+        grid-row: 1;
+    }
+
+    .card-x .cd-field--split-actions-2 .dg-btn-generate {
+        grid-row: 2;
+        margin-top: 0;
+    }
+}
+
+
+/* =========================================================
+   COE — Apply + Send to Email two-column action grid
+   ========================================================= */
+
+.card-x .cd-purpose-form {
+    margin-bottom: 0;
+}
+
+/* Put both action containers into the same 2-column row */
+.card-x .cd-purpose-form .cd-purpose-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-top: 14px;
+}
+
+.card-x .cd-purpose-form .cd-purpose-actions .cd-btn-apply {
+    width: 100%;
+    min-height: 38px;
+    box-sizing: border-box;
+}
+
+/*
+ * The Send to Email container follows the form.
+ * Pull it into the same visual grid row.
+ */
+.card-x .cd-purpose-form + .cd-field--split-actions-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin-top: -48px;
+    margin-bottom: 0;
+    padding: 0;
+    border: 0;
+}
+
+.card-x .cd-purpose-form + .cd-field--split-actions-2 .dg-btn-generate {
+    grid-column: 2;
+    width: 100%;
+    min-height: 38px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Keep the two buttons compact and equal */
+.card-x .cd-purpose-actions .cd-btn-apply,
+.card-x .cd-purpose-form + .cd-field--split-actions-2 .dg-btn-generate {
+    padding: 0 14px;
+    border-radius: 6px;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+    .card-x .cd-purpose-form .cd-purpose-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .card-x .cd-purpose-form + .cd-field--split-actions-2 {
+        grid-template-columns: 1fr;
+        margin-top: 10px;
+    }
+
+    .card-x .cd-purpose-form + .cd-field--split-actions-2 .dg-btn-generate {
+        grid-column: 1;
+    }
+}
+
+
+/* =========================================================
+   COE PURPOSE ACTIONS — FINAL
+   ========================================================= */
+
+.card-x .cd-purpose-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    width: 100%;
+    margin-top: 14px;
+    padding: 0;
+}
+
+.card-x .cd-purpose-actions > .cd-btn-apply,
+.card-x .cd-purpose-actions > .dg-btn-generate {
+    width: 100% !important;
+    min-width: 0;
+    min-height: 38px;
+    margin: 0 !important;
+    box-sizing: border-box;
+}
+
+.card-x .cd-purpose-actions > .cd-btn-apply {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #2f3740;
+    border-radius: 6px;
+    background: #2f3740;
+    color: #fff;
+    padding: 0 14px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.card-x .cd-purpose-actions > .cd-btn-apply:hover {
+    background: #252c33;
+    border-color: #252c33;
+}
+
+.card-x .cd-purpose-actions > .dg-btn-generate {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid #d6dae0;
+    border-radius: 6px;
+    background: #fff;
+    color: #3d4650;
+    padding: 0 14px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.card-x .cd-purpose-actions > .dg-btn-generate:hover {
+    background: #f7f8f9;
+    border-color: #bcc2c9;
+    color: #252a31;
+}
+
+@media (max-width: 767px) {
+    .card-x .cd-purpose-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* COE purpose actions — final production override */
+.card-x .cd-purpose-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin: 16px 0 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.card-x .cd-purpose-actions > .cd-btn-apply,
+.card-x .cd-purpose-actions > .dg-btn-generate {
+    display: inline-flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 14px !important;
+    box-sizing: border-box !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.card-x .cd-purpose-actions > .cd-btn-apply {
+    border: 1px solid #2f3740 !important;
+    border-radius: 6px !important;
+    background: #2f3740 !important;
+    color: #fff !important;
+    font: inherit !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+}
+
+.card-x .cd-purpose-actions > .dg-btn-generate {
+    border: 1px solid #d6dae0 !important;
+    border-radius: 6px !important;
+    background: #fff !important;
+    color: #3d4650 !important;
+    font: inherit !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    text-decoration: none !important;
+}
+
+.card-x .cd-purpose-actions > .cd-btn-apply:hover {
+    background: #252c33 !important;
+    border-color: #252c33 !important;
+}
+
+.card-x .cd-purpose-actions > .dg-btn-generate:hover {
+    background: #f7f8f9 !important;
+    border-color: #bcc2c9 !important;
+}
+
+@media (max-width: 767px) {
+    .card-x .cd-purpose-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+

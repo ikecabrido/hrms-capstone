@@ -1,3 +1,359 @@
+
+<style id="coe-production-css">
+/* =========================================================
+   BCP HRMS - Certificate of Employment
+   Production CSS
+   ========================================================= */
+
+.document-preview {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 30px auto;
+    padding: 20mm 22mm;
+
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+
+    background: #fff;
+    color: #222;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11.5pt;
+    line-height: 1.7;
+
+    border: 1px solid #d9d9d9;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .08);
+}
+
+
+/* =========================
+   HEADER
+   ========================= */
+
+.document-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.document-title {
+    margin: 0 0 8px;
+
+    font-size: 18pt;
+    font-weight: 700;
+    line-height: 1.25;
+
+    letter-spacing: .8px;
+    color: #111;
+}
+
+.document-subtitle {
+    margin: 0;
+
+    font-size: 10.5pt;
+    font-weight: 600;
+
+    letter-spacing: 1.4px;
+    color: #555;
+}
+
+
+/* =========================
+   DOCUMENT BODY
+   ========================= */
+
+.document-body {
+    margin-top: 10px;
+}
+
+.document-body p {
+    margin: 0 0 20px;
+
+    line-height: 1.8;
+    text-align: justify;
+    text-justify: inter-word;
+}
+
+.document-body strong {
+    font-weight: 700;
+    color: #111;
+}
+
+
+/* =========================
+   SIGNATURE AREA
+   ========================= */
+
+.document-signature-area {
+    position: relative;
+    margin-top: 55px;
+}
+
+.document-signature {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 60px;
+    margin-top: 70px;
+}
+
+.document-signature-block {
+    min-width: 0;
+    text-align: center;
+}
+
+
+/* Signature image */
+
+.sig-image {
+    height: 70px;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+
+    margin-bottom: 2px;
+}
+
+.sig-image img {
+    display: block;
+
+    width: auto;
+    height: 70px;
+    max-width: 180px;
+
+    object-fit: contain;
+}
+
+
+/* Signature text */
+
+.sig-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sig-name {
+    min-height: 22px;
+
+    font-size: 10.5pt;
+    font-weight: 700;
+
+    color: #111;
+}
+
+.sig-role {
+    margin-top: 2px;
+
+    font-size: 10pt;
+    font-weight: 600;
+
+    color: #333;
+}
+
+.sig-date {
+    margin-top: 3px;
+
+    font-size: 9pt;
+    color: #666;
+}
+
+
+/* Employee signature */
+
+.document-signature-block:last-child {
+    padding-top: 70px;
+}
+
+
+/* =========================
+   SMALL NOTARY STAMP
+   ========================= */
+
+.document-notary {
+    position: absolute;
+
+    top: -5px;
+    right: 10px;
+
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 5;
+
+    opacity: .9;
+}
+
+.document-notary img {
+    display: block;
+
+    width: 48px;
+    height: 48px;
+
+    max-width: 100%;
+    max-height: 100%;
+
+    object-fit: contain;
+
+    pointer-events: none;
+    user-select: none;
+}
+
+
+/* =========================
+   DISCLAIMER
+   ========================= */
+
+.document-disclaimer {
+    margin-top: 55px;
+    padding: 12px 15px;
+
+    border: 1px solid #d7d7d7;
+    border-left: 3px solid #888;
+
+    background: #f8f8f8;
+
+    font-size: 8.5pt;
+    line-height: 1.55;
+
+    color: #666;
+}
+
+.document-disclaimer strong {
+    color: #444;
+}
+
+
+/* =========================
+   TABLET
+   ========================= */
+
+@media screen and (max-width: 850px) {
+
+    .document-preview {
+        width: calc(100% - 30px);
+        min-height: auto;
+
+        margin: 15px auto;
+        padding: 35px 30px;
+    }
+
+    .document-signature {
+        gap: 30px;
+    }
+}
+
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media screen and (max-width: 600px) {
+
+    .document-preview {
+        width: calc(100% - 20px);
+
+        min-height: auto;
+        margin: 10px auto;
+        padding: 28px 20px;
+
+        border: 0;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, .08);
+    }
+
+    .document-title {
+        font-size: 14pt;
+    }
+
+    .document-subtitle {
+        font-size: 9pt;
+    }
+
+    .document-body p {
+        text-align: left;
+    }
+
+    .document-signature {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .document-signature-block:last-child {
+        padding-top: 0;
+    }
+
+    .document-notary {
+        position: static;
+
+        width: 45px;
+        height: 45px;
+
+        margin-left: auto;
+        margin-bottom: -20px;
+    }
+
+    .document-notary img {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+
+/* =========================
+   PRINT / PDF
+   ========================= */
+
+@media print {
+
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+
+        background: #fff;
+    }
+
+    .document-preview {
+        width: 210mm;
+        min-height: 297mm;
+
+        margin: 0;
+        padding: 20mm 22mm;
+
+        border: 0;
+        box-shadow: none;
+
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .document-notary {
+        width: 48px;
+        height: 48px;
+    }
+
+    .document-notary img {
+        width: 48px;
+        height: 48px;
+    }
+
+    .document-signature,
+    .document-disclaimer {
+        break-inside: avoid;
+    }
+}
+</style>
+
 <?php
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
@@ -66,6 +422,14 @@ $hrSignatory = lc_get_signature_image();
 $rawDateHired = (string) ($employee['date_hired'] ?? $employee['hire_date'] ?? '');
 $dateHired  = $rawDateHired !== '' ? date('F d, Y', strtotime($rawDateHired)) : '';
 
+$documentPurpose = trim((string) ($documentPurpose ?? ''));
+
+if ($documentPurpose === '') {
+    $documentPurpose = 'Employment Verification';
+}
+
+$documentPurposeHtml = htmlspecialchars($documentPurpose, ENT_QUOTES, 'UTF-8');
+
 $today = date('F d, Y');
 ?>
 
@@ -118,7 +482,12 @@ $today = date('F d, Y');
             </p>
 
             <p>
-                Based on the records maintained by the Human Resources Department, the employee has rendered service in accordance with the terms and conditions of employment established by the institution. This Certificate of Employment is issued upon the employee's request for whatever lawful purpose it may serve.
+                Based on the records maintained by the Human Resources Department, the employee has rendered service in accordance with the terms and conditions of employment established by the institution.
+            </p>
+
+            <p>
+                This certificate is issued for the purpose of
+                <strong><?= $documentPurposeHtml ?></strong>.
             </p>
 
             <p>

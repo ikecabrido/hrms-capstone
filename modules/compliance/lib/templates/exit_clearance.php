@@ -130,10 +130,19 @@ $today = date('F d, Y');
                 <td><?= $position ?: '________________'; ?></td>
             </tr>
 
-            <tr>
-                <td style="padding:9px 0;"><strong>Separation Date</strong></td>
-                <td>________________</td>
-            </tr>
+              <tr>
+                  <td style="padding:9px 0;"><strong>Separation Date</strong></td>
+                  <td>
+                      <?php
+                      $exitDate = trim((string) ($_GET['exit_date'] ?? ''));
+                      if ($exitDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $exitDate)) {
+                          echo htmlspecialchars(date('F d, Y', strtotime($exitDate)), ENT_QUOTES);
+                      } else {
+                          echo '________________';
+                      }
+                      ?>
+                  </td>
+              </tr>
 
             <tr>
                 <td style="padding:9px 0;"><strong>Date Issued</strong></td>

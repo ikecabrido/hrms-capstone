@@ -1,4 +1,13 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$employeeName = $_SESSION['employee_name'] ?? 'User';
+$roleName = $_SESSION['role_name'] ?? 'User';
+$employeeId = $_SESSION['employee_id'] ?? '';
+?>
+<?php
 include_once __DIR__ . '/../../../auth/session.php';
 include __DIR__ . '/../classes/Employee.php';
 $employeeClass = new Employee();
@@ -43,7 +52,7 @@ $employeeClass = new Employee();
                             </div>
                             <div>
                                 <strong><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></strong>
-                                <span><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></span>
+                                <span><?= htmlspecialchars($_SESSION["role_name"] ?? "User") ?></span>
                             </div>
                         </div>
                     </div>
@@ -69,7 +78,7 @@ $employeeClass = new Employee();
     <div class="sidebar-header">
         <div class="user_avatar"><?= substr(htmlspecialchars($employeeClass->getEmployeeName()), 0, 1) ?></div>
         <h1 class="employee_name"><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></h1>
-        <p class="employee_position"><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></p>
+        <p class="employee_position"><?= htmlspecialchars($_SESSION["role_name"] ?? "User") ?></p>
     </div>
     <h2>Legal & Compliance</h2>
     <?php $pageController->renderNav(); ?>

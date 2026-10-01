@@ -399,7 +399,6 @@ $docTypeMap = [
     'nte' => 'nte',
     'exit_clearance' => 'exit_clearance',
     'exit_acknowledgement' => 'exit_acknowledgement',
-    'quitclaim' => 'quitclaim',
     'return_service' => 'return_to_work_agreement',
     'employee_handbook' => 'employee_handbook',
 ];
@@ -423,7 +422,6 @@ $attachmentNameMap = [
     'nte' => 'NTE',
     'exit_clearance' => 'Exit_Clearance',
     'exit_acknowledgement' => 'Exit_Acknowledgement',
-    'quitclaim' => 'Quitclaim',
     'return_service' => 'Return_to_Work_Agreement',
     'employee_handbook' => 'Employee_Handbook',
 ];

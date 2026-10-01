@@ -67,7 +67,7 @@
         const container = document.querySelector('.container');
         if (!container) return;
 
-        fetch('index.php?page=' + encodeURIComponent(page), {
+        fetch('/modules/compliance/index.php?page=' + encodeURIComponent(page), {
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })

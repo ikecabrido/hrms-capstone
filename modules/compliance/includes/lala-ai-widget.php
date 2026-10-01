@@ -84,7 +84,7 @@ $llFirstNameEscaped = htmlspecialchars($llFirstName, ENT_QUOTES, 'UTF-8');
     </div>
 </div>
 
-<link rel="stylesheet" href="/modules/compliance/includes/lala-ai-widget.css?v=2">
+<link rel="stylesheet" href="/modules/compliance/includes/lala-ai-widget.css?v=1790791968">
 <link rel="stylesheet" href="/modules/compliance/css/pages/lala-ai-developer.css">
-<script src="js/pages/lala-ai-chat.js?v=2"></script>
+<script src="js/pages/lala-ai-chat.js?v=1790791769"></script>
 

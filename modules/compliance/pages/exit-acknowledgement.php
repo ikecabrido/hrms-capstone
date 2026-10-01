@@ -15,9 +15,13 @@ if (!isset($user) || empty($user)) {
     $user = $_SESSION['user'] ?? [];
 }
 if (!isset($db)) {
-    $db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $database = new Database();
+
+    if ($database->hasConnectionError()) {
+        throw new RuntimeException('Database connection unavailable.');
+    }
+
+    $db = $database->getConnection();
 }
 
 require_once __DIR__ . '/../classes/ExitManagementController.php';
@@ -1109,7 +1113,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
         }
       } else {
         if (statusEl) {
-          statusEl.textContent = (data.message || 'Action failed.') + ' Check console.';
+          statusEl.textContent = data.message || 'Action failed.';
           statusEl.className = 'cw-action-status error';
         }
         if (btn) btn.disabled = false;

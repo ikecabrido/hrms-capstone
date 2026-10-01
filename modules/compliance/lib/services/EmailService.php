@@ -3,7 +3,7 @@
  * EmailService — Reusable email sending service for the HR Management System.
  *
  * Usage:
- *   require_once __DIR__ . '/../../lib/vendor/autoload.php';
+ *   require_once __DIR__ . '/../../vendor/autoload.php';
  *   require_once __DIR__ . '/../../lib/config/email_config.php';
  *
  *   $mailer = EmailService::getInstance();
@@ -15,7 +15,7 @@ namespace App\Services;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as MailerException;
 
-require_once __DIR__ . '/../../lib/vendor/autoload.php';
+require_once __DIR__ . '/../../vendor/autoload.php';
 
 class EmailService
 {
