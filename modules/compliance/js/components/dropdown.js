@@ -332,29 +332,31 @@ bellBtn.addEventListener('click', function (e) {
     }
 });
 
-userBtn.addEventListener('click', function (e) {
-    e.stopPropagation();
-    const isOpen = userDropdown.classList.contains('open');
-    closeAll();
-    if (!isOpen) {
-        openDropdown(userDropdown, userBtn);
-        if (window.innerWidth <= 768) {
-            const sidebar = document.querySelector('.sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            const hamburger = document.getElementById('hamburgerBtn');
-            if (sidebar && sidebar.classList.contains('active')) {
-                sidebar.classList.remove('active');
-                if (overlay) overlay.classList.remove('active');
-                if (hamburger) {
-                    hamburger.classList.remove('active');
-                    hamburger.setAttribute('aria-expanded', 'false');
+if (userBtn) {
+    userBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const isOpen = userDropdown.classList.contains('open');
+        closeAll();
+        if (!isOpen) {
+            openDropdown(userDropdown, userBtn);
+            if (window.innerWidth <= 768) {
+                const sidebar = document.querySelector('.sidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                const hamburger = document.getElementById('hamburgerBtn');
+                if (sidebar && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    if (overlay) overlay.classList.remove('active');
+                    if (hamburger) {
+                        hamburger.classList.remove('active');
+                        hamburger.setAttribute('aria-expanded', 'false');
+                    }
+                    document.body.style.overflow = '';
+                    document.body.classList.remove('sidebar-mobile-open');
                 }
-                document.body.style.overflow = '';
-                document.body.classList.remove('sidebar-mobile-open');
             }
         }
-    }
-});
+    });
+}
 
 document.addEventListener('click', function (e) {
     const inBell = bellWrapper && bellWrapper.contains(e.target);

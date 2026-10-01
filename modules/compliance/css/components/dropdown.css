@@ -359,6 +359,141 @@
     color: #dc2626 !important;
 }
 
+/* ── User Account Dropdown ── */
+.user-dropdown {
+    width: min(300px, calc(100vw - 16px));
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.user-dropdown .dropdown-header {
+    padding: 20px;
+    background: #faf9f6;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.user-dropdown .dropdown-user-info {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.user-dropdown .dropdown-avatar {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #2f3a2f;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.user-dropdown .dropdown-user-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-dropdown .dropdown-user-details strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: #222;
+}
+
+.user-dropdown .dropdown-user-details > span {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #777;
+}
+
+.user-dropdown .account-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    font-size: 11px;
+    color: #4f7d52;
+}
+
+.user-dropdown .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4f7d52;
+}
+
+.user-dropdown .user-menu {
+    list-style: none;
+    margin: 0;
+    padding: 8px;
+}
+
+.user-dropdown .user-menu li {
+    margin: 2px 0;
+}
+
+.user-dropdown .user-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-radius: 8px;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+}
+
+.user-dropdown .user-menu a:hover {
+    background: #f6f5f2;
+}
+
+.user-dropdown .menu-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-dropdown .menu-content strong {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.user-dropdown .menu-content small {
+    margin-top: 3px;
+    font-size: 11px;
+    color: #999;
+}
+
+.user-dropdown .menu-arrow {
+    font-size: 20px;
+    line-height: 1;
+    color: #aaa;
+}
+
+.user-dropdown .user-menu .divider {
+    height: 1px;
+    margin: 7px 4px;
+    background: #eeeeee;
+}
+
+.user-dropdown .signout-link {
+    color: #a14b4b;
+}
+
+.user-dropdown .signout-link small {
+    color: #b77a7a;
+}
+
+.user-dropdown .signout-link:hover {
+    background: #fff6f6;
+}
+
 /* ── Notification Detail Popover ── */
 .notif-detail-dropdown {
     position: fixed;

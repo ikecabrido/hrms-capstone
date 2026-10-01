@@ -35,29 +35,48 @@ $employeeClass = new Employee();
             <!-- User Icon + Profile Dropdown -->
             <div class="icon-wrapper" id="userWrapper">
                 <i class="fa-regular fa-circle-user" id="userBtn"></i>
-                <div class="icon-dropdown" id="userDropdown">
+                <div class="icon-dropdown user-dropdown" id="userDropdown" role="menu">
                     <div class="dropdown-header">
                         <div class="dropdown-user-info">
-                            <div class="dropdown-avatar">
+                            <div class="dropdown-avatar" aria-hidden="true">
                                 <?= substr(htmlspecialchars($employeeClass->getEmployeeName()), 0, 1) ?>
                             </div>
-                            <div>
+                            <div class="dropdown-user-details">
                                 <strong><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></strong>
                                 <span><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></span>
+                                <div class="account-status">
+                                    <span class="status-dot"></span>
+                                    Active
+                                </div>
                             </div>
                         </div>
                     </div>
                     <ul class="user-menu">
                         <li>
-                            <a href="?page=profile-settings"><i class="fa-regular fa-user"></i> Profile Settings</a>
+                            <a href="?page=profile-settings" role="menuitem">
+                                <span class="menu-content">
+                                    <strong>Profile Settings</strong>
+                                    <small>Manage your account</small>
+                                </span>
+                                <span class="menu-arrow">&rsaquo;</span>
+                            </a>
                         </li>
                         <li>
-                            <a href="?page=profile-settings#change-password"><i class="fa-solid fa-lock"></i> Change Password</a>
+                            <a href="?page=profile-settings#change-password" role="menuitem">
+                                <span class="menu-content">
+                                    <strong>Change Password</strong>
+                                    <small>Update your password</small>
+                                </span>
+                                <span class="menu-arrow">&rsaquo;</span>
+                            </a>
                         </li>
-                        <li class="divider"></li>
+                        <li class="divider" role="separator"></li>
                         <li>
-                            <a href="/auth/logout.php" class="signout-link">
-                                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                            <a href="/auth/logout.php" class="signout-link" role="menuitem">
+                                <span class="menu-content">
+                                    <strong>Sign Out</strong>
+                                    <small>End your current session</small>
+                                </span>
                             </a>
                         </li>
                     </ul>
