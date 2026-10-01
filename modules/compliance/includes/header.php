@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" sizes="200x200" href="/modules/compliance/assets/bcp-logo.png?v=6">
-    <link rel="shortcut icon" type="image/png" href="/modules/compliance/assets/bcp-logo.png?v=6">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -89,7 +87,6 @@
     <link rel="stylesheet" href="/modules/compliance/css/pages/document-requests.css?v=11">
     <link rel="stylesheet" href="/modules/compliance/css/pages/onboarding-package.css?v=2">
     <link rel="stylesheet" href="/modules/compliance/css/pages/decision-actions.css?v=1">
-    <link rel="stylesheet" href="/modules/compliance/css/pages/exit-acknowledgement.css?v=20261001-3">
 
     <link rel="stylesheet" href="/modules/compliance/css/pages/external-cases.css?v=1">
     <link rel="stylesheet" href="/modules/compliance/css/pages/external-cases-detail-tabs.css?v=1">
@@ -97,6 +94,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="icon" type="image/png" href="/modules/compliance/assets/bcp_logo.png">
     <title>Legal & Compliance</title>
 </head>
 <body>
