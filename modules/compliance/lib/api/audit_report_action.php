@@ -5,9 +5,13 @@ require_once __DIR__ . '/../../../../auth/session.php';
 
 header('Content-Type: application/json');
 
-$db = new PDO('mysql:host=localhost;dbname=bcp;charset=utf8mb4', 'root', '');
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+$database = new Database();
+
+if ($database->hasConnectionError()) {
+    throw new RuntimeException('Database connection unavailable.');
+}
+
+$db = $database->getConnection();
 
 $response = ['success' => false, 'message' => 'Invalid request.'];
 
@@ -137,7 +141,7 @@ function generate_report_pdf(PDO $db, string $reportKey, string $reportCode): ?s
     $html = ob_get_clean();
 
     if (!class_exists('Dompdf\Dompdf')) {
-        require_once __DIR__ . '/../../lib/vendor/autoload.php';
+        require_once __DIR__ . '/../../vendor/autoload.php';
     }
     $options = new \Dompdf\Options();
     $options->set('isRemoteEnabled', true);
@@ -178,8 +182,8 @@ try {
 
             $reportCode = 'RPT-' . strtoupper(preg_replace('/[^A-Z0-9]/', '', substr($reportKey, 0, 8))) . '-' . date('YmdHis');
             $filePath = generate_report_pdf($db, $reportKey, $reportCode);
-            $stmt = $db->prepare("INSERT INTO lc_generated_reports (id, report_code, report_key, report_date, status, file_format, generated_by, submitted_by, submitted_at, created_at, file_path) VALUES (NULL, :code, :key, CURDATE(), 'Submitted', 'PDF', :uid, :uid, NOW(), NOW(), :file_path)");
-            $stmt->execute([':code' => $reportCode, ':key' => $reportKey, ':uid' => $userId, ':file_path' => $filePath]);
+            $stmt = $db->prepare("INSERT INTO lc_generated_reports (id, report_code, report_key, report_date, status, file_format, generated_by, submitted_by, submitted_at, created_at, file_path) VALUES (NULL, :code, :key, CURDATE(), 'Submitted', 'PDF', :generated_by, :submitted_by, NOW(), NOW(), :file_path)");
+            $stmt->execute([':code' => $reportCode, ':key' => $reportKey, ':generated_by' => $userId, ':submitted_by' => $userId, ':file_path' => $filePath]);
 
             $reportId = (int) $db->lastInsertId();
 
@@ -228,8 +232,8 @@ try {
             if ($sendNow) {
                 $reportCode = 'RPT-' . strtoupper(preg_replace('/[^A-Z0-9]/', '', substr($reportKey, 0, 8))) . '-' . date('YmdHis');
                 $filePath = generate_report_pdf($db, $reportKey, $reportCode);
-                $stmt2 = $db->prepare("INSERT INTO lc_generated_reports (id, report_code, report_key, report_date, status, file_format, generated_by, submitted_by, submitted_at, created_at, file_path) VALUES (NULL, :code, :key, CURDATE(), 'Submitted', 'PDF', :uid, :uid, NOW(), NOW(), :file_path)");
-                $stmt2->execute([':code' => $reportCode, ':key' => $reportKey, ':uid' => $userId, ':file_path' => $filePath]);
+                $stmt2 = $db->prepare("INSERT INTO lc_generated_reports (id, report_code, report_key, report_date, status, file_format, generated_by, submitted_by, submitted_at, created_at, file_path) VALUES (NULL, :code, :key, CURDATE(), 'Submitted', 'PDF', :generated_by, :submitted_by, NOW(), NOW(), :file_path)");
+                $stmt2->execute([':code' => $reportCode, ':key' => $reportKey, ':generated_by' => $userId, ':submitted_by' => $userId, ':file_path' => $filePath]);
             }
 
             try {

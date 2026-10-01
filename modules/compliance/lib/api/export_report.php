@@ -1,4 +1,8 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
+ini_set('display_startup_errors', '1');
+
 
 $key = $_GET['key'] ?? '';
 $format = strtolower((string)($_GET['format'] ?? 'html'));
@@ -7,9 +11,16 @@ if (!in_array($format, $allowedFormats, true)) {
     $format = 'html';
 }
 
-$db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+require_once __DIR__ . '/../../../../database/db.php';
+
+$database = new Database();
+
+if ($database->hasConnectionError()) {
+    http_response_code(500);
+    exit('Database connection failed.');
+}
+
+$db = $database->getConnection();
 
 function cv_value(PDO $db, string $sql, $default = 0) {
     try {
@@ -162,7 +173,7 @@ if ($format === 'pdf') {
     $html = ob_get_clean();
 
     if (!class_exists('Dompdf\Dompdf')) {
-        require_once __DIR__ . '/../../lib/vendor/autoload.php';
+        require_once __DIR__ . '/../../vendor/autoload.php';
     }
     $options = new \Dompdf\Options();
     $options->set('isRemoteEnabled', true);

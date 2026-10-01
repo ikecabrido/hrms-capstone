@@ -81,7 +81,7 @@ if (!$reference) {
 $pageTitle = $reference['title'] ?? 'Labor Law Reference Detail';
 
 $localBase = 'C:/xampp/htdocs/hrms-capstone/';
-$webRoot = '/hrms-capstone/';
+$webRoot = '/';
 
 $docUrl = !empty($reference['document_path']) ? $reference['document_path'] : '';
 
@@ -89,9 +89,9 @@ if ($docUrl) {
     if (str_starts_with($docUrl, $localBase)) {
         $docUrl = $webRoot . ltrim(substr($docUrl, strlen($localBase)), '/');
     } elseif (str_starts_with($docUrl, 'http://127.0.0.1/hrms-capstone/')) {
-        $docUrl = '/hrms-capstone/' . ltrim(substr($docUrl, strlen('http://127.0.0.1/hrms-capstone/')), '/');
+        $docUrl = '/' . ltrim(substr($docUrl, strlen('http://127.0.0.1/hrms-capstone/')), '/');
     } elseif (str_starts_with($docUrl, 'http://localhost/hrms-capstone/')) {
-        $docUrl = '/hrms-capstone/' . ltrim(substr($docUrl, strlen('http://localhost/hrms-capstone/')), '/');
+        $docUrl = '/' . ltrim(substr($docUrl, strlen('http://localhost/hrms-capstone/')), '/');
     } elseif (strpos($docUrl, '://') === false && strpos($docUrl, '/') !== 0) {
         $docUrl = $webRoot . ltrim($docUrl, '/');
     }
@@ -99,7 +99,7 @@ if ($docUrl) {
 
 $sourceUrl = !empty($reference['source_url']) ? $reference['source_url'] : '';
 if ($sourceUrl && strpos($sourceUrl, '://') === false && strpos($sourceUrl, '/') !== 0) {
-    $sourceUrl = '/hrms-capstone/' . ltrim($sourceUrl, '/');
+    $sourceUrl = '/' . ltrim($sourceUrl, '/');
 }
 
 ?>

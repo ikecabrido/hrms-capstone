@@ -24,6 +24,30 @@ $templateFile = isset($_GET['template']) ? trim((string) $_GET['template']) : ''
 $templateCode = isset($_GET['template_code']) ? trim((string) $_GET['template_code']) : '';
 $hrSignatory  = isset($_GET['hr_signatory']) ? (string) $_GET['hr_signatory'] : '';
 
+$coePurposeOptions = [
+    'Employment Verification',
+    'Bank / Loan Application',
+    'Visa / Travel Requirements',
+    'Government Requirement',
+    'School / Scholarship',
+    'Housing / Rental Application',
+    'Personal Records',
+    'Other',
+];
+
+$documentPurpose = trim((string) ($_GET['purpose'] ?? 'Employment Verification'));
+$documentPurposeOther = trim((string) ($_GET['purpose_other'] ?? ''));
+
+if ($templateCode === 'coe') {
+    if ($documentPurpose === 'Other') {
+        $documentPurpose = $documentPurposeOther !== ''
+            ? $documentPurposeOther
+            : 'Other';
+    } elseif (!in_array($documentPurpose, $coePurposeOptions, true)) {
+        $documentPurpose = 'Employment Verification';
+    }
+}
+
 if ($employeeId !== '' && !lc_can_access_employee_document(
     (int) ($_SESSION['employee_id'] ?? 0),
     (string) ($_SESSION['role_name'] ?? $_SESSION['role'] ?? ''),
@@ -47,7 +71,7 @@ if ($templateCode === 'employee_handbook') {
 if (empty($_GET['generate'])) {
     $redirectUrl = '?page=preview-document';
     $params = [];
-    foreach (['employee_id', 'document_type', 'template', 'template_code', 'hr_signatory', 'contract_type', 'contract_start_date', 'contract_end_date', 'contract_salary_input'] as $param) {
+    foreach (['employee_id', 'document_type', 'template', 'template_code', 'hr_signatory', 'contract_type', 'contract_start_date', 'contract_end_date', 'contract_salary_input', 'purpose', 'purpose_other'] as $param) {
         if (isset($_GET[$param]) && $_GET[$param] !== '') {
             $params[] = urlencode($param) . '=' . urlencode($_GET[$param]);
         }

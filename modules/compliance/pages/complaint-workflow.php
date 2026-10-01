@@ -566,8 +566,18 @@ try {
                       ?>
                     <div class="irwf-step-evidence-item">
                       <div class="irwf-step-evidence-name"><?= htmlspecialchars($ev['evidence_item'] ?? 'Evidence') ?></div>
-                      <?php if (!empty($ev['notes'])): ?>
-                        <div class="irwf-step-evidence-notes"><?= nl2br(htmlspecialchars($ev['notes'])) ?></div>
+                      <?php
+                        $evNotes = trim((string)($ev['notes'] ?? ''));
+                        $isWorkflowJson = false;
+                        if ($evNotes !== '') {
+                            $decodedNotes = json_decode($evNotes, true);
+                            $isWorkflowJson = is_array($decodedNotes)
+                                && isset($decodedNotes['stage'])
+                                && isset($decodedNotes['progress']);
+                        }
+                      ?>
+                      <?php if ($evNotes !== '' && !$isWorkflowJson): ?>
+                        <div class="irwf-step-evidence-notes"><?= nl2br(htmlspecialchars($evNotes)) ?></div>
                       <?php endif; ?>
                        <?php if ($evImgSrc): ?>
                          <div class="irwf-step-evidence-img">

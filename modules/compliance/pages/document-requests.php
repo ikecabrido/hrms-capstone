@@ -33,14 +33,9 @@ $searchQuery = isset($_GET['search']) ? trim((string) $_GET['search']) : '';
 
 $docTypeLabels = [
     'coe'                      => 'Certificate of Employment (COE)',
-    'quitclaim'                => 'Quitclaim and Release',
     'exit_acknowledgement'     => 'Exit Acknowledgement',
     'leave_agreement'          => 'Leave Agreement',
-    'return_to_work_agreement' => 'Return-to-Work Agreement',
     'nda'                      => 'Non-Disclosure Agreement (NDA)',
-    'training_bond'            => 'Training Bond',
-    'study_leave'              => 'Study Leave Agreement',
-    'non_compete'              => 'Non-Compete Agreement',
     'nte'                      => 'Notice to Explain (NTE)',
     'written_warning'          => 'Written Warning',
     'suspension_notice'        => 'Suspension Notice',
@@ -94,7 +89,7 @@ $currentPage = max(1, (int)($_GET['p'] ?? 1));
 $offset = ($currentPage - 1) * $pageSize;
 
 if ($docType === '') {
-    $where = ['dr.employee_id IS NOT NULL', "dr.document_type IN ('Certificate of Employment (COE)', 'Quitclaim and Release', 'Leave Agreement', 'Training Bond', 'Study Leave Agreement', 'Non-Compete Agreement', 'Return-to-Work Agreement', 'Clearance Survey', 'Exit Clearance', 'coe', 'quitclaim', 'leave_agreement', 'training_bond', 'study_leave', 'non_compete', 'return_to_work_agreement', 'clearance_survey', 'exit_clearance')"];
+    $where = ['dr.employee_id IS NOT NULL', "dr.document_type IN ('Certificate of Employment (COE)', 'Leave Agreement', 'Clearance Survey', 'Exit Clearance', 'coe', 'leave_agreement', 'clearance_survey', 'exit_clearance')"];
     $params = [];
     if ($statusFilter !== 'all') {
         $where[] = 'dr.request_status = :status';
@@ -160,8 +155,8 @@ if ($docType === '') {
         $records = [];
     }
     $totalAll = $totalRows;
-    $totalPending = (int) dr_value($db, "SELECT COUNT(*) FROM em_lc_document_requests WHERE LOWER(request_status) = 'pending' AND document_type IN ('coe', 'Certificate of Employment (COE)','quitclaim', 'leave_agreement', 'training_bond', 'study_leave', 'non_compete', 'return_to_work_agreement', 'clearance_survey', 'exit_clearance')" . ($docType !== '' ? " AND (document_type = :dt OR document_type = :dt_label)" : ""), 0, $docType !== '' ? [':dt' => $dbType, ':dt_label' => $docTypeLabel] : []);
-    $totalCompleted = (int) dr_value($db, "SELECT COUNT(*) FROM em_lc_document_requests WHERE LOWER(request_status) = 'completed' AND document_type IN ('coe', 'quitclaim', 'leave_agreement', 'training_bond', 'study_leave', 'non_compete', 'return_to_work_agreement', 'clearance_survey', 'exit_clearance')" . ($docType !== '' ? " AND (document_type = :dt OR document_type = :dt_label)" : ""), 0, $docType !== '' ? [':dt' => $dbType, ':dt_label' => $docTypeLabel] : []);
+    $totalPending = (int) dr_value($db, "SELECT COUNT(*) FROM em_lc_document_requests WHERE LOWER(request_status) = 'pending' AND document_type IN ('coe', 'Certificate of Employment (COE)','leave_agreement', 'clearance_survey', 'exit_clearance')" . ($docType !== '' ? " AND (document_type = :dt OR document_type = :dt_label)" : ""), 0, $docType !== '' ? [':dt' => $dbType, ':dt_label' => $docTypeLabel] : []);
+    $totalCompleted = (int) dr_value($db, "SELECT COUNT(*) FROM em_lc_document_requests WHERE LOWER(request_status) = 'completed' AND document_type IN ('coe', 'leave_agreement', 'clearance_survey', 'exit_clearance')" . ($docType !== '' ? " AND (document_type = :dt OR document_type = :dt_label)" : ""), 0, $docType !== '' ? [':dt' => $dbType, ':dt_label' => $docTypeLabel] : []);
 } else {
     $dbType = $docType;
     $docTypeLabel = $docTypeLabels[$docType] ?? null;
@@ -308,13 +303,8 @@ if ($docType !== '') {
                                     $employeeId = (int)($r['employee_id'] ?? 0);
                                     $nonContractTemplateMap = [
                                         'coe' => ['template' => 'coe.php', 'template_code' => 'coe'],
-                                        'quitclaim' => ['template' => 'quitclaim.php', 'template_code' => 'quitclaim'],
                                         'exit_acknowledgement' => ['template' => 'exit_acknowledgement.php', 'template_code' => 'exit_acknowledgement'],
                                         'leave_agreement' => ['template' => 'leave_agreement.php', 'template_code' => 'leave_agreement'],
-                                        'return_to_work_agreement' => ['template' => 'return_service.php', 'template_code' => 'return_service'],
-                                        'training_bond' => ['template' => 'training_bond.php', 'template_code' => 'training_bond'],
-                                        'study_leave' => ['template' => 'study_leave_agreement.php', 'template_code' => 'study_leave'],
-                                        'non_compete' => ['template' => 'non_compete.php', 'template_code' => 'non_compete'],
                                         'nte' => ['template' => 'nte.php', 'template_code' => 'nte'],
                                         'written_warning' => ['template' => 'written_warning.php', 'template_code' => 'written_warning'],
                                         'suspension_notice' => ['template' => 'suspension_notice.php', 'template_code' => 'suspension_notice'],
@@ -407,15 +397,14 @@ if ($docType !== '') {
                 <div class="dl-card-body">
                     <div class="dl-about-text">
                         <p><a href="?page=document-requests&doc_type=coe">Certificate of Employment</a></p>
-                        <p><a href="?page=document-requests&doc_type=quitclaim">Quitclaim and Release</a></p>
                         <p><a href="?page=document-requests&doc_type=leave_agreement">Leave Agreement</a></p>
-                        <p><a href="?page=document-requests&doc_type=training_bond">Training Bond</a></p>
-                        <p><a href="?page=document-requests&doc_type=study_leave">Study Leave Agreement</a></p>
-                        <p><a href="?page=document-requests&doc_type=non_compete">Non-Compete Agreement</a></p>
-                        <p><a href="?page=document-requests&doc_type=return_to_work_agreement">Return-to-Work Agreement</a></p>
                         <p><a href="?page=document-requests&doc_type=clearance_survey">Clearance Survey</a></p>
                         <p><a href="?page=document-requests&doc_type=exit_clearance">Exit Clearance</a></p>
                         <p><a href="/modules/compliance/assets/documents/onboarding/onboarding.html">New Hire Documents</a></p>
+                        <p><a href="https://www.bir.gov.ph/bir-forms" target="_blank" rel="noopener noreferrer">BIR Forms</a></p>
+                        <p><a href="https://www.philhealth.gov.ph/downloads/membership/pmrf_012020.pdf" target="_blank" rel="noopener noreferrer">PhilHealth Form</a></p>
+                        <p><a href="https://www.pagibigfund.gov.ph/documents/PFF093_RequestConsolidationMergingMembersRecords.pdf" target="_blank" rel="noopener noreferrer">Pag-IBIG Form</a></p>
+                        <p><a href="https://www.sss.gov.ph/download-forms-and-electronic-applications/" target="_blank" rel="noopener noreferrer">SSS Forms</a></p>
                     </div>
                 </div>
             </div>
@@ -1045,3 +1034,6 @@ if ($docType !== '') {
  })();
  </script>
 
+
+
+<!-- BIR Forms Quick Link -->

@@ -275,68 +275,110 @@ class LaborLawReference
         ];
     }
 
-    public function searchReferencesForAssistant(string $query, int $limit = 5): array
-    {
-        $query = trim($query);
-        if ($query === '') {
-            return [];
-        }
+public function searchReferencesForAssistant(string $query, int $limit = 5): array
+{
+    $query = trim($query);
 
-        $words = preg_split('/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY);
-        if (empty($words)) {
-            return [];
-        }
-
-        $sql = "
-            SELECT
-                r.id,
-                r.reference_type,
-                r.reference_number,
-                r.title,
-                r.short_title,
-                r.category_id,
-                c.name AS category_name,
-                r.description,
-                r.date_issued,
-                r.effectivity_date,
-                r.issuing_authority,
-                r.status,
-                r.keywords,
-                r.source_url,
-                r.document_path,
-                r.related_law,
-                r.summary,
-                r.remarks,
-                (
-        ";
-
-        $scoreParts = [];
-        $params = [];
-        $whereParts = [];
-        $idx = 0;
-        foreach ($words as $word) {
-            $idx++;
-            $p = ":w{$idx}";
-            $params[$p] = "%{$word}%";
-            $scoreParts[] = "(CASE WHEN r.title LIKE {$p} THEN 5 ELSE 0 END)";
-            $scoreParts[] = "(CASE WHEN r.keywords LIKE {$p} THEN 4 ELSE 0 END)";
-            $scoreParts[] = "(CASE WHEN r.short_title LIKE {$p} THEN 3 ELSE 0 END)";
-            $scoreParts[] = "(CASE WHEN r.reference_number LIKE {$p} THEN 2 ELSE 0 END)";
-            $scoreParts[] = "(CASE WHEN r.description LIKE {$p} THEN 1 ELSE 0 END)";
-            $scoreParts[] = "(CASE WHEN r.summary LIKE {$p} THEN 1 ELSE 0 END)";
-            $whereParts[] = "(r.title LIKE {$p} OR r.keywords LIKE {$p} OR r.short_title LIKE {$p} OR r.reference_number LIKE {$p} OR r.description LIKE {$p} OR r.summary LIKE {$p})";
-        }
-
-        $sql .= implode(" + ", $scoreParts);
-        $sql .= ") AS relevance FROM {$this->table} r LEFT JOIN {$this->categoriesTable} c ON c.id = r.category_id WHERE ";
-        $sql .= implode(" AND ", $whereParts);
-        $sql .= " HAVING relevance > 0 ORDER BY relevance DESC, r.date_issued DESC, r.id DESC LIMIT " . (int) $limit;
-
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if ($query === '') {
+        return [];
     }
 
+    $words = preg_split('/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY);
+
+    if (empty($words)) {
+        return [];
+    }
+
+    $scoreParts = [];
+    $whereParts = [];
+    $params = [];
+
+    $fields = [
+        'title' => 5,
+        'keywords' => 4,
+        'short_title' => 3,
+        'reference_number' => 2,
+        'description' => 1,
+        'summary' => 1
+    ];
+
+    $wordIndex = 0;
+
+    foreach ($words as $word) {
+        $wordIndex++;
+
+        $scoreConditions = [];
+        $whereConditions = [];
+
+        foreach ($fields as $field => $weight) {
+            /*
+             * IMPORTANT:
+             * Use a DIFFERENT placeholder for the score expression
+             * and the WHERE expression.
+             */
+            $scoreParam = ":score_{$wordIndex}_{$field}";
+            $whereParam = ":where_{$wordIndex}_{$field}";
+
+            $searchValue = "%{$word}%";
+
+            $scoreConditions[] =
+                "(CASE WHEN r.{$field} LIKE {$scoreParam} THEN {$weight} ELSE 0 END)";
+
+            $whereConditions[] =
+                "r.{$field} LIKE {$whereParam}";
+
+            $params[$scoreParam] = $searchValue;
+            $params[$whereParam] = $searchValue;
+        }
+
+        $scoreParts[] = implode(" + ", $scoreConditions);
+        $whereParts[] = "(" . implode(" OR ", $whereConditions) . ")";
+    }
+
+    $sql = "
+        SELECT
+            r.id,
+            r.reference_type,
+            r.reference_number,
+            r.title,
+            r.short_title,
+            r.category_id,
+            c.name AS category_name,
+            r.description,
+            r.date_issued,
+            r.effectivity_date,
+            r.issuing_authority,
+            r.status,
+            r.keywords,
+            r.source_url,
+            r.document_path,
+            r.related_law,
+            r.summary,
+            r.remarks,
+
+            (" . implode(" + ", $scoreParts) . ") AS relevance
+
+        FROM {$this->table} r
+
+        LEFT JOIN {$this->categoriesTable} c
+            ON c.id = r.category_id
+
+        WHERE " . implode(" AND ", $whereParts) . "
+
+        HAVING relevance > 0
+
+        ORDER BY
+            relevance DESC,
+            r.date_issued DESC,
+            r.id DESC
+
+        LIMIT " . (int) $limit;
+
+    $stmt = $this->conn->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
     public static function getFallbackInfo(string $topic): array
     {
         $map = [
@@ -533,3 +575,5 @@ class LaborLawReference
         return false;
     }
 }
+
+

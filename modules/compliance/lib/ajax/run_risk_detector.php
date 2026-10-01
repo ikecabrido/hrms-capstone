@@ -1,6 +1,15 @@
 <?php
 
-@apache_setenv('no-gzip', '1');
+file_put_contents(
+    __DIR__ . '/risk_detector_debug.log',
+    date('Y-m-d H:i:s') . " START\n",
+    FILE_APPEND
+);
+
+
+if (function_exists('apache_setenv')) {
+    apache_setenv('no-gzip', '1');
+}
 @ini_set('zlib.output_compression', 0);
 @ini_set('output_buffering', 'off');
 
@@ -10,6 +19,20 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
+
+register_shutdown_function(function () {
+    $error = error_get_last();
+
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Fatal PHP error: ' . $error['message'],
+            'file' => $error['file'],
+            'line' => $error['line']
+        ]) . "\n";
+    }
+});
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
     exit(0);
@@ -24,9 +47,15 @@ $input = json_decode(file_get_contents('php://input'), true);
 $scope = $input['scope'] ?? '';
 
 try {
-    $db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    require_once __DIR__ . '/../../../../database/db.php';
+
+    $database = new Database();
+
+    if ($database->hasConnectionError()) {
+        throw new RuntimeException('Database connection unavailable.');
+    }
+
+    $db = $database->getConnection();
 
     if ($scope !== 'all_departments') {
         throw new Exception('Invalid scope. Only "all_departments" is supported.');
@@ -55,23 +84,22 @@ try {
     }
 
     function isDuplicate(PDO $db, array $risk): bool {
-        $sql = "SELECT id FROM lc_risks 
-                WHERE employee_id = :employee_id 
-                AND risk_type = :risk_type 
-                AND source_module = :source_module 
-                AND detection_rule = :detection_rule 
-                AND source_record_id = :source_record_id 
+        $sql = "SELECT id
+                FROM lc_risks
+                WHERE employee_id <=> :employee_id
+                AND risk_type = :risk_type
+                AND description = :description
                 AND archived = 0
                 AND status IN ('new_report', 'under_review')
                 LIMIT 1";
+
         $stmt = $db->prepare($sql);
         $stmt->execute([
             ':employee_id' => $risk['employee_id'],
             ':risk_type' => $risk['risk_type'],
-            ':source_module' => $risk['source_module'],
-            ':detection_rule' => $risk['detection_rule'],
-            ':source_record_id' => $risk['source_record_id'] ?? 0,
+            ':description' => $risk['description'],
         ]);
+
         return (bool) $stmt->fetchColumn();
     }
 
@@ -81,10 +109,10 @@ try {
             return;
         }
 
-        $sql = "INSERT INTO lc_risks 
-            (employee_id, risk_type, severity, description, mitigation_plan, status, archived, source_module, source_record_id, detection_rule, detected_at, affected_record_count, suggested_likelihood, suggested_impact, created_at, updated_at) 
-            VALUES 
-            (:employee_id, :risk_type, :severity, :description, :mitigation_plan, :status, 0, :source_module, :source_record_id, :detection_rule, :detected_at, :affected_record_count, :suggested_likelihood, :suggested_impact, NOW(), NOW())";
+        $sql = "INSERT INTO lc_risks
+            (employee_id, risk_type, severity, description, mitigation_plan, status, archived, created_at, updated_at)
+            VALUES
+            (:employee_id, :risk_type, :severity, :description, :mitigation_plan, :status, 0, NOW(), NOW())";
 
         $stmt = $db->prepare($sql);
         $stmt->execute([
@@ -94,14 +122,8 @@ try {
             ':description' => $risk['description'],
             ':mitigation_plan' => $risk['mitigation_plan'],
             ':status' => 'new_report',
-            ':source_module' => $risk['source_module'],
-            ':source_record_id' => $risk['source_record_id'] ?? 0,
-            ':detection_rule' => $risk['detection_rule'],
-            ':detected_at' => date('Y-m-d H:i:s'),
-            ':affected_record_count' => $risk['affected_record_count'] ?? 1,
-            ':suggested_likelihood' => $risk['suggested_likelihood'] ?? 3,
-            ':suggested_impact' => $risk['suggested_impact'] ?? 3,
         ]);
+
         $totalNew++;
     }
 
@@ -469,17 +491,17 @@ try {
     $adminCount = 0;
     if (tableExists($db, 'user_account') && tableExists($db, 'em_employees')) {
         try {
-            $stmt = $db->query("SELECT u.user_id, e.employee_id, CONCAT(e.first_name, ' ', e.last_name) AS full_name FROM user_account u JOIN em_employees e ON e.employee_id = u.employee_id WHERE e.employment_status = 'Active' AND (u.account_status IS NULL OR u.account_status != 'active')");
+            $stmt = $db->query("SELECT u.user_id, e.employee_id, CONCAT(e.first_name, ' ', e.last_name) AS full_name FROM user_account u JOIN em_employees e ON e.employee_id = u.employee_id WHERE e.employment_status = 'Active' AND u.locked_until IS NOT NULL AND u.locked_until > NOW()");
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
                 addRisk($allRisks, [
                     'employee_id' => $row['employee_id'],
-                    'risk_type' => 'Inactive Employee Account',
+                    'risk_type' => 'Locked Employee Account',
                     'severity' => 'Medium',
-                    'description' => 'Active employee ' . $row['full_name'] . ' has an inactive user account.',
-                    'mitigation_plan' => 'Reactivate or create user account for the employee.',
+                    'description' => 'Active employee ' . $row['full_name'] . ' has a user account that is currently locked.',
+                    'mitigation_plan' => 'Review the account lock and restore access when appropriate.',
                     'source_module' => 'user_account',
                     'source_record_id' => $row['user_id'],
-                    'detection_rule' => 'inactive_user_account',
+                    'detection_rule' => 'locked_user_account',
                     'affected_record_count' => 1,
                     'suggested_likelihood' => 3,
                     'suggested_impact' => 3,

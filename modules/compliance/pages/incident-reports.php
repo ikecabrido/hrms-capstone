@@ -11,9 +11,13 @@ if (!isset($user) || empty($user)) {
     $user = $_SESSION['user'] ?? [];
 }
 
-$db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
-$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+$database = new Database();
+
+if ($database->hasConnectionError()) {
+    throw new RuntimeException('Database connection unavailable.');
+}
+
+$db = $database->getConnection();
 
 $flash = '';
 if (isset($_GET['msg'])) {

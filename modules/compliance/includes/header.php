@@ -78,7 +78,7 @@
     <link rel="stylesheet" href="/modules/compliance/css/components/dropdown.css?v=3">
     <link rel="stylesheet" href="/modules/compliance/css/components/calendar.css?v=2">
     <link rel="stylesheet" href="/modules/compliance/css/components/list_action_buttons.css?v=2">
-    <link rel="stylesheet" href="/modules/compliance/css/pages/dashboard.css?v=2">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/dashboard.css?v=20261027">
     <link rel="stylesheet" href="/modules/compliance/css/pages/notification-compose.css?v=2">
     <link rel="stylesheet" href="/modules/compliance/css/pages/notification-detail.css?v=1">
     <link rel="stylesheet" href="/modules/compliance/css/pages/labor-law-references.css?v=2">
@@ -180,5 +180,6 @@
         </div>
         <div class="notif-detail-body" id="notifDetailBody"></div>
     </div>
+
 
 

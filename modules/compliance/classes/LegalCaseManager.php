@@ -965,29 +965,47 @@ class LegalCaseManager
         if (!empty($words)) {
             $sql .= ' AND (';
             $first = true;
+
             foreach ($words as $i => $word) {
-                if (!$first) $sql .= ' OR ';
+                if (!$first) {
+                    $sql .= ' OR ';
+                }
+
+                $placeholders = [
+                    ':q' . $i . '_title',
+                    ':q' . $i . '_short_title',
+                    ':q' . $i . '_reference_number',
+                    ':q' . $i . '_keywords',
+                    ':q' . $i . '_authority',
+                    ':q' . $i . '_description',
+                ];
+
                 $sql .= '(' .
-                    'r.title LIKE :q' . $i .
-                    ' OR r.short_title LIKE :q' . $i .
-                    ' OR r.reference_number LIKE :q' . $i .
-                    ' OR r.keywords LIKE :q' . $i .
-                    ' OR r.issuing_authority LIKE :q' . $i .
-                    ' OR r.description LIKE :q' . $i .
+                    'r.title LIKE ' . $placeholders[0] .
+                    ' OR r.short_title LIKE ' . $placeholders[1] .
+                    ' OR r.reference_number LIKE ' . $placeholders[2] .
+                    ' OR r.keywords LIKE ' . $placeholders[3] .
+                    ' OR r.issuing_authority LIKE ' . $placeholders[4] .
+                    ' OR r.description LIKE ' . $placeholders[5] .
                 ')';
-                $params[':q' . $i] = '%' . $word . '%';
+
+                foreach ($placeholders as $placeholder) {
+                    $params[$placeholder] = '%' . $word . '%';
+                }
+
                 $first = false;
             }
+
             $sql .= ')';
         }
 
-        $sql .= ' ORDER BY r.title ASC LIMIT :limit';
+        $limit = max(1, min(100, (int) $limit));
+        $sql .= ' ORDER BY r.title ASC LIMIT ' . $limit;
 
         $stmt = $this->conn->prepare($sql);
         foreach ($params as $key => $val) {
-            $stmt->bindValue($key, $val);
+            $stmt->bindValue($key, $val, PDO::PARAM_STR);
         }
-        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -1055,8 +1073,7 @@ class LegalCaseManager
                 ORDER BY created_at DESC
                 LIMIT :limit
             ");
-            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
-            $stmt->execute();
+                        $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Throwable $e) {
             return [];

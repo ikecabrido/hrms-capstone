@@ -1,209 +1,364 @@
 <?php
-if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-    session_start();
-}
+/**
+ * BCP HRMS
+ * Salary Correction Agreement
+ */
 
-require_once __DIR__ . '/../../../../database/db.php';
-require_once dirname(__DIR__) . '/ajax/document_template_helper.php';
+$employeeName =
+    $employeeName
+    ?? ($employee['name'] ?? null)
+    ?? ($employee['employee_name'] ?? null)
+    ?? '—';
 
-$employeeId   = isset($_GET['employee_id']) ? trim((string) $_GET['employee_id']) : '';
-$documentType = isset($_GET['document_type']) ? trim((string) $_GET['document_type']) : '';
-$templateCode = isset($_GET['template_code']) ? trim((string) $_GET['template_code']) : $documentType;
+$employeeNumber =
+    $employeeNumber
+    ?? ($employee['employee_number'] ?? null)
+    ?? ($employee['employee_id'] ?? null)
+    ?? '—';
 
-$employee = null;
-$sourceLabel = 'em_employees';
+$department =
+    $department
+    ?? ($employee['department'] ?? null)
+    ?? '—';
 
-    if ($employeeId !== '') {
-        try {
-            if (!isset($db)) {
-    $db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-}
-            $stmt = $db->prepare("
-                SELECT e.*, COALESCE(d.department_name, '') AS department_name, COALESCE(p.position_name, '') AS position_name
-                FROM new_hire_table e
-                LEFT JOIN em_departments d ON d.department_id = e.department_id
-                LEFT JOIN em_positions   p ON p.position_id = e.position_id
-                WHERE e.candidate_id = :id
-                LIMIT 1
-            ");
-            $stmt->execute([':id' => $employeeId]);
-            $employee = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-        } catch (Throwable $e) {
-            $employee = null;
-        }
+$position =
+    $position
+    ?? ($employee['position'] ?? null)
+    ?? '—';
 
-        if (!$employee) {
-            try {
-                 $stmt = $db->prepare("
-                 SELECT 
-                     e.*, 
-                     CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.middle_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                     e.employee_code AS employee_no,
-                     COALESCE(d.department_name, 'N/A') AS department_name, 
-                     COALESCE(p.position_name, 'N/A') AS position_name
-                 FROM em_employees e
-                 LEFT JOIN em_departments d ON d.department_id = e.department_id
-                 LEFT JOIN em_positions   p ON p.position_id = e.position_id
-                 WHERE e.employee_id = :id
-                     LIMIT 1
-                 ");
-                $stmt->execute([':id' => $employeeId]);
-                $employee = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-            } catch (Throwable $e) {
-                $employee = null;
-            }
-        }
+$dateHired =
+    $dateHired
+    ?? ($employee['date_hired'] ?? null)
+    ?? '—';
+
+$originalContractDate =
+    $originalContractDate
+    ?? ($contract['date'] ?? null)
+    ?? ($employee['contract_date'] ?? null)
+    ?? '—';
+
+$rectificationDate =
+    $rectificationDate
+    ?? date('F j, Y');
+
+$effectiveDate =
+    $effectiveDate
+    ?? ($salary_effective_date ?? null)
+    ?? '—';
+
+$originalSalary =
+    $originalSalary
+    ?? ($_GET['original_salary'] ?? null)
+    ?? null;
+
+$correctedSalary =
+    $correctedSalary
+    ?? ($corrected_salary ?? null)
+    ?? ($_GET['corrected_salary'] ?? null)
+    ?? null;
+
+$employmentStatus =
+    $employmentStatus
+    ?? ($employee['employment_status'] ?? null)
+    ?? 'Active';
+
+$documentNumber =
+    $documentNumber
+    ?? ($document_no ?? null)
+    ?? ('HR-AGR-' . date('Y') . '-' . $employeeNumber);
+
+$formatMoney = static function ($amount): string {
+    if ($amount === null || $amount === '') {
+        return '—';
     }
 
-if (!$employee) {
-    echo '<div class="dg-template-frame"><div class="dg-empty">No employee record found for this document.</div></div>';
-    exit;
-}
+    return '₱' . number_format((float) $amount, 2);
+};
 
-lc_apply_meta_overrides($employee);
-
-$fullName      = htmlspecialchars((string) ($employee['full_name'] ?? ''), ENT_QUOTES);
-$employeeNo    = htmlspecialchars((string) ($employee['employee_no'] ?? ''), ENT_QUOTES);
-$department    = htmlspecialchars((string) ($employee['department_name'] ?? ''), ENT_QUOTES);
-$position      = htmlspecialchars((string) ($employee['position_name'] ?? ''), ENT_QUOTES);
-$rawDateHired  = (string) ($employee['date_hired'] ?? $employee['hire_date'] ?? '');
-$dateHired     = $rawDateHired !== '' ? date('F d, Y', strtotime($rawDateHired)) : '';
-$today = date('F d, Y');
-$documentTitle = 'Salary Rectification Agreement';
-
-$employer = lc_get_active_employer($db);
-$templateRecord = lc_get_document_template($db, $templateCode);
-
-if ($templateRecord && !empty($templateRecord['template_content'])) {
-    $documentBody = lc_replace_placeholders($templateRecord['template_content'], $employee, $employer);
-    $governingLaw = htmlspecialchars((string) ($templateRecord['governing_law'] ?? ''), ENT_QUOTES);
-} else {
-    $documentBody = lc_replace_placeholders(lc_get_fallback_template('salary_rectification_agreement'), $employee, $employer);
-    $governingLaw = 'Philippine Labor Code (PD 442)';
-}
-
-$generateUrl = 'generate_document.php?employee_id=' . urlencode($employeeId) . '&document_type=' . urlencode($documentType) . '&template=' . urlencode(basename(__FILE__)) . '&template_code=' . urlencode($templateCode);
-foreach (['hr_signatory', 'contract_start_date', 'contract_end_date', 'contract_type', 'contract_salary_input', 'original_salary', 'rectification_date', 'effective_date'] as $key) {
-    if (!empty($_GET[$key])) {
-        $generateUrl .= '&' . $key . '=' . urlencode($_GET[$key]);
-    }
-}
+$esc = static function ($value): string {
+    return htmlspecialchars(
+        (string) $value,
+        ENT_QUOTES,
+        'UTF-8'
+    );
+};
 ?>
-<div style="
-    margin-top:20px;
-    padding:25px 30px;
-    border:1px solid #d7dbe3;
-    border-radius:8px;
-    background:#fff;
-    font-family: Arial, sans-serif;
-    font-size:13px;
-    line-height:1.8;
-    color:#222;
-">
 
-    <h2 style="
-        margin:0;
-        text-align:center;
-        text-transform:uppercase;
-        letter-spacing:.08em;
-        font-size:26px;
-    ">
-        SALARY RECTIFICATION AGREEMENT
-    </h2>
+<link rel="stylesheet"
+      href="<?= htmlspecialchars(
+          dirname($_SERVER['SCRIPT_NAME'] ?? '') .
+          '/salary_rectification_agreement.css',
+          ENT_QUOTES,
+          'UTF-8'
+      ) ?>">
 
-    <p style="
-        margin:10px 0 30px;
-        text-align:center;
-        color:#666;
-        font-size:14px;
-    ">
-        (Amendment to Employment Contract)
-    </p>
+<div class="document-preview">
 
-    <p style="
-        margin:10px 0 30px;
-        text-align:center;
-        color:#666;
-        font-size:14px;
-    ">
-        Governed by <?= $governingLaw ?: 'Philippine Labor Code (Presidential Decree No. 442)' ?>
-    </p>
+    <header class="document-header">
 
-    <hr style="margin:0 0 30px;">
+        <div class="document-organization">
+            BESTLINK COLLEGE OF THE PHILIPPINES
+        </div>
 
-    <table style="
-        width:100%;
-        border-collapse:collapse;
-        margin-bottom:35px;
-    ">
+        <div class="document-department">
+            Human Resources Department
+        </div>
 
-        <tr>
-            <td style="width:190px;padding:9px 0;"><strong>Employee Name</strong></td>
-            <td><?= $fullName ?></td>
-        </tr>
+        <h1 class="document-title">
+            SALARY CORRECTION AGREEMENT
+        </h1>
 
-        <tr>
-            <td style="padding:9px 0;"><strong>Employee ID</strong></td>
-            <td><?= $employeeNo ?: '________________'; ?></td>
-        </tr>
+        <div class="document-subtitle">
+            Amendment to Employment Contract
+        </div>
 
-        <tr>
-            <td style="padding:9px 0;"><strong>Department</strong></td>
-            <td><?= $department ?: '________________'; ?></td>
-        </tr>
+        <div class="document-control">
+            Document No.:
+            <strong><?= $esc($documentNumber) ?></strong>
+        </div>
 
-        <tr>
-            <td style="padding:9px 0;"><strong>Position</strong></td>
-            <td><?= $position ?: '________________'; ?></td>
-        </tr>
+    </header>
 
-        <tr>
-            <td style="padding:9px 0;"><strong>Date of Rectification</strong></td>
-            <td><?= htmlspecialchars((string) ($_GET['rectification_date'] ?? $today), ENT_QUOTES) ?></td>
-        </tr>
+    <hr class="document-separator">
 
-    </table>
+    <section class="document-section">
 
-    <div class="dg-document-body" style="
-        text-align:justify;
-        line-height:1.85;
-        margin-bottom:45px;
-    ">
+        <h2 class="section-title">
+            Employee Information
+        </h2>
 
-        <?= $documentBody ?>
+        <table class="document-information">
+            <tbody>
+                <tr>
+                    <td class="info-label">Employee Name</td>
+                    <td class="info-value"><?= $esc($employeeName) ?></td>
+                </tr>
 
-    </div>
+                <tr>
+                    <td class="info-label">Employee Number</td>
+                    <td class="info-value"><?= $esc($employeeNumber) ?></td>
+                </tr>
 
-    <div style="
-        margin-top:60px;
-        padding:16px 18px;
-        border:1px solid #d8dce4;
-        border-radius:8px;
-        background:#fafbfc;
-        font-size:11px;
-        line-height:1.8;
-        color:#666;
-    ">
+                <tr>
+                    <td class="info-label">Department</td>
+                    <td class="info-value"><?= $esc($department) ?></td>
+                </tr>
 
-        <strong>Academic Disclaimer</strong><br><br>
+                <tr>
+                    <td class="info-label">Position</td>
+                    <td class="info-value"><?= $esc($position) ?></td>
+                </tr>
 
-        This Employment Contract is a <strong>system-generated sample document</strong> developed solely for academic, research, and demonstration purposes as part of the <strong>Human Resource Management System with Legal Compliance Module</strong> undergraduate thesis project.
+                <tr>
+                    <td class="info-label">Date Hired</td>
+                    <td class="info-value"><?= $esc($dateHired) ?></td>
+                </tr>
 
-        The employee information, employer details, employment terms, compensation, positions, em_departments, signatures, dates, and all other information contained in this document are fictitious, system-generated, or used exclusively for demonstration purposes. This document does not constitute an actual employment agreement and should not be interpreted as legally binding.
+                <tr>
+                    <td class="info-label">Employment Status</td>
+                    <td class="info-value"><?= $esc($employmentStatus) ?></td>
+                </tr>
+            </tbody>
+        </table>
 
-        This document is intended only to demonstrate the document generation, document template management, and legal compliance functionalities of the proposed Human Resource Management System. It should not be used as a substitute for legal advice or official employment documentation.
+    </section>
 
-        Any resemblance to actual persons, organizations, institutions, or events is purely coincidental.
+    <section class="document-section">
 
-    </div>
+        <h2 class="section-title">
+            Contract Information
+        </h2>
+
+        <table class="document-information">
+            <tbody>
+                <tr>
+                    <td class="info-label">Original Contract Date</td>
+                    <td class="info-value"><?= $esc($originalContractDate) ?></td>
+                </tr>
+
+                <tr>
+                    <td class="info-label">Date of Correction</td>
+                    <td class="info-value"><?= $esc($rectificationDate) ?></td>
+                </tr>
+
+                <tr>
+                    <td class="info-label">Salary Effective Date</td>
+                    <td class="info-value"><?= $esc($effectiveDate) ?></td>
+                </tr>
+
+                <tr>
+                    <td class="info-label">Original Monthly Salary</td>
+                    <td class="info-value money"><?= $formatMoney($originalSalary) ?></td>
+                </tr>
+
+                <tr>
+                    <td class="info-label">Corrected Monthly Salary</td>
+                    <td class="info-value money"><?= $formatMoney($correctedSalary) ?></td>
+                </tr>
+            </tbody>
+        </table>
+
+    </section>
+
+    <main class="document-body">
+
+        <p>
+            This Salary Correction Agreement ("Agreement") is
+            entered into by and between
+            <strong>Bestlink College of the Philippines</strong>
+            (the "Employer") and
+            <strong><?= $esc($employeeName) ?></strong>
+            (the "Employee"), in connection with the Employee's
+            Employment Contract dated
+            <strong><?= $esc($originalContractDate) ?></strong>.
+        </p>
+
+        <h2>1. Salary Correction</h2>
+
+        <p>
+            The salary stated in the original Employment Contract
+            was recorded incorrectly due to an administrative or
+            clerical error.
+        </p>
+
+        <p>
+            The salary provision is therefore corrected as follows:
+        </p>
+
+        <table class="salary-comparison">
+            <tbody>
+                <tr>
+                    <td>Salary stated in original contract</td>
+                    <td><?= $formatMoney($originalSalary) ?></td>
+                </tr>
+
+                <tr>
+                    <td>Correct monthly salary</td>
+                    <td><?= $formatMoney($correctedSalary) ?></td>
+                </tr>
+
+                <tr>
+                    <td>Effective date</td>
+                    <td><?= $esc($effectiveDate) ?></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>
+            The corrected salary shall apply beginning on the
+            effective date stated above.
+        </p>
+
+        <h2>2. Payroll Implementation</h2>
+
+        <p>
+            The Human Resources Department and Payroll Office shall
+            update the Employee's employment and payroll records to
+            reflect the corrected salary.
+        </p>
+
+        <p>
+            If payroll processing has already been affected by the
+            incorrect salary, any resulting adjustment shall be
+            handled in accordance with applicable law, company
+            policy, and the Employee's applicable employment terms.
+        </p>
+
+        <h2>3. No Other Changes</h2>
+
+        <p>
+            Except for the salary provision expressly amended by
+            this Agreement, all other terms and conditions of the
+            Employment Contract remain unchanged and in full force
+            and effect.
+        </p>
+
+        <h2>4. Effectivity</h2>
+
+        <p>
+            This Agreement shall form part of the Employee's
+            Employment Contract and shall be effective beginning
+            <strong><?= $esc($effectiveDate) ?></strong>.
+        </p>
+
+        <h2>5. Acknowledgment</h2>
+
+        <p>
+            By signing below, the parties acknowledge that they
+            have read and understood this Agreement and agree to
+            the salary correction stated herein.
+        </p>
+
+        <p class="closing-statement">
+            IN WITNESS WHEREOF, the parties have signed this
+            Agreement on the date indicated below.
+        </p>
+
+    </main>
+
+    <section class="signature-grid">
+
+        <div class="signature-block">
+            <div class="signature-heading">FOR THE EMPLOYER</div>
+
+            <div class="signature-space"></div>
+
+            <div class="signature-line"></div>
+
+            <strong>Authorized Representative</strong>
+
+            <div>Name: __________________________</div>
+            <div>Position: _______________________</div>
+            <div>Date: ___________________________</div>
+        </div>
+
+        <div class="signature-block">
+            <div class="signature-heading">EMPLOYEE</div>
+
+            <div class="signature-space"></div>
+
+            <div class="signature-line"></div>
+
+            <strong><?= $esc($employeeName) ?></strong>
+
+            <div>
+                Employee No.: <?= $esc($employeeNumber) ?>
+            </div>
+
+            <div>Date: ___________________________</div>
+        </div>
+
+    </section>
+
+    <section class="signature-grid witnesses">
+
+        <div class="signature-block">
+            <div class="signature-heading">WITNESS</div>
+
+            <div class="signature-space small"></div>
+
+            <div class="signature-line"></div>
+
+            <div>Name: __________________________</div>
+            <div>Date: ___________________________</div>
+        </div>
+
+        <div class="signature-block">
+            <div class="signature-heading">WITNESS</div>
+
+            <div class="signature-space small"></div>
+
+            <div class="signature-line"></div>
+
+            <div>Name: __________________________</div>
+            <div>Date: ___________________________</div>
+        </div>
+
+    </section>
+
+    <footer class="document-footer">
+        <span>Human Resources Department</span>
+        <span>Document No. <?= $esc($documentNumber) ?></span>
+    </footer>
 
 </div>
-
-
-
-
-
-
-

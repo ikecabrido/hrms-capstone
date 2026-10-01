@@ -17,6 +17,140 @@
     var minimizeBtn = root.querySelector('#ll-assistant-minimize');
     var clearBtn = root.querySelector('#ll-assistant-clear');
     var quickRepliesContainer = root.querySelector('#ll-assistant-quick-replies');
+
+    function getGovernmentFormsResponse(message) {
+        var text = String(message || '').toLowerCase().trim();
+
+        var normalized = text
+            .replace(/[.,!?]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        var isGenericForms =
+            /^(forms?|government forms?|government form)$/.test(normalized);
+
+        var isSSS =
+            /\bsss\s+forms?\b/.test(normalized);
+
+        var isPhilHealth =
+            /\bphilhealth\s+forms?\b/.test(normalized);
+
+        var isPagIBIG =
+            /\bpag[\s-]?ibig\s+forms?\b/.test(normalized);
+
+        var isBIR =
+            /\bbir\s+forms?\b/.test(normalized);
+
+        if (!isGenericForms && !isSSS && !isPhilHealth && !isPagIBIG && !isBIR) {
+            return '';
+        }
+
+        if (isGenericForms) {
+            isSSS = true;
+            isPhilHealth = true;
+            isPagIBIG = true;
+            isBIR = true;
+        }
+
+        var html = `
+            <div class="ll-government-resources">
+                <div class="ll-government-title">
+                    <i class="fa-solid fa-building-columns"></i>
+                    <span>Government Forms &amp; Resources</span>
+                </div>
+
+                <div class="ll-government-links">
+        `;
+
+        if (isSSS) {
+            html += `
+                <a href="https://www.sss.gov.ph/download-forms-and-electronic-applications/"
+                   class="ll-government-link"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    <span class="ll-government-icon">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </span>
+                    <span>
+                        <strong>SSS Forms</strong>
+                        <small>Download SSS forms and electronic applications</small>
+                    </span>
+                </a>
+            `;
+        }
+
+        if (isPhilHealth) {
+            html += `
+                <a href="https://www.philhealth.gov.ph/downloads/membership/pmrf_012020.pdf"
+                   class="ll-government-link"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    <span class="ll-government-icon">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </span>
+                    <span>
+                        <strong>PhilHealth Form</strong>
+                        <small>PhilHealth Member Registration Form</small>
+                    </span>
+                </a>
+            `;
+        }
+
+        if (isPagIBIG) {
+            html += `
+                <a href="https://www.pagibigfund.gov.ph/documents/PFF093_RequestConsolidationMergingMembersRecords.pdf"
+                   class="ll-government-link"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    <span class="ll-government-icon">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </span>
+                    <span>
+                        <strong>Pag-IBIG Form</strong>
+                        <small>Pag-IBIG membership records form</small>
+                    </span>
+                </a>
+            `;
+        }
+
+        if (isBIR) {
+            html += `
+                <a href="https://www.bir.gov.ph/bir-forms"
+                   class="ll-government-link"
+                   target="_blank"
+                   rel="noopener noreferrer">
+                    <span class="ll-government-icon">
+                        <i class="fa-solid fa-file-lines"></i>
+                    </span>
+                    <span>
+                        <strong>BIR Forms</strong>
+                        <small>Official BIR forms and documents</small>
+                    </span>
+                </a>
+            `;
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+
+        return html;
+    }
+
+    function showGovernmentFormsForMessage(message) {
+        if (!body) return false;
+
+        var response = getGovernmentFormsResponse(message);
+
+        if (!response) {
+            return false;
+        }
+
+        addMessage('bot', response);
+        return true;
+    }
+
     var form = root.querySelector('#ll-assistant-form');
     var input = root.querySelector('#ll-assistant-input');
     var submitBtn = root.querySelector('#ll-assistant-submit');
@@ -33,7 +167,6 @@
     var STORAGE_KEY = 'll_assistant_state';
     var SCROLL_KEY = 'll_assistant_scroll';
     var OPEN_KEY = 'll_assistant_open';
-
     function generateId() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0;
@@ -360,9 +493,22 @@
             return;
         }
 
+        // Government form requests are handled locally so they do not
+        // depend on the LALA knowledge database.
+        if (showGovernmentFormsForMessage(trimmed)) {
+            clearQuickReplies();
+            clearAllLoadingIndicators();
+            addMessage('user', escapeHtml(trimmed));
+            input.value = '';
+            setProcessing(false);
+            input.focus();
+            return;
+        }
+
         clearQuickReplies();
         clearAllLoadingIndicators();
         addMessage('user', escapeHtml(trimmed));
+
         input.value = '';
 
         setProcessing(true);
@@ -392,6 +538,7 @@
                 return;
             }
             handleResponse(data);
+
             input.focus();
         })
         .catch(function () {

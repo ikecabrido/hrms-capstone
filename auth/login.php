@@ -53,9 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         SELECT 
             u.user_id, 
             u.employee_id, 
-            u.role_id,
+            e.role_id,
             u.password,
-            u.account_status,
             e.employee_code,
             e.first_name,
             e.middle_name,
@@ -70,14 +69,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         INNER JOIN em_employees e
             ON e.employee_id = u.employee_id
         INNER JOIN em_roles r
-            ON r.role_id = u.role_id
+            ON r.role_id = e.role_id
         INNER JOIN em_positions p
             ON p.position_id = e.position_id
         LEFT JOIN em_departments d
             ON d.department_id = e.department_id
-        WHERE e.employee_code = :employeeid
-        AND e.employment_status = 'ACTIVE'
-        AND p.position_name IN ('HR Staff', 'HR Officer')
+        WHERE e.employee_id = :employeeid
+        AND e.employment_status = 'Active'
         LIMIT 1
     ");
     $stmt->bindParam(':employeeid', $employeeid);
@@ -85,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && $user['account_status'] === 'Active' && password_verify($password, $user['password'])) {
+    if ($user && password_verify($password, $user['password'])) {
         // ── Success: clear attempt tracking & build session ───────────────────
         unset($_SESSION[$key]);
 
@@ -130,15 +128,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ];
 
         $role = (int) $user['role_id'];
+        $roleName = strtolower(trim($user['role_name']));
 
-        if (!isset($redirectMap[$role])) {
-            echo json_encode(['success' => false, 'locked' => false, 'message' => 'Invalid role.']);
+        if ($roleName === 'compliance') {
+            $redirect = 'modules/compliance/index.php';
+        } elseif (isset($redirectMap[$role])) {
+            $redirect = $redirectMap[$role];
+        } else {
+            echo json_encode([
+                'success' => false,
+                'locked' => false,
+                'message' => 'Invalid role.'
+            ]);
             exit();
         }
 
         echo json_encode([
             'success'  => true,
-            'redirect' => $redirectMap[$role],
+            'redirect' => $redirect,
         ]);
         exit();
     } else {
