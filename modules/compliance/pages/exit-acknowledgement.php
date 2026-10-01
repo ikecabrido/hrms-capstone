@@ -948,28 +948,62 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
       <!-- Acknowledgement Actions -->
       <div class="cw-card">
         <div class="cw-card-head">
-          <h3>Acknowledgement Actions</h3>
+          <h3>Exit Acknowledgement</h3>
         </div>
+
         <div class="cw-card-body">
-          <p style="margin:0 0 12px;font-size:0.82rem;color:var(--cw-muted,#5b6472);">Verify compliance, acknowledge the exit, or return the record to Exit Management for clarification.</p>
-          <form method="POST" action="" id="eaActionForm" data-api-url="/modules/compliance/lib/api/exit_acknowledgement_action.php" data-skip>
+          <p style="margin:0 0 12px;font-size:0.82rem;color:var(--cw-muted,#5b6472);">
+            Review the clearance requirements before acknowledging the employee’s exit.
+          </p>
+
+          <form method="POST" action="" id="eaActionForm"
+                data-api-url="/modules/compliance/lib/api/exit_acknowledgement_action.php"
+                data-skip>
+
             <input type="hidden" name="exit_id" value="<?= (int)$exit['id'] ?>">
+
             <?php if ($legalStatus !== 'confirmed'): ?>
-              <button type="submit" name="acknowledge_exit" class="cw-btn primary" id="eaBtnAcknowledge" style="background:rgba(47,158,110,.08);border-color:rgba(47,158,110,.25);color:#1f7a52;">
+              <button type="submit"
+                      name="acknowledge_exit"
+                      class="cw-btn primary"
+                      id="eaBtnAcknowledge"
+                      style="background:rgba(47,158,110,.08);border-color:rgba(47,158,110,.25);color:#1f7a52;">
                 Acknowledge Exit
               </button>
             <?php endif; ?>
+
             <?php if ($legalStatus !== 'returned'): ?>
-              <button type="submit" name="return_exit" class="cw-btn danger" id="eaBtnReturn">
+              <button type="submit"
+                      name="return_exit"
+                      class="cw-btn danger"
+                      id="eaBtnReturn">
                 Return to Exit Management
               </button>
-              <button type="button" class="cw-btn" id="eaToggleRemarks" style="margin-left:1px;">Add Remarks</button>
+
+              <button type="button"
+                      class="cw-btn"
+                      id="eaToggleRemarks"
+                      style="margin-left:1px;">
+                Add Remarks
+              </button>
             <?php endif; ?>
-            <span id="eaActionStatus" class="cw-action-status" style="margin-left:10px;"></span>
+
+            <span id="eaActionStatus"
+                  class="cw-action-status"
+                  style="margin-left:10px;"></span>
+
             <div id="eaRemarksWrap" style="display:none; margin-top:12px;">
-              <label style="font-size:0.78rem;font-weight:600;color:var(--cw-text,#3b4252);">Remarks</label>
-              <textarea name="legal_remarks" class="cw-textarea" rows="2" placeholder="Enter review remarks..." style="font-size:0.82rem;"><?= htmlspecialchars($exit['legal_remarks'] ?? '', ENT_QUOTES) ?></textarea>
+              <label style="font-size:0.78rem;font-weight:600;color:var(--cw-text,#3b4252);">
+                Remarks
+              </label>
+
+              <textarea name="legal_remarks"
+                        class="cw-textarea"
+                        rows="2"
+                        placeholder="Enter remarks..."
+                        style="font-size:0.82rem;"><?= htmlspecialchars($exit['legal_remarks'] ?? '', ENT_QUOTES) ?></textarea>
             </div>
+
           </form>
         </div>
       </div>
