@@ -78,7 +78,7 @@
     <link rel="stylesheet" href="/modules/compliance/css/components/dropdown.css?v=3">
     <link rel="stylesheet" href="/modules/compliance/css/components/calendar.css?v=2">
     <link rel="stylesheet" href="/modules/compliance/css/components/list_action_buttons.css?v=2">
-    <link rel="stylesheet" href="/modules/compliance/css/pages/dashboard.css?v=20261027">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/dashboard.css?v=2">
     <link rel="stylesheet" href="/modules/compliance/css/pages/notification-compose.css?v=2">
     <link rel="stylesheet" href="/modules/compliance/css/pages/notification-detail.css?v=1">
     <link rel="stylesheet" href="/modules/compliance/css/pages/labor-law-references.css?v=2">
@@ -124,48 +124,29 @@
         </div>
 
         <!-- User Profile Dropdown -->
-        <div class="icon-dropdown user-dropdown" id="userDropdown" role="menu">
+        <div class="icon-dropdown" id="userDropdown">
             <div class="dropdown-header">
                 <div class="dropdown-user-info">
-                    <div class="dropdown-avatar" aria-hidden="true">
+                    <div class="dropdown-avatar">
                         <?= substr(htmlspecialchars($employeeClass->getEmployeeName()), 0, 1) ?>
                     </div>
-                    <div class="dropdown-user-details">
+                    <div>
                         <strong><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></strong>
                         <span><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></span>
-                        <div class="account-status">
-                            <span class="status-dot"></span>
-                            Active
-                        </div>
                     </div>
                 </div>
             </div>
             <ul class="user-menu">
                 <li>
-                    <a href="?page=profile-settings" role="menuitem">
-                        <span class="menu-content">
-                            <strong>Profile Settings</strong>
-                            <small>Manage your account</small>
-                        </span>
-                        <span class="menu-arrow">&rsaquo;</span>
-                    </a>
+                    <a href="#"><i class="fa-regular fa-user"></i> Profile Settings</a>
                 </li>
                 <li>
-                    <a href="?page=profile-settings#change-password" role="menuitem">
-                        <span class="menu-content">
-                            <strong>Change Password</strong>
-                            <small>Update your password</small>
-                        </span>
-                        <span class="menu-arrow">&rsaquo;</span>
-                    </a>
+                    <a href="#"><i class="fa-solid fa-lock"></i> Change Password</a>
                 </li>
-                <li class="divider" role="separator"></li>
+                <li class="divider"></li>
                 <li>
-                    <a href="/auth/logout.php" class="signout-link" role="menuitem">
-                        <span class="menu-content">
-                            <strong>Sign Out</strong>
-                            <small>End your current session</small>
-                        </span>
+                    <a href="/auth/logout.php" class="signout-link">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                     </a>
                 </li>
             </ul>
@@ -180,6 +161,5 @@
         </div>
         <div class="notif-detail-body" id="notifDetailBody"></div>
     </div>
-
 
 
