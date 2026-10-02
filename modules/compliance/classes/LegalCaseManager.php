@@ -1013,6 +1013,9 @@ class LegalCaseManager
     public function getTotalCases(): int
     {
         try {
+            if (!$this->conn) {
+                return 0;
+            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases")->fetchColumn();
         } catch (Throwable $e) {
             return 0;
@@ -1022,6 +1025,9 @@ class LegalCaseManager
     public function getClosedCases(): int
     {
         try {
+            if (!$this->conn) {
+                return 0;
+            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE current_status IN ('Closed','Resolved')")->fetchColumn();
         } catch (Throwable $e) {
             return 0;
@@ -1031,6 +1037,9 @@ class LegalCaseManager
     public function getHighPriorityCases(): int
     {
         try {
+            if (!$this->conn) {
+                return 0;
+            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE priority = 'High'")->fetchColumn();
         } catch (Throwable $e) {
             return 0;
@@ -1040,6 +1049,9 @@ class LegalCaseManager
     public function getStatusBreakdown(): array
     {
         try {
+            if (!$this->conn) {
+                return [];
+            }
             $stmt = $this->conn->query("SELECT current_status, COUNT(*) as cnt FROM lc_legal_cases GROUP BY current_status ORDER BY cnt DESC");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Throwable $e) {
@@ -1050,6 +1062,9 @@ class LegalCaseManager
     public function getAgencyBreakdown(): array
     {
         try {
+            if (!$this->conn) {
+                return [];
+            }
             $stmt = $this->conn->prepare("
                 SELECT external_agency, COUNT(*) as cnt
                 FROM lc_legal_cases
