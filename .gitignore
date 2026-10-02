@@ -31,3 +31,5 @@ modules/compliance/lib/ajax/*.log
 
 # Local archives
 *.tar.gz
+
+database/db_config.php
