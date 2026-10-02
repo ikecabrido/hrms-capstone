@@ -1,0 +1,243 @@
+find ~/public_html -type f -name "*.css"
+
+
+cd ~/public_html
+cat > dashboard-overrides.css <<'CSS'
+/* BLUE DASHBOARD */
+
+:root {
+    --blue-950:#0b1f3a;
+    --blue-900:#102a56;
+    --blue-800:#163b73;
+    --blue-700:#1e40af;
+    --blue-600:#2563eb;
+    --blue-100:#dbeafe;
+    --blue-50:#eff6ff;
+    --slate-900:#172033;
+    --slate-700:#334155;
+    --slate-500:#64748b;
+    --slate-200:#e2e8f0;
+    --white:#fff;
+    --green:#15803d;
+    --red:#b91c1c;
+    --amber:#b45309;
+}
+
+.dash-row--horizontal {
+    display:flex;
+    align-items:stretch;
+    gap:16px;
+    width:100%;
+}
+
+.dash-row--compact {
+    margin-bottom:20px;
+}
+
+.dash-health-card {
+    display:flex;
+    align-items:center;
+    gap:20px;
+    flex:1 1 42%;
+    min-width:420px;
+    padding:20px 22px;
+    background:#fff;
+    border:1px solid var(--slate-200);
+    border-left:3px solid var(--blue-700);
+    border-radius:6px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+}
+
+.health-ring {
+    width:112px;
+    height:112px;
+    flex:0 0 112px;
+}
+
+.health-svg {
+    display:block;
+    width:100%;
+    height:100%;
+}
+
+.health-svg circle:first-child {
+    stroke:var(--slate-200);
+}
+
+.health-svg circle:nth-child(2) {
+    stroke:var(--blue-700);
+}
+
+.health-title {
+    margin-bottom:10px;
+    color:var(--slate-900);
+    font-size:15px;
+    font-weight:700;
+}
+
+.health-badges {
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+    margin-bottom:16px;
+}
+
+.badge {
+    display:inline-flex;
+    align-items:center;
+    min-height:25px;
+    padding:3px 9px;
+    border:1px solid transparent;
+    border-radius:4px;
+    font-size:11px;
+    font-weight:700;
+}
+
+.badge-danger {
+    color:var(--red);
+    background:#fef2f2;
+    border-color:#fecaca;
+}
+
+.badge-info {
+    color:var(--blue-800);
+    background:var(--blue-50);
+    border-color:var(--blue-100);
+}
+
+.health-stats {
+    display:flex;
+    gap:28px;
+}
+
+.health-stat {
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+}
+
+.hs-label {
+    color:var(--slate-500);
+    font-size:11px;
+    font-weight:600;
+}
+
+.hs-value {
+    color:var(--slate-900);
+    font-size:18px;
+    font-weight:700;
+}
+
+.kpi-strip {
+    display:grid;
+    grid-template-columns:repeat(5,minmax(110px,1fr));
+    gap:10px;
+    flex:1 1 58%;
+}
+
+.kpi-box-link {
+    display:block;
+    min-width:0;
+    color:inherit;
+    text-decoration:none;
+}
+
+.kpi-box {
+    min-height:108px;
+    height:100%;
+    box-sizing:border-box;
+    padding:16px 15px;
+    background:#fff;
+    border:1px solid var(--slate-200);
+    border-top:3px solid var(--blue-700);
+    border-radius:5px;
+}
+
+.kpi-box:hover {
+    background:#f8fafc;
+    border-color:#bfdbfe;
+}
+
+.kpi-box-label {
+    margin-bottom:9px;
+    color:var(--slate-500);
+    font-size:11px;
+    font-weight:700;
+    line-height:1.25;
+    text-transform:uppercase;
+    letter-spacing:.35px;
+}
+
+.kpi-box-value {
+    color:var(--slate-900);
+    font-size:26px;
+    font-weight:700;
+    line-height:1;
+}
+
+.kpi-box-sub {
+    margin-top:8px;
+    color:var(--slate-500);
+    font-size:11px;
+}
+
+.kpi-box--success {
+    border-top-color:var(--green);
+}
+
+.kpi-box--success .kpi-box-value {
+    color:var(--green);
+}
+
+.kpi-box--danger {
+    border-top-color:var(--red);
+}
+
+.kpi-box--danger .kpi-box-value {
+    color:var(--red);
+}
+
+.kpi-box--warning {
+    border-top-color:var(--amber);
+}
+
+.kpi-box--warning .kpi-box-value {
+    color:var(--amber);
+}
+
+@media (max-width:1200px) {
+    .dash-row--horizontal {
+        flex-direction:column;
+    }
+
+    .dash-health-card {
+        min-width:0;
+        width:100%;
+    }
+
+    .kpi-strip {
+        width:100%;
+    }
+}
+
+@media (max-width:800px) {
+    .kpi-strip {
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+}
+
+@media (max-width:520px) {
+    .dash-health-card {
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .health-stats {
+        gap:20px;
+        flex-wrap:wrap;
+    }
+
+    .kpi-strip {
+        grid-template-columns:1fr;
+    }
+}

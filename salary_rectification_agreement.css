@@ -1,0 +1,406 @@
+/*
+ * BCP HRMS
+ * Salary Correction Agreement
+ *
+ * Typography:
+ * Arial throughout.
+ * Only the main document title is bold.
+ */
+
+.document-preview {
+    width: 100%;
+    max-width: 900px;
+    margin: 32px auto;
+    padding: 56px 64px;
+    box-sizing: border-box;
+
+    background: #ffffff;
+    color: #222222;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+
+    border: 1px solid #dddddd;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+/* -----------------------------------------------------------
+   Header
+   ----------------------------------------------------------- */
+
+.document-header {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.document-organization {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: #222222;
+}
+
+.document-department {
+    margin-top: 3px;
+    font-size: 12px;
+    font-weight: 400;
+    color: #555555;
+}
+
+/*
+ * ONLY THE MAIN TITLE IS BOLD
+ */
+.document-title {
+    margin: 26px 0 5px;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.25;
+
+    color: #111111;
+    letter-spacing: 0;
+}
+
+.document-subtitle {
+    margin: 0;
+
+    font-size: 12px;
+    font-weight: 400;
+    color: #555555;
+}
+
+.document-control {
+    margin-top: 16px;
+
+    font-size: 11px;
+    font-weight: 400;
+    color: #666666;
+}
+
+.document-control strong {
+    font-weight: 400;
+}
+
+/* -----------------------------------------------------------
+   Separator
+   ----------------------------------------------------------- */
+
+.document-separator {
+    border: 0;
+    border-top: 1px solid #cccccc;
+    margin: 0 0 26px;
+}
+
+/* -----------------------------------------------------------
+   Sections
+   ----------------------------------------------------------- */
+
+.document-section {
+    margin-bottom: 26px;
+}
+
+.section-title {
+    margin: 0 0 9px;
+    padding-bottom: 6px;
+
+    border-bottom: 1px solid #cccccc;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+
+    color: #333333;
+}
+
+/* -----------------------------------------------------------
+   Information tables
+   ----------------------------------------------------------- */
+
+.document-information {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.document-information tr {
+    border-bottom: 1px solid #eeeeee;
+}
+
+.document-information tr:last-child {
+    border-bottom: 0;
+}
+
+.info-label {
+    width: 38%;
+    padding: 8px 14px 8px 0;
+
+    font-size: 12px;
+    font-weight: 400;
+
+    color: #666666;
+    vertical-align: top;
+}
+
+.info-value {
+    padding: 8px 0;
+
+    font-size: 13px;
+    font-weight: 400;
+
+    color: #222222;
+    vertical-align: top;
+}
+
+.money {
+    font-variant-numeric: tabular-nums;
+}
+
+/* -----------------------------------------------------------
+   Document body
+   ----------------------------------------------------------- */
+
+.document-body {
+    margin-top: 32px;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.7;
+}
+
+.document-body p {
+    margin: 0 0 14px;
+}
+
+/*
+ * Section headings are NOT bold.
+ * This keeps the document visually restrained.
+ */
+
+.document-body h2 {
+    margin: 25px 0 9px;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+
+    color: #222222;
+}
+
+.document-body strong {
+    font-weight: 400;
+}
+
+.closing-statement {
+    margin-top: 26px !important;
+}
+
+/* -----------------------------------------------------------
+   Salary comparison
+   ----------------------------------------------------------- */
+
+.salary-comparison {
+    width: 100%;
+    margin: 17px 0 19px;
+
+    border-collapse: collapse;
+
+    border: 1px solid #d5d5d5;
+
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.salary-comparison td {
+    padding: 10px 13px;
+
+    border-bottom: 1px solid #e5e5e5;
+    font-weight: 400;
+}
+
+.salary-comparison tr:last-child td {
+    border-bottom: 0;
+}
+
+.salary-comparison td:first-child {
+    color: #555555;
+}
+
+.salary-comparison td:last-child {
+    width: 30%;
+
+    text-align: right;
+    color: #222222;
+
+    white-space: nowrap;
+}
+
+/* -----------------------------------------------------------
+   Signatures
+   ----------------------------------------------------------- */
+
+.signature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 72px;
+
+    margin-top: 54px;
+}
+
+.signature-block {
+    min-width: 0;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+
+    line-height: 1.8;
+    color: #333333;
+}
+
+.signature-heading {
+    margin-bottom: 7px;
+
+    font-size: 11px;
+    font-weight: 400;
+
+    letter-spacing: 0.03em;
+    color: #333333;
+}
+
+.signature-space {
+    height: 54px;
+}
+
+.signature-space.small {
+    height: 34px;
+}
+
+.signature-line {
+    width: 100%;
+
+    border-bottom: 1px solid #333333;
+
+    margin-bottom: 4px;
+}
+
+.signature-block strong {
+    font-weight: 400;
+}
+
+.witnesses {
+    margin-top: 42px;
+}
+
+/* -----------------------------------------------------------
+   Footer
+   ----------------------------------------------------------- */
+
+.document-footer {
+    display: flex;
+    justify-content: space-between;
+
+    margin-top: 54px;
+    padding-top: 10px;
+
+    border-top: 1px solid #e5e5e5;
+
+    font-size: 10px;
+    font-weight: 400;
+
+    color: #888888;
+}
+
+/* -----------------------------------------------------------
+   Responsive
+   ----------------------------------------------------------- */
+
+@media (max-width: 700px) {
+
+    .document-preview {
+        margin: 0;
+        padding: 32px 24px;
+
+        border-left: 0;
+        border-right: 0;
+
+        box-shadow: none;
+    }
+
+    .document-title {
+        font-size: 19px;
+    }
+
+    .signature-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+
+    .document-footer {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+/* -----------------------------------------------------------
+   Print / PDF
+   ----------------------------------------------------------- */
+
+@media print {
+
+    .document-preview {
+        max-width: none;
+
+        margin: 0;
+        padding: 18mm 17mm;
+
+        border: 0;
+        box-shadow: none;
+
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11pt;
+    }
+
+    .document-title {
+        font-size: 17pt;
+        font-weight: 700;
+    }
+
+    .document-body {
+        font-size: 11pt;
+    }
+
+    .document-information,
+    .salary-comparison,
+    .signature-grid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .document-body h2 {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+
+    .document-body p {
+        orphans: 3;
+        widows: 3;
+    }
+}
+
+/* Contract Details header */
+.document-section-header {
+    padding: 20px 0 8px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #333333;
+    text-align: left;
+}

@@ -1,0 +1,71 @@
+<div class="dash-row dash-row--horizontal dash-row--compact">
+
+    <div class="dash-health-card">
+        <div class="health-ring">
+            <svg viewBox="0 0 120 120" class="health-svg">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#e2e8f0" stroke-width="8"></circle>
+                <circle cx="60" cy="60" r="52" fill="none" stroke="#1e40af" stroke-width="8" stroke-dasharray="0.00 360.00" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 60 60)"></circle>
+                <text x="60" y="56" text-anchor="middle" font-size="22" font-weight="700" fill="#1b2430">0%</text>
+                <text x="60" y="72" text-anchor="middle" font-size="9" fill="#64748b" font-weight="600" letter-spacing="1">HEALTH</text>
+            </svg>
+        </div>
+
+        <div class="health-meta">
+            <div class="health-title">Overall Compliance Health</div>
+
+            <div class="health-badges">
+                <span class="badge badge-danger">High Risk</span>
+                <span class="badge badge-info">Risk Score: 355</span>
+            </div>
+
+            <div class="health-stats">
+                <div class="health-stat">
+                    <span class="hs-label">Active Employees</span>
+                    <span class="hs-value">20</span>
+                </div>
+
+                <div class="health-stat">
+                    <span class="hs-label">Pending Acknowledgements</span>
+                    <span class="hs-value">67</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-strip">
+
+        <div class="kpi-box">
+            <div class="kpi-box-label">Total Employees</div>
+            <div class="kpi-box-value">20</div>
+        </div>
+
+        <div class="kpi-box kpi-box--success">
+            <div class="kpi-box-label">Compliance Rate</div>
+            <div class="kpi-box-value">0%</div>
+        </div>
+
+        <a href="?page=incident-reports" class="kpi-box-link">
+            <div class="kpi-box kpi-box--danger">
+                <div class="kpi-box-label">Open Issues</div>
+                <div class="kpi-box-value">20</div>
+                <div class="kpi-box-sub">1 critical</div>
+            </div>
+        </a>
+
+        <a href="?page=employee-documents&amp;status=Expiring+Soon" class="kpi-box-link">
+            <div class="kpi-box kpi-box--warning">
+                <div class="kpi-box-label">Expiring Documents</div>
+                <div class="kpi-box-value">0</div>
+                <div class="kpi-box-sub">Next 30 days</div>
+            </div>
+        </a>
+
+        <a href="?page=employee-documents&amp;status=Expired" class="kpi-box-link">
+            <div class="kpi-box kpi-box--danger">
+                <div class="kpi-box-label">Expired Documents</div>
+                <div class="kpi-box-value">0</div>
+            </div>
+        </a>
+
+    </div>
+</div>
