@@ -78,7 +78,7 @@
     <link rel="stylesheet" href="/modules/compliance/css/components/dropdown.css?v=3">
     <link rel="stylesheet" href="/modules/compliance/css/components/calendar.css?v=2">
     <link rel="stylesheet" href="/modules/compliance/css/components/list_action_buttons.css?v=2">
-    <link rel="stylesheet" href="/modules/compliance/css/pages/dashboard.css?v=20261002-1930">
+    <link rel="stylesheet" href="/modules/compliance/css/pages/dashboard.css?v=20261002-2020">
     <link rel="stylesheet" href="/modules/compliance/css/pages/notification-compose.css?v=2">
     <link rel="stylesheet" href="/modules/compliance/css/pages/notification-detail.css?v=1">
     <link rel="stylesheet" href="/modules/compliance/css/pages/labor-law-references.css?v=2">

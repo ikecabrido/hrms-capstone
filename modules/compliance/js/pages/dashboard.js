@@ -491,6 +491,7 @@ function initDeptComplianceChart() {
 
 function initLegalCasesChart() {
     if (typeof Chart === 'undefined') return;
+
     const canvas = document.getElementById('legalCasesChart');
     if (!canvas) return;
 
@@ -501,6 +502,7 @@ function initLegalCasesChart() {
 
     const labels = window.LEGAL_CASES_LABELS || [];
     const values = window.LEGAL_CASES_VALUES || [];
+
     if (!labels.length || !values.length) {
         const wrap = document.querySelector('.legal-chart-wrap');
         if (wrap) {
@@ -510,181 +512,73 @@ function initLegalCasesChart() {
     }
 
     const ctx = canvas.getContext('2d');
-    const backgroundColors = [
-        'rgba(37, 99, 235, 0.85)',
-        'rgba(59, 130, 196, 0.85)',
-        'rgba(30, 64, 175, 0.85)',
-        'rgba(96, 165, 250, 0.85)',
-        'rgba(29, 78, 216, 0.85)',
-        'rgba(37, 99, 235, 0.85)',
-        'rgba(59, 130, 196, 0.85)',
-    ];
-
-    const borderColors = [
-        'rgba(37, 99, 235, 1)',
-        'rgba(59, 130, 196, 1)',
-        'rgba(30, 64, 175, 1)',
-        'rgba(96, 165, 250, 1)',
-        'rgba(29, 78, 216, 1)',
-        'rgba(37, 99, 235, 1)',
-        'rgba(59, 130, 196, 1)',
-    ];
 
     legalChartInstance = new Chart(ctx, {
-        type: 'scatter',
+        type: 'bar',
         data: {
+            labels: labels,
             datasets: [{
                 label: 'Cases',
-                data: values.map(function (value, index) {
-                    return { x: index, y: value };
-                }),
-                backgroundColor: backgroundColors.slice(0, labels.length),
-                borderColor: borderColors.slice(0, labels.length),
+                data: values,
+                backgroundColor: '#2563eb',
+                borderColor: '#1d4ed8',
                 borderWidth: 1,
-                pointRadius: isMobileView() ? 5 : 7,
-                pointHoverRadius: isMobileView() ? 7 : 10,
-                pointBorderWidth: 2,
+                borderRadius: 3,
+                barThickness: 34,
+                maxBarThickness: 42
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 500
+            },
             plugins: {
-                legend: { display: false },
+                legend: {
+                    display: false
+                },
                 tooltip: {
-                    backgroundColor: '#0f172a',
-                    titleColor: '#f8fafc',
-                    bodyColor: '#cbd5e1',
-                    borderColor: '#1e293b',
-                    borderWidth: 1,
-                    padding: isMobileView() ? 10 : 14,
-                    cornerRadius: isMobileView() ? 6 : 10,
-                    titleFont: { size: isMobileView() ? 11 : 13, weight: '600', family: 'Inter' },
-                    bodyFont: { size: isMobileView() ? 11 : 12, family: 'Inter' },
                     callbacks: {
-                        title: function (items) {
-                            if (!items.length) return '';
-                            const index = items[0].parsed.x;
-                            return labels[index] || '';
-                        },
-                        label: function (context) {
-                            return ' ' + context.parsed.y + ' cases';
+                        label: function(context) {
+                            return 'Cases: ' + context.parsed.y;
                         }
                     }
                 }
             },
             scales: {
                 x: {
-                    type: 'linear',
-                    position: 'bottom',
-                    title: {
+                    grid: {
                         display: false
                     },
-                    grid: { display: false },
-                    border: { display: false },
                     ticks: {
-                        stepSize: 1,
-                        color: '#94a3b8',
-                        font: { size: isMobileView() ? 9 : 11, family: 'Inter' },
-                        maxRotation: isMobileView() ? 45 : 30,
-                        minRotation: isMobileView() ? 45 : 30,
-                        callback: function (value) {
-                            const index = Math.round(value);
-                            return labels[index] || '';
-                        }
+                        color: '#64748b',
+                        font: {
+                            size: 9,
+                            weight: '500'
+                        },
+                        maxRotation: 0,
+                        minRotation: 0
                     }
                 },
                 y: {
                     beginAtZero: true,
-                    grid: {
-                        color: '#f1f5f9',
-                        drawBorder: false
-                    },
                     ticks: {
-                        color: '#94a3b8',
-                        font: { size: isMobileView() ? 9 : 11, family: 'Inter' },
-                        stepSize: 1,
-                        maxTicksLimit: isMobileView() ? 5 : 7
+                        precision: 0,
+                        color: '#64748b',
+                        font: {
+                            size: 9
+                        }
                     },
-                    border: { display: false }
+                    grid: {
+                        color: '#e2e8f0',
+                        drawBorder: false
+                    }
                 }
-            },
-            animation: {
-                duration: 800,
-                easing: 'easeOutQuart'
             }
         }
     });
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Event Listeners
-// ──────────────────────────────────────────────────────────────────────────────
-
-window.addEventListener('page:loaded', function (e) {
-    if (e.detail && e.detail.page === DASHBOARD_PAGE) {
-        initDashboard();
-    } else {
-        destroyCharts();
-        if (resizeObserver) {
-            resizeObserver.disconnect();
-            resizeObserver = null;
-        }
-    }
-});
-
-let dashboardResizeTimer;
-window.addEventListener('resize', function () {
-    clearTimeout(dashboardResizeTimer);
-    dashboardResizeTimer = setTimeout(function () {
-        if (!document.getElementById('dashTrendChart') && !document.getElementById('riskPieChart') && !document.getElementById('deptComplianceChart') && !document.getElementById('legalCasesChart')) return;
-
-        const wasDesktop = !isMobileView();
-        const sparkWrap = document.querySelector('.sparkline-wrap');
-        const riskWrap = document.querySelector('.risk-pie-wrap');
-        const deptWrap = document.querySelector('.dept-chart-wrap');
-        const legalWrap = document.querySelector('.legal-chart-wrap');
-
-        if (sparkWrap && trendChartInstance) {
-            if (isMobileView()) {
-                sparkWrap.style.height = getMobileChartHeight() + 'px';
-            } else {
-                sparkWrap.style.height = '';
-            }
-            trendChartInstance.resize();
-        }
-
-        if (riskWrap && riskChartInstance) {
-            if (isMobileView()) {
-                riskWrap.style.height = getMobileChartHeight() + 'px';
-            } else {
-                riskWrap.style.height = '';
-            }
-            riskChartInstance.resize();
-        }
-
-        if (deptWrap && complianceChartInstance) {
-            if (isMobileView()) {
-                deptWrap.style.height = '220px';
-            } else {
-                deptWrap.style.height = '260px';
-            }
-            complianceChartInstance.resize();
-        }
-
-        if (legalWrap && legalChartInstance) {
-            if (isMobileView()) {
-                legalWrap.style.height = getMobileChartHeight() + 'px';
-            } else {
-                legalWrap.style.height = '';
-            }
-            legalChartInstance.resize();
-        }
-    }, 200);
-});
-
-// ── Incident Analytics ──────────────────────────────────────────────────────────
-
 function initIncidentAnalytics() {
     initIncidentCalendar();
     initIncidentCategoryFilter();

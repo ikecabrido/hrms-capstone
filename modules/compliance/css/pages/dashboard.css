@@ -4451,3 +4451,216 @@
     }
 }
 
+
+/* =========================================================
+   ANALYTICS ROW
+   MATCHED ENTERPRISE PANELS / EQUAL HEIGHT
+   ========================================================= */
+
+.dash-row--analytics {
+    align-items: stretch;
+}
+
+.dash-row--analytics > .chart-panel--wide,
+.dash-row--analytics > .chart-panel-link {
+    min-height: 292px;
+}
+
+.dash-row--analytics > .chart-panel--wide,
+.dash-row--analytics > .chart-panel-link > .chart-panel {
+    height: 292px;
+    box-sizing: border-box;
+}
+
+/* Risk Distribution link must behave like the panel itself */
+.dash-row--analytics > .chart-panel-link {
+    display: block;
+    height: 292px;
+    min-height: 292px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.dash-row--analytics > .chart-panel-link:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Keep both panel headers visually identical */
+.dash-row--analytics .chart-panel-head {
+    min-height: 48px;
+    height: 48px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* Wide trend panel */
+.dash-row--analytics .chart-panel--wide {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-row--analytics .chart-panel--wide .chart-panel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* Risk panel */
+.dash-row--analytics > .chart-panel-link > .chart-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.dash-row--analytics > .chart-panel-link > .chart-panel .chart-panel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+}
+
+/* Keep chart areas balanced */
+.dash-row--analytics .sparkline-wrap {
+    flex: 1;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+}
+
+.dash-row--analytics .risk-pie-wrap {
+    height: 190px;
+    min-height: 190px;
+    flex-shrink: 0;
+}
+
+/* Keep metric row anchored at the bottom of the trend panel */
+.dash-row--analytics .metric-row {
+    flex-shrink: 0;
+}
+
+/* Consistent panel border treatment */
+.dash-row--analytics .chart-panel--wide,
+.dash-row--analytics > .chart-panel-link > .chart-panel {
+    border: 1px solid #d7e2f0;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 42, 95, 0.04);
+    overflow: hidden;
+}
+
+/* Consistent blue top accent */
+.dash-row--analytics .chart-panel--wide::before,
+.dash-row--analytics > .chart-panel-link > .chart-panel::before {
+    content: "";
+    display: block;
+    width: 100%;
+    height: 2px;
+    flex-shrink: 0;
+    background: #2563eb;
+}
+
+/* Risk panel hover remains subtle and professional */
+.dash-row--analytics > .chart-panel-link:hover > .chart-panel {
+    border-color: #bfdbfe;
+    box-shadow: 0 2px 5px rgba(15, 42, 95, 0.06);
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+    .dash-row--analytics > .chart-panel--wide,
+    .dash-row--analytics > .chart-panel-link,
+    .dash-row--analytics > .chart-panel-link > .chart-panel {
+        height: auto;
+        min-height: 0;
+    }
+
+    .dash-row--analytics .chart-panel--wide .chart-panel-body,
+    .dash-row--analytics > .chart-panel-link > .chart-panel .chart-panel-body {
+        min-height: 0;
+    }
+
+    .dash-row--analytics .sparkline-wrap {
+        min-height: 150px;
+    }
+
+    .dash-row--analytics .risk-pie-wrap {
+        min-height: 180px;
+        height: 180px;
+    }
+}
+
+
+/* =========================================================
+   COMPACT ANALYTICS METRICS
+   ========================================================= */
+
+.dash-row--analytics .metric-row {
+    min-height: 48px;
+    padding: 7px 10px;
+}
+
+.dash-row--analytics .metric-item {
+    padding: 3px 8px;
+}
+
+.dash-row--analytics .m-label {
+    margin-bottom: 2px;
+    font-size: 8px;
+    line-height: 1.2;
+}
+
+.dash-row--analytics .m-value {
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.dash-row--analytics .m-sub {
+    margin-top: 1px;
+    font-size: 7px;
+    line-height: 1.2;
+}
+
+
+/* =========================================================
+   LEGAL CASES SUMMARY
+   COMPACT ENTERPRISE BAR CHART
+   ========================================================= */
+
+.legal-chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 230px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.legal-chart-wrap canvas {
+    display: block !important;
+    width: 100% !important;
+    height: 230px !important;
+    max-width: 100%;
+}
+
+@media (max-width: 700px) {
+    .legal-chart-wrap {
+        height: 210px;
+    }
+
+    .legal-chart-wrap canvas {
+        height: 210px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .legal-chart-wrap {
+        height: 190px;
+    }
+
+    .legal-chart-wrap canvas {
+        height: 190px !important;
+    }
+}
+
