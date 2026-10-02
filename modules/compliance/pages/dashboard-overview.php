@@ -16,10 +16,7 @@ $employeeClass = new Employee($db);
 $pageTitle = 'Dashboard Overview';
 
 $totalEmployees = $dashboard->getTotalEmployees();
-$trendValues = [85, 87, 88, 89, 92, 91];
-$healthScore = !empty($trendValues)
-    ? (int) round(array_sum($trendValues) / count($trendValues))
-    : 0;
+$healthScore = $dashboard->getComplianceHealthScore();
 $riskCounts = $dashboard->getRiskCounts();
 $openIncidents = $dashboard->getOpenIncidents();
 $criticalOpen = $dashboard->getCriticalOpen();
@@ -277,7 +274,14 @@ function lc_report_status_class(string $s): string {
          
 
         <!-- Mobile Quick Links -->
-        
+        <div class="quick-links-mobile" aria-label="Quick navigation">
+            <?php foreach (array_slice($quickLinks, 0, 8) as $link): ?>
+            <a href="index.php?page=<?= urlencode($link['page']) ?>" class="quick-link-mobile-item" style="--ql-color: <?= htmlspecialchars($link['color']) ?>">
+                <i class="fa-solid <?= htmlspecialchars($link['icon']) ?>"></i>
+                <span><?= htmlspecialchars($link['label']) ?></span>
+            </a>
+            <?php endforeach; ?>
+        </div>
 
      
       
@@ -470,7 +474,7 @@ function lc_report_status_class(string $s): string {
                                                 <div class="agency-description"><?= htmlspecialchars($agency['description']) ?></div>
                                                 <div class="agency-contacts">
                                                     <span class="agency-contact"><i class="bi bi-telephone"></i> <?= htmlspecialchars($agency['phone']) ?></span>
-                                                    <a href="index.php?page=notification-compose&amp;mode=reply&amp;notification_id=0&amp;email=<?= rawurlencode($agency['email']) ?>" class="agency-contact agency-email" style="color:inherit;text-decoration:none;cursor:pointer"><i class="bi bi-envelope"></i> <?= htmlspecialchars($agency['email']) ?></a>
+                                                    <span class="agency-contact"><i class="bi bi-envelope"></i> <?= htmlspecialchars($agency['email']) ?></span>
                                                     <span class="agency-contact"><i class="bi bi-globe"></i> <?= htmlspecialchars($agency['website']) ?></span>
                                                 </div>
                                             </div>
@@ -658,6 +662,7 @@ function lc_report_status_class(string $s): string {
                                             $docTypeValue = $req['document_type'] ?? 'Document';
                                             $docTypeLabelToCode = [
                                                 'Certificate of Employment (COE)' => 'coe',
+                                                'Quitclaim and Release' => 'quitclaim',
                                                 'Exit Acknowledgement' => 'exit_acknowledgement',
                                                 'Leave Agreement' => 'leave_agreement',
                                                 'Return-to-Work Agreement' => 'return_service',
@@ -677,7 +682,7 @@ function lc_report_status_class(string $s): string {
                                             $templateCode = $docTypeLabelToCode[$docTypeValue] ?? strtolower(str_replace([' ', '-', '(', ')', '/'], '_', $docTypeValue));
                                             $templateFile = $templateCode . '.php';
                                         ?>
-                                        <a href="?page=preview-document&request_id=<?= urlencode((string)($req['request_id'] ?? '')) ?>&employee_id=<?= $employeeId ?>&document_type=<?= urlencode($docTypeValue) ?>&template=<?= urlencode($templateFile) ?>&template_code=<?= urlencode($templateCode) ?>" class="dr-action-link">View</a>
+                                        <a href="?page=preview-document&employee_id=<?= $employeeId ?>&document_type=<?= urlencode($docTypeValue) ?>&template=<?= urlencode($templateFile) ?>&template_code=<?= urlencode($templateCode) ?>" class="dr-action-link">View</a>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
@@ -774,7 +779,7 @@ function lc_report_status_class(string $s): string {
                     }
                 }
             ?>
-            <div class="chart-panel chart-panel--wide">
+            <div class="chart-panel chart-panel--wide" data-gov-insight="<?= htmlspecialchars($govInsightText) ?>">
                 <div class="chart-panel-head">
                     <h4>Government Contribution Compliance</h4>
                     <div class="chart-panel-meta">Agency submission and verification status</div>
@@ -965,293 +970,81 @@ function lc_report_status_class(string $s): string {
         </div>
 
         <div class="dash-row dash-row--analytics">
-<div class="chart-panel chart-panel--wide incident-occurrence-panel">
-
-    <div class="chart-panel-head">
-        <div>
-            <h4>Incident Occurrence</h4>
-            <div class="chart-panel-meta">
-                Monthly incident activity and severity
-            </div>
-        </div>
-
-        <div class="incident-calendar-controls">
-            <button
-                type="button"
-                class="incident-calendar-btn"
-                data-direction="prev"
-                aria-label="Previous month">
-                &#8249;
-            </button>
-
-            <span class="incident-calendar-month">August 2026</span>
-
-            <button
-                type="button"
-                class="incident-calendar-btn"
-                data-direction="next"
-                aria-label="Next month">
-                &#8250;
-            </button>
-        </div>
-    </div>
-
-    <div class="chart-panel-body">
-
-        <div class="incident-calendar-summary">
-
-            <div class="incident-summary-item">
-                <div class="incident-summary-value">18</div>
-                <div class="incident-summary-label">Total Incidents</div>
-            </div>
-
-            <div class="incident-summary-item">
-                <div class="incident-summary-value">8</div>
-                <div class="incident-summary-label">Active Days</div>
-            </div>
-
-            <div class="incident-summary-item">
-                <div class="incident-summary-value">Aug 11</div>
-                <div class="incident-summary-label">Peak Day</div>
-            </div>
-
-            <div class="incident-summary-item">
-                <div class="incident-summary-value">3</div>
-                <div class="incident-summary-label">Peak Count</div>
-            </div>
-
-        </div>
-
-        <div
-            class="incident-calendar"
-            data-year="2026"
-            data-month="9"
-            data-days="{&quot;2026-08-09&quot;:{&quot;date&quot;:&quot;2026-08-09&quot;,&quot;total&quot;:1,&quot;categories&quot;:{&quot;Workplace Accident&quot;:1},&quot;severities&quot;:{&quot;high&quot;:1}},&quot;2026-08-10&quot;:{&quot;date&quot;:&quot;2026-08-10&quot;,&quot;total&quot;:1,&quot;categories&quot;:{&quot;Occupational Injury&quot;:1},&quot;severities&quot;:{&quot;medium&quot;:1}},&quot;2026-08-11&quot;:{&quot;date&quot;:&quot;2026-08-11&quot;,&quot;total&quot;:3,&quot;categories&quot;:{&quot;Exposure Incident&quot;:2,&quot;Workplace Accident&quot;:1},&quot;severities&quot;:{&quot;high&quot;:2,&quot;medium&quot;:1}},&quot;2026-08-12&quot;:{&quot;date&quot;:&quot;2026-08-12&quot;,&quot;total&quot;:2,&quot;categories&quot;:{&quot;Medical Emergency&quot;:2},&quot;severities&quot;:{&quot;high&quot;:2}},&quot;2026-08-13&quot;:{&quot;date&quot;:&quot;2026-08-13&quot;,&quot;total&quot;:2,&quot;categories&quot;:{&quot;Environmental &amp; Safety Hazard&quot;:1,&quot;Health Incident&quot;:1},&quot;severities&quot;:{&quot;high&quot;:1,&quot;medium&quot;:1}},&quot;2026-08-14&quot;:{&quot;date&quot;:&quot;2026-08-14&quot;,&quot;total&quot;:2,&quot;categories&quot;:{&quot;Health Incident&quot;:1,&quot;Workplace Accident&quot;:1},&quot;severities&quot;:{&quot;medium&quot;:2}},&quot;2026-08-15&quot;:{&quot;date&quot;:&quot;2026-08-15&quot;,&quot;total&quot;:2,&quot;categories&quot;:{&quot;Health Incident&quot;:1,&quot;Workplace Accident&quot;:1},&quot;severities&quot;:{&quot;medium&quot;:1,&quot;high&quot;:1}},&quot;2026-08-16&quot;:{&quot;date&quot;:&quot;2026-08-16&quot;,&quot;total&quot;:5,&quot;categories&quot;:{&quot;Environmental &amp; Safety Hazard&quot;:1,&quot;Return-to-Work Monitoring&quot;:3,&quot;Workplace Accident&quot;:1},&quot;severities&quot;:{&quot;critical&quot;:1,&quot;low&quot;:2,&quot;medium&quot;:2}}}">
-
-            <div class="incident-calendar-weekdays">
-                <div>Mon</div>
-                <div>Tue</div>
-                <div>Wed</div>
-                <div>Thu</div>
-                <div>Fri</div>
-                <div>Sat</div>
-                <div>Sun</div>
-            </div>
-
-            <div class="incident-calendar-grid">
-                <div class="incident-calendar-day incident-calendar-day--empty"></div>
-                <div class="incident-calendar-day incident-calendar-day--empty"></div>
-                <div class="incident-calendar-day incident-calendar-day--empty"></div>
-                <div class="incident-calendar-day incident-calendar-day--empty"></div>
-                <div class="incident-calendar-day incident-calendar-day--empty"></div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-01, 0 incidents">
-                    <div class="incident-calendar-day-number">1</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-02, 0 incidents">
-                    <div class="incident-calendar-day-number">2</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-03, 0 incidents">
-                    <div class="incident-calendar-day-number">3</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-04, 0 incidents">
-                    <div class="incident-calendar-day-number">4</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-05, 0 incidents">
-                    <div class="incident-calendar-day-number">5</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-06, 0 incidents">
-                    <div class="incident-calendar-day-number">6</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-07, 0 incidents">
-                    <div class="incident-calendar-day-number">7</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-08, 0 incidents">
-                    <div class="incident-calendar-day-number">8</div>
-                </div>
-
-                <div class="incident-calendar-day incident-calendar-day--low" role="button" tabindex="0" aria-label="2026-08-09, 1 incident">
-                    <div class="incident-calendar-day-number">9</div>
-                    <div class="incident-calendar-day-count">1</div>
-                </div>
-
-                <div class="incident-calendar-day incident-calendar-day--low" role="button" tabindex="0" aria-label="2026-08-10, 1 incident">
-                    <div class="incident-calendar-day-number">10</div>
-                    <div class="incident-calendar-day-count">1</div>
-                </div>
-
-                <div class="incident-calendar-day incident-calendar-day--high incident-calendar-day--selected" role="button" tabindex="0" aria-label="2026-08-11, 3 incidents">
-                    <div class="incident-calendar-day-number">11</div>
-                    <div class="incident-calendar-day-count">3</div>
-                </div>
-
-                <div class="incident-calendar-day incident-calendar-day--medium" role="button" tabindex="0" aria-label="2026-08-12, 2 incidents">
-                    <div class="incident-calendar-day-number">12</div>
-                    <div class="incident-calendar-day-count">2</div>
-                </div>
-
-                <div class="incident-calendar-day incident-calendar-day--medium" role="button" tabindex="0" aria-label="2026-08-13, 2 incidents">
-                    <div class="incident-calendar-day-number">13</div>
-                    <div class="incident-calendar-day-count">2</div>
-                </div>
-
-                <div class="incident-calendar-day incident-calendar-day--medium" role="button" tabindex="0" aria-label="2026-08-14, 2 incidents">
-                    <div class="incident-calendar-day-number">14</div>
-                    <div class="incident-calendar-day-count">2</div>
-                </div>
-
-                <div class="incident-calendar-day incident-calendar-day--medium" role="button" tabindex="0" aria-label="2026-08-15, 2 incidents">
-                    <div class="incident-calendar-day-number">15</div>
-                    <div class="incident-calendar-day-count">2</div>
-                </div>
-
-                <div class="incident-calendar-day incident-calendar-day--critical" role="button" tabindex="0" aria-label="2026-08-16, 5 incidents">
-                    <div class="incident-calendar-day-number">16</div>
-                    <div class="incident-calendar-day-count">5</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-17, 0 incidents">
-                    <div class="incident-calendar-day-number">17</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-18, 0 incidents">
-                    <div class="incident-calendar-day-number">18</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-19, 0 incidents">
-                    <div class="incident-calendar-day-number">19</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-20, 0 incidents">
-                    <div class="incident-calendar-day-number">20</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-21, 0 incidents">
-                    <div class="incident-calendar-day-number">21</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-22, 0 incidents">
-                    <div class="incident-calendar-day-number">22</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-23, 0 incidents">
-                    <div class="incident-calendar-day-number">23</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-24, 0 incidents">
-                    <div class="incident-calendar-day-number">24</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-25, 0 incidents">
-                    <div class="incident-calendar-day-number">25</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-26, 0 incidents">
-                    <div class="incident-calendar-day-number">26</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-27, 0 incidents">
-                    <div class="incident-calendar-day-number">27</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-28, 0 incidents">
-                    <div class="incident-calendar-day-number">28</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-29, 0 incidents">
-                    <div class="incident-calendar-day-number">29</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-30, 0 incidents">
-                    <div class="incident-calendar-day-number">30</div>
-                </div>
-
-                <div class="incident-calendar-day" role="button" tabindex="0" aria-label="2026-08-31, 0 incidents">
-                    <div class="incident-calendar-day-number">31</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="incident-calendar-legend">
-            <span>Incident Count</span>
-            <span class="legend-level legend-level--0"></span>
-            <span class="legend-level legend-level--1"></span>
-            <span class="legend-level legend-level--2"></span>
-            <span class="legend-level legend-level--3"></span>
-            <span class="legend-level legend-level--4"></span>
-            <span>High Activity</span>
-        </div>
-
-        <div class="incident-selected-day" aria-live="polite" style="display: none !important;">
-
-            <div class="incident-selected-day-head">
-                <div>
-                    <div class="incident-insight-label">Selected Date</div>
-                    <div class="incident-selected-date">August 11, 2026</div>
-                </div>
-
-                <div class="incident-selected-total">
-                    <strong>3</strong>
-                    <span>Incidents</span>
-                </div>
-            </div>
-
-            <div class="incident-selected-details">
-
-                <div class="incident-detail-group">
-                    <div class="incident-detail-title">Incident Categories</div>
-
-                    <div class="incident-detail-row">
-                        <span>Exposure Incident</span>
-                        <strong>2</strong>
+            <div class="chart-panel chart-panel--wide incident-occurrence-panel">
+                <div class="chart-panel-head">
+                    <div>
+                        <h4>Incident Occurrence</h4>
                     </div>
-
-                    <div class="incident-detail-row">
-                        <span>Workplace Accident</span>
-                        <strong>1</strong>
+                    <div class="incident-calendar-controls">
+                        <button type="button" class="incident-calendar-btn" data-direction="prev" aria-label="Previous month">Previous</button>
+                        <span class="incident-calendar-month"><?= date('F Y', mktime(0, 0, 0, $incidentOccurrence['month'], 1, $incidentOccurrence['year'])) ?></span>
+                        <button type="button" class="incident-calendar-btn" data-direction="next" aria-label="Next month">Next</button>
                     </div>
                 </div>
-
-                <div class="incident-detail-group">
-                    <div class="incident-detail-title">Severity</div>
-
-                    <div class="incident-detail-row">
-                        <span>High</span>
-                        <strong>2</strong>
+                <div class="chart-panel-body">
+                    <?php
+                        $occTotal = (int)($incidentOccurrence['total'] ?? 0);
+                        $occActiveDays = (int)($incidentOccurrence['activeDays'] ?? 0);
+                        $occPeakDay = $incidentOccurrence['peakDay'] ?? null;
+                        $occPeakCount = (int)($incidentOccurrence['peakCount'] ?? 0);
+                        $occAverage = $incidentOccurrence['averagePerActiveDay'] ?? null;
+                        $occMissing = (int)($incidentOccurrence['missingCount'] ?? 0);
+                        $occYear = (int)($incidentOccurrence['year'] ?? date('Y'));
+                        $occMonth = (int)($incidentOccurrence['month'] ?? date('m'));
+                        $incidentDaysJson = json_encode($incidentOccurrence['days'] ?? []);
+                        $incidentCategoryFilter = '';
+                    ?>
+                    <div class="incident-calendar-summary">
+                        <div class="incident-summary-item">
+                            <div class="incident-summary-value"><?= number_format($occTotal) ?></div>
+                            <div class="incident-summary-label">Total Incidents</div>
+                        </div>
+                        <div class="incident-summary-item">
+                            <div class="incident-summary-value"><?= number_format($occActiveDays) ?></div>
+                            <div class="incident-summary-label">Active Days</div>
+                        </div>
+                        <div class="incident-summary-item">
+                            <div class="incident-summary-value"><?= $occPeakDay ? date('M d', strtotime($occPeakDay)) : '—' ?></div>
+                            <div class="incident-summary-label">Peak Day</div>
+                        </div>
+                        <div class="incident-summary-item">
+                            <div class="incident-summary-value"><?= number_format($occPeakCount) ?></div>
+                            <div class="incident-summary-label">Peak Count</div>
+                        </div>
                     </div>
 
-                    <div class="incident-detail-row">
-                        <span>Medium</span>
-                        <strong>1</strong>
+                    <div class="incident-calendar" data-year="<?= $incidentYear ?>" data-month="<?= $incidentMonth ?>" data-days='<?= htmlspecialchars($incidentDaysJson, ENT_QUOTES, 'UTF-8') ?>'>
+                        <div class="incident-calendar-weekdays">
+                            <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                        </div>
+                        <div class="incident-calendar-grid"></div>
+                    </div>
+
+                    <div class="incident-calendar-legend">
+                        <span>Less</span>
+                        <span class="legend-level legend-level--0"></span>
+                        <span class="legend-level legend-level--1"></span>
+                        <span class="legend-level legend-level--2"></span>
+                        <span class="legend-level legend-level--3"></span>
+                        <span class="legend-level legend-level--4"></span>
+                        <span>More</span>
+                    </div>
+
+                    <div class="incident-calendar-insight">
+                        <div class="incident-insight-label">Analytical Insight</div>
+                        <div class="incident-insight-text">
+                            <?php if ($occTotal === 0): ?>
+                                No incidents recorded for this period.
+                            <?php elseif ($occActiveDays > 0): ?>
+                                <?= number_format($occTotal) ?> incidents were recorded across <?= number_format($occActiveDays) ?> active days.
+                                <?php if ($occPeakDay && $occPeakCount > 0): ?>
+                                    Incident activity peaked on <?= date('F j', strtotime($occPeakDay)) ?> with <?= number_format($occPeakCount) ?> incidents.
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-
             </div>
-        </div>
-
-        <div class="incident-calendar-insight">
-
-            <div class="incident-insight-label">
-                Analytical Insight
-            </div>
-
-            <div class="incident-insight-text">
-                18 incidents were recorded across 8 active days.
-                Incident activity peaked on August 16 with 5 incidents.
-            </div>
-
-        </div>
-
-    </div>
-</div>
-
 
         <div class="dash-row dash-row--analytics dash-row--stacked">
             <div class="chart-panel chart-panel--wide priority-actions-panel">
