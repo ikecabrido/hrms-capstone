@@ -88,8 +88,9 @@ class Dashboard
     {
         try {
             if (!$this->conn) {
-                return 0;
-            }$total      = (int) $this->conn->query("SELECT COUNT(*) FROM em_documents")->fetchColumn();
+                return ['total' => 0, 'valid' => 0, 'rate' => 0, 'expiring30' => 0, 'expiring60' => 0, 'expiring90' => 0, 'expired' => 0];
+            }
+            $total      = (int) $this->conn->query("SELECT COUNT(*) FROM em_documents")->fetchColumn();
             $expired    = (int) $this->conn->query("
                 SELECT COUNT(*) FROM em_documents
                 WHERE expiry_date IS NOT NULL
@@ -123,8 +124,9 @@ class Dashboard
     {
         try {
             if (!$this->conn) {
-                return 0;
-            }$total            = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audits")->fetchColumn();
+                return ['total' => 0, 'completed' => 0, 'rate' => 0, 'openFindings' => 0, 'totalFindings' => 0, 'resolvedFindings' => 0, 'totalCorrective' => 0, 'completedCorrective' => 0];
+            }
+            $total            = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audits")->fetchColumn();
             $completed        = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audits WHERE status = 'Completed'")->fetchColumn();
             $openFindings     = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audit_findings WHERE status IN ('Open', 'In Progress', 'Escalated')")->fetchColumn();
             $totalFindings    = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audit_findings")->fetchColumn();
