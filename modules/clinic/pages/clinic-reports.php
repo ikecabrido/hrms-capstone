@@ -1,5 +1,5 @@
 <div class="clinic-reports-module module-content">
-    <div class="module-header"><div><span class="report-kicker">HR CLINIC MANAGEMENT SYSTEM</span><h1>Generate Clinic Report</h1><p>Employee clinic visits by day, week, or month.</p></div></div>
+    <div class="module-header"><div><h1>Generate Clinic Report</h1><p>Employee clinic visits by day, week, or month.</p></div></div>
     <div id="reportsMessage" class="module-message" role="alert" hidden></div>
     <section class="report-builder section-card">
         <div class="report-builder-heading"><div><span class="section-eyebrow">Report builder</span><h2>Clinic Visit Reports</h2></div><i class="fa-solid fa-chart-line"></i></div>

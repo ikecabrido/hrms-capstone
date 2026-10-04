@@ -102,7 +102,7 @@ $clinicJsVersion = is_file($clinicJsFile) ? (string) filemtime($clinicJsFile) : 
         </article>
     </div>
 
-    <div class="dash-grid dash-grid--2col">
+    <div class="dash-grid dash-grid--1col">
         <section class="dash-panel">
             <div class="panel-header">
                 <h2><i class="fa-solid fa-chart-line"></i> Patient Visits Overview</h2>
@@ -146,25 +146,6 @@ $clinicJsVersion = is_file($clinicJsFile) ? (string) filemtime($clinicJsFile) : 
             </div>
         </section>
 
-        <section class="dash-panel">
-            <div class="panel-header panel-header--link">
-                <h2><i class="fa-regular fa-calendar-check"></i> Upcoming Appointments</h2>
-                <a href="?page=medical-records-history" class="view-all">View All</a>
-            </div>
-            <ul class="appointment-list" id="appointmentList">
-                <?php foreach ($clinicData['upcoming_appointments'] as $a): ?>
-                <li class="appointment-item">
-                    <span class="appointment-time"><?= date('h:i A', strtotime($a['appointment_time'])) ?></span>
-                    <span class="appointment-name"><?= htmlspecialchars($a['patient_name'] ?: 'Unknown patient') ?></span>
-                    <span class="appointment-purpose"><?= htmlspecialchars($a['purpose']) ?></span>
-                    <span class="appointment-badge"><?= htmlspecialchars($a['status']) ?></span>
-                </li>
-                <?php endforeach; ?>
-                <?php if (empty($clinicData['upcoming_appointments'])): ?>
-                <li class="empty-dash"><i class="fa-regular fa-calendar-xmark"></i> No upcoming appointments.</li>
-                <?php endif; ?>
-            </ul>
-        </section>
     </div>
 
     <div class="dash-grid dash-grid--3col">

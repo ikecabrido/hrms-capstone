@@ -1,6 +1,9 @@
 .emergency-cases-module {
     display: block;
     width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
     color: #0f172a;
 }
 
@@ -8,6 +11,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    text-align: left;
     gap: 1.25rem;
     flex-wrap: wrap;
     margin-bottom: 1.5rem;
@@ -23,19 +27,20 @@
 .emergency-cases-module .module-header > div {
     flex: 1 1 auto;
     min-width: 0;
+    text-align: left;
 }
 
 .emergency-cases-module .module-header h1 {
     margin: 0;
     color: #0f172a;
     font-size: clamp(1.75rem, 2.2vw, 2.5rem);
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
     line-height: 1.15;
     font-weight: 800;
 }
 
 .emergency-cases-module .module-header p {
-    margin: 0.55rem 0 0;
+    margin: 0.25rem 0 0;
     color: #475569;
     font-size: 0.98rem;
 }
@@ -178,34 +183,36 @@
 }
 
 .emergency-cases-module .table-wrapper {
-    overflow-x: auto;
+    overflow-x: hidden;
 }
 
 .emergency-cases-module table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1200px;
+    min-width: 0;
+    table-layout: fixed;
 }
 
 .emergency-cases-module th,
 .emergency-cases-module td {
     text-align: left;
-    padding: 0.9rem 0.8rem;
+    padding: 0.7rem 0.5rem;
     border-bottom: 1px solid #edf2f7;
     vertical-align: top;
+    overflow-wrap: anywhere;
 }
 
 .emergency-cases-module th {
     background: #f8fafc;
     color: #475569;
-    font-size: 0.83rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
 }
 
 .emergency-cases-module td {
     color: #334155;
-    font-size: 0.95rem;
+    font-size: 0.78rem;
 }
 
 .emergency-cases-module .case-patient-meta {
@@ -717,16 +724,16 @@
 
 .emergency-cases-module .module-header .primary-btn {
     border-radius: 16px;
-    min-height: 52px;
-    padding: 0.75rem 1.75rem;
-    font-size: 1rem;
+    min-height: 46px;
+    padding: 0.6rem 1.35rem;
+    font-size: 0.95rem;
     font-weight: 800;
     gap: 0.6rem;
     background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
     border-color: #1e40af;
     box-shadow:
-        0 22px 55px rgba(37, 99, 235, 0.42),
-        0 10px 22px rgba(37, 99, 235, 0.25),
+        0 10px 24px rgba(37, 99, 235, 0.28),
+        0 5px 12px rgba(37, 99, 235, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.22);
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     position: relative;
@@ -743,7 +750,7 @@
 }
 
 .emergency-cases-module .module-header .primary-btn i {
-    font-size: 1.35rem;
+    font-size: 1.15rem;
     font-weight: 900;
 }
 

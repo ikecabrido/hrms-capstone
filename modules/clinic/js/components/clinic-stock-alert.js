@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var POLL_INTERVAL_SECONDS = 30;
+    var POLL_INTERVAL_SECONDS = 10;
     var DISMISS_TTL_MS = 10 * 1000;
     var STORAGE_KEY = 'clinic_stock_alert_dismissed_until';
     var LAST_HASH_KEY = 'clinic_stock_alert_last_hash';
@@ -416,7 +416,7 @@
         }
         window.addEventListener('page:loaded', function () {
             ensureDom();
-            setTimeout(function () { runOnce(false); }, 50);
+            setTimeout(function () { runOnce(true); }, 50);
         });
         document.addEventListener('keydown', function (ev) {
             if (ev.key === 'Escape') {

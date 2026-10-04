@@ -300,6 +300,10 @@
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
 }
 
+.dash-grid--1col {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 .dash-grid--3col {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }

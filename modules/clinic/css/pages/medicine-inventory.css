@@ -6,31 +6,33 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    text-align: left;
     gap: 1.25rem;
     margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    border: 1px solid rgba(59, 130, 246, 0.18);
-    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.08);
-    padding: 1.5rem;
-    border-radius: 16px;
+    background: #ffffff;
+    border: 0;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+    padding: 1.5rem 1.75rem;
+    border-radius: 0 0 8px 8px;
     flex-wrap: wrap;
 }
 
 .medicine-inventory-module .module-header > div {
     flex: 1 1 auto;
     min-width: 0;
+    text-align: left;
 }
 
 .medicine-inventory-module .module-header h1 {
     margin: 0;
     color: #0f172a;
     font-size: clamp(1.7rem, 2vw, 2.3rem);
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
     line-height: 1.2;
 }
 
 .medicine-inventory-module .module-header p {
-    margin: 0.5rem 0 0;
+    margin: 0.25rem 0 0;
     color: #475569;
     font-size: 0.96rem;
 }
@@ -147,35 +149,36 @@
 }
 
 .table-wrapper {
-    overflow-x: auto;
+    overflow-x: hidden;
     overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
 }
 
 .inventory-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 1200px;
+    min-width: 0;
+    table-layout: fixed;
 }
 
 .inventory-table th,
 .inventory-table td {
-    padding: 1.05rem 1rem;
+    padding: 0.85rem 0.6rem;
     border-bottom: 1px solid #e2e8f0;
     text-align: left;
     vertical-align: middle;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
     text-overflow: ellipsis;
 }
 
 .inventory-table th {
     background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%);
     color: #ffffff;
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
     font-weight: 800;
-    padding: 1.1rem 1rem;
+    padding: 0.85rem 0.6rem;
 }
 
 .inventory-table tbody tr {
@@ -193,73 +196,67 @@
 }
 
 .inventory-table td {
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     color: #0f172a;
 }
 
 .inventory-table td.medicine-id {
     font-weight: 700;
     color: #1d4ed8;
-    width: 110px;
-    min-width: 110px;
-    max-width: 110px;
+    width: 7%;
+    min-width: 0;
+    max-width: none;
 }
 
 .inventory-table td.medicine-name {
     font-weight: 600;
-    width: 150px;
-    min-width: 150px;
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    width: 12%;
+    min-width: 0;
+    max-width: none;
 }
 
 .inventory-table td.generic-name {
     color: #64748b;
-    width: 140px;
-    min-width: 140px;
-    max-width: 140px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    width: 13%;
+    min-width: 0;
+    max-width: none;
 }
 
 .inventory-table td.category {
-    width: 110px;
-    min-width: 110px;
-    max-width: 110px;
+    width: 12%;
+    min-width: 0;
+    max-width: none;
 }
 
 .inventory-table td.dosage {
-    width: 130px;
-    min-width: 130px;
-    max-width: 130px;
+    width: 14%;
+    min-width: 0;
+    max-width: none;
 }
 
 .inventory-table td.stock {
-    width: 110px;
-    min-width: 110px;
-    max-width: 110px;
+    width: 10%;
+    min-width: 0;
+    max-width: none;
 }
 
 .inventory-table td.expiry {
-    width: 120px;
-    min-width: 120px;
-    max-width: 120px;
+    width: 11%;
+    min-width: 0;
+    max-width: none;
 }
 
 .inventory-table td.supplier {
     color: #64748b;
-    width: 120px;
-    min-width: 120px;
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    width: 10%;
+    min-width: 0;
+    max-width: none;
 }
 
 .inventory-table td.status {
-    width: 100px;
-    min-width: 100px;
-    max-width: 100px;
+    width: 11%;
+    min-width: 0;
+    max-width: none;
 }
 
 
@@ -700,7 +697,7 @@ button:disabled {
 
 @media (max-width: 1024px) {
     .inventory-table {
-        min-width: 1100px;
+        min-width: 0;
     }
 
     .small-btn {
