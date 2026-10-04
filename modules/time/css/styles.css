@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Mozilla+Headline:wght@200..700&display=swap');
 
+/*Base CSS*/
+@import url('base/variables.css');
+@import url('base/reset.css');
+@import url('base/global.css');
+
 /*Components CSS*/
 @import url('components/dropdown.css');
 
@@ -10,16 +15,5 @@
 @import url('layout/module-container.css');
 
 /*Pages CSS*/
-@import url('pages/dashboard-overview.css');
-@import url('pages/user-management.css');
-@import url('pages/department-unit-management.css');
-@import url('pages/approval-decision-support.css');
-@import url('pages/communications-announcements.css');
-@import url('pages/report-submission-management.css');
-@import url('pages/concerns-issue-tracking.css');
-
-/*Base CSS*/
-@import url('base/variables.css');
-@import url('base/reset.css');
-@import url('base/global.css');
+/* Time module's page-specific stylesheets are linked inline per-page from assets/css/ */
 

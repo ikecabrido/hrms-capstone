@@ -17,6 +17,8 @@
 @import url("pages/deduction.css");
 @import url("pages/reports.css");
 @import url("pages/final-settlement.css");
+@import url("pages/profile-settings.css");
+@import url("pages/change-password.css");
 
 /*Base CSS*/
 @import url("base/variables.css");

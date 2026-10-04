@@ -3,7 +3,40 @@ class PayrollModel
 {
     private PDO $db;
     private ?PDO $smsDb;
-    private const ABSENCE_DEDUCTION = 1000.00;
+    private const NON_TEACHING_DAYS_PER_MONTH = 26;
+    private const FULL_TIME_REGULAR_LOAD = 30;
+    private const FULL_TIME_MAX_LOAD = 45;
+    private const PART_TIME_MAX_LOAD = 15;
+
+    /**
+     * Auto-classifies em_positions.position_name into 'teaching' vs
+     * 'non-teaching' by keyword, so payroll can pick the correct
+     * pr_position_deduction_rates row (position_type 'Teacher' vs
+     * 'Other') without a category column on em_positions, and
+     * without needing a code update every time a new position is
+     * added.
+     *
+     * Rule: if the position name contains any of these keywords
+     * (case-insensitive), it's 'teaching'. Every current teaching
+     * position name (Instructor, Professor, etc.) matches this.
+     */
+    private const TEACHING_KEYWORDS = [
+        'instructor',
+        'professor',
+    ];
+
+    /**
+     * Exact-name overrides for positions the keyword rule would
+     * misclassify — e.g. a support role whose title happens to
+     * contain "Instructor" but isn't actually a teaching load, or
+     * a teaching role whose title doesn't contain a teaching
+     * keyword. Add entries here as those cases come up; checked
+     * before the keyword rule. Empty for now — none of the current
+     * positions need an override.
+     *
+     * Example: 'Laboratory Instructor' => 'non-teaching',
+     */
+    private const POSITION_OVERRIDES = [];
     /**
      * $db    = HRIS/payroll database
      * $smsDb = SMS database containing faculty schedules/subjects
@@ -53,12 +86,15 @@ class PayrollModel
                 e.last_name,
                 e.email,
                 e.position_id,
+                p.position_name,
                 e.employment_status,
                 e.employment_type,
                 e.unit_load,
                 e.graduate_level,
                 e.negotiated_salary
             FROM em_employees e
+            LEFT JOIN em_positions p
+                ON p.position_id = e.position_id
             WHERE e.employment_status = 'Active'
               AND e.is_archived = 0
             ORDER BY e.last_name, e.first_name
@@ -68,9 +104,13 @@ class PayrollModel
     public function getEmployee(int $employeeId): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT *
-            FROM em_employees
-            WHERE employee_id = :employee_id
+            SELECT
+                e.*,
+                p.position_name
+            FROM em_employees e
+            LEFT JOIN em_positions p
+                ON p.position_id = e.position_id
+            WHERE e.employee_id = :employee_id
             LIMIT 1
         ");
         $stmt->execute([
@@ -78,6 +118,36 @@ class PayrollModel
         ]);
         $employee = $stmt->fetch(PDO::FETCH_ASSOC);
         return $employee ?: null;
+    }
+    /**
+     * Classify a position name as 'teaching' or 'non-teaching'.
+     *
+     * 1. Check POSITION_OVERRIDES for an exact-name override.
+     * 2. Otherwise, 'teaching' if the name contains any
+     *    TEACHING_KEYWORDS (case-insensitive), else 'non-teaching'.
+     *
+     * Returns 'unknown' only when there's no position name at all
+     * (e.g. employee has no position_id set), in which case the
+     * caller falls back to the employee's faculty-schedule status.
+     */
+    private function classifyPosition(?string $positionName): string
+    {
+        if ($positionName === null || trim($positionName) === '') {
+            return 'unknown';
+        }
+        $normalized = strtolower(trim($positionName));
+
+        foreach (self::POSITION_OVERRIDES as $name => $group) {
+            if (strtolower($name) === $normalized) {
+                return $group;
+            }
+        }
+        foreach (self::TEACHING_KEYWORDS as $keyword) {
+            if (strpos($normalized, $keyword) !== false) {
+                return 'teaching';
+            }
+        }
+        return 'non-teaching';
     }
     public function getTimeAttendanceMetrics(
         int $employeeId,
@@ -156,188 +226,15 @@ class PayrollModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     /* ============================================================
-   ABSENCE DEDUCTION
-   ============================================================ */
-    /**
-     * Get absence records for an employee during a payroll period.
-     */
-    private function getAbsenceRecords(
-        int $employeeId,
-        string $startDate,
-        string $endDate
-    ): array {
-        $stmt = $this->db->prepare("
-        SELECT
-            record_id,
-            absence_date,
-            type,
-            excuse_status,
-            reason,
-            approval_notes
-        FROM ta_absence_late_records
-        WHERE employee_id = :employee_id
-          AND absence_date BETWEEN :start_date AND :end_date
-          AND type = 'ABSENT'
-        ORDER BY absence_date ASC
-    ");
-        $stmt->execute([
-            ':employee_id' => $employeeId,
-            ':start_date' => $startDate,
-            ':end_date' => $endDate
-        ]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-    /**
-     * Check whether an employee has an approved excuse
-     * for a specific absence date.
-     */
-    private function hasApprovedAbsenceExcuse(
-        int $employeeId,
-        string $date
-    ): bool {
-        $stmt = $this->db->prepare("
-        SELECT COUNT(*)
-        FROM ta_absence_late_records
-        WHERE employee_id = :employee_id
-          AND absence_date = :absence_date
-          AND type = 'ABSENT'
-          AND excuse_status = 'APPROVED'
-    ");
-        $stmt->execute([
-            ':employee_id' => $employeeId,
-            ':absence_date' => $date
-        ]);
-        return (int)$stmt->fetchColumn() > 0;
-    }
-    /**
-     * Get actual unexcused absences for payroll deduction.
-     *
-     * An absence is deductible when:
-     *
-     * 1. ta_attendance says ABSENT
-     * 2. The attendance record is approved
-     * 3. There is no APPROVED excuse in
-     *    ta_absence_late_records
-     *
-     * Deduction:
-     * ₱1,000 per unexcused absence.
-     */
-    private function getUnexcusedAbsences(
-        int $employeeId,
-        string $startDate,
-        string $endDate
-    ): array {
-        $stmt = $this->db->prepare("
-        SELECT
-            attendance_id,
-            attendance_date,
-            status
-        FROM ta_attendance
-        WHERE employee_id = :employee_id
-          AND attendance_date BETWEEN :start_date AND :end_date
-          AND status = 'ABSENT'
-          AND is_approved = 1
-        ORDER BY attendance_date ASC
-    ");
-        $stmt->execute([
-            ':employee_id' => $employeeId,
-            ':start_date' => $startDate,
-            ':end_date' => $endDate
-        ]);
-        $attendanceAbsences =
-            $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        /*
-     * Get approved leaves for the payroll period once.
-     * This avoids repeatedly querying the leave tables
-     * for every absence date.
-     */
-        $approvedLeaveDates =
-            $this->getApprovedLeaveDates(
-                $employeeId,
-                $startDate,
-                $endDate
-            );
-        $unexcused = [];
-        foreach ($attendanceAbsences as $absence) {
-            $date = $absence['attendance_date'];
-            /*
-         * ========================================================
-         * 1. CHECK APPROVED LEAVE
-         * ========================================================
-         */
-            if (isset($approvedLeaveDates[$date])) {
-                $leave = $approvedLeaveDates[$date];
-                /*
-             * Non-deductible approved leave means the employee
-             * was legitimately on leave and should NOT receive
-             * an absence deduction.
-             *
-             * Deductible leave is handled separately through
-             * calculateLeaveDeduction().
-             */
-                if ($leave['is_deductible'] == 0) {
-                    continue;
-                }
-                /*
-             * If the leave is deductible, do not add this as
-             * an ordinary absence because the leave deduction
-             * will be recorded separately.
-             */
-                if ($leave['is_deductible'] == 1) {
-                    continue;
-                }
-            }
-            /*
-         * ========================================================
-         * 2. CHECK APPROVED ABSENCE EXCUSE
-         * ========================================================
-         */
-            if (
-                $this->hasApprovedAbsenceExcuse(
-                    $employeeId,
-                    $date
-                )
-            ) {
-                continue;
-            }
-            /*
-         * ========================================================
-         * 3. ORDINARY UNEXCUSED ABSENCE
-         * ========================================================
-         */
-            $unexcused[] = [
-                'attendance_id' =>
-                (int)$absence['attendance_id'],
-                'date' =>
-                $date,
-                'deduction' =>
-                self::ABSENCE_DEDUCTION
-            ];
-        }
-        return $unexcused;
-    }
-    /**
-     * Calculate total absence deduction for the payroll period.
-     */
-    private function calculateAbsenceDeduction(
-        int $employeeId,
-        string $startDate,
-        string $endDate
-    ): array {
-        $absences = $this->getUnexcusedAbsences(
-            $employeeId,
-            $startDate,
-            $endDate
-        );
-        $total = count($absences) * self::ABSENCE_DEDUCTION;
-        return [
-            'absence_count' => count($absences),
-            'rate_per_absence' => self::ABSENCE_DEDUCTION,
-            'total_deduction' => round($total, 2),
-            'records' => $absences
-        ];
-    }
+       LEAVE LOOKUP
+       ============================================================
+       Note: this model no longer uses a flat per-absence/per-leave
+       peso deduction. Absence and leave are now handled by simply
+       not generating earnings for unworked, non-leave, non-holiday
+       days (see calculateFacultyDailyPay() and
+       calculateRegularPayroll()). getApprovedLeaves() is kept
+       because getApprovedPaidLeaveDates() still depends on it.
+       ============================================================ */
     private function getApprovedLeaves(
         int $employeeId,
         string $startDate,
@@ -372,114 +269,6 @@ class PayrollModel
         ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    /**
-     * Get approved leave dates for an employee during a payroll period.
-     *
-     * The returned dates are clipped to the payroll period so that
-     * leave outside the payroll period does not affect payroll.
-     */
-    private function getApprovedLeaveDates(
-        int $employeeId,
-        string $startDate,
-        string $endDate
-    ): array {
-        $leaves = $this->getApprovedLeaves(
-            $employeeId,
-            $startDate,
-            $endDate
-        );
-        $leaveDates = [];
-        foreach ($leaves as $leave) {
-            $leaveStart = max(
-                $leave['start_date'],
-                $startDate
-            );
-            $leaveEnd = min(
-                $leave['end_date'],
-                $endDate
-            );
-            $current = new DateTime($leaveStart);
-            $end = new DateTime($leaveEnd);
-            while ($current <= $end) {
-                $date = $current->format('Y-m-d');
-                $leaveDates[$date] = [
-                    'leave_request_id' =>
-                    (int)$leave['leave_request_id'],
-                    'leave_type_id' =>
-                    (int)$leave['leave_type_id'],
-                    'leave_type_name' =>
-                    $leave['leave_type_name'],
-                    'is_deductible' =>
-                    (int)$leave['is_deductible']
-                ];
-                $current->modify('+1 day');
-            }
-        }
-        return $leaveDates;
-    }
-    /**
-     * Calculate leave deduction during a payroll period.
-     *
-     * Only approved deductible leaves are included here.
-     *
-     * The current system uses ₱1,000 as the absence deduction rate,
-     * so deductible leave uses the same rate for now.
-     */
-    private function calculateLeaveDeduction(
-        int $employeeId,
-        string $startDate,
-        string $endDate
-    ): array {
-        $leaveDates = $this->getApprovedLeaveDates(
-            $employeeId,
-            $startDate,
-            $endDate
-        );
-        $deductibleLeaves = [];
-        $nonDeductibleLeaves = [];
-        foreach ($leaveDates as $date => $leave) {
-            if ($leave['is_deductible'] == 1) {
-                $deductibleLeaves[] = [
-                    'date' => $date,
-                    'leave_request_id' =>
-                    $leave['leave_request_id'],
-                    'leave_type_id' =>
-                    $leave['leave_type_id'],
-                    'leave_type_name' =>
-                    $leave['leave_type_name'],
-                    'deduction' =>
-                    self::ABSENCE_DEDUCTION
-                ];
-            } else {
-                $nonDeductibleLeaves[] = [
-                    'date' => $date,
-                    'leave_request_id' =>
-                    $leave['leave_request_id'],
-                    'leave_type_id' =>
-                    $leave['leave_type_id'],
-                    'leave_type_name' =>
-                    $leave['leave_type_name']
-                ];
-            }
-        }
-        $totalDeduction =
-            count($deductibleLeaves)
-            * self::ABSENCE_DEDUCTION;
-        return [
-            'deductible_leave_count' =>
-            count($deductibleLeaves),
-            'non_deductible_leave_count' =>
-            count($nonDeductibleLeaves),
-            'rate_per_leave' =>
-            self::ABSENCE_DEDUCTION,
-            'total_deduction' =>
-            round($totalDeduction, 2),
-            'deductible_records' =>
-            $deductibleLeaves,
-            'non_deductible_records' =>
-            $nonDeductibleLeaves
-        ];
-    }
     /* ============================================================
        FACULTY SCHEDULE / UNITS
        ============================================================ */
@@ -488,58 +277,34 @@ class PayrollModel
      * Find the SMS faculty record corresponding to the HR employee.
      *
      * Current bridge:
-     * em_employees.email = sms.cc_faculty.email
-     *
-     * This is being used because cc_faculty does not contain
-     * employee_id in the supplied SMS schema.
+     * cc_faculty.employee_id = em_employees.employee_id
      */
     private function getSmsFaculty(int $employeeId): ?array
     {
         if (!$this->smsDb) {
             return null;
         }
-        $stmt = $this->db->prepare("
-            SELECT email
-            FROM em_employees
+
+        // The current SMS schema contains a direct employee_id bridge.
+        $stmt = $this->smsDb->prepare("
+            SELECT
+                id,
+                employee_id,
+                faculty_code,
+                first_name,
+                last_name,
+                email
+            FROM cc_faculty
             WHERE employee_id = :employee_id
             LIMIT 1
         ");
         $stmt->execute([
             ':employee_id' => $employeeId
         ]);
-        $email = $stmt->fetchColumn();
-        if (!$email) {
-            return null;
-        }
-        $stmt = $this->smsDb->prepare("
-            SELECT
-                id,
-                faculty_code,
-                first_name,
-                last_name,
-                email
-            FROM cc_faculty
-            WHERE email = :email
-            LIMIT 1
-        ");
-        $stmt->execute([
-            ':email' => $email
-        ]);
+
         $faculty = $stmt->fetch(PDO::FETCH_ASSOC);
         return $faculty ?: null;
     }
-    /**
-     * Get recurring faculty schedule from SMS.
-     *
-     * cc_schedule contains:
-     * - faculty_id
-     * - subject_id
-     * - day_of_week
-     * - start_time
-     * - end_time
-     * - school_year_id
-     * - semester_id
-     */
     public function getFacultySchedule(
         int $employeeId,
         ?int $schoolYearId = null,
@@ -555,6 +320,7 @@ class PayrollModel
         $sql = "
             SELECT
                 s.id AS schedule_id,
+                s.faculty_load_id,
                 s.day_of_week,
                 s.start_time,
                 s.end_time,
@@ -632,6 +398,130 @@ class PayrollModel
      * daily faculty pay =
      * daily units × qualification rate
      */
+    /**
+     * Return the faculty load classification for the current teaching
+     * assignment. The College Coordinator rule is:
+     *
+     * Full-time: first 30 units are regular; assignments after 30 units
+     * are overload, up to a maximum total load of 45 units.
+     * Part-time: maximum 15 regular units and no overload.
+     *
+     * A whole subject assignment is classified as regular or overload;
+     * a subject is never split between the two categories.
+     */
+    private function getFacultyLoadClassification(
+        int $employeeId,
+        ?int $schoolYearId = null,
+        ?int $semesterId = null
+    ): array {
+        if (!$this->smsDb) {
+            return [];
+        }
+
+        $faculty = $this->getSmsFaculty($employeeId);
+        if (!$faculty) {
+            return [];
+        }
+
+        $employee = $this->getEmployee($employeeId);
+        if (!$employee) {
+            return [];
+        }
+
+        $sql = "
+            SELECT
+                fl.id AS faculty_load_id,
+                fl.section_id,
+                fl.subject_id,
+                fl.school_year_id,
+                fl.semester_id,
+                sub.code AS subject_code,
+                sub.name AS subject_name,
+                sub.units
+            FROM cc_faculty_load fl
+            LEFT JOIN rgr_subjects sub
+                ON sub.id = fl.subject_id
+            WHERE fl.faculty_id = :faculty_id
+        ";
+        $params = [':faculty_id' => (int)$faculty['id']];
+
+        if ($schoolYearId !== null) {
+            $sql .= " AND fl.school_year_id = :school_year_id";
+            $params[':school_year_id'] = $schoolYearId;
+        }
+        if ($semesterId !== null) {
+            $sql .= " AND fl.semester_id = :semester_id";
+            $params[':semester_id'] = $semesterId;
+        }
+
+        $sql .= " ORDER BY fl.id ASC";
+        $stmt = $this->smsDb->prepare($sql);
+        $stmt->execute($params);
+        $loads = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $classification = [];
+        $regularLimit = $employee['employment_type'] === 'Part-time'
+            ? self::PART_TIME_MAX_LOAD
+            : self::FULL_TIME_REGULAR_LOAD;
+        $maxLoad = $employee['employment_type'] === 'Part-time'
+            ? self::PART_TIME_MAX_LOAD
+            : self::FULL_TIME_MAX_LOAD;
+
+        $cumulativeUnits = 0.0;
+
+        foreach ($loads as $load) {
+            $units = (float)($load['units'] ?? 0);
+            if ($units <= 0) {
+                continue;
+            }
+
+            // The entire next subject becomes overload once the regular
+            // threshold has been reached or would be crossed.
+            $isOverload = false;
+            if ($employee['employment_type'] === 'Full-time') {
+                $isOverload = $cumulativeUnits >= $regularLimit;
+            }
+
+            // Never allow an assignment beyond the maximum load to become
+            // payable. It is retained as invalid/excess for validation.
+            $isExcess = ($cumulativeUnits + $units) > $maxLoad;
+
+            $classification[(int)$load['faculty_load_id']] = [
+                'classification' => $isOverload ? 'overload' : 'regular',
+                'is_excess' => $isExcess,
+                'units' => $units,
+                'subject_code' => $load['subject_code'] ?? null,
+                'subject_name' => $load['subject_name'] ?? null,
+                'section_id' => $load['section_id'] ?? null,
+                'subject_id' => $load['subject_id'] ?? null
+            ];
+
+            // Once the max load is reached, subsequent assignments remain
+            // invalid/excess and are not payable.
+            $cumulativeUnits += $units;
+        }
+
+        return [
+            'assignments' => $classification,
+            'regular_limit' => $regularLimit,
+            'max_load' => $maxLoad,
+            'total_assigned_units' => $cumulativeUnits
+        ];
+    }
+
+    /**
+     * Calculates faculty pay using scheduled teaching hours and the
+     * qualification rate stored in pr_teacher_qualification_rates.pay_per_unit.
+     *
+     * In the revised payroll rule, that database value is interpreted as
+     * the configured hourly rate. The column is retained for compatibility
+     * with the current database schema.
+     *
+     * Normal teaching days: actual approved attendance hours are paid,
+     * with regular-load hours consumed before overload hours.
+     * Approved leave and paid holidays: regular scheduled hours are paid;
+     * overload hours are not paid for those dates.
+     */
     public function calculateFacultyDailyPay(
         int $employeeId,
         string $date,
@@ -643,37 +533,146 @@ class PayrollModel
             return [
                 'date' => $date,
                 'classes' => [],
-                'total_units' => 0,
-                'rate_per_unit' => 0,
-                'gross' => 0
+                'regular_hours' => 0,
+                'overload_hours' => 0,
+                'total_hours' => 0,
+                'hourly_rate' => 0,
+                'regular_gross' => 0,
+                'overload_gross' => 0,
+                'gross' => 0,
+                'is_holiday' => false,
+                'is_paid_leave' => false
             ];
         }
+
         $classes = $this->getFacultyClassesForDate(
             $employeeId,
             $date,
             $schoolYearId,
             $semesterId
         );
-        $totalUnits = 0;
+
+        $loadInfo = $this->getFacultyLoadClassification(
+            $employeeId,
+            $schoolYearId,
+            $semesterId
+        );
+        $assignments = $loadInfo['assignments'] ?? [];
+
+        $regularScheduledHours = 0.0;
+        $overloadScheduledHours = 0.0;
+        $classifiedClasses = [];
+
         foreach ($classes as $class) {
-            $totalUnits += (float)($class['units'] ?? 0);
+            $start = $class['start_time'] ?? null;
+            $end = $class['end_time'] ?? null;
+            if (!$start || !$end) {
+                continue;
+            }
+
+            $startTs = strtotime($date . ' ' . $start);
+            $endTs = strtotime($date . ' ' . $end);
+            if ($startTs === false || $endTs === false || $endTs <= $startTs) {
+                continue;
+            }
+
+            $hours = ($endTs - $startTs) / 3600;
+            $classification = 'regular';
+            $isExcess = false;
+
+            $facultyLoadId = isset($class['faculty_load_id'])
+                ? (int)$class['faculty_load_id']
+                : 0;
+
+            if ($facultyLoadId > 0 && isset($assignments[$facultyLoadId])) {
+                $classification = $assignments[$facultyLoadId]['classification'];
+                $isExcess = (bool)$assignments[$facultyLoadId]['is_excess'];
+            } else {
+                // Current test data may contain schedule rows without a
+                // faculty_load_id. Match by subject/section where possible.
+                foreach ($assignments as $assignment) {
+                    if ((int)($assignment['subject_id'] ?? 0) !== (int)($class['subject_id'] ?? 0)) {
+                        continue;
+                    }
+                    if (
+                        $assignment['section_id'] !== null &&
+                        $class['section_id'] !== null &&
+                        (int)$assignment['section_id'] !== (int)$class['section_id']
+                    ) {
+                        continue;
+                    }
+                    $classification = $assignment['classification'];
+                    $isExcess = (bool)$assignment['is_excess'];
+                    break;
+                }
+            }
+
+            if ($isExcess) {
+                continue;
+            }
+
+            if ($classification === 'overload') {
+                $overloadScheduledHours += $hours;
+            } else {
+                $regularScheduledHours += $hours;
+            }
+
+            $class['scheduled_hours'] = round($hours, 2);
+            $class['load_classification'] = $classification;
+            $classifiedClasses[] = $class;
         }
-        $rate = $this->getQualificationRate(
+
+        $isHoliday = $this->isPaidHoliday($date);
+        $isPaidLeave = $this->isPaidLeaveDate(
+            $employeeId,
+            $date
+        );
+
+        if ($isHoliday || $isPaidLeave) {
+            // Paid holiday/leave covers regular teaching load only.
+            $regularHours = $regularScheduledHours;
+            $overloadHours = 0.0;
+        } else {
+            $attendance = $this->getDailyApprovedAttendance(
+                $employeeId,
+                $date
+            );
+            $attendedHours = $attendance['hours'];
+
+            // Regular teaching hours are paid first. Any remaining actual
+            // approved hours may be applied to eligible overload hours.
+            $regularHours = min($attendedHours, $regularScheduledHours);
+            $remainingHours = max(0.0, $attendedHours - $regularHours);
+            $overloadHours = min($remainingHours, $overloadScheduledHours);
+        }
+
+        $hourlyRate = $this->getFacultyHourlyRate(
             $employee['graduate_level']
         );
-        $gross = $totalUnits * $rate;
+
+        $regularGross = $regularHours * $hourlyRate;
+        $overloadGross = $overloadHours * $hourlyRate;
+        $gross = $regularGross + $overloadGross;
+
         return [
             'date' => $date,
-            'classes' => $classes,
-            'total_units' => $totalUnits,
-            'rate_per_unit' => $rate,
-            'qualification' => $employee['graduate_level'],
-            'gross' => round($gross, 2)
+            'classes' => $classifiedClasses,
+            'regular_hours' => round($regularHours, 2),
+            'overload_hours' => round($overloadHours, 2),
+            'total_hours' => round($regularHours + $overloadHours, 2),
+            'scheduled_regular_hours' => round($regularScheduledHours, 2),
+            'scheduled_overload_hours' => round($overloadScheduledHours, 2),
+            'hourly_rate' => $hourlyRate,
+            'regular_gross' => round($regularGross, 2),
+            'overload_gross' => round($overloadGross, 2),
+            'gross' => round($gross, 2),
+            'is_holiday' => $isHoliday,
+            'is_paid_leave' => $isPaidLeave,
+            'qualification' => $employee['graduate_level'] ?? 'None'
         ];
     }
-    /**
-     * Calculate all faculty teaching earnings for a payroll period.
-     */
+
+    /** Get faculty earnings for the complete payroll period. */
     public function calculateFacultyPeriodEarnings(
         int $employeeId,
         string $startDate,
@@ -684,8 +683,10 @@ class PayrollModel
         $days = [];
         $current = new DateTime($startDate);
         $end = new DateTime($endDate);
-        $totalUnits = 0;
-        $totalGross = 0;
+        $totalRegularHours = 0.0;
+        $totalOverloadHours = 0.0;
+        $totalGross = 0.0;
+
         while ($current <= $end) {
             $date = $current->format('Y-m-d');
             $daily = $this->calculateFacultyDailyPay(
@@ -694,41 +695,105 @@ class PayrollModel
                 $schoolYearId,
                 $semesterId
             );
-            if ($daily['total_units'] > 0) {
+
+            if ($daily['total_hours'] > 0 || $daily['is_holiday'] || $daily['is_paid_leave']) {
                 $days[] = $daily;
-                $totalUnits += $daily['total_units'];
+                $totalRegularHours += $daily['regular_hours'];
+                $totalOverloadHours += $daily['overload_hours'];
                 $totalGross += $daily['gross'];
             }
+
             $current->modify('+1 day');
         }
+
         return [
             'days' => $days,
-            'total_units' => $totalUnits,
+            'total_regular_hours' => round($totalRegularHours, 2),
+            'total_overload_hours' => round($totalOverloadHours, 2),
+            'total_hours' => round($totalRegularHours + $totalOverloadHours, 2),
             'gross' => round($totalGross, 2)
         ];
     }
+
+    private function getDailyApprovedAttendance(
+        int $employeeId,
+        string $date
+    ): array {
+        $stmt = $this->db->prepare("
+            SELECT
+                COALESCE(SUM(CASE
+                    WHEN status IN ('PRESENT','LATE','EARLY_OUT')
+                    THEN COALESCE(regular_hours, total_hours_worked, 0)
+                    ELSE 0
+                END), 0) AS hours,
+                COALESCE(SUM(CASE
+                    WHEN status IN ('PRESENT','LATE','EARLY_OUT')
+                    THEN COALESCE(late_minutes, 0)
+                    ELSE 0
+                END), 0) AS late_minutes
+            FROM ta_attendance
+            WHERE employee_id = :employee_id
+              AND attendance_date = :attendance_date
+              AND is_approved = 1
+        ");
+        $stmt->execute([
+            ':employee_id' => $employeeId,
+            ':attendance_date' => $date
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'hours' => max(0.0, (float)($row['hours'] ?? 0)),
+            'late_minutes' => max(0, (int)($row['late_minutes'] ?? 0))
+        ];
+    }
+
+    private function isPaidHoliday(string $date): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*)
+            FROM ta_holidays
+            WHERE holiday_date = :holiday_date
+              AND is_active = 1
+              AND is_working_day = 0
+        ");
+        $stmt->execute([':holiday_date' => $date]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    private function isPaidLeaveDate(int $employeeId, string $date): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*)
+            FROM ta_leave_requests lr
+            INNER JOIN ta_leave_types lt
+                ON lt.leave_type_id = lr.leave_type_id
+            WHERE lr.employee_id = :employee_id
+              AND lr.status = 'Approved'
+              AND lr.start_date <= :leave_date
+              AND lr.end_date >= :leave_date
+        ");
+        $stmt->execute([
+            ':employee_id' => $employeeId,
+            ':leave_date' => $date
+        ]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     /* ============================================================
        QUALIFICATION RATE
        ============================================================ */
-    private function getQualificationRate(string $graduateLevel): float
+    private function getFacultyHourlyRate(string $graduateLevel): float
     {
-        /**
-         * Existing table:
-         * pr_teacher_qualification_rates
-         *
-         * Existing values include:
-         * ProfEd  = 128
-         * LPT     = 130
-         * Masteral = 250
-         *
-         * We map "None" to ProfEd for now.
-         */
         $qualification = match ($graduateLevel) {
             'LPT' => 'LPT',
             'Masteral' => 'Masteral',
             'Doctoral' => 'Doctoral',
             default => 'ProfEd'
         };
+
+        // The current database still names this column pay_per_unit.
+        // Under the revised payroll rule it stores the faculty hourly rate.
         $stmt = $this->db->prepare("
             SELECT pay_per_unit
             FROM pr_teacher_qualification_rates
@@ -740,8 +805,12 @@ class PayrollModel
             ':qualification' => $qualification
         ]);
         $rate = $stmt->fetchColumn();
-        return $rate !== false ? (float)$rate : 0.00;
+        return $rate !== false ? max(0.0, (float)$rate) : 0.00;
     }
+
+    /* ============================================================
+       QUALIFICATION RATE
+       ============================================================ */
     /* ============================================================
        PART-TIME HOURLY RATE
        ============================================================ */
@@ -1013,7 +1082,8 @@ class PayrollModel
     private function calculateLateDeduction(
         int $employeeId,
         string $startDate,
-        string $endDate
+        string $endDate,
+        string $positionGroup = 'non-teaching'
     ): array {
         $stmt = $this->db->prepare("
         SELECT
@@ -1037,15 +1107,21 @@ class PayrollModel
             ];
         }
         /*
-     * Get the configured late deduction rate.
+     * Get the configured late deduction rate for this employee's
+     * position group (see classifyPosition()). 'teaching' maps to
+     * the 'Teacher' rate row; everything else uses 'Other'.
      */
-        $stmt = $this->db->query("
+        $positionType = $positionGroup === 'teaching' ? 'Teacher' : 'Other';
+        $stmt = $this->db->prepare("
         SELECT late_per_minute_rate
         FROM pr_position_deduction_rates
-        WHERE position_type = 'Teacher'
+        WHERE position_type = :position_type
           AND is_active = 1
         LIMIT 1
     ");
+        $stmt->execute([
+            ':position_type' => $positionType
+        ]);
         $rate = (float)$stmt->fetchColumn();
         if ($rate <= 0) {
             return [
@@ -1097,28 +1173,129 @@ class PayrollModel
         array $employee,
         array $period
     ): array {
-        $salary = (float)($employee['negotiated_salary'] ?? 0);
-        /**
-         * Negotiated salary is the monthly salary.
-         *
-         * Semi-monthly payroll:
-         * monthly salary / 2
-         */
-        $semiMonthlySalary = $salary / 2;
+        $salary = max(0.0, (float)($employee['negotiated_salary'] ?? 0));
+        $dailyRate = $salary / self::NON_TEACHING_DAYS_PER_MONTH;
+        $employeeId = (int)$employee['employee_id'];
+
         $attendance = $this->getTimeAttendanceMetrics(
-            (int)$employee['employee_id'],
+            $employeeId,
             $period['start_date'],
             $period['end_date']
         );
+        $approvedLeaveDates = $this->getApprovedPaidLeaveDates(
+            $employeeId,
+            $period['start_date'],
+            $period['end_date']
+        );
+        $holidayDates = $this->getPaidHolidayDates(
+            $period['start_date'],
+            $period['end_date']
+        );
+
+        $payableDates = [];
+
+        // Approved attendance counts as a payable workday.
+        $attendanceRows = $this->getAttendanceRecords(
+            $employeeId,
+            $period['start_date'],
+            $period['end_date']
+        );
+        foreach ($attendanceRows as $row) {
+            if ((int)$row['is_approved'] !== 1) {
+                continue;
+            }
+            if (in_array($row['status'], ['PRESENT', 'LATE', 'EARLY_OUT'], true)) {
+                $payableDates[$row['attendance_date']] = true;
+            }
+        }
+
+        // Approved leave is paid.
+        foreach ($approvedLeaveDates as $date => $_leave) {
+            $payableDates[$date] = true;
+        }
+
+        // Non-working holidays are paid when they fall on a normal
+        // Monday-Saturday workday. Existing attendance on that date is
+        // already represented by the same date key, preventing double pay.
+        foreach ($holidayDates as $date) {
+            $dayOfWeek = date('N', strtotime($date));
+            if ($dayOfWeek <= 6) {
+                $payableDates[$date] = true;
+            }
+        }
+
+        $payableDays = count($payableDates);
+        $gross = $dailyRate * $payableDays;
+
         return [
-            'gross' => round($semiMonthlySalary, 2),
+            'gross' => round($gross, 2),
             'salary' => $salary,
+            'daily_rate' => round($dailyRate, 2),
+            'payable_days' => $payableDays,
             'days_worked' => (int)$attendance['present_days'],
             'absent_days' => (int)$attendance['absent_days'],
+            'paid_leave_days' => count($approvedLeaveDates),
+            'paid_holiday_days' => count($holidayDates),
             'hours_worked' => (float)$attendance['total_hours_worked'],
             'late_minutes' => (int)$attendance['total_late_minutes']
         ];
     }
+
+    private function getApprovedPaidLeaveDates(
+        int $employeeId,
+        string $startDate,
+        string $endDate
+    ): array {
+        $leaves = $this->getApprovedLeaves(
+            $employeeId,
+            $startDate,
+            $endDate
+        );
+        $dates = [];
+
+        foreach ($leaves as $leave) {
+            $leaveStart = max($leave['start_date'], $startDate);
+            $leaveEnd = min($leave['end_date'], $endDate);
+            $current = new DateTime($leaveStart);
+            $end = new DateTime($leaveEnd);
+
+            while ($current <= $end) {
+                $date = $current->format('Y-m-d');
+                $dates[$date] = [
+                    'leave_request_id' => (int)$leave['leave_request_id'],
+                    'leave_type_id' => (int)$leave['leave_type_id'],
+                    'leave_type_name' => $leave['leave_type_name']
+                ];
+                $current->modify('+1 day');
+            }
+        }
+
+        return $dates;
+    }
+
+    private function getPaidHolidayDates(
+        string $startDate,
+        string $endDate
+    ): array {
+        $stmt = $this->db->prepare("
+            SELECT holiday_date
+            FROM ta_holidays
+            WHERE holiday_date BETWEEN :start_date AND :end_date
+              AND is_active = 1
+              AND is_working_day = 0
+            ORDER BY holiday_date
+        ");
+        $stmt->execute([
+            ':start_date' => $startDate,
+            ':end_date' => $endDate
+        ]);
+
+        return array_map(
+            static fn($row) => $row['holiday_date'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC)
+        );
+    }
+
     /* ============================================================
        MAIN PAYROLL CALCULATION
        ============================================================ */
@@ -1130,397 +1307,339 @@ class PayrollModel
     ): array {
         $employee = $this->getEmployee($employeeId);
         $period = $this->getPayrollPeriod($periodId);
+
         if (!$employee || !$period) {
             return [];
         }
+
         $earnings = [];
         $deductions = [];
         $grossPay = 0.00;
         $totalDeductions = 0.00;
-        /*
-         * ========================================================
-         * 1. DETERMINE PAYROLL TYPE
-         * ========================================================
-         */
 
-        $employmentType = $employee['employment_type'];
+        $employmentType = $employee['employment_type'] ?? null;
+        $isOjt = $employmentType === 'OJT/Training';
         $isPartTime = $employmentType === 'Part-time';
-        /*
-         * A faculty member is determined by having an active
-         * SMS schedule matching the employee.
-         */
-        $facultySchedule = [];
-        if (!$isPartTime) {
-            $facultySchedule = $this->getFacultySchedule(
+
+        $positionGroup = $this->classifyPosition(
+            $employee['position_name'] ?? null
+        );
+        $faculty = $this->getSmsFaculty($employeeId);
+        $hasSmsFacultyRecord = $faculty !== null;
+        // Route by the employee's actual position, not by whether an SMS
+        // record happens to exist yet — a teaching position with no SMS
+        // schedule/subject load should be paid ₱0 for this period (see
+        // below), not silently fall back to the non-teaching daily rate.
+        $isFaculty = $positionGroup === 'teaching'
+            || ($positionGroup === 'unknown' && $hasSmsFacultyRecord);
+
+        /* ========================================================
+           1. EARNINGS
+           ======================================================== */
+        if ($isOjt) {
+            $ojtAllowance = $this->getOjtAllowance(
                 $employeeId,
-                $schoolYearId,
-                $semesterId
+                $period['start_date'],
+                $period['end_date']
             );
-        }
-        $isFaculty = !empty($facultySchedule);
-        /*
-         * ========================================================
-         * 2. EARNINGS
-         * ========================================================
-         */
-        if ($isPartTime) {
-            /*
-             * PART-TIME:
-             * hours worked × hourly rate
-             */
-            $result = $this->calculatePartTimePayroll(
-                $employee,
-                $period
-            );
-            $grossPay = $result['gross'];
-            $earnings[] = [
-                'description' =>
-                'Part-time Hours (' .
-                    number_format($result['hours_worked'], 2) .
-                    ' hrs × ₱' .
-                    number_format($result['hourly_rate'], 2) .
-                    ')',
-                'amount' => $grossPay
-            ];
+
+            if ($ojtAllowance > 0) {
+                $grossPay = round($ojtAllowance, 2);
+                $earnings[] = [
+                    'description' => 'OJT Training Allowance',
+                    'amount' => $grossPay
+                ];
+            }
         } elseif ($isFaculty) {
-            /*
-             * FULL-TIME FACULTY:
-             *
-             * subject units × qualification rate
-             * calculated per scheduled teaching day.
-             */
-            $faculty = $this->calculateFacultyPeriodEarnings(
+            $facultyPayroll = $this->calculateFacultyPeriodEarnings(
                 $employeeId,
                 $period['start_date'],
                 $period['end_date'],
                 $schoolYearId,
                 $semesterId
             );
-            $grossPay = $faculty['gross'];
-            foreach ($faculty['days'] as $day) {
-                $earnings[] = [
-                    'description' =>
-                    'Faculty Teaching Pay - ' .
-                        date(
-                            'M d, Y',
-                            strtotime($day['date'])
-                        ) .
-                        ' (' .
-                        number_format($day['total_units'], 2) .
-                        ' units × ₱' .
-                        number_format(
-                            $day['rate_per_unit'],
-                            2
-                        ) .
-                        ')',
+            $grossPay = $facultyPayroll['gross'];
 
-                    'amount' => $day['gross']
+            foreach ($facultyPayroll['days'] as $day) {
+                if ($day['regular_gross'] > 0) {
+                    $label = $day['is_holiday']
+                        ? 'Faculty Regular Holiday Pay'
+                        : ($day['is_paid_leave']
+                            ? 'Faculty Regular Paid Leave'
+                            : 'Faculty Regular Teaching Pay');
+
+                    $earnings[] = [
+                        'description' => $label . ' - ' .
+                            date('M d, Y', strtotime($day['date'])) .
+                            ' (' . number_format($day['regular_hours'], 2) .
+                            ' hrs × ₱' . number_format($day['hourly_rate'], 2) . ')',
+                        'amount' => $day['regular_gross']
+                    ];
+                }
+
+                if ($day['overload_gross'] > 0) {
+                    $earnings[] = [
+                        'description' => 'Faculty Overload Pay - ' .
+                            date('M d, Y', strtotime($day['date'])) .
+                            ' (' . number_format($day['overload_hours'], 2) .
+                            ' hrs × ₱' . number_format($day['hourly_rate'], 2) . ')',
+                        'amount' => $day['overload_gross']
+                    ];
+                }
+            }
+
+            if ($grossPay <= 0) {
+                $earnings[] = [
+                    'description' => $hasSmsFacultyRecord
+                        ? 'No scheduled teaching load found for this period — no pay'
+                        : 'No SMS faculty/schedule record found for this employee — no pay',
+                    'amount' => 0
                 ];
             }
-        } else {
-            /*
-             * FULL-TIME NON-FACULTY:
-             * negotiated monthly salary / 2.
-             */
-            $result = $this->calculateRegularPayroll(
+        } elseif ($isPartTime) {
+            // Non-faculty part-time employees remain on their employee-specific
+            // hourly rate. Faculty part-time employees are handled above.
+            $result = $this->calculatePartTimePayroll(
                 $employee,
                 $period
             );
             $grossPay = $result['gross'];
             $earnings[] = [
-                'description' =>
-                'Semi-Monthly Salary (' .
-                    number_format(
-                        $result['salary'],
-                        2
-                    ) .
-                    ' ÷ 2)',
+                'description' => 'Part-time Hours (' .
+                    number_format($result['hours_worked'], 2) .
+                    ' hrs × ₱' . number_format($result['hourly_rate'], 2) . ')',
+                'amount' => $grossPay
+            ];
+        } else {
+            $result = $this->calculateRegularPayroll(
+                $employee,
+                $period
+            );
+            $grossPay = $result['gross'];
+
+            $earnings[] = [
+                'description' => 'Daily Rate (' .
+                    number_format($result['daily_rate'], 2) .
+                    ' × ' . number_format($result['payable_days'], 2) .
+                    ' payable days)',
                 'amount' => $grossPay
             ];
         }
-        /*
- * ========================================================
- * 3. EMPLOYEE ADJUSTMENTS
- * ========================================================
- */
+
+        /* ========================================================
+           2. OTHER EMPLOYEE DEDUCTIONS
+           ======================================================== */
         $adjustments = $this->getEmployeeAdjustments(
             $employeeId,
             $periodId
         );
+
         foreach ($adjustments as $adjustment) {
-            $amount = (float)$adjustment['amount'];
+            $amount = max(0.0, (float)$adjustment['amount']);
             if ($amount <= 0) {
                 continue;
             }
+
             $deductions[] = [
                 'description' => $adjustment['description'],
                 'amount' => $amount
             ];
             $totalDeductions += $amount;
         }
-        /*
- * ========================================================
- * 4. LATE DEDUCTION
- * ========================================================
- *
- * Late minutes come directly from ta_attendance.
- *
- * Example:
- * 10 late minutes × ₱rate per minute
- */
-        $lateDeduction = $this->calculateLateDeduction(
-            $employeeId,
-            $period['start_date'],
-            $period['end_date']
-        );
-        if ($lateDeduction['deduction'] > 0) {
-            $deductions[] = [
-                'description' =>
-                'Late (' .
-                    $lateDeduction['late_minutes'] .
-                    ' minutes × ₱' .
-                    number_format(
-                        $lateDeduction['rate_per_minute'],
-                        2
-                    ) .
-                    ')',
-                'amount' =>
-                $lateDeduction['deduction']
-            ];
-            $totalDeductions +=
-                $lateDeduction['deduction'];
-        }
-        /*
- * ========================================================
- * 5. ABSENCE DEDUCTION
- * ========================================================
- */
-        $absenceDeduction = $this->calculateAbsenceDeduction(
-            $employeeId,
-            $period['start_date'],
-            $period['end_date']
-        );
-        if ($absenceDeduction['total_deduction'] > 0) {
-            foreach ($absenceDeduction['records'] as $absence) {
-                $deductions[] = [
-                    'description' =>
-                    'Unexcused Absence - ' .
-                        date(
-                            'M d, Y',
-                            strtotime($absence['date'])
-                        ) .
-                        ' (₱1,000.00)',
-                    'amount' =>
-                    self::ABSENCE_DEDUCTION
-                ];
-                $totalDeductions +=
-                    self::ABSENCE_DEDUCTION;
-            }
-        }
-        $leaveDeduction = $this->calculateLeaveDeduction(
-            $employeeId,
-            $period['start_date'],
-            $period['end_date']
-        );
-        /*
- * Add deductible approved leaves to deductions.
- */
-        if ($leaveDeduction['total_deduction'] > 0) {
-            foreach (
-                $leaveDeduction['deductible_records']
-                as $leave
-            ) {
-                $deductions[] = [
-                    'description' =>
-                    'Deductible Leave - ' .
-                        $leave['leave_type_name'] .
-                        ' (' .
-                        date(
-                            'M d, Y',
-                            strtotime($leave['date'])
-                        ) .
-                        ')',
-                    'amount' =>
-                    self::ABSENCE_DEDUCTION
-                ];
-                $totalDeductions +=
-                    self::ABSENCE_DEDUCTION;
-            }
-        }
-        /*
-         * ========================================================
-         * 4. LEGAL CONTRIBUTION ELIGIBILITY
-         * ========================================================
-         */
-        $eligibility = $this->getContributionEligibility(
-            $employeeId
-        );
-        /*
-         * ========================================================
-         * 5. GOVERNMENT CONTRIBUTIONS
-         * ========================================================
-         */
 
-        /*
-         * For semi-monthly payroll we use the monthly-equivalent
-         * earnings as the contribution basis.
-         */
-        $monthlyEquivalent = $grossPay * 2;
-        if ($grossPay > 0 && $eligibility['sss']) {
-            $sss = $this->calculateSSS(
-                $monthlyEquivalent
+        /* ========================================================
+           3. LATE DEDUCTION
+           ======================================================== */
+        if (!$isOjt && $grossPay > 0) {
+            $positionGroup = $this->classifyPosition(
+                $employee['position_name'] ?? null
             );
-            if ($sss > 0) {
-                /*
-                 * If contribution is calculated monthly,
-                 * deduct half on each semi-monthly payroll.
-                 */
-                $sssSemiMonthly = round($sss / 2, 2);
+            if ($positionGroup === 'unknown') {
+                // Employee has no position_name at all. Fall back to the
+                // faculty-schedule signal so this doesn't silently
+                // default everyone to the non-teaching rate.
+                $positionGroup = $isFaculty ? 'teaching' : 'non-teaching';
+            }
+
+            $lateDeduction = $this->calculateLateDeduction(
+                $employeeId,
+                $period['start_date'],
+                $period['end_date'],
+                $positionGroup
+            );
+
+            if ($lateDeduction['deduction'] > 0) {
                 $deductions[] = [
-                    'description' => 'SSS',
-                    'amount' => $sssSemiMonthly
+                    'description' => 'Late (' .
+                        $lateDeduction['late_minutes'] .
+                        ' minutes × ₱' .
+                        number_format($lateDeduction['rate_per_minute'], 2) . ')',
+                    'amount' => $lateDeduction['deduction']
                 ];
-                $totalDeductions += $sssSemiMonthly;
+                $totalDeductions += $lateDeduction['deduction'];
             }
         }
-        if ($grossPay > 0 && $eligibility['philhealth']) {
-            $philhealth = $this->calculatePhilHealth(
-                $monthlyEquivalent
-            );
-            if ($philhealth > 0) {
-                $philhealthSemiMonthly =
-                    round($philhealth / 2, 2);
-                $deductions[] = [
-                    'description' => 'PhilHealth',
-                    'amount' => $philhealthSemiMonthly
-                ];
-                $totalDeductions +=
-                    $philhealthSemiMonthly;
+
+        /* ========================================================
+           4. ABSENCE / LEAVE RULE
+           ========================================================
+           Approved leaves are paid. We therefore do NOT add the old
+           fixed ₱1,000 deductible-leave charge.
+
+           For daily-rate employees, an unexcused absence is already
+           unpaid because the gross calculation counts payable days.
+           Faculty and hourly employees are paid only for actual approved
+           teaching/attendance hours, except paid leave and holidays.
+        */
+
+        /* ========================================================
+           5. GOVERNMENT CONTRIBUTIONS
+           ======================================================== */
+        $eligibility = $this->getContributionEligibility($employeeId);
+
+        // OJT allowance is intentionally not treated as salary/hourly pay.
+        // Contributions are only calculated when the payroll earning path
+        // has a positive compensable gross amount and the employee has a
+        // submitted registration record.
+        if ($grossPay > 0 && !$isOjt) {
+            $monthlyEquivalent = $grossPay * 2;
+
+            if ($eligibility['sss']) {
+                $sss = $this->calculateSSS($monthlyEquivalent);
+                if ($sss > 0) {
+                    $amount = round($sss / 2, 2);
+                    $deductions[] = ['description' => 'SSS', 'amount' => $amount];
+                    $totalDeductions += $amount;
+                }
             }
-        }
-        if ($grossPay > 0 && $eligibility['pagibig']) {
-            $pagibig = $this->calculatePagIBIG(
-                $monthlyEquivalent
-            );
-            if ($pagibig > 0) {
-                $pagibigSemiMonthly =
-                    round($pagibig / 2, 2);
-                $deductions[] = [
-                    'description' => 'Pag-IBIG',
-                    'amount' => $pagibigSemiMonthly
-                ];
-                $totalDeductions +=
-                    $pagibigSemiMonthly;
+
+            if ($eligibility['philhealth']) {
+                $philhealth = $this->calculatePhilHealth($monthlyEquivalent);
+                if ($philhealth > 0) {
+                    $amount = round($philhealth / 2, 2);
+                    $deductions[] = ['description' => 'PhilHealth', 'amount' => $amount];
+                    $totalDeductions += $amount;
+                }
             }
-        }
-        /*
-         * ========================================================
-         * 6. WITHHOLDING TAX
-         * ========================================================
-         */
-        if ($grossPay > 0 && $eligibility['bir']) {
-            /*
-             * Simplified semi-monthly taxable base.
-             *
-             * Statutory deductions are subtracted before tax.
-             */
-            $taxableSemiMonthly =
-                max(
-                    0,
-                    $grossPay - $totalDeductions
-                );
-            $withholdingTax =
-                $this->calculateWithholdingTax(
+
+            if ($eligibility['pagibig']) {
+                $pagibig = $this->calculatePagIBIG($monthlyEquivalent);
+                if ($pagibig > 0) {
+                    $amount = round($pagibig / 2, 2);
+                    $deductions[] = ['description' => 'Pag-IBIG', 'amount' => $amount];
+                    $totalDeductions += $amount;
+                }
+            }
+
+            /* ====================================================
+               6. WITHHOLDING TAX
+               ==================================================== */
+            if ($eligibility['bir']) {
+                $taxableSemiMonthly = max(0.0, $grossPay - $totalDeductions);
+                $withholdingTax = $this->calculateWithholdingTax(
                     $taxableSemiMonthly,
                     'semi_monthly'
                 );
-            if ($withholdingTax > 0) {
-                $withholdingTax =
-                    round($withholdingTax, 2);
-                $deductions[] = [
-                    'description' =>
-                    'Withholding Tax',
-                    'amount' =>
-                    $withholdingTax
-                ];
-                $totalDeductions +=
-                    $withholdingTax;
+
+                if ($withholdingTax > 0) {
+                    $withholdingTax = round($withholdingTax, 2);
+                    $deductions[] = [
+                        'description' => 'Withholding Tax',
+                        'amount' => $withholdingTax
+                    ];
+                    $totalDeductions += $withholdingTax;
+                }
             }
         }
-        /*
- * ========================================================
- * 7. NET PAY
- * ========================================================
- *
- * Payroll must never produce negative net pay.
- *
- * Total deductions cannot exceed gross pay.
- */
-        if ($grossPay <= 0) {
 
-            /*
-     * No earnings means there should be no payable
-     * employee deductions for this payroll period.
-     */
+        /* ========================================================
+           7. NET PAY
+           ======================================================== */
+        if ($grossPay <= 0) {
+            $grossPay = 0.00;
             $totalDeductions = 0.00;
             $deductions = [];
             $netPay = 0.00;
         } else {
-            /*
-     * Prevent deductions from exceeding gross pay.
-     */
             $totalDeductions = min(
-                $totalDeductions,
-                $grossPay
+                round($totalDeductions, 2),
+                round($grossPay, 2)
             );
-            $totalDeductions = round(
-                $totalDeductions,
-                2
+            $netPay = max(
+                0.00,
+                round($grossPay - $totalDeductions, 2)
             );
-            $netPay = round(
-                $grossPay - $totalDeductions,
-                2
-            );
-            /*
-     * Final safety check.
-     */
-            if ($netPay < 0) {
-                $netPay = 0.00;
-            }
         }
+
         return [
             'employee_id' => $employeeId,
             'period_id' => $periodId,
-            'employment_type' =>
-            $employee['employment_type'],
-            'graduate_level' =>
-            $employee['graduate_level'],
-            'gross_pay' =>
-            round($grossPay, 2),
-            'total_deductions' =>
-            round($totalDeductions, 2),
-            'net_pay' =>
-            $netPay,
-            'earnings' =>
-            $earnings,
-            'deductions' =>
-            $deductions,
+            'employment_type' => $employmentType,
+            'graduate_level' => $employee['graduate_level'],
+            'gross_pay' => round($grossPay, 2),
+            'total_deductions' => round($totalDeductions, 2),
+            'net_pay' => $netPay,
+            'earnings' => $earnings,
+            'deductions' => $deductions,
             'leave_summary' => [
-                'deductible_leave_count' =>
-                $leaveDeduction['deductible_leave_count'],
-                'non_deductible_leave_count' =>
-                $leaveDeduction['non_deductible_leave_count'],
-                'leave_deduction' =>
-                $leaveDeduction['total_deduction']
+                'deductible_leave_count' => 0,
+                'non_deductible_leave_count' => 0,
+                'leave_deduction' => 0.00
             ],
-            'contribution_status' =>
-            $eligibility,
-            'is_faculty' =>
-            $isFaculty,
-            'is_part_time' =>
-            $isPartTime
+            'contribution_status' => $eligibility,
+            'is_faculty' => $isFaculty,
+            'is_part_time' => $isPartTime,
+            'is_ojt' => $isOjt
         ];
     }
+
+    /**
+     * OJT allowance lookup.
+     *
+     * The supplied for_test_payroll(4).sql does not currently contain an
+     * OJT allowance table. This method therefore checks for the table at
+     * runtime and returns zero when it is not installed, instead of
+     * incorrectly treating negotiated_salary as an OJT salary.
+     *
+     * Expected optional table:
+     * pr_ojt_allowances(employee_id, allowance_amount, effective_date,
+     * end_date, status).
+     */
+    private function getOjtAllowance(
+        int $employeeId,
+        string $startDate,
+        string $endDate
+    ): float {
+        try {
+            $tableCheck = $this->db->query("SHOW TABLES LIKE 'pr_ojt_allowances'");
+            if (!$tableCheck || !$tableCheck->fetchColumn()) {
+                return 0.00;
+            }
+
+            $stmt = $this->db->prepare("
+                SELECT allowance_amount
+                FROM pr_ojt_allowances
+                WHERE employee_id = :employee_id
+                  AND status = 'Active'
+                  AND effective_date <= :end_date
+                  AND (end_date IS NULL OR end_date >= :start_date)
+                ORDER BY effective_date DESC, allowance_id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([
+                ':employee_id' => $employeeId,
+                ':start_date' => $startDate,
+                ':end_date' => $endDate
+            ]);
+            $allowance = $stmt->fetchColumn();
+            return $allowance !== false ? max(0.0, (float)$allowance) : 0.00;
+        } catch (Throwable $e) {
+            // Payroll should not fail because the optional OJT table has not
+            // yet been installed in the current test database.
+            return 0.00;
+        }
+    }
+
     /* ============================================================
        PAYROLL PREVIEW
        ============================================================ */
@@ -1720,7 +1839,7 @@ class PayrollModel
         $stmt = $this->db->prepare("
             SELECT
                 p.*,
-                e.employee_num,
+                e.employee_code,
                 e.first_name,
                 e.middle_name,
                 e.last_name,

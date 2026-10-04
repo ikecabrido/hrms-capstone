@@ -137,4 +137,33 @@ class Employee
 
         return 'Unknown Position';
     }
+    public function getEmployeeRole()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $employeeId = $_SESSION['employee_id'] ?? null;
+
+        if ($employeeId) {
+            $sql = "SELECT r.role_name
+                FROM em_employees AS e
+                LEFT JOIN em_roles AS r
+                    ON e.role_id = r.role_id
+                WHERE e.employee_id = :employee_id
+                LIMIT 1";
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindParam(':employee_id', $employeeId);
+            $stmt->execute();
+
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($row && $row['role_name']) {
+                return htmlspecialchars($row['role_name']);
+            }
+        }
+
+        return 'Unknown Role';
+    }
 }

@@ -2,6 +2,41 @@
 
     document.addEventListener('DOMContentLoaded', function () {
 
+    // ─── Script Re-execution (innerHTML does NOT run injected <script> tags) ──────
+    // Scripts are re-created and run sequentially, in document order, so that
+    // library scripts finish loading before any page script that depends on
+    // them executes — matching normal browser document-parsing behavior.
+
+    function runInjectedScripts(container, onDone) {
+        const originalScripts = Array.prototype.slice.call(container.querySelectorAll('script'));
+        let i = 0;
+
+        function runNext() {
+            if (i >= originalScripts.length) {
+                if (onDone) onDone();
+                return;
+            }
+            const oldScript = originalScripts[i++];
+            const newScript = document.createElement('script');
+
+            Array.prototype.forEach.call(oldScript.attributes, function (attr) {
+                newScript.setAttribute(attr.name, attr.value);
+            });
+
+            if (oldScript.src) {
+                newScript.onload = runNext;
+                newScript.onerror = runNext;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            } else {
+                newScript.text = oldScript.textContent;
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+                runNext();
+            }
+        }
+
+        runNext();
+    }
+
     // ─── Page Fetching ───────────────────────────────────────────────────────────
 
     function fetchPage(page, push = true) {
@@ -25,6 +60,15 @@
             })
             .then(function (result) {
             if (!result) return; // was a redirect, bail
+
+            // Force-clear any open modal before the DOM under it is destroyed.
+            // Without this, a modal left open when the user clicks another tab
+            // leaves its full-screen backdrop stuck in <body> forever (the
+            // backdrop lives outside .container, so replacing .container's HTML
+            // never removes it), which is what causes the screen to look
+            // permanently greyed out afterwards.
+            if (window.exitModalShimReset) window.exitModalShimReset();
+
             container.innerHTML = result.html;
             updateActiveLink(result.rendered);
 
@@ -33,6 +77,9 @@
             }
 
             reinitPage(result.rendered);
+            runInjectedScripts(container, function () {
+                document.dispatchEvent(new Event('app:pageready'));
+            });
             })
             .catch(function (err) {
             console.error('Page switch failed', err);
@@ -70,5 +117,6 @@
     var initial = new URL(location).searchParams.get('page') || 'dashboard-overview';
     updateActiveLink(initial);
     reinitPage(initial);
+    document.dispatchEvent(new Event('app:pageready'));
 
     });

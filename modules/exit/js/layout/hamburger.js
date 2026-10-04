@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+function initHamburgerLayout() {
     const hamburger = document.querySelector('.hamburger');
     const sidebar = document.querySelector('.sidebar');
     const mainContent = document.querySelector('.main-content');
@@ -69,32 +69,52 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Apply the correct layout for the current viewport. This must run once
+    // immediately on page load (not just react to click/resize events) -
+    // otherwise whatever inline style happens to already be present (stale
+    // from a previous view, or set by a resize event during a DevTools
+    // device-emulation transition) permanently overrides the CSS underneath
+    // it, since inline styles always beat stylesheet rules regardless of
+    // any @media query or CSS variable.
+    function applyLayoutForCurrentViewport() {
+        const mobile = isMobile();
+
+        if (mobile) {
+            // Mobile: clear any desktop inline styles so CSS (off-canvas
+            // sidebar, full-width content) takes over correctly.
+            mainContent.style.marginLeft = '';
+            footer.style.marginLeft = '';
+            header.style.left = '';
+            header.style.width = '';
+            sidebar.classList.remove('hidden');
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            hamburger?.classList.remove('active');
+        } else {
+            // Desktop: restore desktop layout if sidebar is not manually hidden.
+            overlay.classList.remove('active');
+            if (!sidebar.classList.contains('hidden')) {
+                mainContent.style.marginLeft = '252px';
+                footer.style.marginLeft = '252px';
+                header.style.left = '252px';
+                header.style.width = 'calc(100% - 252px)';
+            }
+        }
+    }
+    
+    // Apply correct layout immediately on load, before any user interaction.
+    applyLayoutForCurrentViewport();
+    
     // Handle window resize
     let resizeTimer;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(function() {
-            const mobile = isMobile();
-            
-            if (mobile) {
-                // Reset desktop styles
-                mainContent.style.marginLeft = '';
-                footer.style.marginLeft = '';
-                header.style.left = '';
-                header.style.width = '';
-                sidebar.classList.remove('hidden');
-            } else {
-                // Remove mobile overlay
-                overlay.classList.remove('active');
-                
-                // Restore desktop layout if sidebar is not hidden
-                if (!sidebar.classList.contains('hidden')) {
-                    mainContent.style.marginLeft = '252px';
-                    footer.style.marginLeft = '252px';
-                    header.style.left = '252px';
-                    header.style.width = 'calc(100% - 252px)';
-                }
-            }
-        }, 250);
+        resizeTimer = setTimeout(applyLayoutForCurrentViewport, 250);
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHamburgerLayout);
+} else {
+    initHamburgerLayout();
+}
