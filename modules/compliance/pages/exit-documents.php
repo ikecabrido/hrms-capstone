@@ -17,7 +17,9 @@ if (!isset($db)) {
     $db = (new Database())->getConnection();
 }
 
-$exitDb = $db;
+$exitDb = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
+$exitDb->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$exitDb->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 $extraCssArray  = [];
 $extraJsArray   = [];

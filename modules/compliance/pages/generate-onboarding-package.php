@@ -107,7 +107,7 @@ try {
 
     $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $packageFileUrl = $protocol . $host . '/modules/compliance/assets/documents/onboarding/' . $packageFilename;
+    $packageFileUrl = $protocol . $host . '/hrms-capstone/modules/compliance/assets/documents/onboarding/' . $packageFilename;
 
     $db->beginTransaction();
     try {
@@ -351,4 +351,3 @@ try {
     echo $errorMsg;
     exit;
 }
-

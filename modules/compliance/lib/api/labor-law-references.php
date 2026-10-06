@@ -18,7 +18,7 @@ if (session_status() === PHP_SESSION_NONE) {
 $database = new Database();
 $db = $database->getConnection();
 
-require_once __DIR__ . '/../../classes/LaborLawReference.php';
+require_once __DIR__ . '/../../../classes/LaborLawReference.php';
 
 $model = new LaborLawReference($db);
 $method = $_SERVER['REQUEST_METHOD'];

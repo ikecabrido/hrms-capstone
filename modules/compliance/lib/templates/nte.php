@@ -295,7 +295,7 @@ foreach (['hr_signatory', 'contract_start_date', 'contract_end_date', 'contract_
 
             <div style="margin-bottom:40px;">
 
-                                <img src="/modules/compliance/assets/notary.png" style="width:340px;height:auto;display:inline-block;opacity:0.5;mix-blend-mode:multiply;">
+                                <img src="/hrms-capstone/modules/compliance/assets/notary.png" style="width:340px;height:auto;display:inline-block;opacity:0.5;mix-blend-mode:multiply;">
 <div style="position: relative; display: inline-block;">
                     <div style="position: absolute; top: 0; left: 0; z-index: 2;">
                         <?= $hrSignatory ?>
@@ -367,7 +367,6 @@ foreach (['hr_signatory', 'contract_start_date', 'contract_end_date', 'contract_
         </div>
 
     </div>
-
 
 
 

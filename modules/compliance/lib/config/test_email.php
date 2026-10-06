@@ -5,7 +5,7 @@
  * Visit: http://localhost/hrms-capstone/test_email.php
  */
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require_once __DIR__ . '/lib/vendor/autoload.php';
 require_once __DIR__ . '/lib/config/email_config.php';
 
 use App\Services\EmailService;

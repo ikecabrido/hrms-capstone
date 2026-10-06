@@ -532,7 +532,7 @@ try {
                   <?php foreach ($stepEvidenceItems['evidence_check'] as $ev): ?>
                       <?php
                         $evImgSrc = null;
-                        $assetBase = '/modules/compliance/assets/';
+                        $assetBase = '/hrms-capstone/modules/compliance/assets/';
                         if (!empty($ev['image_path'])) {
                           $img = $ev['image_path'];
                           if (preg_match('/^[a-zA-Z]:\\|^\//', $img)) {
@@ -566,18 +566,8 @@ try {
                       ?>
                     <div class="irwf-step-evidence-item">
                       <div class="irwf-step-evidence-name"><?= htmlspecialchars($ev['evidence_item'] ?? 'Evidence') ?></div>
-                      <?php
-                        $evNotes = trim((string)($ev['notes'] ?? ''));
-                        $isWorkflowJson = false;
-                        if ($evNotes !== '') {
-                            $decodedNotes = json_decode($evNotes, true);
-                            $isWorkflowJson = is_array($decodedNotes)
-                                && isset($decodedNotes['stage'])
-                                && isset($decodedNotes['progress']);
-                        }
-                      ?>
-                      <?php if ($evNotes !== '' && !$isWorkflowJson): ?>
-                        <div class="irwf-step-evidence-notes"><?= nl2br(htmlspecialchars($evNotes)) ?></div>
+                      <?php if (!empty($ev['notes'])): ?>
+                        <div class="irwf-step-evidence-notes"><?= nl2br(htmlspecialchars($ev['notes'])) ?></div>
                       <?php endif; ?>
                        <?php if ($evImgSrc): ?>
                          <div class="irwf-step-evidence-img">
@@ -845,7 +835,7 @@ window.CHWF_CONFIG = {
     severity: <?= json_encode($case['severity'] ?? '') ?>,
     description: <?= json_encode($case['description'] ?? '') ?>,
     assignedTo: <?= json_encode($case['assigned_to'] ?? '') ?>,
-    assetBaseUrl: '/modules/compliance/assets/',
+    assetBaseUrl: '/hrms-capstone/modules/compliance/assets/',
     assignableOfficers: <?= json_encode(array_values(array_map(function($o) {
         return ['id' => (int)$o['employee_id'], 'name' => $o['full_name'], 'code' => $o['employee_code']];
     }, $assignableOfficers)), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>,
@@ -1631,4 +1621,3 @@ window.CHWF_CONFIG = {
   }
  </style>
 <?php ob_end_flush(); ?>
-

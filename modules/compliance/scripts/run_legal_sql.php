@@ -2,7 +2,7 @@
 require 'C:/xampp/htdocs/hrms-capstone/database/db.php';
 $db = (new Database())->getConnection();
 
-$sql = file_get_contents('C:/xampp/htdocs/modules/compliance/sql/legal_cases.sql');
+$sql = file_get_contents('C:/xampp/htdocs/hrms-capstone/modules/compliance/sql/legal_cases.sql');
 
 $statements = array_filter(array_map('trim', explode(';', $sql)));
 foreach ($statements as $stmt) {
@@ -14,4 +14,3 @@ foreach ($statements as $stmt) {
     }
 }
 echo 'Legal case tables verified/updated.' . PHP_EOL;
-

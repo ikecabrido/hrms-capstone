@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db instanceof PDO && $policy insta
 
 ?>
 
-<link rel="stylesheet" href="/modules/compliance/css/pages/policy-create.css?v=2">
+<link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/policy-create.css?v=2">
 
 <style>
 :root {
@@ -410,4 +410,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db instanceof PDO && $policy insta
     updateVisibility();
 })();
 </script>
-

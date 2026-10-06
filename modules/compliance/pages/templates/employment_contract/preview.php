@@ -239,7 +239,7 @@ $authorizedPosition = 'HR Directress';
 
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$hrSignatory = '<img src="' . $protocol . $host . '/modules/compliance/assets/images.png" alt="Signature" style="height:90px; vertical-align:middle; display:inline-block;">';
+$hrSignatory = '<img src="' . $protocol . $host . '/hrms-capstone/modules/compliance/assets/images.png" alt="Signature" style="height:90px; vertical-align:middle; display:inline-block;">';
 ?>
 
 <?php if (!empty($validationErrors ?? [])): ?>
@@ -1047,7 +1047,6 @@ $hrSignatory = '<img src="' . $protocol . $host . '/modules/compliance/assets/im
 }
 
 </style>
-
 
 
 

@@ -19,9 +19,6 @@ class Dashboard
     public function getTotalEmployees()
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM em_employees WHERE employment_status = 'Active'")->fetchColumn();
         } catch (Exception $e) {
             return 0;
@@ -31,9 +28,6 @@ class Dashboard
     public function getComplianceHealthScore()
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             $stmt = $this->conn->query("SELECT AVG(overall_score) FROM lc_compliance_summary WHERE overall_score IS NOT NULL");
             $score = $stmt->fetchColumn();
             return $score !== false ? (int) round($score) : 0;
@@ -45,9 +39,6 @@ class Dashboard
     public function getRiskCounts()
     {
         try {
-            if (!$this->conn) {
-                return ['critical' => 0, 'high' => 0, 'medium' => 0, 'low' => 0];
-            }
             $sql = "SELECT severity, COUNT(*) as cnt FROM lc_risks WHERE archived = 0 GROUP BY severity";
             $stmt = $this->conn->query($sql);
             $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
@@ -65,9 +56,7 @@ class Dashboard
     public function getOpenIncidents()
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }return (int) $this->conn->query("SELECT COUNT(*) FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed')")->fetchColumn();
+            return (int) $this->conn->query("SELECT COUNT(*) FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed')")->fetchColumn();
         } catch (Exception $e) {
             return 0;
         }
@@ -76,9 +65,7 @@ class Dashboard
     public function getCriticalOpen()
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }return (int) $this->conn->query("SELECT COUNT(*) FROM lc_incident_report WHERE severity = 'Critical' AND status NOT IN ('resolved', 'closed')")->fetchColumn();
+            return (int) $this->conn->query("SELECT COUNT(*) FROM lc_incident_report WHERE severity = 'Critical' AND status NOT IN ('resolved', 'closed')")->fetchColumn();
         } catch (Exception $e) {
             return 0;
         }
@@ -87,9 +74,6 @@ class Dashboard
     public function getDocumentStats()
     {
         try {
-            if (!$this->conn) {
-                return ['total' => 0, 'valid' => 0, 'rate' => 0, 'expiring30' => 0, 'expiring60' => 0, 'expiring90' => 0, 'expired' => 0];
-            }
             $total      = (int) $this->conn->query("SELECT COUNT(*) FROM em_documents")->fetchColumn();
             $expired    = (int) $this->conn->query("
                 SELECT COUNT(*) FROM em_documents
@@ -123,9 +107,6 @@ class Dashboard
     public function getAuditStats()
     {
         try {
-            if (!$this->conn) {
-                return ['total' => 0, 'completed' => 0, 'rate' => 0, 'openFindings' => 0, 'totalFindings' => 0, 'resolvedFindings' => 0, 'totalCorrective' => 0, 'completedCorrective' => 0];
-            }
             $total            = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audits")->fetchColumn();
             $completed        = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audits WHERE status = 'Completed'")->fetchColumn();
             $openFindings     = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audit_findings WHERE status IN ('Open', 'In Progress', 'Escalated')")->fetchColumn();
@@ -153,9 +134,6 @@ class Dashboard
     public function getGovernmentCompliance()
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $agencies = [
                 ['name' => 'SSS', 'table' => 'lc_sss_contributions'],
                 ['name' => 'PhilHealth', 'table' => 'lc_philhealth_contributions'],
@@ -199,9 +177,6 @@ class Dashboard
     public function getDepartmentCompliance()
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $sql = "SELECT d.department_name, AVG(s.overall_score) as avg_score, COUNT(s.id) as emp_count
                     FROM em_departments d
                     LEFT JOIN lc_compliance_summary s ON s.department_id = d.department_id
@@ -227,9 +202,6 @@ class Dashboard
     public function getIncidentCategories()
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $sql = "SELECT incident_type, COUNT(*) as cnt FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed') GROUP BY incident_type ORDER BY cnt DESC";
             $stmt = $this->conn->query($sql);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -250,9 +222,6 @@ class Dashboard
     public function getIncidentOccurrenceData($year = null, $month = null)
     {
         try {
-            if (!$this->conn) {
-                return ['year' => date('Y'), 'month' => date('m'), 'items' => []];
-            }
             $year = $year ?: (int) date('Y');
             $month = $month ?: (int) date('m');
 
@@ -348,9 +317,6 @@ class Dashboard
     public function getIncidentSeveritySummary()
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $sql = "SELECT severity, COUNT(*) as cnt FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed') GROUP BY severity ORDER BY cnt DESC";
             $stmt = $this->conn->query($sql);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -370,14 +336,6 @@ class Dashboard
     public function getIncidentAgingSummary()
     {
         try {
-            if (!$this->conn) {
-                return [
-                    '0-7 days' => 0,
-                    '8-30 days' => 0,
-                    '31-90 days' => 0,
-                    '90+ days' => 0,
-                ];
-            }
             $sql = "SELECT id, created_at FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed')";
             $stmt = $this->conn->query($sql);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -419,21 +377,18 @@ class Dashboard
     public function getEmployeeRiskRanking($limit = 10)
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $sql = "SELECT r.id, r.risk_type, r.severity, r.status,
                            e.first_name, e.last_name, e.employee_code,
                            d.department_name,
                            (SELECT COUNT(*) FROM lc_risks r2 WHERE r2.employee_id = r.employee_id AND r2.archived = 0) as violations
-                     FROM lc_risks r
-                     LEFT JOIN em_employees e ON r.employee_id = e.employee_id
-                     LEFT JOIN em_departments d ON e.department_id = d.department_id
-                     WHERE r.archived = 0
-                     ORDER BY 
-                         CASE r.severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 END DESC,
-                         r.created_at DESC
-                     LIMIT " . (int) $limit;
+                    FROM lc_risks r
+                    LEFT JOIN em_employees e ON r.employee_id = e.employee_id
+                    LEFT JOIN em_departments d ON e.department_id = d.department_id
+                    WHERE r.archived = 0
+                    ORDER BY 
+                        CASE r.severity WHEN 'Critical' THEN 4 WHEN 'High' THEN 3 WHEN 'Medium' THEN 2 WHEN 'Low' THEN 1 END DESC,
+                        r.created_at DESC
+                    LIMIT " . (int) $limit;
             $stmt = $this->conn->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
@@ -444,9 +399,6 @@ class Dashboard
     public function getRecentActivities($limit = 10)
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $sql = "SELECT 
                         title, 
                         message, 
@@ -467,9 +419,6 @@ class Dashboard
     public function getTodayTasks()
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $sql = "SELECT task_name as task, status, priority, deadline
                     FROM lc_compliance_tasks
                     WHERE status IN ('Pending', 'In Progress', 'Overdue')
@@ -494,9 +443,6 @@ class Dashboard
     public function getMonthlyTrend()
     {
         try {
-            if (!$this->conn) {
-                return ['months' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], 'scores' => [85, 87, 88, 89, 92, 91]];
-            }
             $sql = "SELECT 
                         DATE_FORMAT(created_at, '%b %Y') as month,
                         AVG(score) as avg_score
@@ -530,19 +476,6 @@ class Dashboard
         $items = [];
 
         try {
-            if (!$this->conn) {
-                return [
-                    'total' => 0,
-                    'urgency' => [
-                        'overdue' => 0,
-                        'today' => 0,
-                        'soon' => 0,
-                        'upcoming' => 0,
-                        'unscheduled' => 0,
-                    ],
-                    'groups' => [],
-                ];
-            }
             $stmt = $this->conn->prepare("
                 SELECT pa.id, pa.due_date, pa.status,
                        CONCAT(e.first_name, ' ', e.last_name) as person_name,
@@ -564,19 +497,6 @@ class Dashboard
         } catch (Exception $e) {}
 
         try {
-            if (!$this->conn) {
-                return [
-                    'total' => 0,
-                    'urgency' => [
-                        'overdue' => 0,
-                        'today' => 0,
-                        'soon' => 0,
-                        'upcoming' => 0,
-                        'unscheduled' => 0,
-                    ],
-                    'groups' => [],
-                ];
-            }
             $stmt = $this->conn->prepare("
                 SELECT ci.id, ci.due_date, ci.status, ci.name as item_title, ci.category,
                        CONCAT(e.first_name, ' ', e.last_name) as person_name,
@@ -598,19 +518,6 @@ class Dashboard
         } catch (Exception $e) {}
 
         try {
-            if (!$this->conn) {
-                return [
-                    'total' => 0,
-                    'urgency' => [
-                        'overdue' => 0,
-                        'today' => 0,
-                        'soon' => 0,
-                        'upcoming' => 0,
-                        'unscheduled' => 0,
-                    ],
-                    'groups' => [],
-                ];
-            }
             $stmt = $this->conn->prepare("
                 SELECT ed.id, ed.expiry_date as due_date, 'Expired' as status,
                        CONCAT(e.first_name, ' ', e.last_name) as person_name,
@@ -675,11 +582,11 @@ class Dashboard
             if (!isset($groups[$groupKey])) {
                 $url = null;
                 if ($type === 'Policy Acknowledgement') {
-                    $url = '/modules/compliance/index.php?page=policy-management';
+                    $url = '/hrms-capstone/modules/compliance/index.php?page=policy-management';
                 } elseif ($type === 'Compliance Item') {
-                    $url = '/modules/compliance/index.php?page=labor-compliance';
+                    $url = '/hrms-capstone/modules/compliance/index.php?page=labor-compliance';
                 } elseif ($type === 'Document Expiry') {
-                    $url = '/modules/compliance/index.php?page=employee-documents';
+                    $url = '/hrms-capstone/modules/compliance/index.php?page=employee-documents';
                 }
 
                 $groups[$groupKey] = [
@@ -720,9 +627,6 @@ class Dashboard
         $alerts = [];
 
         try {
-            if (!$this->conn) {
-                return $alerts;
-            }
             $expiringDocs = (int) $this->conn->query("SELECT COUNT(*) FROM em_documents WHERE expiry_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)")->fetchColumn();
             if ($expiringDocs > 0) {
                 $alerts[] = [
@@ -736,9 +640,6 @@ class Dashboard
         } catch (Exception $e) {}
 
         try {
-            if (!$this->conn) {
-                return $alerts;
-            }
             $pendingAcks = (int) $this->conn->query("SELECT COUNT(*) FROM lc_policy_assignments WHERE status = 'Pending'")->fetchColumn();
             if ($pendingAcks > 0) {
                 $alerts[] = [
@@ -752,9 +653,6 @@ class Dashboard
         } catch (Exception $e) {}
 
         try {
-            if (!$this->conn) {
-                return $alerts;
-            }
             $openFindings = (int) $this->conn->query("SELECT COUNT(*) FROM lc_audit_findings WHERE status IN ('Open', 'In Progress')")->fetchColumn();
             if ($openFindings > 0) {
                 $alerts[] = [
@@ -768,9 +666,6 @@ class Dashboard
         } catch (Exception $e) {}
 
         try {
-            if (!$this->conn) {
-                return $alerts;
-            }
             $openIncidents = (int) $this->conn->query("SELECT COUNT(*) FROM lc_incident_report WHERE status NOT IN ('resolved', 'closed')")->fetchColumn();
             if ($openIncidents > 0) {
                 $alerts[] = [
@@ -784,9 +679,6 @@ class Dashboard
         } catch (Exception $e) {}
 
         try {
-            if (!$this->conn) {
-                return $alerts;
-            }
             $overdueItems = (int) $this->conn->query("SELECT COUNT(*) FROM lc_compliance_items WHERE status = 'Overdue'")->fetchColumn();
             if ($overdueItems > 0) {
                 $alerts[] = [
@@ -809,9 +701,6 @@ class Dashboard
     public function getOpenLegalCases(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE current_status = 'Open'")->fetchColumn();
         } catch (Exception $e) {
             return 0;
@@ -821,9 +710,6 @@ class Dashboard
     public function getExternalCases(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE external_agency IS NOT NULL AND external_agency <> ''")->fetchColumn();
         } catch (Exception $e) {
             return 0;
@@ -833,9 +719,6 @@ class Dashboard
     public function getCasesRequiringAction(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE due_date <= NOW() AND current_status NOT IN ('Resolved','Closed','Cancelled')")->fetchColumn();
         } catch (Exception $e) {
             return 0;
@@ -845,9 +728,6 @@ class Dashboard
     public function getOverdueCases(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE due_date < NOW() AND current_status NOT IN ('Resolved','Closed','Cancelled')")->fetchColumn();
         } catch (Exception $e) {
             return 0;
@@ -857,9 +737,6 @@ class Dashboard
     public function getCasesUnderMonitoring(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE current_status = 'Monitoring'")->fetchColumn();
         } catch (Exception $e) {
             return 0;
@@ -869,9 +746,6 @@ class Dashboard
     public function getUpcomingConferences(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_case_conferences WHERE conference_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY)")->fetchColumn();
         } catch (Exception $e) {
             return 0;
@@ -908,5 +782,3 @@ class Dashboard
         ];
     }
 }
-
-

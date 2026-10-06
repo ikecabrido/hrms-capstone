@@ -29,7 +29,7 @@ try {
         }
     }
     if ($missing) {
-        $sql = file_get_contents(__DIR__ . '/../../sql/external_cases.sql');
+        $sql = file_get_contents(__DIR__ . '/../../../sql/external_cases.sql');
         if ($sql !== false) {
             $db->beginTransaction();
             foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {

@@ -12,7 +12,7 @@ if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
 $employeeId = $_SESSION['employee_id'] ?? null;
 
 if (!$employeeId) {
-    header('Location: /index.php');
+    header('Location: /hrms-capstone/index.php');
     exit;
 }
 
@@ -70,14 +70,10 @@ if ($db instanceof PDO) {
                 e.hire_date,
                 d.department_name AS department,
                 p.position_name AS position,
-                CASE
-                    WHEN u.user_id IS NULL THEN ''
-                    WHEN u.locked_until IS NOT NULL AND u.locked_until > NOW() THEN 'Locked'
-                    ELSE 'Active'
-                END AS account_status,
+                u.account_status,
                 u.password_changed_at,
                 u.last_login,
-                NULL AS profile_pic
+                u.profile_pic
             FROM em_employees e
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             LEFT JOIN em_positions p ON e.position_id = p.position_id
@@ -524,7 +520,7 @@ if (window.location.hash === '#change-password') {
         var formData = new FormData();
         formData.append('password', val);
 
-        fetch('/modules/compliance/lib/api/verify_current_password.php', {
+        fetch('/hrms-capstone/modules/compliance/lib/api/verify_current_password.php', {
             method: 'POST',
             body: formData,
             credentials: 'same-origin'
@@ -1105,4 +1101,3 @@ if (window.location.hash === '#change-password') {
     .cw-profile-avatar { width: 50px; height: 50px; font-size: 15px; }
 }
 </style>
-

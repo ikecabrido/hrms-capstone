@@ -1,5 +1,5 @@
 <?php
-require 'C:/xampp/htdocs/modules/compliance/../../../database/db.php';
+require 'C:/xampp/htdocs/hrms-capstone/modules/compliance/../../../database/db.php';
 $db = (new Database())->getConnection();
 
 echo "=== em_position_salary_ranges ===\n";
@@ -23,4 +23,3 @@ if ($r) {
 } else {
     echo "No record found\n";
 }
-

@@ -292,7 +292,7 @@ try {
             $fileName = 'LOI-CMP-' . str_pad($complaintId, 5, '0', STR_PAD_LEFT) . '-' . date('YmdHis') . '-' . preg_replace('/[^A-Za-z0-9_\-\.]/', '_', basename($_FILES['loi_file']['name']));
             $targetPath = $uploadDir . $fileName;
             if (move_uploaded_file($_FILES['loi_file']['tmp_name'], $targetPath)) {
-                $loiFilePath = '/modules/compliance/assets/termination_loi/' . $fileName;
+                $loiFilePath = '/hrms-capstone/modules/compliance/assets/termination_loi/' . $fileName;
             }
         }
 
@@ -344,7 +344,7 @@ try {
             exit;
         }
         $baseDir = __DIR__ . '/../../../assets/termination_loi/';
-        $webDir = '/modules/compliance/assets/termination_loi/';
+        $webDir = '/hrms-capstone/modules/compliance/assets/termination_loi/';
         if (!is_dir($baseDir) && !mkdir($baseDir, 0755, true) && !is_dir($baseDir)) {
             echo json_encode(['success' => false, 'message' => 'Failed to create directory for PDF storage.']);
             exit;
@@ -639,5 +639,4 @@ try {
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
     exit;
 }
-
 

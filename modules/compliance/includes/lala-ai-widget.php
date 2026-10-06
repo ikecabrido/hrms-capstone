@@ -1,5 +1,5 @@
 <?php
-$llAssistantEndpoint = '/modules/compliance/lib/ajax/lala-ai-chat.php';
+$llAssistantEndpoint = '/hrms-capstone/modules/compliance/lib/ajax/lala-ai-chat.php';
 $llEmployeeName = trim((string) ($_SESSION['employee_name'] ?? 'there'));
 $llFirstName = explode(' ', $llEmployeeName)[0];
 $llFirstNameEscaped = htmlspecialchars($llFirstName, ENT_QUOTES, 'UTF-8');
@@ -13,7 +13,7 @@ $llFirstNameEscaped = htmlspecialchars($llFirstName, ENT_QUOTES, 'UTF-8');
         aria-controls="ll-assistant-panel"
         type="button"
     >
-        <img src="/modules/compliance/assets/lala_ai.png" alt="" class="ll-assistant-toggle-img" />
+        <img src="/hrms-capstone/modules/compliance/assets/lala_ai.png" alt="" class="ll-assistant-toggle-img" />
     </button>
 
     <div
@@ -27,7 +27,7 @@ $llFirstNameEscaped = htmlspecialchars($llFirstName, ENT_QUOTES, 'UTF-8');
         <div class="ll-assistant-header">
             <div class="ll-assistant-header-left">
                 <div style="position:relative;">
-                    <img src="/modules/compliance/assets/lala_ai.png" alt="Lala AI" class="ll-assistant-header-img" />
+                    <img src="/hrms-capstone/modules/compliance/assets/lala_ai.png" alt="Lala AI" class="ll-assistant-header-img" />
                 </div>
                 <div>
                     <strong>Lala AI</strong>
@@ -84,7 +84,6 @@ $llFirstNameEscaped = htmlspecialchars($llFirstName, ENT_QUOTES, 'UTF-8');
     </div>
 </div>
 
-<link rel="stylesheet" href="/modules/compliance/includes/lala-ai-widget.css?v=1790791968">
-<link rel="stylesheet" href="/modules/compliance/css/pages/lala-ai-developer.css">
-<script src="js/pages/lala-ai-chat.js?v=1790791769"></script>
-
+<link rel="stylesheet" href="/hrms-capstone/modules/compliance/includes/lala-ai-widget.css?v=2">
+<link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/lala-ai-developer.css">
+<script src="js/pages/lala-ai-chat.js?v=2"></script>

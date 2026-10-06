@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 ?>
-<link rel="stylesheet" href="/modules/compliance/css/pages/policy-view.css?v=2">
+<link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/policy-view.css?v=2">
 
 <section class="policy-module">
   <div class="policy-row">

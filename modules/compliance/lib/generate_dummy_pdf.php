@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../../../database/db.php';
 
-$webBase = '/modules/compliance/';
+$webBase = '/hrms-capstone/modules/compliance/';
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
@@ -130,4 +130,3 @@ function generateMinimalPdf(string $documentName, string $employeeName, string $
 
     return $output;
 }
-

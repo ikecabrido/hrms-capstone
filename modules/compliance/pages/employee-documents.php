@@ -17,7 +17,7 @@ $db = (new Database())->getConnection();
 if (!$db instanceof PDO) {
   throw new RuntimeException('Database connection unavailable.');
 }
-$webBase = '/modules/compliance/';
+$webBase = '/hrms-capstone/modules/compliance/';
 
 $rows = [];
 $totalRows = 0;
@@ -1299,4 +1299,3 @@ document.addEventListener('click', function(e) {
   .finally(function() { btn.disabled = false; });
 });
 </script>
-

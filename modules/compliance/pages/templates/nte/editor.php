@@ -66,7 +66,7 @@ foreach ($policyViolationOptions as $pv) {
 
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
-        $absGenerateUrl = $protocol . $host . '/modules/compliance/pages/generate-document.php'
+        $absGenerateUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/generate-document.php'
             . '?employee_id=' . urlencode($employeeId)
             . '&document_type=nte'
             . '&template=nte.php'
@@ -113,4 +113,3 @@ foreach ($policyViolationOptions as $pv) {
     }
 })();
 </script>
-

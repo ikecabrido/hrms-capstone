@@ -571,9 +571,9 @@ function llr_build_page_url(int $pageNum, string $search): string {
                     if (!empty($ref['document_path'])) {
                         $pdfHref = $ref['document_path'];
                         if (str_starts_with($pdfHref, 'C:/xampp/htdocs/hrms-capstone/')) {
-                            $pdfHref = '/' . ltrim(substr($pdfHref, strlen('C:/xampp/htdocs/hrms-capstone/')), '/');
+                            $pdfHref = '/hrms-capstone/' . ltrim(substr($pdfHref, strlen('C:/xampp/htdocs/hrms-capstone/')), '/');
                         } elseif (strpos($pdfHref, '://') === false && strpos($pdfHref, '/') !== 0) {
-                            $pdfHref = '/' . ltrim($pdfHref, '/');
+                            $pdfHref = '/hrms-capstone/' . ltrim($pdfHref, '/');
                         }
 
                         $documentName = basename((string) $ref['document_path']);

@@ -15,13 +15,9 @@ if (!isset($user) || empty($user)) {
     $user = $_SESSION['user'] ?? [];
 }
 if (!isset($db)) {
-    $database = new Database();
-
-    if ($database->hasConnectionError()) {
-        throw new RuntimeException('Database connection unavailable.');
-    }
-
-    $db = $database->getConnection();
+    $db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 }
 
 require_once __DIR__ . '/../classes/ExitManagementController.php';
@@ -952,7 +948,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
         </div>
         <div class="cw-card-body">
           <p style="margin:0 0 12px;font-size:0.82rem;color:var(--cw-muted,#5b6472);">Verify compliance, acknowledge the exit, or return the record to Exit Management for clarification.</p>
-          <form method="POST" action="" id="eaActionForm" data-api-url="/modules/compliance/lib/api/exit_acknowledgement_action.php" data-skip>
+          <form method="POST" action="" id="eaActionForm" data-api-url="/hrms-capstone/modules/compliance/lib/api/exit_acknowledgement_action.php" data-skip>
             <input type="hidden" name="exit_id" value="<?= (int)$exit['id'] ?>">
             <?php if ($legalStatus !== 'confirmed'): ?>
               <button type="submit" name="acknowledge_exit" class="cw-btn primary" id="eaBtnAcknowledge" style="background:rgba(47,158,110,.08);border-color:rgba(47,158,110,.25);color:#1f7a52;">
@@ -1113,7 +1109,7 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
         }
       } else {
         if (statusEl) {
-          statusEl.textContent = data.message || 'Action failed.';
+          statusEl.textContent = (data.message || 'Action failed.') + ' Check console.';
           statusEl.className = 'cw-action-status error';
         }
         if (btn) btn.disabled = false;
@@ -1127,7 +1123,6 @@ $legalStatus = strtolower($exit['legal_status'] ?? 'pending');
 })();
 </script>
 <?php ob_end_flush(); ?>
-
 
 
 

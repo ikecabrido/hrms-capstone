@@ -1,13 +1,8 @@
     
     export function reinitPage(page) {
     initTabs();
-    // Run automatic initialization only once per page.
-    if (!window.__compliancePageInitDone) {
-        window.__compliancePageInitDone = true;
-
-        initForms();
-        initDocumentForms();
-    }
+    initForms();
+    initDocumentForms();
     window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: page } }));
     }
 
@@ -20,209 +15,89 @@
     if (!tabItems.length) return;
 
     tabItems.forEach(function (tab) {
-
-        if (tab.dataset.initTabsBound === '1') {
-            return;
-        }
-
-        tab.dataset.initTabsBound = '1';
-
         tab.addEventListener('click', function () {
-            tabItems.forEach(function (t) {
-                t.classList.remove('active');
-            });
+        tabItems.forEach(function (t) { t.classList.remove('active'); });
+        tabContents.forEach(function (c) { c.classList.remove('active'); });
 
-            tabContents.forEach(function (c) {
-                c.classList.remove('active');
-            });
-
-            tab.classList.add('active');
-
-            const target = document.getElementById(
-                tab.getAttribute('data-tab')
-            );
-
-            if (target) {
-                target.classList.add('active');
-            }
+        tab.classList.add('active');
+        const target = document.getElementById(tab.getAttribute('data-tab'));
+        if (target) target.classList.add('active');
         });
     });
-}
+    }
 
     // ─── Form Submissions ─────────────────────────────────────────────────────────
 
     export function initForms() {
-    const forms = document.querySelectorAll(
-        'form:not([data-skip]):not(#approval-upload-form):not([method="get"]):not([method="GET"])'
-    );
+        const forms = document.querySelectorAll('form:not([data-skip]):not(#approval-upload-form):not([method="get"]):not([method="GET"])');
+        console.log('[initForms] Found forms:', forms.length);
 
-    let initializedCount = 0;
+        forms.forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                console.log('[initForms] Submit intercepted for form:', form);
+                e.preventDefault();
+                const formData = new FormData(form);
+                const action = form.getAttribute('action') || window.location.href;
+                console.log('[initForms] Posting to:', action);
 
-    forms.forEach(function (form) {
-
-        // Prevent duplicate submit handlers.
-        if (form.dataset.initFormsBound === '1') {
-            return;
-        }
-
-        form.dataset.initFormsBound = '1';
-        initializedCount++;
-
-        form.addEventListener('submit', function (e) {
-            console.log(
-                '[initForms] Submit intercepted for form:',
-                form
-            );
-
-            e.preventDefault();
-
-            const formData = new FormData(form);
-            const action =
-                form.getAttribute('action') ||
-                window.location.href;
-
-            console.log(
-                '[initForms] Posting to:',
-                action
-            );
-
-            fetch(action, {
-                method: (
-                    form.getAttribute('method') || 'POST'
-                ).toUpperCase(),
-
-                body: formData,
-
-                credentials: 'same-origin',
-
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(function (response) {
-
-                    console.log(
-                        '[initForms] Response status:',
-                        response.status
-                    );
-
-                    if (!response.ok) {
-                        throw new Error(
-                            'Form submission failed'
-                        );
-                    }
-
-                    return response.text();
+                fetch(action, {
+                    method: (form.getAttribute('method') || 'POST').toUpperCase(),
+                    body: formData,
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
                 })
-                .then(function (result) {
+                    .then(function (response) {
+                        console.log('[initForms] Response status:', response.status);
+                        if (!response.ok) throw new Error('Form submission failed');
+                        return response.text();
+                    })
+                    .then(function (result) {
+                        console.log('[initForms] Response length:', result.length);
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(result, 'text/html');
+                        const newContainer = doc.querySelector('.container');
+                        const container = document.querySelector('.container');
+                        if (!container || !newContainer) {
+                            console.log('[initForms] Container not found');
+                            return;
+                        }
 
-                    console.log(
-                        '[initForms] Response length:',
-                        result.length
-                    );
+                        container.innerHTML = newContainer.innerHTML;
 
-                    const parser = new DOMParser();
-
-                    const doc = parser.parseFromString(
-                        result,
-                        'text/html'
-                    );
-
-                    const newContainer =
-                        doc.querySelector('.container');
-
-                    const container =
-                        document.querySelector('.container');
-
-                    if (!container || !newContainer) {
-                        console.log(
-                            '[initForms] Container not found'
-                        );
-                        return;
-                    }
-
-                    container.innerHTML =
-                        newContainer.innerHTML;
-
-                    container.querySelectorAll('script')
-                        .forEach(function (oldScript) {
-
-                            const newScript =
-                                document.createElement('script');
-
-                            Array.from(
-                                oldScript.attributes
-                            ).forEach(function (attr) {
-
-                                newScript.setAttribute(
-                                    attr.name,
-                                    attr.value
-                                );
+                        container.querySelectorAll('script').forEach(function (oldScript) {
+                            const newScript = document.createElement('script');
+                            Array.from(oldScript.attributes).forEach(function (attr) {
+                                newScript.setAttribute(attr.name, attr.value);
                             });
-
-                            newScript.textContent =
-                                oldScript.textContent;
-
-                            oldScript.parentNode.replaceChild(
-                                newScript,
-                                oldScript
-                            );
+                            newScript.textContent = oldScript.textContent;
+                            oldScript.parentNode.replaceChild(newScript, oldScript);
                         });
 
-                    const current =
-                        new URL(location).searchParams.get('page') ||
-                        'dashboard-overview';
-
-                    reinitPage(current);
-                })
-                .catch(function (err) {
-
-                    console.error(
-                        '[initForms] Form error',
-                        err
-                    );
-                });
+                        const current = new URL(location).searchParams.get('page') || 'dashboard-overview';
+                        reinitPage(current);
+                    })
+                    .catch(function (err) {
+                        console.error('[initForms] Form error', err);
+                    });
+            });
         });
-    });
-
-    // Only report actual new initialization.
-    if (initializedCount > 0) {
-        console.log(
-            '[initForms] Initialized forms:',
-            initializedCount
-        );
     }
-}
 
     export function initDocumentForms() {
-    const forms = document.querySelectorAll(
-        'form.cd-date-form:not([method="POST"]):not([method="post"])'
-    );
+        const forms = document.querySelectorAll('form.cd-date-form:not([method="POST"]):not([method="post"])');
 
-    forms.forEach(function (form) {
+        forms.forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
 
-        // Prevent duplicate submit handlers.
-        if (form.dataset.initDocumentFormsBound === '1') {
-            return;
-        }
+        var url = new URL(form.getAttribute('action') || window.location.href);
+        var formData = new FormData(form);
 
-        form.dataset.initDocumentFormsBound = '1';
+        formData.forEach(function (value, key) {
+            url.searchParams.set(key, value);
+        });
 
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            var url = new URL(
-                form.getAttribute('action') ||
-                window.location.href
-            );
-
-            var formData = new FormData(form);
-
-            formData.forEach(function (value, key) {
-                url.searchParams.set(key, value);
-            });
-
-            window.location.href = url.toString();
+        window.location.href = url.toString();
         });
     });
-}
+    }

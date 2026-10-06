@@ -9,7 +9,7 @@
  *   php modules/compliance/classes/bulk_assign_policies.php
  *
  * Usage (Browser):
- *   http://127.0.0.1/modules/compliance/classes/bulk_assign_policies.php
+ *   http://127.0.0.1/hrms-capstone/modules/compliance/classes/bulk_assign_policies.php
  *
  * Safety:
  *   - Prevents duplicate assignments via UNIQUE KEY (policy_id, employee_id)
@@ -128,4 +128,3 @@ if (PHP_SAPI === 'cli') {
     echo '<div class="log">' . htmlspecialchars(implode("\n", $log)) . '</div>';
     echo '</body></html>';
 }
-

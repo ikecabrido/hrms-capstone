@@ -73,7 +73,7 @@ $hrSignatory = lc_get_signature_image();
 $today = date('F d, Y');
 $documentTitle = 'Exit Clearance';
 
-$separationDate = trim((string) ($_GET['exit_date'] ?? ''));
+$separationDate = isset($_GET['exit_date']) ? trim((string) $_GET['exit_date']) : '';
 
 $employer = lc_get_active_employer($db);
 $templateRecord = lc_get_document_template($db, $templateCode);
@@ -88,74 +88,6 @@ if ($templateRecord && !empty($templateRecord['template_content'])) {
 ?>
 
 <div class="dg-template-frame">
-
-<!-- EXIT CLEARANCE ACTION FORM -->
-<div class="cx-body exit-clearance-actions">
-
-    <p class="cd-section-title">Employee Information</p>
-
-    <div class="cd-field-row">
-
-        <div class="cd-field">
-            <label>Full Name</label>
-            <div class="cd-readonly-value"><?= $fullName ?></div>
-        </div>
-
-        <div class="cd-field">
-            <label>Position</label>
-            <div class="cd-readonly-value"><?= $position ?: '________________' ?></div>
-        </div>
-
-    </div>
-
-    <div class="cd-field">
-        <label>Department</label>
-        <div class="cd-readonly-value"><?= $department ?: '________________' ?></div>
-    </div>
-
-    <form method="GET" action="" class="exit-clearance-date-form">
-
-        <input type="hidden" name="page" value="preview-document">
-        <input type="hidden" name="request_id" value="<?= htmlspecialchars((string)($_GET['request_id'] ?? ''), ENT_QUOTES) ?>">
-        <input type="hidden" name="employee_id" value="<?= htmlspecialchars((string)($_GET['employee_id'] ?? $employeeId), ENT_QUOTES) ?>">
-        <input type="hidden" name="document_type" value="exit_clearance">
-        <input type="hidden" name="template" value="exit_clearance.php">
-        <input type="hidden" name="template_code" value="exit_clearance">
-
-        <div class="cd-field">
-            <label for="separation_date">Separation Date</label>
-
-            <input
-                type="date"
-                id="separation_date"
-                name="exit_date"
-                class="cd-input exit-date-picker"
-                value="<?= htmlspecialchars($separationDate, ENT_QUOTES) ?>"
-                required
-            >
-        </div>
-
-        <div class="cd-field exit-clearance-action-buttons">
-
-            <button type="submit" class="cd-btn-save">
-                <i class="bi bi-check2-circle"></i>
-                Apply Exit Details
-            </button>
-
-            <button
-                type="button"
-                class="cd-btn-email"
-                id="sendExitClearanceEmail"
-            >
-                <i class="bi bi-envelope" aria-hidden="true"></i>
-                Send to Email
-            </button>
-
-        </div>
-
-    </form>
-
-</div>
 
 <div class="document-preview">
 
@@ -190,17 +122,12 @@ if ($templateRecord && !empty($templateRecord['template_content'])) {
 
         <tr>
             <td class="info-label">Separation Date</td>
-            <td class="info-value">
-                  <?php
-                  $displayExitDate = trim((string) ($_GET["exit_date"] ?? ""));
-
-                  if ($displayExitDate !== "" && preg_match("/^\d{4}-\d{2}-\d{2}$/", $displayExitDate)) {
-                      echo htmlspecialchars(date("F d, Y", strtotime($displayExitDate)), ENT_QUOTES);
-                  } else {
-                      echo "________________";
-                  }
-                  ?>
-            </td>
+            <td class="info-value"><?php
+                $sepDate = isset($_GET['exit_date']) ? trim((string) $_GET['exit_date']) : '';
+                if ($sepDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $sepDate)) {
+                    echo htmlspecialchars(date('F d, Y', strtotime($sepDate)));
+                }
+            ?></td>
         </tr>
 
         <tr>
@@ -285,7 +212,7 @@ if ($templateRecord && !empty($templateRecord['template_content'])) {
     </table>
 
         <div class="document-notary">
-        <img src="<?= $protocol . $host . '/modules/compliance/assets/notary.png' ?>" alt="Notary Seal">
+        <img src="<?= $protocol . $host . '/hrms-capstone/modules/compliance/assets/notary.png' ?>" alt="Notary Seal">
     </div>
 <div class="document-signature">
 
@@ -323,7 +250,6 @@ if ($templateRecord && !empty($templateRecord['template_content'])) {
 </div>
 
 </div>
-
 
 
 

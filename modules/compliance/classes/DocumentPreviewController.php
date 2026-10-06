@@ -8,8 +8,6 @@ class DocumentPreviewController
 {
     private PDO $db;
     private array $user;
-    private string $documentPurpose = '';
-    private string $requestId = '';
 
     public function __construct(PDO $db, array $user = [])
     {
@@ -27,16 +25,6 @@ class DocumentPreviewController
         $templateCode  = isset($_GET['template_code']) ? trim((string) $_GET['template_code']) : '';
         $hrSignatory   = isset($_GET['hr_signatory']) ? (string) $_GET['hr_signatory'] : '';
         $mode          = isset($_GET['mode']) ? trim((string) $_GET['mode']) : 'preview';
-
-        // Training Bond template has been retired.
-        if (
-            strtolower($documentType) === 'training_bond'
-            || strtolower($templateCode) === 'training_bond'
-            || strtolower($templateFile) === 'training_bond.php'
-        ) {
-            $this->renderError('The Training Bond document template is no longer available.');
-            return;
-        }
         $savedVersionId = isset($_GET['version_id']) ? trim((string) $_GET['version_id']) : '';
 
         if ($templateCode !== 'employee_handbook' && $employeeId !== '' && !lc_can_access_employee_document(
@@ -71,14 +59,6 @@ class DocumentPreviewController
             && ($_POST['action'] ?? '') === 'apply_contract_renewal'
         ) {
             $this->handleContractRenewalApply();
-            return;
-        }
-
-        if (
-            $_SERVER['REQUEST_METHOD'] === 'POST'
-            && ($_POST['action'] ?? '') === 'apply_coe_purpose'
-        ) {
-            $this->handleCoePurposeApply();
             return;
         }
 
@@ -118,6 +98,7 @@ class DocumentPreviewController
             'nte' => 'nte.php',
             'exit_clearance' => 'exit_clearance.php',
             'exit_acknowledgement' => 'exit_acknowledgement.php',
+            'quitclaim' => 'quitclaim.php',
             'termination_decision' => 'termination_decision.php',
             'onboarding_package' => 'onboarding_package.php',
         ];
@@ -145,6 +126,7 @@ class DocumentPreviewController
             'Notice of Decision' => 'notice_of_decision',
             'Termination Decision' => 'termination_decision',
             'Clearance Survey' => 'clearance_survey',
+            'Quitclaim and Release' => 'quitclaim',
             'Salary Rectification Agreement' => 'salary_rectification',
             'Employee Handbook' => 'employee_handbook',
         ];
@@ -224,99 +206,11 @@ class DocumentPreviewController
         }
     }
 
-    private function handleCoePurposeApply(): void
-    {
-        $requestId = trim((string) ($_POST['request_id'] ?? ''));
-        $purpose = trim((string) ($_POST['purpose'] ?? ''));
-        $purposeOther = trim((string) ($_POST['purpose_other'] ?? ''));
-
-        $allowedPurposes = [
-            'Employment Verification',
-            'Bank / Loan Application',
-            'Visa / Travel Requirements',
-            'Government Requirement',
-            'School / Scholarship',
-            'Housing / Rental Application',
-            'Personal Records',
-            'Other',
-        ];
-
-        if ($requestId === '' || !ctype_digit($requestId)) {
-            $this->renderError('Invalid document request.');
-            return;
-        }
-
-        if (!in_array($purpose, $allowedPurposes, true)) {
-            $this->renderError('Invalid certificate purpose.');
-            return;
-        }
-
-        if ($purpose === 'Other') {
-            if ($purposeOther === '') {
-                $this->renderError('Please enter the certificate purpose.');
-                return;
-            }
-
-            $purpose = $purposeOther;
-        }
-
-        if (function_exists('mb_substr')) {
-            $purpose = mb_substr($purpose, 0, 200);
-        } else {
-            $purpose = substr($purpose, 0, 200);
-        }
-
-        try {
-            $stmt = $this->db->prepare("
-                UPDATE em_lc_document_requests
-                SET document_purpose = :purpose
-                WHERE request_id = :request_id
-                LIMIT 1
-            ");
-
-            $stmt->execute([
-                ':purpose' => $purpose,
-                ':request_id' => (int) $requestId,
-            ]);
-
-            if ($stmt->rowCount() < 1) {
-                $check = $this->db->prepare("
-                    SELECT request_id
-                    FROM em_lc_document_requests
-                    WHERE request_id = :request_id
-                    LIMIT 1
-                ");
-                $check->execute([':request_id' => (int) $requestId]);
-
-                if (!$check->fetch(PDO::FETCH_ASSOC)) {
-                    $this->renderError('COE document request not found.');
-                    return;
-                }
-            }
-
-            $redirect = $_SERVER['REQUEST_URI'] ?? '';
-
-            if ($redirect === '') {
-                $redirect = '?page=preview-document&request_id=' . urlencode($requestId);
-            }
-
-            $separator = strpos($redirect, '?') === false ? '?' : '&';
-            $redirect .= $separator . 'purpose_saved=1';
-
-            header('Location: ' . $redirect);
-            exit;
-        } catch (Throwable $e) {
-            error_log('COE purpose update failed: ' . $e->getMessage());
-            $this->renderError('Unable to save the certificate purpose.');
-            return;
-        }
-    }
-
     private function loadFromRequest(string $requestId, string &$employeeId, string &$documentType, string &$templateCode): bool
     {
         try {
             $stmt = $this->db->prepare("
-                SELECT request_id, employee_id, document_type, template_code, document_purpose, request_status, priority, notes, requires_signature, signature_status, created_at
+                SELECT request_id, employee_id, document_type, template_code, request_status, priority, notes, requires_signature, signature_status, created_at
                 FROM em_lc_document_requests
                 WHERE request_id = :id
                 LIMIT 1
@@ -331,8 +225,6 @@ class DocumentPreviewController
             $employeeId   = (string) ($requestData['employee_id'] ?? $employeeId);
             $documentType = (string) ($requestData['document_type'] ?? $documentType);
             $templateCode = (string) ($requestData['template_code'] ?? $templateCode);
-            $this->requestId = (string) ($requestData['request_id'] ?? $requestId);
-        $this->documentPurpose = trim((string) ($requestData['document_purpose'] ?? ''));
 
             if ($templateCode === '' || $templateCode === 'null') {
                 $docTypeToCodeMap = [
@@ -354,7 +246,8 @@ class DocumentPreviewController
                     'Notice of Decision' => 'notice_of_decision',
                     'Termination Decision' => 'termination_decision',
                     'Clearance Survey' => 'clearance_survey',
-                          'Salary Rectification Agreement' => 'salary_rectification',
+                    'Quitclaim and Release' => 'quitclaim',
+                    'Salary Rectification Agreement' => 'salary_rectification',
                 ];
                 $templateCode = $docTypeToCodeMap[$documentType] ?? $documentType;
             }
@@ -426,13 +319,6 @@ class DocumentPreviewController
     {
         $data = DocumentData::load($this->db, $templateCode, $employeeId, $documentType);
         $db = $this->db;
-        $documentPurpose = $this->documentPurpose;
-
-        // Explicitly pass Exit Clearance separation date to the preview template.
-        $separationDate = '';
-        if ($templateCode === 'exit_clearance' || $documentType === 'exit_clearance') {
-            $separationDate = trim((string) ($_GET['exit_date'] ?? ''));
-        }
 
         $previewPath = $templateDir . '/preview.php';
 
@@ -472,14 +358,6 @@ class DocumentPreviewController
         }
         $editorHtml = ob_get_clean();
 
-        // Preserve Exit Clearance separation date for the preview template.
-        if ($templateCode === 'exit_clearance' || $documentType === 'exit_clearance') {
-            $exitDate = trim((string) ($_GET['exit_date'] ?? ''));
-            if ($exitDate !== '') {
-                $_GET['exit_date'] = $exitDate;
-            }
-        }
-
         $previewHtml = $this->renderPreviewContent($templateDir, $templateCode, $employeeId, $documentType);
 
         $this->renderTemplateShell($editorHtml, $previewHtml, $data, $templateCode, $employeeId, $documentType, $hrSignatory, $mode, $savedVersionId, $templateFile);
@@ -516,7 +394,6 @@ class DocumentPreviewController
         }
 
         $db = $this->db;
-        $documentPurpose = $this->documentPurpose;
 
         $documentCss = 'css/document-preview.css?v=' . (file_exists(__DIR__ . '/../../css/document-preview.css') ? filemtime(__DIR__ . '/../../css/document-preview.css') : time());
         $documentCssLink = '<link rel="stylesheet" href="' . htmlspecialchars($documentCss) . '">';
@@ -547,7 +424,7 @@ class DocumentPreviewController
 
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $absGenerateUrl = $protocol . $host . '/modules/compliance/pages/' . $generateUrl;
+        $absGenerateUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/' . $generateUrl;
 
         $attachmentName = 'Onboarding_Package_' . preg_replace('/[^A-Za-z0-9]/', '', ($employee['full_name'] ?? 'Employee')) . '.html';
 
@@ -628,59 +505,6 @@ class DocumentPreviewController
             $generateUrl .= '&contract_salary_input=' . urlencode((string) ($_GET['contract_salary_input'] ?? ''));
         }
 
-        $coePurposeOptions = [
-            'Employment Verification',
-            'Bank / Loan Application',
-            'Visa / Travel Requirements',
-            'Government Requirement',
-            'School / Scholarship',
-            'Housing / Rental Application',
-            'Personal Records',
-            'Other',
-        ];
-
-        $coePurpose = trim((string) ($_GET['purpose'] ?? 'Employment Verification'));
-        if (!in_array($coePurpose, $coePurposeOptions, true)) {
-            $coePurpose = 'Employment Verification';
-        }
-
-        if ($templateCode === 'coe') {
-            $generateUrl .= '&purpose=' . urlencode($coePurpose);
-        }
-
-        $leaveAgreementRequest = false;
-
-        $leaveCheckValues = [
-            $documentType ?? '',
-            $templateCode ?? '',
-            $templateFile ?? '',
-            $_GET['document_type'] ?? '',
-            $_GET['template_code'] ?? '',
-            $_GET['template'] ?? ''
-        ];
-
-        foreach ($leaveCheckValues as $leaveCheckValue) {
-            $normalized = strtolower(trim((string) $leaveCheckValue));
-            $normalized = str_replace(['-', ' ', '.php'], ['_', '_', ''], $normalized);
-            $normalized = preg_replace('/[^a-z0-9_]/', '', $normalized);
-            $normalized = trim((string) $normalized, '_');
-
-            if (
-                $normalized === 'leave_agreement'
-                || $normalized === 'leaveagreement'
-            ) {
-                $leaveAgreementRequest = true;
-                break;
-            }
-        }
-
-        if ($leaveAgreementRequest) {
-            $generateUrl .= '&leave_type=' . urlencode((string) ($_GET['leave_type'] ?? ''));
-            $generateUrl .= '&leave_start_date=' . urlencode((string) ($_GET['leave_start_date'] ?? ''));
-            $generateUrl .= '&leave_end_date=' . urlencode((string) ($_GET['leave_end_date'] ?? ''));
-            $generateUrl .= '&leave_duration=' . urlencode((string) ($_GET['leave_duration'] ?? ''));
-        }
-
         $sendToEmailUrl = '?page=notification-compose&mode=reply&notification_key=warning';
         $sendToEmailUrl .= '&to_recipient_email=' . urlencode($data['employee_email'] ?? '');
         $sendToEmailUrl .= '&to_recipient_name=' . urlencode($data['employee_full_name'] ?? '');
@@ -707,7 +531,7 @@ class DocumentPreviewController
 
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $absGenerateUrl = $protocol . $host . '/modules/compliance/pages/' . $generateUrl;
+        $absGenerateUrl = $protocol . $host . '/hrms-capstone/modules/compliance/pages/' . $generateUrl;
 
         $attachmentNameMap = [
             'coe' => 'COE',
@@ -847,181 +671,7 @@ HTML;
             '</div>' .
             '<div class="cd-field"><label>Department</label><div class="cd-readonly-value">' . htmlspecialchars($data['employee_department'] ?: '') . '</div></div>';
 
-        if (
-            strtolower(trim((string) ($templateCode ?? ''))) === 'exit_clearance'
-            || strtolower(trim((string) ($documentType ?? ''))) === 'exit_clearance'
-            || strtolower(trim((string) ($_GET['template_code'] ?? ''))) === 'exit_clearance'
-            || strtolower(trim((string) ($_GET['document_type'] ?? ''))) === 'exit_clearance'
-            || strtolower(trim((string) ($_GET['template'] ?? ''))) === 'exit_clearance.php'
-        ) {
-            $exitDate = trim((string) ($_GET['exit_date'] ?? ''));
-
-            $exitSendToEmailUrl = $sendToEmailUrl;
-            $exitSendToEmailUrl .= '&request_id=' . urlencode((string) $this->requestId);
-            $exitSendToEmailUrl .= '&document_type=exit_clearance';
-            $exitSendToEmailUrl .= '&template_code=exit_clearance';
-            $exitSendToEmailUrl .= '&template=exit_clearance.php';
-            $exitSendToEmailUrl .= '&exit_date=' . urlencode($exitDate);
-
-            $combinedCardHtml .= '
-                <div class="cd-form-section exit-clearance-form-section" style="margin-top:22px;">
-                    <p class="cd-section-title">Exit Clearance Details</p>
-
-                    <form method="get" action="" class="cd-exit-clearance-form">
-
-                        <input type="hidden" name="page" value="preview-document">
-                        <input type="hidden" name="request_id" value="' . htmlspecialchars((string) $this->requestId, ENT_QUOTES) . '">
-                        <input type="hidden" name="employee_id" value="' . htmlspecialchars((string) $employeeId, ENT_QUOTES) . '">
-                        <input type="hidden" name="document_type" value="exit_clearance">
-                        <input type="hidden" name="template" value="exit_clearance.php">
-                        <input type="hidden" name="template_code" value="exit_clearance">
-
-                        <div class="cd-field">
-                            <label for="exitClearanceDate">Separation Date</label>
-                            <input
-                                type="date"
-                                id="exitClearanceDate"
-                                name="exit_date"
-                                class="cd-input exit-clearance-date"
-                                value="' . htmlspecialchars($exitDate, ENT_QUOTES) . '"
-                                required
-                            >
-                        </div>
-
-                        <div class="cd-field cd-field--split-actions-2 cd-exit-clearance-actions" style="margin-top:14px;">
-
-                            <button type="submit" class="cd-btn-save">
-                                <i class="bi bi-check2-circle"></i>
-                                Apply Exit Details
-                            </button>
-
-                            <a
-                                href="' . htmlspecialchars($exitSendToEmailUrl, ENT_QUOTES) . '"
-                                class="cd-btn-email"
-                            >
-                                <i class="bi bi-envelope" aria-hidden="true"></i>
-                                Send to Email
-                            </a>
-
-                        </div>
-
-                    </form>
-                </div>
-            ';
-        }
-
-        if (
-            strtolower(trim((string) ($templateCode ?? ''))) === 'leave_agreement'
-            || strtolower(trim((string) ($documentType ?? ''))) === 'leave_agreement'
-            || strtolower(trim((string) ($_GET['template_code'] ?? ''))) === 'leave_agreement'
-            || strtolower(trim((string) ($_GET['document_type'] ?? ''))) === 'leave_agreement'
-            || strtolower(trim((string) ($_GET['template'] ?? ''))) === 'leave_agreement.php'
-        ) {
-            $leaveType = trim((string) ($_GET['leave_type'] ?? ''));
-            $leaveStartDate = trim((string) ($_GET['leave_start_date'] ?? ''));
-            $leaveEndDate = trim((string) ($_GET['leave_end_date'] ?? ''));
-            $leaveDuration = trim((string) ($_GET['leave_duration'] ?? ''));
-
-            $leaveSendToEmailUrl = $sendToEmailUrl;
-            $leaveSendToEmailUrl .= '&request_id=' . urlencode((string) $this->requestId);
-            $leaveSendToEmailUrl .= '&document_type=leave_agreement';
-            $leaveSendToEmailUrl .= '&template_code=leave_agreement';
-            $leaveSendToEmailUrl .= '&template=leave_agreement.php';
-            $leaveSendToEmailUrl .= '&leave_type=' . urlencode($leaveType);
-            $leaveSendToEmailUrl .= '&leave_start_date=' . urlencode($leaveStartDate);
-            $leaveSendToEmailUrl .= '&leave_end_date=' . urlencode($leaveEndDate);
-            $leaveSendToEmailUrl .= '&leave_duration=' . urlencode($leaveDuration);
-
-            $leaveTypeOptions = [
-                'Vacation Leave',
-                'Sick Leave',
-                'Emergency Leave',
-                'Personal Leave',
-                'Maternity Leave',
-                'Paternity Leave',
-                'Bereavement Leave',
-                'Study Leave',
-                'Service Incentive Leave',
-                'Other',
-            ];
-
-            $combinedCardHtml .= '
-                <div class="cd-form-section" style="margin-top:22px;">
-                    <p class="cd-section-title">Leave Details</p>
-
-                    <form method="get" action="" class="cd-purpose-form">
-                        <input type="hidden" name="page" value="preview-document">
-                        <input type="hidden" name="request_id" value="' . htmlspecialchars($this->requestId, ENT_QUOTES) . '">
-                        <input type="hidden" name="employee_id" value="' . htmlspecialchars($employeeId, ENT_QUOTES) . '">
-                        <input type="hidden" name="document_type" value="' . htmlspecialchars($documentType, ENT_QUOTES) . '">
-                        <input type="hidden" name="template" value="' . htmlspecialchars($templateFile, ENT_QUOTES) . '">
-                        <input type="hidden" name="template_code" value="leave_agreement">
-
-                        <div class="cd-field">
-                            <label for="leaveType">Leave Type</label>
-                            <select id="leaveType" name="leave_type" class="form-select" required>
-                                <option value="">Select leave type</option>';
-
-            foreach ($leaveTypeOptions as $option) {
-                $selected = ($leaveType === $option) ? ' selected' : '';
-                $combinedCardHtml .= '<option value="' .
-                    htmlspecialchars($option, ENT_QUOTES) . '"' .
-                    $selected . '>' .
-                    htmlspecialchars($option) .
-                    '</option>';
-            }
-
-            $combinedCardHtml .= '
-                            </select>
-                        </div>
-
-                        <div class="cd-field-row">
-                            <div class="cd-field">
-                                <label for="leaveStartDate">Leave Start Date</label>
-                                <input type="date"
-                                       id="leaveStartDate"
-                                       name="leave_start_date"
-                                       value="' . htmlspecialchars($leaveStartDate, ENT_QUOTES) . '"
-                                       class="form-control"
-                                       required>
-                            </div>
-
-                            <div class="cd-field">
-                                <label for="leaveEndDate">Leave End Date</label>
-                                <input type="date"
-                                       id="leaveEndDate"
-                                       name="leave_end_date"
-                                       value="' . htmlspecialchars($leaveEndDate, ENT_QUOTES) . '"
-                                       class="form-control"
-                                       required>
-                            </div>
-                        </div>
-
-                        <div class="cd-field">
-                            <label for="leaveDuration">Duration</label>
-                            <input type="text"
-                                   id="leaveDuration"
-                                   name="leave_duration"
-                                   value="' . htmlspecialchars($leaveDuration, ENT_QUOTES) . '"
-                                   class="form-control"
-                                   placeholder="e.g. 5 days"
-                                   required>
-                        </div>
-
-                        <div class="cd-field cd-field--split-actions-2 cd-leave-actions" style="margin-top:14px;">
-                            <button type="submit" class="cd-btn-save">
-                                <i class="bi bi-check2-circle"></i> Apply Leave Details
-                            </button>
-
-                            <a href="' . htmlspecialchars($leaveSendToEmailUrl, ENT_QUOTES) . '"
-                               class="cd-btn-email">
-                                <i class="bi bi-envelope" aria-hidden="true"></i> Send to Email
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            ';
-        } elseif ($editorHtml !== '' && $templateCode !== 'coe') {
+        if ($editorHtml !== '') {
             $combinedCardHtml .= $editorHtml;
         } elseif ($templateCode === 'salary_rectification') {
             $currentSalary = !empty($_GET['contract_salary_input']) ? $_GET['contract_salary_input'] : '';
@@ -1126,73 +776,8 @@ HTML;
                     }
                 });
             </script>';
-        } elseif (
-            $templateCode === 'coe'
-            || strtolower(trim($documentType)) === 'coe'
-            || strtolower(trim($templateFile)) === 'coe.php'
-        ) {
-                $templateCode = 'coe';
-
-                $otherPurpose = '';
-                if ($coePurpose === 'Other') {
-                    $otherPurpose = trim((string) ($_GET['purpose_other'] ?? ''));
-                }
-
-                $savedPurpose = trim((string) $this->documentPurpose);
-                $standardPurpose = in_array($savedPurpose, $coePurposeOptions, true) ? $savedPurpose : 'Other';
-                $otherPurpose = ($standardPurpose === 'Other' && $savedPurpose !== 'Other') ? $savedPurpose : '';
-
-                $combinedCardHtml .=
-                    '<div class="cd-section-divider"></div>' .
-                    '<form class="cd-purpose-form" method="post" action="">' .
-                        '<input type="hidden" name="action" value="apply_coe_purpose">' .
-                        '<input type="hidden" name="request_id" value="' . htmlspecialchars((string) ($this->requestId ?? ($_GET['request_id'] ?? '')), ENT_QUOTES) . '">' .
-                        '<input type="hidden" name="hr_signatory" value="' . htmlspecialchars((string) ($_GET['hr_signatory'] ?? ''), ENT_QUOTES) . '">' .
-                        '<input type="hidden" name="employee_id" value="' . htmlspecialchars((string) ($data['employee_id'] ?? ''), ENT_QUOTES) . '">' .
-                        '<input type="hidden" name="document_type" value="coe">' .
-                        '<input type="hidden" name="template_code" value="coe">' .
-                        '<div class="cd-field-row cd-purpose-row">' .
-                            '<div class="cd-field">' .
-                                '<label for="coePurpose">Certificate Purpose</label>' .
-                                '<select id="coePurpose" name="purpose" class="cd-purpose-select">' .
-                                    '<option value="Employment Verification"' . ($standardPurpose === 'Employment Verification' ? ' selected' : '') . '>Employment Verification</option>' .
-                                    '<option value="Bank / Loan Application"' . ($standardPurpose === 'Bank / Loan Application' ? ' selected' : '') . '>Bank / Loan Application</option>' .
-                                    '<option value="Visa / Travel Requirements"' . ($standardPurpose === 'Visa / Travel Requirements' ? ' selected' : '') . '>Visa / Travel Requirements</option>' .
-                                    '<option value="Government Requirement"' . ($standardPurpose === 'Government Requirement' ? ' selected' : '') . '>Government Requirement</option>' .
-                                    '<option value="School / Scholarship"' . ($standardPurpose === 'School / Scholarship' ? ' selected' : '') . '>School / Scholarship</option>' .
-                                    '<option value="Housing / Rental Application"' . ($standardPurpose === 'Housing / Rental Application' ? ' selected' : '') . '>Housing / Rental Application</option>' .
-                                    '<option value="Personal Records"' . ($standardPurpose === 'Personal Records' ? ' selected' : '') . '>Personal Records</option>' .
-                                    '<option value="Other"' . ($standardPurpose === 'Other' ? ' selected' : '') . '>Other</option>' .
-                                '</select>' .
-                                '<input type="text" id="coePurposeOther" name="purpose_other" class="cd-purpose-other" placeholder="Enter certificate purpose" value="' . htmlspecialchars($otherPurpose, ENT_QUOTES) . '"' . ($standardPurpose === 'Other' ? '' : ' disabled') . '>' .
-                                '<div class="cd-field-help">Select the purpose for which this Certificate of Employment will be issued.</div>' .
-                            '</div>' .
-                        '</div>' .
-                        '<div class="cd-purpose-actions">' .
-                            '<button type="submit" class="cd-btn-apply">Apply</button>' .
-                            $sendToEmailButtonHtml .
-                        '</div>' .
-                    '</form>' .
-                    '<script>
-                    (function () {
-                        var select = document.getElementById("coePurpose");
-                        var other = document.getElementById("coePurposeOther");
-
-                        if (!select) return;
-
-                        function syncOther() {
-                            var isOther = select.value === "Other";
-
-                            if (other) {
-                                other.disabled = !isOther;
-                                other.style.display = isOther ? "block" : "none";
-                            }
-                        }
-
-                        select.addEventListener("change", syncOther);
-                        syncOther();
-                    })();
-                    </script>';
+        } else {
+            $combinedCardHtml .= '<div class="cd-field cd-field--split-actions-2">' . $sendToEmailButtonHtml . '</div>';
         }
 
         $combinedCardHtml .= '</div>' .
@@ -1556,6 +1141,5 @@ HTML;
         echo '<div class="dg-template-frame"><div class="dg-empty">' . htmlspecialchars($message) . '</div></div>';
     }
 }
-
 
 

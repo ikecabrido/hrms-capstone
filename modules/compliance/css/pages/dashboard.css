@@ -978,7 +978,22 @@
 }
 
 /* ── Government Contribution Tooltip ── */
-
+.gov-tooltip {
+    position: fixed;
+    display: none;
+    max-width: 260px;
+    padding: 8px 10px;
+    background: #0f172a;
+    color: #f8fafc;
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.4;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.22);
+    pointer-events: none;
+    z-index: 950;
+    white-space: normal;
+}
 
 /* ── Incident Categories ── */
 .incident-categories {
@@ -1078,6 +1093,20 @@
     .incident-summary { grid-template-columns: 1fr; }
 }
 
+.incident-summary-item {
+    background: #fff;
+    border: 1px solid var(--dash-slate-200, #e2e8f0);
+    border-radius: 6px;
+    padding: 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 100%;
+    min-height: 72px;
+    justify-content: center;
+    margin-top: 12px;
+}
+
 .incident-summary-link {
     display: flex;
     text-decoration: none;
@@ -1085,12 +1114,215 @@
     height: 100%;
 }
 
-.incident-summary-link:hover 
+.incident-summary-link:hover .incident-summary-item {
+    border-color: var(--dash-blue-500, #3b82c6);
+    background: var(--dash-slate-50, #f8fafc);
+}
+
+.incident-summary-value {
+
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--dash-text-900, #1b2430);
+    line-height: 1.4;
+}
+
+.incident-summary-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--dash-text-400, #8b93a1);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    line-height: 1.3;
+}
 
 /* ── Incident Occurrence Calendar ── */
+.incident-occurrence-panel {
+    min-height: auto;
+}
+
+.incident-calendar-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.incident-calendar-btn {
+    background: #fff;
+    border: 1px solid var(--dash-slate-200, #e2e8f0);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--dash-text-600, #5b6472);
+    cursor: pointer;
+    transition: border-color .12s ease, color .12s ease;
+    line-height: 1.2;
+}
+
+.incident-calendar-btn:hover {
+    border-color: var(--dash-blue-600, #2563eb);
+    color: var(--dash-blue-700, #1d4ed8);
+}
+
+.incident-calendar-month {
+
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--dash-text-900, #1b2430);
+    min-width: 100px;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.incident-calendar-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
 
 @media (max-width: 640px) {
-    
+    .incident-calendar-summary { grid-template-columns: repeat(2, 1fr); }
+}
+
+.incident-calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.incident-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--dash-text-400, #8b93a1);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--dash-slate-100, #f1f5f9);
+    line-height: 1.3;
+    margin-top: 20px;
+}
+
+.incident-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-top: 12px;
+}
+
+.incident-calendar-day {
+    position: relative;
+    min-height: 52px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    background: #fff;
+    border: 1px solid var(--dash-slate-100, #f1f5f9);
+    cursor: pointer;
+    transition: border-color .12s ease, box-shadow .12s ease, background .12s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.incident-calendar-day:hover {
+    border-color: var(--dash-slate-300, #cbd5e1);
+    box-shadow: 0 1px 3px rgba(0,0,0,.03);
+    background: var(--dash-slate-50, #f8fafc);
+}
+
+.incident-calendar-day--empty {
+    background: transparent;
+    border-color: transparent;
+    cursor: default;
+    pointer-events: none;
+}
+
+.incident-calendar-day--low { background: rgba(59,130,196,.06); border-color: rgba(59,130,196,.18); }
+.incident-calendar-day--medium { background: rgba(59,130,196,.14); border-color: rgba(59,130,196,.30); }
+.incident-calendar-day--high { background: rgba(30,64,175,.20); border-color: rgba(30,64,175,.40); }
+.incident-calendar-day--critical { background: rgba(30,64,175,.28); border-color: rgba(30,64,175,.55); }
+
+.incident-calendar-day--selected {
+    background: var(--dash-blue-700, #1d4ed8);
+    border-color: var(--dash-blue-800, #1e40af);
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+.incident-calendar-day--selected .incident-calendar-day-number {
+    color: #fff;
+}
+
+.incident-calendar-day--selected .incident-calendar-day-count {
+    color: rgba(255,255,255,.85);
+}
+
+.incident-calendar-day--today {
+    box-shadow: inset 0 0 0 1px var(--dash-blue-500, #3b82c6);
+}
+
+.incident-calendar-day-number {
+
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--dash-text-900, #1b2430);
+    line-height: 1.3;
+}
+
+.incident-calendar-day-count {
+
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--dash-blue-700, #1d4ed8);
+    line-height: 1.4;
+}
+
+.incident-calendar-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--dash-text-400, #8b93a1);
+    line-height: 1.3;
+}
+
+.legend-level {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid var(--dash-slate-200, #e2e8f0);
+}
+
+.legend-level--0 { background: #fff; }
+.legend-level--1 { background: rgba(59,130,196,.08); }
+.legend-level--2 { background: rgba(59,130,196,.18); }
+.legend-level--3 { background: rgba(30,64,175,.24); }
+.legend-level--4 { background: rgba(30,64,175,.32); }
+
+.incident-calendar-insight {
+    margin-top: 8px;
+    padding: 6px 10px;
+    background: var(--dash-slate-50, #f8fafc);
+    border: 1px solid var(--dash-slate-200, #e2e8f0);
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--dash-text-600, #5b6472);
+    line-height: 1.4;
+}
+
+.incident-insight-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--dash-text-400, #8b93a1);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    margin-bottom: 2px;
+    line-height: 1.3;
 }
 
 .incident-tooltip {
@@ -1111,7 +1343,16 @@
 }
 
 @media (max-width: 768px) {
-
+    .incident-calendar-day {
+        min-height: 44px;
+        padding: 3px 4px;
+    }
+    .incident-calendar-day-number {
+        font-size: 9px;
+    }
+    .incident-calendar-day-count {
+        font-size: 8px;
+    }
 }
 
 /* ── Action & Compliance Overview ── */
@@ -2685,645 +2926,3 @@
         padding: 6px 0;
     }
 }
-
-/* =========================================================
-   INCIDENT OCCURRENCE
-   ========================================================= */
-
-.incident-occurrence-panel {
-    overflow: hidden;
-}
-
-/* ---------------------------------------------------------
-   Panel Header
-   --------------------------------------------------------- */
-
-.incident-occurrence-panel .chart-panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.incident-occurrence-panel .chart-panel-meta {
-    margin-top: 4px;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11px;
-    font-weight: 400;
-    color: #777;
-}
-
-/* ---------------------------------------------------------
-   Month Controls
-   --------------------------------------------------------- */
-
-.incident-calendar-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.incident-calendar-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    width: 30px;
-    height: 30px;
-    padding: 0;
-
-    border: 1px solid #d8d8d8;
-    border-radius: 6px;
-
-    background: #ffffff;
-    color: #333333;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 18px;
-    font-weight: 400;
-    line-height: 1;
-
-    cursor: pointer;
-
-    transition:
-        background-color .15s ease,
-        border-color .15s ease;
-}
-
-.incident-calendar-btn:hover {
-    background: #f5f5f5;
-    border-color: #bdbdbd;
-}
-
-.incident-calendar-btn:focus {
-    outline: 2px solid #999999;
-    outline-offset: 2px;
-}
-
-.incident-calendar-month {
-    min-width: 105px;
-
-    text-align: center;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-
-    color: #333333;
-}
-
-/* ---------------------------------------------------------
-   Summary Cards
-   --------------------------------------------------------- */
-
-.incident-calendar-summary {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-
-    margin-bottom: 18px;
-}
-
-.incident-summary-item {
-    min-width: 0;
-
-    padding: 12px 10px;
-
-    border: 1px solid #e5e5e5;
-    border-radius: 7px;
-
-    background: #fafafa;
-
-    text-align: center;
-}
-
-.incident-summary-value {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    line-height: 1.2;
-
-    color: #222222;
-}
-
-.incident-summary-label {
-    margin-top: 5px;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 10px;
-    font-weight: 400;
-
-    color: #777777;
-}
-
-/* ---------------------------------------------------------
-   Calendar
-   --------------------------------------------------------- */
-
-.incident-calendar {
-    width: 100%;
-}
-
-.incident-calendar-weekdays,
-.incident-calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 4px;
-}
-
-.incident-calendar-weekdays {
-    margin-bottom: 5px;
-}
-
-.incident-calendar-weekdays > div {
-    padding: 5px 2px;
-
-    text-align: center;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-
-    color: #888888;
-}
-
-/* ---------------------------------------------------------
-   Calendar Day
-   --------------------------------------------------------- */
-
-.incident-calendar-day {
-    position: relative;
-
-    min-height: 45px;
-    padding: 6px;
-
-    border: 1px solid #e8e8e8;
-    border-radius: 5px;
-
-    background: #ffffff;
-
-    cursor: pointer;
-
-    transition:
-        border-color .15s ease,
-        box-shadow .15s ease,
-        background-color .15s ease;
-}
-
-.incident-calendar-day:hover {
-    border-color: #aaaaaa;
-    background: #fafafa;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, .07);
-}
-
-.incident-calendar-day:focus {
-    outline: 2px solid #999999;
-    outline-offset: 1px;
-}
-
-.incident-calendar-day--empty {
-    border-color: transparent;
-    background: transparent;
-
-    cursor: default;
-    box-shadow: none;
-}
-
-.incident-calendar-day--empty:hover {
-    border-color: transparent;
-    background: transparent;
-    box-shadow: none;
-}
-
-.incident-calendar-day-number {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11px;
-    font-weight: 400;
-
-    color: #555555;
-}
-
-.incident-calendar-day-count {
-    position: absolute;
-    right: 5px;
-    bottom: 4px;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11px;
-    font-weight: 700;
-
-    color: #333333;
-}
-
-/* ---------------------------------------------------------
-   Incident Activity Levels
-   --------------------------------------------------------- */
-
-.incident-calendar-day--low {
-    background: #f8f8f8;
-}
-
-.incident-calendar-day--medium {
-    background: #eeeeee;
-}
-
-.incident-calendar-day--high {
-    background: #dddddd;
-}
-
-.incident-calendar-day--critical {
-    background: #c9c9c9;
-}
-
-/* ---------------------------------------------------------
-   Selected Date
-   --------------------------------------------------------- */
-
-.incident-calendar-day--selected {
-    border: 2px solid #333333;
-    background: #eeeeee;
-
-    box-shadow: none;
-}
-
-.incident-calendar-day--selected:hover {
-    border-color: #222222;
-    background: #e7e7e7;
-}
-
-/* ---------------------------------------------------------
-   Legend
-   --------------------------------------------------------- */
-
-.incident-calendar-legend {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 5px;
-
-    margin-top: 12px;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 9px;
-    font-weight: 400;
-
-    color: #888888;
-}
-
-.legend-level {
-    display: inline-block;
-
-    width: 12px;
-    height: 12px;
-
-    border: 1px solid #dddddd;
-    border-radius: 3px;
-}
-
-.legend-level--0 {
-    background: #ffffff;
-}
-
-.legend-level--1 {
-    background: #f1f1f1;
-}
-
-.legend-level--2 {
-    background: #dcdcdc;
-}
-
-.legend-level--3 {
-    background: #bdbdbd;
-}
-
-.legend-level--4 {
-    background: #8f8f8f;
-}
-
-/* ---------------------------------------------------------
-   Selected Date Detail
-   --------------------------------------------------------- */
-
-.incident-selected-day {
-    margin-top: 18px;
-    padding: 15px;
-
-    border: 1px solid #e2e2e2;
-    border-radius: 7px;
-
-    background: #fafafa;
-}
-
-.incident-selected-day-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-
-    padding-bottom: 12px;
-
-    border-bottom: 1px solid #e5e5e5;
-}
-
-.incident-selected-date {
-    margin-top: 3px;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-
-    color: #333333;
-}
-
-.incident-selected-total {
-    text-align: right;
-}
-
-.incident-selected-total strong {
-    display: block;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    line-height: 1;
-
-    color: #222222;
-}
-
-.incident-selected-total span {
-    display: block;
-
-    margin-top: 4px;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 9px;
-    font-weight: 400;
-
-    color: #777777;
-}
-
-.incident-selected-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-
-    margin-top: 14px;
-}
-
-.incident-detail-title {
-    margin-bottom: 7px;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-
-    text-transform: uppercase;
-    letter-spacing: .03em;
-
-    color: #777777;
-}
-
-.incident-detail-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-
-    padding: 6px 0;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11px;
-    font-weight: 400;
-
-    color: #444444;
-}
-
-.incident-detail-row + .incident-detail-row {
-    border-top: 1px solid #ededed;
-}
-
-.incident-detail-row strong {
-    font-weight: 700;
-    color: #222222;
-}
-
-/* ---------------------------------------------------------
-   Analytical Insight
-   --------------------------------------------------------- */
-
-.incident-calendar-insight {
-    margin-top: 15px;
-    padding-top: 14px;
-
-    border-top: 1px solid #e6e6e6;
-}
-
-.incident-insight-label {
-    margin-bottom: 5px;
-
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-
-    text-transform: uppercase;
-    letter-spacing: .03em;
-
-    color: #777777;
-}
-
-.incident-insight-text {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11px;
-    font-weight: 400;
-    line-height: 1.55;
-
-    color: #555555;
-}
-
-/* ---------------------------------------------------------
-   Responsive
-   --------------------------------------------------------- */
-
-@media (max-width: 700px) {
-
-    .incident-occurrence-panel .chart-panel-head {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .incident-calendar-controls {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .incident-calendar-summary {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .incident-selected-details {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .incident-calendar-day {
-        min-height: 40px;
-        padding: 5px;
-    }
-
-}
-
-@media (max-width: 450px) {
-
-    .incident-calendar-weekdays > div {
-        font-size: 9px;
-    }
-
-    .incident-calendar-day-number {
-        font-size: 10px;
-    }
-
-    .incident-calendar-day-count {
-        font-size: 10px;
-    }
-
-    .incident-calendar-legend {
-        justify-content: flex-start;
-    }
-
-    .incident-selected-day-head {
-        align-items: flex-start;
-    }
-
-}
-
-
-/* Incident Occurrence — Selected Date */
-.incident-selected-day {
-    width: 100%;
-    margin-top: 16px;
-    padding: 16px 18px;
-    box-sizing: border-box;
-
-    background: #fff;
-    border: 1px solid #dfe3e8;
-    border-radius: 8px;
-
-    color: #2f3439;
-}
-
-.incident-selected-day-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-
-    padding-bottom: 14px;
-    border-bottom: 1px solid #e8ebee;
-}
-
-.incident-insight-label {
-    margin-bottom: 4px;
-
-    font-size: 10px;
-    font-weight: 700;
-    line-height: 1.3;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-
-    color: #7a8087;
-}
-
-.incident-selected-date {
-    font-size: 15px;
-    font-weight: 700;
-    line-height: 1.4;
-
-    color: #25292d;
-}
-
-.incident-selected-total {
-    flex: 0 0 auto;
-
-    padding: 6px 10px;
-
-    background: #f6f7f8;
-    border: 1px solid #dfe3e8;
-    border-radius: 5px;
-
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.2;
-
-    color: #555b61;
-    white-space: nowrap;
-}
-
-.incident-selected-details {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 28px;
-
-    padding-top: 15px;
-}
-
-.incident-detail-group {
-    min-width: 0;
-}
-
-.incident-detail-title {
-    margin-bottom: 6px;
-
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.4;
-
-    color: #3f454b;
-}
-
-.incident-detail-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-
-    min-height: 30px;
-    padding: 6px 0;
-
-    border-bottom: 1px solid #eeeeef;
-
-    font-size: 12px;
-    line-height: 1.4;
-
-    color: #5d6369;
-}
-
-.incident-detail-row:last-child {
-    border-bottom: 0;
-}
-
-.incident-detail-row strong {
-    flex: 0 0 auto;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    color: #25292d;
-}
-
-@media (max-width: 640px) {
-    .incident-selected-day {
-        padding: 14px;
-    }
-
-    .incident-selected-day-head {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .incident-selected-details {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-}
-

@@ -31,6 +31,7 @@ async function initDashboard() {
         initDashboardInteractions();
         initFilterInteractions();
         initDocumentHealthInteractions();
+        initGovInsightTooltip();
         initIncidentAnalytics();
         initActionComplianceOverview();
         initMobileResizeObserver();
@@ -76,7 +77,7 @@ async function ensureChartJs() {
 
     return new Promise((resolve) => {
         const script = document.createElement('script');
-        script.src = '/modules/compliance/lib/chart.js/chart.umd.min.js';
+        script.src = '/hrms-capstone/modules/compliance/lib/chart.js/chart.umd.min.js';
         script.onload = () => resolve(true);
         script.onerror = () => resolve(false);
         document.head.appendChild(script);
@@ -170,10 +171,67 @@ function initDocumentHealthInteractions() {
     const container = document.querySelector('.document-health');
     if (!container) return;
 
-    const panel = container;
-    const tooltip = container.querySelector('.document-health-tooltip');
+    const tooltip = document.createElement('div');
+    tooltip.className = 'dh-tooltip';
+    tooltip.style.cssText = 'position:fixed;display:none;padding:6px 10px;background:#0f172a;color:#f8fafc;font-size:11px;font-weight:600;border-radius:6px;pointer-events:none;z-index:900;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.18);';
+    document.body.appendChild(tooltip);
 
-    if (!tooltip) return;
+    function showTooltip(x, y, html) {
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+        const rect = tooltip.getBoundingClientRect();
+        tooltip.style.left = (x - rect.width / 2) + 'px';
+        tooltip.style.top = (y - rect.height - 8) + 'px';
+    }
+
+    function hideTooltip() {
+        tooltip.style.display = 'none';
+    }
+
+    container.querySelectorAll('.dh-kpi').forEach(function (kpi) {
+        kpi.addEventListener('click', function () {
+            const label = this.querySelector('.dh-kpi-label')?.textContent?.trim() || '';
+            const event = new CustomEvent('documentHealthFilter', {
+                detail: { filter: label },
+                bubbles: true
+            });
+            window.dispatchEvent(event);
+        });
+    });
+
+    container.querySelectorAll('.dh-legend-item').forEach(function (item) {
+        item.addEventListener('click', function () {
+            const label = this.textContent.trim();
+            const event = new CustomEvent('documentHealthFilter', {
+                detail: { filter: label },
+                bubbles: true
+            });
+            window.dispatchEvent(event);
+        });
+    });
+
+    container.querySelectorAll('.dh-distribution-fill').forEach(function (fill) {
+        fill.addEventListener('mousemove', function (e) {
+            const status = this.dataset.status || '';
+            const count = this.dataset.count || '0';
+            const pct = this.dataset.pct || '0';
+            showTooltip(e.clientX, e.clientY, '<div>' + status + '</div><div style=\"font-weight:400;opacity:.85;margin-top:2px;\">' + count + ' documents (' + pct + '%)</div>');
+        });
+        fill.addEventListener('mouseleave', hideTooltip);
+    });
+}
+
+function initGovInsightTooltip() {
+    const panel = document.querySelector('.chart-panel[data-gov-insight]');
+    if (!panel) return;
+
+    const text = panel.getAttribute('data-gov-insight');
+    if (!text) return;
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'gov-tooltip';
+    tooltip.textContent = text;
+    document.body.appendChild(tooltip);
 
     panel.addEventListener('mouseenter', function () {
         tooltip.style.display = 'block';
@@ -694,14 +752,6 @@ function initIncidentCalendar() {
     const calendar = document.querySelector('.incident-calendar');
     if (!calendar) return;
 
-    // Prevent duplicate initialization when dashboard/page lifecycle
-    // events trigger initialization more than once.
-    if (calendar.dataset.incidentCalendarInitialized === '1') {
-        return;
-    }
-
-    calendar.dataset.incidentCalendarInitialized = '1';
-
     const grid = calendar.querySelector('.incident-calendar-grid');
     const panel = calendar.closest('.chart-panel');
     const monthLabel = panel ? panel.querySelector('.incident-calendar-month') : null;
@@ -728,12 +778,6 @@ function initIncidentCalendar() {
 
     const tooltip = document.createElement('div');
     tooltip.className = 'incident-tooltip';
-
-    // Tooltip is informational only and must never capture clicks.
-    tooltip.style.pointerEvents = 'none';
-    tooltip.style.userSelect = 'none';
-    tooltip.style.zIndex = '-1';
-
     document.body.appendChild(tooltip);
 
     const intensityColors = {
@@ -755,33 +799,10 @@ function initIncidentCalendar() {
 
     function showTooltip(x, y, html) {
         tooltip.innerHTML = html;
-        tooltip.style.pointerEvents = 'none';
         tooltip.style.display = 'block';
-
         const rect = tooltip.getBoundingClientRect();
-        const padding = 10;
-
-        let left = x - (rect.width / 2);
-        let top = y - rect.height - 10;
-
-        if (left < padding) {
-            left = padding;
-        }
-
-        if (left + rect.width > window.innerWidth - padding) {
-            left = window.innerWidth - rect.width - padding;
-        }
-
-        if (top < padding) {
-            top = y + 12;
-        }
-
-        if (top + rect.height > window.innerHeight - padding) {
-            top = window.innerHeight - rect.height - padding;
-        }
-
-        tooltip.style.left = left + 'px';
-        tooltip.style.top = top + 'px';
+        tooltip.style.left = (x - rect.width / 2) + 'px';
+        tooltip.style.top = (y - rect.height - 8) + 'px';
     }
 
     function hideTooltip() {
@@ -822,13 +843,6 @@ function initIncidentCalendar() {
             cell.setAttribute('tabindex', '0');
             cell.setAttribute('aria-label', dateStr + ', ' + count + ' incidents');
 
-            // Force generated calendar cells to remain interactive.
-            cell.style.pointerEvents = 'auto';
-            cell.style.cursor = 'pointer';
-            cell.style.userSelect = 'none';
-            cell.style.webkitUserSelect = 'none';
-            cell.style.touchAction = 'manipulation';
-
             const numberEl = document.createElement('div');
             numberEl.className = 'incident-calendar-day-number';
             numberEl.textContent = day;
@@ -859,42 +873,15 @@ function initIncidentCalendar() {
                 cell.addEventListener('mouseleave', hideTooltip);
             }
 
-            /*
-             * Direct pointer interaction.
-             *
-             * The calendar cells are generated dynamically, so
-             * bind the interaction directly to each generated
-             * cell. This runs before the normal click event.
-             */
-            cell.addEventListener('pointerdown', function (e) {
-                if (e.button !== undefined && e.button !== 0) {
-                    return;
-                }
-
-                e.stopPropagation();
-
+            cell.addEventListener('click', function () {
                 if (selectedDate === dateStr) {
                     selectedDate = null;
                 } else {
                     selectedDate = dateStr;
                 }
-
                 render();
                 dispatchIncidentDateFilter(selectedDate);
-            }, true);
-
-            /*
-             * Keep the normal click handler for compatibility
-             * with existing dashboard behaviour.
-             */
-            cell.addEventListener('click', function (e) {
-                /*
-                 * pointerdown already performs the selection.
-                 * Prevent this click from selecting the same date
-                 * a second time.
-                 */
-                e.stopPropagation();
-            }, true);
+            });
 
             cell.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -940,98 +927,8 @@ function initIncidentCalendar() {
         });
     }
 
-    // Delegated Incident Calendar Click Handler
-    // Handles clicks on generated calendar cells even when the grid
-    // is rebuilt by render().
-    if (grid) {
-        grid.addEventListener('click', function (e) {
-            const cell = e.target.closest('.incident-calendar-day[role="button"]');
-
-            if (!cell || !grid.contains(cell)) {
-                return;
-            }
-
-            const label = cell.getAttribute('aria-label') || '';
-            const match = label.match(/^(\d{4}-\d{2}-\d{2})/);
-
-            if (!match) {
-                return;
-            }
-
-            const dateStr = match[1];
-
-            if (selectedDate === dateStr) {
-                selectedDate = null;
-            } else {
-                selectedDate = dateStr;
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            render();
-            dispatchIncidentDateFilter(selectedDate);
-        });
-
-        grid.addEventListener('keydown', function (e) {
-            if (e.key !== 'Enter' && e.key !== ' ') {
-                return;
-            }
-
-            const cell = e.target.closest('.incident-calendar-day[role="button"]');
-
-            if (!cell || !grid.contains(cell)) {
-                return;
-            }
-
-            const label = cell.getAttribute('aria-label') || '';
-            const match = label.match(/^(\d{4}-\d{2}-\d{2})/);
-
-            if (!match) {
-                return;
-            }
-
-            e.preventDefault();
-            e.stopPropagation();
-
-            const dateStr = match[1];
-
-            if (selectedDate === dateStr) {
-                selectedDate = null;
-            } else {
-                selectedDate = dateStr;
-            }
-
-            render();
-            dispatchIncidentDateFilter(selectedDate);
-        });
-    }
-
-    // End Delegated Incident Calendar Click Handler
-
     render();
 }
-
-/*
- * Independent Incident Calendar bootstrap.
- *
- * This deliberately initializes the Incident Occurrence calendar even if
- * another dashboard initializer throws before initIncidentAnalytics().
- * The initialization guard above prevents duplicate handlers.
- */
-function bootstrapIncidentCalendar() {
-    if (document.querySelector('.incident-calendar')) {
-        initIncidentCalendar();
-    }
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootstrapIncidentCalendar);
-} else {
-    bootstrapIncidentCalendar();
-}
-
-window.addEventListener('page:loaded', bootstrapIncidentCalendar);
 
 function dispatchIncidentDateFilter(date) {
     const event = new CustomEvent('incidentDateFilter', {
@@ -1089,4 +986,3 @@ function initActionComplianceOverview() {
 }
 
 export { initDashboard, initDeptComplianceChart, initIncidentAnalytics, initActionComplianceOverview, DASHBOARD_PAGE };
-

@@ -161,7 +161,7 @@ $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 ?>
 
     <div class="document-notary">
-        <img src="<?= $protocol . $host . '/modules/compliance/assets/notary.png' ?>" alt="Notary Seal">
+        <img src="<?= $protocol . $host . '/hrms-capstone/modules/compliance/assets/notary.png' ?>" alt="Notary Seal">
     </div>
 
     <div class="document-signature">
@@ -191,7 +191,6 @@ $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     </div>
 
 </div>
-
 
 
 

@@ -130,19 +130,10 @@ $today = date('F d, Y');
                 <td><?= $position ?: '________________'; ?></td>
             </tr>
 
-              <tr>
-                  <td style="padding:9px 0;"><strong>Separation Date</strong></td>
-                  <td>
-                      <?php
-                      $exitDate = trim((string) ($_GET['exit_date'] ?? ''));
-                      if ($exitDate !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $exitDate)) {
-                          echo htmlspecialchars(date('F d, Y', strtotime($exitDate)), ENT_QUOTES);
-                      } else {
-                          echo '________________';
-                      }
-                      ?>
-                  </td>
-              </tr>
+            <tr>
+                <td style="padding:9px 0;"><strong>Separation Date</strong></td>
+                <td>________________</td>
+            </tr>
 
             <tr>
                 <td style="padding:9px 0;"><strong>Date Issued</strong></td>
@@ -244,7 +235,7 @@ $today = date('F d, Y');
 
             <div style="margin-bottom:40px;">
 
-                                <img src="/modules/compliance/assets/notary.png" style="width:340px;height:auto;display:inline-block;opacity:0.5;mix-blend-mode:multiply;">
+                                <img src="/hrms-capstone/modules/compliance/assets/notary.png" style="width:340px;height:auto;display:inline-block;opacity:0.5;mix-blend-mode:multiply;">
 <div style="position: relative; display: inline-block;">
                     <div style="position: absolute; top: 0; left: 0; z-index: 2;">
                         <?= $hrSignatory ?>
@@ -317,7 +308,6 @@ $today = date('F d, Y');
 
 
     </div>
-
 
 
 

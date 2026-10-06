@@ -24,30 +24,6 @@ $templateFile = isset($_GET['template']) ? trim((string) $_GET['template']) : ''
 $templateCode = isset($_GET['template_code']) ? trim((string) $_GET['template_code']) : '';
 $hrSignatory  = isset($_GET['hr_signatory']) ? (string) $_GET['hr_signatory'] : '';
 
-$coePurposeOptions = [
-    'Employment Verification',
-    'Bank / Loan Application',
-    'Visa / Travel Requirements',
-    'Government Requirement',
-    'School / Scholarship',
-    'Housing / Rental Application',
-    'Personal Records',
-    'Other',
-];
-
-$documentPurpose = trim((string) ($_GET['purpose'] ?? 'Employment Verification'));
-$documentPurposeOther = trim((string) ($_GET['purpose_other'] ?? ''));
-
-if ($templateCode === 'coe') {
-    if ($documentPurpose === 'Other') {
-        $documentPurpose = $documentPurposeOther !== ''
-            ? $documentPurposeOther
-            : 'Other';
-    } elseif (!in_array($documentPurpose, $coePurposeOptions, true)) {
-        $documentPurpose = 'Employment Verification';
-    }
-}
-
 if ($employeeId !== '' && !lc_can_access_employee_document(
     (int) ($_SESSION['employee_id'] ?? 0),
     (string) ($_SESSION['role_name'] ?? $_SESSION['role'] ?? ''),
@@ -71,7 +47,7 @@ if ($templateCode === 'employee_handbook') {
 if (empty($_GET['generate'])) {
     $redirectUrl = '?page=preview-document';
     $params = [];
-    foreach (['employee_id', 'document_type', 'template', 'template_code', 'hr_signatory', 'contract_type', 'contract_start_date', 'contract_end_date', 'contract_salary_input', 'purpose', 'purpose_other'] as $param) {
+    foreach (['employee_id', 'document_type', 'template', 'template_code', 'hr_signatory', 'contract_type', 'contract_start_date', 'contract_end_date', 'contract_salary_input'] as $param) {
         if (isset($_GET[$param]) && $_GET[$param] !== '') {
             $params[] = urlencode($param) . '=' . urlencode($_GET[$param]);
         }
@@ -336,7 +312,7 @@ if (isset($_GET['generate']) && $_GET['generate'] === '1') {
         file_put_contents($savePath, $pdfOutput);
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $fileUrl = $protocol . $host . '/modules/compliance/assets/uploads/contracts/' . $contractFilename;
+        $fileUrl = $protocol . $host . '/hrms-capstone/modules/compliance/assets/uploads/contracts/' . $contractFilename;
         $db->prepare("UPDATE lc_contracts SET file_path = :file_path, file_name = :file_name WHERE contract_id = :id")->execute([':file_path' => $fileUrl, ':file_name' => $contractFilename, ':id' => $contractId]);
         $requestDocType = ucwords(str_replace('_', ' ', $documentType));
         $requestTemplateCode = $templateCode !== '' ? $templateCode : null;
@@ -725,6 +701,5 @@ ob_start();
 })();
 </script>
 <?php
-
 
 

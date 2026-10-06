@@ -14,13 +14,9 @@ if (!isset($user) || empty($user)) {
     $user = $_SESSION['user'] ?? [];
 }
 
-$database = new Database();
-
-if ($database->hasConnectionError()) {
-    throw new RuntimeException('Database connection unavailable.');
-}
-
-$db = $database->getConnection();
+$db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 // ------------------------------------------------------------------
 // DB helper functions
@@ -472,7 +468,7 @@ $riskSources = [
                    <td data-label="Assigned To"><span class="ra-emp-no"><?= htmlspecialchars($responsible, ENT_QUOTES) ?></span></td>
                    <td data-label="Status"><span class="ra-status-stamp <?= ra_status_class($r['status']) ?>"><?= htmlspecialchars(ra_status_label($r['status']), ENT_QUOTES) ?></span></td>
                    <td data-label="Last Updated"><span class="ra-emp-no"><?= !empty($r['updated_at']) ? date('M d, Y g:i A', strtotime($r['updated_at'])) : '—' ?></span></td>
-                   <td data-label="Action"><a href="<?= htmlspecialchars('/modules/compliance/index.php?page=notification-compose&mode=reply&notification_id=0&to_recipient_dept=' . urlencode($deptName) . '&subject=' . urlencode($riskSubject) . '&body=' . urlencode($riskBody), ENT_QUOTES) ?>" class="ra-btn" title="Send Reminder">Send Reminder</a></td>
+                   <td data-label="Action"><a href="<?= htmlspecialchars('http://127.0.0.1/hrms-capstone/modules/compliance/index.php?page=notification-compose&mode=reply&notification_id=0&to_recipient_dept=' . urlencode($deptName) . '&subject=' . urlencode($riskSubject) . '&body=' . urlencode($riskBody), ENT_QUOTES) ?>" class="ra-btn" title="Send Reminder">Send Reminder</a></td>
                  </tr>
                <?php endforeach; ?>
              </tbody>
@@ -1753,4 +1749,3 @@ $riskSources = [
     animation: none;
   }
   </style>
-

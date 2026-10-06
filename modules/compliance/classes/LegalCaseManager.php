@@ -965,47 +965,29 @@ class LegalCaseManager
         if (!empty($words)) {
             $sql .= ' AND (';
             $first = true;
-
             foreach ($words as $i => $word) {
-                if (!$first) {
-                    $sql .= ' OR ';
-                }
-
-                $placeholders = [
-                    ':q' . $i . '_title',
-                    ':q' . $i . '_short_title',
-                    ':q' . $i . '_reference_number',
-                    ':q' . $i . '_keywords',
-                    ':q' . $i . '_authority',
-                    ':q' . $i . '_description',
-                ];
-
+                if (!$first) $sql .= ' OR ';
                 $sql .= '(' .
-                    'r.title LIKE ' . $placeholders[0] .
-                    ' OR r.short_title LIKE ' . $placeholders[1] .
-                    ' OR r.reference_number LIKE ' . $placeholders[2] .
-                    ' OR r.keywords LIKE ' . $placeholders[3] .
-                    ' OR r.issuing_authority LIKE ' . $placeholders[4] .
-                    ' OR r.description LIKE ' . $placeholders[5] .
+                    'r.title LIKE :q' . $i .
+                    ' OR r.short_title LIKE :q' . $i .
+                    ' OR r.reference_number LIKE :q' . $i .
+                    ' OR r.keywords LIKE :q' . $i .
+                    ' OR r.issuing_authority LIKE :q' . $i .
+                    ' OR r.description LIKE :q' . $i .
                 ')';
-
-                foreach ($placeholders as $placeholder) {
-                    $params[$placeholder] = '%' . $word . '%';
-                }
-
+                $params[':q' . $i] = '%' . $word . '%';
                 $first = false;
             }
-
             $sql .= ')';
         }
 
-        $limit = max(1, min(100, (int) $limit));
-        $sql .= ' ORDER BY r.title ASC LIMIT ' . $limit;
+        $sql .= ' ORDER BY r.title ASC LIMIT :limit';
 
         $stmt = $this->conn->prepare($sql);
         foreach ($params as $key => $val) {
-            $stmt->bindValue($key, $val, PDO::PARAM_STR);
+            $stmt->bindValue($key, $val);
         }
+        $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -1013,9 +995,6 @@ class LegalCaseManager
     public function getTotalCases(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases")->fetchColumn();
         } catch (Throwable $e) {
             return 0;
@@ -1025,9 +1004,6 @@ class LegalCaseManager
     public function getClosedCases(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE current_status IN ('Closed','Resolved')")->fetchColumn();
         } catch (Throwable $e) {
             return 0;
@@ -1037,9 +1013,6 @@ class LegalCaseManager
     public function getHighPriorityCases(): int
     {
         try {
-            if (!$this->conn) {
-                return 0;
-            }
             return (int) $this->conn->query("SELECT COUNT(*) FROM lc_legal_cases WHERE priority = 'High'")->fetchColumn();
         } catch (Throwable $e) {
             return 0;
@@ -1049,9 +1022,6 @@ class LegalCaseManager
     public function getStatusBreakdown(): array
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $stmt = $this->conn->query("SELECT current_status, COUNT(*) as cnt FROM lc_legal_cases GROUP BY current_status ORDER BY cnt DESC");
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Throwable $e) {
@@ -1062,9 +1032,6 @@ class LegalCaseManager
     public function getAgencyBreakdown(): array
     {
         try {
-            if (!$this->conn) {
-                return [];
-            }
             $stmt = $this->conn->prepare("
                 SELECT external_agency, COUNT(*) as cnt
                 FROM lc_legal_cases
@@ -1088,7 +1055,8 @@ class LegalCaseManager
                 ORDER BY created_at DESC
                 LIMIT :limit
             ");
-                        $stmt->execute();
+            $stmt->bindValue(':limit', (int) $limit, PDO::PARAM_INT);
+            $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Throwable $e) {
             return [];

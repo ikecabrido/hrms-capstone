@@ -3,13 +3,9 @@ require_once __DIR__ . '/../../../../database/db.php';
 
 header('Content-Type: application/json');
 
-$database = new Database();
-
-if ($database->hasConnectionError()) {
-    throw new RuntimeException('Database connection unavailable.');
-}
-
-$db = $database->getConnection();
+$db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 $incidentId = isset($_POST['incident_id']) ? (int) $_POST['incident_id'] : 0;
 $action = isset($_POST['action']) ? trim($_POST['action']) : '';

@@ -2501,7 +2501,7 @@ function chwfEscapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 function chwfResolveEvidenceSrc(evidenceItem, notes, imagePath) {
-    const assetBase = (window.CHWF_CONFIG && window.CHWF_CONFIG.assetBaseUrl) ? window.CHWF_CONFIG.assetBaseUrl : '/modules/compliance/assets/';
+    const assetBase = (window.CHWF_CONFIG && window.CHWF_CONFIG.assetBaseUrl) ? window.CHWF_CONFIG.assetBaseUrl : '/hrms-capstone/modules/compliance/assets/';
     if (imagePath) {
         const trimmed = imagePath.trim();
         if (/^https?:\/\//i.test(trimmed)) {
@@ -2932,4 +2932,3 @@ if (document.readyState === 'loading') {
     chwfBindDecisionPoints();
     chLoadEmployeeDisciplinaryHistory();
 }
-

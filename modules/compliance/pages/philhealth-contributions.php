@@ -1,7 +1,7 @@
 <?php
 
 $pageTitle = 'PhilHealth Monitoring';
-$moduleHeaderImage = '/modules/compliance/assets/philhealth.webp';
+$moduleHeaderImage = '/hrms-capstone/modules/compliance/assets/philhealth.webp';
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
@@ -662,4 +662,3 @@ $recentActivity = array_slice($recent, 0, 6);
   })();
 })();
 </script>
-

@@ -34,7 +34,7 @@ $reference = $model->getReferenceById($referenceId);
 
 if (!$reference) {
     $pdfDir = __DIR__ . '/../assets/labor-law-pdf/';
-    $pdfBaseUrl = '/modules/compliance/assets/labor-law-pdf/';
+    $pdfBaseUrl = '/hrms-capstone/modules/compliance/assets/labor-law-pdf/';
     if (is_dir($pdfDir)) {
         foreach (glob($pdfDir . '*.pdf') as $pdfPath) {
             $filename = basename($pdfPath);
@@ -81,7 +81,7 @@ if (!$reference) {
 $pageTitle = $reference['title'] ?? 'Labor Law Reference Detail';
 
 $localBase = 'C:/xampp/htdocs/hrms-capstone/';
-$webRoot = '/';
+$webRoot = '/hrms-capstone/';
 
 $docUrl = !empty($reference['document_path']) ? $reference['document_path'] : '';
 
@@ -89,9 +89,9 @@ if ($docUrl) {
     if (str_starts_with($docUrl, $localBase)) {
         $docUrl = $webRoot . ltrim(substr($docUrl, strlen($localBase)), '/');
     } elseif (str_starts_with($docUrl, 'http://127.0.0.1/hrms-capstone/')) {
-        $docUrl = '/' . ltrim(substr($docUrl, strlen('http://127.0.0.1/hrms-capstone/')), '/');
+        $docUrl = '/hrms-capstone/' . ltrim(substr($docUrl, strlen('http://127.0.0.1/hrms-capstone/')), '/');
     } elseif (str_starts_with($docUrl, 'http://localhost/hrms-capstone/')) {
-        $docUrl = '/' . ltrim(substr($docUrl, strlen('http://localhost/hrms-capstone/')), '/');
+        $docUrl = '/hrms-capstone/' . ltrim(substr($docUrl, strlen('http://localhost/hrms-capstone/')), '/');
     } elseif (strpos($docUrl, '://') === false && strpos($docUrl, '/') !== 0) {
         $docUrl = $webRoot . ltrim($docUrl, '/');
     }
@@ -99,12 +99,12 @@ if ($docUrl) {
 
 $sourceUrl = !empty($reference['source_url']) ? $reference['source_url'] : '';
 if ($sourceUrl && strpos($sourceUrl, '://') === false && strpos($sourceUrl, '/') !== 0) {
-    $sourceUrl = '/' . ltrim($sourceUrl, '/');
+    $sourceUrl = '/hrms-capstone/' . ltrim($sourceUrl, '/');
 }
 
 ?>
 
-<link rel="stylesheet" href="/modules/compliance/css/pages/labor-law-reference-detail.css">
+<link rel="stylesheet" href="/hrms-capstone/modules/compliance/css/pages/labor-law-reference-detail.css">
 
 <section class="llr-detail-module">
     <div class="llr-detail-card">
@@ -176,6 +176,5 @@ if ($sourceUrl && strpos($sourceUrl, '://') === false && strpos($sourceUrl, '/')
         </div>
     </div>
 </section>
-
 
 

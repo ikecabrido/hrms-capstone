@@ -5,16 +5,9 @@ header('Content-Type: text/html; charset=utf-8');
 $key = $_GET['key'] ?? '';
 $export = $_GET['export'] ?? 'export_report';
 
-require_once __DIR__ . '/../../../../database/db.php';
-
-$database = new Database();
-
-if ($database->hasConnectionError()) {
-    http_response_code(500);
-    exit('Database connection failed.');
-}
-
-$db = $database->getConnection();
+$db = new PDO('mysql:host=localhost;dbname=hrms;charset=utf8mb4', 'root', '');
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
 function pv_value(PDO $db, string $sql, $default = 0) {
     try {
@@ -237,27 +230,17 @@ if (isset($config['type'])) {
         case 'risk':
             $sql = "SELECT r.id, r.risk_type, r.severity, r.status, r.description, r.created_at,
                            COALESCE(CONCAT(e.first_name, ' ', e.last_name), 'Unassigned') AS employee_name,
-                           COALESCE(r.reviewed_by, 'Unassigned') AS reviewed_by,
-                           r.monitoring_status,
-                           r.compliance_review
+                           COALESCE(CONCAT(o.first_name, ' ', o.last_name), 'Unassigned') AS owner_name,
+                           COALESCE(CONCAT(i.first_name, ' ', i.last_name), 'Unassigned') AS investigator_name
                     FROM lc_risks r
                     LEFT JOIN em_employees e ON e.employee_id = r.employee_id
+                    LEFT JOIN em_employees o ON o.employee_id = r.owner_id
+                    LEFT JOIN em_employees i ON i.employee_id = r.investigator_id
                     ORDER BY r.created_at DESC
                     LIMIT 100";
             $rows = $db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
             $summaryData = ['Total Risks' => count($rows)];
-            $columns = [
-                'id' => 'Risk ID',
-                'risk_type' => 'Risk Type',
-                'severity' => 'Severity',
-                'status' => 'Status',
-                'employee_name' => 'Employee',
-                'reviewed_by' => 'Reviewed By',
-                'monitoring_status' => 'Monitoring',
-                'compliance_review' => 'Compliance Review',
-                'created_at' => 'Created',
-                'description' => 'Description'
-            ];
+            $columns = ['id' => 'Risk ID', 'risk_type' => 'Risk Type', 'severity' => 'Severity', 'status' => 'Status', 'employee_name' => 'Employee', 'owner_name' => 'Owner', 'investigator_name' => 'Investigator', 'created_at' => 'Created', 'description' => 'Description'];
             break;
 
         case 'legal_case_summary':
