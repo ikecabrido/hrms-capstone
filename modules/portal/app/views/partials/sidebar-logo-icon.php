@@ -410,7 +410,7 @@
                 <div class="dropdown-divider m-0"></div>
 
                 <!-- Sign Out -->
-                <a href="/hrms-capstone/modules/portal/index.php?url=<?= !empty($_SESSION['is_admin']) ? 'admin-logout' : 'auth-logout' ?>"
+                <a href="<?= appUrl('index.php?url=' . (!empty($_SESSION['is_admin']) ? 'admin-logout' : 'auth-logout')) ?>"
                     class="dropdown-item text-danger">
                     <i class="fa-solid fa-right-from-bracket me-2"></i>
                     Sign Out

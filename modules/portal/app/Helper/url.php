@@ -2,14 +2,32 @@
 
 function asset(string $path = ''): string
 {
-    $serverName = $_SERVER['SERVER_NAME'] ?? '';
+    $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
 
-    $baseUrl = (
-        $serverName === 'localhost' ||
-        $serverName === '127.0.0.1'
-    )
-        ? '/hrms-capstone/modules/portal/public'
-        : '/modules/portal/public';
+    if (
+        str_starts_with($host, 'localhost') ||
+        str_starts_with($host, '127.0.0.1')
+    ) {
+        $baseUrl = '/hrms-capstone/modules/portal/public';
+    } else {
+        $baseUrl = '/modules/portal/public';
+    }
 
     return $baseUrl . ($path !== '' ? '/' . ltrim($path, '/') : '');
-}   
+}
+
+function appUrl(string $path = ''): string
+{
+    $host = strtolower($_SERVER['HTTP_HOST'] ?? '');
+
+    if (
+        str_starts_with($host, 'localhost') ||
+        str_starts_with($host, '127.0.0.1')
+    ) {
+        $baseUrl = '/hrms-capstone/modules/portal';
+    } else {
+        $baseUrl = '/modules/portal';
+    }
+
+    return $baseUrl . ($path !== '' ? '/' . ltrim($path, '/') : '');
+}

@@ -1333,4 +1333,4 @@
 <link rel="stylesheet" href="/hrms-capstone/modules/portal/public/css/employee-portal-dashboard.css">
 <!-- Anime.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
-<script src="/hrms-capstone/modules/portal/public/js/function/employeePortalDashboard.js"></script>
+<script src="<?= asset('js/function/employeePortalDashboard.js') ?>"></script>
