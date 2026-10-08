@@ -7,11 +7,33 @@ use PDOException;
 
 class Database
 {
-    private string $host = '127.0.0.1';
-    private string $db_name = 'hrms-capstone';
-    private string $username = 'root';
-    private string $password = '';
+    private string $host;
+    private string $db_name;
+    private string $username;
+    private string $password;
     private ?PDO $conn = null;
+
+    public function __construct()
+    {
+        $serverName = $_SERVER['SERVER_NAME'] ?? '';
+
+        if (
+            $serverName === 'localhost' ||
+            $serverName === '127.0.0.1'
+        ) {
+            // Local XAMPP
+            $this->host = '127.0.0.1';
+            $this->db_name = 'hrms-capstone';
+            $this->username = 'root';
+            $this->password = '';
+        } else {
+            // Production Server
+            $this->host = 'localhost';
+            $this->db_name = 'port_hrmscapstone';
+            $this->username = 'port_root';
+            $this->password = 'password';
+        }
+    }
 
     public function getConnection(): PDO
     {
