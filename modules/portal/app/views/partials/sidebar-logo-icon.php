@@ -325,12 +325,12 @@
                 border-top:1px solid #e5e7eb;
             ">
 
-                    <a href="index.php?url=notification" style="
-                    color:#2563eb;
-                    text-decoration:none;
-                    font-size:10px;
-                    font-weight:600;
-                ">
+                    <a href="<?= appUrl('index.php?url=notification') ?>" style="
+    color:#2563eb;
+    text-decoration:none;
+    font-size:10px;
+    font-weight:600;
+">
                         View all notifications
                         <i class="fas fa-arrow-right ms-1"></i>
                     </a>
