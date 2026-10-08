@@ -27,6 +27,7 @@ use App\Controllers\BackupAndRestoreController;
 use App\Controllers\BenefitsAndGovernmentContributionController;
 
 require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/app/Helper/url.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
