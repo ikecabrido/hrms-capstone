@@ -31,7 +31,7 @@ class Database
             $this->host = 'localhost';
             $this->db_name = 'port_hrmscapstone';
             $this->username = 'port_root';
-            $this->password = 'password';
+            $this->password = 'bUWdO1%TPyT1jV7o';
         }
     }
 
