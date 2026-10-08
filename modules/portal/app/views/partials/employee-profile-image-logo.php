@@ -1,8 +1,9 @@
 <?php if (!empty($employeeImage['profile_image'])): ?>
 
-    <img src="/hrms-capstone/modules/portal/public/assets/uploads/profile/<?= htmlspecialchars(
-        $employeeImage['profile_image']
-    ); ?>" alt="Profile Photo">
+    <img
+        src="<?= asset('assets/uploads/profile/' . htmlspecialchars($employeeImage['profile_image'], ENT_QUOTES, 'UTF-8')) ?>"
+        alt="Profile Photo"
+    >
 
 <?php else: ?>
 
