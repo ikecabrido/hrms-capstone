@@ -12,4 +12,4 @@ function asset(string $path = ''): string
         : '/modules/portal/public';
 
     return $baseUrl . ($path !== '' ? '/' . ltrim($path, '/') : '');
-}
+}   
