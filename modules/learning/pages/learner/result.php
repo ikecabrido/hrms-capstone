@@ -1,6 +1,6 @@
 <?php
 include_once __DIR__ . '/../../classes/Employee.php';
-include_once __DIR__ . '/../../classes/Grade.php';
+include_once __DIR__ . '/../../classes/grade.php';
 
 require_once dirname(__DIR__, 4) . '/database/db.php';
 

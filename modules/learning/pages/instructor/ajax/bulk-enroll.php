@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 session_start();
 
 require_once dirname(__DIR__, 3) . '/classes/employee.php';
-require_once dirname(__DIR__, 3) . '/classes/csrf.php';
+require_once dirname(__DIR__, 3) . '/classes/CSRF.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 require_once dirname(__DIR__, 3) . '/classes/enrollment.php';
 

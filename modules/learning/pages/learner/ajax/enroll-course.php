@@ -8,7 +8,7 @@ if (!isset($_SESSION['employee_id'])) {
 }
 
 require_once dirname(__DIR__, 3) . '/classes/enrollment.php';
-require_once dirname(__DIR__, 3) . '/classes/csrf.php';
+require_once dirname(__DIR__, 3) . '/classes/CSRF.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 
 // CSRF validation for state-changing request
