@@ -1,0 +1,2 @@
+ALTER TABLE ld_learning_path_item
+    MODIFY id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT;

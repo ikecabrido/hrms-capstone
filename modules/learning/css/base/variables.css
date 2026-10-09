@@ -1,14 +1,13 @@
 :root {
-    --color1: rgba(32, 0, 130, 1); 
-    --color2: rgba(51, 65, 85, 1);
-    --color3: rgba(255, 255, 255, 1);
-    --color4: rgba(186, 186, 186, 1);
-    --color5: rgba(95, 95, 95, 1);
-    --color6: rgba(51, 65, 85, 1);
-    --color7: rgb(81, 70, 183);
-    --color8: rgb(0, 0, 0);
-    --color9: rgba(240, 240, 240, 1);
-    --color10: #e53e3e;
+    --primary: rgba(32, 0, 130, 1); 
+    --text: rgba(51, 65, 85, 1);
+    --surface: rgba(255, 255, 255, 1);
+    --border: rgba(186, 186, 186, 1);
+    --muted: rgba(95, 95, 95, 1);
+    --accent: rgb(81, 70, 183);
+    --black: rgb(0, 0, 0);
+    --bg-subtle: rgba(240, 240, 240, 1);
+    --danger: #e53e3e;
     --sidebar-width: 252px;
     --header-height: 60px;
 }

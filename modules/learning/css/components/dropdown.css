@@ -9,7 +9,7 @@
         position: absolute;
         top: -6px;
         right: -6px;
-        background: #e53e3e;
+        background: var(--danger);
         color: white;
         font-size: 0.65rem;
         font-weight: bold;
@@ -30,7 +30,7 @@
         display: none;
         position: fixed;
         width: 300px;
-        background: var(--color3);
+        background: var(--surface);
         border-radius: 10px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
         z-index: 9999;
@@ -47,16 +47,16 @@
         align-items: center;
         justify-content: space-between;
         padding: 14px 16px;
-        border-bottom: 1px solid var(--color3);
+        border-bottom: 1px solid var(--surface);
         font-weight: 600;
         font-size: 0.9rem;
-        color: var(--color8);
+        color: var(--black);
     }
 
     .mark-all-read {
         background: none;
         border: none;
-        color: var(--color1);
+        color: var(--primary);
         font-size: 0.75rem;
         cursor: pointer;
     }
@@ -83,23 +83,23 @@
     }
 
     .notif-item:hover {
-        background: var(--color9);
+        background: var(--bg-subtle);
     }
 
     .notif-item.unread {
-        background: var(--color9);
+        background: var(--bg-subtle);
     }
 
     .notif-item.unread:hover {
-        background: var(--color9);
+        background: var(--bg-subtle);
     }
 
     .notif-icon {
         width: 34px;
         height: 34px;
         border-radius: 50%;
-        background: var(--color1-light);
-        color: var(--color1);
+        background: var(--primary-light);
+        color: var(--primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -110,24 +110,24 @@
     .notif-content p {
         margin: 0 0 2px;
         font-size: 0.82rem;
-        color: var(--color8);
+        color: var(--black);
         font-weight: 500;
     }
 
     .notif-content span {
         font-size: 0.72rem;
-        color: var(--color5);
+        color: var(--muted);
     }
 
     .dropdown-footer {
         padding: 10px 16px;
-        border-top: 1px solid var(--color3);
+        border-top: 1px solid var(--surface);
         text-align: center;
     }
 
     .dropdown-footer a {
         font-size: 0.8rem;
-        color: var(--color1);
+        color: var(--primary);
         text-decoration: none;
     }
 
@@ -145,7 +145,7 @@
         width: 38px;
         height: 38px;
         border-radius: 50%;
-        background: var(--color1);
+        background: var(--primary);
         color: white;
         font-weight: bold;
         display: flex;
@@ -158,12 +158,12 @@
     .dropdown-header .dropdown-user-info strong {
         display: block;
         font-size: 0.88rem;
-        color: var(--color8);
+        color: var(--black);
     }
 
     .dropdown-header .dropdown-user-info span {
         font-size: 0.75rem;
-        color: #888;
+        color: var(--muted);
         font-weight: normal;
     }
 
@@ -179,29 +179,29 @@
         gap: 10px;
         padding: 10px 16px;
         font-size: 0.85rem;
-        color: var(--color8);
+        color: var(--black);
         text-decoration: none;
         transition: background 0.15s;
     }
 
     .user-menu li a:hover {
-        background: var(--color9);
+        background: var(--bg-subtle);
     }
 
     .user-menu li a i {
         width: 16px;
-        color: var(--color1);
+        color: var(--primary);
     }
 
     .user-menu .divider {
-        border-top: 1px solid #f0f0f0;
+        border-top: 1px solid var(--bg-subtle);
         margin: 6px 0;
     }
 
     .signout-link {
-        color: var(--color10) !important;
+        color: var(--danger) !important;
     }
 
     .signout-link i {
-        color: var(--color10) !important;
+        color: var(--danger) !important;
     }

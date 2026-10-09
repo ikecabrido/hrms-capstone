@@ -1,6 +1,6 @@
     .sidebar {
         width: var(--sidebar-width);
-        background: var(--color1);
+        background: var(--primary);
         padding: 1.2rem 1.3rem;
         top: 0;
         left: 0;
@@ -9,6 +9,8 @@
         overflow-y: auto;
         z-index: 1000;
         transition: transform 0.3s ease;
+        display: flex;
+        flex-direction: column;
     }
 
     /* Hide sidebar on desktop when toggled */
@@ -31,7 +33,7 @@
     .sidebar-icons {
         display: flex;
         gap: 0.5rem;
-        color: var(--color3);
+        color: var(--surface);
     }
 
     .sidebar-icons i {
@@ -43,13 +45,13 @@
         text-align: center;
         margin-bottom: 2rem;
         padding-bottom: 1.5rem;
-        border-bottom: 1px solid var(--color4);
+        border-bottom: 1px solid var(--border);
     }
 
     .user_avatar {
         width: 80px;
         height: 80px;
-        background: var(--color2);
+        background: var(--text);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -57,34 +59,34 @@
         margin: 0 auto 1rem;
         font-size: 2rem;
         font-weight: bold;
-        color: var(--color3);
+        color: var(--surface);
     }
 
     .sidebar-header h1 {
         font-size: 1.3rem;
-        color: var(--color3);
+        color: var(--surface);
     }
 
     .employee_name {
         font-size: 12px;
-        color: var(--color3);
+        color: var(--surface);
         font-weight: bold;
     }
 
     .employee_id {
         font-size: 16px;
-        color: var(--color3);
+        color: var(--surface);
         font-weight: bold;
     }
 
     .employee_position {
         font-size: 14px;
-        color: var(--color3);
+        color: var(--surface);
         font-weight: bold;
     }
 
     .sidebar h2 {
-        color: var(--color3);
+        color: var(--surface);
         font-size: 14px;
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -93,7 +95,7 @@
     }
 
     .sidebar h3 {
-        color: var(--color3);
+        color: var(--surface);
         font-size: 13px;
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -105,12 +107,87 @@
         list-style: none;
     }
 
+    .sidebar-footer {
+        position: sticky;
+        bottom: -1.2rem;
+        z-index: 1;
+        margin-top: auto;
+        padding: 0.75rem 0 0.25rem;
+        background: var(--primary);
+        border-top: 1px solid var(--border);
+    }
+
+    .learner-tools-layout {
+        display: grid;
+        grid-template-columns: 210px minmax(0, 1fr);
+        align-items: start;
+        gap: 1rem;
+    }
+
+    .learner-tools-sidebar {
+        position: sticky;
+        top: calc(var(--header-height) + 1rem);
+        padding: 0.6rem;
+        border: 1px solid rgba(32,0,130,0.1);
+        border-radius: 12px;
+        background: var(--surface);
+        box-shadow: 0 4px 14px rgba(32,0,130,0.06);
+    }
+
+    .learner-tools-sidebar h2 {
+        margin: 0.35rem 0.45rem 0.65rem;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .learner-tools-sidebar nav {
+        display: grid;
+        gap: 0.25rem;
+    }
+
+    .learner-tools-link {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.65rem 0.7rem;
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 0.86rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .learner-tools-link i {
+        width: 1.1rem;
+        color: var(--primary);
+        text-align: center;
+    }
+
+    .learner-tools-link:hover {
+        background: rgba(32,0,130,0.06);
+    }
+
+    .learner-tools-link.active {
+        background: var(--primary);
+        color: #fff;
+    }
+
+    .learner-tools-link.active i {
+        color: #fff;
+    }
+
+    .learner-tools-content {
+        min-width: 0;
+    }
+
     .sidebar .menu-link {
         display: flex;
         align-items: center;
         gap: 0.8rem;
         padding: 0.8rem 0.5rem;
-        color: var(--color3);
+        color: var(--surface);
         text-decoration: none;
         border-radius: 8px;
         margin-bottom: 0.5rem;
@@ -124,32 +201,32 @@
     }
 
     .sidebar .menu-link:hover {
-        background: var(--color7);
-        color: var(--color3);
+        background: var(--accent);
+        color: var(--surface);
         transform: translateX(5px);
     }
 
     .sidebar .menu-link.active {
-        background: var(--color2);
-        color: var(--color3);
+        background: var(--text);
+        color: var(--surface);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
     .separator {
         height: 0.5px;
-        background: var(--color4);
+        background: var(--border);
         margin: 1rem 0;
     }
 
-    .active-menu-link {
-        background: var(--color7);
-        color: var(--color3);
+    .sidebar .active-menu-link {
+        background: var(--accent);
+        color: var(--surface);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
         gap: 0.8rem;
         padding: 0.8rem 0.5rem;
-        color: var(--color3);
+        color: var(--surface);
         text-decoration: none;
         border-radius: 8px;
         margin-bottom: 0.5rem;
@@ -192,6 +269,18 @@
         /* Show sidebar when active */
         .sidebar.active {
             transform: translateX(0);
+        }
+
+        .learner-tools-layout {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .learner-tools-sidebar {
+            position: static;
+        }
+
+        .learner-tools-sidebar nav {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         
     }

@@ -4,7 +4,7 @@ header {
     left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
     height: var(--header-height);
-    background: var(--color3);
+    background: var(--surface);
     display: flex;
     align-items: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -15,7 +15,7 @@ header {
 
 header i {
     font-size: 1.5rem;
-    color: var(--color8);
+    color: var(--black);
     margin: 1rem;
     cursor: pointer;
 }
@@ -33,14 +33,14 @@ header i {
 .hamburger span {
     width: 25px;
     height: 3px;
-    background: var(--color8);
+    background: var(--black);
     border-radius: 3px;
     transition: all 0.3s ease;
     display: block;
 }
 
 .hamburger:hover span {
-    background: var(--color1);
+    background: var(--primary);
 }
 
 @media (max-width: 768px) {
@@ -70,6 +70,6 @@ header i {
     margin-left: auto;
     margin-right: 1rem;
     font-size: 1rem;
-    color: var(--color8);
+    color: var(--black);
     padding: 0.5rem 1rem;
 }

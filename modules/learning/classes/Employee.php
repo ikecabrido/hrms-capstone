@@ -5,13 +5,6 @@ include_once __DIR__ . '/../../../database/db.php';
 class Employee
 {
     private $conn;
-    private $employeeid;
-    private $firstname;
-    private $lastname;
-    private $middlename;
-    private $department;
-    private $position;
-    private $status;
 
     public function __construct($pdo = null)
     {
@@ -23,105 +16,112 @@ class Employee
         }
     }
 
-    /**
-     * Get all employees
-     */
+    private function getSessionEmployeeId()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!empty($_SESSION['employee_id'])) {
+            return (int) $_SESSION['employee_id'];
+        }
+
+        if (!empty($_SESSION['user_id'])) {
+            $userId = (int) $_SESSION['user_id'];
+            $stmt = $this->conn->prepare('SELECT employee_id FROM em_employees WHERE user_id = :user_id LIMIT 1');
+            $stmt->execute([':user_id' => $userId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                return (int) $row['employee_id'];
+            }
+        }
+
+        return null;
+    }
+
     public function getEmployees()
     {
-        $sql = "SELECT 
-                    e.employee_id,
-                    e.first_name,
-                    e.middle_name,
-                    e.last_name,
-                    d.department_name,
-                    p.position_name,
-                    e.status
-                FROM hrms_employee AS e
-                LEFT JOIN hrms_department AS d
-                    ON e.department = d.department_id
-                LEFT JOIN hrms_position AS p
-                    ON e.position = p.position_id
+        $sql = "SELECT e.employee_id, e.first_name, e.middle_name, e.last_name, e.employment_status AS status,
+                       d.department_name, p.position_name
+                FROM em_employees AS e
+                LEFT JOIN em_departments AS d ON e.department_id = d.department_id
+                LEFT JOIN em_positions AS p ON e.position_id = p.position_id
                 ORDER BY e.employee_id";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute();
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Get logged-in employee ID
-     */
     public function getEmployeeId()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        return $_SESSION['employee_id'] ?? null;
+        return $this->getSessionEmployeeId();
     }
 
-    /**
-     * Get logged-in employee name
-     */
     public function getEmployeeName()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        $employeeId = $this->getSessionEmployeeId();
+        if (!$employeeId) {
+            return 'Unknown User';
         }
 
-        $employeeId = $_SESSION['employee_id'] ?? null;
+        $stmt = $this->conn->prepare('SELECT first_name, last_name FROM em_employees WHERE employee_id = :employee_id LIMIT 1');
+        $stmt->execute([':employee_id' => $employeeId]);
+        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($employeeId) {
-            $sql = "SELECT first_name, last_name
-                    FROM hrms_employee
-                    WHERE employee_id = :employee_id
-                    LIMIT 1";
-
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':employee_id', $employeeId);
-            $stmt->execute();
-
-            $employee = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($employee) {
-                return htmlspecialchars(
-                    $employee['first_name'] . ' ' . $employee['last_name']
-                );
-            }
+        if ($employee) {
+            return htmlspecialchars(trim(($employee['first_name'] ?? '') . ' ' . ($employee['last_name'] ?? '')));
         }
 
         return 'Unknown User';
     }
 
-    /**
-     * Get logged-in employee position
-     */
-    public function getEmployeePosition()
+    public function getEmployeeFirstName()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        $employeeId = $this->getSessionEmployeeId();
+        if (!$employeeId) {
+            return 'User';
         }
 
-        $employeeId = $_SESSION['employee_id'] ?? null;
+        $stmt = $this->conn->prepare('SELECT first_name FROM em_employees WHERE employee_id = :employee_id LIMIT 1');
+        $stmt->execute([':employee_id' => $employeeId]);
+        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($employeeId) {
-            $sql = "SELECT p.position_name
-                    FROM hrms_employee AS e
-                    LEFT JOIN hrms_position AS p
-                        ON e.position = p.position_id
-                    WHERE e.employee_id = :employee_id
-                    LIMIT 1";
+        if ($employee) {
+            return htmlspecialchars($employee['first_name'] ?? 'User');
+        }
 
-            $stmt = $this->conn->prepare($sql);
-            $stmt->bindParam(':employee_id', $employeeId);
-            $stmt->execute();
+        return 'User';
+    }
 
-            $employee = $stmt->fetch(PDO::FETCH_ASSOC);
+    public function getGreeting()
+    {
+        $firstName = $this->getEmployeeFirstName();
+        $hour = (int) date('G');
+        if ($hour < 12) {
+            $greeting = 'Good morning';
+        } elseif ($hour < 18) {
+            $greeting = 'Good afternoon';
+        } else {
+            $greeting = 'Good evening';
+        }
 
-            if ($employee) {
-                return htmlspecialchars($employee['position_name']);
-            }
+        return sprintf('%s, %s!', $greeting, $firstName);
+    }
+
+    public function getEmployeePosition()
+    {
+        $employeeId = $this->getSessionEmployeeId();
+        if (!$employeeId) {
+            return 'Unknown Position';
+        }
+
+        $stmt = $this->conn->prepare('SELECT p.position_name FROM em_employees AS e LEFT JOIN em_positions AS p ON e.position_id = p.position_id WHERE e.employee_id = :employee_id LIMIT 1');
+        $stmt->execute([':employee_id' => $employeeId]);
+        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($employee && !empty($employee['position_name'])) {
+            return htmlspecialchars($employee['position_name']);
         }
 
         return 'Unknown Position';

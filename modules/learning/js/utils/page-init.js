@@ -2,6 +2,15 @@
     export function reinitPage(page) {
     initTabs();
     initForms();
+
+    if (typeof window.__elearningInit === 'function' && String(page).includes('elearning')) {
+        window.__elearningInit();
+    }
+
+    if (typeof window.__trainingInit === 'function' && String(page).includes('training')) {
+        window.__trainingInit();
+    }
+
     window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: page } }));
     }
 
@@ -31,6 +40,8 @@
     const forms = document.querySelectorAll('form:not([data-skip]):not(#approval-upload-form)');
 
     forms.forEach(function (form) {
+        if (form.hasAttribute('data-skip')) return;
+
         const fresh = form.cloneNode(true);
         form.parentNode.replaceChild(fresh, form);
 

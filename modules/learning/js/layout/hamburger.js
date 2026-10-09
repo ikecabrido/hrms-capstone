@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const mainContent = document.querySelector('.main-content');
     const footer = document.querySelector('footer');
     const header = document.querySelector('header');
+    const desktopSidebarWidth = 252;
     
     // Create overlay for mobile
     let overlay = document.querySelector('.sidebar-overlay');
@@ -17,36 +18,51 @@ document.addEventListener('DOMContentLoaded', function() {
     function isMobile() {
         return window.innerWidth <= 768;
     }
-    
-    // Toggle sidebar
-    hamburger?.addEventListener('click', function() {
-        const mobile = isMobile();
-        
-        // Toggle hamburger animation
-        this.classList.toggle('active');
-        
-        if (mobile) {
-            // Mobile behavior: show overlay
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        } else {
-            // Desktop behavior: hide sidebar and adjust layout
-            sidebar.classList.toggle('hidden');
-            
-            // Adjust main content, footer, and header
-            if (sidebar.classList.contains('hidden')) {
-                mainContent.style.marginLeft = '0';
-                footer.style.marginLeft = '0';
-                header.style.left = '0';
-                header.style.width = '100%';
-            } else {
-                mainContent.style.marginLeft = '252px';
-                footer.style.marginLeft = '252px';
-                header.style.left = '252px';
-                header.style.width = 'calc(100% - 252px)';
-            }
+
+    function applyDesktopLayout(isHidden) {
+        const width = isHidden ? 0 : desktopSidebarWidth;
+
+        if (mainContent) mainContent.style.marginLeft = width + 'px';
+        if (footer) footer.style.marginLeft = width + 'px';
+        if (header) {
+            header.style.left = width + 'px';
+            header.style.width = 'calc(100% - ' + width + 'px)';
         }
-    });
+    }
+
+    function syncSidebarState() {
+        if (!sidebar) return;
+
+        if (isMobile()) {
+            sidebar.classList.remove('hidden');
+            if (overlay) overlay.classList.toggle('active', sidebar.classList.contains('active'));
+            return;
+        }
+
+        applyDesktopLayout(sidebar.classList.contains('hidden'));
+    }
+    
+    function toggleSidebar() {
+        const mobile = isMobile();
+
+        if (hamburger) {
+            hamburger.classList.toggle('active');
+        }
+
+        if (mobile) {
+            sidebar.classList.toggle('active');
+            if (overlay) overlay.classList.toggle('active');
+            return;
+        }
+
+        sidebar.classList.toggle('hidden');
+        syncSidebarState();
+    }
+
+    // Toggle sidebar
+    hamburger?.addEventListener('click', toggleSidebar);
+
+
     
     // Close sidebar when clicking overlay (mobile only)
     overlay?.addEventListener('click', function() {
@@ -56,6 +72,8 @@ document.addEventListener('DOMContentLoaded', function() {
             hamburger.classList.remove('active');
         }
     });
+
+    syncSidebarState();
     
     // Close sidebar when clicking menu links on mobile
     const menuLinks = document.querySelectorAll('.sidebar .menu-link');
@@ -78,22 +96,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (mobile) {
                 // Reset desktop styles
-                mainContent.style.marginLeft = '';
-                footer.style.marginLeft = '';
-                header.style.left = '';
-                header.style.width = '';
+                if (mainContent) mainContent.style.marginLeft = '';
+                if (footer) footer.style.marginLeft = '';
+                if (header) {
+                    header.style.left = '';
+                    header.style.width = '';
+                }
                 sidebar.classList.remove('hidden');
             } else {
                 // Remove mobile overlay
-                overlay.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+                sidebar.classList.remove('active');
                 
                 // Restore desktop layout if sidebar is not hidden
-                if (!sidebar.classList.contains('hidden')) {
-                    mainContent.style.marginLeft = '252px';
-                    footer.style.marginLeft = '252px';
-                    header.style.left = '252px';
-                    header.style.width = 'calc(100% - 252px)';
-                }
+                syncSidebarState();
             }
         }, 250);
     });
