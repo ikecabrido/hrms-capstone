@@ -1,0 +1,351 @@
+
+/* Hidden compatibility element for existing Risk Detection JavaScript */
+.ra-loading-card .ra-loading-icon {
+  display: none !important;
+}
+
+
+/* =========================================================
+   RISK ANALYTICS — ENTERPRISE REFINEMENT
+   ========================================================= */
+
+.ra-modal--wide {
+  width: min(1080px, 94vw) !important;
+  max-width: 1080px !important;
+}
+
+.ra-modal--wide .ra-modal__head {
+  min-height: 58px;
+  padding: 0 22px;
+  border-bottom: 1px solid #e5eaf0;
+  background: #ffffff;
+}
+
+.ra-modal--wide .ra-modal__head h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+
+.ra-modal--wide .ra-modal__close {
+  width: auto;
+  min-width: 58px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #d8e0e8;
+  border-radius: 5px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.ra-modal--wide .ra-modal__close span {
+  color: #374151 !important;
+}
+
+.ra-modal--wide .ra-modal__body {
+  padding: 20px 22px 24px;
+  background: #f7f9fc;
+  overflow-y: auto;
+}
+
+/* Remove duplicate inner heading */
+.ra-modal--wide .ra-analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin: 0 0 16px;
+  padding: 0 2px;
+}
+
+.ra-modal--wide .ra-analytics-header h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.ra-modal--wide .ra-analytics-meta {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+/* Main grid */
+.ra-modal--wide .ra-analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+/* Cards */
+.ra-modal--wide .ra-analytics-card {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15,23,42,.04);
+  overflow: hidden;
+}
+
+.ra-modal--wide .ra-analytics-card-head {
+  min-height: 48px;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid #edf1f5;
+  background: #fbfcfe;
+}
+
+.ra-modal--wide .ra-analytics-card-head h4 {
+  margin: 0;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ra-modal--wide .ra-card-meta {
+  color: #7a8796;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.ra-modal--wide .ra-analytics-body {
+  padding: 15px;
+}
+
+/* Severity */
+.ra-modal--wide .ra-severity-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0,1fr) 48px;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 13px;
+}
+
+.ra-modal--wide .ra-severity-row:last-child {
+  margin-bottom: 0;
+}
+
+.ra-modal--wide .ra-severity-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ra-modal--wide .ra-severity-count {
+  color: #111827;
+  font-weight: 700;
+}
+
+.ra-modal--wide .ra-severity-bar-track {
+  height: 7px;
+  border-radius: 4px;
+  background: #edf2f7;
+  overflow: hidden;
+}
+
+.ra-modal--wide .ra-severity-bar-fill {
+  height: 100%;
+  min-width: 3px;
+  border-radius: inherit;
+  background: #2563a8;
+  transition: width .35s ease;
+}
+
+.ra-modal--wide .ra-severity-pct {
+  color: #4b5563;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Monthly trend */
+.ra-modal--wide .ra-trend-chart {
+  height: 190px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 8px 4px 0;
+  border-bottom: 1px solid #dfe6ee;
+}
+
+.ra-modal--wide .ra-trend-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+}
+
+.ra-modal--wide .ra-trend-bar-wrap {
+  width: min(42px, 70%);
+  height: 135px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.ra-modal--wide .ra-trend-bar {
+  width: 100%;
+  min-height: 4px;
+  border-radius: 4px 4px 0 0;
+  background: #2563a8;
+  transition: height .4s ease;
+}
+
+.ra-modal--wide .ra-trend-col:last-child .ra-trend-bar {
+  background: #123a63;
+}
+
+.ra-modal--wide .ra-trend-label {
+  color: #64748b;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.ra-modal--wide .ra-trend-value {
+  color: #111827;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Risk sources */
+.ra-modal--wide .ra-source-analytics-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0,1fr) 40px;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 11px;
+}
+
+.ra-modal--wide .ra-source-analytics-row:last-child {
+  margin-bottom: 0;
+}
+
+.ra-modal--wide .ra-source-analytics-name {
+  color: #374151;
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ra-modal--wide .ra-source-analytics-bar-track {
+  height: 7px;
+  border-radius: 4px;
+  background: #edf2f7;
+  overflow: hidden;
+}
+
+.ra-modal--wide .ra-source-analytics-bar {
+  height: 100%;
+  min-width: 3px;
+  border-radius: inherit;
+  background: #3b78ad;
+}
+
+.ra-modal--wide .ra-source-analytics-count {
+  color: #111827;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Compliance review */
+.ra-modal--wide .ra-compliance-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0,1fr) 42px;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 13px;
+}
+
+.ra-modal--wide .ra-compliance-row:last-child {
+  margin-bottom: 0;
+}
+
+.ra-modal--wide .ra-compliance-label {
+  color: #374151;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.ra-modal--wide .ra-compliance-bar-track {
+  height: 9px;
+  border-radius: 5px;
+  background: #edf2f7;
+  overflow: hidden;
+}
+
+.ra-modal--wide .ra-compliance-bar-fill {
+  height: 100%;
+  min-width: 3px;
+  border-radius: inherit;
+  background: #2563a8;
+}
+
+.ra-modal--wide .ra-compliance-value {
+  color: #111827;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: right;
+}
+
+/* Make the bottom cards span the full modal */
+.ra-modal--wide .ra-analytics-card:nth-child(3),
+.ra-modal--wide .ra-analytics-card:nth-child(4) {
+  grid-column: span 2;
+}
+
+/* Responsive */
+@media (max-width: 760px) {
+  .ra-modal--wide {
+    width: calc(100vw - 24px) !important;
+  }
+
+  .ra-modal--wide .ra-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ra-modal--wide .ra-analytics-card:nth-child(3),
+  .ra-modal--wide .ra-analytics-card:nth-child(4) {
+    grid-column: span 1;
+  }
+
+  .ra-modal--wide .ra-source-analytics-row,
+  .ra-modal--wide .ra-compliance-row {
+    grid-template-columns: 125px minmax(0,1fr) 38px;
+  }
+}
+
+@media (max-width: 500px) {
+  .ra-modal--wide .ra-analytics-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .ra-modal--wide .ra-severity-row {
+    grid-template-columns: 82px minmax(0,1fr) 43px;
+  }
+
+  .ra-modal--wide .ra-source-analytics-row,
+  .ra-modal--wide .ra-compliance-row {
+    grid-template-columns: 105px minmax(0,1fr) 35px;
+  }
+}
+

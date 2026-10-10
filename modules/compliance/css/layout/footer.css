@@ -1,0 +1,21 @@
+footer {
+    text-align: center;
+    padding: 1rem;
+    background: var(--color3);
+    color: var(--color2);
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    footer {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    footer {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+    }
+}

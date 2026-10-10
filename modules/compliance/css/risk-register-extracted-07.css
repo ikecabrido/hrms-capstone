@@ -1,0 +1,182 @@
+
+#analyticsModal.ra-modal {
+    top: 50% !important;
+    bottom: auto !important;
+    height: auto !important;
+    max-height: calc(100vh - 100px) !important;
+    transform: translate(-50%, -50%) !important;
+    overflow: hidden !important;
+}
+
+#analyticsModal .ra-modal__body {
+    flex: 0 1 auto !important;
+    min-height: 0 !important;
+    max-height: calc(100vh - 180px) !important;
+    overflow-y: auto !important;
+}
+
+@media (max-width: 768px) {
+    #analyticsModal.ra-modal {
+        max-height: calc(100vh - 32px) !important;
+    }
+
+    #analyticsModal .ra-modal__body {
+        max-height: calc(100vh - 112px) !important;
+    }
+}
+
+/* Risk Analytics: center in the visible browser viewport */
+#analyticsModal.ra-modal.is-open {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+
+    width: min(1100px, calc(100vw - 32px)) !important;
+    max-width: calc(100vw - 32px) !important;
+
+    height: auto !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    z-index: 99999 !important;
+}
+
+/* Keep the modal heading visible */
+#analyticsModal .ra-modal__head {
+    flex: 0 0 auto !important;
+    position: relative;
+    background: #fff;
+    z-index: 2;
+}
+
+/* Scroll long analytics content inside the modal */
+#analyticsModal .ra-modal__body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 110px) !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Smaller screens */
+@media (max-width: 600px) {
+    #analyticsModal.ra-modal.is-open {
+        width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important;
+        max-height: calc(100vh - 20px) !important;
+        max-height: calc(100dvh - 20px) !important;
+    }
+
+    #analyticsModal .ra-modal__body {
+        max-height: calc(100dvh - 90px) !important;
+    }
+}
+
+
+/* Fixed viewport behavior: Risk Analytics */
+#analyticsModalBackdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 99990 !important;
+}
+
+#analyticsModal.ra-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  box-sizing: border-box !important;
+  width: min(1100px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+  height: auto !important;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  z-index: 99991 !important;
+}
+
+#analyticsModal .ra-modal__body {
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+
+@media (max-width: 600px) {
+  #analyticsModal.ra-modal {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
+  }
+}
+
+/* Final Risk Analytics viewport centering */
+html body #analyticsModalBackdrop.ra-modal-backdrop.is-open {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 2147482998 !important;
+}
+
+html body #analyticsModal.ra-modal.is-open {
+  position: fixed !important;
+  inset: 50% auto auto 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  width: min(1100px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
+  height: calc(100vh - 32px) !important;
+  height: calc(100dvh - 32px) !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  z-index: 2147482999 !important;
+}
+
+html body #analyticsModal.ra-modal.is-open .ra-modal__head {
+  flex: 0 0 auto !important;
+}
+
+html body #analyticsModal.ra-modal.is-open .ra-modal__body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+  html body #analyticsModal.ra-modal.is-open {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    height: calc(100vh - 20px) !important;
+    height: calc(100dvh - 20px) !important;
+  }
+}
+

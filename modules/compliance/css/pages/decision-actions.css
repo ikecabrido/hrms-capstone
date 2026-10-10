@@ -1,0 +1,10 @@
+.irwf-decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.irwf-decision-actions .cc-btn {
+  flex: 0 0 auto;
+}

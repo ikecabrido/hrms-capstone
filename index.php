@@ -30,7 +30,9 @@
                     <label for="password">Password *</label>
                     <input type="password" id="password" name="password" required>
                 </div>
-                <div class="forgot">Forgotten User ID or Password</div>
+                <div class="forgot">
+    <a href="forgot_password.php">Forgotten User ID or Password</a>
+</div>
                 <button type="submit" id="loginBtn">Login</button>
             </form>
         </div>

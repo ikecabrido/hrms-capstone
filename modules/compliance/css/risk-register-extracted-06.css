@@ -1,0 +1,50 @@
+
+/* Keep the modal inside the viewport */
+#analyticsModal.ra-modal {
+    position: fixed !important;
+    top: 16px !important;
+    bottom: 16px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+
+    width: min(1100px, calc(100vw - 32px)) !important;
+    max-width: calc(100vw - 32px) !important;
+    height: auto !important;
+    max-height: none !important;
+
+    box-sizing: border-box !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    z-index: 99999 !important;
+}
+
+/* Preserve the existing closed state */
+#analyticsModal.ra-modal.is-open {
+    display: flex !important;
+}
+
+/* Keep the heading visible while the content scrolls */
+#analyticsModal .ra-modal__head {
+    flex: 0 0 auto !important;
+}
+
+/* Scroll the modal content, not the entire page */
+#analyticsModal .ra-modal__body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 768px) {
+    #analyticsModal.ra-modal {
+        top: 12px !important;
+        bottom: 12px !important;
+        width: calc(100vw - 24px) !important;
+        max-width: calc(100vw - 24px) !important;
+    }
+}

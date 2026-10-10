@@ -1,53 +1,50 @@
 <?php
-class Page
-{
+class Page {
     private $default = 'dashboard-overview';
     private $pagesDir;
     private $allowed = [];
 
     private $labels = [
         'dashboard-overview'          => 'Dashboard Overview',
-        'resignation'             => 'Resignations',
-        'termination'  => 'Terminations',
-        'exit-interview'   => 'Exit Interview',
-        'knowledge-transfer' => 'Knowledge Transfer',
-        'documents' => 'Documents',
-        'settlement'     => 'Settlements',
-        'post-exit-survey'     => 'Post-Exit Survey',
+        'account-creation'            => 'Account Creation',
+        'job-list'                    => 'Job Lists',
+        'applications'                => 'Applications',
+        'parsed-resumes'              => 'Parsed Resumes',
+        'schedule-tracker'            => 'Schedule Tracker',
+        'interview-results'           => 'Interview Results',
+        'offered-list'                => 'Offered Lists',
+        'offer'                       => 'Offer',
+        'Onboarding'                  => 'Onboarding',
     ];
 
     private $sections = [
         'top'             => ['dashboard-overview'],
-        'exit-process'  => ['resignation', 'termination', 'exit-interview'],
-        'offboarding'      => ['knowledge-transfer', 'documents'],
-        'final-settlement'       => ['settlement'],
-        'post-exit' => ['post-exit-survey']
+        'user-management' => ['account-creation'],
+        'recruitment'     => ['job-list', 'applications', 'parsed-resumes'],
+        'interviews'      => ['schedule-tracker', 'interview-results'],
+        'hiring'          => ['offered-list', 'offer', 'onboarding'],
     ];
 
-    public function __construct($pagesDir = null)
-    {
+    public function __construct($pagesDir = null) {
         $this->pagesDir = $pagesDir ?? dirname(__DIR__) . '/pages';
         $this->discoverPages();
     }
 
-    private function discoverPages()
-    {
+    private function discoverPages() {
         if (!is_dir($this->pagesDir)) return;
         foreach (glob($this->pagesDir . '/*.php') as $file) {
             $this->allowed[] = basename($file, '.php');
         }
     }
 
-    public function getPage()
-    {
+    public function getPage() {
         if (!empty($_GET['page']) && in_array($_GET['page'], $this->allowed)) {
             return $_GET['page'];
         }
         return $this->default;
     }
 
-    public function render()
-    {
+    public function render() {
         $page = $this->getPage();
         $file = $this->pagesDir . '/' . $page . '.php';
         if (file_exists($file)) {
@@ -57,25 +54,22 @@ class Page
         }
     }
 
-    public function isActive($page)
-    {
+    public function isActive($page) {
         return $this->getPage() === $page;
     }
 
-    public function getAllowedPages()
-    {
+    public function getAllowedPages() {
         return $this->allowed;
     }
 
-    public function renderNav()
-    {
+    public function renderNav() {
         // Top section (no heading/separator)
         foreach ($this->sections['top'] as $p) {
             $this->renderLink($p);
         }
 
         // Grouped sections
-        $sectionOrder = ['exit-process', 'offboarding', 'final-settlement', 'post-exit'];
+        $sectionOrder = ['user-management','recruitment', 'interviews', 'hiring'];
         foreach ($sectionOrder as $section) {
             echo '<div class="separator"></div>';
             echo '<h3>' . ucwords(str_replace('-', ' ', $section)) . '</h3>';
@@ -85,8 +79,7 @@ class Page
         }
     }
 
-    private function renderLink($p)
-    {
+    private function renderLink($p) {
         $label = $this->labels[$p] ?? ucwords(str_replace('-', ' ', $p));
         if (in_array($p, $this->allowed)) {
             $class = $this->isActive($p) ? 'active-menu-link' : 'menu-link';

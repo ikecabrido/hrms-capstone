@@ -1,0 +1,1561 @@
+/*
+ * BCP HRMS
+ * Salary Correction Agreement
+ */
+
+.document-preview {
+    width: 100%;
+    max-width: 900px;
+    margin: 32px auto;
+    padding: 56px 64px;
+    box-sizing: border-box;
+
+    background: #ffffff;
+    color: #202124;
+
+    font-family:
+        "Inter",
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+    font-size: 14px;
+    line-height: 1.65;
+
+    border: 1px solid #e3e6ea;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.07);
+}
+
+/* -----------------------------------------------------------
+   Header
+   ----------------------------------------------------------- */
+
+.document-header {
+    text-align: center;
+    margin-bottom: 22px;
+}
+
+.document-organization {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #111827;
+}
+
+.document-department {
+    margin-top: 2px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.document-title {
+    margin: 28px 0 4px;
+    font-size: 22px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #111827;
+}
+
+.document-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.document-control {
+    margin-top: 18px;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+/* -----------------------------------------------------------
+   Separator
+   ----------------------------------------------------------- */
+
+.document-separator {
+    border: 0;
+    border-top: 1px solid #d9dde3;
+    margin: 0 0 28px;
+}
+
+/* -----------------------------------------------------------
+   Sections
+   ----------------------------------------------------------- */
+
+.document-section {
+    margin-bottom: 28px;
+}
+
+.section-title {
+    margin: 0 0 10px;
+    padding-bottom: 7px;
+
+    border-bottom: 1px solid #d9dde3;
+
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+
+    color: #374151;
+}
+
+/* -----------------------------------------------------------
+   Information tables
+   ----------------------------------------------------------- */
+
+.document-information {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.document-information tr {
+    border-bottom: 1px solid #edf0f2;
+}
+
+.document-information tr:last-child {
+    border-bottom: 0;
+}
+
+.info-label {
+    width: 38%;
+    padding: 9px 14px 9px 0;
+
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+    vertical-align: top;
+}
+
+.info-value {
+    padding: 9px 0;
+
+    color: #111827;
+    font-size: 13px;
+    font-weight: 500;
+    vertical-align: top;
+}
+
+.money {
+    font-variant-numeric: tabular-nums;
+}
+
+/* -----------------------------------------------------------
+   Document body
+   ----------------------------------------------------------- */
+
+.document-body {
+    margin-top: 34px;
+}
+
+.document-body p {
+    margin: 0 0 15px;
+}
+
+.document-body h2 {
+    margin: 28px 0 10px;
+
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 700;
+
+    color: #111827;
+}
+
+.document-body strong {
+    font-weight: 600;
+}
+
+.closing-statement {
+    margin-top: 28px !important;
+}
+
+/* -----------------------------------------------------------
+   Salary comparison
+   ----------------------------------------------------------- */
+
+.salary-comparison {
+    width: 100%;
+    margin: 18px 0 20px;
+
+    border-collapse: collapse;
+
+    border: 1px solid #dfe3e8;
+}
+
+.salary-comparison td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #e7eaee;
+}
+
+.salary-comparison tr:last-child td {
+    border-bottom: 0;
+}
+
+.salary-comparison td:first-child {
+    color: #4b5563;
+}
+
+.salary-comparison td:last-child {
+    width: 30%;
+    text-align: right;
+
+    color: #111827;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+/* -----------------------------------------------------------
+   Signatures
+   ----------------------------------------------------------- */
+
+.signature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    gap: 72px;
+
+    margin-top: 56px;
+}
+
+.signature-block {
+    min-width: 0;
+
+    font-size: 12px;
+    line-height: 1.8;
+    color: #374151;
+}
+
+.signature-heading {
+    margin-bottom: 8px;
+
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #374151;
+}
+
+.signature-space {
+    height: 54px;
+}
+
+.signature-space.small {
+    height: 34px;
+}
+
+.signature-line {
+    width: 100%;
+    border-bottom: 1px solid #374151;
+    margin-bottom: 4px;
+}
+
+.witnesses {
+    margin-top: 44px;
+}
+
+/* -----------------------------------------------------------
+   Footer
+   ----------------------------------------------------------- */
+
+.document-footer {
+    display: flex;
+    justify-content: space-between;
+
+    margin-top: 56px;
+    padding-top: 12px;
+
+    border-top: 1px solid #e5e7eb;
+
+    font-size: 10px;
+    color: #9ca3af;
+}
+
+/* -----------------------------------------------------------
+   Responsive preview
+   ----------------------------------------------------------- */
+
+@media (max-width: 700px) {
+
+    .document-preview {
+        margin: 0;
+        padding: 32px 24px;
+        border-left: 0;
+        border-right: 0;
+        box-shadow: none;
+    }
+
+    .document-title {
+        font-size: 19px;
+    }
+
+    .signature-grid {
+        grid-template-columns: 1fr;
+        gap: 42px;
+    }
+
+    .document-footer {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+/* -----------------------------------------------------------
+   Print / PDF
+   ----------------------------------------------------------- */
+
+@media print {
+
+    .document-preview {
+        max-width: none;
+        margin: 0;
+        padding: 20mm 18mm;
+
+        border: 0;
+        box-shadow: none;
+
+        font-size: 11pt;
+    }
+
+    .document-title {
+        font-size: 18pt;
+    }
+
+    .section-title {
+        font-size: 10pt;
+    }
+
+    .document-information,
+    .salary-comparison,
+    .signature-grid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .document-body h2 {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+
+    .document-body p {
+        orphans: 3;
+        widows: 3;
+    }
+
+    .document-footer {
+        position: fixed;
+        bottom: 8mm;
+        left: 18mm;
+        right: 18mm;
+    }
+}
+
+/* =========================================================
+   Document Details / Leave Agreement Form
+   ========================================================= */
+
+.cd-main-layout .cd-form-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.cd-main-layout .cd-form-section .cd-section-title {
+    margin: 0 0 16px;
+}
+
+.cd-main-layout .cd-purpose-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cd-main-layout .cd-purpose-form .cd-field {
+    min-width: 0;
+}
+
+.cd-main-layout .cd-purpose-form .cd-field-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.cd-main-layout .cd-purpose-form label {
+    display: block;
+    margin: 0 0 7px;
+    color: #374151;
+    font-size: 13px;
+    line-height: 1.35;
+    font-weight: 600;
+}
+
+.cd-main-layout .cd-purpose-form .form-control,
+.cd-main-layout .cd-purpose-form .form-select {
+    display: block;
+    width: 100%;
+    min-height: 42px;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1px solid #cfd4dc;
+    border-radius: 6px;
+    background: #fff;
+    color: #1f2937;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.4;
+    transition:
+        border-color 120ms ease,
+        box-shadow 120ms ease,
+        background-color 120ms ease;
+}
+
+.cd-main-layout .cd-purpose-form .form-control::placeholder {
+    color: #9ca3af;
+}
+
+.cd-main-layout .cd-purpose-form .form-select {
+    padding-right: 36px;
+    cursor: pointer;
+}
+
+.cd-main-layout .cd-purpose-form input[type="date"] {
+    cursor: pointer;
+}
+
+.cd-main-layout .cd-purpose-form .form-control:hover,
+.cd-main-layout .cd-purpose-form .form-select:hover {
+    border-color: #aeb5c0;
+}
+
+.cd-main-layout .cd-purpose-form .form-control:focus,
+.cd-main-layout .cd-purpose-form .form-select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.cd-main-layout .cd-purpose-form .cd-readonly-value {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border: 1px solid #e1e5ea;
+    border-radius: 6px;
+    background: #f7f8fa;
+    color: #4b5563;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.cd-main-layout .cd-purpose-form .cd-field--split-actions-2 {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 2px !important;
+    padding-top: 2px;
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 9px 15px;
+    border: 1px solid #1d4ed8;
+    border-radius: 6px;
+    background: #2563eb;
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        box-shadow 120ms ease;
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-save:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-save:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-save:active {
+    background: #1e40af;
+    border-color: #1e40af;
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-save i {
+    font-size: 14px;
+}
+
+@media (max-width: 700px) {
+    .cd-main-layout .cd-purpose-form .cd-field-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .cd-main-layout .cd-purpose-form .cd-btn-save {
+        width: 100%;
+    }
+}
+
+
+/* Leave Agreement actions */
+
+.cd-main-layout .cd-purpose-form .cd-leave-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-email {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    min-height: 40px;
+    padding: 9px 15px;
+
+    border: 1px solid #cfd4dc;
+    border-radius: 6px;
+    background: #fff;
+
+    color: #374151;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+
+    cursor: pointer;
+    text-decoration: none;
+
+    transition:
+        background-color 120ms ease,
+        border-color 120ms ease,
+        color 120ms ease,
+        box-shadow 120ms ease;
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-email:hover {
+    background: #f8fafc;
+    border-color: #aeb5c0;
+    color: #1f2937;
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-email:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.cd-main-layout .cd-purpose-form .cd-btn-email i {
+    font-size: 14px;
+}
+
+@media (max-width: 700px) {
+    .cd-main-layout .cd-purpose-form .cd-leave-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cd-main-layout .cd-purpose-form .cd-leave-actions .cd-btn-save,
+    .cd-main-layout .cd-purpose-form .cd-leave-actions .cd-btn-email {
+        width: 100%;
+    }
+}
+
+
+/* Leave Details - Two Column Actions */
+.cd-leave-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100%;
+    margin-top: 14px;
+}
+
+.cd-leave-actions .cd-btn-save,
+.cd-leave-actions .cd-btn-email {
+    width: 100% !important;
+    min-height: 44px;
+    padding: 11px 18px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-sizing: border-box;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Apply Leave Details */
+.cd-leave-actions .cd-btn-save {
+    background: #2563eb !important;
+    color: #ffffff !important;
+    border: 1px solid #2563eb !important;
+}
+
+.cd-leave-actions .cd-btn-save:hover {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+}
+
+/* Send to Email */
+.cd-leave-actions .cd-btn-email {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border: 1px solid #bfdbfe !important;
+}
+
+.cd-leave-actions .cd-btn-email:hover {
+    background: #dbeafe !important;
+    border-color: #93c5fd !important;
+    color: #1e40af !important;
+}
+
+.cd-leave-actions i {
+    font-size: 17px;
+    line-height: 1;
+}
+
+@media (max-width: 600px) {
+    .cd-leave-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* =========================================================
+   Leave Agreement Document
+   Production Document Preview
+   ========================================================= */
+
+.cd-leave-document {
+    width: 100%;
+    max-width: 900px;
+    margin: 20px auto 0;
+    padding: 40px 46px;
+    box-sizing: border-box;
+
+    background: #ffffff;
+    border: 1px solid #d9dee7;
+    border-radius: 8px;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    line-height: 1.75;
+    color: #202124;
+
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+/* Document Header */
+.cd-leave-document .cd-document-title {
+    margin: 0;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 26px;
+    line-height: 1.3;
+    font-weight: 700;
+    color: #111827;
+}
+
+.cd-leave-document .cd-document-subtitle {
+    margin: 10px 0 30px;
+    text-align: center;
+    color: #667085;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+.cd-leave-document .cd-document-divider {
+    height: 1px;
+    margin: 0 0 30px;
+    border: 0;
+    background: #d9dee7;
+}
+
+/* Employee Information */
+.cd-leave-document .cd-employee-info {
+    width: 100%;
+    margin: 0 0 32px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.cd-leave-document .cd-employee-info td {
+    padding: 8px 0;
+    vertical-align: top;
+    border-bottom: 1px solid #eef1f5;
+}
+
+.cd-leave-document .cd-employee-info tr:last-child td {
+    border-bottom: 0;
+}
+
+.cd-leave-document .cd-employee-info td:first-child {
+    width: 190px;
+    padding-right: 20px;
+    color: #344054;
+    font-weight: 700;
+}
+
+.cd-leave-document .cd-employee-info td:last-child {
+    color: #202124;
+}
+
+/* Document Body */
+.cd-leave-document .cd-document-body {
+    margin: 0;
+}
+
+.cd-leave-document .cd-document-body p {
+    margin: 0 0 18px;
+    text-align: justify;
+}
+
+.cd-leave-document .cd-document-body strong {
+    color: #111827;
+    font-weight: 700;
+}
+
+/* Signature Section */
+.cd-leave-document .cd-signature-section {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 60px;
+    margin-top: 60px;
+    padding-top: 10px;
+}
+
+.cd-leave-document .cd-signature-column {
+    min-width: 0;
+    text-align: left;
+}
+
+.cd-leave-document .cd-signature-image {
+    display: block;
+    width: 340px;
+    max-width: 100%;
+    height: auto;
+    margin: 0 0 -4px;
+    opacity: 0.5;
+    mix-blend-mode: multiply;
+}
+
+.cd-leave-document .cd-signature-name {
+    display: block;
+    margin-top: 0;
+    font-weight: 700;
+    color: #111827;
+}
+
+.cd-leave-document .cd-signature-line {
+    margin-top: 12px;
+    color: #344054;
+    letter-spacing: 0.02em;
+}
+
+.cd-leave-document .cd-signature-date {
+    margin-top: 8px;
+    color: #475467;
+    font-size: 12px;
+}
+
+/* Academic Disclaimer */
+.cd-leave-document .cd-academic-disclaimer {
+    margin-top: 60px;
+    padding: 16px 18px;
+
+    border: 1px solid #d9dee7;
+    border-radius: 7px;
+    background: #f8fafc;
+
+    font-size: 11px;
+    line-height: 1.75;
+    color: #667085;
+}
+
+.cd-leave-document .cd-academic-disclaimer-title {
+    display: block;
+    margin-bottom: 8px;
+    color: #344054;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.cd-leave-document .cd-academic-disclaimer strong {
+    color: #475467;
+}
+
+/* Email Action Container */
+.cd-leave-document .lc-template-email-action {
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* Remove unnecessary inline spacing when classes are present */
+.cd-leave-document [style*="font-family"] {
+    font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .cd-leave-document {
+        padding: 28px 24px;
+        border-radius: 6px;
+    }
+
+    .cd-leave-document .cd-document-title {
+        font-size: 22px;
+    }
+
+    .cd-leave-document .cd-document-subtitle {
+        font-size: 13px;
+        margin-bottom: 24px;
+    }
+
+    .cd-leave-document .cd-employee-info td:first-child {
+        width: 145px;
+    }
+
+    .cd-leave-document .cd-signature-section {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        margin-top: 45px;
+    }
+
+    .cd-leave-document .cd-signature-image {
+        width: 300px;
+    }
+
+    .cd-leave-document .cd-academic-disclaimer {
+        margin-top: 45px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .cd-leave-document {
+        padding: 22px 18px;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .cd-leave-document .cd-document-title {
+        font-size: 19px;
+        letter-spacing: 0.05em;
+    }
+
+    .cd-leave-document .cd-document-subtitle {
+        font-size: 12px;
+    }
+
+    .cd-leave-document .cd-employee-info {
+        table-layout: auto;
+    }
+
+    .cd-leave-document .cd-employee-info td {
+        display: block;
+        width: 100% !important;
+        padding: 5px 0;
+        border-bottom: 0;
+    }
+
+    .cd-leave-document .cd-employee-info tr {
+        display: block;
+        padding: 7px 0;
+        border-bottom: 1px solid #eef1f5;
+    }
+
+    .cd-leave-document .cd-employee-info tr:last-child {
+        border-bottom: 0;
+    }
+
+    .cd-leave-document .cd-document-body p {
+        text-align: left;
+    }
+
+    .cd-leave-document .cd-signature-section {
+        gap: 35px;
+    }
+
+    .cd-leave-document .cd-academic-disclaimer {
+        font-size: 10px;
+    }
+}
+
+/* =========================================================
+   Print / PDF
+   ========================================================= */
+
+@media print {
+
+    .cd-leave-document {
+        max-width: none;
+        margin: 0;
+        padding: 20mm 18mm;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .cd-leave-document .cd-signature-section {
+        page-break-inside: avoid;
+    }
+
+    .cd-leave-document .cd-academic-disclaimer {
+        page-break-inside: avoid;
+    }
+
+    .cd-leave-document .lc-template-email-action {
+        display: none;
+    }
+}
+
+
+/* Compact Arial Document Typography */
+.cd-leave-document {
+    font-family: Arial, sans-serif !important;
+    font-size: 11px !important;
+    line-height: 1.55 !important;
+    color: #222 !important;
+}
+
+.cd-leave-document .cd-document-title {
+    font-family: Arial, sans-serif !important;
+    font-size: 20px !important;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.cd-leave-document .cd-document-subtitle {
+    font-family: Arial, sans-serif !important;
+    font-size: 11px !important;
+    margin: 6px 0 20px !important;
+}
+
+.cd-leave-document .cd-employee-info {
+    font-family: Arial, sans-serif !important;
+    font-size: 11px !important;
+    margin-bottom: 24px !important;
+}
+
+.cd-leave-document .cd-employee-info td {
+    padding: 5px 0 !important;
+}
+
+.cd-leave-document .cd-document-body {
+    font-family: Arial, sans-serif !important;
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+}
+
+.cd-leave-document .cd-document-body p {
+    margin-bottom: 12px !important;
+}
+
+.cd-leave-document .cd-signature-section {
+    font-family: Arial, sans-serif !important;
+    font-size: 11px !important;
+}
+
+.cd-leave-document .cd-signature-date {
+    font-size: 10px !important;
+}
+
+.cd-leave-document .cd-academic-disclaimer {
+    font-family: Arial, sans-serif !important;
+    font-size: 9px !important;
+    line-height: 1.5 !important;
+    margin-top: 35px !important;
+}
+
+.cd-leave-document .cd-academic-disclaimer-title {
+    font-size: 9px !important;
+}
+
+@media print {
+    .cd-leave-document {
+        font-family: Arial, sans-serif !important;
+        font-size: 10.5px !important;
+    }
+
+    .cd-leave-document .cd-document-title {
+        font-size: 19px !important;
+    }
+
+    .cd-leave-document .cd-document-body {
+        font-size: 10.5px !important;
+    }
+
+    .cd-leave-document .cd-academic-disclaimer {
+        font-size: 8.5px !important;
+    }
+}
+
+
+/* Employee Information - Labels Only Bold */
+.cd-leave-document .cd-employee-info td:first-child {
+    font-family: Arial, sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #222 !important;
+}
+
+.cd-leave-document .cd-employee-info td:last-child {
+    font-family: Arial, sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    color: #222 !important;
+}
+
+
+/* Compact Employee Information */
+.cd-leave-document .cd-employee-info {
+    font-family: Arial, sans-serif !important;
+    font-size: 9px !important;
+    line-height: 1.4 !important;
+}
+
+.cd-leave-document .cd-employee-info td {
+    padding: 3px 0 !important;
+}
+
+.cd-leave-document .cd-employee-info td:first-child {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    color: #222 !important;
+}
+
+.cd-leave-document .cd-employee-info td:last-child {
+    font-size: 9px !important;
+    font-weight: 400 !important;
+    color: #222 !important;
+}
+
+
+/* Extra Compact Employee Information */
+.cd-leave-document .cd-employee-info {
+    font-family: Arial, sans-serif !important;
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+}
+
+.cd-leave-document .cd-employee-info td {
+    padding: 2px 0 !important;
+}
+
+.cd-leave-document .cd-employee-info td:first-child {
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    color: #222 !important;
+}
+
+.cd-leave-document .cd-employee-info td:last-child {
+    font-size: 8px !important;
+    font-weight: 400 !important;
+    color: #222 !important;
+}
+
+
+/* =========================================================
+   Leave Agreement Employee Information Table
+   ========================================================= */
+
+.cd-leave-document table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 24px !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+}
+
+.cd-leave-document table tr {
+    height: auto !important;
+}
+
+.cd-leave-document table td {
+    padding: 2px 0 !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+    color: #222 !important;
+    vertical-align: top !important;
+}
+
+/* Labels */
+.cd-leave-document table td:first-child,
+.cd-leave-document table td:first-child strong {
+    font-family: Arial, sans-serif !important;
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    color: #222 !important;
+}
+
+/* Values */
+.cd-leave-document table td:last-child {
+    font-family: Arial, sans-serif !important;
+    font-size: 8px !important;
+    font-weight: 400 !important;
+    color: #222 !important;
+}
+
+/* Remove excessive inline spacing */
+.cd-leave-document table td[style] {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+}
+
+/* Keep label column compact */
+.cd-leave-document table td:first-child {
+    width: 150px !important;
+    padding-right: 15px !important;
+}
+
+
+/* FORCE COMPACT LEAVE INFORMATION TABLE */
+.cd-leave-document > table,
+.cd-leave-document table[style] {
+    width: 100% !important;
+    margin-bottom: 20px !important;
+    border-collapse: collapse !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 7px !important;
+    line-height: 1.2 !important;
+}
+
+.cd-leave-document > table tbody tr td,
+.cd-leave-document table[style] tbody tr td {
+    padding: 1px 0 !important;
+    margin: 0 !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 7px !important;
+    line-height: 1.2 !important;
+    color: #222 !important;
+    vertical-align: top !important;
+}
+
+/* FORCE LABELS BOLD */
+.cd-leave-document > table tbody tr td:first-child,
+.cd-leave-document > table tbody tr td:first-child strong,
+.cd-leave-document table[style] tbody tr td:first-child,
+.cd-leave-document table[style] tbody tr td:first-child strong {
+    width: 150px !important;
+    padding: 1px 12px 1px 0 !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 7px !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    color: #222 !important;
+}
+
+/* FORCE VALUES NORMAL */
+.cd-leave-document > table tbody tr td:last-child,
+.cd-leave-document table[style] tbody tr td:last-child {
+    padding: 1px 0 !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 7px !important;
+    font-weight: 400 !important;
+    line-height: 1.2 !important;
+    color: #222 !important;
+}
+
+/* FORCE OVERRIDE INLINE TD STYLES */
+.cd-leave-document table td[style] {
+    padding: 1px 0 !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 7px !important;
+}
+
+/* Keep first column width */
+.cd-leave-document table td[style*="width:190px"] {
+    width: 150px !important;
+}
+
+/* Remove any inherited bold from values */
+.cd-leave-document table td:last-child strong {
+    font-weight: 400 !important;
+}
+
+
+/* EXIT MANAGEMENT ACTIONS */
+.cd-field--split-actions-2.cd-leave-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+}
+
+.cd-field--split-actions-2.cd-leave-actions .cd-btn-save,
+.cd-field--split-actions-2.cd-leave-actions .cd-btn-email {
+    width: 100% !important;
+    min-height: 42px !important;
+    box-sizing: border-box !important;
+}
+
+.cd-field input[type="date"] {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 10px 12px !important;
+    border: 1px solid #d5dbe5 !important;
+    border-radius: 6px !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 13px !important;
+    background: #fff !important;
+}
+
+@media (max-width: 600px) {
+    .cd-field--split-actions-2.cd-leave-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* =========================================================
+   EXIT CLEARANCE - DATE SELECTOR + ACTION BUTTONS
+   FORCE OVERRIDE
+   ========================================================= */
+
+.exit-clearance-actions {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 20px !important;
+    padding: 16px !important;
+    background: #ffffff !important;
+    border: 1px solid #d9dee7 !important;
+    border-radius: 8px !important;
+}
+
+.exit-clearance-actions .cd-section-title {
+    margin: 0 0 14px !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+}
+
+.exit-clearance-actions .cd-field-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+}
+
+.exit-clearance-actions .cd-field {
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: 12px !important;
+}
+
+.exit-clearance-actions label {
+    display: block !important;
+    margin-bottom: 5px !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+}
+
+.exit-clearance-actions .cd-readonly-value {
+    width: 100% !important;
+    min-height: 38px !important;
+    box-sizing: border-box !important;
+    padding: 9px 11px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+
+    background: #f8f9fb !important;
+    border: 1px solid #d9dee7 !important;
+    border-radius: 6px !important;
+}
+
+.exit-clearance-actions .exit-date-picker,
+.exit-clearance-actions input[type="date"] {
+    display: block !important;
+    width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+
+    box-sizing: border-box !important;
+
+    padding: 8px 11px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+
+    color: #222 !important;
+    background: #fff !important;
+
+    border: 1px solid #cfd6df !important;
+    border-radius: 6px !important;
+
+    cursor: pointer !important;
+}
+
+.exit-clearance-actions .exit-date-picker:focus,
+.exit-clearance-actions input[type="date"]:focus {
+    outline: none !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, .10) !important;
+}
+
+.exit-clearance-action-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+    margin-top: 4px !important;
+}
+
+.exit-clearance-action-buttons .cd-btn-save,
+.exit-clearance-action-buttons .cd-btn-email {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+
+    box-sizing: border-box !important;
+
+    padding: 0 14px !important;
+
+    font-family: Arial, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+
+    border-radius: 6px !important;
+    cursor: pointer !important;
+}
+
+.exit-clearance-action-buttons .cd-btn-save i,
+.exit-clearance-action-buttons .cd-btn-email i {
+    margin-right: 7px !important;
+}
+
+@media (max-width: 600px) {
+
+    .exit-clearance-actions .cd-field-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .exit-clearance-action-buttons {
+        grid-template-columns: 1fr !important;
+    }
+
+}
+
+
+/* =========================================================
+   EXIT CLEARANCE — PRODUCTION OVERRIDE
+   ========================================================= */
+
+.card-x {
+    background:#fff !important;
+    border:1px solid #dbe3ec !important;
+    border-radius:8px !important;
+    overflow:hidden !important;
+    box-shadow:0 1px 3px rgba(15,23,42,.06) !important;
+}
+
+.card-x .cx-head {
+    min-height:54px !important;
+    display:flex !important;
+    align-items:center !important;
+    padding:0 20px !important;
+    background:#fff !important;
+    border-bottom:1px solid #e5eaf0 !important;
+}
+
+.card-x .cx-head h2 {
+    margin:0 !important;
+    color:#172033 !important;
+    font-family:Arial,Helvetica,sans-serif !important;
+    font-size:15px !important;
+    font-weight:700 !important;
+}
+
+.card-x .cx-body {
+    padding:20px !important;
+    background:#fff !important;
+}
+
+.card-x .cd-section-title {
+    margin:0 0 13px !important;
+    color:#334155 !important;
+    font-family:Arial,Helvetica,sans-serif !important;
+    font-size:12px !important;
+    font-weight:700 !important;
+}
+
+.card-x .cd-field-row {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:14px !important;
+}
+
+.card-x .cd-field {
+    width:100% !important;
+    min-width:0 !important;
+    margin:0 0 14px !important;
+}
+
+.card-x .cd-field label {
+    display:block !important;
+    margin:0 0 6px !important;
+    color:#475569 !important;
+    font-family:Arial,Helvetica,sans-serif !important;
+    font-size:11px !important;
+    font-weight:600 !important;
+}
+
+.card-x .cd-readonly-value {
+    display:flex !important;
+    align-items:center !important;
+    width:100% !important;
+    min-height:39px !important;
+    box-sizing:border-box !important;
+    padding:9px 11px !important;
+    color:#1e293b !important;
+    background:#f8fafc !important;
+    border:1px solid #dce3eb !important;
+    border-radius:5px !important;
+    font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important;
+}
+
+.exit-clearance-form-section {
+    width:100% !important;
+    box-sizing:border-box !important;
+    margin-top:22px !important;
+    padding-top:19px !important;
+    border-top:1px solid #e5eaf0 !important;
+}
+
+.cd-exit-clearance-form input[type="date"] {
+    display:block !important;
+    width:100% !important;
+    height:40px !important;
+    min-height:40px !important;
+    box-sizing:border-box !important;
+    padding:8px 10px !important;
+    color:#1e293b !important;
+    background:#fff !important;
+    border:1px solid #cbd5e1 !important;
+    border-radius:5px !important;
+    font-family:Arial,Helvetica,sans-serif !important;
+    font-size:13px !important;
+    outline:none !important;
+}
+
+.cd-exit-clearance-form input[type="date"]:hover {
+    border-color:#94a3b8 !important;
+}
+
+.cd-exit-clearance-form input[type="date"]:focus {
+    border-color:#2563eb !important;
+    box-shadow:0 0 0 2px rgba(37,99,235,.12) !important;
+}
+
+.cd-exit-clearance-actions {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important;
+    gap:10px !important;
+    width:100% !important;
+    margin-top:14px !important;
+}
+
+.cd-exit-clearance-actions .cd-btn-save,
+.cd-exit-clearance-actions .cd-btn-email {
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    width:100% !important;
+    height:40px !important;
+    min-height:40px !important;
+    box-sizing:border-box !important;
+    padding:0 14px !important;
+    border-radius:5px !important;
+    font-family:Arial,Helvetica,sans-serif !important;
+    font-size:12px !important;
+    font-weight:600 !important;
+    line-height:1 !important;
+    text-decoration:none !important;
+    cursor:pointer !important;
+}
+
+.cd-exit-clearance-actions .cd-btn-save {
+    color:#fff !important;
+    background:#1d4ed8 !important;
+    border:1px solid #1d4ed8 !important;
+}
+
+.cd-exit-clearance-actions .cd-btn-save:hover {
+    color:#fff !important;
+    background:#1e40af !important;
+    border-color:#1e40af !important;
+}
+
+.cd-exit-clearance-actions .cd-btn-email {
+    color:#1d4ed8 !important;
+    background:#fff !important;
+    border:1px solid #93c5fd !important;
+}
+
+.cd-exit-clearance-actions .cd-btn-email:hover {
+    color:#1e40af !important;
+    background:#eff6ff !important;
+    border-color:#60a5fa !important;
+}
+
+.cd-exit-clearance-actions .cd-btn-save i,
+.cd-exit-clearance-actions .cd-btn-email i {
+    margin-right:7px !important;
+    font-size:13px !important;
+}
+
+@media (max-width:640px) {
+    .card-x .cx-body {
+        padding:16px !important;
+    }
+
+    .card-x .cd-field-row {
+        grid-template-columns:1fr !important;
+    }
+
+    .cd-exit-clearance-actions {
+        grid-template-columns:1fr !important;
+    }
+}
+

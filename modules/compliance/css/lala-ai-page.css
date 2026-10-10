@@ -1,0 +1,269 @@
+.lala-ai-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+    max-height: 800px;
+    min-height: 500px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.lala-ai-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--color1, #1a5f8a);
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.lala-ai-page-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lala-ai-page-logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.lala-ai-page-header h1 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.lala-ai-page-subtitle {
+    margin: 2px 0 0;
+    font-size: 0.75rem;
+    opacity: 0.9;
+}
+
+.lala-ai-page-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: #f8fafc;
+}
+
+.lala-ai-page-intro {
+    padding: 16px 20px;
+    background: #fff;
+    border-bottom: 1px solid var(--border, #e4e8ee);
+    flex-shrink: 0;
+}
+
+.lala-ai-page-intro p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-600, #5b6472);
+    line-height: 1.5;
+}
+
+.lala-ai-page-chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+}
+
+.lala-ai-page-chat::-webkit-scrollbar { width: 6px; }
+.lala-ai-page-chat::-webkit-scrollbar-track { background: transparent; }
+.lala-ai-page-chat::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+.lala-ai-page-quick-replies {
+    padding: 0 16px 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    flex-shrink: 0;
+    min-height: 0;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.lala-ai-page-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border, #e4e8ee);
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.lala-ai-page-form {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+}
+
+.lala-ai-page-input {
+    flex: 1;
+    border: 1px solid var(--border, #e4e8ee);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    min-height: 44px;
+    max-height: 120px;
+    line-height: 1.4;
+}
+
+.lala-ai-page-input:focus {
+    border-color: var(--info-blue, #3b82c4);
+    box-shadow: 0 0 0 3px rgba(59,130,196,0.08);
+}
+
+.lala-ai-page-submit {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid var(--border, #e4e8ee);
+    background: #fff;
+    color: var(--text-700, #3b4252);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all .15s ease;
+}
+
+.lala-ai-page-submit:hover:not(:disabled) {
+    border-color: var(--info-blue, #3b82c4);
+    color: var(--info-blue, #3b82c4);
+}
+
+.lala-ai-page-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.ll-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0,0,0,0.1);
+    border-top-color: var(--info-blue, #3b82c4);
+    border-radius: 50%;
+    animation: ll-spin .8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes ll-spin { to { transform: rotate(360deg); } }
+
+.ll-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.ll-result-item {
+    background: #fff;
+    border: 1px solid var(--border, #e4e8ee);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.ll-result-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-900, #1b2430);
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.ll-result-meta {
+    font-size: 0.75rem;
+    color: var(--text-500, #6b7280);
+    margin-bottom: 6px;
+}
+
+.ll-result-matched {
+    font-size: 0.78rem;
+    color: var(--text-600, #5b6472);
+    margin-bottom: 8px;
+    font-style: italic;
+}
+
+.ll-result-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ll-result-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border, #e4e8ee);
+    background: #fff;
+    color: var(--text-700, #3b4252);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .15s ease;
+}
+
+.ll-result-btn:hover {
+    border-color: var(--info-blue, #3b82c4);
+    color: var(--info-blue, #3b82c4);
+}
+
+.ll-result-btn--primary {
+    background: var(--info-blue, #3b82c4);
+    border-color: var(--info-blue, #3b82c4);
+    color: #fff;
+}
+
+.ll-result-btn--primary:hover {
+    background: #1c5a8a;
+    border-color: #1c5a8a;
+    color: #fff;
+}
+
+.ll-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.ll-assistant-quick-reply-btn {
+    font-size: 0.72rem;
+    padding: 6px 10px;
+    border-radius: 16px;
+    border: 1.5px solid var(--info-blue, #3b82c4);
+    background: #fff;
+    color: var(--info-blue, #3b82c4);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all .15s ease;
+    white-space: nowrap;
+}
+
+.ll-assistant-quick-reply-btn:hover {
+    background: var(--info-blue, #3b82c4);
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .lala-ai-page { height: calc(100vh - 120px); }
+}

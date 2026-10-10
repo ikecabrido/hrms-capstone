@@ -1,0 +1,256 @@
+
+/* =========================================================
+   GLOBAL MODULE HEADER — BLUE NEOMORPHISM
+   ========================================================= */
+
+.module-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 0 0 24px !important;
+    padding: 22px 28px !important;
+    background: #eaf1fb !important;
+    border: 1px solid rgba(255,255,255,.75) !important;
+    border-radius: 20px !important;
+    box-shadow:
+        9px 9px 20px rgba(163,180,205,.55),
+        -9px -9px 20px rgba(255,255,255,.95) !important;
+    color: #243653 !important;
+    transition: box-shadow .25s ease, transform .25s ease;
+}
+
+.module-header h1,
+.module-header h2,
+.module-header h3 {
+    margin: 0 !important;
+    color: #1e40af !important;
+    font-weight: 800 !important;
+    letter-spacing: -.035em;
+    line-height: 1.3;
+}
+
+.module-header h1 {
+    font-size: clamp(1.5rem, 2.5vw, 2.1rem) !important;
+}
+
+.module-header p {
+    margin: 5px 0 0;
+    color: #71819b !important;
+}
+
+.module-header a,
+.module-header button {
+    border-radius: 12px;
+}
+
+.module-header .btn,
+.module-header button {
+    box-shadow:
+        4px 4px 8px rgba(163,180,205,.45),
+        -4px -4px 8px rgba(255,255,255,.9);
+}
+
+.module-header .btn:active,
+.module-header button:active {
+    box-shadow:
+        inset 3px 3px 6px rgba(163,180,205,.5),
+        inset -3px -3px 6px rgba(255,255,255,.9);
+}
+
+@media (max-width: 600px) {
+    .module-header {
+        padding: 17px 18px !important;
+        border-radius: 16px !important;
+        margin-bottom: 18px !important;
+    }
+}
+
+
+/* SSS Monitoring: logo left, title beside logo */
+.module-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    gap: 14px !important;
+}
+
+.module-header .module-header-logo {
+    display: block !important;
+    flex: 0 0 48px !important;
+    width: 48px !important;
+    height: 48px !important;
+    object-fit: contain !important;
+    margin: 0 !important;
+}
+
+.module-header h1 {
+    flex: 0 1 auto !important;
+    margin: 0 !important;
+    text-align: left !important;
+    line-height: 1.2 !important;
+}
+
+@media (max-width: 480px) {
+    .module-header {
+        gap: 10px !important;
+    }
+
+    .module-header .module-header-logo {
+        flex-basis: 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+    }
+}
+
+
+/* SSS Monitoring: force title text to black */
+.module-header h1 {
+    color: #000000 !important;
+}
+
+/* SSS Monitoring: softer title color */
+.module-header h1 {
+    color: #444444 !important;
+}
+
+/* SSS Monitoring: title back to black */
+.module-header h1 {
+    color: #000000 !important;
+}
+
+/* ==========================================
+   MODULE HEADER — WHITE NEOMORPHIC
+   White background, black title
+   ========================================== */
+
+.module-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+
+    margin: 0 0 24px !important;
+    padding: 22px 28px !important;
+
+    background: #ffffff !important;
+    border: 1px solid #f0f2f5 !important;
+    border-radius: 14px !important;
+
+    box-shadow:
+        6px 6px 14px rgba(31, 45, 61, 0.07),
+        -6px -6px 14px rgba(255, 255, 255, 0.95) !important;
+
+    color: #111111 !important;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+/* Force module titles to black */
+.module-header h1,
+.module-header h2,
+.module-header h3,
+.module-header h4,
+.module-header .module-title,
+.module-header .page-title {
+    color: #111111 !important;
+    font-weight: 700;
+}
+
+/* Supporting text */
+.module-header p,
+.module-header .module-subtitle,
+.module-header .module-description {
+    color: #64748b !important;
+}
+
+/* Icons */
+.module-header > i,
+.module-header .module-icon {
+    color: #2563eb;
+}
+
+/* Mobile layout */
+@media (max-width: 600px) {
+    .module-header {
+        gap: 10px;
+        margin-bottom: 18px !important;
+        padding: 16px 18px !important;
+        border-radius: 10px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .module-header {
+        transition: none;
+    }
+}
+
+
+/* =========================================================
+   FINAL OVERRIDE — WHITE MODULE HEADER
+   Preserves the existing logo and horizontal layout
+   ========================================================= */
+
+.module-header {
+    background: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 14px !important;
+    box-shadow:
+        5px 5px 12px rgba(15, 23, 42, 0.07),
+        -5px -5px 12px rgba(255, 255, 255, 0.95) !important;
+}
+
+.module-header h1,
+.module-header h2,
+.module-header h3,
+.module-header h4,
+.module-header .module-title,
+.module-header .page-title {
+    color: #111111 !important;
+    font-weight: 700 !important;
+}
+
+.module-header p,
+.module-header .module-subtitle,
+.module-header .module-description {
+    color: #64748b !important;
+}
+
+.module-header .module-header-logo {
+    object-fit: contain !important;
+}
+
+@media (max-width: 600px) {
+    .module-header {
+        padding: 16px 18px !important;
+        border-radius: 10px !important;
+    }
+}
+
+
+/* Dashboard Overview module header — flat white, black text */
+.module-header {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+    color: #111827 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+.module-header h1 {
+    color: #111827 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    filter: none !important;
+}

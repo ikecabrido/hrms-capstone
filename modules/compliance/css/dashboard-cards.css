@@ -1,0 +1,221 @@
+/* Dashboard card styles — isolated from shared site CSS */
+.dash {
+    --card-border: #dfe4ea;
+    --card-text: #263445;
+    --card-muted: #6b7788;
+}
+
+/* 1. Overall compliance health */
+.dash .dash-health-card {
+    background: #fff;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    box-shadow: none;
+    color: var(--card-text);
+}
+
+/* 2. KPI cards — base */
+.dash .kpi-strip > .kpi-box,
+.dash .kpi-strip .kpi-box {
+    background: #fff;
+    border: 1px solid var(--card-border);
+    border-radius: 7px;
+    box-shadow: none;
+    color: var(--card-text);
+}
+
+/* Total employees */
+.dash .kpi-strip .kpi-box:not(.kpi-box--success):not(.kpi-box--danger):not(.kpi-box--warning) {
+    border-top: 3px solid #64748b;
+}
+
+/* Compliance rate */
+.dash .kpi-strip .kpi-box--success {
+    border-top: 3px solid #27845b;
+}
+
+/* Open issues and expired documents */
+.dash .kpi-strip .kpi-box--danger {
+    border-top: 3px solid #c74747;
+}
+
+/* Expiring documents */
+.dash .kpi-strip .kpi-box--warning {
+    border-top: 3px solid #c58a22;
+}
+
+.dash .kpi-box-label {
+    color: var(--card-muted);
+}
+
+.dash .kpi-box-value {
+    color: var(--card-text);
+}
+
+/* 3. Trend chart card */
+.dash .dash-row--analytics:first-of-type .chart-panel--wide {
+    background: #fff;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.dash #dashTrendChart {
+    max-width: 100%;
+}
+
+/* 4. Risk chart card */
+.dash .dash-row--analytics:first-of-type .chart-panel:not(.chart-panel--wide) {
+    background: #fff;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+/* 5. Agency case chart */
+.dash .dash-row--agency-directory > .chart-panel:first-child {
+    background: #fff;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+/* 6. Agency directory card */
+.dash .dash-row--agency-directory > .chart-panel:last-child {
+    background: #fff;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.dash .agency-row {
+    background: #fff;
+    border-bottom: 1px solid #edf0f3;
+}
+
+/* 7. Document health card */
+.dash .dash-row--analytics:nth-of-type(2) > .chart-panel--wide {
+    background: #fff;
+    border: 1px solid #d7e0e8;
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.dash .dh-kpi {
+    background: #fff;
+    border: 1px solid #e0e5eb;
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+.dash .dh-kpi--valid {
+    border-top: 3px solid #27845b;
+}
+
+.dash .dh-kpi--expiring {
+    border-top: 3px solid #c58a22;
+}
+
+.dash .dh-kpi--expired {
+    border-top: 3px solid #c74747;
+}
+
+.dash .dh-kpi--attention {
+    border-top: 3px solid #64748b;
+}
+
+/* Consistent card headings and body spacing */
+.dash .chart-panel-head {
+    border-bottom: 1px solid #edf0f3;
+}
+
+.dash .chart-panel-meta,
+.dash .health-stat,
+.dash .dh-kpi-label {
+    color: var(--card-muted);
+}
+
+/* Small screens */
+@media (max-width: 768px) {
+    .dash .dash-health-card,
+    .dash .kpi-strip .kpi-box,
+    .dash .dash-row--analytics .chart-panel,
+    .dash .dash-row--agency-directory > .chart-panel {
+        min-width: 0;
+        max-width: 100%;
+    }
+}
+
+/* Unified blue-only palette */
+.dash {
+    --card-border: #d5e4f5;
+    --card-text: #17365c;
+    --card-muted: #5c7594;
+}
+
+/* All main cards */
+.dash .dash-health-card,
+.dash .kpi-strip .kpi-box,
+.dash .dash-row--analytics .chart-panel,
+.dash .dash-row--agency-directory > .chart-panel {
+    background: #ffffff;
+    border-color: #d5e4f5;
+    color: #17365c;
+    box-shadow: none;
+}
+
+/* Blue-only KPI accents */
+.dash .kpi-strip .kpi-box,
+.dash .kpi-strip .kpi-box--success,
+.dash .kpi-strip .kpi-box--danger,
+.dash .kpi-strip .kpi-box--warning {
+    border-top: 3px solid #367cc4;
+}
+
+.dash .kpi-box-label,
+.dash .chart-panel-meta,
+.dash .health-stat,
+.dash .dh-kpi-label {
+    color: #5c7594;
+}
+
+.dash .kpi-box-value,
+.dash .health-title,
+.dash .chart-panel-head,
+.dash .dh-kpi-value {
+    color: #17365c;
+}
+
+/* Blue document-health cards */
+.dash .dh-kpi,
+.dash .dh-kpi--valid,
+.dash .dh-kpi--expiring,
+.dash .dh-kpi--expired,
+.dash .dh-kpi--attention {
+    background: #f4f8fd;
+    border-color: #d5e4f5;
+    border-top: 3px solid #367cc4;
+    color: #17365c;
+    box-shadow: none;
+}
+
+/* Blue separators and agency rows */
+.dash .chart-panel-head,
+.dash .agency-row {
+    border-color: #e3edf8;
+}
+
+.dash .agency-row {
+    background: #ffffff;
+}
+
+/* Blue health indicators and labels */
+.dash .health-badges,
+.dash .health-stats {
+    color: #245f9e;
+}
+
+.dash .kpi-box-sub,
+.dash .dh-kpi-sub {
+    color: #5c7594;
+}

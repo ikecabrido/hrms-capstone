@@ -1,0 +1,113 @@
+body {
+    background: var(--color9);
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--header-height);
+    width: calc(100% - var(--sidebar-width));
+    min-height: calc(100vh - var(--header-height));
+    padding: 2rem;
+    transition: margin-left 0.3s ease, width 0.3s ease;
+    position: relative;
+}
+
+.main-content.sidebar-collapsed {
+    margin-left: 0;
+    width: 100%;
+}
+
+.main-content.sidebar-collapsed > .container {
+    max-width: none;
+}
+
+.main-content::-webkit-scrollbar {
+    width: 8px;
+    display: block;
+}
+
+.main-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+    background: var(--color4);
+    border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+    background: var(--color5);
+}
+
+.container {
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color4);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color5);
+}
+
+@media (max-width: 1024px) {
+    .container {
+        max-width: 960px;
+    }
+    
+    .module-content {
+        max-width: 100%;
+        padding: 1.5rem;
+    }
+}
+
+/* Tablets (768px and below) */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        min-height: calc(100vh - var(--header-height));
+        padding: 1rem;
+    }
+    
+    .container {
+        padding: 0 0.5rem;
+    }
+}
+
+/* Mobile Phones (480px and below) */
+@media (max-width: 480px) {
+        .main-content {
+        margin-top: 50px;
+        min-height: calc(100vh - 50px);
+        padding: 0.75rem;
+    }
+    
+}
+
+/* Print Styles */
+@media print {
+    .sidebar,
+    header,
+    footer,
+    .hamburger {
+        display: none;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        margin-top: 0;
+    }
+}

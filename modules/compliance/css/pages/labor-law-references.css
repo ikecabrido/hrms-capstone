@@ -1,0 +1,467 @@
+/* ============================================
+   Labor Law References — Minimal Styles
+   ============================================ */
+
+.llr-module {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 4px 2px 24px;
+}
+
+.llr-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.llr-card > .llr-table-search {
+    margin-left: auto;
+}
+
+.llr-empty {
+    padding: 32px 24px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 11.5px;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.llr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    background: #e5e7eb;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.llr-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px 20px;
+    background: #fff;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.1s ease;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+.llr-item:hover {
+    background: #f9fafb;
+}
+
+.llr-item-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    width: 100%;
+    min-width: 0;
+}
+
+.llr-item-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #111827;
+    line-height: 1.3;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    letter-spacing: -0.005em;
+    font-family: Arial, sans-serif;
+}
+
+.llr-item-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.llr-item-ref {
+    font-size: 10px;
+    font-weight: 500;
+    color: #4b5563;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-family: Arial, sans-serif;
+}
+
+.llr-item-date {
+    font-size: 10px;
+    color: #6b7280;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-family: Arial, sans-serif;
+}
+
+.llr-item-preview {
+    font-size: 11.5px;
+    color: #4b5563;
+    line-height: 1.3;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-family: Arial, sans-serif;
+}
+
+.llr-item-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.llr-stamp {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    letter-spacing: 0.01em;
+    font-family: Arial, sans-serif;
+}
+
+.llr-stamp-active {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.llr-stamp-amended {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.llr-stamp-superseded {
+    background: #eff6ff;
+    color: #1e40af;
+}
+
+.llr-stamp-repealed {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.llr-stamp-archived {
+    background: #f9fafb;
+    color: #374151;
+}
+
+.llr-stamp-for_reference {
+    background: #f9fafb;
+    color: #4b5563;
+}
+
+.llr-table-search {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.llr-table-search input {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 10px;
+    outline: none;
+    width: 240px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    min-width: 0;
+    box-sizing: border-box;
+    color: #111827;
+    background: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.llr-table-search input:focus {
+    border-color: #111827;
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+.llr-table-search input::placeholder {
+    color: #9ca3af;
+}
+
+.llr-table-search .llr-search-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 2px;
+    font-size: 11.5px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.llr-table-search .llr-search-clear:hover {
+    color: #111827;
+}
+
+.llr-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 4px;
+    border: 1px solid #2563eb;
+    background: #2563eb;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    min-height: 36px;
+    letter-spacing: 0.01em;
+    font-family: Arial, sans-serif;
+}
+
+.llr-action-btn:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #fff;
+}
+
+.llr-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    width: 100%;
+    min-width: 0;
+}
+
+.llr-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #374151;
+    font-size: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    min-height: 36px;
+    letter-spacing: 0.01em;
+    font-family: Arial, sans-serif;
+}
+
+.llr-page-btn:hover:not(:disabled) {
+    border-color: #111827;
+    color: #111827;
+    background: #f9fafb;
+}
+
+.llr-page-btn:disabled {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.llr-page-btn.active {
+    background: #111827;
+    border-color: #111827;
+    color: #fff;
+    font-weight: 600;
+}
+
+.llr-page-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    color: #9ca3af;
+    font-size: 10px;
+    min-height: 36px;
+    font-family: Arial, sans-serif;
+}
+
+.llr-card-body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+    .llr-table-search input {
+        width: 220px;
+    }
+}
+
+@media (max-width: 768px) {
+    .llr-module {
+        padding: 4px 2px 20px;
+    }
+
+    .llr-card-head {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding-bottom: 14px;
+    }
+
+    .llr-card-head h3 {
+        width: 100%;
+        font-size: 11.5px;
+        font-family: Arial, sans-serif;
+    }
+
+    .llr-table-search {
+        width: 100%;
+    }
+
+    .llr-table-search input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .llr-item {
+        padding: 14px 16px;
+    }
+
+    .llr-card {
+        padding: 16px;
+        border-radius: 4px;
+    }
+
+    .llr-page-btn {
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .llr-page-ellipsis {
+        min-width: 40px;
+        min-height: 40px;
+    }
+
+    .llr-action-btn {
+        min-height: 40px;
+        padding: 8px 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .llr-item {
+        padding: 14px 16px;
+    }
+
+    .llr-card {
+        padding: 16px;
+    }
+
+    .llr-item-title {
+        font-size: 11.5px;
+    }
+
+    .llr-item-meta {
+        gap: 3px;
+    }
+
+    .llr-item-ref,
+    .llr-item-date {
+        font-size: 10px;
+    }
+
+    .llr-item-preview {
+        font-size: 11.5px;
+    }
+}
+
+@media (max-width: 380px) {
+    .llr-card {
+        padding: 14px;
+        border-radius: 3px;
+    }
+
+    .llr-item {
+        padding: 12px 14px;
+    }
+
+    .llr-item-title {
+        font-size: 11.5px;
+    }
+
+    .llr-item-ref,
+    .llr-item-date {
+        font-size: 10px;
+    }
+
+    .llr-item-preview {
+        font-size: 11.5px;
+    }
+
+    .llr-card-head h3 {
+        font-size: 11.5px;
+    }
+
+    .llr-table-search input {
+        font-size: 10px;
+    }
+
+    .llr-action-btn {
+        font-size: 10px;
+        min-height: 38px;
+    }
+
+    .llr-page-btn {
+        min-width: 38px;
+        min-height: 38px;
+        font-size: 10px;
+        padding: 0 10px;
+    }
+
+    .llr-page-ellipsis {
+        min-width: 38px;
+        min-height: 38px;
+        font-size: 10px;
+    }
+}

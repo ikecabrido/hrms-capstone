@@ -1,0 +1,79 @@
+
+/* =========================================================
+   RISK ANALYTICS — COMPACT HEIGHT
+   ========================================================= */
+
+.ra-modal--wide .ra-modal__body {
+  padding: 14px 18px 16px;
+}
+
+.ra-modal--wide .ra-analytics-header {
+  margin-bottom: 10px;
+}
+
+.ra-modal--wide .ra-analytics-card-head {
+  min-height: 40px;
+  padding: 9px 13px;
+}
+
+.ra-modal--wide .ra-analytics-body {
+  padding: 11px 13px;
+}
+
+/* Severity */
+.ra-modal--wide .ra-severity-row {
+  margin-bottom: 8px;
+  gap: 7px;
+}
+
+.ra-modal--wide .ra-severity-bar-track {
+  height: 6px;
+}
+
+/* Monthly trend */
+.ra-modal--wide .ra-trend-chart {
+  height: 135px;
+  padding-top: 3px;
+}
+
+.ra-modal--wide .ra-trend-bar-wrap {
+  height: 92px;
+}
+
+.ra-modal--wide .ra-trend-label {
+  font-size: 8px;
+}
+
+.ra-modal--wide .ra-trend-value {
+  font-size: 9px;
+}
+
+/* Risk sources */
+.ra-modal--wide .ra-source-analytics-row {
+  margin-bottom: 7px;
+  gap: 7px;
+}
+
+.ra-modal--wide .ra-source-analytics-bar-track {
+  height: 6px;
+}
+
+/* Compliance */
+.ra-modal--wide .ra-compliance-row {
+  margin-bottom: 9px;
+  gap: 7px;
+}
+
+.ra-modal--wide .ra-compliance-bar-track {
+  height: 7px;
+}
+
+/* Compact typography */
+.ra-modal--wide .ra-analytics-card-head h4 {
+  font-size: 12px;
+}
+
+.ra-modal--wide .ra-card-meta,
+.ra-modal--wide .ra-analytics-meta {
+  font-size: 9px;
+}

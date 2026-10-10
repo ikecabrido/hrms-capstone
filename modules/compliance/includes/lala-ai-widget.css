@@ -1,0 +1,1004 @@
+.ll-assistant-root {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1080;
+    font-family: inherit;
+}
+
+.ll-assistant-toggle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--color1);
+    background: var(--color1);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .12s ease;
+    padding: 0;
+    position: relative;
+}
+
+.ll-assistant-toggle:hover {
+    opacity: .85;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+
+.ll-assistant-toggle:focus-visible {
+    outline: 2px solid var(--color1);
+    outline-offset: 2px;
+}
+
+.ll-assistant-panel {
+    position: absolute;
+    bottom: 64px;
+    right: 0;
+    width: 370px;
+    max-width: calc(100vw - 40px);
+    height: 540px;
+    max-height: calc(100vh - 120px);
+    background: #fff;
+    border-radius: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .12s ease;
+    transform-origin: bottom right;
+    border: 1px solid #e5e7eb;
+}
+
+.ll-assistant-panel--open {
+    opacity: 1;
+    pointer-events: auto;
+    bottom: 0;
+}
+
+.ll-assistant-root--open {
+    bottom: 0;
+}
+
+.ll-assistant-toggle-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    border-radius: 4px;
+    display: block;
+}
+
+.ll-assistant-header-img {
+    height: 28px;
+    width: auto;
+    object-fit: contain;
+    margin-right: 8px;
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 4px;
+    opacity: .85;
+}
+
+.ll-assistant-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--color1);
+    color: #fff;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.ll-assistant-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ll-assistant-header-left strong {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: -.01em;
+}
+
+.ll-assistant-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.ll-assistant-sub {
+    font-size: 0.68rem;
+    color: #fff;
+    margin-top: 1px;
+    line-height: 1.2;
+    font-weight: 400;
+    letter-spacing: .01em;
+    opacity: .85;
+}
+
+.ll-assistant-action-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #fff;
+    font-size: 0.78rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 3px;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .1s ease;
+}
+
+.ll-assistant-action-btn:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,255,255,0.15);
+    color: #fff;
+}
+
+.ll-assistant-action-btn:focus-visible {
+    outline: 2px solid #9ca3af;
+    outline-offset: 1px;
+}
+
+.ll-assistant-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #fafafa;
+}
+
+.ll-assistant-body::-webkit-scrollbar {
+    width: 5px;
+}
+.ll-assistant-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.ll-assistant-body::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 3px;
+}
+
+.ll-assistant-msg {
+    display: flex;
+}
+
+.ll-assistant-msg--user {
+    justify-content: flex-end;
+}
+
+.ll-assistant-msg--bot {
+    justify-content: flex-start;
+}
+
+.ll-assistant-bubble {
+    max-width: 85%;
+    padding: 7px 11px;
+    border-radius: 2px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    word-break: break-word;
+    letter-spacing: .01em;
+}
+
+.ll-assistant-msg--user .ll-assistant-bubble {
+    background: var(--color1);
+    color: #fff;
+    border-bottom-right-radius: 2px;
+}
+
+.ll-assistant-msg--bot .ll-assistant-bubble {
+    background: #fff;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+    border-bottom-left-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.02);
+}
+
+.ll-assistant-quick-replies {
+    padding: 0 10px 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    flex-shrink: 0;
+    min-height: 0;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.ll-assistant-quick-reply-btn {
+    font-size: 0.72rem;
+    padding: 5px 10px;
+    border-radius: 3px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #374151;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all .1s ease;
+    white-space: nowrap;
+}
+
+.ll-assistant-quick-reply-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    color: #1f2937;
+}
+
+.ll-assistant-quick-reply-btn:active {
+    transform: scale(0.97);
+}
+
+.ll-assistant-quick-reply-btn:focus-visible {
+    outline: 2px solid #9ca3af;
+    outline-offset: 1px;
+}
+
+.ll-assistant-footer {
+    padding: 8px 10px;
+    border-top: 1px solid #e5e7eb;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.ll-assistant-form {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+}
+
+.ll-assistant-input {
+    flex: 1;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 7px 10px;
+    font-size: 0.72rem;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    min-height: 36px;
+    max-height: 100px;
+    line-height: 1.4;
+    transition: border-color .1s ease, box-shadow .1s ease;
+    background: #fafafa;
+}
+
+.ll-assistant-input:focus {
+    border-color: #9ca3af;
+    background: #fff;
+    box-shadow: 0 0 0 1px rgba(156,163,175,.1);
+}
+
+.ll-assistant-submit {
+    width: 34px;
+    height: 34px;
+    border-radius: 3px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #6b7280;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all .1s ease;
+}
+
+.ll-assistant-submit:hover:not(:disabled) {
+    border-color: #9ca3af;
+    color: #374151;
+}
+
+.ll-assistant-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ll-assistant-submit:focus-visible {
+    outline: 2px solid #9ca3af;
+    outline-offset: 1px;
+}
+
+
+.ll-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid #e5e7eb;
+    border-top-color: #6b7280;
+    border-radius: 50%;
+    animation: ll-spin .8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.ll-spinner-sm {
+    width: 12px;
+    height: 12px;
+    border-width: 1.5px;
+    margin-right: 6px;
+}
+
+.ll-spinner-lg {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+    margin-right: 10px;
+}
+
+@keyframes ll-spin {
+    to { transform: rotate(360deg); }
+}
+
+.ll-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.ll-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #9ca3af;
+    animation: ll-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.ll-dot:nth-child(2) {
+    animation-delay: .15s;
+}
+
+.ll-dot:nth-child(3) {
+    animation-delay: .3s;
+}
+
+@keyframes ll-dot-pulse {
+    0%, 80%, 100% { opacity: .25; transform: scale(.75); }
+    40% { opacity: 1; transform: scale(1.1); }
+}
+
+.ll-loading-bubble {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.ll-loading-text {
+    font-size: 0.8rem;
+    color: #6b7280;
+    line-height: 1.4;
+}
+
+.ll-loading-subtext {
+    font-size: 0.72rem;
+    color: #9ca3af;
+    margin-top: 2px;
+    line-height: 1.35;
+}
+
+.ll-progress {
+    height: 3px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.ll-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #6b7280;
+    border-radius: 2px;
+    animation: ll-progress-indeterminate 1.6s ease-in-out infinite;
+}
+
+@keyframes ll-progress-indeterminate {
+    0% { width: 0%; margin-left: 0; }
+    40% { width: 35%; margin-left: 15%; }
+    70% { width: 15%; margin-left: 55%; }
+    100% { width: 0%; margin-left: 100%; }
+}
+
+.ll-skeleton-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.ll-skeleton-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 10px;
+}
+
+.ll-skeleton-line {
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 200% 100%;
+    animation: ll-shimmer 1.6s ease-in-out infinite;
+}
+
+.ll-skeleton-title {
+    height: 12px;
+    width: 65%;
+    margin-bottom: 8px;
+}
+
+.ll-skeleton-meta {
+    height: 9px;
+    width: 40%;
+    margin-bottom: 6px;
+}
+
+.ll-skeleton-meta-sm {
+    height: 9px;
+    width: 28%;
+    margin-bottom: 8px;
+}
+
+.ll-skeleton-actions {
+    height: 24px;
+    width: 80px;
+    margin-top: 8px;
+    border-radius: 3px;
+}
+
+@keyframes ll-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.ll-assistant-loading {
+    animation: ll-fade-in 0.15s ease-out;
+}
+
+.ll-assistant-loading .ll-assistant-bubble {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 9px 12px;
+}
+
+.ll-assistant-loading .ll-loading-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ll-assistant-loading .ll-loading-actions {
+    display: flex;
+    gap: 5px;
+    margin-top: 4px;
+}
+
+.ll-assistant-loading .ll-skeleton-line {
+    height: 10px;
+}
+
+.ll-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+.ll-result-item {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 9px;
+}
+
+.ll-result-title {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #1f2937;
+    margin-bottom: 3px;
+    line-height: 1.3;
+    letter-spacing: .01em;
+}
+
+.ll-result-meta {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-bottom: 5px;
+    line-height: 1.5;
+}
+
+.ll-result-matched {
+    font-size: 0.73rem;
+    color: #6b7280;
+    margin-bottom: 5px;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.ll-result-actions {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.ll-result-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #374151;
+    font-size: 0.72rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all .1s ease;
+}
+
+.ll-result-btn:hover {
+    border-color: #9ca3af;
+    color: #1f2937;
+}
+
+.ll-result-btn--primary {
+    background: var(--color1);
+    border-color: var(--color1);
+    color: #fff;
+}
+
+.ll-result-btn--primary:hover {
+    background: var(--color1);
+    border-color: var(--color1);
+    color: #fff;
+    opacity: .85;
+}
+
+.ll-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes ll-fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+    .ll-assistant-root {
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .ll-assistant-panel {
+        width: calc(100vw - 20px);
+        right: 0;
+        bottom: 60px;
+        height: 55vh;
+        max-height: none;
+        border-radius: 2px;
+        transform-origin: bottom right;
+    }
+
+    .ll-assistant-panel--open {
+        bottom: 0;
+    }
+
+    .ll-assistant-header-actions {
+        gap: 2px;
+    }
+
+    .ll-assistant-action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+        padding: 2px 4px;
+    }
+}
+/* =========================================================
+   LALA AI — Government Forms
+   Production UI / Blue Palette
+   ========================================================= */
+
+.ll-government-resources {
+    width: 100%;
+    margin: 12px 0 2px;
+    padding: 0;
+    border: 1px solid #dbe5f0;
+    border-radius: 10px;
+    background: #ffffff;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* Header */
+.ll-government-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-height: 42px;
+    padding: 10px 12px;
+    margin: 0;
+    background: #f4f8fc;
+    border-bottom: 1px solid #dbe5f0;
+    color: #163a63;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.ll-government-title i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    flex: 0 0 25px;
+    border-radius: 6px;
+    background: #e5effa;
+    color: #1769aa;
+    font-size: 12px;
+}
+
+/* Forms container */
+.ll-government-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 6px;
+    background: #ffffff;
+}
+
+/* Individual form */
+.ll-government-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 9px;
+    margin: 0;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: #ffffff;
+    color: #1e293b;
+    text-decoration: none !important;
+    box-sizing: border-box;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+/* Separator between items */
+.ll-government-link + .ll-government-link {
+    border-top: 1px solid #edf2f7;
+    border-radius: 0;
+}
+
+/* Hover */
+.ll-government-link:hover {
+    background: #f4f8fc;
+    border-color: #d8e6f3;
+    color: #163a63;
+}
+
+/* Keyboard accessibility */
+.ll-government-link:focus-visible {
+    outline: 2px solid #4d91c9;
+    outline-offset: -2px;
+    background: #f4f8fc;
+}
+
+/* Icon container */
+.ll-government-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    flex: 0 0 32px;
+    border-radius: 7px;
+    background: #eaf3fb;
+    color: #1769aa;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.ll-government-link:hover .ll-government-icon {
+    background: #dcecf9;
+    color: #125b94;
+}
+
+/* Text area */
+.ll-government-link > span:last-child {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+    gap: 2px;
+}
+
+/* Form name */
+.ll-government-link strong {
+    display: block;
+    margin: 0;
+    color: #1e3a5f;
+    font-size: 12px;
+    font-weight: 650;
+    line-height: 1.35;
+    white-space: normal;
+}
+
+/* Description */
+.ll-government-link small {
+    display: block;
+    margin: 0;
+    color: #64748b;
+    font-size: 10.5px;
+    font-weight: 400;
+    line-height: 1.35;
+    white-space: normal;
+}
+
+/* PDF icon distinction */
+.ll-government-link .fa-file-pdf {
+    color: #2563a6;
+}
+
+/* Normal file icon */
+.ll-government-link .fa-file-lines {
+    color: #1769aa;
+}
+
+/* Smaller Lala chat widths */
+.ll-assistant-msg--bot .ll-government-resources {
+    max-width: 100%;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .ll-government-title {
+        padding: 9px 10px;
+        font-size: 11.5px;
+    }
+
+    .ll-government-links {
+        padding: 5px;
+    }
+
+    .ll-government-link {
+        min-height: 50px;
+        padding: 8px;
+        gap: 9px;
+    }
+
+    .ll-government-icon {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        flex-basis: 30px;
+    }
+
+    .ll-government-link strong {
+        font-size: 11.5px;
+    }
+
+    .ll-government-link small {
+        font-size: 10px;
+    }
+}
+
+
+
+/* =========================================================
+   LALA AI — ANIMATED ASSISTANT
+   ========================================================= */
+
+.ll-assistant-root {
+    position: fixed;
+}
+
+/* Main Lala AI button */
+.ll-assistant-toggle {
+    animation: lalaFloat 3s ease-in-out infinite;
+    transform-origin: center;
+    position: relative;
+}
+
+/* Gentle floating movement */
+@keyframes lalaFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+/* Soft pulse around the AI button */
+.ll-assistant-toggle::before {
+    content: "";
+    position: absolute;
+    inset: -6px;
+
+    border-radius: 50%;
+    border: 2px solid rgba(59, 130, 246, 0.28);
+
+    animation: lalaPulse 2.2s ease-out infinite;
+
+    pointer-events: none;
+}
+
+@keyframes lalaPulse {
+    0% {
+        opacity: 0.8;
+        transform: scale(0.9);
+    }
+
+    70% {
+        opacity: 0;
+        transform: scale(1.25);
+    }
+
+    100% {
+        opacity: 0;
+        transform: scale(1.3);
+    }
+}
+
+/* Hover */
+.ll-assistant-toggle:hover {
+    animation-play-state: paused;
+    transform: scale(1.08);
+    opacity: 1;
+}
+
+/* Click */
+.ll-assistant-toggle:active {
+    transform: scale(0.94);
+}
+
+/* =========================================================
+   HI! ASK ME BUBBLE
+   ========================================================= */
+
+.ll-assistant-ask-bubble {
+    position: absolute;
+
+    right: 68px;
+    bottom: 12px;
+
+    padding: 9px 14px;
+
+    background: #ffffff;
+    color: #1e3a8a;
+
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+
+    white-space: nowrap;
+
+    box-shadow:
+        0 8px 24px rgba(15, 23, 42, 0.14),
+        0 2px 6px rgba(15, 23, 42, 0.08);
+
+    pointer-events: none;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translateX(8px) scale(0.92);
+    transform-origin: right center;
+
+    animation: lalaAskBubble 4s ease-in-out infinite;
+
+    z-index: 1081;
+}
+
+/* Bubble tail */
+.ll-assistant-ask-bubble::after {
+    content: "";
+
+    position: absolute;
+
+    right: -6px;
+    top: 50%;
+
+    width: 10px;
+    height: 10px;
+
+    background: #ffffff;
+
+    border-top: 1px solid #dbeafe;
+    border-right: 1px solid #dbeafe;
+
+    transform: translateY(-50%) rotate(45deg);
+}
+
+@keyframes lalaAskBubble {
+    0%,
+    15% {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(8px) scale(0.92);
+    }
+
+    25% {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0) scale(1);
+    }
+
+    70% {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0) scale(1);
+    }
+
+    85%,
+    100% {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(8px) scale(0.92);
+    }
+}
+
+/* Hide the greeting when Lala AI is open */
+.ll-assistant-root--open .ll-assistant-ask-bubble,
+.ll-assistant-panel--open ~ .ll-assistant-ask-bubble {
+    animation: none;
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .ll-assistant-toggle,
+    .ll-assistant-toggle::before,
+    .ll-assistant-ask-bubble {
+        animation: none !important;
+    }
+
+    .ll-assistant-ask-bubble {
+        opacity: 0;
+        visibility: hidden;
+    }
+}
+

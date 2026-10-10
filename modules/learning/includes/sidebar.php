@@ -5,6 +5,85 @@ $employeeClass = new Employee();
 
 ?>
 
+<?php
+// Use the employee ID from the existing authenticated session.
+// Do not modify the login or authentication process.
+$employeeId = $_SESSION['employee_id'] ?? null;
+
+$employeeName = '';
+$roleName = '';
+
+if ($employeeId && isset($pdo)) {
+    $roleStmt = $pdo->prepare("
+        SELECT
+            e.first_name,
+            e.last_name,
+            r.role_name
+        FROM em_employees AS e
+        LEFT JOIN em_roles AS r
+            ON e.role_id = r.role_id
+        WHERE e.employee_id = ?
+        LIMIT 1
+    ");
+
+    $roleStmt->execute([$employeeId]);
+    $sidebarEmployee = $roleStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($sidebarEmployee) {
+        $employeeName = trim(
+            $sidebarEmployee['first_name'] . ' ' .
+            $sidebarEmployee['last_name']
+        );
+
+        $roleName = $sidebarEmployee['role_name'] ?? '';
+    }
+}
+?>
+
+<?php
+/*
+ * Sidebar role lookup.
+ * Uses the existing authenticated employee ID.
+ * Does not modify the login process.
+ */
+
+$sidebarEmployeeId = $_SESSION['employee_id'] ?? null;
+
+$sidebarEmployeeName = '';
+$sidebarRoleName = '';
+
+if ($sidebarEmployeeId && isset($pdo)) {
+
+    $sidebarStmt = $pdo->prepare("
+        SELECT
+            e.first_name,
+            e.last_name,
+            r.role_name
+        FROM em_employees AS e
+        INNER JOIN em_roles AS r
+            ON e.role_id = r.role_id
+        WHERE e.employee_id = ?
+        LIMIT 1
+    ");
+
+    $sidebarStmt->execute([$sidebarEmployeeId]);
+
+    $sidebarUser = $sidebarStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($sidebarUser) {
+
+        $sidebarEmployeeName =
+            trim(
+                $sidebarUser['first_name'] . ' ' .
+                $sidebarUser['last_name']
+            );
+
+        $sidebarRoleName =
+            $sidebarUser['role_name'];
+    }
+}
+?>
+
 <aside class="sidebar">
     <div class="school-logo">
         <img src="assets/bcp-logo.png" alt="School Logo">

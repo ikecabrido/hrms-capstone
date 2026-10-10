@@ -41,16 +41,16 @@ $employeeClass = new Employee();
                             </div>
                             <div>
                                 <strong><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></strong>
-                                <span><?= htmlspecialchars($employeeClass->getEmployeeRole()) ?></span>
+                                <span><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></span>
                             </div>
                         </div>
                     </div>
                     <ul class="user-menu">
                         <li>
-                            <a href="?page=profile-settings"><i class="fa-regular fa-user"></i> Profile Settings</a>
+                            <a href="#"><i class="fa-regular fa-user"></i> Profile Settings</a>
                         </li>
                         <li>
-                            <a href="?page=change-password"><i class="fa-solid fa-lock"></i> Change Password</a>
+                            <a href="#"><i class="fa-solid fa-lock"></i> Change Password</a>
                         </li>
                         <li class="divider"></li>
                         <li>

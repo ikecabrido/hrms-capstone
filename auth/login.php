@@ -2,12 +2,16 @@
 // auth/login.php
 include "../database/db.php";
 
-$db   = new Database();
+header('Content-Type: application/json');
+
+$db = new Database();
+if ($db->hasConnectionError()) {
+    echo json_encode(['success' => false, 'message' => 'Database connection unavailable.']);
+    exit();
+}
 $conn = $db->getConnection();
 
 session_start();
-
-header('Content-Type: application/json');
 
 define('MAX_ATTEMPTS', 3);
 define('LOCKOUT_TIME', 60); // 60 seconds lockout
@@ -46,29 +50,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── Authentication ────────────────────────────────────────────────────────
     $stmt = $conn->prepare("
-        SELECT
-            user_account.user_id,
-            user_account.employee_id,
-            user_account.password,
-            em_employees.role_id AS role,
-            em_employees.department_id AS department,
-            em_employees.employment_status,
-            em_roles.role_name,
-            em_departments.department_name
-        FROM user_account
-        INNER JOIN em_employees
-            ON em_employees.employee_id = user_account.employee_id
-        LEFT JOIN em_roles
-            ON em_roles.role_id = em_employees.role_id
-        LEFT JOIN em_departments
-            ON em_departments.department_id = em_employees.department_id
-        WHERE user_account.employee_id = :employeeid
+        SELECT 
+            u.user_id, 
+            u.employee_id, 
+            e.role_id,
+            u.password,
+            e.employee_code,
+            e.first_name,
+            e.middle_name,
+            e.last_name,
+            e.position_id,
+            e.department_id,
+            e.employment_status,
+            p.position_name,
+            r.role_name,
+            d.department_name
+        FROM user_account u
+        INNER JOIN em_employees e
+            ON e.employee_id = u.employee_id
+        INNER JOIN em_roles r
+            ON r.role_id = e.role_id
+        INNER JOIN em_positions p
+            ON p.position_id = e.position_id
+        LEFT JOIN em_departments d
+            ON d.department_id = e.department_id
+        WHERE e.employee_id = :employeeid
+        AND e.employment_status = 'Active'
         LIMIT 1
     ");
-
-    $stmt->execute([
-        ':employeeid' => $employeeid
-    ]);
+    $stmt->bindParam(':employeeid', $employeeid);
+    $stmt->execute();
 
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -76,11 +87,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // ── Success: clear attempt tracking & build session ───────────────────
         unset($_SESSION[$key]);
 
-        $_SESSION['employee_id']     = $user['employee_id'];
-        $_SESSION['role']            = $user['role'];
-        $_SESSION['role_name']       = $user['role_name'];
-        $_SESSION['department_id']   = $user['department'];
+        $_SESSION['user_id']        = $user['user_id'];
+        $_SESSION['employee_id']    = $user['employee_id'];
+        $_SESSION['employee_code']  = $user['employee_code'];
+        $_SESSION['employee_name']  = trim(
+            $user['first_name'] . ' ' . $user['last_name']
+        );
+        $_SESSION['role_id']        = $user['role_id'];
+        $_SESSION['role_name']      = $user['role_name'];
+        $_SESSION['position_id']    = $user['position_id'];
+        $_SESSION['position_name']  = $user['position_name'];
+        $_SESSION['department_id']   = $user['department_id'];
         $_SESSION['department_name'] = $user['department_name'];
+        $_SESSION['last_activity'] = time();
+        $_SESSION['show_login_disclaimer'] = true;
+
+        $updateLogin = $conn->prepare("
+            UPDATE user_account
+            SET last_login = CURRENT_TIMESTAMP,
+                failed_login_attempts = 0
+            WHERE user_id = :user_id
+        ");
+        $updateLogin->execute([
+            ':user_id' => $user['user_id']
+        ]);
 
         $redirectMap = [
             2 => 'modules/recruitment/index.php',
@@ -91,22 +121,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             7 => 'modules/learning/index.php',
             8 => 'modules/compliance/index.php',
             9 => 'modules/workforce/index.php',
-            10 => 'modules/exit/index.php',
+            10 => 'modules/exit/inedex.php',
             11 => 'modules/clinic/index.php',
             12 => 'modules/engagement/index.php',
-            13 => 'modules/portal/index.php'
+            13 => 'modules/portal/index.php',
+            26 => 'modules/compliance/index.php'
+
         ];
 
-        $role = (int) $user['role'];
+        $role = (int) $user['role_id'];
+        $roleName = strtolower(trim($user['role_name']));
 
-        if (!isset($redirectMap[$role])) {
-            echo json_encode(['success' => false, 'locked' => false, 'message' => 'Invalid role.']);
+        if ($roleName === 'compliance') {
+            $redirect = 'modules/compliance/index.php';
+        } elseif (isset($redirectMap[$role])) {
+            $redirect = $redirectMap[$role];
+        } else {
+            echo json_encode([
+                'success' => false,
+                'locked' => false,
+                'message' => 'Invalid role.'
+            ]);
             exit();
         }
 
         echo json_encode([
             'success'  => true,
-            'redirect' => $redirectMap[$role],
+            'redirect' => $redirect,
         ]);
         exit();
     } else {
