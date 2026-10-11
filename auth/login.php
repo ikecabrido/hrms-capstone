@@ -81,6 +81,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['role_name']       = $user['role_name'];
         $_SESSION['department_id']   = $user['department'];
         $_SESSION['department_name'] = $user['department_name'];
+        $_SESSION['last_activity'] = time();
+
+        $updateLogin = $conn->prepare("
+            UPDATE user_account
+            SET last_login = CURRENT_TIMESTAMP,
+                failed_login_attempts = 0
+            WHERE user_id = :user_id
+        ");
+        $updateLogin->execute([
+            ':user_id' => $user['user_id']
+        ]);
 
         $redirectMap = [
             2 => 'modules/recruitment/index.php',
