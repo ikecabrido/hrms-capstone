@@ -1,0 +1,213 @@
+/* ==========================================================================
+   Profile Settings — page-specific styles
+   Reuses the existing Payroll theme variables (base/variables.css) and
+   the shared .pm-page / .pm-alert / .pm-btn / .pm-form-group classes
+   from period-manager.css.
+   ========================================================================== */
+
+.pfs-subtitle,
+.cp-subtitle {
+  margin-top: 0.35rem;
+  color: var(--color5);
+  font-size: 0.9rem;
+}
+
+/* ---------- Summary card ---------- */
+.pfs-summary-card {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.pfs-avatar {
+  width: 64px;
+  height: 64px;
+  min-width: 64px;
+  border-radius: 50%;
+  background: var(--color1);
+  color: var(--color3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.pfs-summary-info h2 {
+  font-size: 1.15rem;
+  color: var(--color8);
+  margin: 0 0 0.2rem 0;
+}
+
+.pfs-summary-info p {
+  color: var(--color5);
+  font-size: 0.88rem;
+  margin: 0 0 0.6rem 0;
+}
+
+.pfs-summary-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pfs-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--color9);
+  color: var(--color2);
+}
+
+.pfs-badge-status {
+  background: #e6f7ee;
+  color: #1e7e4d;
+}
+
+.pfs-status-resigned,
+.pfs-status-terminated {
+  background: #fdecec;
+  color: var(--color10);
+}
+
+.pfs-status-probationary {
+  background: #fff6e0;
+  color: #9a6c00;
+}
+
+/* ---------- Two-column layout ---------- */
+.pfs-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.cp-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .pfs-grid,
+  .cp-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Card ---------- */
+.pfs-card {
+  background: var(--color3);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+}
+
+.pfs-card-header {
+  margin-bottom: 1.2rem;
+}
+
+.pfs-card-header h3 {
+  font-size: 1rem;
+  color: var(--color8);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.pfs-card-header h3 i {
+  color: var(--color1);
+}
+
+.pfs-card-header p {
+  font-size: 0.82rem;
+  color: var(--color5);
+  margin: 0;
+}
+
+/* ---------- Form ---------- */
+.pfs-form .pm-form-group {
+  margin-bottom: 1rem;
+}
+
+.pfs-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 560px) {
+  .pfs-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pfs-form input,
+.pfs-form textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color4);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.pfs-form input:focus,
+.pfs-form textarea:focus {
+  border-color: var(--color7);
+}
+
+.pfs-form textarea {
+  resize: vertical;
+}
+
+.pfs-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+/* ---------- Read-only info list ---------- */
+.pfs-info-list {
+  margin: 0;
+}
+
+.pfs-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--color9);
+}
+
+.pfs-info-row:last-child {
+  border-bottom: none;
+}
+
+.pfs-info-row dt {
+  font-size: 0.82rem;
+  color: var(--color5);
+}
+
+.pfs-info-row dd {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color8);
+  text-align: right;
+}

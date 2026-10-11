@@ -42,12 +42,42 @@ class Page {
     }
 
     public function render() {
+        $this->runAttendanceDetectionIfDue();
+
         $page = $this->getPage();
         $file = $this->pagesDir . '/' . $page . '.php';
         if (file_exists($file)) {
             include $file;
         } else {
             include $this->pagesDir . '/' . $this->default . '.php';
+        }
+    }
+
+    /**
+     * Auto-runs absence/late detection (throttled to once every 5 minutes) on
+     * every page load in this module - not just Absence & Late Management -
+     * so status is always fresh regardless of which page a user opens first.
+     * See AttendanceDetectionRunner.php for why this exists instead of relying
+     * on an external OS scheduler.
+     */
+    private function runAttendanceDetectionIfDue() {
+        $runnerPath = dirname(__DIR__) . '/app/helpers/AttendanceDetectionRunner.php';
+        if (!file_exists($runnerPath)) {
+            return;
+        }
+
+        $throttleFile = dirname(__DIR__) . '/logs/last_absence_detection_run.txt';
+        $lastRun = file_exists($throttleFile) ? (int)@file_get_contents($throttleFile) : 0;
+        if ((time() - $lastRun) < 300) { // 5 minutes
+            return;
+        }
+
+        require_once $runnerPath;
+        try {
+            AttendanceDetectionRunner::run(date('Y-m-d'));
+            @file_put_contents($throttleFile, (string)time());
+        } catch (\Throwable $e) {
+            error_log('Auto absence/late detection failed: ' . $e->getMessage());
         }
     }
 

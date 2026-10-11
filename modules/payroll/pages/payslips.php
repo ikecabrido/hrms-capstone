@@ -115,12 +115,25 @@
                     </thead>
                     <tbody id="psTableBody">
                         <tr>
-                            <td colspan="10" class="ps-loading-row">
+                            <td colspan="7" class="ps-loading-row">
                                 <i class="fa-solid fa-spinner fa-spin"></i> Loading payslips...
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div class="ps-pagination" id="psPagination" style="display:none;">
+                <span class="ps-pagination-info" id="psPaginationInfo"></span>
+                <div class="ps-pagination-controls">
+                    <button type="button" class="ps-btn ps-btn-secondary ps-btn-sm" id="psPagePrev">
+                        <i class="fa-solid fa-chevron-left"></i> Prev
+                    </button>
+                    <span class="ps-pagination-pages" id="psPaginationPages"></span>
+                    <button type="button" class="ps-btn ps-btn-secondary ps-btn-sm" id="psPageNext">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="ps-empty-state" id="psEmptyState" style="display:none;">
