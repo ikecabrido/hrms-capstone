@@ -1,11 +1,11 @@
 <?php
-require_once 'classes/Page.php';
+require_once __DIR__ . '/classes/Page.php';
 
 $pageController = new Page();
 $currentPage = $pageController->getPage();
 
-include 'includes/sidebar.php';
-include 'includes/header.php';
+include __DIR__ . '/includes/sidebar.php';
+include __DIR__ . '/includes/header.php';
 ?>
 
 <main class="main-content">
@@ -14,4 +14,4 @@ include 'includes/header.php';
     </div>
 </main>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

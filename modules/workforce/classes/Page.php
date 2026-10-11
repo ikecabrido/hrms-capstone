@@ -1,58 +1,57 @@
 <?php
-class Page
-{
+class Page {
     private $default = 'dashboard-overview';
     private $pagesDir;
     private $allowed = [];
 
     private $labels = [
         'dashboard-overview' => 'Dashboard & Metrics',
-        'period-manager' => 'Attrition & Turnover',
-        'payroll-processing' => 'Diversity & Inclusion',
-        'payslips' => 'Predictive Analytics',
-        'reports' => 'Custom Reports',
+        'attrition-turnover' => 'Attrition & Turnover',
+        'diversity-inclusion' => 'Diversity & Inclusion',
+        'predictive-analytics' => 'Predictive Analytics',
+        'custom-reports' => 'Custom Reports',
+        'turnover-risk-indicator' => 'Turnover risk indicator',
+        'predicted-skill-competency-needs' => 'Predicted skill / Competency needs',
+        'implementation-guide' => 'Implementation Guide',
     ];
 
     private $sections = [
-        'top'             => [],
-        'analytics' => ['dashboard-overview', 'period-manager', 'payroll-processing', 'payslips', 'reports']
+        'analytics' => [
+            'dashboard-overview',
+            'attrition-turnover',
+            'diversity-inclusion',
+            'predictive-analytics',
+            'custom-reports',
+        ],
+        'resources' => [
+            'turnover-risk-indicator',
+            'predicted-skill-competency-needs',
+            'implementation-guide',
+        ],
     ];
 
-    private $renderFiles = [
-        'dashboard-overview' => 'analytics-dashboard.php',
-        'period-manager' => 'attrition-turnover.php',
-        'payroll-processing' => 'diversity-inclusion.php',
-        'payslips' => 'predictive-analytics.php',
-        'reports' => 'custom-reports.php',
-    ];
-
-    public function __construct($pagesDir = null)
-    {
+    public function __construct($pagesDir = null) {
         $this->pagesDir = $pagesDir ?? dirname(__DIR__) . '/pages';
         $this->discoverPages();
     }
 
-    private function discoverPages()
-    {
+    private function discoverPages() {
         if (!is_dir($this->pagesDir)) return;
         foreach (glob($this->pagesDir . '/*.php') as $file) {
             $this->allowed[] = basename($file, '.php');
         }
     }
 
-    public function getPage()
-    {
+    public function getPage() {
         if (!empty($_GET['page']) && in_array($_GET['page'], $this->allowed)) {
             return $_GET['page'];
         }
         return $this->default;
     }
 
-    public function render()
-    {
+    public function render() {
         $page = $this->getPage();
-        $fileName = $this->renderFiles[$page] ?? $page . '.php';
-        $file = $this->pagesDir . '/' . $fileName;
+        $file = $this->pagesDir . '/' . $page . '.php';
         if (file_exists($file)) {
             include $file;
         } else {
@@ -60,42 +59,45 @@ class Page
         }
     }
 
-    public function isActive($page)
-    {
+    public function isActive($page) {
         return $this->getPage() === $page;
     }
 
-    public function getAllowedPages()
-    {
+    public function getAllowedPages() {
         return $this->allowed;
     }
 
-    public function renderNav()
-    {
-        // Top section (no heading/separator)
-        foreach ($this->sections['top'] as $p) {
+    public function renderNav() {
+        echo '<h3>Analytics</h3>';
+        foreach ($this->sections['analytics'] as $p) {
             $this->renderLink($p);
         }
-
-        // Grouped sections
-        $sectionOrder = ['analytics'];
-        foreach ($sectionOrder as $section) {
-            echo '<div class="separator"></div>';
-            echo '<h3>' . ucwords(str_replace('-', ' ', $section)) . '</h3>';
-            foreach ($this->sections[$section] as $p) {
-                $this->renderLink($p);
-            }
+        echo '<h3>Resources</h3>';
+        foreach ($this->sections['resources'] as $p) {
+            $this->renderLink($p);
         }
     }
 
-    private function renderLink($p)
-    {
+    private function renderLink($p) {
         $label = $this->labels[$p] ?? ucwords(str_replace('-', ' ', $p));
+        $icons = [
+            'dashboard-overview' => 'fa-chart-line',
+            'attrition-turnover' => 'fa-arrow-trend-down',
+            'diversity-inclusion' => 'fa-people-group',
+            'predictive-analytics' => 'fa-wand-magic-sparkles',
+            'custom-reports' => 'fa-file-lines',
+            'turnover-risk-indicator' => 'fa-circle-play',
+            'predicted-skill-competency-needs' => 'fa-book-open',
+            'implementation-guide' => 'fa-circle-check',
+        ];
+        $icon = $icons[$p] ?? 'fa-file-lines';
+        $safeLabel = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         if (in_array($p, $this->allowed)) {
             $class = $this->isActive($p) ? 'active-menu-link' : 'menu-link';
-            echo "<li><a href=\"?page={$p}\" data-page=\"{$p}\" class=\"{$class}\">{$label}</a></li>";
+            $url = '?page=' . rawurlencode($p);
+            echo "<li><a href=\"{$url}\" class=\"{$class}\"><i class=\"fa-solid {$icon}\" aria-hidden=\"true\"></i><span>{$safeLabel}</span></a></li>";
         } else {
-            echo "<li><a href=\"#\" class=\"menu-link\">{$label}</a></li>";
+            echo "<li><a href=\"#\" class=\"menu-link\"><i class=\"fa-solid {$icon}\" aria-hidden=\"true\"></i><span>{$safeLabel}</span></a></li>";
         }
     }
 }

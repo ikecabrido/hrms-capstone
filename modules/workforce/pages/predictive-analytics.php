@@ -1,2 +1,76 @@
-<div class="module-header analytics-header"><div><p class="eyebrow">Predictive analytics</p><h1>Predictive Analytics</h1><p class="analytics-subtitle">Turn workforce patterns into an early-warning system for people decisions.</p></div><button class="analytics-button" type="button"><i class="fa-solid fa-rotate"></i> Run forecast</button></div>
-<div class="module-content analytics-page"><div class="forecast-banner"><i class="fa-solid fa-wand-magic-sparkles"></i><div><b>Next 90-day outlook</b><span>Model refreshed 25 Aug 2026 using headcount, attendance, performance, and compensation signals.</span></div><span class="confidence">87% confidence</span></div><div class="metric-grid three"><article class="metric-card metric-accent"><span class="metric-label">At-risk employees</span><strong>18</strong><span class="metric-trend neutral">7.3% of active workforce</span></article><article class="metric-card"><span class="metric-label">Predicted absenteeism</span><strong>3.8%</strong><span class="metric-trend up">+0.6 pts next quarter</span></article><article class="metric-card"><span class="metric-label">Skills gap exposure</span><strong>11%</strong><span class="metric-trend neutral">27 critical roles affected</span></article></div><div class="analytics-grid"><section class="analytics-panel panel-wide"><div class="panel-heading"><div><span class="panel-kicker">Risk distribution</span><h2>Attrition forecast</h2></div><span class="panel-chip">Next 90 days</span></div><div class="risk-table"><div><b>Employee segment</b><b>Risk level</b><b>Employees</b></div><div><span>High potential risk</span><i class="risk high">High</i><strong>5</strong></div><div><span>Moderate risk</span><i class="risk medium">Moderate</i><strong>13</strong></div><div><span>Low risk</span><i class="risk low">Low</i><strong>230</strong></div></div></section><section class="analytics-panel"><div class="panel-heading"><div><span class="panel-kicker">Decision support</span><h2>Recommended actions</h2></div></div><ul class="action-list"><li><i class="fa-solid fa-comments"></i><span>Schedule stay interviews<small>5 high-risk employees</small></span></li><li><i class="fa-solid fa-graduation-cap"></i><span>Open skills cohort<small>27 critical roles</small></span></li><li><i class="fa-solid fa-user-plus"></i><span>Review succession bench<small>12 key positions</small></span></li></ul></section></div></div>
+<?php
+
+$page = 'predictive-analytics';
+include __DIR__ . '/../includes/analytics-setup.php';
+
+$view = [
+    'eyebrow' => 'Forward-looking insights',
+    'title' => 'Predictive Analytics',
+    'description' => 'Use workforce trends to plan ahead and reduce operational risk.',
+    'cards' => [
+        ['Forecast accuracy', '91%', 'Validated against last quarter'],
+        ['Hiring demand', '+14', 'Expected next quarter'],
+        ['High-risk roles', '4', 'Require succession planning'],
+        ['Recommended actions', '9', 'Ready for review'],
+    ],
+];
+include __DIR__ . '/../includes/analytics-header.php';
+?>
+<form class="wa-filters" method="get">
+    <input type="hidden" name="page" value="<?= htmlspecialchars($page) ?>">
+    <label>Employee
+        <select name="employee_id" onchange="this.form.submit()">
+            <option value="">All employees</option>
+            <?php foreach ($allEmployees as $employee): ?>
+                <?php $employeeName = trim(($employee['first_name'] ?? '') . ' ' . ($employee['last_name'] ?? '')); ?>
+                <option value="<?= htmlspecialchars((string) $employee['employee_id']) ?>" <?= $employeeFilter === (string) $employee['employee_id'] ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($employeeName !== '' ? $employeeName : 'Employee #' . $employee['employee_id']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </label>
+    <label>Status
+        <select name="status" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            <?php foreach ($employeeStatuses as $statusValue => $statusLabel): ?>
+                <option value="<?= htmlspecialchars($statusValue) ?>" <?= $statusFilter === $statusValue ? 'selected' : '' ?>><?= htmlspecialchars(ucwords(strtolower($statusLabel))) ?></option>
+            <?php endforeach; ?>
+        </select>
+    </label>
+    <button class="wa-button" type="submit">Apply filters</button>
+    <?php if ($employeeFilter !== '' || $statusFilter !== ''): ?><a class="wa-clear" href="?page=<?= urlencode($page) ?>">Clear</a><?php endif; ?>
+</form>
+<?php if ($employeeFilter !== '' || $statusFilter !== ''): ?>
+    <p class="wa-filter-summary" role="status">
+        Showing <?= count($employees) ?> of <?= $employeeCount ?> employees
+        <?php if ($employeeFilter !== ''): ?> for the selected employee<?php endif; ?>
+        <?php if ($statusFilter !== ''): ?> with status <?= htmlspecialchars(ucwords(strtolower($statusFilter))) ?><?php endif; ?>.
+    </p>
+<?php endif; ?>
+<div class="wa-grid">
+    <article class="wa-panel">
+        <span class="wa-eyebrow">Workforce overview</span>
+        <h2><?= htmlspecialchars($view['title']) ?> insights</h2>
+        <p class="wa-muted">Review the latest workforce indicators and use them to guide your next decision.</p>
+        <div class="wa-bars">
+            <div><span>Current period</span><i style="width:82%"></i><b>82%</b></div>
+            <div><span>Previous period</span><i style="width:68%"></i><b>68%</b></div>
+            <div><span>Target</span><i style="width:90%"></i><b>90%</b></div>
+        </div>
+    </article>
+    <article class="wa-panel">
+        <span class="wa-eyebrow">Employee snapshot</span>
+        <h2>Workforce coverage</h2>
+        <?php if ($employees): ?>
+            <?php if (count($employees) > 5): ?><p class="wa-muted">Showing the first 5 matching employees.</p><?php endif; ?>
+            <table class="wa-table"><thead><tr><th>Employee</th><th>Department</th><th>Status</th></tr></thead><tbody>
+                <?php foreach (array_slice($employees, 0, 5) as $employee): ?>
+                    <tr><td><?= htmlspecialchars(trim($employee['first_name'] . ' ' . $employee['last_name'])) ?></td><td><?= htmlspecialchars($employee['department_name'] ?? 'Unassigned') ?></td><td><?= htmlspecialchars($employee['status'] ?? 'Active') ?></td></tr>
+                <?php endforeach; ?>
+            </tbody></table>
+        <?php else: ?>
+            <p class="wa-muted"><?= ($employeeFilter !== '' || $statusFilter !== '') ? 'No employees match the selected filters.' : 'No employee data is available yet.' ?></p>
+        <?php endif; ?>
+    </article>
+</div>
+<?php include __DIR__ . '/../includes/analytics-footer.php'; ?>

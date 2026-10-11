@@ -1,2 +1,57 @@
-<div class="module-header analytics-header"><div><p class="eyebrow">Diagnostic analytics</p><h1>Attrition &amp; Turnover</h1><p class="analytics-subtitle">Understand why people leave, where risk is concentrated, and what changed.</p></div><button class="analytics-button" type="button"><i class="fa-solid fa-download"></i> Export view</button></div>
-<div class="module-content analytics-page"><div class="filter-row"><label>Period <select><option>Year to date 2025</option><option>Previous year</option></select></label><label>Department <select><option>All departments</option><option>Operations</option><option>Technology</option></select></label><button class="analytics-button light" type="button"><i class="fa-solid fa-filter"></i> Apply</button></div><div class="metric-grid three"><article class="metric-card metric-accent"><span class="metric-label">Voluntary exits</span><strong>14</strong><span class="metric-trend down">-18% vs 2024</span></article><article class="metric-card"><span class="metric-label">Regrettable exits</span><strong>4</strong><span class="metric-trend neutral">28.6% of voluntary exits</span></article><article class="metric-card"><span class="metric-label">Avg. tenure at exit</span><strong>2.8 <span class="metric-unit">yrs</span></strong><span class="metric-trend neutral">+0.4 yrs vs 2024</span></article></div><div class="analytics-grid"><section class="analytics-panel panel-wide"><div class="panel-heading"><div><span class="panel-kicker">What happened</span><h2>Turnover by department</h2></div></div><div class="horizontal-bars"><div><span>Operations</span><b style="width:72%">12.4%</b></div><div><span>Sales</span><b style="width:51%">8.8%</b></div><div><span>Technology</span><b style="width:35%">6.1%</b></div><div><span>Finance</span><b style="width:22%">3.8%</b></div></div></section><section class="analytics-panel"><div class="panel-heading"><div><span class="panel-kicker">Why it happened</span><h2>Exit drivers</h2></div></div><ul class="insight-list"><li><span class="rank">01</span><div><b>Career growth</b><small>36% of exit interviews</small></div><strong>36%</strong></li><li><span class="rank">02</span><div><b>Compensation</b><small>29% of exit interviews</small></div><strong>29%</strong></li><li><span class="rank">03</span><div><b>Workload</b><small>21% of exit interviews</small></div><strong>21%</strong></li></ul></section></div></div>
+<?php
+
+$page = 'attrition-turnover';
+include __DIR__ . '/../includes/analytics-setup.php';
+
+$summary = $attrition['summary'];
+$latestRate = $attrition['monthly'][0]['attrition_rate_percent'] ?? 0;
+$highestDepartment = $attrition['departments'][0]['department'] ?? 'No data';
+$view = [
+    'eyebrow' => 'Retention intelligence',
+    'title' => 'Attrition & Turnover',
+    'description' => 'Understand retention patterns and identify teams that need attention.',
+    'cards' => [],
+];
+include __DIR__ . '/../includes/analytics-header.php';
+?>
+<div class="wa-cards wa-attrition-kpis">
+    <?php foreach ([
+        ['Total resignations', (int) ($summary['resignations'] ?? 0), 'Voluntary exits'],
+        ['Total terminations', (int) ($summary['terminations'] ?? 0), 'Involuntary exits'],
+        ['Voluntary turnover', (int) ($summary['voluntary'] ?? 0), 'Resigned, retired, or other'],
+        ['Involuntary turnover', (int) ($summary['involuntary'] ?? 0), 'Terminated employees'],
+        ['Monthly turnover rate', $latestRate . '%', 'Latest recorded month'],
+        ['Average tenure before leaving', ($summary['average_tenure'] ?? 0) . ' yrs', 'Across tracked exits'],
+        ['Top reason for leaving', $attrition['reasons'][0]['reason'] ?? 'Not specified', 'Most reported reason'],
+        ['Highest-turnover department', $highestDepartment, 'Most recorded exits'],
+    ] as $card): ?>
+        <article class="wa-card"><span><?= htmlspecialchars($card[0]) ?></span><strong><?= htmlspecialchars((string) $card[1]) ?></strong><small><?= htmlspecialchars($card[2]) ?></small></article>
+    <?php endforeach; ?>
+</div>
+<div class="wa-dashboard-grid wa-attrition-grid">
+    <article class="wa-panel">
+        <div class="wa-panel-heading"><div><span class="wa-eyebrow">Trend analytics</span><h2>Turnover by month</h2><p class="wa-muted">Monthly separations and attrition rate.</p></div></div>
+        <div class="wa-mini-chart"><?php foreach (array_reverse($attrition['monthly']) as $month): ?><div><i style="height:<?= min(100, ((int) $month['total_separations']) * 16 + 8) ?>%"></i><span><?= htmlspecialchars(substr($month['period'], 0, 3)) ?></span></div><?php endforeach; ?></div>
+    </article>
+    <article class="wa-panel">
+        <div class="wa-panel-heading"><div><span class="wa-eyebrow">Reason analytics</span><h2>Resignation reasons</h2><p class="wa-muted">Top reported reasons for leaving.</p></div></div>
+        <div class="wa-reason-list"><?php foreach ($attrition['reasons'] as $reason): ?><div><span><?= htmlspecialchars($reason['reason']) ?></span><b><?= (int) $reason['total'] ?></b></div><?php endforeach; ?></div>
+    </article>
+    <article class="wa-panel">
+        <div class="wa-panel-heading"><div><span class="wa-eyebrow">Department analytics</span><h2>Turnover by department</h2></div></div>
+        <div class="wa-departments"><?php $max = max(array_column($attrition['departments'], 'total') ?: [1]); foreach ($attrition['departments'] as $department): ?><div><span><?= htmlspecialchars($department['department']) ?></span><b style="width:<?= round(((int) $department['total'] / $max) * 100) ?>%"><?= (int) $department['total'] ?></b></div><?php endforeach; ?></div>
+    </article>
+    <article class="wa-panel">
+        <div class="wa-panel-heading"><div><span class="wa-eyebrow">Service analytics</span><h2>Turnover by length of service</h2></div></div>
+        <div class="wa-tenure-list"><?php foreach (['0-1 year' => 18, '1-3 years' => 34, '3-5 years' => 28, '5+ years' => 20] as $label => $percent): ?><div><span><?= $label ?></span><b><?= $percent ?>%</b></div><?php endforeach; ?></div>
+    </article>
+</div>
+<article class="wa-panel wa-exits-panel">
+    <div class="wa-panel-heading"><div><span class="wa-eyebrow">Exit records</span><h2>Employees who left</h2><p class="wa-muted">Date hired, exit date, and recorded reason.</p></div></div>
+    <div class="wa-table-scroll"><table class="wa-table"><thead><tr><th>Employee</th><th>Department</th><th>Position</th><th>Date hired</th><th>Exit date</th><th>Reason</th><th>Action</th></tr></thead><tbody>
+        <?php foreach ($attrition['employees'] as $employee): ?>
+            <tr><td><?= htmlspecialchars($employee['employee_name']) ?></td><td><?= htmlspecialchars($employee['department']) ?></td><td><?= htmlspecialchars($employee['position']) ?></td><td><?= htmlspecialchars($employee['hire_date'] ?? '-') ?></td><td><?= htmlspecialchars($employee['separation_date']) ?></td><td><?= htmlspecialchars($employee['reason_for_leaving'] ?: ucfirst($employee['separation_type'])) ?></td><td><button class="wa-button wa-button-small" type="button" onclick="openActionModal(this)">Action</button></td></tr>
+        <?php endforeach; ?>
+    </tbody></table></div>
+</article>
+<?php include __DIR__ . '/../includes/analytics-footer.php'; ?>
