@@ -1,8 +1,9 @@
 <div>
     <footer>
-        <p>&copy; <?php echo date('Y'); ?> School Management System. All rights reserved.</p>
+        <p>&copy; <?php echo date('Y'); ?> Human Resource Management System. All rights reserved.</p>
     </footer>
 </div>
-    <script type="module" src="js/script.js?v=20260915-1"></script>
+<script type="module" src="js/script.js?v=20260915-1"></script>
 </body>
+
 </html>
