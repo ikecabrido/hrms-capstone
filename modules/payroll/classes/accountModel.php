@@ -15,7 +15,7 @@ class AccountModel
     public function getByEmployeeId(int $employeeId): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT user_id, employee_id, password, account_status,
+            SELECT user_id, employee_id, password,
                    last_login, password_changed_at
             FROM user_account
             WHERE employee_id = :employee_id

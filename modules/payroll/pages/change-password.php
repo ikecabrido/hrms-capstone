@@ -11,13 +11,13 @@
         <div class="cp-grid">
 
             <!-- Password form -->
-            <div class="ps-card cp-card">
-                <div class="ps-card-header">
+            <div class="pfs-card cp-card">
+                <div class="pfs-card-header">
                     <h3><i class="fa-solid fa-lock"></i> Update Password</h3>
                     <p>You'll need to confirm your current password before setting a new one.</p>
                 </div>
 
-                <form id="cpForm" class="ps-form" data-skip autocomplete="off">
+                <form id="cpForm" class="pfs-form" data-skip autocomplete="off">
 
                     <div class="pm-form-group">
                         <label for="cpCurrentPassword">Current Password</label>
@@ -64,7 +64,7 @@
                         <span class="cp-match-msg" id="cpMatchMsg"></span>
                     </div>
 
-                    <div class="ps-form-actions">
+                    <div class="pfs-form-actions">
                         <button type="reset" class="pm-btn pm-btn-outline" id="cpResetBtn">Clear</button>
                         <button type="submit" class="pm-btn pm-btn-primary" id="cpSaveBtn">
                             <i class="fa-solid fa-key"></i> Update Password
@@ -74,8 +74,8 @@
             </div>
 
             <!-- Security tips -->
-            <div class="ps-card cp-tips-card">
-                <div class="ps-card-header">
+            <div class="pfs-card cp-tips-card">
+                <div class="pfs-card-header">
                     <h3><i class="fa-solid fa-shield-halved"></i> Security Tips</h3>
                 </div>
                 <ul class="cp-tips-list">

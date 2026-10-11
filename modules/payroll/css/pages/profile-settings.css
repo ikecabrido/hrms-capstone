@@ -96,6 +96,9 @@
   grid-template-columns: 1.4fr 1fr;
   gap: 1.5rem;
   align-items: start;
+  padding: 1.5rem;
+  background: var(--color3);
+  border-radius: 8px;
 }
 
 @media (max-width: 900px) {
