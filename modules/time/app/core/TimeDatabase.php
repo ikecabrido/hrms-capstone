@@ -12,7 +12,7 @@ class TimeDatabase
 
     public function construct()
     {
-        $configFile = dirname(__DIR__, 2) . '../../../../../db_config.php';
+        $configFile = dirname(__DIR__, 2) . '../../../../db_config.php';
 
         if (file_exists($configFile)) {
             $config = require $configFile;
