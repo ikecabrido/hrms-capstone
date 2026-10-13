@@ -11,7 +11,7 @@ class Database {
 
     public function __construct() {
 
-        $configFile = dirname(__DIR__, 2) . '/db_config.php';
+        $configFile = dirname(__DIR__, 2) . '../db_config.php';
         // Look for Railway's environment variables first, default to local if missing
         $this->host = getenv('DB_HOST') ?: "localhost";
         $this->port = getenv('DB_PORT') ?: "3306"; // Default MySQL port
