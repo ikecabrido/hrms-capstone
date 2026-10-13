@@ -10,7 +10,12 @@ class Database {
     private $conn;
 
     public function __construct() {
-        
+        $configFile = dirname(__DIR__, 2) . '/db_config.php';
+        if (file_exists($configFile)) {
+            require_once $configFile;
+        } else {
+            die("Configuration file not found: " . $configFile);
+        }
         // Look for Railway's environment variables first, default to local if missing
         $this->host = getenv('DB_HOST') ?: "localhost";
         $this->port = getenv('DB_PORT') ?: "3306"; // Default MySQL port
