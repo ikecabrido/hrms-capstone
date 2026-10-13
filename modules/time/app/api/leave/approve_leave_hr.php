@@ -68,10 +68,10 @@ if (!$leaveRequest) {
     exit;
 }
 
-// Verify leave is in correct status for HR approval
-if ($action === 'APPROVE' && !in_array(strtoupper($leaveRequest['status']), ['APPROVED_BY_HEAD', 'PENDING'], true)) {
+// Verify leave is in correct status for approval (must be Pending)
+if ($action === 'APPROVE' && $leaveRequest['status'] !== 'Pending') {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Leave request must be pending or approved by department head first']);
+    echo json_encode(['success' => false, 'message' => 'Leave request must be Pending to be approved']);
     exit;
 }
 
@@ -80,8 +80,7 @@ $leaveController = new LeaveController();
 $user_id = Session::get('user_id');
 
 if ($action === 'APPROVE') {
-    // HR approval deducts balance
-    $result = $leaveController->approve($leave_request_id, $user_id, true, $remarks);
+    $result = $leaveController->approve($leave_request_id, $user_id, $remarks);
 } else {
     // HR rejection
     if (empty($remarks)) {

@@ -43,6 +43,8 @@ class Page {
 
     public function render() {
         $this->runAttendanceDetectionIfDue();
+        $this->runLeaveAccrualIfDue();
+        $this->runLeaveYearlyAllocationIfDue();
 
         $page = $this->getPage();
         $file = $this->pagesDir . '/' . $page . '.php';
@@ -78,6 +80,58 @@ class Page {
             @file_put_contents($throttleFile, (string)time());
         } catch (\Throwable $e) {
             error_log('Auto absence/late detection failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Auto-runs monthly leave accrual (throttled to once every 6 hours,
+     * since it only needs to actually credit once per calendar month -
+     * the runner itself is idempotent per month, this throttle just avoids
+     * needless DB queries on every single page load).
+     */
+    private function runLeaveAccrualIfDue() {
+        $runnerPath = dirname(__DIR__) . '/app/helpers/LeaveAccrualRunner.php';
+        if (!file_exists($runnerPath)) {
+            return;
+        }
+
+        $throttleFile = dirname(__DIR__) . '/logs/last_leave_accrual_run.txt';
+        $lastRun = file_exists($throttleFile) ? (int)@file_get_contents($throttleFile) : 0;
+        if ((time() - $lastRun) < 21600) { // 6 hours
+            return;
+        }
+
+        require_once $runnerPath;
+        try {
+            LeaveAccrualRunner::run();
+            @file_put_contents($throttleFile, (string)time());
+        } catch (\Throwable $e) {
+            error_log('Monthly leave accrual failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Auto-runs yearly leave allocation (throttled to once per day).
+     * Separate throttle from monthly accrual to keep behavior independent.
+     */
+    private function runLeaveYearlyAllocationIfDue() {
+        $runnerPath = dirname(__DIR__) . '/app/helpers/LeaveYearlyAllocationRunner.php';
+        if (!file_exists($runnerPath)) {
+            return;
+        }
+
+        $throttleFile = dirname(__DIR__) . '/logs/last_leave_yearly_allocation_run.txt';
+        $lastRun = file_exists($throttleFile) ? (int)@file_get_contents($throttleFile) : 0;
+        if ((time() - $lastRun) < 86400) { // 24 hours
+            return;
+        }
+
+        require_once $runnerPath;
+        try {
+            LeaveYearlyAllocationRunner::run();
+            @file_put_contents($throttleFile, (string)time());
+        } catch (\Throwable $e) {
+            error_log('Yearly leave allocation failed: ' . $e->getMessage());
         }
     }
 

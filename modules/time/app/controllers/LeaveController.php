@@ -67,6 +67,48 @@ class LeaveController
             if ($created) {
                 $this->auditLog->log('LEAVE_REQUEST_SUBMITTED', $user_id, $data['employee_id'], null,
                     (array)['leave_type_id' => $data['leave_type_id'], 'days' => $requested_days], 'SUCCESS');
+
+                // Notify department heads for this employee using existing dept head lookup logic
+                try {
+                    $database = TimeDatabase::getInstance();
+                    $conn = $database->getConnection();
+
+                    $qry = "SELECT COALESCE(d.department_name, e.department) AS department,
+                                   CONCAT(COALESCE(e.first_name,''),' ',COALESCE(e.last_name,'')) AS full_name
+                              FROM em_employees e
+                              LEFT JOIN em_departments d ON e.department_id = d.department_id
+                             WHERE e.employee_id = :employee_id";
+                    $s = $conn->prepare($qry);
+                    $s->bindParam(':employee_id', $data['employee_id'], PDO::PARAM_INT);
+                    $s->execute();
+                    $emp = $s->fetch(PDO::FETCH_ASSOC);
+
+                    if ($emp) {
+                        $dept = $emp['department'];
+                        $headQry = "SELECT user_id FROM ta_department_heads WHERE department = :department AND is_active = 1";
+                        $h = $conn->prepare($headQry);
+                        $h->bindParam(':department', $dept);
+                        $h->execute();
+                        $heads = $h->fetchAll(PDO::FETCH_ASSOC);
+
+                        foreach ($heads as $hd) {
+                            $this->notificationModel->create([
+                                'user_id' => $hd['user_id'],
+                                'employee_id' => $data['employee_id'],
+                                'notification_type' => 'LEAVE_REQUEST_SUBMITTED',
+                                'title' => 'New Leave Request',
+                                'message' => 'New leave request submitted by ' . ($emp['full_name'] ?? 'an employee'),
+                                'related_id' => null,
+                                'related_type' => 'leave_request',
+                                'send_via_email' => 0,
+                                'send_via_sms' => 0
+                            ]);
+                        }
+                    }
+                } catch (Exception $e) {
+                    error_log('Failed to notify department heads: ' . $e->getMessage());
+                }
+
                 return ['success' => true, 'message' => 'Leave request submitted successfully'];
             }
             $this->auditLog->log('LEAVE_REQUEST_FAILED', $user_id, $data['employee_id'], null,
@@ -81,52 +123,94 @@ class LeaveController
     /**
      * Approve a leave request
      */
-    public function approve($leave_request_id, $approver_id, $is_hr = false, $remarks = '')
+    public function approve($leave_request_id, $approver_id, $remarks = '')
     {
         try {
             Session::start();
             $user_id = Session::get('user_id');
             
-            // Get leave request details
-            $leaveRequest = $this->leaveModel->getById($leave_request_id);
+            // Get leave request details (with leave type name)
+            $requestDetails = $this->leaveModel->getRequestWithType($leave_request_id);
+            $leaveRequest = $requestDetails ?: $this->leaveModel->getById($leave_request_id);
             if (!$leaveRequest) {
                 return ['success' => false, 'message' => 'Leave request not found'];
             }
 
-            $status = $is_hr ? 'APPROVED_BY_HR' : 'APPROVED_BY_HEAD';
-            $requested_days = 0;
+            // Approval-time validations
+            if ($requestDetails) {
+                $leaveTypeName = $requestDetails['leave_type_name'] ?? '';
 
-            // For HR approval, verify balance before changing status
-            if ($is_hr && $status === 'APPROVED_BY_HR') {
-                $requested_days = Helper::calculateWorkingDays($leaveRequest['start_date'], $leaveRequest['end_date']);
-                $balanceCheck = $this->leaveModel->checkLeaveBalance(
-                    $leaveRequest['employee_id'], 
-                    $leaveRequest['leave_type_id'], 
-                    $requested_days
-                );
+                // Document requirement: Sick Leave and Bereavement Leave
+                if (in_array($leaveTypeName, ['Sick Leave', 'Bereavement Leave'], true)) {
+                    $hasDocument = !empty($leaveRequest['supporting_document']) || !empty($leaveRequest['documents']);
+                    if (!$hasDocument) {
+                        return ['success' => false, 'message' => $leaveTypeName . ' requires a supporting document before it can be approved.'];
+                    }
+                }
 
-                if (!$balanceCheck['status']) {
-                    return ['success' => false, 'message' => $balanceCheck['message']];
+                // Advance notice requirement: Vacation Leave needs at least 3 days between submission and start date
+                if ($leaveTypeName === 'Vacation Leave') {
+                    $submittedRaw = $leaveRequest['date_submitted'] ?? $leaveRequest['created_at'] ?? null;
+                    if ($submittedRaw) {
+                        $submitted = new DateTime($submittedRaw);
+                        $start = new DateTime($leaveRequest['start_date']);
+                        $daysNotice = (int)$submitted->diff($start)->days;
+                        if ($daysNotice < 3) {
+                            return ['success' => false, 'message' => 'Vacation Leave requires at least 3 days advance notice. This request was submitted only ' . $daysNotice . ' day(s) before the start date.'];
+                        }
+                    }
                 }
             }
 
+            // Single-stage approval: every approval is final
+            $status = 'Approved';
+
+            // Determine requested days and verify balance
+            $requested_days = Helper::calculateWorkingDays($leaveRequest['start_date'], $leaveRequest['end_date']);
+            $balanceCheck = $this->leaveModel->checkLeaveBalance(
+                $leaveRequest['employee_id'], 
+                $leaveRequest['leave_type_id'], 
+                $requested_days
+            );
+
+            if (!$balanceCheck['status']) {
+                return ['success' => false, 'message' => $balanceCheck['message']];
+            }
+
             $result = $this->leaveModel->updateStatus($leave_request_id, $status, $approver_id, $remarks);
-            
+
             if ($result) {
-                if ($is_hr && $status === 'APPROVED_BY_HR') {
-                    $this->leaveModel->deductLeaveBalance(
-                        $leaveRequest['employee_id'],
-                        $leaveRequest['leave_type_id'],
-                        $requested_days
-                    );
-                    
-                    // Mark absences as excused due to approved leave
-                    LeaveAbsenceHelper::onLeaveApproved($leave_request_id);
+                // Deduct balance and mark absences as excused
+                $this->leaveModel->deductLeaveBalance(
+                    $leaveRequest['employee_id'],
+                    $leaveRequest['leave_type_id'],
+                    $requested_days
+                );
+
+                LeaveAbsenceHelper::onLeaveApproved($leave_request_id);
+
+                $this->auditLog->log('LEAVE_' . strtoupper($status), $user_id, null, null, 
+                    ['leave_request_id' => $leave_request_id], 'SUCCESS');
+
+                // Notify the employee about approval
+                try {
+                    require_once __DIR__ . '/../models/Notification.php';
+                    $notif = new Notification();
+                    $notif->create([
+                        'user_id' => null,
+                        'employee_id' => $leaveRequest['employee_id'],
+                        'notification_type' => 'LEAVE_REQUEST_APPROVED',
+                        'title' => 'Leave Request Approved',
+                        'message' => 'Your ' . ($requestDetails['leave_type_name'] ?? '') . ' request has been approved.',
+                        'related_id' => $leave_request_id,
+                        'related_type' => 'leave_request',
+                        'send_via_email' => 0,
+                        'send_via_sms' => 0
+                    ]);
+                } catch (Exception $e) {
+                    error_log('Failed to send approval notification: ' . $e->getMessage());
                 }
 
-                $this->auditLog->log('LEAVE_' . $status, $user_id, null, null, 
-                    ['leave_request_id' => $leave_request_id], 'SUCCESS');
-                    
                 return ['success' => true, 'message' => 'Leave request approved successfully'];
             }
             
@@ -145,7 +229,9 @@ class LeaveController
         try {
             Session::start();
             $user_id = Session::get('user_id');
-            
+            // Fetch leave request for context
+            $leaveRequest = $this->leaveModel->getRequestWithType($leave_request_id) ?: $this->leaveModel->getById($leave_request_id);
+
             $result = $this->leaveModel->updateStatus($leave_request_id, 'REJECTED', $approver_id, $reason);
             
             if ($result) {
@@ -154,6 +240,25 @@ class LeaveController
                 
                 $this->auditLog->log('LEAVE_REJECTED', $user_id, null, null, 
                     ['leave_request_id' => $leave_request_id, 'reason' => $reason], 'SUCCESS');
+                // Notify the employee about rejection
+                try {
+                    require_once __DIR__ . '/../models/Notification.php';
+                    $notif = new Notification();
+                    $notif->create([
+                        'user_id' => null,
+                        'employee_id' => $leaveRequest['employee_id'],
+                        'notification_type' => 'LEAVE_REQUEST_REJECTED',
+                        'title' => 'Leave Request Rejected',
+                        'message' => 'Your ' . ($leaveRequest['leave_type_name'] ?? '') . ' request has been rejected.' . (!empty($reason) ? ' Reason: ' . $reason : ''),
+                        'related_id' => $leave_request_id,
+                        'related_type' => 'leave_request',
+                        'send_via_email' => 0,
+                        'send_via_sms' => 0
+                    ]);
+                } catch (Exception $e) {
+                    error_log('Failed to send rejection notification: ' . $e->getMessage());
+                }
+
                 return ['success' => true, 'message' => 'Leave request rejected'];
             }
             

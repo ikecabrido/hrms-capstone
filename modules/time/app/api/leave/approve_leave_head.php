@@ -159,7 +159,7 @@ $leaveController = new LeaveController();
 $user_id = $session_user_id;
 
 if ($action === 'APPROVE') {
-    $result = $leaveController->approve($leave_request_id, $user_id, false, $remarks);
+    $result = $leaveController->approve($leave_request_id, $user_id, $remarks);
 } else {
     // Rejection
     if (empty($remarks)) {

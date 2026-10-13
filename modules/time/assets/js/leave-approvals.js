@@ -96,8 +96,12 @@ console.log('leave approvals script loaded');
                     }
 
                     var rows = balances.map(function(balance) {
+                        var freq = (balance.accrual_frequency || '').toLowerCase();
+                        var freqLabel = '';
+                        if (freq === 'monthly') freqLabel = ' <span class="muted">(accrues monthly)</span>';
+                        else if (freq === 'yearly') freqLabel = ' <span class="muted">(accrues yearly)</span>';
                         return '<tr>' +
-                               '<td>' + (balance.leave_type_name || '') + '</td>' +
+                               '<td>' + (balance.leave_type_name || '') + freqLabel + '</td>' +
                                '<td>' + formatLeaveDays(balance.total_days) + '</td>' +
                                '<td>' + formatLeaveDays(balance.used_days) + '</td>' +
                                '<td>' + formatLeaveDays(balance.remaining_days) + '</td>' +

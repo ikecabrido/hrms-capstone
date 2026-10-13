@@ -171,7 +171,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     error_log("DEBUG: POST received - Action: $action, LeaveID: $leave_request_id, User: $user_id, Role: $role");
 
     if ($leave_request_id && $action === 'approve') {
-        $result = $leaveController->approve($leave_request_id, $user_id, $is_hr, $remarks);
+        $result = $leaveController->approve($leave_request_id, $user_id, $remarks);
         if ($result['success']) {
             $_SESSION['flash_message'] = "Leave request approved successfully!";
             $_SESSION['flash_type'] = "success";
@@ -303,13 +303,20 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                 <p>Review request approvals alongside employee leave balances.</p>
             </div>
 
-            <?php if (empty($pendingRequests)): ?>
-                <div class="alert alert-info mb-0">
-                    No pending leave requests to review.
+            <div class="tab-container">
+                <div class="tab-list">
+                    <button class="tab-item active" data-tab="pending-requests">Pending</button>
+                    <button class="tab-item" data-tab="leave-history">History</button>
                 </div>
-            <?php else: ?>
-                <div class="table-responsive">
-                    <table class="approvals-table" id="leaveApprovalTable">
+
+                <div class="tab-content active" data-tab="pending-requests">
+                <?php if (empty($pendingRequests)): ?>
+                    <div class="alert alert-info mb-0">
+                        No pending leave requests to review.
+                    </div>
+                <?php else: ?>
+                    <div class="table-responsive">
+                        <table class="approvals-table" id="leaveApprovalTable">
                         <thead>
                             <tr>
                                 <th>Employee</th>
@@ -355,9 +362,46 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                        </table>
+                    </div>
+                    <?php render_pagination('leave_page', $leavePage, $totalLeavePages, ['employee_page' => $employeePage, 'employee_page_size' => $recordsPerPage, 'employee_search' => $employeeSearch]); ?>
+                <?php endif; ?>
                 </div>
-                <?php render_pagination('leave_page', $leavePage, $totalLeavePages, ['employee_page' => $employeePage, 'employee_page_size' => $recordsPerPage, 'employee_search' => $employeeSearch]); ?>
-            <?php endif; ?>
+
+                <div class="tab-content" data-tab="leave-history">
+                    <?php $historyRequests = $leaveModel->getHistory(null, $recordsPerPage, $leaveOffset); ?>
+                    <?php if (empty($historyRequests)): ?>
+                        <div class="alert alert-info mb-0">No history records found.</div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="approvals-table" id="leaveHistoryTable">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Leave Type</th>
+                                        <th>Start</th>
+                                        <th>End</th>
+                                        <th>Days</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($historyRequests as $req): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($req['full_name'] ?? $req['employee_id']); ?></td>
+                                            <td><?php echo htmlspecialchars($req['leave_type_name']); ?></td>
+                                            <td><?php echo Helper::formatDate($req['start_date']); ?></td>
+                                            <td><?php echo Helper::formatDate($req['end_date']); ?></td>
+                                            <td><?php echo rtrim(rtrim(number_format((isset($req['total_days']) ? $req['total_days'] : (strtotime($req['end_date'])-strtotime($req['start_date']))/86400+1), 2), '0'), '.'); ?></td>
+                                            <td><?php echo LeaveAbsenceHelper::getLeaveStatusBadge($req['status']); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
     </div>

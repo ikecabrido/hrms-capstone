@@ -221,6 +221,22 @@
             margin: 0 !important;
             box-sizing: border-box !important;
         }
+
+        /* Respect global sidebar-collapse state so content stretches when sidebar is collapsed */
+        body.sidebar-collapse .main-content {
+            /* match global collapsed layout used elsewhere */
+            margin-left: 80px !important;
+            width: calc(100% - 80px) !important;
+            padding: 28px !important;
+            box-sizing: border-box !important;
+        }
+
+        body.sidebar-collapse .content-wrapper {
+            margin-left: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+            max-width: 100% !important;
+        }
         /* Ensure page looks consistent with dashboard */
 
         .fc .shift-event,

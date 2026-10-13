@@ -3914,33 +3914,50 @@ function loadTerminationsTable(status = 'active', page = 1, searchTerm = '') {
 
 function buildTerminationLetterPreview(data = {}) {
     const employeeName = data.employee_name || 'Employee';
+    const employeeId = data.employee_id || data.employee_id_display || '';
     const reason = (data.termination_reason || '').trim();
     const effectiveDate = data.effective_date || 'TBD';
     const comments = (data.comments || '').trim();
-    const reasonText = reason ? `Reason for termination: ${escapeHtml(reason)}` : 'Reason for termination: ________________________________________________';
-    const commentsHtml = comments ? `<div style="margin-top: 18px;"><strong>Additional Notes:</strong> ${escapeHtml(comments)}</div>` : '';
+    const reasonText = reason ? escapeHtml(reason) : 'Not specified.';
+    const commentsHtml = comments ? `<div style="margin-top: 12px;"><strong>Additional Notes:</strong> ${escapeHtml(comments)}</div>` : '';
 
     return `
         <div style="background:#fff; border:1px solid #dfe5ec; box-shadow:0 2px 10px rgba(15,23,42,0.06); width:100%; max-width:794px; min-height:1123px; padding:34px 40px; color:#212529; font-family:'Segoe UI', Arial, sans-serif; box-sizing:border-box; margin:0 auto;">
             <div style="display:flex; align-items:center; border-bottom:2px solid #1f5fbf; padding-bottom:14px; margin-bottom:20px;">
                 <img src="/capstone_hr_management_system2/assets/pics/bcpLogo.png" alt="Bestlink College of the Philippines logo" style="width:86px; height:86px; object-fit:contain; margin-right:18px;">
                 <div>
-                    <div style="font-size:20px; font-weight:700; color:#174a8b;">Bestlink College of the Philippines - Bulacan Campus</div>
+                    <div style="font-size:20px; font-weight:700; color:#174a8b;">Bestlink College of the Philippines — Bulacan Campus</div>
                     <div style="font-size:12px; line-height:1.6; color:#333; margin-top:4px;">Lot 1 Ipo Road Brgy. Minuyan Proper, City of San Jose Del Monte, Bulacan.<br>Tel. No.: (044)792-1992</div>
                 </div>
             </div>
 
-            <div style="font-size:30px; font-weight:700; letter-spacing:0.04em; color:#1d2d3d; margin-bottom:28px;">TERMINATION LETTER</div>
+            <div style="font-size:30px; font-weight:700; letter-spacing:0.04em; color:#1d2d3d; margin-bottom:28px; text-align:center;">TERMINATION LETTER</div>
 
-            <div style="font-size:20px; line-height:1.9; color:#1f2937;">
-                <p style="margin:0 0 18px;">This letter serves as formal notice that <strong>${escapeHtml(employeeName)}</strong> is being terminated effective <strong>${escapeHtml(effectiveDate)}</strong>.</p>
-                <p style="margin:0 0 18px;">${reasonText}</p>
+            <div style="font-size:14px; line-height:1.8; color:#1f2937;">
+                <div style="text-align:right; margin-bottom:12px;">${escapeHtml(new Date().toLocaleDateString())}</div>
+                <div style="margin-bottom:8px; font-weight:600;">${employeeId ? 'Re: Notice of Termination — Employee ID ' + escapeHtml(employeeId) : 'Re: Notice of Termination'}</div>
+                <p style="margin:0 0 12px;">Dear ${escapeHtml(employeeName)},</p>
+
+                <p style="margin:0 0 12px;">This letter is to formally notify you that your employment with Bestlink College of the Philippines — Bulacan Campus will be terminated, effective <strong>${escapeHtml(effectiveDate)}</strong>. This decision has been made after careful consideration and in accordance with the applicable provisions of company policy and the Labor Code of the Philippines.</p>
+
+                <p style="margin:0 0 12px; font-weight:600;">The termination is based on the following grounds:</p>
+                <p style="margin:0 0 12px;">${escapeHtml(reasonText)}</p>
+
                 ${commentsHtml}
-                <p style="margin:20px 0 0;">This action is being carried out in accordance with company policy and the approved exit process. The employee will receive the applicable final documentation and settlement details through the appropriate HR channels.</p>
 
-                <div style="margin-top:72px; font-size:18px;">
-                    <div style="margin-bottom:8px;">HR Management</div>
-                    <div>Bestlink College of the Philippines</div>
+                <p style="margin:0 0 12px;">You are requested to return all company property, including but not limited to identification cards, keys, equipment, and documents, to the Human Resources Office on or before your last working day.</p>
+
+                <p style="margin:0 0 12px;">Your final pay, including any unused leave conversions and other benefits due, will be processed in accordance with company policy and applicable law. You will be informed of the schedule and requirements for claiming these through the appropriate HR channels.</p>
+
+                <p style="margin:0 0 12px;">Should you have any questions regarding this letter or the termination process, please contact the Human Resources Office at your earliest convenience.</p>
+
+                <p style="margin:0 0 24px;">We thank you for your service and wish you success in your future endeavors.</p>
+
+                <p style="margin:0 0 6px;">Sincerely,</p>
+                <div style="margin-top:36px;">
+                    <div style="border-top:1px solid #000; width:320px; height:1px; margin-bottom:6px;"></div>
+                    <div style="font-weight:600;">HR Manager / Authorized Signatory</div>
+                    <div>Bestlink College of the Philippines — Bulacan Campus</div>
                 </div>
             </div>
         </div>
