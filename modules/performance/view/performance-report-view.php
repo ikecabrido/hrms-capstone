@@ -21,7 +21,7 @@ $query = $_GET;
 unset($query['employee_id'], $query['export']);
 $baseQuery = http_build_query($query);
 ?>
-<link rel="stylesheet" href="/hrms-capstone/modules/performance/css/pages/performance-report.css">
+<link rel="stylesheet" href="/modules/performance/css/pages/performance-report.css">
 
 <section class="performance-report" aria-labelledby="performance-report-title">
     <div class="report-heading">
