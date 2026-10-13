@@ -56,7 +56,7 @@ $statCards = [
 ?>
 
 <link rel="stylesheet" href="css/appraisals.css">
-<link rel="stylesheet" href="css/pages/appraisals-reference.css">
+<link rel="stylesheet" href="css/pages/appraisals-reference.css?v=2">
 <style>
 .appraisal-pagination-wrap {
     display: flex;
@@ -190,7 +190,7 @@ $statCards = [
 		<div class="appraisal-table-wrap">
 			<table class="appraisal-table"><thead><tr><th>ID</th><th>Employee</th><th>Department</th><th>Review Cycle</th><th>Reviewer</th><th>Status</th><th>Rating</th><th>Due Date</th><th>Actions</th></tr></thead><tbody>
 			<?php if ($appraisals): foreach ($appraisals as $appraisal): ?>
-				<tr><td>#APP-<?= str_pad((string) ($appraisal['appraisal_id'] ?? 0), 5, '0', STR_PAD_LEFT) ?></td><td><strong><?= htmlspecialchars($appraisal['employee_name'] ?? 'Unknown') ?></strong><small>ID <?= (int) ($appraisal['employee_id'] ?? 0) ?></small></td><td><?= htmlspecialchars($appraisal['department'] ?? 'N/A') ?></td><td><strong><?= htmlspecialchars($appraisal['cycle_title'] ?? 'N/A') ?></strong><small><?= htmlspecialchars($appraisal['appraisal_period'] ?? '') ?></small></td><td><?= htmlspecialchars($appraisal['reviewer_name'] ?? 'Unassigned') ?></td><td><span class="status-pill <?= htmlspecialchars($statusClass($appraisal['status'] ?? 'Not Started')) ?>"><?= htmlspecialchars($appraisal['status'] ?? 'Not Started') ?></span></td><td><strong><?= $appraisal['overall_rating'] !== null ? number_format((float) $appraisal['overall_rating'], 1) : 'N/A' ?></strong><?php if ($appraisal['overall_rating'] !== null): ?><small class="stars">★★★★★</small><?php endif; ?></td><td><?= htmlspecialchars($formatDate($appraisal['due_date'] ?? null)) ?></td><td><a class="icon-action" href="?page=appraisals-review&amp;appraisal_id=<?= (int) $appraisal['appraisal_id'] ?>" title="Review appraisal"><i class="fa-solid fa-ellipsis-vertical"></i></a></td></tr>
+				<tr><td>#APP-<?= str_pad((string) ($appraisal['appraisal_id'] ?? 0), 5, '0', STR_PAD_LEFT) ?></td><td><strong><?= htmlspecialchars($appraisal['employee_name'] ?? 'Unknown') ?></strong><small>ID <?= (int) ($appraisal['employee_id'] ?? 0) ?></small></td><td><?= htmlspecialchars($appraisal['department'] ?? 'N/A') ?></td><td><strong><?= htmlspecialchars($appraisal['cycle_title'] ?? 'N/A') ?></strong><small><?= htmlspecialchars($appraisal['appraisal_period'] ?? '') ?></small></td><td><?= htmlspecialchars($appraisal['reviewer_name'] ?? 'Unassigned') ?></td><td><span class="status-pill <?= htmlspecialchars($statusClass($appraisal['status'] ?? 'Not Started')) ?>"><?= htmlspecialchars($appraisal['status'] ?? 'Not Started') ?></span></td><td><strong><?= $appraisal['overall_rating'] !== null ? number_format((float) $appraisal['overall_rating'], 1) : 'Not rated' ?></strong><?php if ($appraisal['overall_rating'] !== null): ?><small class="stars">★★★★★</small><?php endif; ?></td><td><?= htmlspecialchars($formatDate($appraisal['due_date'] ?? null)) ?></td><td><a class="icon-action" href="?page=appraisals-review&amp;appraisal_id=<?= (int) $appraisal['appraisal_id'] ?>" title="Review appraisal"><i class="fa-solid fa-ellipsis-vertical"></i></a></td></tr>
 			<?php endforeach; else: ?><tr><td colspan="9"><div class="appraisal-empty">No appraisal records match the current filters.</div></td></tr><?php endif; ?>
 			</tbody></table>
 			<?php if (!empty($appraisals)): ?>
@@ -208,13 +208,72 @@ $statCards = [
 </div>
 
 <div class="appraisal-modal-layer <?= $selectedAppraisal ? 'is-open' : '' ?>" data-modal="appraisal-detail-modal" aria-hidden="<?= $selectedAppraisal ? 'false' : 'true' ?>">
-	<div class="appraisal-modal"><button class="modal-close" type="button" data-modal-close><i class="fa-solid fa-xmark"></i></button><h2><?= $selectedAppraisal ? 'Review Appraisal' : 'New Appraisal' ?></h2>
-		<?php if ($selectedAppraisal): ?><p class="modal-subtitle"><?= htmlspecialchars($selectedAppraisal['employee_name'] ?? 'Employee') ?> &middot; <?= htmlspecialchars($selectedAppraisal['cycle_title'] ?? 'No cycle') ?></p><form method="post"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>"><input type="hidden" name="action" value="update_status"><input type="hidden" name="appraisal_id" value="<?= (int) $selectedAppraisal['appraisal_id'] ?>"><label>Status<select name="status"><?php foreach ($statuses as $status): ?><option <?= ($selectedAppraisal['status'] ?? '') === $status ? 'selected' : '' ?>><?= htmlspecialchars($status) ?></option><?php endforeach; ?></select></label><label>Review comment<textarea name="status_comment" rows="3" placeholder="Add a review note..."></textarea></label><button class="appraisal-button primary" type="submit">Save status</button></form>
-		<?php else: ?><form method="post"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>"><input type="hidden" name="action" value="create_appraisal"><label>Employee<select name="employee_id" required><option value="">Select employee</option><?php foreach ($employees as $employee): ?><option value="<?= (int) $employee['employee_id'] ?>" data-name="<?= htmlspecialchars($employee['employee_name'] ?? '') ?>" data-department="<?= htmlspecialchars($employee['department'] ?? '') ?>"><?= htmlspecialchars($employee['employee_name'] ?? 'Unknown') ?></option><?php endforeach; ?></select></label><input type="hidden" name="employee_name"><input type="hidden" name="department"><label>Review cycle<select name="review_cycle_id"><option value="">Select cycle</option><?php foreach ($cycles as $cycle): ?><option value="<?= (int) $cycle['cycle_id'] ?>"><?= htmlspecialchars($cycle['title'] ?? 'Untitled') ?></option><?php endforeach; ?></select></label><label>Due date<input type="date" name="due_date"></label><button class="appraisal-button primary" type="submit">Create appraisal</button></form><?php endif; ?>
+	<div class="appraisal-modal">
+		<div class="appraisal-modal-header">
+			<h2><?= $selectedAppraisal ? 'Review Appraisal' : 'New Appraisal' ?></h2>
+			<button class="modal-close" type="button" data-modal-close aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+		</div>
+		<div class="appraisal-modal-body">
+		<?php if ($selectedAppraisal): ?>
+			<p class="modal-subtitle"><?= htmlspecialchars($selectedAppraisal['employee_name'] ?? 'Employee') ?> &middot; <?= htmlspecialchars($selectedAppraisal['cycle_title'] ?? 'No cycle') ?></p>
+			<form method="post" id="appraisal-rating-form" class="appraisal-rating-form">
+				<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+				<input type="hidden" name="action" value="save_ratings">
+				<input type="hidden" name="appraisal_id" value="<?= (int) $selectedAppraisal['appraisal_id'] ?>">
+				<label>Status
+					<select name="status" required>
+						<?php foreach ($statuses as $status): ?>
+							<option value="<?= htmlspecialchars($status) ?>" <?= ($selectedAppraisal['status'] ?? '') === $status ? 'selected' : '' ?>><?= htmlspecialchars($status) ?></option>
+						<?php endforeach; ?>
+					</select>
+				</label>
+				<label>Review comment
+					<textarea name="status_comment" rows="3" placeholder="Add a review note..."></textarea>
+				</label>
+				<h3>Performance Ratings</h3>
+				<?php foreach ($selectedItems as $item): ?>
+					<div class="appraisal-rating-row">
+						<label><?= htmlspecialchars($item['criterion'] ?? 'Criterion') ?>
+							<select name="rating[]">
+								<option value="">Not rated</option>
+								<?php for ($rating = 1; $rating <= 5; $rating++): ?>
+									<option value="<?= $rating ?>" <?= (string) ($item['rating'] ?? '') === (string) $rating ? 'selected' : '' ?>><?= $rating ?> / 5</option>
+								<?php endfor; ?>
+							</select>
+							<input type="hidden" name="criterion[]" value="<?= htmlspecialchars($item['criterion'] ?? '') ?>">
+						</label>
+						<input type="text" name="comments[]" value="<?= htmlspecialchars($item['comments'] ?? '') ?>" placeholder="Comment (optional)">
+					</div>
+				<?php endforeach; ?>
+			</form>
+		<?php else: ?><form method="post" id="appraisal-create-form"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>"><input type="hidden" name="action" value="create_appraisal"><label>Employee<select name="employee_id" required><option value="">Select employee</option><?php foreach ($employees as $employee): ?><option value="<?= (int) $employee['employee_id'] ?>" data-name="<?= htmlspecialchars($employee['employee_name'] ?? '') ?>" data-department="<?= htmlspecialchars($employee['department'] ?? '') ?>"><?= htmlspecialchars($employee['employee_name'] ?? 'Unknown') ?></option><?php endforeach; ?></select></label><small class="appraisal-help-text">Add new people to the Employees list before creating an appraisal.</small><input type="hidden" name="employee_name"><input type="hidden" name="department"><label>Review cycle<select name="review_cycle_id"><option value="">Select cycle</option><?php foreach ($cycles as $cycle): ?><option value="<?= (int) $cycle['cycle_id'] ?>"><?= htmlspecialchars($cycle['title'] ?? 'Untitled') ?></option><?php endforeach; ?></select></label><label>Due date<input type="date" name="due_date"></label></form><?php endif; ?>
+		</div>
+		<div class="appraisal-modal-footer">
+			<?php if ($selectedAppraisal): ?>
+				<button class="appraisal-button primary appraisal-save-button" type="submit" form="appraisal-rating-form">Save Ratings</button>
+			<?php else: ?>
+				<button class="appraisal-button primary appraisal-save-button" type="submit" form="appraisal-create-form">Save Appraisal</button>
+			<?php endif; ?>
+		</div>
 	</div>
 </div>
 
-<div class="appraisal-modal-layer" data-modal="cycle-modal" aria-hidden="true"><div class="appraisal-modal"><button class="modal-close" type="button" data-modal-close><i class="fa-solid fa-xmark"></i></button><h2>New Review Cycle</h2><form method="post"><input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>"><input type="hidden" name="action" value="create_cycle"><label>Cycle title<input type="text" name="title" required placeholder="2026 Annual Review"></label><label>Cycle period<input type="text" name="cycle_period" placeholder="Jan 1, 2026 - Dec 31, 2026"></label><label>Start date<input type="date" name="start_date"></label><label>End date<input type="date" name="end_date"></label><input type="hidden" name="status" value="Active"><button class="appraisal-button primary" type="submit">Create cycle</button></form></div></div>
+<div class="appraisal-modal-layer" data-modal="cycle-modal" aria-hidden="true">
+	<div class="appraisal-modal">
+		<button class="modal-close" type="button" data-modal-close aria-label="Close review cycle form"><i class="fa-solid fa-xmark"></i></button>
+		<h2>New Review Cycle</h2>
+		<form method="post">
+			<input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+			<input type="hidden" name="action" value="create_cycle">
+			<label>Cycle title<input type="text" name="title" required placeholder="2026 Annual Review"></label>
+			<label>Cycle period<input type="text" name="cycle_period" placeholder="Jan 1, 2026 - Dec 31, 2026"></label>
+			<label>Start date<input type="date" name="start_date"></label>
+			<label>End date<input type="date" name="end_date"></label>
+			<input type="hidden" name="status" value="Active">
+			<button class="appraisal-button primary cycle-save-button" type="submit">Save Cycle</button>
+		</form>
+	</div>
+</div>
 
 <script>
 document.querySelectorAll('[data-modal-open]').forEach(function (button) {

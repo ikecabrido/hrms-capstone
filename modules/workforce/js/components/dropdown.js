@@ -1,23 +1,26 @@
-const bellBtn      = document.getElementById('bellBtn');
-    const bellDropdown = document.getElementById('bellDropdown');
-    const bellWrapper  = document.getElementById('bellWrapper');
-    const userBtn      = document.getElementById('userBtn');
-    const userDropdown = document.getElementById('userDropdown');
-    const userWrapper  = document.getElementById('userWrapper');
-    const notifBadge   = document.getElementById('notifBadge');
-    const markAllRead  = document.querySelector('.mark-all-read');
+const bellBtn = document.getElementById('bellBtn');
+const bellDropdown = document.getElementById('bellDropdown');
+const bellWrapper = document.getElementById('bellWrapper');
+const userBtn = document.getElementById('userBtn');
+const userDropdown = document.getElementById('userDropdown');
+const userWrapper = document.getElementById('userWrapper');
+const notifBadge = document.getElementById('notifBadge');
+const markAllRead = document.querySelector('.mark-all-read');
 
+if (bellBtn && bellDropdown && bellWrapper && userBtn && userDropdown && userWrapper) {
     function closeAll() {
         bellDropdown.classList.remove('open');
         userDropdown.classList.remove('open');
     }
 
     function openDropdown(dropdown, triggerEl) {
-        const sidebar  = document.querySelector('.sidebar');
-        const rect     = triggerEl.getBoundingClientRect();
+        const sidebar = document.querySelector('.sidebar');
+        if (!sidebar) return;
+
+        const rect = triggerEl.getBoundingClientRect();
         const sidebarRect = sidebar.getBoundingClientRect();
 
-        dropdown.style.top  = rect.top + 'px';
+        dropdown.style.top = rect.top + 'px';
         dropdown.style.left = (sidebarRect.right + 8) + 'px';
         dropdown.classList.add('open');
     }
@@ -41,10 +44,16 @@ const bellBtn      = document.getElementById('bellBtn');
             closeAll();
         }
     });
+}
 
+if (markAllRead) {
     markAllRead.addEventListener('click', function () {
         document.querySelectorAll('.notif-item.unread').forEach(item => {
             item.classList.remove('unread');
         });
-        notifBadge.classList.add('hidden');
+
+        if (notifBadge) {
+            notifBadge.classList.add('hidden');
+        }
     });
+}

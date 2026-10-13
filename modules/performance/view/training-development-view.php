@@ -37,7 +37,7 @@ class TrainingDevelopmentView
         $priorityLevels = ['Low', 'Medium', 'High', 'Critical'];
         $statuses = ['Pending', 'Approved', 'In Progress', 'Completed', 'Rejected'];
         ?>
-        <link rel="stylesheet" href="css/pages/training-development.css">
+        <link rel="stylesheet" href="css/pages/training-development.css?v=2">
 
         <div class="training-module">
             <div class="training-toolbar">
@@ -129,6 +129,20 @@ class TrainingDevelopmentView
                                 $priority = trim((string) ($item['priority_level'] ?? 'Medium'));
                                 $status = trim((string) ($item['status'] ?? 'Pending'));
                                 $recommendationDate = !empty($item['recommendation_date']) ? date('M d, Y', strtotime($item['recommendation_date'])) : 'N/A';
+                                $details = [
+                                    'employee' => $employeeName,
+                                    'training' => $trainingTitle,
+                                    'category' => $category,
+                                    'skill' => $skillFocus,
+                                    'priority' => $priority,
+                                    'status' => $status,
+                                    'recommendation_date' => $recommendationDate,
+                                    'target_date' => !empty($item['target_completion_date']) ? date('M d, Y', strtotime($item['target_completion_date'])) : 'Not set',
+                                    'reason' => $reason,
+                                    'performance_gap' => trim((string) ($item['performance_gap'] ?? '')) ?: 'Not specified',
+                                    'recommended_by' => trim((string) ($item['recommended_by'] ?? '')) ?: 'Not specified',
+                                    'source' => trim((string) ($item['source_type'] ?? '')) ?: 'Manual',
+                                ];
                                 ?>
                                 <div class="recommendation-item">
                                     <div class="person-avatar"><?= htmlspecialchars($initials) ?></div>
@@ -139,7 +153,12 @@ class TrainingDevelopmentView
                                         </div>
                                         <div class="recommendation-title-row">
                                             <span><?= htmlspecialchars($trainingTitle) ?></span>
-                                            <button type="button" class="ghost-btn">View Details</button>
+                                            <button
+                                                type="button"
+                                                class="ghost-btn"
+                                                data-open-modal="training-details-modal"
+                                                data-training-details='<?= htmlspecialchars(json_encode($details, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>'
+                                            >View Details</button>
                                         </div>
                                         <div class="recommendation-meta">
                                             <span><?= htmlspecialchars($category) ?></span>
@@ -272,6 +291,29 @@ class TrainingDevelopmentView
                         </div>
                     <?php endif; ?>
                 </div>
+            </div>
+        </div>
+
+        <div class="modal-overlay" id="training-details-modal" role="dialog" aria-modal="true" aria-labelledby="training-details-title">
+            <div class="modal-card small-modal">
+                <div class="modal-header">
+                    <h3 id="training-details-title">Training Recommendation Details</h3>
+                    <button type="button" class="close-modal" data-close-modal="training-details-modal" aria-label="Close">×</button>
+                </div>
+                <dl class="training-details-grid">
+                    <div><dt>Employee</dt><dd data-detail="employee"></dd></div>
+                    <div><dt>Training</dt><dd data-detail="training"></dd></div>
+                    <div><dt>Category</dt><dd data-detail="category"></dd></div>
+                    <div><dt>Skill / Competency</dt><dd data-detail="skill"></dd></div>
+                    <div><dt>Priority</dt><dd data-detail="priority"></dd></div>
+                    <div><dt>Status</dt><dd data-detail="status"></dd></div>
+                    <div><dt>Recommended Date</dt><dd data-detail="recommendation_date"></dd></div>
+                    <div><dt>Target Date</dt><dd data-detail="target_date"></dd></div>
+                    <div class="full-width"><dt>Reason for Recommendation</dt><dd data-detail="reason"></dd></div>
+                    <div class="full-width"><dt>Performance Gap</dt><dd data-detail="performance_gap"></dd></div>
+                    <div><dt>Recommended By</dt><dd data-detail="recommended_by"></dd></div>
+                    <div><dt>Source</dt><dd data-detail="source"></dd></div>
+                </dl>
             </div>
         </div>
 
@@ -436,6 +478,13 @@ class TrainingDevelopmentView
                         const modalId = this.getAttribute('data-open-modal');
                         const modal = document.getElementById(modalId);
                         if (modal) {
+                            const detailsJson = this.getAttribute('data-training-details');
+                            if (detailsJson) {
+                                const details = JSON.parse(detailsJson);
+                                modal.querySelectorAll('[data-detail]').forEach(function (field) {
+                                    field.textContent = details[field.getAttribute('data-detail')] || 'Not specified';
+                                });
+                            }
                             modal.classList.add('open');
                         }
                     });
@@ -457,6 +506,14 @@ class TrainingDevelopmentView
                             modal.classList.remove('open');
                         }
                     });
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') {
+                        document.querySelectorAll('.modal-overlay.open').forEach(function (modal) {
+                            modal.classList.remove('open');
+                        });
+                    }
                 });
             });
         </script>

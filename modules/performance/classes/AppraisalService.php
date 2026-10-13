@@ -70,13 +70,25 @@ class AppraisalService
         return $this->appraisalModel->updateAppraisal($data);
     }
 
-    public function updateStatus(int $appraisalId, string $status, string $updatedBy = 'System', string $details = ''): bool
+    public function updateStatus(int $appraisalId, string $status, ?int $updatedBy = null, string $details = ''): bool
     {
         return $this->appraisalModel->updateStatus($appraisalId, $status, $updatedBy, $details);
     }
 
-    public function saveAppraisalItems(int $appraisalId, array $items, string $updatedBy = 'System'): bool
+    public function saveAppraisalItems(
+        int $appraisalId,
+        array $items,
+        ?int $updatedBy = null,
+        string $status = '',
+        string $statusComment = ''
+    ): bool
     {
-        return $this->appraisalModel->saveAppraisalItems($appraisalId, $items, $updatedBy);
+        return $this->appraisalModel->saveAppraisalItems(
+            $appraisalId,
+            $items,
+            $updatedBy,
+            $status,
+            $statusComment
+        );
     }
 }

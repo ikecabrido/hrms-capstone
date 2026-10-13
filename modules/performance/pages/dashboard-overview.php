@@ -20,12 +20,12 @@ $h = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8')
     <div class="summary-grid">
         <article class="summary-card blue"><span class="summary-icon"><i class="fa-solid fa-bullseye"></i></span><div><span>Goals Active</span><strong><?= $h($stats['goals_active']) ?></strong></div></article>
         <article class="summary-card green"><span class="summary-icon"><i class="fa-solid fa-chart-line"></i></span><div><span>KPI Completion</span><strong><?= $h($stats['kpi_completion']) ?>%</strong></div></article>
-        <article class="summary-card violet"><span class="summary-icon"><i class="fa-regular fa-user"></i></span><div><span>Appraisals Due</span><strong><?= $h($stats['appraisals_due']) ?></strong></div></article>
+        <article class="summary-card completed"><span class="summary-icon"><i class="fa-solid fa-circle-check"></i></span><div><span>Appraisals Completed</span><strong><?= $h($stats['appraisals_completed']) ?></strong></div></article>
         <article class="summary-card orange"><span class="summary-icon"><i class="fa-solid fa-graduation-cap"></i></span><div><span>Training Hours</span><strong><?= $h($stats['training_hours']) ?> <small>hours</small></strong></div></article>
     </div>
     <div class="dashboard-grid top-grid">
         <article class="dashboard-panel chart-panel"><div class="panel-heading"><div><h2>Performance Overview</h2><p>Recorded ratings and KPI scores</p></div><span class="legend"><i class="legend-this"></i>This year <i class="legend-last"></i>Last year</span></div><?php if ($trend['labels']): ?><div class="chart-wrap"><canvas id="performanceChart" aria-label="Performance overview line chart"></canvas></div><?php else: ?><div class="empty-state"><i class="fa-regular fa-chart-line"></i><p>No performance data available yet.</p></div><?php endif; ?></article>
-        <article class="dashboard-panel events-panel"><div class="panel-heading"><h2>Upcoming Events</h2><a href="?page=goal-setting">View All</a></div><?php if ($events): ?><div class="event-list"><?php foreach ($events as $event): ?><div class="event-row"><time datetime="<?= $h($event['start_date']) ?>"><b><?= $h(date('M', strtotime($event['start_date']))) ?></b><strong><?= $h(date('d', strtotime($event['start_date']))) ?></strong></time><div><h3><?= $h($event['event_title']) ?></h3><p><?= $h($event['start_time'] ? date('g:i A', strtotime($event['start_time'])) : 'All day') ?><?= $event['location'] ? ' · ' . $h($event['location']) : '' ?></p></div></div><?php endforeach; ?></div><?php else: ?><div class="empty-state"><i class="fa-regular fa-calendar"></i><p>No upcoming events.</p></div><?php endif; ?></article>
+        <article class="dashboard-panel events-panel"><div class="panel-heading"><h2>Upcoming Events</h2><a href="?page=goal-setting">View All</a></div><?php if ($events): ?><div class="event-list"><?php foreach ($events as $event): ?><div class="event-row"><span class="event-marker"><i class="fa-solid fa-bullseye"></i></span><div><h3><?= $h($event['event_title']) ?></h3><p><?= $h($event['employee_name'] ?: 'Unknown') ?> · <?= !empty($event['start_date']) ? $h(date('M j, Y', strtotime($event['start_date']))) : 'No target date' ?></p></div></div><?php endforeach; ?></div><?php else: ?><div class="empty-state"><i class="fa-regular fa-calendar"></i><p>No upcoming events.</p></div><?php endif; ?></article>
         <article class="dashboard-panel calendar-panel"><div class="panel-heading"><h2><?= $h($monthStart->format('F Y')) ?></h2><div class="calendar-nav"><button type="button" class="calendar-change" data-month="<?= $h($monthStart->modify('-1 month')->format('Y-m')) ?>" aria-label="Previous month"><i class="fa-solid fa-chevron-left"></i></button><button type="button" class="calendar-change" data-month="<?= $h($monthStart->modify('+1 month')->format('Y-m')) ?>" aria-label="Next month"><i class="fa-solid fa-chevron-right"></i></button></div></div><div class="calendar-grid calendar-week"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div><div class="calendar-grid"><?php for ($blank = 1; $blank < $firstWeekday; $blank++): ?><span></span><?php endfor; ?><?php for ($day = 1; $day <= $daysInMonth; $day++): $date = $monthStart->format('Y-m-') . str_pad((string) $day, 2, '0', STR_PAD_LEFT); ?><span class="calendar-day<?= in_array($date, $eventDates, true) ? ' has-event' : '' ?>"><?= $day ?></span><?php endfor; ?></div><p class="calendar-note"><i class="calendar-dot"></i> Event dates are shown from actual records</p></article>
     </div>
     <div class="dashboard-grid bottom-grid">
@@ -61,6 +61,18 @@ $h = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8')
     margin: 0.35rem 0 0;
     color: #64748b;
     font-size: 0.9rem;
+}
+</style>
+<style>
+.performance-dashboard .summary-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.performance-dashboard .summary-card.completed .summary-icon { background: #18a66a; }
+.performance-dashboard .event-marker { display: grid; place-items: center; width: 2rem; height: 2rem; flex: 0 0 auto; border-radius: 50%; background: #eef2ff; color: #6752dc; font-size: .8rem; }
+.performance-dashboard .event-row { align-items: center; }
+@media (max-width: 1050px) {
+    .performance-dashboard .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+    .performance-dashboard .summary-grid { grid-template-columns: 1fr; }
 }
 </style>
 <?php if ($trend['labels']): ?><script>new Chart(document.getElementById('performanceChart'), {type:'line', data:{labels:<?= json_encode($trend['labels']) ?>, datasets:[{label:'This year',data:<?= json_encode($trend['this_year']) ?>,borderColor:'#1473e6',backgroundColor:'transparent',tension:.35,spanGaps:true},{label:'Last year',data:<?= json_encode($trend['last_year']) ?>,borderColor:'#9aa5b1',borderDash:[5,4],backgroundColor:'transparent',tension:.35,spanGaps:true}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,suggestedMax:100,grid:{color:'#edf0f4'}},x:{grid:{display:false}}}}});</script><?php endif; ?><script>document.querySelectorAll('.calendar-change').forEach(function(button){button.addEventListener('click',function(){var parts=this.dataset.month.split('-');window.location.href='?page=dashboard-overview&year='+parts[0]+'&month='+Number(parts[1]);});});</script>

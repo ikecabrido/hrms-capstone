@@ -131,6 +131,7 @@ class PerformanceDashboard
                 'goals_active' => 0,
                 'kpi_completion' => 0,
                 'appraisals_due' => 0,
+                'appraisals_completed' => 0,
                 'training_hours' => 0,
             ],
             'trend' => ['labels' => [], 'this_year' => [], 'last_year' => []],
@@ -155,6 +156,9 @@ class PerformanceDashboard
             $data['stats']['appraisals_due'] = (int) $this->fetchScalar(
                 "SELECT COUNT(*) FROM pm_appraisals WHERE due_date >= CURDATE() AND status NOT IN ('Completed', 'Cancelled', 'Archived', 'Closed')"
             );
+            $data['stats']['appraisals_completed'] = (int) $this->fetchScalar(
+                "SELECT COUNT(*) FROM pm_appraisals WHERE LOWER(TRIM(status)) = 'completed'"
+            );
         }
 
         if ($this->tableExists('pm_employee_training') && $this->tableExists('pm_training_programs')) {
@@ -168,13 +172,19 @@ class PerformanceDashboard
 
         $data['trend'] = $this->getDashboardTrend();
 
-        if ($this->tableExists('pm_goal_events')) {
+        if ($this->tableExists('pm_goals')) {
             $data['events'] = $this->fetchAll(
-                "SELECT event_id, event_title, event_type, start_date, start_time, end_time, location
-                 FROM pm_goal_events
-                 WHERE start_date >= CURDATE() AND status NOT IN ('Cancelled', 'Archived')
-                 ORDER BY start_date, start_time
-                 LIMIT 6"
+                "SELECT goal_id AS event_id,
+                        goal_title AS event_title,
+                        'Goal / Deadline' AS event_type,
+                        due_date AS start_date,
+                        NULL AS start_time,
+                        NULL AS end_time,
+                        NULL AS location,
+                        employee_name
+                 FROM pm_goals
+                 ORDER BY created_at DESC
+                 LIMIT 5"
             );
         }
 

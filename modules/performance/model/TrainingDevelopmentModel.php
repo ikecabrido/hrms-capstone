@@ -165,6 +165,7 @@ class TrainingDevelopmentModel
         $sql = "SELECT tr.recommendation_id,
                        tr.employee_id,
                        tr.recommendation_date,
+                       tr.target_completion_date,
                        tr.development_area,
                        tr.performance_gap,
                        tr.recommendation_reason,

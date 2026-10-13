@@ -318,7 +318,7 @@ class Appraisal
 
         if ($result) {
             $appraisalId = (int) $this->conn->lastInsertId();
-            $this->logHistory($appraisalId, 'Appraisal created', 'New appraisal record created.', $data['created_by'] ?? 'System');
+            $this->logHistory($appraisalId, 'Appraisal created', 'New appraisal record created.', $data['created_by'] ?? null);
         }
 
         return $result;
@@ -362,13 +362,13 @@ class Appraisal
         ]);
 
         if ($result) {
-            $this->logHistory($appraisalId, 'Appraisal updated', 'Appraisal details were updated.', $data['updated_by'] ?? 'System');
+            $this->logHistory($appraisalId, 'Appraisal updated', 'Appraisal details were updated.', $data['updated_by'] ?? null);
         }
 
         return $result;
     }
 
-    public function updateStatus(int $appraisalId, string $status, string $updatedBy = 'System', string $details = ''): bool
+    public function updateStatus(int $appraisalId, string $status, ?int $updatedBy = null, string $details = ''): bool
     {
         if ($appraisalId <= 0 || !$this->tableExists('pm_appraisals')) {
             return false;
@@ -392,15 +392,36 @@ class Appraisal
         return $result;
     }
 
-    public function saveAppraisalItems(int $appraisalId, array $items, string $updatedBy = 'System'): bool
+    public function saveAppraisalItems(
+        int $appraisalId,
+        array $items,
+        ?int $updatedBy = null,
+        string $status = '',
+        string $statusComment = ''
+    ): bool
     {
-        if ($appraisalId <= 0 || !$this->tableExists('pm_appraisal_items')) {
+        if (
+            $appraisalId <= 0
+            || $status === ''
+            || !$this->tableExists('pm_appraisals')
+            || !$this->tableExists('pm_appraisal_items')
+        ) {
             return false;
         }
 
         $this->conn->beginTransaction();
 
         try {
+            $currentStatusStmt = $this->conn->prepare(
+                'SELECT status FROM pm_appraisals WHERE appraisal_id = :appraisal_id FOR UPDATE'
+            );
+            $currentStatusStmt->execute([':appraisal_id' => $appraisalId]);
+            $currentStatus = $currentStatusStmt->fetchColumn();
+            if ($currentStatus === false) {
+                $this->conn->rollBack();
+                return false;
+            }
+
             $deleteStmt = $this->conn->prepare('DELETE FROM pm_appraisal_items WHERE appraisal_id = :appraisal_id');
             $deleteStmt->execute([':appraisal_id' => $appraisalId]);
 
@@ -434,23 +455,37 @@ class Appraisal
             }
 
             $updateStmt = $this->conn->prepare(
-                'UPDATE pm_appraisals SET overall_rating = :overall_rating WHERE appraisal_id = :appraisal_id'
+                'UPDATE pm_appraisals SET overall_rating = :overall_rating, status = :status WHERE appraisal_id = :appraisal_id'
             );
             $updateStmt->execute([
                 ':overall_rating' => $overallRating,
+                ':status' => $status,
                 ':appraisal_id' => $appraisalId,
             ]);
 
             $this->logHistory($appraisalId, 'Ratings saved', 'Appraisal criteria ratings were updated.', $updatedBy);
+            if ((string) $currentStatus !== $status) {
+                $this->logHistory(
+                    $appraisalId,
+                    'Status changed',
+                    $statusComment !== '' ? $statusComment : 'Status updated to ' . $status . '.',
+                    $updatedBy
+                );
+            } elseif ($statusComment !== '') {
+                $this->logHistory($appraisalId, 'Review comment added', $statusComment, $updatedBy);
+            }
             $this->conn->commit();
             return true;
         } catch (Exception $e) {
-            $this->conn->rollBack();
+            error_log('Failed to save appraisal ratings: ' . $e->getMessage());
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
             return false;
         }
     }
 
-    public function logHistory(int $appraisalId, string $action, string $details = '', string $createdBy = 'System'): void
+    public function logHistory(int $appraisalId, string $action, string $details = '', ?int $createdBy = null): void
     {
         if (!$this->tableExists('pm_appraisal_history')) {
             return;

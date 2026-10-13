@@ -46,7 +46,10 @@ class AppraisalController
 
         $action = $_POST['action'] ?? '';
         $currentUserName = $_SESSION['employee_name'] ?? 'System';
-        $currentUserId = $_SESSION['employee_id'] ?? '';
+        $sessionEmployeeId = (string) ($_SESSION['employee_id'] ?? '');
+        $currentUserId = ctype_digit($sessionEmployeeId) && (int) $sessionEmployeeId > 0
+            ? (int) $sessionEmployeeId
+            : null;
 
         try {
             switch ($action) {
@@ -83,7 +86,7 @@ class AppraisalController
                     $appraisalId = (int) ($_POST['appraisal_id'] ?? 0);
                     $status = trim((string) ($_POST['status'] ?? ''));
                     $comment = trim((string) ($_POST['status_comment'] ?? ''));
-                    if ($appraisalId > 0 && $status !== '' && $this->appraisalService->updateStatus($appraisalId, $status, $currentUserName, $comment)) {
+                    if ($appraisalId > 0 && $status !== '' && $this->appraisalService->updateStatus($appraisalId, $status, $currentUserId, $comment)) {
                         $_SESSION['appraisal_success'] = 'Appraisal status updated successfully.';
                     } else {
                         $_SESSION['appraisal_error'] = 'Unable to update appraisal status.';
@@ -93,11 +96,24 @@ class AppraisalController
 
                 case 'save_ratings':
                     $appraisalId = (int) ($_POST['appraisal_id'] ?? 0);
+                    $status = trim((string) ($_POST['status'] ?? ''));
+                    $statusComment = trim((string) ($_POST['status_comment'] ?? ''));
                     $items = $this->parseRatingItems($_POST);
-                    if ($appraisalId > 0 && $this->appraisalService->saveAppraisalItems($appraisalId, $items, $currentUserName)) {
-                        $_SESSION['appraisal_success'] = 'Appraisal ratings saved successfully.';
+                    $validStatuses = ['Not Started', 'Pending', 'In Progress', 'Completed', 'Overdue'];
+                    if (
+                        $appraisalId > 0
+                        && in_array($status, $validStatuses, true)
+                        && $this->appraisalService->saveAppraisalItems(
+                            $appraisalId,
+                            $items,
+                            $currentUserId,
+                            $status,
+                            $statusComment
+                        )
+                    ) {
+                        $_SESSION['appraisal_success'] = 'Appraisal status and ratings saved successfully.';
                     } else {
-                        $_SESSION['appraisal_error'] = 'Unable to save appraisal ratings.';
+                        $_SESSION['appraisal_error'] = 'Unable to save appraisal status and ratings.';
                     }
                     $this->redirect('?page=appraisals-review&appraisal_id=' . $appraisalId);
                     break;
@@ -178,8 +194,8 @@ class AppraisalController
             'overall_rating' => ($post['overall_rating'] ?? '') !== '' ? (float) $post['overall_rating'] : null,
             'due_date' => trim((string) ($post['due_date'] ?? '')),
             'review_cycle_id' => !empty($post['review_cycle_id']) ? (int) $post['review_cycle_id'] : null,
-            'created_by' => $currentUserName,
-            'updated_by' => $currentUserName,
+            'created_by' => $currentUserId,
+            'updated_by' => $currentUserId,
         ];
 
         if ($isUpdate) {
