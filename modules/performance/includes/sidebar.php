@@ -52,7 +52,7 @@ $employeeClass = new Employee();
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="/hrms-capstone/auth/logout.php" class="signout-link">
+                            <a href="/auth/logout.php" class="signout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i> Log Out
                             </a>
                         </li>
