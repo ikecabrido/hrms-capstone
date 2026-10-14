@@ -30,6 +30,20 @@ class Goal
         return (int) $stmt->fetchColumn() > 0;
     }
 
+    private function getTableColumns(string $tableName): array
+    {
+        $stmt = $this->conn->prepare(
+            'SELECT COLUMN_NAME
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = :table_name'
+        );
+        $stmt->bindValue(':table_name', $tableName, PDO::PARAM_STR);
+        $stmt->execute();
+
+        return array_fill_keys($stmt->fetchAll(PDO::FETCH_COLUMN), true);
+    }
+
     private function employeeTable(): string
     {
         if ($this->tableExists('em_employees')) {
@@ -357,130 +371,105 @@ class Goal
             return false;
         }
 
-        $employeeId = trim((string) ($data['employee_id'] ?? ''));
-        $employee = $this->getEmployeeRecord($employeeId);
-        if (!$employee) {
-            error_log('Unable to save performance goal: selected employee was not found.');
-            return false;
-        }
-        $employeeName = (string) $employee['employee_name'];
-
-        $supervisorId = trim((string) ($data['supervisor_id'] ?? ($data['assigned_by'] ?? '')));
-        $supervisorName = trim((string) ($data['supervisor_name'] ?? ''));
-        if ($supervisorId !== '' && $supervisorName === '') {
-            $supervisorName = $this->getSupervisorDisplayName($supervisorId) ?? 'System';
-        }
-
-        $goalTitle = trim((string) ($data['goal_title'] ?? ''));
-        $goalDescription = trim((string) ($data['goal_description'] ?? ''));
-        $goalCategory = trim((string) ($data['goal_category'] ?? 'Performance'));
-        $priorityLevel = trim((string) ($data['priority_level'] ?? 'Medium'));
-        $status = trim((string) ($data['status'] ?? 'Draft'));
-        $startDate = trim((string) ($data['start_date'] ?? ''));
-        $dueDate = trim((string) ($data['due_date'] ?? ''));
-        $targetCompletion = max(0, min(100, (int) ($data['target_completion_percentage'] ?? 0)));
-        $kpiName = trim((string) ($data['kpi_name'] ?? ''));
-        $kpiTarget = trim((string) ($data['kpi_target'] ?? ''));
-        $expectedOutcome = trim((string) ($data['expected_outcome'] ?? ''));
-        $notes = trim((string) ($data['smart_notes'] ?? ''));
-        $progressPercentage = max(0, min(100, (int) ($data['progress_percentage'] ?? 0)));
-        $progressNotes = trim((string) ($data['progress_notes'] ?? ''));
-        $goalType = trim((string) ($data['goal_type'] ?? ''));
-
-        if ($notes !== '' && $goalType !== '') {
-            $notes .= "\nGoal Type: {$goalType}";
-        } elseif ($goalType !== '') {
-            $notes = "Goal Type: {$goalType}";
-        }
-
         try {
-            $sql = "INSERT INTO pm_goals (
-                        employee_id,
-                        employee_name,
-                        department,
-                        position,
-                        supervisor_id,
-                        supervisor_name,
-                        goal_title,
-                        goal_description,
-                        goal_category,
-                        priority_level,
-                        start_date,
-                        due_date,
-                        target_completion_percentage,
-                        kpi_name,
-                        kpi_target,
-                        expected_outcome,
-                        smart_notes,
-                        progress_percentage,
-                        progress_notes,
-                        latest_update_date,
-                        status,
-                        approval_comment,
-                        rejection_reason,
-                        completion_date,
-                        created_at,
-                        updated_at
-                    ) VALUES (
-                        :employee_id,
-                        :employee_name,
-                        :department,
-                        :position,
-                        :supervisor_id,
-                        :supervisor_name,
-                        :goal_title,
-                        :goal_description,
-                        :goal_category,
-                        :priority_level,
-                        :start_date,
-                        :due_date,
-                        :target_completion_percentage,
-                        :kpi_name,
-                        :kpi_target,
-                        :expected_outcome,
-                        :smart_notes,
-                        :progress_percentage,
-                        :progress_notes,
-                        :latest_update_date,
-                        :status,
-                        :approval_comment,
-                        :rejection_reason,
-                        :completion_date,
-                        NOW(),
-                        NOW()
-                    )";
+            $employeeId = trim((string) ($data['employee_id'] ?? ''));
+            $employee = $this->getEmployeeRecord($employeeId);
+            if (!$employee) {
+                error_log('Unable to save performance goal: selected employee was not found.');
+                return false;
+            }
+            $employeeName = (string) $employee['employee_name'];
 
-            $stmt = $this->conn->prepare($sql);
+            $supervisorId = trim((string) ($data['supervisor_id'] ?? ($data['assigned_by'] ?? '')));
+            $supervisorName = trim((string) ($data['supervisor_name'] ?? ''));
+            if ($supervisorId !== '' && $supervisorName === '') {
+                $supervisorName = $this->getSupervisorDisplayName($supervisorId) ?? 'System';
+            }
+
+            $goalTitle = trim((string) ($data['goal_title'] ?? ''));
+            $goalDescription = trim((string) ($data['goal_description'] ?? ''));
+            $goalCategory = trim((string) ($data['goal_category'] ?? 'Performance'));
+            $priorityLevel = trim((string) ($data['priority_level'] ?? 'Medium'));
+            $status = trim((string) ($data['status'] ?? 'Draft'));
+            $startDate = trim((string) ($data['start_date'] ?? ''));
+            $dueDate = trim((string) ($data['due_date'] ?? ''));
+            $targetCompletion = max(0, min(100, (int) ($data['target_completion_percentage'] ?? 0)));
+            $kpiName = trim((string) ($data['kpi_name'] ?? ''));
+            $kpiTarget = trim((string) ($data['kpi_target'] ?? ''));
+            $expectedOutcome = trim((string) ($data['expected_outcome'] ?? ''));
+            $notes = trim((string) ($data['smart_notes'] ?? ''));
+            $progressPercentage = max(0, min(100, (int) ($data['progress_percentage'] ?? 0)));
+            $progressNotes = trim((string) ($data['progress_notes'] ?? ''));
+            $goalType = trim((string) ($data['goal_type'] ?? ''));
+
+            if ($notes !== '' && $goalType !== '') {
+                $notes .= "\nGoal Type: {$goalType}";
+            } elseif ($goalType !== '') {
+                $notes = "Goal Type: {$goalType}";
+            }
+
             $approvalComment = trim((string) ($data['approval_comment'] ?? ''));
             $rejectionReason = trim((string) ($data['rejection_reason'] ?? ''));
             $completionDate = trim((string) ($data['completion_date'] ?? ''));
             $latestUpdateDate = !empty($data['latest_update_date']) ? trim((string) $data['latest_update_date']) : date('Y-m-d');
+            $goalColumns = $this->getTableColumns('pm_goals');
+            $values = [
+                'employee_id' => [(int) $employeeId, PDO::PARAM_INT],
+                'employee_name' => [$employeeName, PDO::PARAM_STR],
+                'department' => [null, PDO::PARAM_NULL],
+                'position' => [null, PDO::PARAM_NULL],
+                'supervisor_id' => [$supervisorId !== '' ? (int) $supervisorId : null, $supervisorId !== '' ? PDO::PARAM_INT : PDO::PARAM_NULL],
+                'supervisor_name' => [$supervisorName !== '' ? $supervisorName : 'System', PDO::PARAM_STR],
+                'goal_title' => [$goalTitle, PDO::PARAM_STR],
+                'goal_description' => [$goalDescription, PDO::PARAM_STR],
+                'goal_category' => [$goalCategory !== '' ? $goalCategory : 'Performance', PDO::PARAM_STR],
+                'goal_type' => [$goalType !== '' ? $goalType : 'Individual Goal', PDO::PARAM_STR],
+                'priority_level' => [$priorityLevel !== '' ? $priorityLevel : 'Medium', PDO::PARAM_STR],
+                'start_date' => [$startDate !== '' ? $startDate : null, $startDate !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'due_date' => [$dueDate !== '' ? $dueDate : null, $dueDate !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'target_completion_percentage' => [$targetCompletion, PDO::PARAM_INT],
+                'kpi_name' => [$kpiName !== '' ? $kpiName : null, $kpiName !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'kpi_target' => [$kpiTarget !== '' ? $kpiTarget : null, $kpiTarget !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'expected_outcome' => [$expectedOutcome !== '' ? $expectedOutcome : null, $expectedOutcome !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'smart_notes' => [$notes !== '' ? $notes : null, $notes !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'progress_percentage' => [$progressPercentage, PDO::PARAM_INT],
+                'progress_notes' => [$progressNotes !== '' ? $progressNotes : null, $progressNotes !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'latest_update_date' => [$latestUpdateDate, PDO::PARAM_STR],
+                'status' => [$status !== '' ? $status : 'Draft', PDO::PARAM_STR],
+                'approval_comment' => [$approvalComment !== '' ? $approvalComment : null, $approvalComment !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'rejection_reason' => [$rejectionReason !== '' ? $rejectionReason : null, $rejectionReason !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+                'completion_date' => [$completionDate !== '' ? $completionDate : null, $completionDate !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL],
+            ];
+            $insertValues = array_intersect_key($values, $goalColumns);
+            $insertValues['created_at'] = ['NOW()', null];
+            $insertValues['updated_at'] = ['NOW()', null];
 
-            $stmt->bindValue(':employee_id', (int) $employeeId, PDO::PARAM_INT);
-            $stmt->bindValue(':employee_name', $employeeName ?: 'Unknown Employee', PDO::PARAM_STR);
-            $stmt->bindValue(':department', null, PDO::PARAM_NULL);
-            $stmt->bindValue(':position', '', PDO::PARAM_STR);
-            $stmt->bindValue(':supervisor_id', !empty($supervisorId) ? (int) $supervisorId : null, !empty($supervisorId) ? PDO::PARAM_INT : PDO::PARAM_NULL);
-            $stmt->bindValue(':supervisor_name', $supervisorName ?: 'System', PDO::PARAM_STR);
-            $stmt->bindValue(':goal_title', $goalTitle, PDO::PARAM_STR);
-            $stmt->bindValue(':goal_description', $goalDescription, PDO::PARAM_STR);
-            $stmt->bindValue(':goal_category', $goalCategory ?: 'Performance', PDO::PARAM_STR);
-            $stmt->bindValue(':priority_level', $priorityLevel ?: 'Medium', PDO::PARAM_STR);
-            $stmt->bindValue(':start_date', $startDate !== '' ? $startDate : null, $startDate !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':due_date', $dueDate !== '' ? $dueDate : null, $dueDate !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':target_completion_percentage', $targetCompletion, PDO::PARAM_INT);
-            $stmt->bindValue(':kpi_name', $kpiName !== '' ? $kpiName : null, $kpiName !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':kpi_target', $kpiTarget !== '' ? $kpiTarget : null, $kpiTarget !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':expected_outcome', $expectedOutcome !== '' ? $expectedOutcome : null, $expectedOutcome !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':smart_notes', $notes !== '' ? $notes : null, $notes !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':progress_percentage', $progressPercentage, PDO::PARAM_INT);
-            $stmt->bindValue(':progress_notes', $progressNotes !== '' ? $progressNotes : null, $progressNotes !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':latest_update_date', $latestUpdateDate, PDO::PARAM_STR);
-            $stmt->bindValue(':status', $status ?: 'Draft', PDO::PARAM_STR);
-            $stmt->bindValue(':approval_comment', $approvalComment !== '' ? $approvalComment : null, $approvalComment !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':rejection_reason', $rejectionReason !== '' ? $rejectionReason : null, $rejectionReason !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
-            $stmt->bindValue(':completion_date', $completionDate !== '' ? $completionDate : null, $completionDate !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
+            if (!isset($insertValues['employee_id'], $insertValues['goal_title'], $insertValues['goal_description'])) {
+                error_log('Unable to save performance goal: pm_goals is missing required goal columns. Import the latest modules/performance/performance.sql.');
+                return false;
+            }
 
+            foreach (array_keys($insertValues) as $column) {
+                if (!isset($goalColumns[$column])) {
+                    unset($insertValues[$column]);
+                }
+            }
+
+            $columnSql = [];
+            $placeholderSql = [];
+            foreach ($insertValues as $column => $value) {
+                $columnSql[] = '`' . $column . '`';
+                $placeholderSql[] = $value[1] === null ? 'NOW()' : ':' . $column;
+            }
+
+            $stmt = $this->conn->prepare(
+                'INSERT INTO pm_goals (' . implode(', ', $columnSql) . ') VALUES (' . implode(', ', $placeholderSql) . ')'
+            );
+            foreach ($insertValues as $column => [$value, $type]) {
+                if ($type !== null) {
+                    $stmt->bindValue(':' . $column, $value, $value === null ? PDO::PARAM_NULL : $type);
+                }
+            }
             $stmt->execute();
 
             $goalId = (int) $this->conn->lastInsertId();

@@ -60,9 +60,10 @@ class GoalController
                     }
                     if ($this->goalService->saveGoal($data)) {
                         $_SESSION['goal_success'] = 'Goal created successfully.';
-                        $this->redirect();
+                        header('Location: ?page=goal-setting');
+                        exit;
                     }
-                    $_SESSION['goal_error'] = 'Unable to save the goal. Confirm database/goal_setting.sql was imported into the same HRMS database used by this site, then check the PHP error log for the database error.';
+                    $_SESSION['goal_error'] = 'Unable to save the goal. Check that the selected employee exists and that pm_goals matches the latest performance.sql schema.';
                     $this->redirect();
                     break;
 
@@ -133,9 +134,9 @@ class GoalController
                     $this->redirect();
                     break;
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log('Goal setting request failed: ' . $e->getMessage());
-            $_SESSION['goal_error'] = 'An unexpected error occurred.';
+            $_SESSION['goal_error'] = 'Unable to save the goal. Please check the server error log for the database details.';
             $this->redirect();
         }
     }
