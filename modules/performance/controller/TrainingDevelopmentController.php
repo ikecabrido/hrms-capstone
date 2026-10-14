@@ -43,10 +43,15 @@ class TrainingDevelopmentController
                 $this->redirect();
             }
 
-            if ($this->model->createRecommendation($data)) {
-                $_SESSION['training_success'] = 'Training recommendation saved successfully.';
-            } else {
-                $_SESSION['training_error'] = 'Unable to create the training recommendation.';
+            try {
+                if ($this->model->createRecommendation($data)) {
+                    $_SESSION['training_success'] = 'Training recommendation saved successfully.';
+                } else {
+                    $_SESSION['training_error'] = 'Unable to save recommendation. Confirm the training tables are installed and the employee is valid.';
+                }
+            } catch (Throwable $e) {
+                error_log('Training recommendation request failed: ' . $e->getMessage());
+                $_SESSION['training_error'] = 'Unable to save recommendation right now. Please try again or contact the system administrator.';
             }
 
             $this->redirect();
@@ -87,14 +92,31 @@ class TrainingDevelopmentController
 
     public function getDashboardData(array $filters = []): array
     {
-        return [
-            'stats' => $this->model->getDashboardStats(),
-            'recommendations' => $this->model->getRecommendations($filters),
-            'employees' => $this->model->getEmployees(),
-            'programs' => $this->model->getPrograms(),
-            'upcoming' => $this->model->getUpcomingTraining(),
-            'categorySummary' => $this->model->getCategorySummary(),
-        ];
+        try {
+            return [
+                'stats' => $this->model->getDashboardStats(),
+                'recommendations' => $this->model->getRecommendations($filters),
+                'employees' => $this->model->getEmployees(),
+                'programs' => $this->model->getPrograms(),
+                'upcoming' => $this->model->getUpcomingTraining(),
+                'categorySummary' => $this->model->getCategorySummary(),
+            ];
+        } catch (Throwable $e) {
+            error_log('Unable to load training development data: ' . $e->getMessage());
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $_SESSION['training_error'] = 'Unable to load training data. Please verify the performance database tables and contact the system administrator.';
+
+            return [
+                'stats' => [],
+                'recommendations' => [],
+                'employees' => [],
+                'programs' => [],
+                'upcoming' => [],
+                'categorySummary' => [],
+            ];
+        }
     }
 
     public function getMessages(): array

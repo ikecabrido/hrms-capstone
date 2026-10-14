@@ -234,75 +234,86 @@ class TrainingDevelopmentModel
     public function createRecommendation(array $data): bool
     {
         if (!$this->tableExists('pm_training_recommendations')) {
+            error_log('Unable to create training recommendation: pm_training_recommendations table does not exist.');
             return false;
         }
 
-        $employeeId = (int) ($data['employee_id'] ?? 0);
-        $programId = isset($data['training_program_id']) ? (int) $data['training_program_id'] : 0;
-        $priority = trim((string) ($data['priority_level'] ?? 'Medium'));
-        $status = trim((string) ($data['status'] ?? 'Pending'));
-        $recommendedBy = trim((string) ($data['recommended_by'] ?? 'System'));
-        $recommendationDate = trim((string) ($data['recommendation_date'] ?? date('Y-m-d')));
-        $reason = trim((string) ($data['recommendation_reason'] ?? ''));
-        $developmentArea = trim((string) ($data['development_area'] ?? ''));
-        $performanceGap = trim((string) ($data['performance_gap'] ?? ''));
+        try {
+            $employeeId = (int) ($data['employee_id'] ?? 0);
+            $programId = isset($data['training_program_id']) ? (int) $data['training_program_id'] : 0;
+            $priority = trim((string) ($data['priority_level'] ?? 'Medium'));
+            $status = trim((string) ($data['status'] ?? 'Pending'));
+            $recommendedBy = trim((string) ($data['recommended_by'] ?? 'System'));
+            $recommendationDate = trim((string) ($data['recommendation_date'] ?? date('Y-m-d')));
+            $reason = trim((string) ($data['recommendation_reason'] ?? ''));
+            $developmentArea = trim((string) ($data['development_area'] ?? ''));
+            $performanceGap = trim((string) ($data['performance_gap'] ?? ''));
 
-        if ($employeeId <= 0 || $reason === '' || $developmentArea === '') {
-            return false;
-        }
-
-        if ($programId > 0 && $this->tableExists('pm_training_programs')) {
-            $program = $this->fetchAll('SELECT training_title, training_category, skill_focus FROM pm_training_programs WHERE training_id = :training_id', [
-                ':training_id' => ['value' => $programId, 'type' => PDO::PARAM_INT],
-            ]);
-
-            if (!empty($program)) {
-                $developmentArea = $developmentArea === '' ? (string) ($program[0]['training_title'] ?? '') : $developmentArea;
+            if ($employeeId <= 0 || $reason === '' || $developmentArea === '') {
+                return false;
             }
+
+            if ($programId > 0 && $this->tableExists('pm_training_programs')) {
+                $program = $this->fetchAll('SELECT training_title, training_category, skill_focus FROM pm_training_programs WHERE training_id = :training_id', [
+                    ':training_id' => ['value' => $programId, 'type' => PDO::PARAM_INT],
+                ]);
+
+                if (!empty($program)) {
+                    $developmentArea = $developmentArea === '' ? (string) ($program[0]['training_title'] ?? '') : $developmentArea;
+                }
+            }
+
+            $sql = 'INSERT INTO pm_training_recommendations (
+                        employee_id,
+                        recommendation_date,
+                        source_type,
+                        source_id,
+                        development_area,
+                        performance_gap,
+                        recommendation_reason,
+                        priority_level,
+                        recommended_by,
+                        status,
+                        target_completion_date,
+                        created_at
+                    ) VALUES (
+                        :employee_id,
+                        :recommendation_date,
+                        :source_type,
+                        :source_id,
+                        :development_area,
+                        :performance_gap,
+                        :recommendation_reason,
+                        :priority_level,
+                        :recommended_by,
+                        :status,
+                        :target_completion_date,
+                        NOW()
+                    )';
+
+            $stmt = $this->conn->prepare($sql);
+            $stmt->bindValue(':employee_id', $employeeId, PDO::PARAM_INT);
+            $stmt->bindValue(':recommendation_date', $recommendationDate ?: date('Y-m-d'), PDO::PARAM_STR);
+            $stmt->bindValue(':source_type', $programId > 0 ? 'Program' : 'Manual', PDO::PARAM_STR);
+            $stmt->bindValue(':source_id', $programId > 0 ? $programId : null, $programId > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $stmt->bindValue(':development_area', $developmentArea, PDO::PARAM_STR);
+            $stmt->bindValue(':performance_gap', $performanceGap !== '' ? $performanceGap : $reason, PDO::PARAM_STR);
+            $stmt->bindValue(':recommendation_reason', $reason, PDO::PARAM_STR);
+            $stmt->bindValue(':priority_level', in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true) ? $priority : 'Medium', PDO::PARAM_STR);
+            $stmt->bindValue(':recommended_by', $recommendedBy !== '' ? $recommendedBy : 'System', PDO::PARAM_STR);
+            $stmt->bindValue(':status', in_array($status, ['Pending', 'Approved', 'Rejected', 'In Progress', 'Completed'], true) ? $status : 'Pending', PDO::PARAM_STR);
+            $targetCompletionDate = trim((string) ($data['target_completion_date'] ?? ''));
+            $stmt->bindValue(
+                ':target_completion_date',
+                $targetCompletionDate !== '' ? $targetCompletionDate : null,
+                $targetCompletionDate !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL
+            );
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log('Unable to create training recommendation: ' . $e->getMessage());
+            return false;
         }
-
-        $sql = 'INSERT INTO pm_training_recommendations (
-                    employee_id,
-                    recommendation_date,
-                    source_type,
-                    source_id,
-                    development_area,
-                    performance_gap,
-                    recommendation_reason,
-                    priority_level,
-                    recommended_by,
-                    status,
-                    target_completion_date,
-                    created_at
-                ) VALUES (
-                    :employee_id,
-                    :recommendation_date,
-                    :source_type,
-                    :source_id,
-                    :development_area,
-                    :performance_gap,
-                    :recommendation_reason,
-                    :priority_level,
-                    :recommended_by,
-                    :status,
-                    :target_completion_date,
-                    NOW()
-                )';
-
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bindValue(':employee_id', $employeeId, PDO::PARAM_INT);
-        $stmt->bindValue(':recommendation_date', $recommendationDate ?: date('Y-m-d'), PDO::PARAM_STR);
-        $stmt->bindValue(':source_type', $programId > 0 ? 'Program' : 'Manual', PDO::PARAM_STR);
-        $stmt->bindValue(':source_id', $programId > 0 ? $programId : null, $programId > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
-        $stmt->bindValue(':development_area', $developmentArea, PDO::PARAM_STR);
-        $stmt->bindValue(':performance_gap', $performanceGap !== '' ? $performanceGap : $reason, PDO::PARAM_STR);
-        $stmt->bindValue(':recommendation_reason', $reason, PDO::PARAM_STR);
-        $stmt->bindValue(':priority_level', in_array($priority, ['Low', 'Medium', 'High', 'Critical'], true) ? $priority : 'Medium', PDO::PARAM_STR);
-        $stmt->bindValue(':recommended_by', $recommendedBy !== '' ? $recommendedBy : 'System', PDO::PARAM_STR);
-        $stmt->bindValue(':status', in_array($status, ['Pending', 'Approved', 'Rejected', 'In Progress', 'Completed'], true) ? $status : 'Pending', PDO::PARAM_STR);
-        $stmt->bindValue(':target_completion_date', !empty($data['target_completion_date']) ? trim((string) $data['target_completion_date']) : null, PDO::PARAM_STR);
-
-        return $stmt->execute();
     }
 
     public function getCategorySummary(): array
