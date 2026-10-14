@@ -14,13 +14,24 @@ class Database
 
     public function __construct()
     {
-        // Look for Railway's environment variables first, default to local if missing
-        $this->host = getenv('DB_HOST') ?: "localhost";
-        $this->port = getenv('DB_PORT') ?: "3306"; // Default MySQL port
-        $this->db   = getenv('DB_DATABASE') ?: "payr_bcp";
-        $this->user = getenv('DB_USER') ?: "root";
-        $this->pass = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : "";
+        $configFile = dirname(__DIR__) . '/config.php';
 
+        if (file_exists($configFile)) {
+            $config = require $configFile;
+
+            $this->host = $config['host'];
+            $this->port = $config['port'];
+            $this->db   = $config['database'];
+            $this->user = $config['username'];
+            $this->pass = $config['password'];
+        } else {
+
+            $this->host = "host";
+            $this->port = "port";
+            $this->db   = "database";
+            $this->user = "username";
+            $this->pass = "password";
+        }
         try {
             // Added port mapping and upgraded charset to utf8mb4 (standard for modern MySQL)
             $dsn = "mysql:host={$this->host};port={$this->port};dbname={$this->db};charset=utf8mb4";
