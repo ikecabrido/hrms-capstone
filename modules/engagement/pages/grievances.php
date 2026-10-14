@@ -91,8 +91,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
                   <div class="row mb-3">
                      <div class="col-12 mb-2 grievance-list-toolbar">
-                      <p class="text-muted small mb-0">All Grievances.</p>
-                      <button type="button" class="btn btn-primary btn-sm" data-open-grievance-reports onclick="var reportModal=document.getElementById('grievance-report-modal');if(reportModal){reportModal.classList.add('is-open');reportModal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');}">
+                      <p class="grievance-list-title mb-0">All Grievances</p>
+                      <button type="button" class="btn btn-primary btn-sm grievance-reports-button" data-open-grievance-reports onclick="var reportModal=document.getElementById('grievance-report-modal');if(reportModal){reportModal.classList.add('is-open');reportModal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open');}">
                         <i class="fas fa-file-alt mr-1"></i> Reports
                       </button>
                     </div>
@@ -233,7 +233,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             </tr>
                           <?php endforeach; ?>
                         <?php else: ?>
-                          <tr><td colspan="10" class="text-center text-muted">No grievance records found.</td></tr>
+                          <tr class="grievance-empty-row"><td colspan="10"><i class="fas fa-inbox" aria-hidden="true"></i><span>No grievance records found.</span></td></tr>
                         <?php endif; ?>
                       </tbody>
                     </table>
@@ -241,17 +241,20 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 </div>
 
                 <div class="tab-pane fade<?= $activeGrievanceTab === 'management' ? ' show active' : '' ?>" id="management" role="tabpanel" aria-labelledby="management-tab">
-                  <div class="card card-success">
+                  <div class="card card-success grievance-management-card">
                     <div class="card-header">
                       <h3 class="card-title"><i class="fas fa-user-shield"></i> Grievance</h3>
                     </div>
                     <div class="card-body">
-                      <div class="row">
+                      <form id="management-update-form" class="grievance-management-form" method="POST" action="/hrms-capstone/modules/engagement/api/grievance.php?action=update_management" enctype="multipart/form-data" data-skip="true">
+                        <input type="hidden" name="management_action" value="1">
+                        <input type="hidden" name="grievance_id" id="management-grievance-id" value="">
+                        <div class="row grievance-management-selectors">
                         <div class="col-md-6">
                           <div class="form-group">
-                            <label>Choose grievance</label>
-                            <select class="form-control" id="management-grievance-select" onchange="document.getElementById('management-grievance-id').value=this.value;">
-                              <option value="">Select grievance record</option>
+                            <label for="management-grievance-select">Choose grievance</label>
+                            <select class="form-control" id="management-grievance-select" disabled onchange="document.getElementById('management-grievance-id').value=this.value;">
+                              <option value="">Loading grievance records...</option>
                               <?php foreach ($payload['grievances'] as $grievance): ?>
                                 <option value="<?= (int)($grievance['id'] ?? 0) ?>"
                                       data-status="<?= strtolower(trim(htmlspecialchars($grievance['status'] ?? ''))) ?>"
@@ -261,20 +264,13 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                                 <?= (int)($grievance['id'] ?? 0) ?> - <?= htmlspecialchars($grievance['subject'] ?? '') ?>
                               </option>
                               <?php endforeach; ?>
-                            </select>
+                              </select>
+                            </div>
                           </div>
-                        </div>
-                        <div class="col-md-6"></div>
-                      </div>
-                      <div id="management-form-alert" class="alert d-none" role="alert"></div>
-                      <form id="management-update-form" method="POST" action="/hrms-capstone/modules/engagement/api/grievance.php?action=update_management" enctype="multipart/form-data" data-skip="true">
-                        <input type="hidden" name="management_action" value="1">
-                        <input type="hidden" name="grievance_id" id="management-grievance-id" value="">
-                        <div class="row">
                           <div class="col-md-6">
                             <div class="form-group">
-                              <label>Status</label>
-                              <select class="form-control" name="status" id="management-status-select" onchange="var fields=document.getElementById('escalation-fields');var inputs=fields?fields.querySelectorAll('input,textarea'):[];var show=this.value.toLowerCase().trim()==='escalated';if(fields)fields.classList.toggle('d-none',!show);inputs.forEach(function(input){input.disabled=!show;});">
+                              <label for="management-status-select">Status</label>
+                              <select class="form-control" name="status" id="management-status-select" disabled onchange="var fields=document.getElementById('escalation-fields');var inputs=fields?fields.querySelectorAll('input,textarea'):[];var show=this.value.toLowerCase().trim()==='escalated';if(fields)fields.classList.toggle('d-none',!show);inputs.forEach(function(input){input.disabled=!show;});">
                                 <option value="Pending">Pending</option>
                                 <option value="Resolved">Resolved</option>
                                 <option value="Closed">Closed</option>
@@ -283,6 +279,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             </div>
                           </div>
                         </div>
+                        <div id="management-form-alert" class="alert d-none" role="alert"></div>
                         <div id="escalation-fields" class="border rounded p-3 mb-3 d-none">
                           <h5 class="mb-2">Escalation Details</h5>
                           <div class="form-group">
@@ -296,22 +293,22 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                         </div>
                         <!-- Investigation Notes removed from management UI per request -->
                         <div class="form-group">
-                          <label>HR Remarks</label>
-                          <textarea class="form-control" name="hr_remarks" rows="4" placeholder="Add HR remarks or actions taken"></textarea>
+                          <label for="management-hr-remarks">HR Remarks</label>
+                          <textarea class="form-control" id="management-hr-remarks" name="hr_remarks" rows="4" placeholder="Add HR remarks or actions taken" disabled></textarea>
                         </div>
                         <div class="form-group">
-                          <label>Final Resolution</label>
-                          <textarea class="form-control" name="final_resolution" rows="4" placeholder="Record the final resolution"></textarea>
+                          <label for="management-final-resolution">Final Resolution</label>
+                          <textarea class="form-control" id="management-final-resolution" name="final_resolution" rows="4" placeholder="Record the final resolution" disabled></textarea>
                         </div>
                         <div class="form-group">
                           <label>Supporting Documents</label>
-                          <input type="file" class="form-control-file" name="supporting_document">
+                          <input type="file" class="form-control-file" name="supporting_document" disabled>
                         </div>
                         <div class="form-check">
-                          <input type="checkbox" class="form-check-input" name="confidential" value="1">
+                          <input type="checkbox" class="form-check-input" name="confidential" value="1" disabled>
                           <label class="form-check-label">Mark as confidential</label>
                         </div>
-                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save"></i> Save Management Update</button>
+                        <button type="submit" class="btn btn-primary mt-3" disabled><i class="fas fa-save"></i> Save Management Update</button>
                       </form>
                     </div>
                   </div>
@@ -360,5 +357,3 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
       </div>
     </div>
   </div>
-
-

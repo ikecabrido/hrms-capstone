@@ -301,7 +301,8 @@
     const tbody = document.querySelector('#all-grievances-table tbody');
     if (!tbody || !Array.isArray(grievances)) return;
     if (!grievances.length) {
-      tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No grievance records found.</td></tr>';
+      tbody.innerHTML = '<tr class="grievance-empty-row"><td colspan="10"><i class="fas fa-inbox" aria-hidden="true"></i><span>No grievance records found.</span></td></tr>';
+      window.originalGrievanceRows = [];
       return;
     }
 
@@ -330,10 +331,14 @@
   function renderGrievanceManagementOptions(grievances) {
     const select = document.getElementById('management-grievance-select');
     if (!select || !Array.isArray(grievances)) return;
-    select.innerHTML = '<option value="">Select grievance record</option>' + grievances.map(function (grievance) {
+    const validGrievances = grievances.filter(function (grievance) {
+      return Number(grievance.id || grievance.eer_grievance_id || 0) > 0;
+    });
+    select.innerHTML = '<option value="">' + (validGrievances.length ? 'Select grievance record' : 'No grievance records available') + '</option>' + validGrievances.map(function (grievance) {
       const id = Number(grievance.id || grievance.eer_grievance_id || 0);
       return '<option value="' + id + '" data-status="' + htmlspecialchars(String(grievance.status || 'Pending').toLowerCase()) + '" data-escalation-level="' + htmlspecialchars(grievance.escalation_level || '') + '" data-escalation-reason="' + htmlspecialchars(grievance.escalation_reason || '') + '" data-compliance-record-id="' + Number(grievance.compliance_record_id || 0) + '">' + id + ' - ' + htmlspecialchars(grievance.subject || '') + '</option>';
     }).join('');
+    select.disabled = validGrievances.length === 0;
   }
 
   function renderGrievanceReportEmployees(grievances) {
@@ -390,6 +395,7 @@
       })
       .catch(function (error) {
         console.warn('[Grievance] API data load failed; keeping server-rendered fallback.', error);
+        updateManagementFormState();
       });
   }
 
@@ -441,6 +447,22 @@
 
       event.preventDefault();
       event.stopImmediatePropagation();
+
+      if (form.id === 'management-update-form') {
+        const grievanceSelect = document.getElementById('management-grievance-select');
+        if (!grievanceSelect || Number(grievanceSelect.value) <= 0) {
+          updateManagementFormState();
+          const alertBox = document.getElementById('management-form-alert');
+          if (alertBox) {
+            alertBox.className = 'alert alert-info';
+            alertBox.textContent = grievanceSelect && grievanceSelect.options.length > 1
+              ? 'Please select a grievance record before saving.'
+              : 'No grievance records are available to update.';
+            alertBox.classList.remove('d-none');
+          }
+          return;
+        }
+      }
 
       if (form.dataset.submitting === '1') return;
       form.dataset.submitting = '1';
@@ -745,19 +767,29 @@ function isFinalizedStatus(status) {
 }
 
 function updateManagementFormState() {
-  const selectedOption = dom('#management-grievance-select option:selected');
-  const status = String(dom('#management-status-select').val() || selectedOption.data('status') || '').toLowerCase().trim();
-  const escalationLevel = selectedOption.data('escalation-level') || '';
-  const escalationReason = selectedOption.data('escalation-reason') || '';
+  const grievanceSelect = document.getElementById('management-grievance-select');
+  const selectedOption = grievanceSelect && grievanceSelect.selectedIndex > 0
+    ? grievanceSelect.options[grievanceSelect.selectedIndex]
+    : null;
+  const hasRecords = Boolean(grievanceSelect && Array.from(grievanceSelect.options).some(function (option) {
+    return Number(option.value) > 0;
+  }));
+  const selectedId = grievanceSelect ? String(grievanceSelect.value || '').trim() : '';
+  const hasSelection = Boolean(selectedOption && Number(selectedId) > 0);
+  const statusSelect = document.getElementById('management-status-select');
+  const status = String(statusSelect && statusSelect.value || selectedOption && selectedOption.dataset.status || '').toLowerCase().trim();
+  const escalationLevel = selectedOption && selectedOption.dataset.escalationLevel || '';
+  const escalationReason = selectedOption && selectedOption.dataset.escalationReason || '';
   const finalized = isFinalizedStatus(status);
   const form = dom('#management-update-form');
-  const inputs = form.find('select[name="status"], textarea[name="hr_remarks"], textarea[name="final_resolution"], textarea[name="escalation_reason"], input[name="supporting_document"], input[name="confidential"], input[name="escalation_level"], button[type="submit"]');
+  const inputs = form.find('select[name="status"], textarea[name="hr_remarks"], textarea[name="final_resolution"], input[name="supporting_document"], input[name="confidential"], button[type="submit"]');
   const escalationFields = dom('#escalation-fields');
   const escalationLevelInput = dom('#management-escalation-level');
   const escalationReasonInput = dom('#management-escalation-reason');
   const alertBox = dom('#management-form-alert');
 
-  if (status === 'escalated') {
+  grievanceSelect && (grievanceSelect.disabled = !hasRecords);
+  if (hasSelection && status === 'escalated' && !finalized) {
     escalationFields.removeClass('d-none');
     escalationLevelInput.prop('disabled', false).val(escalationLevel);
     escalationReasonInput.prop('disabled', false).val(escalationReason);
@@ -767,17 +799,19 @@ function updateManagementFormState() {
     escalationReasonInput.prop('disabled', true).val('');
   }
 
-  if (finalized) {
+  if (finalized && hasSelection) {
     inputs.prop('disabled', true);
-    dom('#management-grievance-select').prop('disabled', false);
+    if (grievanceSelect) grievanceSelect.disabled = false;
     dom('#management-grievance-id').prop('disabled', false);
     alertBox.removeClass('alert-success alert-danger alert-info d-none').addClass('alert-warning').html('<i class="fas fa-lock"></i> This grievance is resolved or closed and cannot be edited.');
-  } else if (selectedOption.val()) {
+  } else if (hasSelection) {
     inputs.prop('disabled', false);
     alertBox.addClass('d-none').removeClass('alert-success alert-danger alert-warning alert-info').html('');
   } else {
-    inputs.prop('disabled', false);
-    alertBox.addClass('d-none').removeClass('alert-success alert-danger alert-warning alert-info').html('');
+    inputs.prop('disabled', true);
+    alertBox.removeClass('alert-success alert-danger alert-warning d-none')
+      .addClass('alert-info')
+      .text(hasRecords ? 'Select a grievance record to enable the management form.' : 'No grievance records are available to update.');
   }
 }
 
@@ -977,6 +1011,15 @@ function filterGrievances() {
 
   const currentRows = Array.from(tbody.querySelectorAll('.grievance-row'));
   const sourceRows = Array.from(new Set([...(window.originalGrievanceRows || []), ...currentRows]));
+  const emptyRow = tbody.querySelector('.grievance-empty-row');
+  if (!sourceRows.length) {
+    if (!emptyRow) {
+      tbody.innerHTML = '<tr class="grievance-empty-row"><td colspan="10"><i class="fas fa-inbox" aria-hidden="true"></i><span>No grievance records found.</span></td></tr>';
+    }
+    return;
+  }
+  if (emptyRow) emptyRow.remove();
+
   sourceRows.forEach(function (row) {
     const status = canonicalStatus(String(row.getAttribute('data-status') || ''));
     const category = normalize(String(row.getAttribute('data-category') || ''));
@@ -1022,7 +1065,7 @@ function filterGrievances() {
   });
 
   if (!rows.length) {
-    tbody.insertAdjacentHTML('beforeend', '<tr class="no-results-row"><td colspan="10" class="text-center text-muted">No grievance records match the current filters.</td></tr>');
+    tbody.insertAdjacentHTML('beforeend', '<tr class="no-results-row grievance-filter-empty-row"><td colspan="10"><i class="fas fa-filter" aria-hidden="true"></i><span>No grievance records match the current filters.</span></td></tr>');
   }
 }
 
@@ -1534,4 +1577,3 @@ function downloadPdf(filename, title, headers, rows, filters = {}) {
 function refreshGrievances() {
   location.reload();
 }
-

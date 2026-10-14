@@ -237,6 +237,25 @@ class RecognitionController
             return [];
         }
 
+        $reportSources = [
+            ['pm_performance_reports', ['report_id', 'employee_id']],
+            ['pm_reports', ['report_id', 'employee_id']],
+            ['pm_appraisals', ['appraisal_id', 'employee_id']],
+        ];
+        $hasPerformanceData = false;
+        foreach ($reportSources as [$table, $columns]) {
+            if ($this->recognition->tableHasColumns($table, $columns)) {
+                $stmt = $db->query("SELECT 1 FROM {$table} LIMIT 1");
+                if ($stmt->fetchColumn()) {
+                    $hasPerformanceData = true;
+                    break;
+                }
+            }
+        }
+        if (!$hasPerformanceData) {
+            return [];
+        }
+
         $joins = [];
         if ($this->recognition->tableHasColumns('pm_performance_reports', ['report_id', 'employee_id'])) {
             $joins[] = 'LEFT JOIN pm_performance_reports ppr ON e.employee_id = ppr.employee_id';

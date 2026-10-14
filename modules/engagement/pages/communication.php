@@ -46,11 +46,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     <i class="fas fa-bullhorn"></i> Announcements
                   </a>
                 </li>
-                <li class="nav-item">
-                  <a class="nav-link" id="notifications-tab" data-toggle="pill" href="#notifications" role="tab">
-                    <i class="fas fa-bell"></i> HR Notifications
-                  </a>
-                </li>
                 <?php if ($showPolicySharing && ($isHrAdmin || !empty($payload['lcm_policies']))): ?>
                 <li class="nav-item">
                   <a class="nav-link" id="policies-tab" data-toggle="pill" href="#policies" role="tab">
@@ -70,22 +65,26 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
                 <!-- Company Announcements Tab -->
                 <div class="tab-pane fade" id="announcements" role="tabpanel">
-                  <div class="row">
+                  <div class="row announcement-layout">
                     <div class="col-md-4">
-                      <div class="card card-warning">
-                        <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-plus-circle"></i> Post Announcement</h3>
+                      <div class="card announcement-composer">
+                        <div class="card-header announcement-composer-header">
+                          <div class="announcement-composer-icon"><i class="fas fa-bullhorn"></i></div>
+                          <div>
+                            <h3 class="card-title">Post Announcement</h3>
+                            <p>Share important updates with your team</p>
+                          </div>
                         </div>
                         <div class="card-body">
-                          <form method="POST" action="" data-skip="true">
+                          <form method="POST" action="" data-skip="true" class="announcement-form">
                             <input type="hidden" name="form_type" value="announcement">
                             <div class="form-group">
-                              <label>Title <span class="text-danger">*</span></label>
-                              <input type="text" class="form-control" name="title" required placeholder="Announcement title">
+                              <label for="announcement-title"><i class="fas fa-file-alt"></i> Title <span class="text-danger">*</span></label>
+                              <input id="announcement-title" type="text" class="form-control" name="title" required maxlength="200" placeholder="Enter announcement title...">
                             </div>
                             <div class="form-group">
-                              <label>Category</label>
-                              <select class="form-control" name="category">
+                              <label for="announcement-category"><i class="fas fa-list"></i> Category</label>
+                              <select id="announcement-category" class="form-control" name="category">
                                 <option value="general">General</option>
                                 <option value="company">Company News</option>
                                 <option value="events">Events</option>
@@ -94,26 +93,27 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                               </select>
                             </div>
                             <div class="form-group">
-                              <label>Priority</label>
-                              <select class="form-control" name="priority">
+                              <label for="announcement-priority"><i class="fas fa-flag"></i> Priority</label>
+                              <select id="announcement-priority" class="form-control" name="priority">
                                 <option value="normal">Normal</option>
                                 <option value="high">High</option>
                                 <option value="urgent">Urgent</option>
                               </select>
                             </div>
                             <div class="form-group">
-                              <label>Target Audience</label>
-                              <select class="form-control" name="target_audience">
+                              <label for="announcement-audience"><i class="fas fa-users"></i> Target Audience</label>
+                              <select id="announcement-audience" class="form-control" name="target_audience">
                                 <option value="all">All Employees</option>
                                 <option value="management">Management Only</option>
                                 <option value="staff">Staff Only</option>
                               </select>
                             </div>
                             <div class="form-group">
-                              <label>Content <span class="text-danger">*</span></label>
-                              <textarea class="form-control" name="content" rows="4" required placeholder="Announcement details..."></textarea>
+                              <label for="announcement-content"><i class="fas fa-file-alt"></i> Content <span class="text-danger">*</span></label>
+                              <textarea id="announcement-content" class="form-control" name="content" rows="4" maxlength="2000" required placeholder="Enter announcement details..."></textarea>
+                              <div class="announcement-character-count"><span id="announcement-content-count">0</span>/2000</div>
                             </div>
-                            <button type="submit" class="btn btn-info btn-block">
+                            <button type="submit" class="btn btn-info btn-block announcement-submit">
                               <i class="fas fa-paper-plane"></i> Post Announcement
                             </button>
                           </form>
@@ -122,34 +122,52 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                     </div>
 
                     <div class="col-md-8">
-                      <div class="card">
-                        <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-list"></i> Recent Announcements</h3>
-                          <div class="card-tools">
-
+                      <div class="card announcement-list-panel">
+                        <div class="card-header announcement-list-header">
+                          <div>
+                            <h3 class="card-title"><i class="fas fa-list"></i> Recent Announcements</h3>
+                            <p>Latest updates and important notices</p>
+                          </div>
+                          <div class="announcement-filter-wrap">
+                            <i class="fas fa-filter" aria-hidden="true"></i>
+                            <label class="sr-only" for="announcement-category-filter">Filter announcements</label>
+                            <select id="announcement-category-filter" class="form-control" aria-label="Filter announcements by category">
+                              <option value="">All</option>
+                              <option value="general">General</option>
+                              <option value="company">Company News</option>
+                              <option value="events">Events</option>
+                              <option value="achievements">Achievements</option>
+                              <option value="changes">Organizational Changes</option>
+                            </select>
+                            <i class="fas fa-chevron-down announcement-filter-chevron" aria-hidden="true"></i>
                           </div>
                         </div>
                         <div class="card-body">
                           <div id="announcements-container" class="communication-post-scroll">
                             <?php if (!empty($payload['announcements'])): ?>
                               <?php foreach (array_slice($payload['announcements'], 0, 5) as $announcement): ?>
-                                <div class="announcement-card card mb-3">
+                                <?php $announcementCategory = (string)($announcement['category'] ?? 'general'); ?>
+                                <div class="announcement-card card mb-3" data-category="<?= htmlspecialchars(strtolower(trim(preg_replace('/[^a-z0-9]+/i', '-', $announcementCategory), '-'))) ?>">
+                                  <div class="announcement-card-icon" aria-hidden="true"><i class="fas fa-bullhorn"></i></div>
                                   <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="announcement-heading d-flex justify-content-between align-items-start mb-2">
                                       <h6 class="card-title text-primary mb-1">
                                         <?= htmlspecialchars($announcement['title']) ?>
                                       </h6>
                                       <span class="badge badge-secondary">
                                         <?= ucfirst($announcement['priority'] ?? 'normal') ?>
                                       </span>
+                                      <button type="button" class="announcement-more" aria-label="View announcement details" title="View announcement details" onclick="viewFullAnnouncement(<?= (int)$announcement['eer_announcements_id'] ?>)">
+                                        <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+                                      </button>
                                     </div>
-                                    <p class="card-text text-muted small mb-2">
-                                      <i class="fas fa-calendar"></i> <?= date('M d, Y H:i', strtotime($announcement['created_at'])) ?> |
-                                      <i class="fas fa-tag"></i> <?= ucfirst($announcement['category'] ?? 'general') ?> |
-                                      <i class="fas fa-user"></i> <?= htmlspecialchars($announcement['author_name'] ?? 'Admin') ?>
-                                    </p>
+                                    <div class="announcement-meta">
+                                      <span><i class="fas fa-calendar"></i> <?= date('M d, Y H:i', strtotime($announcement['created_at'])) ?></span>
+                                      <span><i class="fas fa-tag"></i> <?= htmlspecialchars(ucfirst($announcementCategory)) ?></span>
+                                      <span><i class="fas fa-user"></i> <?= htmlspecialchars($announcement['author_name'] ?? 'Admin') ?></span>
+                                    </div>
                                     <?php $announcementContent = (string)($announcement['content'] ?? ''); ?>
-                                    <p class="card-text"><?= nl2br(htmlspecialchars(strlen($announcementContent) > 200 ? substr($announcementContent, 0, 200) . '...' : $announcementContent)) ?></p>
+                                    <p class="announcement-content"><?= nl2br(htmlspecialchars(strlen($announcementContent) > 200 ? substr($announcementContent, 0, 200) . '...' : $announcementContent)) ?></p>
                                     <?php if (strlen($announcementContent) > 200): ?>
                                       <button class="btn btn-sm btn-outline-primary" onclick="viewFullAnnouncement(<?= $announcement['eer_announcements_id'] ?>)">
                                         <i class="fas fa-eye"></i> Read More
@@ -163,83 +181,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                                 <i class="fas fa-bullhorn fa-3x mb-3"></i>
                                 <h5>No announcements yet</h5>
                                 <p>Company announcements will appear here.</p>
-                              </div>
-                            <?php endif; ?>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- HR Notifications Tab -->
-                <div class="tab-pane fade" id="notifications" role="tabpanel">
-                  <div class="row">
-                    <div class="col-md-12">
-                      <div class="card">
-                        <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-bell"></i> HR Notifications</h3>
-                        </div>
-                        <div class="card-body">
-                          <div id="notifications-container" class="communication-post-scroll">
-                            <?php if (!empty($payload['notifications']) || !empty($payload['lcm_notifications'])): ?>
-                              <?php foreach ($payload['notifications'] as $notification): ?>
-                                <?php $notificationType = strtolower((string)($notification['type'] ?? 'info')); ?>
-                                <div class="notification-item <?= !empty($notification['is_read']) ? 'notification-read' : 'notification-unread' ?>">
-                                  <div class="d-flex justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                      <div class="d-flex align-items-center mb-1">
-                                        <span class="badge badge-light notification-type-badge notification-type-badge--side">HR Update</span>
-                                        <i class="fas fa-bell text-primary mr-2"></i>
-                                        <h6 class="mb-0">HR Update Notification</h6>
-                                      </div>
-                                      <p class="text-muted small mb-1">
-                                        <i class="fas fa-calendar"></i> <?= date('M d, Y H:i', strtotime($notification['created_at'] ?? date('Y-m-d H:i:s'))) ?> |
-                                        <i class="fas fa-bolt"></i> Automatic HR update
-                                      </p>
-                                      <p class="mb-2"><?= htmlspecialchars($notification['message'] ?? 'No details') ?></p>
-                                    </div>
-                                    <div class="ml-3 notification-actions">
-                                      <?php if (!$notification['is_read']): ?>
-                                        <form method="POST" class="d-inline">
-                                          <input type="hidden" name="form_type" value="mark_read">
-                                          <input type="hidden" name="notification_id" value="<?= $notification['id'] ?>">
-                                          <button type="submit" class="btn btn-sm btn-outline-success">
-                                            <i class="fas fa-check"></i> Mark Read
-                                          </button>
-                                        </form>
-                                        <span class="badge badge-primary notification-new-badge">New</span>
-                                      <?php endif; ?>
-                                    </div>
-                                  </div>
-                                </div>
-                              <?php endforeach; ?>
-                              <?php foreach ($payload['lcm_notifications'] ?? [] as $notification): ?>
-                                <div class="notification-item <?= $notification['is_read'] ? 'notification-read' : 'notification-unread' ?>">
-                                  <div class="d-flex justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                      <div class="d-flex align-items-center mb-1">
-                                        <span class="badge badge-warning mr-2">Legal & Compliance</span>
-                                        <i class="fas fa-bell text-primary mr-2"></i>
-                                        <h6 class="mb-0"><?= htmlspecialchars($notification['title'] ?? $notification['message'] ?? 'Compliance Notification') ?></h6>
-                                        <?php if (empty($notification['is_read']) || $notification['is_read'] == 0): ?>
-                                          <span class="badge badge-primary ml-2">New</span>
-                                        <?php endif; ?>
-                                      </div>
-                                      <p class="text-muted small mb-1">
-                                        <i class="fas fa-calendar"></i> <?= date('M d, Y H:i', strtotime($notification['created_at'] ?? date('Y-m-d H:i:s'))) ?> |
-                                        <i class="fas fa-balance-scale"></i> Legal & Compliance Management
-                                      </p>
-                                      <p class="mb-2"><?= htmlspecialchars($notification['message'] ?? '') ?></p>
-                                    </div>
-                                  </div>
-                                </div>
-                              <?php endforeach; ?>
-                            <?php else: ?>
-                              <div class="text-center text-muted py-4">
-                                <i class="fas fa-bell fa-3x mb-3"></i>
-                                <h5>No notifications</h5>
-                                <p>HR notifications will appear here.</p>
                               </div>
                             <?php endif; ?>
                           </div>
@@ -629,18 +570,22 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
                 <!-- HR-Employee Messaging Tab -->
                 <div class="tab-pane fade" id="messaging" role="tabpanel">
-                  <div class="row">
+                  <div class="row messaging-layout">
                     <div class="col-md-4">
-                      <div class="card card-warning">
-                        <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-comments"></i> Send Message</h3>
+                      <div class="card message-composer">
+                        <div class="card-header message-composer-header">
+                          <div class="message-composer-icon"><i class="fas fa-paper-plane"></i></div>
+                          <div>
+                            <h3 class="card-title">Send Message</h3>
+                            <p>Send a message to your selected recipients</p>
+                          </div>
                         </div>
                         <div class="card-body">
-                          <form method="POST" action="" data-skip="true">
+                          <form method="POST" action="" data-skip="true" class="message-form">
                             <input type="hidden" name="form_type" value="message">
                             <div class="form-group">
-                              <label>To <span class="text-danger">*</span></label>
-                              <select class="form-control" name="receiver_id" required>
+                              <label for="message-recipient"><i class="fas fa-users"></i> To <span class="text-danger">*</span></label>
+                              <select id="message-recipient" class="form-control" name="receiver_id" required>
                                 <option value="">Select recipient...</option>
                                 <?php foreach ($payload['employees'] ?? [] as $employee): ?>
                                   <?php
@@ -657,28 +602,29 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                               </select>
                             </div>
                             <div class="form-group">
-                              <label>Message <span class="text-danger">*</span></label>
-                              <textarea class="form-control" name="message" rows="4" required placeholder="Type your message..."></textarea>
+                              <label for="message-content"><i class="fas fa-comment-alt"></i> Message <span class="text-danger">*</span></label>
+                              <textarea id="message-content" class="form-control" name="message" rows="6" maxlength="2000" required placeholder="Type your message..."></textarea>
+                              <div class="message-character-count"><span id="message-content-count">0</span>/2000</div>
                             </div>
-                            <button type="submit" class="btn btn-info btn-block">
+                            <button type="submit" class="btn btn-info btn-block message-submit">
                               <i class="fas fa-paper-plane"></i> Send Message
                             </button>
                           </form>
                         </div>
                       </div>
-
-                    
                     </div>
 
                     <div class="col-md-8">
-                      <div class="card">
-                        <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-inbox"></i> Message Threads</h3>
-                          <div class="card-tools">
-                            <div class="message-search-wrap">
-                              <label class="sr-only" for="message-search">Search messages</label>
-                              <input type="search" id="message-search" class="form-control" placeholder="Search messages..." autocomplete="off">
-                            </div>
+                      <div class="card message-threads-panel">
+                        <div class="card-header message-threads-header">
+                          <div>
+                            <h3 class="card-title"><i class="fas fa-comments"></i> Message Threads</h3>
+                            <p>View and manage your conversations</p>
+                          </div>
+                          <div class="message-search-wrap">
+                            <label class="sr-only" for="message-search">Search messages</label>
+                            <i class="fas fa-search" aria-hidden="true"></i>
+                            <input type="search" id="message-search" class="form-control" placeholder="Search messages..." autocomplete="off">
                           </div>
                         </div>
                         <div class="card-body message-thread">
@@ -686,17 +632,16 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             <?php if (!empty($payload['messageThreads'])): ?>
                               <?php foreach ($payload['messageThreads'] as $message): ?>
                                 <?php $isSent = false; ?>
-                                <div class="message-bubble <?= $isSent ? 'sent' : 'received' ?>" data-message-search="<?= htmlspecialchars(strtolower(trim(($message['sender_name'] ?? $message['sender_id']) . ' ' . ($message['message'] ?? '') . ' ' . date('H:i', strtotime($message['timestamp'])))), ENT_QUOTES, 'UTF-8') ?>">
-                                  <div class="p-2">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                      <small class="text-muted">
-                                        <i class="fas fa-user"></i> <?= htmlspecialchars($message['sender_name'] ?? $message['sender_id']) ?>
-                                      </small>
-                                      <small class="text-muted">
-                                        <i class="fas fa-clock"></i> <?= date('H:i', strtotime($message['timestamp'])) ?>
-                                      </small>
+                                <?php $messageSender = (string)($message['sender_name'] ?? $message['sender_id']); ?>
+                                <?php $messageInitials = implode('', array_map(static function ($part) { return strtoupper(substr($part, 0, 1)); }, array_slice(preg_split('/\s+/', trim($messageSender)) ?: [], 0, 2))); ?>
+                                <div class="message-bubble <?= $isSent ? 'sent' : 'received' ?>" data-message-search="<?= htmlspecialchars(strtolower(trim($messageSender . ' ' . ($message['message'] ?? '') . ' ' . date('H:i', strtotime($message['timestamp'])))), ENT_QUOTES, 'UTF-8') ?>">
+                                  <div class="message-avatar" aria-hidden="true"><?= htmlspecialchars($messageInitials ?: '??') ?></div>
+                                  <div class="message-summary">
+                                    <div class="message-summary-heading">
+                                      <strong><?= htmlspecialchars($messageSender) ?></strong>
+                                      <time datetime="<?= htmlspecialchars(date(DATE_ATOM, strtotime($message['timestamp']))) ?>"><i class="fas fa-clock" aria-hidden="true"></i> <?= date('M d, Y, g:i A', strtotime($message['timestamp'])) ?></time>
                                     </div>
-                                    <p class="mb-0"><?= htmlspecialchars($message['message']) ?></p>
+                                    <p><?= htmlspecialchars($message['message']) ?></p>
                                   </div>
                                 </div>
                               <?php endforeach; ?>
@@ -745,5 +690,3 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 <!-- Modal Backdrop -->
 <div id="announcement-modal-backdrop" class="modal-backdrop fade" style="display: none; z-index: 1040;"></div>
       
-
-

@@ -72,8 +72,8 @@ if ($surveyFormToken === '') {
                 <div class="tab-pane fade" id="satisfaction" role="tabpanel" aria-labelledby="satisfaction-tab">
                   <div class="row">
                     <div class="col-lg-7">
-                      <div class="card card-secondary card-outline">
-                        <div class="card-header">
+                      <div class="card card-secondary card-outline survey-create-card">
+                        <div class="card-header survey-form-header">
                           <h3 class="card-title"><i class="fas fa-chart-line mr-2"></i>Create Employee Satisfaction Survey</h3>
                           <div class="card-tools">
 
@@ -85,27 +85,27 @@ if ($surveyFormToken === '') {
                             <input type="hidden" name="survey_type" value="satisfaction">
                             <input type="hidden" name="survey_form_token" value="<?= htmlspecialchars($surveyFormToken) ?>">
                             <div class="form-group">
-                              <label for="survey-title">Survey Title</label>
+                              <label for="survey-title"><i class="fas fa-file-alt"></i> Survey Title <span class="text-danger">*</span></label>
                               <input id="survey-title" type="text" name="title" class="form-control" placeholder="Enter survey title" required>
                             </div>
                             <div class="form-group">
-                              <label for="survey-description">Description (Optional)</label>
+                              <label for="survey-description"><i class="fas fa-file-alt"></i> Description (Optional)</label>
                               <textarea id="survey-description" name="description" class="form-control" rows="2" placeholder="Brief description of the survey purpose"></textarea>
                             </div>
                             <div class="form-group">
-                              <label for="survey-questions">Questions (one per line)</label>
+                              <label for="survey-questions"><i class="fas fa-question-circle"></i> Questions (one per line) <span class="text-danger">*</span></label>
                               <textarea id="survey-questions" name="questions_raw" class="form-control" rows="5" placeholder="How satisfied are you with your work environment?
 How would you rate your work-life balance?
 What improvements would you suggest?" required></textarea>
                               <small class="form-text text-muted">Enter each question on a new line</small>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check survey-anonymous-option">
                               <input class="form-check-input" type="checkbox" id="is-anonymous" name="is_anonymous" value="1">
                               <label class="form-check-label" for="is-anonymous">
                                 Allow anonymous responses
                               </label>
                             </div>
-                            <button class="btn btn-success" type="submit">Create Satisfaction Survey</button>
+                            <button class="btn btn-success survey-submit" type="submit"><i class="fas fa-paper-plane mr-2"></i>Create Survey</button>
                           </form>
                         </div>
                       </div>
@@ -114,8 +114,8 @@ What improvements would you suggest?" required></textarea>
 
                   <div class="row">
                     <div class="col-12">
-                      <div class="card card-info card-outline">
-                        <div class="card-header"><h3 class="card-title">Available Satisfaction Surveys</h3></div>
+                      <div class="card card-info card-outline survey-list-card">
+                        <div class="card-header survey-list-header"><h3 class="card-title"><i class="fas fa-chart-bar"></i> Available Satisfaction Surveys</h3></div>
                         <div class="card-body">
                           <div id="satisfaction-surveys-list">
                             <?php
@@ -149,15 +149,15 @@ What improvements would you suggest?" required></textarea>
                 <div class="tab-pane fade" id="pulse" role="tabpanel" aria-labelledby="pulse-tab">
                   <div class="row">
                     <div class="col-12">
-                      <div class="card card-warning card-outline">
-                        <div class="card-header">
+                      <div class="card card-warning card-outline pulse-create-card">
+                        <div class="card-header survey-form-header">
                           <h3 class="card-title"><i class="fas fa-bolt mr-2"></i>Quick Pulse Surveys</h3>
                           <div class="card-tools">
 
                           </div>
                         </div>
                         <div class="card-body">
-                          <div class="alert alert-info">
+                          <div class="alert alert-info pulse-survey-note">
                             <i class="fas fa-info-circle mr-2"></i>
                             <strong>Pulse Surveys</strong> are short, frequent surveys designed to quickly gauge employee sentiment on specific topics.
                           </div>
@@ -167,21 +167,21 @@ What improvements would you suggest?" required></textarea>
                             <input type="hidden" name="survey_type" value="pulse">
                             <input type="hidden" name="survey_form_token" value="<?= htmlspecialchars($surveyFormToken) ?>">
                             <div class="form-group">
-                              <label for="pulse-title">Pulse Survey Title</label>
+                              <label for="pulse-title"><i class="far fa-comment-dots"></i> Pulse Survey Title <span class="text-danger">*</span></label>
                               <input id="pulse-title" type="text" name="title" class="form-control" placeholder="e.g., How are you feeling about the new policy?" required>
                             </div>
                             <div class="form-group">
-                              <label for="pulse-question">Single Question</label>
+                              <label for="pulse-question"><i class="fas fa-question-circle"></i> Single Question <span class="text-danger">*</span></label>
                               <input id="pulse-question" type="text" name="questions_raw" class="form-control" placeholder="On a scale of 1-5, how satisfied are you with...?" required>
                               <small class="form-text text-muted">Pulse surveys should have only one focused question</small>
                             </div>
-                            <div class="form-check">
+                            <div class="form-check survey-anonymous-option">
                               <input class="form-check-input" type="checkbox" id="pulse-anonymous" name="is_anonymous" value="1" checked>
                               <label class="form-check-label" for="pulse-anonymous">
                                 Allow anonymous responses (recommended for pulse surveys)
                               </label>
                             </div>
-                            <button class="btn btn-warning" type="submit">Create Pulse Survey</button>
+                            <button class="btn btn-warning survey-submit" type="submit"><i class="fas fa-paper-plane mr-2"></i>Create Pulse Survey</button>
                           </form>
                         </div>
                       </div>
@@ -190,8 +190,8 @@ What improvements would you suggest?" required></textarea>
 
                   <div class="row">
                     <div class="col-12">
-                      <div class="card card-light card-outline">
-                        <div class="card-header"><h3 class="card-title">Active Pulse Surveys</h3></div>
+                      <div class="card card-light card-outline survey-list-card pulse-list-card">
+                        <div class="card-header survey-list-header"><h3 class="card-title"><i class="fas fa-chart-bar"></i> Active Pulse Surveys</h3></div>
                         <div class="card-body">
                           <div id="pulse-surveys-list">
                             <?php
@@ -208,7 +208,7 @@ What improvements would you suggest?" required></textarea>
                             <?php else: ?>
                               <div class="row">
                                 <?php foreach ($pulseSurveys as $survey): ?>
-                                  <div class="col-md-6 mb-3">
+                                  <div class="col-12 mb-2">
                                     <div class="card border-warning"><div class="card-body pulse-result-row">
                                       <div class="pulse-result-details">
                                         <h6 class="card-title"><?= htmlspecialchars($survey['title'] ?? '') ?></h6>
@@ -231,8 +231,8 @@ What improvements would you suggest?" required></textarea>
                <div class="tab-pane fade" id="hr-feedback" role="tabpanel" aria-labelledby="hr-feedback-tab">
                   <div class="row feedback-layout-row">
                       <div class="col-lg-7">
-                      <div class="card card-primary card-outline">
-                        <div class="card-header">
+                      <div class="card card-primary card-outline feedback-form-card">
+                        <div class="card-header survey-form-header">
                           <h3 class="card-title"><i class="fas fa-user-tie mr-2"></i>Provide Feedback to Employee</h3>
                         </div>
                         <div class="card-body">
@@ -244,7 +244,7 @@ What improvements would you suggest?" required></textarea>
                           <form method="post" class="hr-feedback-form" data-skip="true">
                             <input type="hidden" name="action" value="hr_feedback">
                             <div class="form-group">
-                              <label for="feedback-employee">Select Employee</label>
+                              <label for="feedback-employee"><i class="fas fa-user"></i> Select Employee <span class="text-danger">*</span></label>
                               <select id="feedback-employee" name="employee_id" class="form-control" required>
                                 <option value="">Select an employee</option>
                                 <?php foreach ($payload['employees'] as $employee): ?>
@@ -261,7 +261,7 @@ What improvements would you suggest?" required></textarea>
                               </select>
                             </div>
                             <div class="form-group">
-                              <label for="feedback-category">Category</label>
+                              <label for="feedback-category"><i class="fas fa-tag"></i> Category <span class="text-danger">*</span></label>
                               <select id="feedback-category" name="category" class="form-control" required>
                                 <option value="">Select a category</option>
                                 <option value="performance">Performance</option>
@@ -273,7 +273,7 @@ What improvements would you suggest?" required></textarea>
                               </select>
                             </div>
                             <div class="form-group">
-                              <label for="feedback-rating">Overall Rating</label>
+                              <label for="feedback-rating"><i class="fas fa-star"></i> Overall Rating <span class="text-danger">*</span></label>
                               <select id="feedback-rating" name="rating" class="form-control" required>
                                 <option value="">Select rating</option>
                                 <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
@@ -284,7 +284,7 @@ What improvements would you suggest?" required></textarea>
                               </select>
                             </div>
                             <div class="form-group">
-                              <label for="hr-feedback">Feedback Comments</label>
+                              <label for="hr-feedback"><i class="fas fa-comments"></i> Feedback Comments <span class="text-danger">*</span></label>
                               <textarea id="hr-feedback" name="comments" class="form-control" rows="5" placeholder="Provide detailed feedback to help the employee improve." required></textarea>
                             </div>
                             <div class="feedback-form-actions">
@@ -315,108 +315,6 @@ What improvements would you suggest?" required></textarea>
                     </div>
                   </div>
                 </div>
-
-                <style>
-                  #feedbackHistoryDetails {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 1060;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 1.25rem;
-                    background: rgba(12, 32, 50, 0.5);
-                  }
-
-                  #feedbackHistoryDetails[hidden] {
-                    display: none !important;
-                  }
-
-                  #feedbackHistoryDetails .feedback-history-modal-dialog {
-                    width: min(1180px, 100%) !important;
-                    max-height: min(760px, calc(100vh - 2.5rem)) !important;
-                    overflow: hidden !important;
-                    background: #ffffff !important;
-                    border: 1px solid rgba(23, 95, 154, 0.18) !important;
-                    border-radius: 12px !important;
-                    box-shadow: 0 15px 40px rgba(14, 39, 64, 0.22) !important;
-                  }
-
-                  #feedbackHistoryDetails .feedback-history-modal-header {
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: space-between !important;
-                    padding: 1rem 1.35rem !important;
-                    background: linear-gradient(180deg, #1a9ad8 0%, #0f7ec0 100%) !important;
-                    color: #ffffff !important;
-                  }
-
-                  #feedbackHistoryDetails .feedback-history-modal-header h3 {
-                    margin: 0 !important;
-                    font-size: 1.05rem !important;
-                    font-weight: 700 !important;
-                    color: #ffffff !important;
-                  }
-
-                  #feedbackHistoryDetails .feedback-history-close {
-                    width: 38px !important;
-                    height: 38px !important;
-                    padding: 0 !important;
-                    border: 0 !important;
-                    border-radius: 50% !important;
-                    background: rgba(255, 255, 255, 0.18) !important;
-                    color: #ffffff !important;
-                    font-size: 1.8rem !important;
-                  }
-
-                  #feedbackHistoryDetails .feedback-history-modal-body {
-                    max-height: calc(min(760px, 100vh - 2.5rem) - 70px);
-                    overflow: auto;
-                    background: #ffffff;
-                    padding: 0;
-                  }
-
-                  #feedback-history-list table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    background: #fff;
-                  }
-
-                  #feedback-history-list th {
-                    background: #f5f9ff;
-                    color: #3a5879;
-                    font-size: 0.8rem;
-                    font-weight: 800;
-                    text-transform: uppercase;
-                    letter-spacing: 0.04em;
-                    text-align: left;
-                    padding: 0.9rem 1rem;
-                    border-bottom: 1px solid #dfeaf4;
-                  }
-
-                  #feedback-history-list td {
-                    padding: 0.9rem 1rem;
-                    border-bottom: 1px solid #e7eef7;
-                    color: #1b3c64;
-                    vertical-align: top;
-                    line-height: 1.5;
-                  }
-
-                  #feedback-history-list td[colspan="4"] {
-                    background: #fbfdff;
-                    padding-top: 0.5rem;
-                    padding-bottom: 1.15rem;
-                  }
-
-                  #feedback-history-list td[colspan="4"] strong {
-                    color: #0f3e71;
-                    font-weight: 800;
-                  }
-
-                  body.feedback-history-modal-open {
-                    overflow: hidden;
-                  }
-                </style>
 
                 <script>
                   document.addEventListener('DOMContentLoaded', function () {

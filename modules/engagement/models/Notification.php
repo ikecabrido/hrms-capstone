@@ -68,10 +68,12 @@ class Notification extends BaseModel
         return (int)$stmt->fetchColumn();
     }
 
-    public function markAsRead($notification_id)
+    public function markAsReadForEmployee($notificationId, $employeeId)
     {
-        $sql = 'UPDATE eer_notifications SET is_read = 1 WHERE id = :id';
-        $this->execute($sql, ['id' => $notification_id]);
+        return $this->execute(
+            'UPDATE eer_notifications SET is_read = 1 WHERE id = :id AND employee_id = :employee_id',
+            ['id' => (int)$notificationId, 'employee_id' => (int)$employeeId]
+        )->rowCount();
     }
 
     public function markAllAsReadForEmployee($employeeId)

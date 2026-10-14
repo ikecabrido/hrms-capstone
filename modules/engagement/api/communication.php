@@ -84,7 +84,14 @@ try {
             if (empty($employeeId)) {
                 jsonResponse(['error' => 'Current user is not linked to an employee record'], 400);
             }
-            $id = $ctrl->postAnnouncement($data['title'], $data['content'], (int)$employeeId);
+            $id = $ctrl->postAnnouncement(
+                $data['title'],
+                $data['content'],
+                (int)$employeeId,
+                $data['category'] ?? 'general',
+                $data['priority'] ?? 'normal',
+                $data['target_audience'] ?? 'all'
+            );
             jsonResponse(['id' => $id], 201);
             break;
         case 'post_department_update':
@@ -243,11 +250,23 @@ try {
             jsonResponse(['share_id' => $shareId], 201);
             break;
         case 'mark_notification_read':
-            if (empty($data['notification_id'])) {
-                jsonResponse(['error' => 'Notification ID is required'], 400);
+            $notificationId = (int)($data['notification_id'] ?? 0);
+            $notificationSource = $data['source'] ?? 'hr';
+            $employeeId = resolveCommunicationEmployeeId();
+            if ($notificationId <= 0) {
+                jsonResponse(['error' => 'A valid notification ID is required'], 400);
             }
-            $ctrl->markNotificationAsRead($data['notification_id']);
-            jsonResponse(['success' => true], 200);
+            if (empty($employeeId)) {
+                jsonResponse(['error' => 'Current user is not linked to an employee record'], 400);
+            }
+            if ($notificationSource === 'lcm') {
+                $updated = $ctrl->markLcmNotificationAsReadForEmployee($notificationId, (int)$employeeId);
+            } elseif ($notificationSource === 'hr') {
+                $updated = $ctrl->markNotificationAsReadForEmployee($notificationId, (int)$employeeId);
+            } else {
+                jsonResponse(['error' => 'Invalid notification source'], 400);
+            }
+            jsonResponse(['success' => true, 'updated' => $updated], 200);
             break;
         case 'mark_all_notifications_read':
             $employeeId = resolveCommunicationEmployeeId();
@@ -263,4 +282,3 @@ try {
 } catch (Exception $e) {
     jsonResponse(['error' => $e->getMessage()], 500);
 }
-

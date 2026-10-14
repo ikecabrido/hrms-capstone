@@ -1,5 +1,7 @@
-﻿<?php
+<?php
 namespace App\Models;
+
+require_once __DIR__ . '/BaseModel.php';
 
 class SurveyTarget extends BaseModel
 {
@@ -26,4 +28,3 @@ class SurveyTarget extends BaseModel
         return $this->db->lastInsertId();
     }
 }
-

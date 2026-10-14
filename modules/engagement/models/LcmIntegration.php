@@ -50,6 +50,30 @@ class LcmIntegration extends BaseModel
         return $this->execute($sql, $params)->fetchAll();
     }
 
+    public function markNotificationAsReadForEmployee(int $notificationId, int $employeeId)
+    {
+        if (!$this->hasTable('lc_notifications')) {
+            return 0;
+        }
+
+        return $this->execute(
+            'UPDATE lc_notifications SET is_read = 1 WHERE id = :id AND employee_id = :employee_id',
+            ['id' => $notificationId, 'employee_id' => $employeeId]
+        )->rowCount();
+    }
+
+    public function markAllNotificationsAsReadForEmployee(int $employeeId)
+    {
+        if (!$this->hasTable('lc_notifications')) {
+            return 0;
+        }
+
+        return $this->execute(
+            'UPDATE lc_notifications SET is_read = 1 WHERE employee_id = :employee_id AND is_read = 0',
+            ['employee_id' => $employeeId]
+        )->rowCount();
+    }
+
     public function getPolicyAcknowledgmentsForEmployee(int $employeeId = null)
     {
         if (!$this->hasTable('lc_acknowledgment_log')) {
@@ -258,4 +282,3 @@ class LcmIntegration extends BaseModel
         return [];
     }
 }
-

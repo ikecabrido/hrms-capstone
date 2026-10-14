@@ -28,23 +28,18 @@ class CommunicationController
     {
         $data = [
             'announcements' => $this->getAnnouncements(),
-            'notifications' => $employeeId !== null && $employeeId !== ''
-                ? $this->getNotificationsForEmployee($employeeId)
-                : $this->getNotifications(),
             'department_updates' => $this->getDepartmentUpdates(),
             'departments' => $this->lcm->getDepartments(),
             'policies' => $this->getSharedLcmPolicies(),
             'policy_updates' => $this->getPolicyUpdates(),
             'messageThreads' => (new MessageController())->messageThreads($employeeId),
             'employees' => $this->employee->all(),
-            'lcm_notifications' => [],
             'lcm_policies' => [],
             'lcm_acknowledgments' => [],
             'lcm_documents' => [],
         ];
 
         if ($employeeId !== null && $employeeId !== '') {
-            $data['lcm_notifications'] = $this->lcm->getNotificationsForEmployee((int)$employeeId);
             $data['lcm_acknowledgments'] = $this->lcm->getPolicyAcknowledgmentsForEmployee($includeAllLcmData ? null : (int)$employeeId);
             $data['lcm_documents'] = $this->lcm->getEmployeeDocumentsForEmployee($includeAllLcmData ? null : (int)$employeeId);
         }
@@ -232,13 +227,20 @@ class CommunicationController
         return $this->notification->countUnreadForEmployee($employeeId);
     }
 
-    public function markNotificationAsRead($notification_id)
+    public function markNotificationAsReadForEmployee($notificationId, $employeeId)
     {
-        return $this->notification->markAsRead($notification_id);
+        return $this->notification->markAsReadForEmployee($notificationId, $employeeId);
     }
 
     public function markAllNotificationsAsRead($employeeId)
     {
-        return $this->notification->markAllAsReadForEmployee($employeeId);
+        $updated = $this->notification->markAllAsReadForEmployee($employeeId);
+        $updated += $this->lcm->markAllNotificationsAsReadForEmployee((int)$employeeId);
+        return $updated;
+    }
+
+    public function markLcmNotificationAsReadForEmployee($notificationId, $employeeId)
+    {
+        return $this->lcm->markNotificationAsReadForEmployee((int)$notificationId, (int)$employeeId);
     }
 }

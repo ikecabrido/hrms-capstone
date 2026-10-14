@@ -1,7 +1,11 @@
 <?php
+$scriptPath = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '/auth/logout.php');
+$modulesPosition = strpos($scriptPath, '/modules/');
+$appBasePath = $modulesPosition === false ? rtrim(dirname(dirname($scriptPath)), '/') : substr($scriptPath, 0, $modulesPosition);
+
 // Clear the saved page cookie before destroying session
-setcookie('lastEngagementPage', '', time() - 3600, '/hrms-capstone/modules/engagement/');
-setcookie('openModal', '', time() - 3600, '/hrms-capstone/modules/engagement/');
+setcookie('lastEngagementPage', '', time() - 3600, $appBasePath . '/modules/engagement/');
+setcookie('openModal', '', time() - 3600, $appBasePath . '/modules/engagement/');
 
 session_start();
 session_destroy();
@@ -74,7 +78,7 @@ session_destroy();
         }
 
         // Redirect to login page
-        window.location.href = '/hrms-capstone/index.php';
+        window.location.href = <?= json_encode(($appBasePath ?: '') . '/index.php') ?>;
     </script>
 </body>
 </html>

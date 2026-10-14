@@ -248,6 +248,38 @@
   margin: 0 !important;
 }
 
+.grievance-area #all-grievances .grievance-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 42px;
+  padding-bottom: 0.15rem;
+}
+
+.grievance-area #all-grievances .grievance-list-title {
+  color: #203b57;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.grievance-area #all-grievances .grievance-reports-button {
+  min-height: 36px;
+  padding: 0.45rem 1rem;
+  border: 1px solid #cfe0ef;
+  background: #fff;
+  color: #24577f;
+  font-size: 0.82rem;
+  box-shadow: none;
+}
+
+.grievance-area #all-grievances .grievance-reports-button:hover,
+.grievance-area #all-grievances .grievance-reports-button:focus {
+  border-color: #a9c7df;
+  background: #f0f7fc;
+  color: #17496f;
+}
+
 .grievance-area #all-grievances > .row.mb-3 > .col-md-2 {
   min-width: 0;
   width: auto;
@@ -262,6 +294,14 @@
   height: 44px;
   background: #fff;
   font-size: 0.92rem;
+  border-color: #d3deea;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.grievance-area #all-grievances > .row.mb-3 .form-control:focus {
+  border-color: #6da5d0;
+  box-shadow: 0 0 0 0.16rem rgba(49, 125, 181, 0.12);
 }
 
 .grievance-area #all-grievances > .row.mb-3 select.form-control {
@@ -368,6 +408,24 @@
   color: #fff;
 }
 
+.grievance-area #all-grievances-table .grievance-empty-row td,
+.grievance-area #all-grievances-table .grievance-filter-empty-row td {
+  padding: 2rem 1rem;
+  border-top: 0;
+  background: #fbfdff;
+  color: #667c92;
+  text-align: center;
+  font-size: 0.88rem;
+}
+
+.grievance-area #all-grievances-table .grievance-empty-row i,
+.grievance-area #all-grievances-table .grievance-filter-empty-row i {
+  display: block;
+  margin-bottom: 0.55rem;
+  color: #80a6c6;
+  font-size: 1.45rem;
+}
+
 @media (max-width: 992px) {
   .grievance-area .card-body {
     padding: 18px !important;
@@ -381,10 +439,19 @@
 @media (max-width: 576px) {
   .grievance-area #all-grievances > .row.mb-3 {
     grid-template-columns: 1fr;
+    padding: 0.8rem;
   }
 
   .grievance-area #all-grievances > .row.mb-3 > .col-12 {
     grid-column: auto;
+  }
+
+  .grievance-area #all-grievances .grievance-list-toolbar {
+    align-items: flex-start;
+  }
+
+  .grievance-area #all-grievances .grievance-list-title {
+    padding-top: 0.45rem;
   }
 }
 
@@ -576,6 +643,103 @@
   .grievance-area #reports .grievance-date-range .form-control {
     width: 100%;
   }
+}
+
+.grievance-area #management .grievance-management-card {
+	overflow: hidden;
+	border: 1px solid #d8e8f7 !important;
+	border-radius: 12px !important;
+	box-shadow: 0 4px 14px rgba(30, 77, 125, 0.06) !important;
+}
+
+.grievance-area #management .grievance-management-card > .card-header {
+	min-height: 44px;
+	padding: 0.7rem 1rem !important;
+	border-bottom: 1px solid #dfebf7 !important;
+	background: linear-gradient(110deg, #edf7ff 0%, #f8fbff 100%) !important;
+}
+
+.grievance-area #management .grievance-management-card > .card-header .card-title {
+	color: #155b99 !important;
+	font-size: 0.9rem;
+}
+
+.grievance-area #management .grievance-management-card > .card-header .card-title i {
+	margin-right: 0.35rem;
+}
+
+.grievance-area #management .grievance-management-card > .card-body {
+	padding: 0.85rem !important;
+}
+
+.grievance-area #management .grievance-management-form .grievance-management-selectors {
+	margin-right: -0.45rem;
+	margin-left: -0.45rem;
+}
+
+.grievance-area #management .grievance-management-form .grievance-management-selectors > [class*="col-"] {
+	padding-right: 0.45rem;
+	padding-left: 0.45rem;
+}
+
+.grievance-area #management .grievance-management-form .form-group {
+	margin-bottom: 0.65rem;
+}
+
+.grievance-area #management .grievance-management-form .form-group label {
+	margin-bottom: 0.3rem;
+	color: #345572;
+	font-size: 0.72rem;
+}
+
+.grievance-area #management .grievance-management-form .form-control {
+	min-height: 35px;
+	padding: 0.45rem 0.6rem;
+	border: 1px solid #d5e3f1;
+	border-radius: 7px;
+	box-shadow: none;
+	font-size: 0.72rem;
+}
+
+.grievance-area #management .grievance-management-form textarea.form-control {
+	min-height: 64px;
+}
+
+.grievance-area #management .grievance-management-form #escalation-fields {
+	padding: 0.75rem !important;
+	border-color: #d7e6f4 !important;
+	border-radius: 8px !important;
+	background: #f7fbff;
+}
+
+.grievance-area #management .grievance-management-form .form-check {
+	margin: 0.35rem 0 0.6rem;
+}
+
+.grievance-area #management .grievance-management-form .form-check-label {
+	font-size: 0.72rem;
+}
+
+.grievance-area #management .grievance-management-form > .btn-primary {
+	min-height: 34px;
+	margin-top: 0.35rem !important;
+	padding: 0.45rem 0.9rem;
+	border: 0;
+	border-radius: 999px;
+	background: linear-gradient(110deg, #15549a 0%, #2581df 100%);
+	font-size: 0.72rem;
+}
+
+.grievance-area #management .grievance-management-form > .btn-primary:hover,
+.grievance-area #management .grievance-management-form > .btn-primary:focus {
+	background: linear-gradient(110deg, #124781 0%, #1b6fc5 100%);
+}
+
+@media (max-width: 767px) {
+	.grievance-area #management .grievance-management-form .grievance-management-selectors > .col-md-6 {
+		flex: 0 0 100%;
+		max-width: 100%;
+	}
 }
 
 .grievance-area .timeline {

@@ -54,7 +54,7 @@ $employeeClass = new Employee();
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="/hrms-capstone/auth/logout.php" class="signout-link">
+                            <a href="<?= htmlspecialchars(preg_replace('#/modules/.*$#', '', $_SERVER['SCRIPT_NAME'] ?? '') . '/auth/logout.php', ENT_QUOTES, 'UTF-8') ?>" class="signout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                             </a>
                         </li>

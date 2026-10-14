@@ -1511,12 +1511,23 @@ function loadRecognitionPageData() {
       }
 
       const withoutReports = document.getElementById('employees-without-reports-list');
+      const withoutReportsPanel = document.getElementById('employees-without-reports-panel');
+      const missingReportEmployees = Array.isArray(data.employees_without_reports)
+        ? data.employees_without_reports
+        : [];
+      const recommendationsAvailable = Array.isArray(data.recognition_recommendations)
+        && data.recognition_recommendations.length > 0;
+      if (withoutReportsPanel) {
+        withoutReportsPanel.style.display = recommendationsAvailable && missingReportEmployees.length
+          ? ''
+          : 'none';
+      }
       if (withoutReports && Array.isArray(data.employees_without_reports)) {
-        withoutReports.innerHTML = data.employees_without_reports.length
-          ? '<ul class="list-group list-group-flush">' + data.employees_without_reports.map(function (item) {
+        withoutReports.innerHTML = missingReportEmployees.length
+          ? '<ul class="list-group list-group-flush">' + missingReportEmployees.map(function (item) {
               return '<li class="list-group-item recognition-summary-item rounded-list-item"><div class="recognition-summary-content"><strong>' + escapeHtml(item.employee_name || 'Unknown') + '</strong><div class="recognition-summary-meta">' + escapeHtml(item.department || 'No department') + '</div></div><span class="badge badge-danger recognition-status-badge">No Report</span></li>';
             }).join('') + '</ul>'
-          : '<p class="text-muted text-center m-2">All employees have performance report data.</p>';
+          : '';
       }
 
       renderTopPerformers(findCardBodyByTitle('Top Performers'), data.performance_leaderboard || []);
@@ -1638,7 +1649,7 @@ function loadBadges() {
         });
         if (badgeSelect && selectedBadgeId) badgeSelect.value = selectedBadgeId;
       } else {
-        feed.innerHTML = '<div class="text-muted">No badges found.</div>';
+        feed.innerHTML = '<div class="badges-empty-state"><span class="badges-empty-icon"><i class="fas fa-award" aria-hidden="true"></i></span><div><strong>No badges found.</strong><p>Create and assign badges to recognize employee achievements.</p></div></div>';
       }
     });
 }

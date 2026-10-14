@@ -821,6 +821,205 @@
   }
 }
 
+.recognition-area #rewards .card {
+  border: 1px solid #dfe8f2 !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  background: #fff;
+}
+
+.recognition-area #rewards .card-header {
+  min-height: 48px;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid #e5edf6 !important;
+  background: #eef7ff !important;
+}
+
+.recognition-area #rewards .card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: #15558d !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+}
+
+.recognition-area #rewards .card-title i {
+  color: #2378bc;
+}
+
+.recognition-area #rewards .card-body {
+  padding: 10px !important;
+}
+
+.recognition-area #rewards .header-action-card-header {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.recognition-area #rewards .header-action-card-header .card-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.recognition-area #rewards .header-action-button {
+  width: auto;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0.35rem 0.75rem !important;
+  border: 1px solid #cfe1f4 !important;
+  border-radius: 999px !important;
+  background: #e7f2ff !important;
+  color: #1761a0 !important;
+  box-shadow: none;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.recognition-area #rewards .header-action-button:hover,
+.recognition-area #rewards .header-action-button:focus {
+  border-color: #a8c9eb !important;
+  background: #d8eaff !important;
+  color: #104d82 !important;
+}
+
+.recognition-area #rewards .header-action-button i {
+  margin-right: 0.25rem;
+}
+
+.recognition-area #rewards-feed {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.recognition-area #rewards-feed .reward-item {
+  min-width: 0;
+  padding: 0.75rem !important;
+  border: 1px solid #e5edf6 !important;
+  border-radius: 10px !important;
+  background: #fbfdff;
+  gap: 0.65rem;
+}
+
+.recognition-area #rewards-feed .reward-icon {
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(145deg, #3185c5, #15558d);
+  box-shadow: 0 2px 6px rgba(21, 85, 141, 0.18);
+}
+
+.recognition-area #rewards-feed .reward-content strong {
+  display: block;
+  color: #203c58;
+  font-size: 0.84rem;
+}
+
+.recognition-area #rewards-feed .reward-description {
+  margin-top: 0.1rem;
+  color: #60758b;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.recognition-area #rewards-feed .reward-content small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #718398 !important;
+  font-size: 0.68rem;
+}
+
+.recognition-area #rewards-feed .reward-points {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.35rem 0.6rem;
+  background: #e8f3ff;
+  color: #15558d;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.recognition-area #reward-redemptions-feed {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.recognition-area #reward-redemptions-feed .reward-redemption-item {
+  padding: 0.75rem !important;
+  border: 1px solid #e5edf6 !important;
+  border-radius: 10px !important;
+  background: #fbfdff;
+  font-size: 0.78rem;
+}
+
+.recognition-area #reward-redemptions-feed .reward-redemption-item strong {
+  color: #203c58;
+}
+
+.recognition-area #reward-redemptions-feed .reward-redemption-item .text-muted {
+  color: #65788d !important;
+}
+
+.recognition-area #reward-redemptions-feed .reward-redemption-item .badge {
+  border-radius: 999px;
+  padding: 0.35rem 0.55rem;
+  text-transform: capitalize;
+}
+
+.recognition-area #reward-redemptions-feed .reward-redemption-item .redemption-action {
+  min-height: 29px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.recognition-area #rewards-feed > .text-muted,
+.recognition-area #reward-redemptions-feed > .text-muted {
+  margin: 0;
+  padding: 1rem 0.75rem;
+  border: 1px dashed #d7e3f0;
+  border-radius: 10px;
+  background: #f8fbff;
+  color: #65788d !important;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+@media (max-width: 575px) {
+  .recognition-area #rewards .header-action-card-header .card-tools {
+    width: auto;
+  }
+
+  .recognition-area #rewards .header-action-button {
+    width: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .recognition-area #rewards .header-action-card-header {
+    align-items: flex-start;
+  }
+
+  .recognition-area #rewards .header-action-card-header .card-tools {
+    width: 100%;
+  }
+
+  .recognition-area #rewards .header-action-button {
+    flex: 1 1 auto;
+  }
+
+  .recognition-area #rewards-feed .reward-item {
+    flex-wrap: wrap;
+  }
+
+  .recognition-area #rewards-feed .reward-points {
+    margin-left: 2.65rem;
+  }
+}
+
 body.modal-open {
   overflow: hidden;
 }
@@ -1984,6 +2183,264 @@ body.modal-open {
   .recognition-area .recognition-tabs-body {
     padding: 0.75rem 0.65rem;
   }
+}
+
+/* Blue-accented recognition cards for the feed, badges, and rankings. */
+.recognition-area .recognition-feature-card,
+.recognition-area .recognition-quick-stats,
+.recognition-area .recognition-recent-activity,
+.recognition-area .recognition-rules-card,
+.recognition-area .recognition-badges-card,
+.recognition-area .recognition-leaderboard-card,
+.recognition-area .recognition-department-leaderboard-card {
+	overflow: hidden;
+	border: 1px solid #d8e8f7 !important;
+	border-radius: 12px !important;
+	background: #ffffff;
+	box-shadow: 0 4px 14px rgba(30, 77, 125, 0.06) !important;
+}
+
+.recognition-area .recognition-feature-card > .card-header,
+.recognition-area .recognition-quick-stats > .card-header,
+.recognition-area .recognition-recent-activity > .card-header,
+.recognition-area .recognition-rules-card > .card-header,
+.recognition-area .recognition-badges-card > .card-header,
+.recognition-area .recognition-leaderboard-card > .card-header,
+.recognition-area .recognition-department-leaderboard-card > .card-header {
+	min-height: 44px;
+	padding: 0.7rem 0.9rem !important;
+	border-bottom: 1px solid #dfebf7 !important;
+	background: linear-gradient(110deg, #edf7ff 0%, #f8fbff 100%) !important;
+}
+
+.recognition-area .recognition-feature-card > .card-header .card-title,
+.recognition-area .recognition-quick-stats > .card-header .card-title,
+.recognition-area .recognition-recent-activity > .card-header .card-title,
+.recognition-area .recognition-rules-card > .card-header .card-title,
+.recognition-area .recognition-badges-card > .card-header .card-title,
+.recognition-area .recognition-leaderboard-card > .card-header .card-title,
+.recognition-area .recognition-department-leaderboard-card > .card-header .card-title {
+	color: #155b99 !important;
+	font-size: 0.9rem !important;
+}
+
+.recognition-area #recognition .recognition-main-grid {
+	grid-template-columns: minmax(0, 0.9fr) minmax(260px, 1.1fr);
+	gap: 0.8rem;
+}
+
+.recognition-area #recognition .recognition-left-column,
+.recognition-area #recognition .recognition-right-column {
+	gap: 0.8rem;
+}
+
+.recognition-area .recognition-feature-card > .card-body {
+	padding: 0.8rem !important;
+}
+
+.recognition-area #recognition-feed .list-group-item {
+	margin: 0 0 0.55rem;
+	padding: 0.85rem;
+	border: 1px solid #dfebf7 !important;
+	border-radius: 10px;
+	background: #f7fbff;
+}
+
+.recognition-area #recognition-feed .list-group-item:last-child {
+	margin-bottom: 0;
+}
+
+.recognition-area #recognition-feed .list-group-item strong {
+	color: #1b4f80;
+}
+
+.recognition-area #recognition-feed .list-group-item .lh-relaxed {
+	color: #536b84;
+	font-size: 0.85rem;
+	line-height: 1.5;
+}
+
+.recognition-area #recognition-feed .list-group-item .badge-success,
+.recognition-area .recent-activity-badge {
+	border-radius: 999px;
+	background: #def5e1;
+	color: #24813a;
+	font-size: 0.72rem;
+	font-weight: 700;
+}
+
+.recognition-area .recognition-quick-stats .quick-stats-card {
+	padding: 0.75rem !important;
+}
+
+.recognition-area .recognition-quick-stats .quick-stats-row {
+	gap: 0.55rem;
+}
+
+.recognition-area .recognition-quick-stats .quick-stats-item {
+	min-height: 68px;
+	padding: 0.6rem;
+	border-color: #deebf7;
+	border-radius: 9px;
+	background: #f8fbff;
+}
+
+.recognition-area .recognition-quick-stats .quick-stats-label {
+	margin-bottom: 0.25rem;
+	color: #72869b;
+	font-size: 0.66rem;
+}
+
+.recognition-area .recognition-quick-stats .quick-stats-value {
+	color: #1b5e9f !important;
+	font-size: 1rem;
+}
+
+.recognition-area .recognition-recent-activity .recent-activity-item {
+	gap: 0.65rem;
+	padding: 0.7rem 0.8rem;
+	border-bottom-color: #e8f0f8;
+	background: #ffffff;
+}
+
+.recognition-area .recognition-recent-activity .recent-activity-name {
+	color: #1b4f80;
+	font-size: 0.82rem;
+}
+
+.recognition-area .recognition-recent-activity .recent-activity-recipient,
+.recognition-area .recognition-recent-activity .recent-activity-time {
+	color: #71849a;
+	font-size: 0.7rem;
+}
+
+.recognition-area .recognition-rules-card .card-body {
+	padding: 0.75rem 0.9rem !important;
+}
+
+.recognition-area .recognition-rules-card .list-unstyled {
+	display: grid;
+	gap: 0.45rem;
+	margin: 0;
+}
+
+.recognition-area .recognition-rules-card .list-unstyled li {
+	color: #425b74;
+	font-size: 0.8rem;
+}
+
+.recognition-area .recognition-rules-card .list-unstyled li i {
+	color: #2674b7 !important;
+}
+
+.recognition-area .recognition-badges-card .header-action-button {
+	min-height: 32px;
+	padding: 0.35rem 0.7rem;
+	border: 1px solid #cfe1f2 !important;
+	border-radius: 999px !important;
+	background: #f1f7fd !important;
+	color: #185b99 !important;
+	font-size: 0.68rem;
+}
+
+.recognition-area .recognition-badges-card .header-action-button:hover,
+.recognition-area .recognition-badges-card .header-action-button:focus {
+	background: #e1effc !important;
+}
+
+.recognition-area #badges-feed > .badges-empty-state {
+	display: flex;
+	min-height: 90px;
+	align-items: center;
+	gap: 0.8rem;
+	margin: 0.2rem;
+	padding: 1rem;
+	border: 1px solid #e3edf7;
+	border-radius: 10px;
+	background: #f9fbfe;
+	color: #607a94;
+}
+
+.recognition-area #badges-feed .badges-empty-icon {
+	display: grid;
+	flex: 0 0 42px;
+	width: 42px;
+	height: 42px;
+	place-items: center;
+	border-radius: 50%;
+	background: #e8f3fc;
+	color: #1b609d;
+	font-size: 1.1rem;
+}
+
+.recognition-area #badges-feed .badges-empty-state strong {
+	color: #1d4f7d;
+	font-size: 0.8rem;
+}
+
+.recognition-area #badges-feed .badges-empty-state p {
+	margin: 0.2rem 0 0;
+	color: #71849a;
+	font-size: 0.7rem;
+}
+
+.recognition-area #leaderboard .recognition-leaderboard-card .card-body {
+	padding: 0.55rem 0.7rem !important;
+}
+
+.recognition-area #leaderboard .leaderboard-table-scroll {
+	border: 1px solid #e1ebf5;
+	border-radius: 9px;
+}
+
+.recognition-area #leaderboard .leaderboard-table-scroll table {
+	min-width: 650px;
+}
+
+.recognition-area #leaderboard .leaderboard-table-scroll thead th {
+	padding: 0.55rem 0.45rem;
+	background: #f0f7fd;
+	color: #52718f;
+	font-size: 0.62rem;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.recognition-area #leaderboard .leaderboard-table-scroll tbody td {
+	padding: 0.65rem 0.45rem;
+	color: #31516f;
+	font-size: 0.72rem;
+}
+
+.recognition-area #leaderboard .leaderboard-table-scroll tbody td strong {
+	color: #1c507f;
+	font-size: 0.78rem;
+}
+
+.recognition-area #leaderboard .leaderboard-table-scroll tbody tr:nth-child(even) {
+	background: #f9fbfd;
+}
+
+.recognition-area #leaderboard .recognition-department-leaderboard-card .list-group-item {
+	padding: 0.7rem 0.8rem;
+	border-bottom-color: #e8f0f8;
+	background: #ffffff;
+}
+
+.recognition-area #leaderboard .recognition-department-leaderboard-card .list-group-item strong {
+	color: #1b4f80;
+	font-size: 0.8rem;
+}
+
+.recognition-area #leaderboard .recognition-department-leaderboard-card .list-group-item .text-muted {
+	color: #72869b !important;
+	font-size: 0.7rem;
+}
+
+@media (max-width: 991.98px) {
+	.recognition-area #recognition .recognition-main-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
 
   .recognition-area .tab-content {
     padding-top: 0.75rem;
@@ -2499,10 +2956,134 @@ body.modal-open {
   background: rgba(255,255,255,0.75) !important;
 }
 
+.recognition-area #employee-month > .row {
+  row-gap: 10px;
+}
 
+.recognition-area #employee-month .card-header {
+  background: #eef7ff !important;
+  border-bottom-color: #deebf7 !important;
+  padding: 10px 12px !important;
+}
 
+.recognition-area #employee-month .card-body {
+  padding: 10px !important;
+}
 
+.recognition-area #employee-month .header-action-button {
+  min-height: 32px;
+  padding: 0.35rem 0.8rem !important;
+  border: 1px solid #cfe3fa !important;
+  border-radius: 999px !important;
+  background: #e8f3ff !important;
+  color: #1761a0 !important;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
 
+.recognition-area #employee-month #employee-month-filter-form {
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+
+.recognition-area #employee-month #employee-month-filter-form label {
+  font-size: 0.78rem;
+}
+
+.recognition-area #employee-month .employee-month-select,
+.recognition-area #employee-month .employee-year-select {
+  min-width: 0;
+  min-height: 32px;
+  height: 32px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px !important;
+  font-size: 0.75rem;
+}
+
+.recognition-area #employee-month #employee-month-filter-form .btn-warning {
+  min-height: 32px;
+  padding: 0.3rem 0.85rem;
+  border: 1px solid #1672c4 !important;
+  background: #1672c4 !important;
+  color: #fff !important;
+  font-size: 0.75rem;
+}
+
+.recognition-area #employee-month .employee-month-empty {
+  margin: 0;
+  padding: 0.25rem 0.1rem;
+  color: #405b78;
+  font-size: 0.78rem;
+}
+
+.recognition-area #employee-month #current-winner-content {
+  min-height: 58px;
+  padding: 8px !important;
+  border: 1px solid #dcecf9;
+  border-radius: 10px;
+  background: #f5faff;
+}
+
+.recognition-area #employee-month .current-winner-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  color: #31577d;
+  text-align: center;
+}
+
+.recognition-area #employee-month .current-winner-empty i {
+  margin-bottom: 0.2rem;
+  font-size: 1.1rem;
+}
+
+.recognition-area #employee-month .current-winner-empty p {
+  margin: 0;
+  font-size: 0.68rem;
+}
+
+.recognition-area #employee-month .current-winner-empty small {
+  font-size: 0.62rem;
+}
+
+.recognition-area #employee-month .recognition-rules-card .card-body {
+  padding: 8px 10px !important;
+}
+
+.recognition-area #employee-month .recognition-rules-card ul {
+  margin: 0;
+}
+
+.recognition-area #employee-month .recognition-rules-card li {
+  margin-bottom: 0.25rem;
+  font-size: 0.72rem;
+}
+
+.recognition-area #employee-month .recognition-rules-card li:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 480px) {
+  .recognition-area #employee-month .card-header {
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .recognition-area #employee-month .card-title {
+    font-size: 0.9rem !important;
+  }
+
+  .recognition-area #employee-month #employee-month-filter-form {
+    gap: 0.35rem;
+  }
+
+  .recognition-area #employee-month .employee-month-select,
+  .recognition-area #employee-month .employee-year-select {
+    flex: 1 1 70px;
+  }
+}
 
 
 

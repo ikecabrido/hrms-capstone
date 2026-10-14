@@ -123,6 +123,11 @@
         background: var(--color9);
     }
 
+    .notif-item.is-marking-read {
+        opacity: 0.65;
+        pointer-events: none;
+    }
+
     .notif-icon {
         width: 34px;
         height: 34px;
@@ -162,6 +167,11 @@
 
     .dropdown-footer a:hover {
         text-decoration: underline;
+    }
+
+    .dropdown-footer span {
+        font-size: 0.8rem;
+        color: var(--color5);
     }
 
     .dropdown-user-info {

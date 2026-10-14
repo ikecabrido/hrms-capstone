@@ -377,10 +377,10 @@
         const date = item.evaluation_date || item.created_at || 'Recent';
         return '<tr>' +
           '<td>' + escapeSurveyHtml(item.employee_name || 'Unknown') + '</td>' +
-          '<td>' + escapeSurveyHtml(category.charAt(0).toUpperCase() + category.slice(1)) + '</td>' +
-          '<td>' + escapeSurveyHtml(rating ? rating + '/5' : 'N/A') + '</td>' +
+          '<td><span class="feedback-history-category">' + escapeSurveyHtml(category.charAt(0).toUpperCase() + category.slice(1)) + '</span></td>' +
+          '<td><span class="feedback-history-rating">' + escapeSurveyHtml(rating ? rating + '/5' : 'N/A') + '</span></td>' +
           '<td>' + escapeSurveyHtml(date) + '</td>' +
-          '</tr><tr><td colspan="4"><strong>Feedback:</strong> ' + escapeSurveyHtml(item.comment || item.comments || 'No comments available').replace(/\n/g, '<br>') + '</td></tr>';
+          '</tr><tr class="feedback-history-comment-row"><td colspan="4"><div class="feedback-history-comment"><strong>Feedback</strong><p>' + escapeSurveyHtml(item.comment || item.comments || 'No comments available').replace(/\n/g, '<br>') + '</p></div></td></tr>';
       }).join('') +
       '</tbody></table>';
   }

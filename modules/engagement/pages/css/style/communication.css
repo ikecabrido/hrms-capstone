@@ -222,8 +222,7 @@
 
 .communication-area .announcement-card,
 .communication-area .dept-update-item,
-.communication-area .policy-card,
-.communication-area .notification-item {
+.communication-area .policy-card {
 	position: relative;
 }
 
@@ -244,20 +243,6 @@
 /* Make the Recent Announcements card larger and more prominent */
 
 
-/* Make HR Notifications item text match Recent Announcements sizing */
-.communication-area .notification-item h6,
-.communication-area .notification-item .card-title {
-	font-size: 1.08rem;
-	font-weight: 700;
-	color: #1a4a8a;
-}
-.communication-area .notification-item p,
-.communication-area .notification-item .card-text,
-.communication-area .notification-item small {
-	font-size: 1rem;
-	color: #3a4a5a;
-}
-
 /* Make message thread text slightly larger to match announcements */
 .communication-area .message-thread .message-bubble p {
 	font-size: 1rem;
@@ -265,104 +250,6 @@
 }
 .communication-area .message-thread .message-bubble small.text-muted {
 	font-size: 0.95rem;
-}
-
-/* Enlarge HR Notifications right column and its items */
-#notifications .col-md-8 .card {
-	min-height: 470px;
-	padding: 1.35rem;
-
-}
-.communication-area #notifications .notification-item {
-	max-width: 100%;
-	margin: 1rem 0;
-	min-height: 220px;
-	padding: 1.25rem 1.5rem;
-	border: 1px solid #e5eff8;
-	border-radius: 14px;
-	background: #f7fbff;
-}
-
-.communication-area #notifications .notification-item > .d-flex {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: 1rem;
-}
-
-.communication-area #notifications .notification-item .flex-grow-1 {
-	min-width: 0;
-}
-
-.communication-area #notifications .notification-item .flex-grow-1 > .d-flex {
-	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 0.45rem;
-	margin-bottom: 0.55rem !important;
-}
-
-.communication-area #notifications .notification-item .notification-type-badge,
-.communication-area #notifications .notification-item .badge-warning {
-	position: static;
-	margin: 0 !important;
-}
-
-.communication-area #notifications .notification-item h6 {
-	flex: 1 1 100%;
-	order: 2;
-	margin: 0 !important;
-}
-
-.communication-area #notifications .notification-item .flex-grow-1 > .d-flex > i {
-	order: 1;
-}
-
-.communication-area #notifications .notification-item .flex-grow-1 > .d-flex > .badge-primary {
-	position: static;
-	order: 3;
-	margin: 0 0 0 auto !important;
-	    background: #16407c;
-    color: white;
-}
-
-.communication-area #notifications .notification-item .flex-grow-1 > p.text-muted {
-	margin: 0 0 0.6rem !important;
-	line-height: 1.5;
-}
-
-.communication-area #notifications .notification-item .flex-grow-1 > p.mb-2 {
-	margin: 0 !important;
-}
-
-.communication-area #notifications .notification-item > .d-flex > .ml-3 {
-	flex: 0 0 auto;
-	margin-left: 0 !important;
-}
-
-.communication-area #notifications .notification-actions {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-end;
-	gap: 0.5rem;
-}
-
-.communication-area #notifications .notification-new-badge {
-	position: static;
-	margin: 0 !important;
-	background: #16407c;
-	color: #ffffff;
-}
-
-.communication-area #notifications .notification-item > .d-flex > .ml-3 .btn {
-	white-space: nowrap;
-}
-
-.communication-area #notifications .notification-item .d-flex {
-	align-items: flex-start;
-}
-.communication-area #notifications .notification-item .card-body {
-	padding: 1rem 1.25rem;
 }
 
 /* Enlarge HR-Employee Messaging right column and message thread area */
@@ -1075,42 +962,6 @@
 	overflow-wrap: anywhere;
 }
 
-.communication-area #notifications .notification-item {
-	min-height: 0;
-	margin: 0 0 0.65rem;
-	padding: 0.9rem 1rem;
-	border: 1px solid #e2eaf3;
-	border-left: 3px solid #aab8c7;
-	border-radius: 10px;
-	background: #fafbfd;
-}
-
-.communication-area #notifications .notification-item.notification-unread {
-	border-left-color: #2877b8;
-	background: #f3f8fd;
-}
-
-.communication-area #notifications .notification-item.notification-read {
-	border-left-color: #c6d0da;
-	background: #fbfcfd;
-}
-
-.communication-area #notifications .notification-item h6 {
-	flex: 1 1 auto;
-	font-size: 0.98rem;
-}
-
-.communication-area #notifications .notification-item .flex-grow-1 > p.text-muted {
-	font-size: 0.78rem;
-}
-
-.communication-area #notifications .notification-item .flex-grow-1 > p.mb-2 {
-	color: #3d5064;
-	font-size: 0.92rem;
-	line-height: 1.5;
-	overflow-wrap: anywhere;
-}
-
 .communication-area #messaging .col-md-8 .card {
 	min-height: 0;
 	padding: 0;
@@ -1222,21 +1073,6 @@
 		min-height: 0;
 	}
 
-	.communication-area #notifications .notification-item > .d-flex {
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	.communication-area #notifications .notification-item > .d-flex > .ml-3 {
-		width: 100%;
-	}
-
-	.communication-area #notifications .notification-actions {
-		flex-direction: row;
-		flex-wrap: wrap;
-		align-items: center;
-	}
-
 	.communication-area #messaging .card-header {
 		align-items: flex-start;
 	}
@@ -1247,5 +1083,721 @@
 
 	.communication-area #messaging .message-bubble {
 		max-width: 96%;
+	}
+}
+
+/* Announcement composer and recent-post layout. */
+.communication-area #announcements .announcement-layout {
+	align-items: flex-start;
+	gap: 0;
+}
+
+.communication-area #announcements .announcement-layout > .col-md-4 {
+	flex: 0 0 35%;
+	max-width: 35%;
+}
+
+.communication-area #announcements .announcement-layout > .col-md-8 {
+	flex: 0 0 65%;
+	max-width: 65%;
+}
+
+.communication-area #announcements .announcement-composer,
+.communication-area #announcements .announcement-list-panel {
+	min-height: 0;
+	height: auto;
+	overflow: hidden;
+	border: 1px solid #e1e9f2 !important;
+	border-radius: 12px !important;
+	background: #ffffff;
+	box-shadow: 0 8px 24px rgba(25, 55, 88, 0.06) !important;
+}
+
+.communication-area #announcements .announcement-composer-header {
+	display: flex;
+	justify-content: flex-start;
+	gap: 0.85rem;
+	min-height: 74px;
+	padding: 1rem 1.15rem !important;
+	border: 0 !important;
+	background: linear-gradient(115deg, #15549a 0%, #2581df 100%) !important;
+	color: #ffffff;
+}
+
+.communication-area #announcements .announcement-composer-header .announcement-composer-icon {
+	display: grid;
+	flex: 0 0 32px;
+	width: 32px;
+	height: 32px;
+	place-items: center;
+	color: #ffffff;
+	font-size: 1.25rem;
+}
+
+.communication-area #announcements .announcement-composer-header .card-title,
+.communication-area #announcements .announcement-composer-header h3 {
+	margin: 0;
+	color: #ffffff !important;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.communication-area #announcements .announcement-composer-header p,
+.communication-area #announcements .announcement-list-header p {
+	margin: 0.2rem 0 0;
+	color: inherit;
+	font-size: 0.78rem;
+	line-height: 1.4;
+}
+
+.communication-area #announcements .announcement-composer-header p {
+	color: rgba(255, 255, 255, 0.9);
+}
+
+.communication-area #announcements .announcement-composer > .card-body {
+	padding: 1.1rem !important;
+}
+
+.communication-area #announcements .announcement-form .form-group {
+	max-width: none;
+	margin-bottom: 0.9rem;
+}
+
+.communication-area #announcements .announcement-form .form-group label {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.4rem;
+	color: #203752;
+	font-size: 0.88rem;
+	font-weight: 700;
+}
+
+.communication-area #announcements .announcement-form .form-group label > i {
+	width: 16px;
+	color: #526982;
+	text-align: center;
+}
+
+.communication-area #announcements .announcement-form .form-control {
+	width: 100%;
+	max-width: none;
+	min-height: 42px;
+	padding: 0.6rem 0.75rem;
+	border: 1px solid #d6e0eb;
+	border-radius: 9px;
+	background-color: #ffffff;
+	color: #26394d;
+	font-size: 0.88rem;
+	box-shadow: none;
+}
+
+.communication-area #announcements .announcement-form .form-control::placeholder {
+	color: #8997a8;
+}
+
+.communication-area #announcements .announcement-form .form-control:focus {
+	border-color: #6aa9ec;
+	box-shadow: 0 0 0 0.18rem rgba(47, 132, 220, 0.14);
+}
+
+.communication-area #announcements .announcement-form textarea.form-control {
+	min-height: 108px;
+	padding-top: 0.7rem;
+	resize: vertical;
+}
+
+.communication-area #announcements .announcement-character-count {
+	margin-top: 0.2rem;
+	color: #8190a2;
+	font-size: 0.72rem;
+	text-align: right;
+}
+
+.communication-area #announcements .announcement-form .announcement-submit {
+	min-height: 43px;
+	margin-top: 0.1rem;
+	border: 0 !important;
+	border-radius: 10px;
+	background: linear-gradient(110deg, #15549a 0%, #2581df 100%) !important;
+	color: #ffffff !important;
+	font-size: 0.88rem;
+}
+
+.communication-area #announcements .announcement-form .announcement-submit:hover,
+.communication-area #announcements .announcement-form .announcement-submit:focus {
+	background: linear-gradient(110deg, #124781 0%, #1b6fc5 100%) !important;
+}
+
+.communication-area #announcements .announcement-list-header {
+	min-height: 76px;
+	padding: 1rem 1.15rem !important;
+	border-bottom: 0 !important;
+	background: #ffffff !important;
+}
+
+.communication-area #announcements .announcement-list-header .card-title,
+.communication-area #announcements .announcement-list-header h3 {
+	margin: 0;
+	color: #183b63 !important;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.communication-area #announcements .announcement-list-header .card-title i {
+	margin-right: 0.45rem;
+	color: #28486b;
+}
+
+.communication-area #announcements .announcement-list-header p {
+	padding-left: 1.45rem;
+	color: #728399;
+}
+
+.communication-area #announcements .announcement-filter-wrap {
+	position: relative;
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 0.45rem;
+	min-width: 96px;
+	padding: 0 0.75rem;
+	border-radius: 999px;
+	background: #f1f5f9;
+	color: #526982;
+}
+
+.communication-area #announcements .announcement-filter-wrap > .fa-filter {
+	font-size: 0.8rem;
+}
+
+.communication-area #announcements #announcement-category-filter {
+	width: auto;
+	min-width: 45px;
+	max-width: 150px;
+	height: 36px;
+	padding: 0 1.05rem 0 0;
+	border: 0;
+	background: transparent;
+	color: #354b63;
+	font-size: 0.8rem;
+	font-weight: 600;
+	appearance: none;
+	cursor: pointer;
+}
+
+.communication-area #announcements #announcement-category-filter:focus {
+	outline: 2px solid #83baff;
+	outline-offset: 1px;
+	box-shadow: none;
+}
+
+.communication-area #announcements .announcement-filter-chevron {
+	position: absolute;
+	right: 0.6rem;
+	pointer-events: none;
+	font-size: 0.7rem;
+}
+
+.communication-area #announcements .announcement-list-panel > .card-body {
+	padding: 0.15rem 1rem 1rem !important;
+}
+
+.communication-area #announcements #announcements-container {
+	max-height: 560px;
+	padding-right: 0;
+}
+
+.communication-area #announcements .announcement-card {
+	display: grid;
+	grid-template-columns: 48px minmax(0, 1fr);
+	align-items: start;
+	gap: 0.9rem;
+	min-height: 110px;
+	margin: 0 0 0.55rem;
+	padding: 1rem;
+	border: 1px solid #e0e8f1 !important;
+	border-radius: 12px !important;
+	background: #ffffff !important;
+}
+
+.communication-area #announcements .announcement-card:first-of-type {
+	border-color: #b8d8ff !important;
+	background: linear-gradient(110deg, #f5faff 0%, #ffffff 100%) !important;
+}
+
+.communication-area #announcements .announcement-card > .announcement-card-icon {
+	display: grid;
+	width: 44px;
+	height: 44px;
+	place-items: center;
+	border-radius: 50%;
+	background: #2180dc;
+	color: #ffffff;
+	font-size: 1rem;
+}
+
+.communication-area #announcements .announcement-card > .card-body {
+	min-width: 0;
+	margin: 0;
+	padding: 0 !important;
+}
+
+.communication-area #announcements .announcement-card .announcement-heading {
+	display: flex !important;
+	grid-template-columns: none !important;
+	align-items: flex-start !important;
+	gap: 0.6rem;
+	margin: 0 0 0.35rem !important;
+}
+
+.communication-area #announcements .announcement-card .announcement-heading .card-title {
+	flex: 1 1 auto;
+	font-size: 1rem;
+	font-weight: 700;
+	line-height: 1.4;
+}
+
+.communication-area #announcements .announcement-card .announcement-more {
+	display: grid;
+	flex: 0 0 24px;
+	width: 24px;
+	height: 28px;
+	margin: -0.25rem -0.3rem 0 0;
+	padding: 0;
+	place-items: center;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: #5c7087;
+	cursor: pointer;
+}
+
+.communication-area #announcements .announcement-card .announcement-more:hover,
+.communication-area #announcements .announcement-card .announcement-more:focus {
+	background: #edf4fb;
+	color: #1b5d9f;
+	outline: none;
+}
+
+.communication-area #announcements .announcement-card .announcement-heading .badge {
+	flex: 0 0 auto;
+	margin: 0;
+	border: 0;
+	border-radius: 999px;
+	background: #def5e1 !important;
+	color: #24813a !important;
+	font-size: 0.72rem;
+	font-weight: 700;
+}
+
+.communication-area #announcements .announcement-card .announcement-heading .badge-warning {
+	background: #fff2cf !important;
+	color: #8a6200 !important;
+}
+
+.communication-area #announcements .announcement-card .announcement-heading .badge-danger {
+	background: #fde4e4 !important;
+	color: #a63232 !important;
+}
+
+.communication-area #announcements .announcement-card .announcement-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.55rem;
+	margin: 0 0 0.65rem;
+	color: #6b7c90;
+	font-size: 0.76rem;
+	line-height: 1.45;
+}
+
+.communication-area #announcements .announcement-card .announcement-meta span {
+	white-space: nowrap;
+}
+
+.communication-area #announcements .announcement-card .announcement-meta i {
+	margin-right: 0.2rem;
+	color: #637890;
+}
+
+.communication-area #announcements .announcement-card .announcement-content {
+	margin: 0;
+	color: #3c5066;
+	font-size: 0.9rem;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+
+.communication-area #announcements .announcement-filter-empty {
+	padding: 1.25rem;
+	color: #728399;
+	font-size: 0.88rem;
+	text-align: center;
+}
+
+@media (max-width: 992px) {
+	.communication-area #announcements .announcement-layout > .col-md-4,
+	.communication-area #announcements .announcement-layout > .col-md-8 {
+		flex: 0 0 100%;
+		max-width: 100%;
+	}
+}
+
+@media (max-width: 767px) {
+	.communication-area #announcements .announcement-list-header {
+		align-items: flex-start;
+		gap: 0.75rem;
+	}
+
+	.communication-area #announcements .announcement-card {
+		grid-template-columns: 38px minmax(0, 1fr);
+		gap: 0.65rem;
+		padding: 0.8rem;
+	}
+
+	.communication-area #announcements .announcement-card > .announcement-card-icon {
+		width: 36px;
+		height: 36px;
+		font-size: 0.9rem;
+	}
+
+	.communication-area #announcements .announcement-card .announcement-meta span {
+		white-space: normal;
+	}
+}
+
+/* Messaging composer and conversation cards. */
+.communication-area #messaging .messaging-layout {
+	align-items: stretch;
+}
+
+.communication-area #messaging .messaging-layout > .col-md-4 {
+	flex: 0 0 34%;
+	max-width: 34%;
+}
+
+.communication-area #messaging .messaging-layout > .col-md-8 {
+	flex: 0 0 66%;
+	max-width: 66%;
+}
+
+.communication-area #messaging .message-composer,
+.communication-area #messaging .message-threads-panel {
+	display: flex;
+	flex-direction: column;
+	min-height: 560px;
+	height: 100%;
+	overflow: hidden;
+	border: 1px solid #e1e9f2 !important;
+	border-radius: 14px !important;
+	background: #ffffff;
+	box-shadow: 0 8px 24px rgba(25, 55, 88, 0.06) !important;
+}
+
+.communication-area #messaging .message-composer-header {
+	display: flex;
+	justify-content: flex-start;
+	gap: 0.9rem;
+	min-height: 96px;
+	padding: 1.15rem 1.25rem !important;
+	border: 0 !important;
+	background: linear-gradient(115deg, #15549a 0%, #37a0e1 100%) !important;
+	color: #ffffff;
+}
+
+.communication-area #messaging .message-composer-icon {
+	display: grid;
+	flex: 0 0 40px;
+	width: 40px;
+	height: 40px;
+	place-items: center;
+	color: #ffffff;
+	font-size: 1.65rem;
+	transform: rotate(-8deg);
+}
+
+.communication-area #messaging .message-composer-header .card-title,
+.communication-area #messaging .message-composer-header h3 {
+	margin: 0;
+	color: #ffffff !important;
+	font-size: 1.2rem;
+	font-weight: 700;
+}
+
+.communication-area #messaging .message-composer-header p,
+.communication-area #messaging .message-threads-header p {
+	margin: 0.25rem 0 0;
+	color: inherit;
+	font-size: 0.84rem;
+	line-height: 1.45;
+}
+
+.communication-area #messaging .message-composer-header p {
+	color: rgba(255, 255, 255, 0.9);
+}
+
+.communication-area #messaging .message-composer > .card-body {
+	flex: 1 1 auto;
+	padding: 1.2rem !important;
+}
+
+.communication-area #messaging .message-form .form-group {
+	max-width: none;
+	margin-bottom: 1.15rem;
+}
+
+.communication-area #messaging .message-form .form-group label {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	margin-bottom: 0.5rem;
+	color: #203752;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.communication-area #messaging .message-form .form-group label > i {
+	width: 18px;
+	color: #284c76;
+	text-align: center;
+}
+
+.communication-area #messaging .message-form .form-control {
+	width: 100%;
+	max-width: none;
+	min-height: 52px;
+	padding: 0.75rem 0.85rem;
+	border: 1px solid #d6e0eb;
+	border-radius: 10px;
+	background-color: #ffffff;
+	color: #26394d;
+	font-size: 0.95rem;
+	box-shadow: 0 1px 3px rgba(20, 45, 70, 0.04);
+}
+
+.communication-area #messaging .message-form .form-control:focus {
+	border-color: #6aa9ec;
+	box-shadow: 0 0 0 0.18rem rgba(47, 132, 220, 0.14);
+}
+
+.communication-area #messaging .message-form textarea.form-control {
+	min-height: 200px;
+	padding-top: 0.85rem;
+	resize: vertical;
+}
+
+.communication-area #messaging .message-character-count {
+	margin-top: 0.2rem;
+	color: #8190a2;
+	font-size: 0.78rem;
+	text-align: right;
+}
+
+.communication-area #messaging .message-form .message-submit {
+	min-height: 56px;
+	margin-top: 0.25rem;
+	border: 1px solid #267ddd !important;
+	border-radius: 11px;
+	background: linear-gradient(110deg, #15549a 0%, #267ddd 100%) !important;
+	color: #ffffff !important;
+	font-size: 1rem;
+}
+
+.communication-area #messaging .message-threads-panel > .message-threads-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	min-height: 96px;
+	padding: 1.15rem 1.25rem !important;
+	border-bottom: 1px solid #edf2f8 !important;
+	background: #ffffff !important;
+}
+
+.communication-area #messaging .message-threads-header .card-title,
+.communication-area #messaging .message-threads-header h3 {
+	margin: 0;
+	color: #183b63 !important;
+	font-size: 1.25rem;
+	font-weight: 700;
+}
+
+.communication-area #messaging .message-threads-header .card-title i {
+	margin-right: 0.45rem;
+	color: #234970;
+}
+
+.communication-area #messaging .message-threads-header p {
+	padding-left: 1.9rem;
+	color: #728399;
+	font-size: 0.9rem;
+}
+
+.communication-area #messaging .message-search-wrap {
+	position: relative;
+	flex: 0 1 300px;
+	width: auto;
+	min-width: 200px;
+}
+
+.communication-area #messaging .message-search-wrap > i {
+	position: absolute;
+	top: 50%;
+	left: 0.85rem;
+	z-index: 1;
+	color: #8596aa;
+	transform: translateY(-50%);
+}
+
+.communication-area #messaging #message-search {
+	width: 100%;
+	min-height: 46px;
+	margin: 0;
+	padding: 0.65rem 0.8rem 0.65rem 2.4rem;
+	border: 1px solid #d6e0eb;
+	border-radius: 10px;
+	background: #ffffff;
+	font-size: 0.9rem;
+}
+
+.communication-area #messaging .message-threads-panel > .message-thread {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: 0.7rem 1rem 1rem !important;
+}
+
+.communication-area #messaging #messages-container {
+	display: flex;
+	flex-direction: column;
+	gap: 0.65rem;
+	max-height: 560px;
+	min-height: 420px;
+	padding: 0.15rem;
+	overscroll-behavior: contain;
+}
+
+.communication-area #messaging .message-bubble {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.9rem;
+	width: 100%;
+	max-width: 100%;
+	min-height: 102px;
+	margin: 0;
+	padding: 0.9rem 1rem;
+	border: 1px solid #d9e9fa;
+	border-radius: 13px;
+	background: linear-gradient(110deg, #f3f9ff 0%, #fbfdff 100%);
+	box-shadow: none;
+	overflow-wrap: anywhere;
+}
+
+.communication-area #messaging .message-bubble.sent {
+	border-color: #d9e9fa;
+	background: linear-gradient(110deg, #f3f9ff 0%, #fbfdff 100%);
+}
+
+.communication-area #messaging .message-bubble.received {
+	border-color: #e2eaf3;
+	background: #ffffff;
+}
+
+.communication-area #messaging .message-avatar {
+	display: grid;
+	flex: 0 0 56px;
+	width: 56px;
+	height: 56px;
+	place-items: center;
+	border-radius: 50%;
+	background: #287bd1;
+	color: #ffffff;
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.communication-area #messaging .message-summary {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding-top: 0.1rem;
+}
+
+.communication-area #messaging .message-summary-heading {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
+
+.communication-area #messaging .message-summary-heading strong {
+	color: #194675;
+	font-size: 1rem;
+	line-height: 1.45;
+}
+
+.communication-area #messaging .message-summary-heading time {
+	flex: 0 0 auto;
+	color: #71849a;
+	font-size: 0.8rem;
+	line-height: 1.5;
+}
+
+.communication-area #messaging .message-summary-heading time i {
+	margin-right: 0.3rem;
+	color: #8597ab;
+}
+
+.communication-area #messaging .message-summary p {
+	margin: 0.25rem 0 0;
+	color: #536d89;
+	font-size: 0.9rem;
+	line-height: 1.5;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 992px) {
+	.communication-area #messaging .messaging-layout > .col-md-4,
+	.communication-area #messaging .messaging-layout > .col-md-8 {
+		flex: 0 0 100%;
+		max-width: 100%;
+	}
+
+	.communication-area #messaging .message-composer,
+	.communication-area #messaging .message-threads-panel {
+		min-height: 0;
+	}
+
+	.communication-area #messaging #messages-container {
+		min-height: 0;
+	}
+}
+
+@media (max-width: 767px) {
+	.communication-area #messaging .message-threads-panel > .message-threads-header {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+
+	.communication-area #messaging .message-search-wrap {
+		flex: 0 0 auto;
+		width: 100%;
+		min-width: 0;
+	}
+
+	.communication-area #messaging .message-bubble {
+		gap: 0.65rem;
+		padding: 0.75rem;
+	}
+
+	.communication-area #messaging .message-avatar {
+		flex-basis: 42px;
+		width: 42px;
+		height: 42px;
+		font-size: 0.85rem;
+	}
+
+	.communication-area #messaging .message-summary-heading {
+		flex-direction: column;
+		gap: 0.1rem;
 	}
 }

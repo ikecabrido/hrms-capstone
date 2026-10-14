@@ -109,7 +109,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                 <div class="tab-pane fade<?= $activeRecognitionTab === 'recognition' ? ' show active' : '' ?>" id="recognition" role="tabpanel" aria-labelledby="recognition-tab">
                   <div class="recognition-main-grid">
                     <div class="recognition-left-column">
-                      <div class="card card-success card-outline shadow-sm border-0 recognition-feed">
+                      <div class="card card-success card-outline shadow-sm border-0 recognition-feed recognition-feature-card">
                         <div class="card-header d-flex align-items-center justify-content-between">
                           <h3 class="card-title mb-0"><i class="fas fa-heart mr-2"></i>Recognition Feed</h3>
                         </div>
@@ -177,7 +177,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                             <nav id="performance-recommendations-pagination" class="mt-2"></nav>
                           </div>
                         </div>
-                        <div>
+                        <div id="employees-without-reports-panel" style="display: none;">
                           <!-- Employees without Performance Reports -->
                           <div class="card card-secondary card-outline shadow-sm border-0">
                             <div class="card-header">
@@ -210,7 +210,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
 
                     <div class="recognition-right-column">
                       <!-- Quick Stats -->
-                      <div class="card card-info card-outline shadow-sm border-0 mb-3">
+                      <div class="card card-info card-outline shadow-sm border-0 mb-3 recognition-quick-stats">
                         <div class="card-header">
                           <h3 class="card-title mb-0"><i class="fas fa-chart-bar mr-2"></i>Quick Stats</h3>
                         </div>
@@ -229,7 +229,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                       </div>
 
                       <!-- Recent Recognitions -->
-                      <div class="card card-warning card-outline shadow-sm border-0 rounded-xl mb-3">
+                      <div class="card card-warning card-outline shadow-sm border-0 rounded-xl mb-3 recognition-recent-activity">
                         <div class="card-header recent-activity-header">
                           <h3 class="card-title mb-0 recent-activity-title"><i class="fas fa-clock mr-2"></i>Recent Activity</h3>
                         </div>
@@ -358,7 +358,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                                 </div>
                               <?php endforeach; ?>
                             <?php else: ?>
-                              <p class="text-muted text-center">No nominations yet.</p>
+                              <p class="employee-month-empty">No nominations yet.</p>
                             <?php endif; ?>
                           </div>
                         </div>
@@ -426,8 +426,8 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                               </div>
                             <?php endif; ?>
                           <?php else: ?>
-                            <div class="text-center text-muted py-4">
-                              <i class="fas fa-trophy fa-3x mb-3 text-warning"></i>
+                            <div class="current-winner-empty">
+                              <i class="fas fa-trophy text-primary" aria-hidden="true"></i>
                               <p>No Employee of the Month selected yet for <?= date('F Y') ?></p>
                               <small>Nominations will be announced soon!</small>
                             </div>
@@ -436,7 +436,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                       </div>
 
                       <!-- Nomination Rules -->
-                      <div class="card card-info card-outline">
+                      <div class="card card-info card-outline recognition-rules-card">
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-info-circle mr-2"></i>Nomination Rules</h3>
                         </div>
@@ -457,7 +457,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                 <div class="tab-pane fade<?= $activeRecognitionTab === 'badges' ? ' show active' : '' ?>" id="badges" role="tabpanel" aria-labelledby="badges-tab">
                   <div class="row">
                     <div class="col-md-8">
-                      <div class="card card-info card-outline">
+                      <div class="card card-info card-outline recognition-badges-card">
                         <div class="card-header header-action-card-header">
                           <h3 class="card-title"><i class="fas fa-medal mr-2"></i>Achievement Badges</h3>
                           <div class="card-tools">
@@ -503,7 +503,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                 <div class="tab-pane fade<?= $activeRecognitionTab === 'rewards' ? ' show active' : '' ?>" id="rewards" role="tabpanel" aria-labelledby="rewards-tab">
                   <div class="row">
                     <div class="col-md-8">
-                      <div class="card card-primary card-outline">
+                      <div class="card card-primary card-outline rewards-catalog-card">
                         <div class="card-header header-action-card-header">
                           <h3 class="card-title"><i class="fas fa-gift mr-2"></i>Rewards Catalog</h3>
                           <div class="card-tools">
@@ -523,7 +523,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
 
                     <div class="col-md-4">
                       <!-- Reward Redemptions -->
-                      <div class="card card-success card-outline">
+                      <div class="card card-success card-outline reward-redemptions-card">
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-history mr-2"></i>Recent Redemptions</h3>
                         </div>
@@ -539,7 +539,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                 <div class="tab-pane fade<?= $activeRecognitionTab === 'leaderboard' ? ' show active' : '' ?>" id="leaderboard" role="tabpanel" aria-labelledby="leaderboard-tab">
                   <div class="row">
                     <div class="col-md-8">
-                      <div class="card card-warning card-outline">
+                      <div class="card card-warning card-outline recognition-leaderboard-card">
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-trophy mr-2"></i>Comprehensive Leaderboard</h3>
                         </div>
@@ -604,7 +604,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                       </div>
                     </div>
                     <div class="col-md-4">
-                      <div class="card card-secondary card-outline">
+                      <div class="card card-secondary card-outline recognition-department-leaderboard-card">
                         <div class="card-header">
                           <h3 class="card-title"><i class="fas fa-users mr-2"></i>Department Leaderboard</h3>
                         </div>
@@ -766,4 +766,3 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
 
 
 </body>
-

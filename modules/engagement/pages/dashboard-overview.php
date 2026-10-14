@@ -249,10 +249,11 @@ foreach ($payload['feed'] ?? [] as $socialPost) {
       </div>
     </div>
 
-      $socialPostTotal = max(1, (int)$socialAnalysis['posts']);
-      $positivePercent = (int)round($socialAnalysis['positive'] / $socialPostTotal * 100);
-      $neutralPercent = (int)round($socialAnalysis['neutral'] / $socialPostTotal * 100);
-      $negativePercent = (int)round($socialAnalysis['negative'] / $socialPostTotal * 100);
+    <?php
+    $socialPostTotal = max(1, (int) $socialAnalysis['posts']);
+    $positivePercent = (int) round($socialAnalysis['positive'] / $socialPostTotal * 100);
+    $neutralPercent = (int) round($socialAnalysis['neutral'] / $socialPostTotal * 100);
+    $negativePercent = (int) round($socialAnalysis['negative'] / $socialPostTotal * 100);
     ?>
     <div class="row mt-4">
       <div class="col-12">

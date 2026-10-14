@@ -2,14 +2,10 @@ function normalizeCommunicationTab(tabId) {
   if (!tabId) return '';
 
   const normalized = String(tabId).trim().toLowerCase().replace(/_/g, '-');
-  const validTabs = ['announcements', 'notifications', 'updates', 'messaging', 'policies'];
+  const validTabs = ['announcements', 'updates', 'messaging', 'policies'];
 
   if (validTabs.includes(normalized)) {
     return normalized;
-  }
-
-  if (normalized === 'hr-notification' || normalized === 'hr-notification-tab') {
-    return 'notifications';
   }
 
   return '';
@@ -210,14 +206,44 @@ function getPriorityBadgeClass(priority) {
   return classes[String(priority || 'normal').toLowerCase()] || 'light';
 }
 
-function getNotificationTypeIcon(type) {
-  const icons = {
-    info: 'fas fa-info-circle text-info',
-    warning: 'fas fa-exclamation-triangle text-warning',
-    success: 'fas fa-check-circle text-success',
-    danger: 'fas fa-times-circle text-danger'
-  };
-  return icons[String(type || '').toLowerCase()] || 'fas fa-bell text-primary';
+function normalizeAnnouncementCategory(value) {
+  return String(value || 'general').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+function renderCommunicationAnnouncementCard(announcement) {
+  const title = escapeCommunicationHtml(announcement.title);
+  const category = String(announcement.category || 'general');
+  const categoryLabel = category.replace(/[_-]+/g, ' ').replace(/\b\w/g, function (character) {
+    return character.toUpperCase();
+  });
+  const priority = String(announcement.priority || 'normal');
+  const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+  const date = announcement.created_at ? new Date(announcement.created_at).toLocaleString() : '';
+  const author = announcement.author_name || announcement.created_by_name || 'Admin';
+  const content = String(announcement.content || '');
+  const announcementId = Number(announcement.eer_announcements_id);
+  const moreAction = announcementId > 0
+    ? '<button type="button" class="announcement-more" aria-label="View announcement details" title="View announcement details" onclick="viewFullAnnouncement(' + announcementId + ')"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></button>'
+    : '';
+  const contentMarkup = renderCommunicationContent(content, announcement.eer_announcements_id, 'primary')
+    .replace('class="card-text"', 'class="announcement-content"');
+
+  return '<div class="announcement-card card mb-3" data-category="' + escapeCommunicationHtml(normalizeAnnouncementCategory(category)) + '">' +
+    '<div class="announcement-card-icon" aria-hidden="true"><i class="fas fa-bullhorn"></i></div>' +
+    '<div class="card-body">' +
+      '<div class="announcement-heading d-flex justify-content-between align-items-start mb-2">' +
+        '<h6 class="card-title text-primary mb-1">' + title + '</h6>' +
+        '<span class="badge badge-' + getPriorityBadgeClass(priority) + '">' + escapeCommunicationHtml(priorityLabel) + '</span>' +
+        moreAction +
+      '</div>' +
+      '<div class="announcement-meta">' +
+        '<span><i class="fas fa-calendar"></i> ' + escapeCommunicationHtml(date) + '</span>' +
+        '<span><i class="fas fa-tag"></i> ' + escapeCommunicationHtml(categoryLabel) + '</span>' +
+        '<span><i class="fas fa-user"></i> ' + escapeCommunicationHtml(author) + '</span>' +
+      '</div>' +
+      contentMarkup +
+    '</div>' +
+  '</div>';
 }
 
 function renderCommunicationAnnouncements(announcements) {
@@ -226,19 +252,63 @@ function renderCommunicationAnnouncements(announcements) {
 
   if (!announcements.length) {
     container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-bullhorn fa-3x mb-3"></i><h5>No announcements yet</h5><p>Company announcements will appear here.</p></div>';
+    applyAnnouncementFilter();
     return;
   }
 
-  container.innerHTML = announcements.slice(0, 5).map(function (announcement) {
-    const content = String(announcement.content || '');
-    const date = announcement.created_at ? new Date(announcement.created_at).toLocaleString() : '';
-    return '<div class="announcement-card card mb-3"><div class="card-body">' +
-      '<div class="d-flex justify-content-between align-items-start mb-2"><h6 class="card-title text-primary mb-1">' + escapeCommunicationHtml(announcement.title) + '</h6>' +
-      '<span class="badge badge-' + getPriorityBadgeClass(announcement.priority) + '">' + escapeCommunicationHtml((announcement.priority || 'normal').charAt(0).toUpperCase() + (announcement.priority || 'normal').slice(1)) + '</span></div>' +
-      '<p class="card-text text-muted small mb-2"><i class="fas fa-calendar"></i> ' + escapeCommunicationHtml(date) + ' | <i class="fas fa-tag"></i> ' + escapeCommunicationHtml(announcement.category || 'general') + ' | <i class="fas fa-user"></i> ' + escapeCommunicationHtml(announcement.author_name || announcement.created_by_name || 'Admin') + '</p>' +
-      renderCommunicationContent(content, announcement.eer_announcements_id, 'primary') +
-      '</div></div>';
-  }).join('');
+  container.innerHTML = announcements.slice(0, 5).map(renderCommunicationAnnouncementCard).join('');
+  applyAnnouncementFilter();
+}
+
+function applyAnnouncementFilter() {
+  const container = document.getElementById('announcements-container');
+  const filter = document.getElementById('announcement-category-filter');
+  if (!container || !filter) return;
+
+  const cards = Array.from(container.querySelectorAll('.announcement-card'));
+  let visibleCount = 0;
+  cards.forEach(function (card) {
+    const matches = !filter.value || normalizeAnnouncementCategory(card.dataset.category) === normalizeAnnouncementCategory(filter.value);
+    card.hidden = !matches;
+    card.style.display = matches ? '' : 'none';
+    if (matches) visibleCount += 1;
+  });
+
+  const emptyState = container.querySelector('[data-announcement-filter-empty]');
+  if (cards.length > 0 && visibleCount === 0) {
+    if (!emptyState) {
+      container.insertAdjacentHTML('beforeend', '<div class="announcement-filter-empty" data-announcement-filter-empty>No announcements match this category.</div>');
+    }
+  } else if (emptyState) {
+    emptyState.remove();
+  }
+}
+
+function initAnnouncementFilter() {
+  const filter = document.getElementById('announcement-category-filter');
+  if (!filter || filter.dataset.filterBound === '1') return;
+
+  filter.dataset.filterBound = '1';
+  filter.addEventListener('change', applyAnnouncementFilter);
+}
+
+function initAnnouncementContentCounter() {
+  const content = document.getElementById('announcement-content');
+  const counter = document.getElementById('announcement-content-count');
+  if (!content || !counter || content.dataset.counterBound === '1') return;
+
+  content.dataset.counterBound = '1';
+  const updateCount = function () {
+    counter.textContent = String(content.value.length);
+  };
+  content.addEventListener('input', updateCount);
+  const form = content.closest('form');
+  if (form) {
+    form.addEventListener('reset', function () {
+      window.setTimeout(updateCount, 0);
+    });
+  }
+  updateCount();
 }
 
 function renderCommunicationUpdates(updates) {
@@ -262,32 +332,6 @@ function renderCommunicationUpdates(updates) {
   }).join('');
 }
 
-function renderCommunicationNotifications(notifications, lcmNotifications) {
-  const container = document.getElementById('notifications-container');
-  if (!container || !Array.isArray(notifications)) return;
-  const allNotifications = notifications.concat(Array.isArray(lcmNotifications) ? lcmNotifications : []);
-
-  if (!allNotifications.length) {
-    container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-bell fa-3x mb-3"></i><h5>No notifications</h5><p>HR notifications will appear here.</p></div>';
-    return;
-  }
-
-  container.innerHTML = allNotifications.map(function (notification) {
-    const isRead = Number(notification.is_read || 0) === 1;
-    const title = notification.title || (notification.notification_type ? 'Legal & Compliance' : 'HR Update');
-    return '<div class="notification-item ' + (isRead ? 'notification-read' : 'notification-unread') + '"><div class="d-flex justify-content-between align-items-start"><div class="flex-grow-1">' +
-      '<div class="d-flex align-items-center mb-1"><span class="badge badge-light notification-type-badge notification-type-badge--side">' + escapeCommunicationHtml(getNotificationTypeLabel(notification.type || notification.notification_type || 'info')) + '</span><i class="' + getNotificationTypeIcon(notification.type || notification.notification_type || 'info') + ' mr-2"></i><h6 class="mb-0">' + escapeCommunicationHtml(title) + '</h6></div>' +
-      '<p class="text-muted small mb-1"><i class="fas fa-calendar"></i> ' + escapeCommunicationHtml(notification.created_at || '') + '</p><p class="mb-2">' + escapeCommunicationHtml(notification.message || '') + '</p></div>' +
-      (!isRead && notification.id ? '<div class="ml-3 notification-actions"><button type="button" class="btn btn-sm btn-outline-success js-mark-notification-read" data-notification-id="' + Number(notification.id) + '"><i class="fas fa-check"></i> Mark Read</button><span class="badge badge-primary notification-new-badge">New</span></div>' : '') +
-      '</div></div>';
-  }).join('');
-}
-
-function getNotificationTypeLabel(type) {
-  const labels = {survey: 'Survey', social: 'Social', recognition: 'Recognition', grievance: 'Grievance', policy: 'Policy'};
-  return labels[String(type || '').toLowerCase()] || 'HR Update';
-}
-
 function renderCommunicationMessages(messages, currentEmployeeId) {
   const container = document.getElementById('messages-container');
   if (!container || !Array.isArray(messages)) return;
@@ -300,11 +344,47 @@ function renderCommunicationMessages(messages, currentEmployeeId) {
 
   container.innerHTML = messages.map(function (message) {
     const isSent = Number(message.sender_id) === Number(currentEmployeeId);
-    const sender = message.sender_name || message.sender_id || '';
+    const participant = isSent
+      ? (message.receiver_name || message.receiver_id || '')
+      : (message.sender_name || message.sender_id || '');
     const text = String(message.message || '');
-    const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
-    return '<div class="message-bubble ' + (isSent ? 'sent' : 'received') + '" data-message-search="' + escapeCommunicationHtml((sender + ' ' + text + ' ' + timestamp).toLowerCase()) + '"><div class="p-2"><div class="d-flex justify-content-between align-items-center mb-1"><small class="text-muted"><i class="fas fa-user"></i> ' + escapeCommunicationHtml(sender) + '</small><small class="text-muted"><i class="fas fa-clock"></i> ' + escapeCommunicationHtml(timestamp) + '</small></div><p class="mb-0">' + escapeCommunicationHtml(text) + '</p></div></div>';
+    const date = message.timestamp ? new Date(message.timestamp) : null;
+    const timestamp = date && !Number.isNaN(date.getTime())
+      ? date.toLocaleDateString(undefined, {month: 'short', day: '2-digit', year: 'numeric'}) + ', ' + date.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})
+      : '';
+    const initials = participant.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(function (part) {
+      return part.charAt(0).toUpperCase();
+    }).join('') || '??';
+    const preview = (isSent ? 'You: ' : '') + text;
+    return '<div class="message-bubble ' + (isSent ? 'sent' : 'received') + '" data-message-search="' + escapeCommunicationHtml((participant + ' ' + text + ' ' + timestamp).toLowerCase()) + '">' +
+      '<div class="message-avatar" aria-hidden="true">' + escapeCommunicationHtml(initials) + '</div>' +
+      '<div class="message-summary">' +
+        '<div class="message-summary-heading"><strong>' + escapeCommunicationHtml(participant) + '</strong>' +
+          '<time' + (date && !Number.isNaN(date.getTime()) ? ' datetime="' + escapeCommunicationHtml(date.toISOString()) + '"' : '') + '><i class="fas fa-clock" aria-hidden="true"></i> ' + escapeCommunicationHtml(timestamp) + '</time>' +
+        '</div>' +
+        '<p>' + escapeCommunicationHtml(preview) + '</p>' +
+      '</div>' +
+    '</div>';
   }).join('') + emptySearch;
+}
+
+function initMessageContentCounter() {
+  const content = document.getElementById('message-content');
+  const counter = document.getElementById('message-content-count');
+  if (!content || !counter || content.dataset.counterBound === '1') return;
+
+  content.dataset.counterBound = '1';
+  const updateCount = function () {
+    counter.textContent = String(content.value.length);
+  };
+  content.addEventListener('input', updateCount);
+  const form = content.closest('form');
+  if (form) {
+    form.addEventListener('reset', function () {
+      window.setTimeout(updateCount, 0);
+    });
+  }
+  updateCount();
 }
 
 function populateCommunicationOptions(data) {
@@ -340,49 +420,12 @@ function loadCommunicationPageData() {
       const data = response.data || {};
       renderCommunicationAnnouncements(data.announcements);
       renderCommunicationUpdates(data.department_updates);
-      renderCommunicationNotifications(data.notifications, data.lcm_notifications);
       renderCommunicationMessages(data.messageThreads, response.current_employee_id);
       populateCommunicationOptions(data);
     })
     .catch(function (error) {
       console.warn('[Communication] API data load failed; keeping server-rendered content.', error);
     });
-}
-
-function initCommunicationApiActions() {
-  const container = document.getElementById('notifications-container');
-  if (!container || container.dataset.apiActionsBound === '1') return;
-  container.dataset.apiActionsBound = '1';
-  container.addEventListener('click', function (event) {
-    const button = event.target.closest('.js-mark-notification-read');
-    if (!button) return;
-
-    button.disabled = true;
-    fetch('api/communication.php?action=mark_notification_read', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      credentials: 'same-origin',
-      body: JSON.stringify({notification_id: button.dataset.notificationId})
-    })
-      .then(function (response) {
-        return response.json().then(function (data) {
-          if (!response.ok || data.error) throw new Error(data.error || 'Unable to mark notification as read.');
-          return data;
-        });
-      })
-      .then(function () {
-        const item = button.closest('.notification-item');
-        if (item) {
-          item.classList.remove('notification-unread');
-          item.classList.add('notification-read');
-          item.querySelectorAll('.js-mark-notification-read, .notification-new-badge').forEach(function (element) { element.remove(); });
-        }
-      })
-      .catch(function (error) {
-        button.disabled = false;
-        window.alert(error.message);
-      });
-  });
 }
 
 function renderCommunicationContent(content, announcementId, buttonClass) {
@@ -396,6 +439,10 @@ function renderCommunicationContent(content, announcementId, buttonClass) {
 }
 
 function initCommunicationForms() {
+  initAnnouncementFilter();
+  initAnnouncementContentCounter();
+  initMessageContentCounter();
+
   document.querySelectorAll('#announcements form, #updates form, #messaging form').forEach(function (form) {
     if (form.dataset.ajaxBound === '1') return;
     form.dataset.ajaxBound = '1';
@@ -439,7 +486,21 @@ function initCommunicationForms() {
           const priorityBadge = '<span class="badge badge-' + (priority === 'urgent' ? 'danger' : (priority === 'high' ? 'warning' : (priority === 'low' ? 'secondary' : 'info'))) + '">' + priority.charAt(0).toUpperCase() + priority.slice(1) + '</span>';
           if (formType === 'announcement') {
             const container = document.getElementById('announcements-container');
-            if (container) container.insertAdjacentHTML('afterbegin', '<div class="announcement-card card mb-3"><div class="card-body"><div class="d-flex justify-content-between align-items-start mb-2"><h6 class="card-title text-primary">' + escapeCommunicationHtml(formData.get('title')) + '</h6>' + priorityBadge + '</div><p class="text-muted small"><i class="fas fa-calendar"></i> ' + time + ' | <i class="fas fa-tag"></i> ' + escapeCommunicationHtml(formData.get('category') || 'general') + '</p>' + renderCommunicationContent(formData.get('content'), data.id, 'primary') + '</div></div>');
+            if (container) {
+              const emptyState = container.querySelector('.text-center.text-muted.py-4');
+              if (emptyState) emptyState.remove();
+              const announcement = {
+                title: formData.get('title'),
+                content: formData.get('content'),
+                category: formData.get('category') || 'general',
+                priority: formData.get('priority') || 'normal',
+                created_at: new Date().toISOString(),
+                author_name: 'You',
+                eer_announcements_id: data.id
+              };
+              container.insertAdjacentHTML('afterbegin', renderCommunicationAnnouncementCard(announcement));
+              applyAnnouncementFilter();
+            }
           } else if (formType === 'department_update') {
             const container = document.getElementById('updates-container');
             if (container) {
@@ -452,8 +513,18 @@ function initCommunicationForms() {
             if (container) {
               const emptyState = container.querySelector('.text-center.text-muted');
               if (emptyState) emptyState.remove();
-              const messageText = escapeCommunicationHtml(formData.get('message'));
-              container.insertAdjacentHTML('afterbegin', '<div class="message-bubble sent" data-message-search="' + messageText.toLowerCase() + ' current just now"><div class="p-2"><small class="text-muted"><i class="fas fa-clock"></i> Just now</small><p class="mb-0">' + messageText + '</p></div></div>');
+              const recipient = form.querySelector('[name="receiver_id"]');
+              const selectedRecipient = recipient && recipient.selectedIndex >= 0 ? recipient.options[recipient.selectedIndex].text : '';
+              const messageDate = new Date();
+              const messageText = String(formData.get('message') || '');
+              const initials = selectedRecipient.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(function (part) {
+                return part.charAt(0).toUpperCase();
+              }).join('') || '??';
+              const messageCard = '<div class="message-bubble sent" data-message-search="' + escapeCommunicationHtml((selectedRecipient + ' ' + messageText + ' ' + messageDate.toLocaleString()).toLowerCase()) + '">' +
+                '<div class="message-avatar" aria-hidden="true">' + escapeCommunicationHtml(initials) + '</div>' +
+                '<div class="message-summary"><div class="message-summary-heading"><strong>' + escapeCommunicationHtml(selectedRecipient) + '</strong><time datetime="' + escapeCommunicationHtml(messageDate.toISOString()) + '"><i class="fas fa-clock" aria-hidden="true"></i> ' + escapeCommunicationHtml(messageDate.toLocaleDateString(undefined, {month: 'short', day: '2-digit', year: 'numeric'}) + ', ' + messageDate.toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'})) + '</time></div>' +
+                '<p>' + escapeCommunicationHtml('You: ' + messageText) + '</p></div></div>';
+              container.insertAdjacentHTML('afterbegin', messageCard);
               applyMessageSearch();
             }
           }
@@ -511,16 +582,6 @@ function initMessageSearch() {
 
   applyMessageSearch();
 }
-
-window.addEventListener('notifications:all-read', function () {
-  document.querySelectorAll('#notifications-container .notification-item').forEach(function (item) {
-    item.classList.remove('notification-unread');
-    item.classList.add('notification-read');
-    item.querySelectorAll('.notification-new-badge, .notification-actions form').forEach(function (element) {
-      element.remove();
-    });
-  });
-});
 
 function initPolicyFilter() {
   const filterSelect = document.getElementById('policy-filter');
@@ -773,7 +834,6 @@ if (document.readyState === 'loading') {
       initMessageSearch();
       initPolicyFilter();
       initLcmPolicySharing();
-      initCommunicationApiActions();
       loadCommunicationPageData();
       console.log('[Communication Tab] Initialization complete');
     }, 100);
@@ -788,7 +848,6 @@ if (document.readyState === 'loading') {
     initMessageSearch();
     initPolicyFilter();
     initLcmPolicySharing();
-    initCommunicationApiActions();
     loadCommunicationPageData();
     console.log('[Communication Tab] Initialization complete');
   }, 100);
@@ -811,7 +870,6 @@ window.addEventListener('page:loaded', function(e) {
       initMessageSearch();
       initPolicyFilter();
       initLcmPolicySharing();
-      initCommunicationApiActions();
       loadCommunicationPageData();
       console.log('[Communication Tab] Initialization complete after page load');
     }, 150);
