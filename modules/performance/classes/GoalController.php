@@ -55,16 +55,14 @@ class GoalController
                     $data = $_POST;
                     $data['supervisor_id'] = $data['supervisor_id'] ?? $currentUserId;
                     $data['supervisor_name'] = $data['supervisor_name'] ?? $currentUserName;
-                    if ($this->validateGoalData($data)) {
-                        $result = $this->goalService->getGoals();
-                        $saved = $this->goalService->getOverview();
-                        $goalModel = new Goal();
-                        if ($goalModel->saveGoal($data)) {
-                            $_SESSION['goal_success'] = 'Goal created successfully.';
-                            $this->redirect();
-                        }
+                    if (!$this->validateGoalData($data)) {
+                        $this->redirect();
                     }
-                    $_SESSION['goal_error'] = 'Unable to save the goal.';
+                    if ($this->goalService->saveGoal($data)) {
+                        $_SESSION['goal_success'] = 'Goal created successfully.';
+                        $this->redirect();
+                    }
+                    $_SESSION['goal_error'] = 'Unable to save the goal. Make sure the goal tables are set up using modules/performance/performance.sql.';
                     $this->redirect();
                     break;
 
@@ -126,7 +124,7 @@ class GoalController
                     if ($eventDate !== '' && $this->createEvent($data, (string) $currentUserName)) {
                         $_SESSION['goal_success'] = 'Calendar event saved successfully.';
                     } else {
-                        $_SESSION['goal_error'] = 'Unable to save the calendar event. Import database/goal_setting.sql first.';
+                        $_SESSION['goal_error'] = 'Unable to save the calendar event. Make sure the goal event table is set up using modules/performance/performance.sql.';
                     }
                     $this->redirect();
                     break;
@@ -136,6 +134,7 @@ class GoalController
                     break;
             }
         } catch (Exception $e) {
+            error_log('Goal setting request failed: ' . $e->getMessage());
             $_SESSION['goal_error'] = 'An unexpected error occurred.';
             $this->redirect();
         }

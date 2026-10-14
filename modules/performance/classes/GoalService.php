@@ -35,6 +35,11 @@ class GoalService
         return $this->goalModel->getGoals($filters);
     }
 
+    public function saveGoal(array $data): bool
+    {
+        return $this->goalModel->saveGoal($data);
+    }
+
     public function getGoalById(int $goalId): ?array
     {
         return $this->goalModel->getGoalById($goalId);

@@ -328,6 +328,7 @@ class Goal
     public function saveGoal(array $data): bool
     {
         if (!$this->tableExists('pm_goals')) {
+            error_log('Unable to save performance goal: pm_goals table does not exist.');
             return false;
         }
 
@@ -425,6 +426,7 @@ class Goal
             $stmt = $this->conn->prepare($sql);
             $department = trim((string) ($data['department'] ?? ''));
             $position = trim((string) ($data['position'] ?? ''));
+            $departmentId = $department !== '' ? (int) $department : null;
             $approvalComment = trim((string) ($data['approval_comment'] ?? ''));
             $rejectionReason = trim((string) ($data['rejection_reason'] ?? ''));
             $completionDate = trim((string) ($data['completion_date'] ?? ''));
@@ -432,7 +434,7 @@ class Goal
 
             $stmt->bindValue(':employee_id', (int) $employeeId, PDO::PARAM_INT);
             $stmt->bindValue(':employee_name', $employeeName ?: 'Unknown Employee', PDO::PARAM_STR);
-            $stmt->bindValue(':department', $department, PDO::PARAM_STR);
+            $stmt->bindValue(':department', $departmentId, $departmentId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
             $stmt->bindValue(':position', $position, PDO::PARAM_STR);
             $stmt->bindValue(':supervisor_id', !empty($supervisorId) ? (int) $supervisorId : null, !empty($supervisorId) ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->bindValue(':supervisor_name', $supervisorName ?: 'System', PDO::PARAM_STR);
@@ -461,6 +463,7 @@ class Goal
             $this->appendHistory($goalId, 'Goal created', 'Goal created for employee: ' . $employeeName, $supervisorId ?: $employeeId);
             return true;
         } catch (PDOException $e) {
+            error_log('Unable to save performance goal: ' . $e->getMessage());
             return false;
         }
     }
@@ -699,6 +702,7 @@ class Goal
     public function createEvent(array $data, string $createdBy = ''): bool
     {
         if (!$this->tableExists('pm_goal_events')) {
+            error_log('Unable to save performance calendar event: pm_goal_events table does not exist.');
             return false;
         }
 
@@ -740,6 +744,7 @@ class Goal
             }
             return $stmt->execute();
         } catch (PDOException $e) {
+            error_log('Unable to save performance calendar event: ' . $e->getMessage());
             return false;
         }
     }
