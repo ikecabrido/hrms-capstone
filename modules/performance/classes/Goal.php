@@ -59,6 +59,40 @@ class Goal
         return $row['employee_name'] ?? null;
     }
 
+    private function getEmployeeRecord(string $employeeId): ?array
+    {
+        $table = $this->employeeTable();
+        if (!ctype_digit($employeeId) || !$this->tableExists($table)) {
+            return null;
+        }
+
+        if ($table === 'em_employees') {
+            $sql = "SELECT e.employee_id,
+                           TRIM(CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, ''))) AS employee_name,
+                           e.department_id AS department_id,
+                           p.position_name AS position_name
+                    FROM em_employees e
+                    LEFT JOIN em_positions p ON p.position_id = e.position_id
+                    WHERE e.employee_id = :employee_id
+                    LIMIT 1";
+        } else {
+            $sql = "SELECT employee_id,
+                           TRIM(CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) AS employee_name,
+                           department AS department_id,
+                           CAST(position AS CHAR) AS position_name
+                    FROM {$table}
+                    WHERE employee_id = :employee_id
+                    LIMIT 1";
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':employee_id', (int) $employeeId, PDO::PARAM_INT);
+        $stmt->execute();
+        $employee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $employee ?: null;
+    }
+
     private function getSupervisorDisplayName(string $supervisorId): ?string
     {
         $table = $this->employeeTable();
@@ -147,7 +181,7 @@ class Goal
         $employeeTable = $this->employeeTable();
 
         $sql = "SELECT g.*,
-                       CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                       COALESCE(NULLIF(TRIM(CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, ''))), ''), g.employee_name) AS employee_name,
                        CONCAT(COALESCE(s.first_name, ''), ' ', COALESCE(s.last_name, '')) AS assigned_by_name,
                        g.goal_title AS title,
                        COALESCE(g.progress_percentage, 0) AS actual_progress,
@@ -245,7 +279,7 @@ class Goal
         $employeeTable = $this->employeeTable();
 
         $sql = "SELECT g.*, e.first_name, e.last_name,
-                       CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS employee_name,
+                       COALESCE(NULLIF(TRIM(CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, ''))), ''), g.employee_name) AS employee_name,
                        CONCAT(COALESCE(s.first_name, ''), ' ', COALESCE(s.last_name, '')) AS supervisor_name
                 FROM pm_goals g
                 LEFT JOIN {$employeeTable} e ON e.employee_id = g.employee_id
@@ -333,10 +367,12 @@ class Goal
         }
 
         $employeeId = trim((string) ($data['employee_id'] ?? ''));
-        $employeeName = trim((string) ($data['employee_name'] ?? ''));
-        if ($employeeId !== '' && $employeeName === '') {
-            $employeeName = $this->getEmployeeDisplayName($employeeId) ?? 'Unknown Employee';
+        $employee = $this->getEmployeeRecord($employeeId);
+        if (!$employee) {
+            error_log('Unable to save performance goal: selected employee was not found.');
+            return false;
         }
+        $employeeName = (string) $employee['employee_name'];
 
         $supervisorId = trim((string) ($data['supervisor_id'] ?? ($data['assigned_by'] ?? '')));
         $supervisorName = trim((string) ($data['supervisor_name'] ?? ''));
@@ -424,9 +460,8 @@ class Goal
                     )";
 
             $stmt = $this->conn->prepare($sql);
-            $department = trim((string) ($data['department'] ?? ''));
-            $position = trim((string) ($data['position'] ?? ''));
-            $departmentId = $department !== '' ? (int) $department : null;
+            $departmentId = $employee['department_id'] !== null ? (int) $employee['department_id'] : null;
+            $position = trim((string) ($employee['position_name'] ?? ''));
             $approvalComment = trim((string) ($data['approval_comment'] ?? ''));
             $rejectionReason = trim((string) ($data['rejection_reason'] ?? ''));
             $completionDate = trim((string) ($data['completion_date'] ?? ''));
@@ -460,7 +495,11 @@ class Goal
             $stmt->execute();
 
             $goalId = (int) $this->conn->lastInsertId();
-            $this->appendHistory($goalId, 'Goal created', 'Goal created for employee: ' . $employeeName, $supervisorId ?: $employeeId);
+            try {
+                $this->appendHistory($goalId, 'Goal created', 'Goal created for employee: ' . $employeeName, $supervisorId ?: $employeeId);
+            } catch (PDOException $e) {
+                error_log('Goal was saved but its history entry could not be created: ' . $e->getMessage());
+            }
             return true;
         } catch (PDOException $e) {
             error_log('Unable to save performance goal: ' . $e->getMessage());
@@ -706,32 +745,47 @@ class Goal
             return false;
         }
 
+        if (!$this->ensureEventEmployeeIdColumn()) {
+            return false;
+        }
+
         $title = trim((string) ($data['event_title'] ?? ''));
         $startDate = trim((string) ($data['start_date'] ?? ''));
         if ($title === '' || $startDate === '') {
             return false;
         }
 
+        $employeeId = trim((string) ($data['employee_id'] ?? ''));
+        $employee = $employeeId !== '' ? $this->getEmployeeRecord($employeeId) : null;
+        if ($employeeId !== '' && !$employee) {
+            error_log('Unable to save performance calendar event: selected employee was not found.');
+            return false;
+        }
+
         try {
             $stmt = $this->conn->prepare(
                 'INSERT INTO pm_goal_events
-                    (event_title, event_type, start_date, end_date, start_time, end_time,
+                    (employee_id, event_title, event_type, start_date, end_date, start_time, end_time,
                      employee_name, department, location, description, related_goal_id,
                      status, reminder, created_by)
                  VALUES
-                    (:event_title, :event_type, :start_date, :end_date, :start_time, :end_time,
+                    (:employee_id, :event_title, :event_type, :start_date, :end_date, :start_time, :end_time,
                      :employee_name, :department, :location, :description, :related_goal_id,
                      :status, :reminder, :created_by)'
             );
+            $departmentId = $employee && $employee['department_id'] !== null
+                ? (int) $employee['department_id']
+                : null;
             $values = [
+                ':employee_id' => [$employee ? (int) $employee['employee_id'] : null, PDO::PARAM_INT],
                 ':event_title' => [$title, PDO::PARAM_STR],
                 ':event_type' => [trim((string) ($data['event_type'] ?? 'Other HR Event')), PDO::PARAM_STR],
                 ':start_date' => [$startDate, PDO::PARAM_STR],
                 ':end_date' => [trim((string) ($data['end_date'] ?? '')) ?: null, PDO::PARAM_STR],
                 ':start_time' => [trim((string) ($data['start_time'] ?? '')) ?: null, PDO::PARAM_STR],
                 ':end_time' => [trim((string) ($data['end_time'] ?? '')) ?: null, PDO::PARAM_STR],
-                ':employee_name' => [trim((string) ($data['employee_name'] ?? '')) ?: null, PDO::PARAM_STR],
-                ':department' => [trim((string) ($data['department'] ?? '')) ?: null, PDO::PARAM_STR],
+                ':employee_name' => [$employee ? $employee['employee_name'] : 'All employees', PDO::PARAM_STR],
+                ':department' => [$departmentId, PDO::PARAM_INT],
                 ':location' => [trim((string) ($data['location'] ?? '')) ?: null, PDO::PARAM_STR],
                 ':description' => [trim((string) ($data['description'] ?? '')) ?: null, PDO::PARAM_STR],
                 ':related_goal_id' => [(int) ($data['related_goal_id'] ?? 0) ?: null, PDO::PARAM_INT],
@@ -746,6 +800,33 @@ class Goal
         } catch (PDOException $e) {
             error_log('Unable to save performance calendar event: ' . $e->getMessage());
             return false;
+        }
+    }
+
+    private function ensureEventEmployeeIdColumn(): bool
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT COUNT(*)
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = 'pm_goal_events'
+               AND COLUMN_NAME = 'employee_id'"
+        );
+        $stmt->execute();
+        if ((int) $stmt->fetchColumn() > 0) {
+            return true;
+        }
+
+        try {
+            $this->conn->exec(
+                'ALTER TABLE pm_goal_events ADD COLUMN employee_id BIGINT DEFAULT NULL AFTER event_id'
+            );
+            return true;
+        } catch (PDOException $e) {
+            error_log('Unable to add employee_id to pm_goal_events: ' . $e->getMessage());
+
+            $stmt->execute();
+            return (int) $stmt->fetchColumn() > 0;
         }
     }
 

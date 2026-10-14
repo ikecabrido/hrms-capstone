@@ -97,6 +97,7 @@ CREATE TABLE IF NOT EXISTS pm_goal_history (
 
 CREATE TABLE IF NOT EXISTS pm_goal_events (
     event_id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id BIGINT DEFAULT NULL,
     event_title VARCHAR(255) NOT NULL,
     event_type VARCHAR(100) NOT NULL DEFAULT 'Other HR Event',
     start_date DATE NOT NULL,
@@ -115,9 +116,26 @@ CREATE TABLE IF NOT EXISTS pm_goal_events (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_goal_events_dates (start_date, end_date),
     INDEX idx_goal_events_type (event_type),
+    INDEX idx_goal_events_employee (employee_id),
     INDEX idx_goal_events_goal (related_goal_id),
     CONSTRAINT fk_goal_events_goal FOREIGN KEY (related_goal_id) REFERENCES pm_goals(goal_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+SET @goal_events_employee_id_exists = (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'pm_goal_events'
+      AND COLUMN_NAME = 'employee_id'
+);
+SET @goal_events_employee_id_sql = IF(
+    @goal_events_employee_id_exists = 0,
+    'ALTER TABLE pm_goal_events ADD COLUMN employee_id BIGINT DEFAULT NULL AFTER event_id',
+    'SELECT 1'
+);
+PREPARE goal_events_employee_id_migration FROM @goal_events_employee_id_sql;
+EXECUTE goal_events_employee_id_migration;
+DEALLOCATE PREPARE goal_events_employee_id_migration;
 
 -- ============================================================================
 -- 360-DEGREE FEEDBACK MODULE
@@ -929,4 +947,3 @@ CREATE TABLE IF NOT EXISTS pm_training_evaluations (
     CONSTRAINT fk_training_evaluations_evaluator FOREIGN KEY (evaluated_by)
         REFERENCES em_employees(employee_id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-

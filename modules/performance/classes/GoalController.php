@@ -62,7 +62,7 @@ class GoalController
                         $_SESSION['goal_success'] = 'Goal created successfully.';
                         $this->redirect();
                     }
-                    $_SESSION['goal_error'] = 'Unable to save the goal. Make sure the goal tables are set up using modules/performance/performance.sql.';
+                    $_SESSION['goal_error'] = 'Unable to save the goal. Import database/goal_setting.sql into the HRMS database first.';
                     $this->redirect();
                     break;
 
@@ -124,7 +124,7 @@ class GoalController
                     if ($eventDate !== '' && $this->createEvent($data, (string) $currentUserName)) {
                         $_SESSION['goal_success'] = 'Calendar event saved successfully.';
                     } else {
-                        $_SESSION['goal_error'] = 'Unable to save the calendar event. Make sure the goal event table is set up using modules/performance/performance.sql.';
+                        $_SESSION['goal_error'] = 'Unable to save the calendar event. Import database/goal_setting.sql into the HRMS database first.';
                     }
                     $this->redirect();
                     break;
