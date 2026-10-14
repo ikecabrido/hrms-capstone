@@ -38,6 +38,58 @@ CREATE TABLE IF NOT EXISTS pm_goals (
     INDEX idx_goals_department (department)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- CREATE TABLE IF NOT EXISTS does not add columns to an existing table.
+-- Add any goal fields required by Goal::saveGoal() when upgrading older databases.
+SET SESSION group_concat_max_len = 8192;
+SET @goal_missing_columns = (
+    SELECT GROUP_CONCAT(
+        CONCAT('ADD COLUMN `', goal_column_specs.column_name, '` ', goal_column_specs.column_definition)
+        ORDER BY goal_column_specs.column_name
+        SEPARATOR ', '
+    )
+    FROM (
+        SELECT 'approval_comment' AS column_name, 'TEXT DEFAULT NULL' AS column_definition
+        UNION ALL SELECT 'completion_date', 'DATE DEFAULT NULL'
+        UNION ALL SELECT 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+        UNION ALL SELECT 'department', 'INT DEFAULT NULL'
+        UNION ALL SELECT 'employee_name', 'VARCHAR(255) DEFAULT NULL'
+        UNION ALL SELECT 'expected_outcome', 'TEXT DEFAULT NULL'
+        UNION ALL SELECT 'goal_category', 'VARCHAR(100) DEFAULT ''Performance'''
+        UNION ALL SELECT 'goal_description', 'TEXT DEFAULT NULL'
+        UNION ALL SELECT 'goal_title', 'VARCHAR(255) DEFAULT NULL'
+        UNION ALL SELECT 'goal_type', 'VARCHAR(100) DEFAULT ''Individual Goal'''
+        UNION ALL SELECT 'kpi_name', 'VARCHAR(255) DEFAULT NULL'
+        UNION ALL SELECT 'kpi_target', 'VARCHAR(255) DEFAULT NULL'
+        UNION ALL SELECT 'latest_update_date', 'DATE DEFAULT NULL'
+        UNION ALL SELECT 'position', 'VARCHAR(100) DEFAULT NULL'
+        UNION ALL SELECT 'priority_level', 'VARCHAR(20) DEFAULT ''Medium'''
+        UNION ALL SELECT 'progress_notes', 'TEXT DEFAULT NULL'
+        UNION ALL SELECT 'progress_percentage', 'TINYINT UNSIGNED DEFAULT 0'
+        UNION ALL SELECT 'rejection_reason', 'TEXT DEFAULT NULL'
+        UNION ALL SELECT 'smart_notes', 'TEXT DEFAULT NULL'
+        UNION ALL SELECT 'start_date', 'DATE DEFAULT NULL'
+        UNION ALL SELECT 'status', 'VARCHAR(30) DEFAULT ''Draft'''
+        UNION ALL SELECT 'supervisor_id', 'INT DEFAULT NULL'
+        UNION ALL SELECT 'supervisor_name', 'VARCHAR(255) DEFAULT NULL'
+        UNION ALL SELECT 'target_completion_percentage', 'TINYINT UNSIGNED DEFAULT 0'
+        UNION ALL SELECT 'due_date', 'DATE DEFAULT NULL'
+        UNION ALL SELECT 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+    ) AS goal_column_specs
+    LEFT JOIN information_schema.COLUMNS AS existing
+        ON existing.TABLE_SCHEMA = DATABASE()
+       AND existing.TABLE_NAME = 'pm_goals'
+       AND existing.COLUMN_NAME = goal_column_specs.column_name
+    WHERE existing.COLUMN_NAME IS NULL
+);
+SET @goal_migration_sql = IF(
+    @goal_missing_columns IS NULL,
+    'SELECT 1',
+    CONCAT('ALTER TABLE pm_goals ', @goal_missing_columns)
+);
+PREPARE goal_columns_migration FROM @goal_migration_sql;
+EXECUTE goal_columns_migration;
+DEALLOCATE PREPARE goal_columns_migration;
+
 CREATE TABLE IF NOT EXISTS pm_goal_progress (
     progress_id INT AUTO_INCREMENT PRIMARY KEY,
     goal_id INT NOT NULL,
