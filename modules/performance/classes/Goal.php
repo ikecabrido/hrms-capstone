@@ -66,31 +66,22 @@ class Goal
             return null;
         }
 
-        if ($table === 'em_employees') {
-            $sql = "SELECT e.employee_id,
-                           TRIM(CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, ''))) AS employee_name,
-                           e.department_id AS department_id,
-                           p.position_name AS position_name
-                    FROM em_employees e
-                    LEFT JOIN em_positions p ON p.position_id = e.position_id
-                    WHERE e.employee_id = :employee_id
-                    LIMIT 1";
-        } else {
-            $sql = "SELECT employee_id,
-                           TRIM(CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) AS employee_name,
-                           department AS department_id,
-                           CAST(position AS CHAR) AS position_name
-                    FROM {$table}
-                    WHERE employee_id = :employee_id
-                    LIMIT 1";
-        }
-
-        $stmt = $this->conn->prepare($sql);
+        $stmt = $this->conn->prepare(
+            "SELECT employee_id,
+                    TRIM(CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) AS employee_name
+             FROM {$table}
+             WHERE employee_id = :employee_id
+             LIMIT 1"
+        );
         $stmt->bindValue(':employee_id', (int) $employeeId, PDO::PARAM_INT);
         $stmt->execute();
         $employee = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $employee ?: null;
+        if (!$employee || trim((string) $employee['employee_name']) === '') {
+            return null;
+        }
+
+        return $employee;
     }
 
     private function getSupervisorDisplayName(string $supervisorId): ?string
@@ -460,8 +451,6 @@ class Goal
                     )";
 
             $stmt = $this->conn->prepare($sql);
-            $departmentId = $employee['department_id'] !== null ? (int) $employee['department_id'] : null;
-            $position = trim((string) ($employee['position_name'] ?? ''));
             $approvalComment = trim((string) ($data['approval_comment'] ?? ''));
             $rejectionReason = trim((string) ($data['rejection_reason'] ?? ''));
             $completionDate = trim((string) ($data['completion_date'] ?? ''));
@@ -469,8 +458,8 @@ class Goal
 
             $stmt->bindValue(':employee_id', (int) $employeeId, PDO::PARAM_INT);
             $stmt->bindValue(':employee_name', $employeeName ?: 'Unknown Employee', PDO::PARAM_STR);
-            $stmt->bindValue(':department', $departmentId, $departmentId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
-            $stmt->bindValue(':position', $position, PDO::PARAM_STR);
+            $stmt->bindValue(':department', null, PDO::PARAM_NULL);
+            $stmt->bindValue(':position', '', PDO::PARAM_STR);
             $stmt->bindValue(':supervisor_id', !empty($supervisorId) ? (int) $supervisorId : null, !empty($supervisorId) ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->bindValue(':supervisor_name', $supervisorName ?: 'System', PDO::PARAM_STR);
             $stmt->bindValue(':goal_title', $goalTitle, PDO::PARAM_STR);
@@ -773,9 +762,6 @@ class Goal
                      :employee_name, :department, :location, :description, :related_goal_id,
                      :status, :reminder, :created_by)'
             );
-            $departmentId = $employee && $employee['department_id'] !== null
-                ? (int) $employee['department_id']
-                : null;
             $values = [
                 ':employee_id' => [$employee ? (int) $employee['employee_id'] : null, PDO::PARAM_INT],
                 ':event_title' => [$title, PDO::PARAM_STR],
@@ -785,7 +771,7 @@ class Goal
                 ':start_time' => [trim((string) ($data['start_time'] ?? '')) ?: null, PDO::PARAM_STR],
                 ':end_time' => [trim((string) ($data['end_time'] ?? '')) ?: null, PDO::PARAM_STR],
                 ':employee_name' => [$employee ? $employee['employee_name'] : 'All employees', PDO::PARAM_STR],
-                ':department' => [$departmentId, PDO::PARAM_INT],
+                ':department' => [null, PDO::PARAM_NULL],
                 ':location' => [trim((string) ($data['location'] ?? '')) ?: null, PDO::PARAM_STR],
                 ':description' => [trim((string) ($data['description'] ?? '')) ?: null, PDO::PARAM_STR],
                 ':related_goal_id' => [(int) ($data['related_goal_id'] ?? 0) ?: null, PDO::PARAM_INT],
