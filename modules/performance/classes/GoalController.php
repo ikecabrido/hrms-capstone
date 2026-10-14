@@ -62,7 +62,7 @@ class GoalController
                         $_SESSION['goal_success'] = 'Goal created successfully.';
                         $this->redirect();
                     }
-                    $_SESSION['goal_error'] = 'Unable to save the goal. Import database/goal_setting.sql into the HRMS database first.';
+                    $_SESSION['goal_error'] = 'Unable to save the goal. Confirm database/goal_setting.sql was imported into the same HRMS database used by this site, then check the PHP error log for the database error.';
                     $this->redirect();
                     break;
 
