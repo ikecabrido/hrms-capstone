@@ -11,9 +11,9 @@ var selectedDate = null;
 var allSchedulesMode = false; // Only show employee-specific data once selected
 var targetCalendarView = 'dayGridMonth'; // Track which view should be active
 
-var timeModuleBase = window.__TA_ROOT || '.';
-var timeModuleApiBase = `${timeModuleBase}/app`;
-var timeModuleScheduleApiBase = `${timeModuleBase}/app/api/schedules`;
+var timeModuleBase = window.__TA_ROOT || '';
+var timeModuleApiBase = window.taJoinUrl ? window.taJoinUrl(timeModuleBase, 'app/') : (timeModuleBase ? timeModuleBase + '/app/' : '/app/');
+var timeModuleScheduleApiBase = window.taJoinUrl ? window.taJoinUrl(timeModuleBase, 'app/api/schedules/') : (timeModuleBase ? timeModuleBase + '/app/api/schedules/' : '/app/api/schedules/');
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== CALENDAR SCHEDULE PAGE LOADED ===');

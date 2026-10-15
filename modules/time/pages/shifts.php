@@ -686,5 +686,5 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
         </div>
     </div>
     </div>
-    <script src="<?= htmlspecialchars(ta_base_path() ?: './', ENT_QUOTES, 'UTF-8'); ?>assets/js/shifts.js"></script>
+    <script src="<?= htmlspecialchars((ta_base_path() ?: '') . '/assets/js/shifts.js', ENT_QUOTES, 'UTF-8'); ?>"></script>
 
