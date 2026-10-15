@@ -456,6 +456,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .status-active { background: #dcfce7; color: #15803d; }
+.status-inactive { background: #fee2e2; color: #b91c1c; }
 .status-probationary { background: #dbeafe; color: #1d4ed8; }
 .status-resigned { background: #f1f5f9; color: #475569; }
 .status-terminated { background: #fee2e2; color: #b91c1c; }

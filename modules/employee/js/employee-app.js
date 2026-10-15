@@ -410,6 +410,107 @@ async function archiveEmployee(employeeId) {
     document.querySelector('.container')?._loadEmployeeTable?.();
 }
 
+// ─────────────────────────── Department Management page ───────────────────────────
+
+function renderDepartmentRow(d) {
+    const isActive = (d.status || 'Active') === 'Active';
+    const statusClass = isActive ? 'status-active' : 'status-inactive';
+    const statusLabel = isActive ? 'ACTIVE' : 'INACTIVE';
+    const statusAction = isActive ? 'Deactivate' : 'Activate';
+    const nextStatus = isActive ? 'Inactive' : 'Active';
+
+    const tr = document.createElement('tr');
+    tr.className = 'department-row';
+    tr.innerHTML = `
+        <td>${esc(d.department_code)}</td>
+        <td>${esc(d.department_name)}</td>
+        <td>${esc(d.description) || '&mdash;'}</td>
+        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+        <td>
+            <button type="button" class="btn-edit-department" data-id="${d.department_id}">Edit</button>
+            <button type="button" class="btn-toggle-department-status" data-id="${d.department_id}" data-next-status="${nextStatus}">${statusAction}</button>
+        </td>`;
+    return tr;
+}
+
+async function initDepartmentManagement(root) {
+    const tbody = qs('#department-table-body', root);
+    if (!tbody) return;
+
+    async function loadTable() {
+        tbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+        // include_inactive=1 so this management page shows BOTH Active and
+        // Inactive departments (assignment dropdowns elsewhere call
+        // get_departments with no params and only ever get Active ones).
+        const res = await api('get_departments', { params: { include_inactive: 1 } });
+        if (!res.success) {
+            tbody.innerHTML = `<tr><td colspan="5">${esc(res.message || 'Failed to load departments.')}</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = '';
+        if (!res.data.length) {
+            tbody.innerHTML = '<tr><td colspan="5">No departments found.</td></tr>';
+            return;
+        }
+        res.data.forEach(d => tbody.appendChild(renderDepartmentRow(d)));
+    }
+
+    root._loadDepartmentTable = loadTable;
+    await loadTable();
+}
+
+async function submitAddDepartmentForm(form) {
+    const alertBox = qs('#add-department-message', form.closest('.modal, body'));
+    const res = await api('add_department', { method: 'POST', body: new FormData(form) });
+    showAlert(alertBox, res.message, res.success ? 'success' : 'error');
+    if (res.success) {
+        form.reset();
+        toggleModal(qs('#add-department-modal'), false);
+        document.querySelector('.container')?._loadDepartmentTable?.();
+    }
+}
+
+function openEditDepartmentModal(btn) {
+    const modal = qs('#edit-department-modal');
+    const row = btn?.closest('tr');
+    if (!modal || !row) return;
+
+    const form = qs('#edit-department-form', modal);
+    form.reset();
+    qs('[name="department_id"]', form).value = btn.dataset.id;
+    qs('[name="department_code"]', form).value = row.children[0].textContent.trim();
+    qs('[name="department_name"]', form).value = row.children[1].textContent.trim();
+    const description = row.children[2].textContent.trim();
+    qs('[name="description"]', form).value = (description === '—' || description === '\u2014') ? '' : description;
+
+    toggleModal(modal, true);
+}
+
+async function submitEditDepartmentForm(form) {
+    const alertBox = qs('#edit-department-message', form.closest('.modal, body'));
+    const res = await api('update_department', { method: 'POST', body: new FormData(form) });
+    showAlert(alertBox, res.message, res.success ? 'success' : 'error');
+    if (res.success) {
+        toggleModal(qs('#edit-department-modal'), false);
+        document.querySelector('.container')?._loadDepartmentTable?.();
+    }
+}
+
+async function toggleDepartmentStatus(btn) {
+    const departmentId = btn.dataset.id;
+    const nextStatus = btn.dataset.nextStatus;
+    const verb = nextStatus === 'Inactive' ? 'deactivate' : 'activate';
+
+    if (!confirm(`Are you sure you want to ${verb} this department?`)) return;
+
+    const res = await api('update_department_status', {
+        method: 'POST',
+        body: toFormData({ department_id: departmentId, status: nextStatus }),
+    });
+    if (!res.success) alert(res.message || 'Failed to update department status.');
+    document.querySelector('.container')?._loadDepartmentTable?.();
+}
+
 // ─────────────────────────── Employee Profile (personal-information page) ───────────────────────────
 
 async function initPersonalInformation(root) {
@@ -874,6 +975,7 @@ function initPageByName(page) {
 
     const handlers = {
         'employee-database': initEmployeeDatabase,
+        'department-management': initDepartmentManagement,
         'personal-information': initPersonalInformation,
         'documents-management': initDocumentsManagement,
         'employee-history': initEmployeeHistory,
@@ -914,6 +1016,18 @@ document.body.addEventListener('click', function (e) {
     const archiveBtn = e.target.closest('.btn-archive-employee');
     if (archiveBtn) {
         archiveEmployee(archiveBtn.dataset.id).catch(reportAsyncError);
+        return;
+    }
+
+    const editDeptBtn = e.target.closest('.btn-edit-department');
+    if (editDeptBtn) {
+        openEditDepartmentModal(editDeptBtn);
+        return;
+    }
+
+    const toggleDeptStatusBtn = e.target.closest('.btn-toggle-department-status');
+    if (toggleDeptStatusBtn) {
+        toggleDepartmentStatus(toggleDeptStatusBtn).catch(reportAsyncError);
         return;
     }
 
@@ -960,6 +1074,8 @@ document.body.addEventListener('submit', function (e) {
 
     if (form.id === 'add-employee-form') return submitAddEmployeeForm(form).catch(reportAsyncError);
     if (form.id === 'edit-employee-form') return submitEditEmployeeForm(form).catch(reportAsyncError);
+    if (form.id === 'add-department-form') return submitAddDepartmentForm(form).catch(reportAsyncError);
+    if (form.id === 'edit-department-form') return submitEditDepartmentForm(form).catch(reportAsyncError);
     if (form.id === 'upload-document-form') return submitUploadDocumentForm(form).catch(reportAsyncError);
     if (form.id === 'renew-contract-form') return submitRenewContractForm(form).catch(reportAsyncError);
     if (form.dataset.action) return submitSubForm(form).catch(reportAsyncError);

@@ -8,6 +8,7 @@ class Page
     private $labels = [
         'dashboard-overview'          => 'Dashboard Overview',
         'employee-database'             => 'Employee Database',
+        'department-management' => 'Department Management',
         'personal-information'  => 'Personal Information',
         'employee-history'   => 'Employee History',
         'documents-management' => 'Document Mangement',
@@ -16,7 +17,7 @@ class Page
 
     private $sections = [
         'top'             => ['dashboard-overview'],
-        'employee-management'  => ['employee-database', 'personal-information'],
+        'employee-management'  => ['employee-database', 'department-management', 'personal-information'],
         'employee-records'      => ['employee-history'],
         'documents'       => ['documents-management', 'document-requests']
     ];

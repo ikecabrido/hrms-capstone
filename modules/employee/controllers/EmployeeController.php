@@ -79,6 +79,18 @@ switch ($action) {
         getDepartments();
         break;
 
+    case 'add_department':
+        addDepartment();
+        break;
+
+    case 'update_department':
+        updateDepartment();
+        break;
+
+    case 'update_department_status':
+        updateDepartmentStatus();
+        break;
+
     case 'get_positions':
         getPositions();
         break;
@@ -405,7 +417,127 @@ function getDepartments()
 {
     global $conn;
     $departmentClass = new Department($conn);
-    echo json_encode(['success' => true, 'data' => $departmentClass->getAllDepartments()]);
+
+    // Employee assignment dropdowns call this with no params (or
+    // include_inactive absent/0) and must only ever see Active departments.
+    // The Department Management page explicitly passes include_inactive=1
+    // so it can list both Active and Inactive departments.
+    $includeInactive = !empty($_GET['include_inactive']);
+    $activeOnly = !$includeInactive;
+
+    echo json_encode(['success' => true, 'data' => $departmentClass->getAllDepartments($activeOnly)]);
+}
+
+function addDepartment()
+{
+    global $conn, $currentUserId, $currentEmployeeName;
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
+        return;
+    }
+
+    $departmentCode = trim($_POST['department_code'] ?? '');
+    $departmentName = trim($_POST['department_name'] ?? '');
+    $description    = trim($_POST['description'] ?? '');
+
+    if ($departmentCode === '' || $departmentName === '') {
+        echo json_encode(['success' => false, 'message' => 'Department code and department name are required.']);
+        return;
+    }
+
+    try {
+        $departmentClass = new Department($conn);
+        $newId = $departmentClass->createDepartment([
+            'department_code' => $departmentCode,
+            'department_name' => $departmentName,
+            'description'     => $description,
+        ]);
+
+        echo json_encode(['success' => true, 'message' => 'Department added successfully.', 'department_id' => $newId]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Failed to add department: ' . $e->getMessage()]);
+    }
+}
+
+function updateDepartment()
+{
+    global $conn;
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
+        return;
+    }
+
+    $departmentId   = intval($_POST['department_id'] ?? 0);
+    $departmentCode = trim($_POST['department_code'] ?? '');
+    $departmentName = trim($_POST['department_name'] ?? '');
+    $description    = trim($_POST['description'] ?? '');
+
+    if (!$departmentId) {
+        echo json_encode(['success' => false, 'message' => 'No department ID provided.']);
+        return;
+    }
+
+    if ($departmentCode === '' || $departmentName === '') {
+        echo json_encode(['success' => false, 'message' => 'Department code and department name are required.']);
+        return;
+    }
+
+    try {
+        $departmentClass = new Department($conn);
+        $updated = $departmentClass->updateDepartment($departmentId, [
+            'department_code' => $departmentCode,
+            'department_name' => $departmentName,
+            'description'     => $description,
+        ]);
+
+        if (!$updated) {
+            echo json_encode(['success' => false, 'message' => 'Department not found.']);
+            return;
+        }
+
+        echo json_encode(['success' => true, 'message' => 'Department updated successfully.']);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Failed to update department: ' . $e->getMessage()]);
+    }
+}
+
+function updateDepartmentStatus()
+{
+    global $conn;
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
+        return;
+    }
+
+    $departmentId = intval($_POST['department_id'] ?? 0);
+    $status       = trim($_POST['status'] ?? '');
+
+    if (!$departmentId) {
+        echo json_encode(['success' => false, 'message' => 'No department ID provided.']);
+        return;
+    }
+
+    if (!in_array($status, ['Active', 'Inactive'], true)) {
+        echo json_encode(['success' => false, 'message' => 'Status must be either Active or Inactive.']);
+        return;
+    }
+
+    try {
+        $departmentClass = new Department($conn);
+        $updated = $departmentClass->updateDepartmentStatus($departmentId, $status);
+
+        if (!$updated) {
+            echo json_encode(['success' => false, 'message' => 'Department not found.']);
+            return;
+        }
+
+        echo json_encode(['success' => true, 'message' => "Department status set to $status."]);
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => 'Failed to update department status: ' . $e->getMessage()]);
+    }
 }
 
 function getPositions()
