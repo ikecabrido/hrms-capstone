@@ -5,21 +5,29 @@ class Page {
     private $allowed = [];
 
     private $labels = [
-        'dashboard-overview'          => 'Dashboard Overview',
-        'period-manager'             => 'Period Manager',
-        'payroll-processing'  => 'Payroll Processing',
-        'payslips'   => 'Payslips',
-        'deductions'=> 'Deductions',
-        'reports'=> 'Reports',
-        'final-settlement'     => 'Final Settlement',
+        'dashboard-overview' => 'Dashboard & Metrics',
+        'attrition-turnover' => 'Attrition & Turnover',
+        'diversity-inclusion' => 'Diversity & Inclusion',
+        'predictive-analytics' => 'Predictive Analytics',
+        'custom-reports' => 'Custom Reports',
+        'turnover-risk-indicator' => 'Turnover risk indicator',
+        'predicted-skill-competency-needs' => 'Predicted skill / Competency needs',
+        'implementation-guide' => 'Implementation Guide',
     ];
 
     private $sections = [
-        'top'             => ['dashboard-overview'],
-        'payroll-administration'  => ['period-manager', 'payroll-processsing'],
-        'employee-payroll'      => ['payslips', 'deductions'],
-        'reports-&-analytics'       => ['reports'],
-        'employee-exit-management' => ['final-settlement']
+        'analytics' => [
+            'dashboard-overview',
+            'attrition-turnover',
+            'diversity-inclusion',
+            'predictive-analytics',
+            'custom-reports',
+        ],
+        'resources' => [
+            'turnover-risk-indicator',
+            'predicted-skill-competency-needs',
+            'implementation-guide',
+        ],
     ];
 
     public function __construct($pagesDir = null) {
@@ -60,29 +68,36 @@ class Page {
     }
 
     public function renderNav() {
-        // Top section (no heading/separator)
-        foreach ($this->sections['top'] as $p) {
+        echo '<h3>Analytics</h3>';
+        foreach ($this->sections['analytics'] as $p) {
             $this->renderLink($p);
         }
-
-        // Grouped sections
-        $sectionOrder = ['payroll-administration', 'employee-payroll', 'reports-&-analytics', 'employee-exit-management'];
-        foreach ($sectionOrder as $section) {
-            echo '<div class="separator"></div>';
-            echo '<h3>' . ucwords(str_replace('-', ' ', $section)) . '</h3>';
-            foreach ($this->sections[$section] as $p) {
-                $this->renderLink($p);
-            }
+        echo '<h3>Resources</h3>';
+        foreach ($this->sections['resources'] as $p) {
+            $this->renderLink($p);
         }
     }
 
     private function renderLink($p) {
         $label = $this->labels[$p] ?? ucwords(str_replace('-', ' ', $p));
+        $icons = [
+            'dashboard-overview' => 'fa-chart-line',
+            'attrition-turnover' => 'fa-arrow-trend-down',
+            'diversity-inclusion' => 'fa-people-group',
+            'predictive-analytics' => 'fa-wand-magic-sparkles',
+            'custom-reports' => 'fa-file-lines',
+            'turnover-risk-indicator' => 'fa-circle-play',
+            'predicted-skill-competency-needs' => 'fa-book-open',
+            'implementation-guide' => 'fa-circle-check',
+        ];
+        $icon = $icons[$p] ?? 'fa-file-lines';
+        $safeLabel = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         if (in_array($p, $this->allowed)) {
             $class = $this->isActive($p) ? 'active-menu-link' : 'menu-link';
-            echo "<li><a href=\"?page={$p}\" data-page=\"{$p}\" class=\"{$class}\">{$label}</a></li>";
+            $url = '?page=' . rawurlencode($p);
+            echo "<li><a href=\"{$url}\" class=\"{$class}\"><i class=\"fa-solid {$icon}\" aria-hidden=\"true\"></i><span>{$safeLabel}</span></a></li>";
         } else {
-            echo "<li><a href=\"#\" class=\"menu-link\">{$label}</a></li>";
+            echo "<li><a href=\"#\" class=\"menu-link\"><i class=\"fa-solid {$icon}\" aria-hidden=\"true\"></i><span>{$safeLabel}</span></a></li>";
         }
     }
 }

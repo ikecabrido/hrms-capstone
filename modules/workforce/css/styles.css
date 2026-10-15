@@ -16,4 +16,7 @@
 @import url('base/variables.css');
 @import url('base/reset.css');
 @import url('base/global.css');
-
+@import url('pages/workforce-analytics.css');
+@import url('pages/workforce-professional.css');
+@import url('pages/workforce-resources.css');
+@import url('pages/implementation-guide.css');

@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Close sidebar when clicking menu links on mobile
-    const menuLinks = document.querySelectorAll('.sidebar .menu-link');
+    const menuLinks = document.querySelectorAll('.sidebar .menu-link, .sidebar .active-menu-link');
     menuLinks.forEach(link => {
         link.addEventListener('click', function() {
             if (isMobile()) {
