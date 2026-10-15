@@ -2,3 +2,5 @@ db_config.php
 .env
 .env.*
 !.env.example
+modules/time/public/qr_debug.log
+modules/time/logs/

@@ -302,7 +302,7 @@
             startScanCooldown(cooldownSeconds);
 
             console.log('QR decoded:', decodedText);
-            const apiRoot = window.__TA_ROOT || '/hrms/hrms-capstone/modules/time';
+            const apiRoot = window.__TA_ROOT || '.';
             const requestUrl = apiRoot + '/processStaticQR.php?id=' + encodeURIComponent(decodedText);
             console.log('QR request URL:', requestUrl);
             console.log('QR request params:', { id: decodedText, method: 'GET' });
@@ -311,13 +311,17 @@
               .then(async r => {
                 const text = await r.text();
                 if (!r.ok) {
-                  throw new Error('HTTP ' + r.status + ': ' + text.slice(0, 200));
+                  const error = new Error('HTTP ' + r.status + ': ' + text.slice(0, 200));
+                  error.status = r.status;
+                  throw error;
                 }
                 try {
                   return JSON.parse(text);
                 } catch (error) {
                   console.error('QR response was not valid JSON:', text.slice(0, 300));
-                  throw new Error('Invalid JSON response from QR endpoint.');
+                  const jsonError = new Error('Invalid JSON response from QR endpoint.');
+                  jsonError.status = r.status;
+                  throw jsonError;
                 }
               })
               .then(j => {
@@ -360,7 +364,10 @@
               }
             }).catch(error => {
               console.error('processStaticQR fetch error:', error);
-              showToast(error.message || 'QR scan failed. Please try again.', 'error');
+              const statusText = error && typeof error.status === 'number' ? 'Server returned ' + error.status : 'QR request failed';
+              const hintText = error && typeof error.status === 'number' ? ' — check the scanner API path' : '';
+              const message = statusText === 'QR request failed' ? (error && error.message ? error.message : 'QR scan failed. Please try again.') : statusText + hintText;
+              showToast(message, 'error');
             }).finally(() => {
               scanInProgress = false;
               setTimeout(() => {

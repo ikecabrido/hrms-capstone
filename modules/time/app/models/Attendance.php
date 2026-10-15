@@ -164,9 +164,10 @@ class Attendance
     /**
      * Record Time In with status and optional late minutes
      */
-    public function timeIn($employee_id, $method, $status = 'PRESENT', $late_minutes = 0)
+    public function timeIn($employee_id, $method, $status = 'PRESENT', $late_minutes = 0, $timestamp = null)
     {
         $attendance_date = date('Y-m-d');
+        $timestamp = $timestamp ?? date('Y-m-d H:i:s');
         $existingRecord = $this->getTodayAttendance($employee_id, $attendance_date);
 
         if ($existingRecord && !empty($existingRecord['time_in'])) {
@@ -175,10 +176,11 @@ class Attendance
 
         if ($existingRecord && empty($existingRecord['time_in'])) {
             $query = "UPDATE $this->table
-                      SET time_in = NOW(), recorded_by = :method, status = :status, late_minutes = :late_minutes, updated_at = CURRENT_TIMESTAMP
+                      SET time_in = :time_in, recorded_by = :method, status = :status, late_minutes = :late_minutes, updated_at = CURRENT_TIMESTAMP
                       WHERE attendance_id = :attendance_id";
 
             $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':time_in', $timestamp);
             $stmt->bindParam(':method', $method);
             $stmt->bindParam(':status', $status);
             $stmt->bindParam(':late_minutes', $late_minutes, PDO::PARAM_INT);
@@ -189,10 +191,11 @@ class Attendance
 
         $query = "INSERT INTO $this->table 
                   (employee_id, time_in, attendance_date, recorded_by, status, late_minutes)
-                  VALUES (:employee_id, NOW(), :attendance_date, :method, :status, :late_minutes)";
+                  VALUES (:employee_id, :time_in, :attendance_date, :method, :status, :late_minutes)";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':employee_id', $employee_id);
+        $stmt->bindParam(':time_in', $timestamp);
         $stmt->bindParam(':attendance_date', $attendance_date);
         $stmt->bindParam(':method', $method);
         $stmt->bindParam(':status', $status);
@@ -204,21 +207,21 @@ class Attendance
     /**
      * Record Time Out
      */
-    public function timeOut($attendance_id)
+    public function timeOut($attendance_id, $timestamp = null)
     {
-        error_log("Attendance::timeOut entered with attendance_id=" . var_export($attendance_id, true));
+        $timestamp = $timestamp ?? date('Y-m-d H:i:s');
 
         if (empty($attendance_id) || !is_numeric($attendance_id) || intval($attendance_id) <= 0) {
-            error_log("Attendance::timeOut called with invalid attendance_id: " . var_export($attendance_id, true));
             return false;
         }
 
         $query = "UPDATE $this->table 
-                  SET time_out = NOW(), updated_at = CURRENT_TIMESTAMP
+                  SET time_out = :time_out, updated_at = CURRENT_TIMESTAMP
                   WHERE attendance_id = :attendance_id
                   AND (time_out IS NULL OR time_out = '0000-00-00 00:00:00')";
 
         $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':time_out', $timestamp);
         $stmt->bindParam(':attendance_id', $attendance_id, PDO::PARAM_INT);
 
         try {
@@ -228,10 +231,7 @@ class Attendance
             throw $e;
         }
 
-        $affectedRows = $stmt->rowCount();
-        error_log("Attendance::timeOut attendance_id={$attendance_id} result=" . ($result ? 'true' : 'false') . " affected_rows={$affectedRows}");
-
-        return ($result && $affectedRows > 0);
+        return ($result && $stmt->rowCount() > 0);
     }
 
     /**
@@ -421,13 +421,18 @@ class Attendance
     public function markAbsent($employee_id, $attendance_date = null, $notes = null)
     {
         $attendance_date = $attendance_date ?? date('Y-m-d');
-        $debugLogPath = __DIR__ . '/../../logs/absence_detection_debug.log';
+        $debugEnabled = defined('TA_QR_DEBUG') && TA_QR_DEBUG === true;
+        $debugLogPath = $debugEnabled ? __DIR__ . '/../../logs/absence_detection_debug.log' : null;
 
         $existingRecord = $this->getTodayAttendance($employee_id, $attendance_date);
-        file_put_contents($debugLogPath, "[Attendance::markAbsent] employee_id={$employee_id} attendance_date={$attendance_date} existingRecord=" . ($existingRecord ? 'true' : 'false') . " time_in=" . ($existingRecord['time_in'] ?? 'NULL') . " time_out=" . ($existingRecord['time_out'] ?? 'NULL') . " status=" . ($existingRecord['status'] ?? 'NULL') . "\n", FILE_APPEND);
+        if ($debugEnabled) {
+            @file_put_contents($debugLogPath, "[Attendance::markAbsent] employee_id={$employee_id} attendance_date={$attendance_date} existingRecord=" . ($existingRecord ? 'true' : 'false') . " time_in=" . ($existingRecord['time_in'] ?? 'NULL') . " time_out=" . ($existingRecord['time_out'] ?? 'NULL') . " status=" . ($existingRecord['status'] ?? 'NULL') . "\n", FILE_APPEND);
+        }
         // If a record exists with time_in, do not mark absent
         if ($existingRecord && !empty($existingRecord['time_in'])) {
-            file_put_contents($debugLogPath, "[Attendance::markAbsent] skipped because existing time_in present\n", FILE_APPEND);
+            if ($debugEnabled) {
+                @file_put_contents($debugLogPath, "[Attendance::markAbsent] skipped because existing time_in present\n", FILE_APPEND);
+            }
             return false;
         }
 
@@ -447,7 +452,9 @@ class Attendance
             }
             $stmt->bindParam(':attendance_id', $existingRecord['attendance_id'], PDO::PARAM_INT);
             $result = $stmt->execute();
-            file_put_contents($debugLogPath, "[Attendance::markAbsent] update_existing result=" . ($result ? 'true' : 'false') . " rowcount=" . $stmt->rowCount() . " query=" . $query . "\n", FILE_APPEND);
+            if ($debugEnabled) {
+                @file_put_contents($debugLogPath, "[Attendance::markAbsent] update_existing result=" . ($result ? 'true' : 'false') . " rowcount=" . $stmt->rowCount() . " query=" . $query . "\n", FILE_APPEND);
+            }
             return $result;
         }
 
@@ -475,10 +482,14 @@ class Attendance
         }
 
         $result = $stmt->execute();
-        file_put_contents($debugLogPath, "[Attendance::markAbsent] insert_new result=" . ($result ? 'true' : 'false') . " rowcount=" . $stmt->rowCount() . " query=" . $query . "\n", FILE_APPEND);
+        if ($debugEnabled) {
+            @file_put_contents($debugLogPath, "[Attendance::markAbsent] insert_new result=" . ($result ? 'true' : 'false') . " rowcount=" . $stmt->rowCount() . " query=" . $query . "\n", FILE_APPEND);
+        }
         if (!$result) {
             $errorInfo = $stmt->errorInfo();
-            file_put_contents($debugLogPath, "[Attendance::markAbsent] insert_error=" . json_encode($errorInfo) . "\n", FILE_APPEND);
+            if ($debugEnabled) {
+                @file_put_contents($debugLogPath, "[Attendance::markAbsent] insert_error=" . json_encode($errorInfo) . "\n", FILE_APPEND);
+            }
         }
 
         return $result;

@@ -11,9 +11,9 @@ var selectedDate = null;
 var allSchedulesMode = false; // Only show employee-specific data once selected
 var targetCalendarView = 'dayGridMonth'; // Track which view should be active
 
-var timeModuleBase = '/hrms/hrms-capstone/modules/time/';
-var timeModuleApiBase = `${timeModuleBase}app/`;
-var timeModuleScheduleApiBase = `${timeModuleBase}app/api/schedules/`;
+var timeModuleBase = window.__TA_ROOT || '.';
+var timeModuleApiBase = `${timeModuleBase}/app`;
+var timeModuleScheduleApiBase = `${timeModuleBase}/app/api/schedules`;
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== CALENDAR SCHEDULE PAGE LOADED ===');

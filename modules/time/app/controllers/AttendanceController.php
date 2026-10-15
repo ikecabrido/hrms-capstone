@@ -176,7 +176,7 @@ class AttendanceController
             }
 
             // STEP 4: Insert time in record with status and late minutes
-            if ($this->attendanceModel->timeIn($employee_id, $method, $status, $minutesLate)) {
+            if ($this->attendanceModel->timeIn($employee_id, $method, $status, $minutesLate, $timeInNow)) {
                 // Get the record to get attendance_id
                 $record = $this->attendanceModel->getTodayAttendance($employee_id, $todayDate);
 
@@ -273,7 +273,8 @@ class AttendanceController
             }
 
             // Update time out
-            if ($this->attendanceModel->timeOut($record['attendance_id'])) {
+            $timeOutNow = date('Y-m-d H:i:s');
+            if ($this->attendanceModel->timeOut($record['attendance_id'], $timeOutNow)) {
                 // Get updated record
                 $updatedRecord = $this->attendanceModel->getTodayAttendance($employee_id);
 
@@ -450,20 +451,25 @@ class AttendanceController
      */
     public function processStaticQR($employee_id)
     {
-        $debugLogDir = dirname(__DIR__, 2) . '/public';
-        if (!is_dir($debugLogDir)) {
-            @mkdir($debugLogDir, 0777, true);
-        }
+        $debugEnabled = defined('TA_QR_DEBUG') && TA_QR_DEBUG === true;
+        $debugLogPath = null;
 
-        $debugLogPath = $debugLogDir . '/qr_debug.log';
-        $entry = '[processStaticQR] ' . date('Y-m-d H:i:s') . ' ' . json_encode([
-            'employee_id' => $employee_id,
-            'get' => $_GET,
-            'post' => $_POST,
-            'request_method' => $_SERVER['REQUEST_METHOD'] ?? null,
-            'request_uri' => $_SERVER['REQUEST_URI'] ?? null
-        ], JSON_UNESCAPED_SLASHES) . PHP_EOL;
-        @file_put_contents($debugLogPath, $entry, FILE_APPEND);
+        if ($debugEnabled) {
+            $debugLogDir = dirname(__DIR__, 2) . '/public';
+            if (!is_dir($debugLogDir)) {
+                @mkdir($debugLogDir, 0777, true);
+            }
+
+            $debugLogPath = $debugLogDir . '/qr_debug.log';
+            $entry = '[processStaticQR] ' . date('Y-m-d H:i:s') . ' ' . json_encode([
+                'employee_id' => $employee_id,
+                'get' => $_GET,
+                'post' => $_POST,
+                'request_method' => $_SERVER['REQUEST_METHOD'] ?? null,
+                'request_uri' => $_SERVER['REQUEST_URI'] ?? null
+            ], JSON_UNESCAPED_SLASHES) . PHP_EOL;
+            @file_put_contents($debugLogPath, $entry, FILE_APPEND);
+        }
 
         error_log('processStaticQR ENTRY: ' . json_encode([
             'employee_id' => $employee_id,
@@ -515,12 +521,14 @@ class AttendanceController
             $todayRecord = $this->attendanceModel->getTodayAttendance($employee_id);
             error_log("StaticQR: todayRecord=" . json_encode($todayRecord));
             error_log("StaticQR: branchCheck employee_id={$employee_id} todayRecordExists=" . ($todayRecord ? 'true' : 'false') . " time_in=" . ($todayRecord['time_in'] ?? 'NULL') . " time_out=" . ($todayRecord['time_out'] ?? 'NULL'));
-            $branchEntry = '[processStaticQR] ' . date('Y-m-d H:i:s') . ' ' . json_encode([
-                'employee_id' => $employee_id,
-                'todayRecord' => $todayRecord,
-                'selected_branch' => ($todayRecord && !empty($todayRecord['time_in']) && empty($todayRecord['time_out'])) ? 'TIME_OUT' : ((!$todayRecord || empty($todayRecord['time_in'])) ? 'TIME_IN' : 'ALREADY_TIMED_OUT')
-            ], JSON_UNESCAPED_SLASHES) . PHP_EOL;
-            file_put_contents($debugLogPath, $branchEntry, FILE_APPEND);
+            if ($debugEnabled) {
+                $branchEntry = '[processStaticQR] ' . date('Y-m-d H:i:s') . ' ' . json_encode([
+                    'employee_id' => $employee_id,
+                    'todayRecord' => $todayRecord,
+                    'selected_branch' => ($todayRecord && !empty($todayRecord['time_in']) && empty($todayRecord['time_out'])) ? 'TIME_OUT' : ((!$todayRecord || empty($todayRecord['time_in'])) ? 'TIME_IN' : 'ALREADY_TIMED_OUT')
+                ], JSON_UNESCAPED_SLASHES) . PHP_EOL;
+                @file_put_contents($debugLogPath, $branchEntry, FILE_APPEND);
+            }
 
             error_log('processStaticQR BRANCH: ' . json_encode([
                 'employee_id' => $employee_id,

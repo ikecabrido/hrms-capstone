@@ -15,10 +15,10 @@
                 urlObj = null;
             }
 
-            // Fallback to current location's origin + modules/time/index.php
+            // Fallback to the module index while preserving the current host
             if (!urlObj) {
-                const fallback = window.location.origin + '/hrms/hrms-capstone/modules/time/index.php';
-                urlObj = new URL(fallback);
+                const fallbackPath = window.__TA_ROOT ? window.__TA_ROOT + '/index.php' : '/index.php';
+                urlObj = new URL(fallbackPath, window.location.origin);
             }
 
             urlObj.searchParams.set('page', 'absence_late_management');
@@ -30,7 +30,7 @@
         }
 
         function viewRecord(recordId) {
-            const apiRoot = window.__TA_API_ROOT || '/hrms/hrms-capstone/modules/time/app/api';
+            const apiRoot = window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : './app/api');
             const apiUrl = `${apiRoot}/attendance/absence_late_management.php?action=get_record&record_id=${recordId}`;
 
             fetch(apiUrl)
@@ -112,7 +112,7 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
             const type = document.getElementById('typeFilter').value;
-            const apiRoot = window.__TA_API_ROOT || '/hrms/hrms-capstone/modules/time/app/api';
+            const apiRoot = window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : './app/api');
 
             let url = `${apiRoot}/attendance/absence_late_management.php?action=get_report`;
             if (startDate) url += `&start_date=${startDate}`;
@@ -151,7 +151,7 @@
             const generated = new Date().toLocaleString();
             const filters = `${startDate || 'All dates'} to ${endDate || 'All dates'}${type ? ` · Type: ${type}` : ''}`;
             const logoFileName = 'Bestlink College of the Philippines.jpeg';
-            const logoUrl = `${window.location.origin}/hrms/hrms-capstone/modules/time/assets/images/${encodeURIComponent(logoFileName)}`;
+            const logoUrl = `${window.location.origin}${window.__TA_ROOT || ''}/assets/images/${encodeURIComponent(logoFileName)}`;
 
             reportWindow.document.write(`<!doctype html><html><head><title>${title}</title><style>
                 @page { size: A4 landscape; margin: 14mm; }

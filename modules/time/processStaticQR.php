@@ -1,33 +1,36 @@
 <?php
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+error_reporting(E_ALL);
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/app/core/Session.php';
-require_once __DIR__ . '/app/controllers/AttendanceController.php';
-
-Session::start();
-
-$employee_id = $_GET['id'] ?? null;
-
-if ($employee_id === null || $employee_id === '') {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Missing employee ID in QR request.'
-    ]);
-    exit;
-}
-
-$employee_id = filter_var($employee_id, FILTER_VALIDATE_INT);
-if ($employee_id === false) {
-    http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Invalid employee ID in QR request.'
-    ]);
-    exit;
-}
-
 try {
+    require_once __DIR__ . '/app/core/Session.php';
+    require_once __DIR__ . '/app/controllers/AttendanceController.php';
+
+    Session::start();
+
+    $employee_id = $_GET['id'] ?? null;
+
+    if ($employee_id === null || $employee_id === '') {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Missing employee ID in QR request.'
+        ]);
+        exit;
+    }
+
+    $employee_id = filter_var($employee_id, FILTER_VALIDATE_INT);
+    if ($employee_id === false) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid employee ID in QR request.'
+        ]);
+        exit;
+    }
+
     $controller = new AttendanceController();
     $result = $controller->processStaticQR((int) $employee_id);
     echo json_encode($result);
@@ -39,3 +42,4 @@ try {
         'message' => 'QR processing failed on the server.'
     ]);
 }
+

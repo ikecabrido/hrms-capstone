@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/ta_paths.php';
 require_once __DIR__ . '/../../auth/guard.php';
 require_once 'classes/Page.php';
 

@@ -17,6 +17,8 @@
             }
         }
 
+        const holidayApiRoot = window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : './app/api');
+
         document.addEventListener('DOMContentLoaded', function() {
             // Load holiday data via AJAX once the page is ready
             loadHolidayData();
@@ -33,7 +35,7 @@ function initHolidaysPage() {
 
         // Load holiday data via AJAX
         function loadHolidayData() {
-            fetch('/hrms/hrms-capstone/modules/time/app/api/holidays/holiday_api.php?action=get_page_data')
+            fetch(holidayApiRoot + '/holidays/holiday_api.php?action=get_page_data')
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('API returned ' + response.status);
@@ -221,7 +223,7 @@ function initHolidaysPage() {
                         2. Click "Sync Holidays from API"<br>
                         3. Return to this page
                     </p>
-                    <a href="/hrms/hrms-capstone/modules/time/app/setup/holiday_setup.php"
+                    <a href="${window.__TA_ROOT || ''}/app/setup/holiday_setup.php"
                     style="display: inline-block; background: #005ba8; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; text-decoration: none;">
                         <i class="fas fa-cog"></i> Go to Setup
                     </a>
@@ -245,7 +247,7 @@ function initHolidaysPage() {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
             btn.disabled = true;
 
-            fetch('/hrms/hrms-capstone/modules/time/app/api/holidays/holiday_api.php?action=sync', {
+            fetch(holidayApiRoot + '/holidays/holiday_api.php?action=sync', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -393,7 +395,7 @@ function initHolidaysPage() {
             const action = id ? 'update' : 'create';
             if (id) payload.id = Number(id);
             try {
-                const response = await fetch(`/hrms/hrms-capstone/modules/time/app/api/holidays/holiday_api.php?action=${action}`, {
+                const response = await fetch(`${holidayApiRoot}/holidays/holiday_api.php?action=${action}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -415,7 +417,7 @@ function initHolidaysPage() {
             const summary = `${holiday.name} (${formatHolidayDate(holiday.holiday_date)}) - ${holidayScopeLabel(holiday.holiday_scope)} - ${holidayWorkLabel(holiday.is_working_day)}`;
             if (!window.confirm(`Delete this holiday?\n\n${summary}`)) return;
             try {
-                const response = await fetch(`/hrms/hrms-capstone/modules/time/app/api/holidays/holiday_api.php?action=delete&id=${encodeURIComponent(holiday.id)}`, { method: 'DELETE' });
+                const response = await fetch(`${holidayApiRoot}/holidays/holiday_api.php?action=delete&id=${encodeURIComponent(holiday.id)}`, { method: 'DELETE' });
                 const result = await response.json();
                 if (!response.ok || !result.success) throw new Error(result.message || 'Unable to delete holiday.');
                 if (window.toastr) toastr.success(result.message || 'Holiday deleted successfully.');
@@ -591,7 +593,7 @@ function initHolidaysPage() {
         function syncHolidays() {
             const button = document.getElementById('syncHolidayButton');
             if (button) { button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...'; }
-            fetch('/hrms/hrms-capstone/modules/time/app/api/holidays/holiday_api.php?action=sync', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+            fetch(holidayApiRoot + '/holidays/holiday_api.php?action=sync', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
                 .then(response => response.json().then(data => ({ response, data })))
                 .then(({ response, data }) => { if (!response.ok || !data.success) throw new Error(data.message || 'Failed to sync holidays.'); if (window.toastr) toastr.success(data.message || 'Holidays synced successfully.'); return loadHolidayData(); })
                 .catch(error => { if (window.toastr) toastr.error(error.message || 'Error syncing holidays.'); })

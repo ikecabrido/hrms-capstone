@@ -1,5 +1,5 @@
 <?php
-// Notifications fragment for Time module (hrms-capstone)
+// Notifications fragment for the Time module.
 header('Content-Type: text/html; charset=utf-8');
 require_once __DIR__ . '/../core/TimeDatabase.php';
 require_once __DIR__ . '/../models/EmployeeShift.php';

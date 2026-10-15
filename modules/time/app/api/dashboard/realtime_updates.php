@@ -28,14 +28,10 @@ try {
     
     $all_events = [];
     
-    // Connect to hr_management for activity logs (login events)
+    // Connect through the shared application database instead of a localhost-only PDO string.
     try {
-        $hr_db = new PDO(
-            "mysql:host=localhost;dbname=hr_management;charset=utf8",
-            'root',
-            ''
-        );
-        $hr_db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        require_once __DIR__ . '/../../../../../database/db.php';
+        $hr_db = TimeDatabase::getInstance()->getConnection();
         
         $login_query = "
             SELECT 

@@ -11,6 +11,7 @@ require_once __DIR__ . '/../classes/Employee.php';
 require_once __DIR__ . '/../app/helpers/Helper.php';
 require_once __DIR__ . '/../app/helpers/LeaveAbsenceHelper.php';
 require_once __DIR__ . '/../app/core/Session.php';
+require_once __DIR__ . '/../includes/ta_paths.php';
 
 Session::start();
 
@@ -467,9 +468,9 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
     <script>
     // Use absolute module paths to avoid dirname() ambiguity when pages are included
     window.__TA_CONFIG = {
-        balanceApiUrl: <?php echo json_encode('/hrms/hrms-capstone/modules/time/app/api/leave/get_leave_balance.php'); ?>,
-        provisionUrl: <?php echo json_encode('/hrms/hrms-capstone/modules/time/app/api/leave/provision_leave_balances.php'); ?>,
-        approveLeaveUrl: <?php echo json_encode('/hrms/hrms-capstone/modules/time/app/api/leave/approve_leave_head.php'); ?>,
+        balanceApiUrl: <?php echo json_encode((ta_base_path() ?: '') . '/app/api/leave/get_leave_balance.php'); ?>,
+        provisionUrl: <?php echo json_encode((ta_base_path() ?: '') . '/app/api/leave/provision_leave_balances.php'); ?>,
+        approveLeaveUrl: <?php echo json_encode((ta_base_path() ?: '') . '/app/api/leave/approve_leave_head.php'); ?>,
         leavePage: <?php echo (int) $leavePage; ?>,
         recordsPerPage: <?php echo (int) $recordsPerPage; ?>
     };

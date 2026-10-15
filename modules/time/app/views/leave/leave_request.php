@@ -7,7 +7,7 @@ if (file_exists($publicPath)) {
 }
 ?>
 <div class="leave-request-form">
-	<form id="leaveRequestForm" action="<?php echo htmlspecialchars('/hrms/hrms-capstone/modules/time/app/api/leave/submit_leave.php', ENT_QUOTES, 'UTF-8'); ?>" method="POST" enctype="multipart/form-data">
+	<form id="leaveRequestForm" action="<?php echo htmlspecialchars((ta_base_path() ?: '') . '/app/api/leave/submit_leave.php', ENT_QUOTES, 'UTF-8'); ?>" method="POST" enctype="multipart/form-data">
 		<input type="hidden" name="employee_id" value="<?php echo htmlspecialchars($_SESSION['user']['id'] ?? ''); ?>">
 		<div>
 			<label>Leave Type</label>

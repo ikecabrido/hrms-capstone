@@ -100,7 +100,7 @@
 
             let fixedScheduleEmployees = [];
             let filteredFixedScheduleEmployees = [];
-            const TIME_API_ROOT = window.__TA_API_ROOT || '/hrms/hrms-capstone/modules/time/app/api';
+            const TIME_API_ROOT = window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : './app/api');
 
             function showToast(message, type) {
                 const toast = document.createElement('div');
@@ -385,7 +385,7 @@ function initShiftsPage() {
                 }
 
                 const weekRange = getCurrentWeekRange();
-                const scheduleApi = (window.__TA_API_ROOT || '/hrms/hrms-capstone/modules/time/app/api') + '/schedules/get_employee_schedule.php';
+                const scheduleApi = (window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : './app/api')) + '/schedules/get_employee_schedule.php';
                 fetch(`${scheduleApi}?employee_id=${encodeURIComponent(id)}&start_date=${encodeURIComponent(weekRange.start)}&end_date=${encodeURIComponent(weekRange.end)}`)
                     .then(r => r.text())
                     .then(text => {
@@ -537,7 +537,7 @@ function initShiftsPage() {
 
         // Load employees when modal opens
         function loadEmployeeList() {
-            const empApiUrl = (window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : '/hrms/hrms-capstone/modules/time/app/api')) + '/shifts/get_employees_for_shift.php';
+            const empApiUrl = (window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : './app/api')) + '/shifts/get_employees_for_shift.php';
             fetch(empApiUrl)
                 .then(response => response.text())
                 .then(text => {
@@ -1622,7 +1622,7 @@ function initShiftsPage() {
 
         // Load existing shift templates into templates table
         function loadShiftTemplates() {
-            fetch('/hrms/hrms-capstone/modules/time/app/api/shifts/get_templates.php')
+            fetch(TIME_API_ROOT + '/shifts/get_templates.php')
                 .then(r => r.text())
                 .then(text => {
                     let data;
@@ -1654,7 +1654,7 @@ function initShiftsPage() {
         }
 
         function viewTemplate(shiftId) {
-            fetch('/hrms/hrms-capstone/modules/time/app/api/shifts/get_template_detail.php?shift_id=' + encodeURIComponent(shiftId))
+            fetch(TIME_API_ROOT + '/shifts/get_template_detail.php?shift_id=' + encodeURIComponent(shiftId))
                 .then(r => r.text())
                 .then(text => {
                     let data; try { data = JSON.parse(text); } catch (err) { console.error('get_template_detail non-json', text); return; }
