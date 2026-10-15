@@ -193,3 +193,5 @@
 [Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
 [Attendance::markAbsent] employee_id=4 attendance_date=2026-09-19 existingRecord=true time_in=NULL time_out=NULL status=ABSENT
 [Attendance::markAbsent] update_existing result=true rowcount=1 query=UPDATE ta_attendance SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP WHERE attendance_id = :attendance_id
+[AttendanceDetectionRunner] run_date=2026-10-15 run_time=2026-10-15 20:10:42
+[AttendanceDetectionRunner] employees_retrieved=20

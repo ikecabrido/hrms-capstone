@@ -10,23 +10,32 @@ class Database {
     private $conn;
 
     public function __construct() {
-            $configFile = dirname(__DIR__, 2) . '/db_config.php';
+        $configFile = dirname(__DIR__, 2) . '/db_config.php';
 
-            if (file_exists($configFile)) {
-                $config = require $configFile;
-                
-                if (!is_array($config)) {
-                    die("Invalid database configuration.");
-                }
-            } else {
-                die("Configuration file not found: " . $configFile);
+        if (file_exists($configFile)) {
+            // Hosted database configuration
+            $config = require $configFile;
+
+            if (!is_array($config)) {
+                die("Invalid database configuration.");
             }
-        // Look for Railway's environment variables first, default to local if missing
+
             $this->host = $config['host'];
             $this->port = $config['port'];
             $this->db   = $config['database'];
             $this->user = $config['username'];
             $this->pass = $config['password'];
+
+        } else {
+            // Local XAMPP database configuration
+            $this->host = 'localhost';
+            $this->port = 3306;
+            $this->db   = 'payr_bcp'; // Your local database name
+            $this->user = 'root';
+            $this->pass = '';
+        }
+
+
 
         try {
             // Added port mapping and upgraded charset to utf8mb4 (standard for modern MySQL)

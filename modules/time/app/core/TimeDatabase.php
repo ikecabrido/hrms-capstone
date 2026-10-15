@@ -10,9 +10,10 @@ class TimeDatabase
     private $pass;
     private $conn;
 
-    public function construct()
+    public function __construct()
     {
-        $configFile = dirname(__DIR__, 2) . '../../../../db_config.php';
+        // Same location that database/db.php uses (the folder above the project)
+        $configFile = dirname(__DIR__, 5) . '/db_config.php';
 
         if (file_exists($configFile)) {
             $config = require $configFile;
@@ -23,7 +24,7 @@ class TimeDatabase
             $this->user = $config['username'];
             $this->pass = $config['password'];
         } else {
-            // Local development configuration
+            // Local XAMPP configuration
             $this->host = "localhost";
             $this->port = "3306";
             $this->db   = "payr_bcp";
