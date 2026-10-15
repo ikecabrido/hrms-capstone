@@ -1,12 +1,16 @@
     .sidebar {
         width: var(--sidebar-width);
         background: var(--color1);
-        padding: 1.2rem 1.3rem;
+        padding: 1.2rem 1.3rem calc(1.2rem + env(safe-area-inset-bottom, 0px));
         top: 0;
+        bottom: 0;
         left: 0;
         position: fixed;
         height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
         overflow-y: auto;
+        overscroll-behavior-y: contain;
         z-index: 1000;
         transition: transform 0.3s ease;
     }

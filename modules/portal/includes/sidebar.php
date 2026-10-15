@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include_once __DIR__ . '/../../../auth/session.php';
 include __DIR__ . '/../classes/Employee.php';
 $employeeClass = new Employee();
@@ -7,7 +7,7 @@ $employeeClass = new Employee();
 
 <aside class="sidebar">
     <div class="school-logo">
-        <img src="assets/bcp-logo.png" alt="School Logo">
+        <img src="/assets/bcp-logo.png" alt="School Logo">
         <div class="sidebar-icons">
 
             <!-- Bell Icon + Notification Dropdown -->

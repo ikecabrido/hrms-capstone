@@ -748,6 +748,14 @@
   outline: 0;
 }
 
+#sendRecognitionModal select.recognition-recipient-locked {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none;
+  cursor: default;
+}
+
 #sendRecognitionModal .modal-footer {
   justify-content: flex-end;
   gap: 0.65rem;
@@ -2124,7 +2132,14 @@ body.modal-open {
   overflow-y: hidden;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.recognition-area .recognition-nav-tabs::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .recognition-area .recognition-nav-tabs .nav-item {
@@ -2139,7 +2154,14 @@ body.modal-open {
   max-width: 100%;
   overflow-x: auto;
   overflow-y: auto;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.recognition-area .leaderboard-table-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .recognition-area .leaderboard-table-scroll table {
@@ -3084,6 +3106,3 @@ body.modal-open {
     flex: 1 1 70px;
   }
 }
-
-
-

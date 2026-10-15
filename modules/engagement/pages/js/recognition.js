@@ -41,25 +41,47 @@ function closeRecognitionModal() {
 function openRecognitionModal(recommendedEmployee = null) {
   loadRecognitionEmployees(true).then(function (employees) {
     const receiverIdInput = document.getElementById('rec-receiver');
-    const receiverNameInput = document.getElementById('rec-receiver-name');
     const matchingEmployeeId = recommendedEmployee
       ? resolveRecommendationEmployeeId(recommendedEmployee, employees)
       : '';
     const matchingEmployee = employees.find(function (employee) {
       return String(employee.employee_id) === matchingEmployeeId;
     });
-    if (receiverIdInput) receiverIdInput.value = matchingEmployeeId;
-    if (receiverNameInput) {
-      const matchedName = matchingEmployee
-        ? ([matchingEmployee.first_name, matchingEmployee.middle_name, matchingEmployee.last_name].filter(Boolean).join(' ')
-          || matchingEmployee.full_name || matchingEmployee.employee_name || '')
+    const matchedEmployeeName = matchingEmployee
+      ? ([matchingEmployee.first_name, matchingEmployee.middle_name, matchingEmployee.last_name]
+        .filter(Boolean)
+        .join(' ') || matchingEmployee.full_name || matchingEmployee.employee_name || '')
+      : '';
+    const recommendationName = recommendedEmployee
+      ? (recommendedEmployee.source_employee_name || recommendedEmployee.employee_name || '')
+      : '';
+    if (receiverIdInput) {
+      receiverIdInput.replaceChildren(new Option('Select employee', ''));
+      employees.forEach(function (employee) {
+        const employeeId = String(employee.employee_id || '');
+        if (!employeeId) return;
+        const employeeName = [employee.first_name, employee.middle_name, employee.last_name]
+          .filter(Boolean)
+          .join(' ') || employee.full_name || employee.employee_name || ('Employee #' + employeeId);
+        const option = new Option(employeeName, employeeId);
+        option.dataset.employeeName = employeeName;
+        if (employeeId === matchingEmployeeId && recommendationName && recommendationName !== employeeName) {
+          option.textContent = recommendationName;
+        }
+        receiverIdInput.add(option);
+      });
+      receiverIdInput.value = matchingEmployeeId;
+      receiverIdInput.disabled = Boolean(matchingEmployeeId && recommendedEmployee);
+      receiverIdInput.classList.toggle('recognition-recipient-locked', receiverIdInput.disabled);
+    }
+    const receiverHelp = document.getElementById('rec-receiver-help');
+    if (receiverHelp) {
+      receiverHelp.textContent = recommendedEmployee && !matchingEmployeeId
+        ? 'This recommendation is not linked to a current employee record. Select the correct employee from the list.'
         : '';
-      receiverNameInput.value = matchingEmployeeId
-        ? matchedName + ' (' + matchingEmployeeId + ')'
-        : (recommendedEmployee ? recommendedEmployee.employee_name || '' : '');
     }
     const sendButton = document.getElementById('send-recognition-btn');
-    if (sendButton) sendButton.disabled = !matchingEmployeeId;
+    if (sendButton) sendButton.disabled = !employees.length;
     setRecognitionModalVisibility('sendRecognitionModal', true);
   }).catch(function (error) {
     console.warn('[Recognition] Could not load employees for the recipient list.', error);
@@ -692,11 +714,13 @@ function initRecognitionTabClickHandlers() {
 }
 
 function bindRecognitionSendForm() {
-  const sendForm = document.getElementById('send-recognition-form');
-  if (!sendForm || sendForm.dataset.recognitionBound === '1') return;
-  sendForm.dataset.recognitionBound = '1';
+  if (document.documentElement.dataset.recognitionSendDelegated === '1') return;
+  document.documentElement.dataset.recognitionSendDelegated = '1';
 
-  sendForm.addEventListener('submit', function(e) {
+  document.addEventListener('submit', function(e) {
+    const sendForm = e.target;
+    if (!sendForm || sendForm.id !== 'send-recognition-form') return;
+
     e.preventDefault();
     e.stopImmediatePropagation();
     if (sendForm.dataset.submitting === '1') return;
@@ -710,7 +734,7 @@ function bindRecognitionSendForm() {
     const points = pointsEl ? parseInt(pointsEl.value, 10) : 10;
 
     if (!receiverId || !message || Number.isNaN(points) || points < 1) {
-      if (!receiverId) alert('Please select a recipient before sending recognition.');
+      if (!receiverId) alert('Please select an employee before sending recognition.');
       else if (!message) alert('Please enter a message before sending recognition.');
       else alert('Points must be a valid number greater than 0.');
       return;
@@ -742,7 +766,9 @@ function bindRecognitionSendForm() {
       })
       .then(res => {
         if (res && (res.id || res.success)) {
-          const receiverName = document.getElementById('rec-receiver-name')?.value || 'Employee';
+          const receiverSelect = document.getElementById('rec-receiver');
+          const selectedOption = receiverSelect?.selectedOptions[0];
+          const receiverName = selectedOption?.dataset.employeeName || selectedOption?.textContent || 'Employee';
           ensureEmployeeInNominationList(receiverId, receiverName);
           closeRecognitionModal();
           if (messageEl) messageEl.value = '';
@@ -1419,10 +1445,11 @@ function resolveRecommendationEmployeeId(item, employees) {
 
 function renderRecognitionRecommendation(item, employees) {
   const employeeId = resolveRecommendationEmployeeId(item, employees);
-  const action = '<button type="button" class="btn btn-sm btn-outline-success recommend-recognize" data-employee-id="' + escapeHtml(employeeId) + '" data-employee-name="' + escapeHtml(item.employee_name || '') + '">Recognize</button>';
+  const recommendationName = item.source_employee_name || item.employee_name || '';
+  const action = '<button type="button" class="btn btn-sm btn-outline-success recommend-recognize" data-employee-id="' + escapeHtml(employeeId) + '" data-employee-name="' + escapeHtml(recommendationName) + '">Recognize</button>';
 
   return '<li class="list-group-item d-flex justify-content-between align-items-center"><div><strong>'
-    + escapeHtml(item.employee_name || item.employee_id || 'Unknown') + '</strong><div class="text-muted small">'
+    + escapeHtml(recommendationName || item.employee_id || 'Unknown') + '</strong><div class="text-muted small">'
     + escapeHtml(item.evaluation_period || 'Performance Review') + ' • Grade: ' + escapeHtml(item.final_grade || 'N/A')
     + ' • Score: ' + escapeHtml(item.final_rating_percent || 'N/A') + '%</div></div>' + action + '</li>';
 }

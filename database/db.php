@@ -14,7 +14,7 @@ class Database
 
     public function __construct()
     {
-        $configFile = dirname(__DIR__) . '/config.php';
+        $configFile = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'db_config.php';
 
         if (file_exists($configFile)) {
             $config = require $configFile;
@@ -25,12 +25,12 @@ class Database
             $this->user = $config['username'];
             $this->pass = $config['password'];
         } else {
-
-            $this->host = "host";
-            $this->port = "port";
-            $this->db   = "database";
-            $this->user = "username";
-            $this->pass = "password";
+            // Local development fallback
+            $this->host = 'localhost';
+            $this->port = '3306';
+            $this->db   = 'hrms';
+            $this->user = 'root';
+            $this->pass = '';
         }
         try {
             // Added port mapping and upgraded charset to utf8mb4 (standard for modern MySQL)

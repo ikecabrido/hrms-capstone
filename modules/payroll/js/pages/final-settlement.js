@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Final Settlement
  * ---------------------------------------------------------------------
  * Talks to modules/payroll/controllers/settlementController.php (AJAX/JSON),
@@ -14,7 +14,7 @@
  *     -> an authorized user approves it
  *     -> Payroll releases the payment     (Approval & Release tab)
  *
- * There is no "Create Settlement" action — settlements only come into
+ * There is no "Create Settlement" action â€” settlements only come into
  * existence through Accept Request, which calls
  * SettlementController::acceptRequest().
  *
@@ -26,7 +26,7 @@
 
 function initFinalSettlement() {
   const root = document.getElementById("finalSettlementPage");
-  if (!root) return; // Not on the Final Settlement page — nothing to do.
+  if (!root) return; // Not on the Final Settlement page â€” nothing to do.
   if (root.dataset.fsInitialized === "true") return;
   root.dataset.fsInitialized = "true";
 
@@ -85,7 +85,7 @@ function initFinalSettlement() {
   const tabProcessingCountEl = document.getElementById("fsTabProcessingCount");
   const tabApprovalCountEl = document.getElementById("fsTabApprovalCount");
 
-  // Tab 1 — Settlement Requests
+  // Tab 1 â€” Settlement Requests
   const reqSearchInput = document.getElementById("fsReqSearchInput");
   const reqStatusFilter = document.getElementById("fsReqStatusFilter");
   const reqExitTypeFilter = document.getElementById("fsReqExitTypeFilter");
@@ -95,7 +95,7 @@ function initFinalSettlement() {
   const reqEmptyState = document.getElementById("fsReqEmptyState");
   const reqEmptyStateText = document.getElementById("fsReqEmptyStateText");
 
-  // Tab 2 — Processing & Calculation
+  // Tab 2 â€” Processing & Calculation
   const procSearchInput = document.getElementById("fsProcSearchInput");
   const procStatusFilter = document.getElementById("fsProcStatusFilter");
   const procExitTypeFilter = document.getElementById("fsProcExitTypeFilter");
@@ -105,7 +105,7 @@ function initFinalSettlement() {
   const procEmptyState = document.getElementById("fsProcEmptyState");
   const procEmptyStateText = document.getElementById("fsProcEmptyStateText");
 
-  // Tab 3 — Approval & Release
+  // Tab 3 â€” Approval & Release
   const apprSearchInput = document.getElementById("fsApprSearchInput");
   const apprStatusFilter = document.getElementById("fsApprStatusFilter");
   const apprExitTypeFilter = document.getElementById("fsApprExitTypeFilter");
@@ -402,12 +402,12 @@ function initFinalSettlement() {
         applySummary(data.summary, data.request_summary);
       }
     } catch (err) {
-      // Non-fatal — summary cards simply keep their last known values.
+      // Non-fatal â€” summary cards simply keep their last known values.
     }
   }
 
   // ==========================================================================
-  // TAB 1 — SETTLEMENT REQUESTS
+  // TAB 1 â€” SETTLEMENT REQUESTS
   // ==========================================================================
 
   function requestRowActionsHtml(r) {
@@ -644,7 +644,7 @@ function initFinalSettlement() {
   });
 
   // ==========================================================================
-  // TAB 2 — PROCESSING & CALCULATION
+  // TAB 2 â€” PROCESSING & CALCULATION
   // ==========================================================================
 
   function settlementRowActionsHtml(s) {
@@ -745,7 +745,7 @@ function initFinalSettlement() {
   });
 
   // ==========================================================================
-  // TAB 3 — APPROVAL & RELEASE
+  // TAB 3 â€” APPROVAL & RELEASE
   // ==========================================================================
 
   async function loadApproval() {
@@ -1075,7 +1075,7 @@ function initFinalSettlement() {
 
     // Prefer the backend-calculated totals once the settlement has been
     // calculated; otherwise show a live preview computed from the items
-    // currently on screen (still not authoritative — Calculate is what
+    // currently on screen (still not authoritative â€” Calculate is what
     // actually persists the totals server-side).
     const calculated = [
       "calculated",
@@ -1520,7 +1520,7 @@ function initFinalSettlement() {
 
     return `
       <div class="fs-doc-header">
-        <img src="assets/bcp-logo.png" alt="Company logo">
+        <img src="/assets/bcp-logo.png" alt="Company logo">
         <div class="fs-doc-header-text">
           <h3>Bestlink College of the Philippines</h3>
           <span>Human Resource / Payroll Department</span>
@@ -1631,3 +1631,4 @@ function initFinalSettlement() {
 }
 
 window.addEventListener("page:loaded", initFinalSettlement);
+

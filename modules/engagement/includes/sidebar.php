@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 include_once __DIR__ . '/../../../auth/session.php';
 include __DIR__ . '/../classes/Employee.php';
 require_once __DIR__ . '/../autoload.php';

@@ -107,15 +107,22 @@ try {
             jsonResponse(['success' => true, 'data' => $data]);
             break;
         case 'send':
-            foreach (['receiver_id', 'message', 'points'] as $f) {
-                if (!isset($data[$f])) jsonResponse(['error' => "$f is required"], 400);
+            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+                jsonResponse(['error' => 'POST required'], 405);
             }
             $senderEmployeeId = $_SESSION['employee_id'] ?? $_SESSION['user']['employee_id'] ?? null;
             if (!$senderEmployeeId) {
-                jsonResponse(['error' => 'Current user is not authenticated'], 400);
+                jsonResponse(['error' => 'Current user is not authenticated'], 401);
             }
-            $id = $ctrl->sendRecognition((int)$senderEmployeeId, $data['receiver_id'], $data['message'], (int)$data['points']);
-            jsonResponse(['id' => $id], 201);
+            $receiverId = filter_var($data['receiver_id'] ?? null, FILTER_VALIDATE_INT);
+            $points = filter_var($data['points'] ?? null, FILTER_VALIDATE_INT);
+            $messageInput = $data['message'] ?? null;
+            $message = is_string($messageInput) ? trim($messageInput) : '';
+            if ($receiverId === false || $receiverId <= 0 || $points === false || $points <= 0 || $message === '') {
+                jsonResponse(['error' => 'A valid recipient, message, and positive points value are required'], 400);
+            }
+            $id = $ctrl->sendRecognition((int)$senderEmployeeId, $receiverId, $message, $points);
+            jsonResponse(['success' => true, 'id' => $id], 201);
             break;
         case 'adjust_points':
             if (!isset($data['employee_id'], $data['points'], $data['reason'])) {
@@ -230,7 +237,6 @@ try {
             jsonResponse(['error' => 'unknown action'], 400);
     }
 } catch (Throwable $e) {
-    $status = $e instanceof \RuntimeException ? 409 : 500;
+    $status = $e instanceof \InvalidArgumentException ? 400 : ($e instanceof \RuntimeException ? 409 : 500);
     jsonResponse(['error' => $e->getMessage()], $status);
 }
-

@@ -145,6 +145,7 @@ class Recognition extends BaseModel
                         LIMIT 1
                     ), pr.employee_id) as employee_id,
                     COALESCE(NULLIF(CONCAT_WS(' ', e.first_name, e.middle_name, e.last_name), ''), NULLIF(pr.source_employee_name, ''), CONCAT('Employee #', pr.employee_id)) as employee_name,
+                    pr.source_employee_name,
                     pr.evaluation_period,
                     pr.period_start,
                     pr.period_end,
@@ -169,7 +170,16 @@ class Recognition extends BaseModel
 
     public function sendRecognition($sender_id, $receiver_id, $message, $points)
     {
-        $receiverId = (int)$receiver_id;
+        $senderId = filter_var($sender_id, FILTER_VALIDATE_INT);
+        $receiverId = filter_var($receiver_id, FILTER_VALIDATE_INT);
+        $message = is_string($message) ? trim($message) : '';
+        $points = filter_var($points, FILTER_VALIDATE_INT);
+
+        if ($senderId === false || $senderId <= 0 || $receiverId === false || $receiverId <= 0
+            || $message === '' || $points === false || $points <= 0) {
+            throw new \InvalidArgumentException('A valid sender, recipient, message, and positive points value are required.');
+        }
+
         $receiverExists = $this->execute(
             'SELECT employee_id FROM em_employees WHERE employee_id = :employee_id LIMIT 1',
             ['employee_id' => $receiverId]
@@ -194,18 +204,33 @@ class Recognition extends BaseModel
         }
 
         // Store the receiver's current department with the recognition.
-        $sql = "INSERT INTO eer_recognitions (sender_id, receiver_id, message, points, category, performance_report_id, department, created_at)
-            SELECT :sender_id, e.employee_id, :message, :points, 'general',
-                    (SELECT pr.report_id FROM pm_performance_reports pr
-                     WHERE pr.employee_id = e.employee_id
-                     ORDER BY pr.period_end DESC LIMIT 1),
-                d.department_name, NOW()
-            FROM em_employees e
-            LEFT JOIN em_departments d ON e.department_id = d.department_id
-            WHERE e.employee_id = :receiver_id";
+        $columns = ['sender_id', 'receiver_id', 'message', 'points', 'category', 'created_at'];
+        $values = [':sender_id', 'e.employee_id', ':message', ':points', "'general'", 'NOW()'];
+        $joins = '';
+
+        if ($this->tableHasColumns('eer_recognitions', ['performance_report_id'])
+            && $this->tableHasColumns('pm_performance_reports', ['report_id', 'employee_id', 'period_end'])) {
+            $columns[] = 'performance_report_id';
+            $values[] = '(SELECT pr.report_id FROM pm_performance_reports pr
+                         WHERE pr.employee_id = e.employee_id
+                         ORDER BY pr.period_end DESC LIMIT 1)';
+        }
+
+        if ($this->tableHasColumns('eer_recognitions', ['department'])
+            && $this->tableHasColumns('em_employees', ['employee_id', 'department_id'])
+            && $this->tableHasColumns('em_departments', ['department_id', 'department_name'])) {
+            $columns[] = 'department';
+            $values[] = 'd.department_name';
+            $joins = ' LEFT JOIN em_departments d ON e.department_id = d.department_id';
+        }
+
+        $sql = 'INSERT INTO eer_recognitions (' . implode(', ', $columns) . ')
+                SELECT ' . implode(', ', $values) . '
+                FROM em_employees e' . $joins . '
+                WHERE e.employee_id = :receiver_id';
         
         $insert = $this->execute($sql, [
-            'sender_id' => $sender_id,
+            'sender_id' => $senderId,
             'receiver_id' => $receiverId,
             'message' => $message,
             'points' => $points
@@ -216,37 +241,54 @@ class Recognition extends BaseModel
         
         $recognitionId = (int)$this->db->lastInsertId();
 
-        $this->execute(
-            'UPDATE eer_recognitions er
-             INNER JOIN em_employees e ON e.employee_id = er.receiver_id
-             LEFT JOIN em_departments d ON d.department_id = e.department_id
-             SET er.department = COALESCE(er.department, d.department_name),
-                 er.performance_report_id = COALESCE(
-                     er.performance_report_id,
-                     (SELECT pr.report_id FROM pm_performance_reports pr
-                      WHERE pr.employee_id = e.employee_id
-                      ORDER BY pr.period_end DESC LIMIT 1)
-                 )
-             WHERE er.department IS NULL OR er.performance_report_id IS NULL'
-        );
-
-        $leaderboard = $this->getComprehensiveLeaderboard(10000);
-        foreach ($leaderboard as $entry) {
-            if (empty($entry['rank_position'])) continue;
+        $notification = new Notification();
+        try {
             $this->execute(
-                'UPDATE eer_recognitions
-                 SET leaderboard_position = :leaderboard_position
-                 WHERE receiver_id = :receiver_id',
-                [
-                    'leaderboard_position' => (int)($entry['rank_position'] ?? 0),
-                    'receiver_id' => (int)($entry['employee_id'] ?? 0)
-                ]
+                'UPDATE eer_recognitions er
+                 INNER JOIN em_employees e ON e.employee_id = er.receiver_id
+                 LEFT JOIN em_departments d ON d.department_id = e.department_id
+                 SET er.department = COALESCE(er.department, d.department_name),
+                     er.performance_report_id = COALESCE(
+                         er.performance_report_id,
+                         (SELECT pr.report_id FROM pm_performance_reports pr
+                          WHERE pr.employee_id = e.employee_id
+                          ORDER BY pr.period_end DESC LIMIT 1)
+                     )
+                 WHERE er.department IS NULL OR er.performance_report_id IS NULL'
             );
+        } catch (\PDOException $e) {
+            error_log('Recognition saved, but metadata refresh failed: ' . $e->getMessage());
         }
 
-        $notification = new Notification();
-        $notification->notifyEmployees([$receiverId], 'You received a recognition: ' . $message, 'recognition');
-        $notification->notifyHr('A recognition was sent to employee #' . $receiverId . '.', 'recognition', [(int)$sender_id, $receiverId]);
+        try {
+            $leaderboard = $this->getComprehensiveLeaderboard(10000);
+            foreach ($leaderboard as $entry) {
+                if (empty($entry['rank_position'])) continue;
+                $this->execute(
+                    'UPDATE eer_recognitions
+                     SET leaderboard_position = :leaderboard_position
+                     WHERE receiver_id = :receiver_id',
+                    [
+                        'leaderboard_position' => (int)($entry['rank_position'] ?? 0),
+                        'receiver_id' => (int)($entry['employee_id'] ?? 0)
+                    ]
+                );
+            }
+        } catch (\PDOException $e) {
+            error_log('Recognition saved, but leaderboard refresh failed: ' . $e->getMessage());
+        }
+
+        try {
+            $notification->notifyEmployees([$receiverId], 'You received a recognition: ' . $message, 'recognition');
+        } catch (\PDOException $e) {
+            error_log('Recognition saved, but recipient notification failed: ' . $e->getMessage());
+        }
+
+        try {
+            $notification->notifyHr('A recognition was sent to employee #' . $receiverId . '.', 'recognition', [(int)$sender_id, $receiverId]);
+        } catch (\PDOException $e) {
+            error_log('Recognition saved, but HR notification failed: ' . $e->getMessage());
+        }
 
         return $recognitionId;
     }
@@ -883,4 +925,3 @@ class Recognition extends BaseModel
         return $this->execute($sql, $params)->fetchAll();
     }
 }
-

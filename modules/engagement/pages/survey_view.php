@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['flash_error'] = 'Please answer all required questions before submitting.';
     }
 
-    $redirectTarget = '/hrms-capstone/modules/engagement/index.php?page=survey#satisfaction';
+    $redirectTarget = '../index.php?page=survey#satisfaction';
     header('Location: ' . $redirectTarget);
     exit;
 }
@@ -77,7 +77,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 <?php if (empty($survey)): ?>
                     <div class="alert alert-warning">Survey not found. Please return to the survey list and try again.</div>
                     <div class="survey-actions">
-                        <a href="/hrms-capstone/modules/engagement/index.php?page=survey#satisfaction" class="btn-secondary-custom">Back to Surveys</a>
+                        <a href="../index.php?page=survey#satisfaction" class="btn-secondary-custom">Back to Surveys</a>
                     </div>
                 <?php else: ?>
                     <div class="survey-meta">
@@ -110,10 +110,10 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             <?php endif; ?>
                         </div>
                         <div class="survey-actions">
-                            <a href="/hrms-capstone/modules/engagement/index.php?page=survey#satisfaction" class="btn-secondary-custom">Back</a>
+                            <a href="../index.php?page=survey#satisfaction" class="btn-secondary-custom">Back</a>
                         </div>
                     <?php else: ?>
-                        <form method="post" action="/hrms-capstone/modules/engagement/pages/survey_view.php?id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">
+                        <form method="post" action="survey_view.php?id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">
                             <input type="hidden" name="survey_id" value="<?= (int)($survey['eer_survey_id'] ?? 0) ?>">
 
                             <?php if (empty($questions)): ?>
@@ -136,7 +136,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                             <?php endif; ?>
 
                             <div class="survey-actions">
-                                <a href="/hrms-capstone/modules/engagement/index.php?page=survey#satisfaction" class="btn-secondary-custom">Back</a>
+                                <a href="../index.php?page=survey#satisfaction" class="btn-secondary-custom">Back</a>
                                 <button type="submit" class="btn-primary-custom">Submit Survey</button>
                             </div>
                         </form>

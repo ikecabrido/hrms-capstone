@@ -597,8 +597,8 @@ function updateGrievanceReportAvailability(message = '') {
 
   if (reportButton) reportButton.disabled = !hasRecords;
   if (emptyState) {
-    emptyState.textContent = message || (hasRecords ? '' : 'Walang grievance records na puwedeng gawan ng report.');
-    emptyState.classList.toggle('d-none', hasRecords && !message);
+    emptyState.textContent = message;
+    emptyState.classList.toggle('d-none', !message);
   }
 
   return hasRecords;

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Payslips
  * ---------------------------------------------------------------------
  * Talks to modules/payroll/controllers/payslipController.php (AJAX/JSON)
@@ -15,7 +15,7 @@
 
 function initPayslips() {
   const root = document.getElementById("payslipsPage");
-  if (!root) return; // Not on the Payslips page — nothing to do.
+  if (!root) return; // Not on the Payslips page â€” nothing to do.
   if (root.dataset.psInitialized === "true") return;
   root.dataset.psInitialized = "true";
 
@@ -76,7 +76,7 @@ function initPayslips() {
   }
 
   function formatDate(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "â€”";
     const d = new Date(dateStr + (dateStr.length <= 10 ? "T00:00:00" : ""));
     if (isNaN(d.getTime())) return esc(dateStr);
     return d.toLocaleDateString("en-US", {
@@ -87,7 +87,7 @@ function initPayslips() {
   }
 
   function formatDateTime(dateStr) {
-    if (!dateStr) return "—";
+    if (!dateStr) return "â€”";
     const d = new Date(dateStr.replace(" ", "T"));
     if (isNaN(d.getTime())) return esc(dateStr);
     return d.toLocaleDateString("en-US", {
@@ -102,7 +102,7 @@ function initPayslips() {
   function formatCurrency(value) {
     const n = Number(value) || 0;
     return (
-      "₱" +
+      "â‚±" +
       n.toLocaleString("en-PH", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -340,7 +340,7 @@ function initPayslips() {
       return p.period_name;
     },
     getSubLabel: function (p) {
-      return `${formatDate(p.start_date)} – ${formatDate(p.end_date)}`;
+      return `${formatDate(p.start_date)} â€“ ${formatDate(p.end_date)}`;
     },
   });
 
@@ -359,7 +359,7 @@ function initPayslips() {
       return e.employee_code;
     },
     // Match on employee name/code normally, and ALSO match when the typed
-    // digits are the tail end of the employee code's digits — so typing
+    // digits are the tail end of the employee code's digits â€” so typing
     // "34" finds "EMP-000034" (and "EMP-001234", etc.) without needing the
     // "EMP-" prefix or the leading zeros.
     matchFn: function (emp, q) {
@@ -380,7 +380,7 @@ function initPayslips() {
       if (!data.success) return;
       periodCombobox.setData(data.data || []);
     } catch (err) {
-      // Filter is a non-critical enhancement — fail silently.
+      // Filter is a non-critical enhancement â€” fail silently.
       console.error("Failed to load payroll periods", err);
     }
   }
@@ -414,7 +414,7 @@ function initPayslips() {
 
     const start = (currentPage - 1) * PAGE_SIZE + 1;
     const end = Math.min(currentPage * PAGE_SIZE, allPayslips.length);
-    paginationInfo.textContent = `Showing ${start}–${end} of ${allPayslips.length}`;
+    paginationInfo.textContent = `Showing ${start}â€“${end} of ${allPayslips.length}`;
     paginationPages.textContent = `Page ${currentPage} of ${totalPages}`;
 
     btnPagePrev.disabled = currentPage <= 1;
@@ -545,7 +545,7 @@ function initPayslips() {
 
     return `
         <div class="ps-doc-header">
-            <img src="assets/bcp-logo.png" alt="Company logo">
+            <img src="/assets/bcp-logo.png" alt="Company logo">
             <div class="ps-doc-header-text">
                 <h3>Bestlink College of the Philippines</h3>
                 <span>Human Resource Management System</span>
@@ -564,8 +564,8 @@ function initPayslips() {
             <div class="ps-doc-grid">
                 <div class="ps-doc-field"><span>Employee Name</span><strong>${esc(p.employee_name)}</strong></div>
                 <div class="ps-doc-field"><span>Employee Code</span><strong>${esc(p.employee_code)}</strong></div>
-                <div class="ps-doc-field"><span>Employment Type</span><strong>${esc(p.employment_type || "—")}</strong></div>
-                <div class="ps-doc-field"><span>Employment Status</span><strong>${esc(p.employment_status || "—")}</strong></div>
+                <div class="ps-doc-field"><span>Employment Type</span><strong>${esc(p.employment_type || "â€”")}</strong></div>
+                <div class="ps-doc-field"><span>Employment Status</span><strong>${esc(p.employment_status || "â€”")}</strong></div>
                 ${p.email ? `<div class="ps-doc-field"><span>Email</span><strong>${esc(p.email)}</strong></div>` : ""}
             </div>
         </div>
@@ -597,7 +597,7 @@ function initPayslips() {
         <div class="ps-doc-meta">
             <span>Payslip ID: <strong>${esc(p.payslip_id)}</strong></span>
             <span>Generated: <strong>${formatDateTime(p.generated_at)}</strong></span>
-            <span>Payroll Status: <strong>${esc((p.payroll_status || "—").toString().toUpperCase())}</strong></span>
+            <span>Payroll Status: <strong>${esc((p.payroll_status || "â€”").toString().toUpperCase())}</strong></span>
             <span>Payroll Period: <strong>${esc(p.period_name)}</strong></span>
         </div>
     `;
@@ -704,3 +704,4 @@ if (document.readyState === "loading") {
 } else {
   initPayslips();
 }
+

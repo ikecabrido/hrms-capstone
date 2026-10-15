@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Payroll Reports
  * ---------------------------------------------------------------------
  * Talks to modules/payroll/controllers/reportController.php (AJAX/JSON)
  * for report data, and reuses modules/payroll/controllers/periodController.php
- * ("list" action) for the Payroll Period filter — same pattern payslips.js
+ * ("list" action) for the Payroll Period filter â€” same pattern payslips.js
  * already uses, since ReportController doesn't expose a dedicated period
  * search endpoint (only getPeriods(), which returns everything).
  *
@@ -15,7 +15,7 @@
 
 function initReports() {
   const root = document.getElementById("reportsPage");
-  if (!root) return; // Not on the Reports page — nothing to do.
+  if (!root) return; // Not on the Reports page â€” nothing to do.
   if (root.dataset.rpInitialized === "true") return;
   root.dataset.rpInitialized = "true";
 
@@ -749,7 +749,7 @@ function initReports() {
     } else if (r.type === "department_summary") {
       tableHtml = renderDepartmentSummaryTable(r.department_summary);
     }
-    // payroll_summary has no row-level table — the summary grid below is the report.
+    // payroll_summary has no row-level table â€” the summary grid below is the report.
 
     reportBodyEl.innerHTML = `
       ${renderSummaryBlock(r.summary)}
@@ -912,7 +912,7 @@ function initReports() {
 
     return `
       <div class="rp-doc-header">
-        <img src="assets/bcp-logo.png" alt="Company logo">
+        <img src="/assets/bcp-logo.png" alt="Company logo">
         <div class="rp-doc-header-text">
           <h3>Bestlink College of the Philippines</h3>
           <span>Bulacan Campus</span>
@@ -964,3 +964,4 @@ if (document.readyState === "loading") {
 } else {
   initReports();
 }
+

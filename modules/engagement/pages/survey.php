@@ -133,7 +133,7 @@ What improvements would you suggest?" required></textarea>
                                       <strong><?= htmlspecialchars($survey['title'] ?? '') ?></strong><br>
                                       <small class="text-muted">Created: <?= htmlspecialchars($survey['created_at'] ?? 'N/A') ?> | Anonymous: <?= !empty($survey['is_anonymous']) ? 'Yes' : 'No' ?></small>
                                     </div>
-                                    <a class="btn btn-sm btn-info survey-result-action" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&amp;action=view&amp;id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">View</a>
+                                    <a class="btn btn-sm btn-info survey-result-action" href="pages/survey_view.php?module=survey&amp;action=view&amp;id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">View</a>
                                   </div>
                                 <?php endforeach; ?>
                               </div>
@@ -214,7 +214,7 @@ What improvements would you suggest?" required></textarea>
                                         <h6 class="card-title"><?= htmlspecialchars($survey['title'] ?? '') ?></h6>
                                         <p class="card-text small text-muted">Created: <?= htmlspecialchars($survey['created_at'] ?? 'N/A') ?><br>Anonymous: <?= !empty($survey['is_anonymous']) ? 'Yes' : 'No' ?></p>
                                       </div>
-                                      <a class="btn btn-sm btn-outline-info pulse-result-action" href="/hrms-capstone/modules/engagement/pages/survey_view.php?module=survey&amp;action=view&amp;id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">Take Survey</a>
+                                      <a class="btn btn-sm btn-outline-info pulse-result-action" href="pages/survey_view.php?module=survey&amp;action=view&amp;id=<?= (int)($survey['eer_survey_id'] ?? 0) ?>">Take Survey</a>
                                     </div></div>
                                   </div>
                                 <?php endforeach; ?>
