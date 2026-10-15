@@ -8,7 +8,6 @@ try {
     if (!isset($_SESSION['employee_id'])) { @http_response_code(401); throw new RuntimeException('Your session has expired. Please sign in again.'); }
     $controller = new MedicineInventoryController();
     $controller->authorize();
-    $action = trim((string)($_REQUEST['action'] ?? ''));
     $method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
     $payload = [];
     if ($method === 'POST') {
@@ -21,6 +20,7 @@ try {
     } else {
         $payload = $_GET;
     }
+    $action = trim((string)($payload['action'] ?? $_REQUEST['action'] ?? ''));
     if ($action === 'list')       { jsonGatekeeperEmit(['items' => $controller->listMedicines($payload)]); }
     if ($action === 'suppliers')  { jsonGatekeeperEmit(['suppliers' => $controller->getSuppliers()]); }
     if ($action === 'get')        { $med = $controller->getMedicine($payload); if ($med === null) { @http_response_code(404); throw new RuntimeException('Medicine record not found.'); } jsonGatekeeperEmit(['medicine' => $med]); }

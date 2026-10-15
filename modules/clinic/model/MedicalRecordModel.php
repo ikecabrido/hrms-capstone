@@ -140,6 +140,16 @@ class MedicalRecordModel
 
     private function ensureSchemaCompatibility(): void {
         try {
+            $recordIdCheck = $this->conn->prepare("SELECT COLUMN_KEY, EXTRA FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='cm_medical_records' AND COLUMN_NAME='record_id' LIMIT 1");
+            $recordIdCheck->execute();
+            $recordId = $recordIdCheck->fetch(PDO::FETCH_ASSOC);
+            if ($recordId && $recordId['COLUMN_KEY'] === '') {
+                $this->conn->exec('ALTER TABLE cm_medical_records ADD INDEX idx_cm_medical_records_record_id (record_id)');
+            }
+            if ($recordId && stripos((string)$recordId['EXTRA'], 'auto_increment') === false) {
+                $this->conn->exec('ALTER TABLE cm_medical_records MODIFY record_id int(10) NOT NULL AUTO_INCREMENT');
+            }
+
             $check = $this->conn->prepare('SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME="cm_medical_records" AND COLUMN_NAME="examination"');
             $check->execute();
             if ((int)$check->fetchColumn() === 0) {

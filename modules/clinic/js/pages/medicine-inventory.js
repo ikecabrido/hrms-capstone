@@ -18,6 +18,14 @@ function clearModuleMessage() {
     box.className = 'module-message';
 }
 
+function showMedicineFormMessage(message, type = 'error') {
+    const box = document.querySelector('#medicineFormMessage');
+    if (!box) return;
+    box.textContent = message;
+    box.className = 'module-message ' + (type === 'error' ? 'error' : 'success');
+    box.hidden = false;
+}
+
 async function medicineRequest(params, method = 'GET') {
     const queryParams = new URLSearchParams(params);
     const url = method === 'GET' ? `medicine-inventory-data.php?${queryParams.toString()}` : 'medicine-inventory-data.php';
@@ -249,16 +257,34 @@ async function submitMedicineForm() {
     const form = document.querySelector('#medicineForm');
     if (!form) return;
 
+    const saveButton = document.querySelector('#saveMedicineBtn');
+    const formMessage = document.querySelector('#medicineFormMessage');
+    if (formMessage) {
+        formMessage.hidden = true;
+        formMessage.textContent = '';
+    }
+    if (!form.reportValidity()) return;
+
     const payload = Object.fromEntries(new FormData(form).entries());
     if (!payload.medicine_id || !payload.medicine_name) {
-        showModuleMessage('Medicine ID and medicine name are required.', 'error');
+        showMedicineFormMessage('Medicine ID and medicine name are required.');
         return;
     }
 
-    const response = await medicineRequest({ action: 'save', ...payload }, 'POST');
+    if (saveButton) saveButton.disabled = true;
+    let response;
+    try {
+        response = await medicineRequest({ action: 'save', ...payload }, 'POST');
+    } catch (error) {
+        showMedicineFormMessage(error.message);
+        return;
+    } finally {
+        if (saveButton) saveButton.disabled = false;
+    }
+
     showModuleMessage(response.message || 'Medicine saved successfully.');
     closeMedicineModal();
-    await loadMedicines();
+    await loadMedicines().catch(error => showModuleMessage(error.message, 'error'));
 }
 
 async function deactivateMedicine(medicineId) {
@@ -320,7 +346,7 @@ export function initMedicineInventory() {
     }
 
     if (saveMedicineButton) {
-        saveMedicineButton.addEventListener('click', () => submitMedicineForm().catch(error => showModuleMessage(error.message, 'error')));
+        saveMedicineButton.addEventListener('click', () => submitMedicineForm().catch(error => showMedicineFormMessage(error.message)));
     }
 
     if (searchInput) {
@@ -352,4 +378,5 @@ export function initMedicineInventory() {
 }
 
 document.addEventListener('DOMContentLoaded', () => initMedicineInventory());
+window.addEventListener('page:loaded', () => initMedicineInventory());
 window.addEventListener('page:loaded', () => initMedicineInventory());

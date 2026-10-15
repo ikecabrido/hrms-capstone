@@ -9,12 +9,14 @@ class MedicineInventoryModel
     public function __construct(?PDO $pdo = null)
     {
         $this->conn = $pdo instanceof PDO ? $pdo : (new Database())->getConnection();
+        $this->ensureSchemaCompatibility();
     }
 
     public function listMedicines(string $search = '', string $filter = 'all'): array
     {
-        $sql = "SELECT m.*
+        $sql = "SELECT m.*, s.supplier_name AS supplier
                 FROM cm_medicine_inventory m
+            LEFT JOIN cm_suppliers s ON s.supplier_id = m.supplier_id
                 WHERE 1 = 1";
         $params = [];
 
@@ -76,9 +78,10 @@ class MedicineInventoryModel
 
     public function getMedicineById(string $medicineId): ?array
     {
-        $sql = "SELECT *
-                FROM cm_medicine_inventory
-                WHERE medicine_id = :medicine_id
+        $sql = "SELECT m.*, s.supplier_name AS supplier
+            FROM cm_medicine_inventory m
+            LEFT JOIN cm_suppliers s ON s.supplier_id = m.supplier_id
+            WHERE m.medicine_id = :medicine_id
                 LIMIT 1";
 
         $rows = $this->fetchAll($sql, [':medicine_id' => $medicineId]);
@@ -109,7 +112,7 @@ class MedicineInventoryModel
                     unit_cost,
                     selling_price,
                     expiry_date,
-                    supplier,
+                    supplier_id,
                     manufacturer,
                     storage_requirements,
                     status,
@@ -129,7 +132,7 @@ class MedicineInventoryModel
                     :unit_cost,
                     :selling_price,
                     :expiry_date,
-                    :supplier,
+                    :supplier_id,
                     :manufacturer,
                     :storage_requirements,
                     :status,
@@ -152,7 +155,7 @@ class MedicineInventoryModel
             ':unit_cost' => $data['unit_cost'] ?? null,
             ':selling_price' => $data['selling_price'] ?? null,
             ':expiry_date' => $data['expiry_date'] ?? null,
-            ':supplier' => $data['supplier'] ?? null,
+            ':supplier_id' => $this->findSupplierId($data['supplier'] ?? null),
             ':manufacturer' => $data['manufacturer'] ?? null,
             ':storage_requirements' => $data['storage_requirements'] ?? null,
             ':status' => $data['status'] ?? 'Available',
@@ -174,7 +177,7 @@ class MedicineInventoryModel
                     unit_cost = :unit_cost,
                     selling_price = :selling_price,
                     expiry_date = :expiry_date,
-                    supplier = :supplier,
+                    supplier_id = :supplier_id,
                     manufacturer = :manufacturer,
                     storage_requirements = :storage_requirements,
                     status = :status,
@@ -195,7 +198,7 @@ class MedicineInventoryModel
             ':unit_cost' => $data['unit_cost'] ?? null,
             ':selling_price' => $data['selling_price'] ?? null,
             ':expiry_date' => $data['expiry_date'] ?? null,
-            ':supplier' => $data['supplier'] ?? null,
+            ':supplier_id' => $this->findSupplierId($data['supplier'] ?? null),
             ':manufacturer' => $data['manufacturer'] ?? null,
             ':storage_requirements' => $data['storage_requirements'] ?? null,
             ':status' => $data['status'] ?? 'Available',
@@ -277,6 +280,45 @@ class MedicineInventoryModel
             return $statement->fetchColumn() ? (int)$id : null;
         } catch (Throwable $e) {
             return null;
+        }
+    }
+
+    private function findSupplierId(?string $supplierName): ?int
+    {
+        if ($supplierName === null || trim($supplierName) === '') {
+            return null;
+        }
+
+        $statement = $this->conn->prepare('SELECT supplier_id FROM cm_suppliers WHERE supplier_name = :supplier_name LIMIT 1');
+        $statement->execute([':supplier_name' => trim($supplierName)]);
+        $supplierId = $statement->fetchColumn();
+        return $supplierId === false ? null : (int) $supplierId;
+    }
+
+    private function ensureSchemaCompatibility(): void
+    {
+        try {
+            $unitCheck = $this->conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cm_medicine_inventory' AND COLUMN_NAME = 'unit'");
+            $unitCheck->execute();
+            if ((int) $unitCheck->fetchColumn() === 0) {
+                $this->conn->exec("ALTER TABLE cm_medicine_inventory ADD COLUMN unit varchar(50) NOT NULL DEFAULT 'pcs' AFTER strength");
+            }
+
+            $idCheck = $this->conn->prepare("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cm_medicine_inventory' AND COLUMN_NAME = 'medicine_id' LIMIT 1");
+            $idCheck->execute();
+            $idType = strtolower((string) ($idCheck->fetchColumn() ?: ''));
+            if ($idType !== '' && !str_starts_with($idType, 'varchar(')) {
+                $this->conn->exec('ALTER TABLE cm_medicine_inventory MODIFY medicine_id varchar(20) NOT NULL');
+            }
+
+            $statusCheck = $this->conn->prepare("SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cm_medicine_inventory' AND COLUMN_NAME = 'status' LIMIT 1");
+            $statusCheck->execute();
+            $statusType = (string) ($statusCheck->fetchColumn() ?: '');
+            if ($statusType !== '' && (stripos($statusType, 'Expiring Soon') === false || stripos($statusType, 'Inactive') === false)) {
+                $this->conn->exec("ALTER TABLE cm_medicine_inventory MODIFY status enum('Available','Low Stock','Out of Stock','Expired','Expiring Soon','Inactive') DEFAULT 'Available'");
+            }
+        } catch (Throwable $e) {
+            error_log('Medicine inventory schema update skipped: ' . $e->getMessage());
         }
     }
 }

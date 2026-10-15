@@ -96,6 +96,7 @@
         </div>
 
         <form id="medicineForm" class="patient-form">
+            <div id="medicineFormMessage" class="module-message" role="alert" hidden></div>
             <div class="form-grid">
                 <div>
                     <label for="medicine_id">Medicine ID</label>

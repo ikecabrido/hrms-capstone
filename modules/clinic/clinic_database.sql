@@ -114,7 +114,7 @@ DELIMITER ;
 --
 
 CREATE TABLE `cm_medical_records` (
-  `record_id` int(10) NOT NULL,
+  `record_id` int(10) NOT NULL AUTO_INCREMENT,
   `patient_id` int(10) NOT NULL,
   `visit_date` datetime NOT NULL,
   `examination` varchar(100) DEFAULT NULL,
@@ -130,7 +130,8 @@ CREATE TABLE `cm_medical_records` (
   `follow_up_date` date DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `created_by` int(10) DEFAULT NULL
+  `created_by` int(10) DEFAULT NULL,
+  PRIMARY KEY (`record_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 ALTER TABLE `cm_medical_records`
@@ -144,12 +145,13 @@ ALTER TABLE `cm_medical_records`
 --
 
 CREATE TABLE `cm_medicine_inventory` (
-  `medicine_id` int(10) NOT NULL,
+  `medicine_id` varchar(20) NOT NULL,
   `medicine_name` varchar(200) NOT NULL,
   `generic_name` varchar(200) DEFAULT NULL,
   `category` varchar(100) DEFAULT NULL,
   `dosage_form` enum('Tablet','Capsule','Liquid','Injection','Ointment','Other') DEFAULT NULL,
   `strength` varchar(50) DEFAULT NULL,
+  `unit` varchar(50) NOT NULL DEFAULT 'pcs',
   `current_stock` int(11) DEFAULT 0,
   `reorder_level` int(11) DEFAULT 10,
   `unit_cost` decimal(8,2) DEFAULT NULL,
@@ -158,10 +160,11 @@ CREATE TABLE `cm_medicine_inventory` (
   `supplier_id` int(10) DEFAULT NULL,
   `manufacturer` varchar(200) DEFAULT NULL,
   `storage_requirements` text DEFAULT NULL,
-  `status` enum('Available','Low Stock','Out of Stock','Expired') DEFAULT 'Available',
+  `status` enum('Available','Low Stock','Out of Stock','Expired','Expiring Soon','Inactive') DEFAULT 'Available',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `created_by` int(10) DEFAULT NULL
+  `created_by` int(10) DEFAULT NULL,
+  PRIMARY KEY (`medicine_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
