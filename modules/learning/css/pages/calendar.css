@@ -1,0 +1,798 @@
+/* ==========================================================================
+   Learning module — Calendar
+   Shared styling for the three role calendars (learner, instructor, admin).
+   Everything is namespaced with .lc- so no other page is affected. The markup
+   lives in pages/{learner,instructor,admin}/calendar.php and the calendar
+   modals reuse the shared .modal-overlay positioner from base/enhancements.css.
+   ========================================================================== */
+
+/* ---- Hero: month switcher + actions ---------------------------------------- */
+.lc-hero-actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* The month title stays the hero heading; the prev/next arrows flank it, e.g.
+   ‹ November 2026 ›, and read as individual buttons. */
+.lc-month-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    white-space: nowrap;
+}
+
+.lc-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    color: #fff;
+    font-size: 0.78rem;
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.lc-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+}
+
+.lc-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.95rem;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.lc-hero-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+}
+
+.lc-hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    border: 0;
+    border-radius: 11px;
+    background: #fff;
+    color: var(--primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lc-hero-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.24);
+}
+
+/* ---- Two column layout ----------------------------------------------------- */
+/* The month grid takes the main column and the upcoming events list sits beside
+   it. The hero keeps the full width. Below the breakpoint this falls back to the
+   plain stacked .home-dashboard flow, so nothing else needs to change. */
+@media (min-width: 1024px) {
+    .home-dashboard.lc-dashboard {
+        display: grid;
+        /* The upcoming list takes about a third, but never less than 260px and
+           never more than 360px, so the month grid keeps useful cell widths. */
+        grid-template-columns: minmax(0, 1fr) clamp(260px, 33%, 360px);
+        gap: 1.25rem;
+        align-items: start;
+    }
+
+    .home-dashboard.lc-dashboard > .home-hero {
+        grid-column: 1 / -1;
+    }
+
+    /* The side column sits beside a tall month grid, so the panel and its rows
+       are compacted to keep the list inside the page: tighter card, smaller
+       icon and badge, two clamped meta lines. Rows only wrap when the panel
+       gets really narrow. */
+    .home-dashboard.lc-dashboard > .lc-upcoming-card {
+        padding: 1rem 1.1rem;
+    }
+
+    .home-dashboard.lc-dashboard .home-card-head {
+        margin-bottom: 0.6rem;
+    }
+
+    .home-dashboard.lc-dashboard .lc-row {
+        gap: 0.6rem;
+        row-gap: 0.35rem;
+        flex-wrap: wrap;
+        padding: 0.5rem 0;
+    }
+
+    .home-dashboard.lc-dashboard .lc-row .home-row-body {
+        min-width: 6.5rem;
+    }
+
+    .home-dashboard.lc-dashboard .lc-row .home-row-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+        font-size: 0.72rem;
+    }
+
+    .home-dashboard.lc-dashboard .lc-row .home-row-title {
+        font-size: 0.84rem;
+    }
+
+    .home-dashboard.lc-dashboard .lc-row .home-row-meta {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        font-size: 0.72rem;
+    }
+
+    .home-dashboard.lc-dashboard .lc-row .home-badge {
+        padding: 0.14rem 0.45rem;
+        font-size: 0.6rem;
+    }
+
+    .home-dashboard.lc-dashboard .lc-row .home-row-trail {
+        justify-content: flex-start;
+    }
+
+    /* Cells are narrower in the two column layout, so the weekday labels need
+       to be smaller to keep "SUN … SAT" on one line. */
+    .home-dashboard.lc-dashboard .lc-weekday {
+        font-size: 0.62rem;
+        letter-spacing: 0.04em;
+    }
+}
+
+/* ---- Month grid ------------------------------------------------------------ */
+.lc-cal-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.lc-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    background: var(--bg-subtle);
+    border-bottom: 1px solid rgba(32, 0, 130, 0.08);
+}
+
+.lc-weekday {
+    padding: 0.7rem 0.3rem;
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+/* The 1px gap plus a tinted backdrop paints the cell separators, so no cell
+   ever needs its own border (and the outer edges stay clean). */
+.lc-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 1px;
+    background: rgba(32, 0, 130, 0.09);
+}
+
+.lc-day {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 112px;
+    padding: 0.4rem 0.45rem 0.5rem;
+    background: var(--surface);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.lc-day:hover {
+    background: rgba(32, 0, 130, 0.035);
+}
+
+.lc-day.is-outside {
+    background: var(--bg-subtle);
+    cursor: default;
+}
+
+.lc-day.is-outside:hover {
+    background: var(--bg-subtle);
+}
+
+.lc-day-num {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 25px;
+    height: 25px;
+    padding: 0 0.3rem;
+    border-radius: 8px;
+    font-size: 0.79rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text);
+}
+
+.lc-day.is-today .lc-day-num {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(32, 0, 130, 0.22);
+}
+
+.lc-ev {
+    display: flex;
+    align-items: center;
+    gap: 0.32rem;
+    min-width: 0;
+    padding: 0.14rem 0.35rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--ev, var(--primary));
+    background: rgba(32, 0, 130, 0.05);
+    font-size: 0.71rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--text);
+}
+
+.lc-ev i {
+    flex-shrink: 0;
+    font-size: 0.66rem;
+    color: var(--ev, var(--primary));
+}
+
+.lc-ev span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lc-more {
+    padding-left: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+/* ---- Upcoming list --------------------------------------------------------- */
+.lc-row {
+    gap: 0.85rem;
+}
+
+.lc-row-icon {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    background: rgba(32, 0, 130, 0.06);
+    color: var(--ev, var(--primary));
+}
+
+.lc-row-trail {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* ---- Pagination (admin) ---------------------------------------------------- */
+.lc-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 1.15rem;
+}
+
+.lc-page-link {
+    min-width: 34px;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid rgba(32, 0, 130, 0.14);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.lc-page-link:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.lc-page-link.is-current,
+.lc-page-link.is-current:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    font-weight: 700;
+}
+
+.lc-pager-gap {
+    color: var(--muted);
+    font-size: 0.82rem;
+    padding: 0 0.15rem;
+}
+
+.lc-pager-note {
+    margin: 0.6rem 0 0;
+    text-align: center;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+/* ---- Modals --------------------------------------------------------------- */
+.lc-modal {
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    max-width: 520px;
+    max-height: 84vh;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.lc-modal.is-sm {
+    max-width: 400px;
+}
+
+.lc-modal-head {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 1.35rem;
+    border-bottom: 1px solid rgba(32, 0, 130, 0.08);
+}
+
+.lc-modal-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: var(--text);
+}
+
+.lc-modal-sub {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.lc-modal-close {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lc-modal-close:hover {
+    background: rgba(32, 0, 130, 0.07);
+    color: var(--primary);
+}
+
+.lc-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.25rem 1.35rem;
+}
+
+.lc-modal-foot {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.9rem 1.35rem;
+    border-top: 1px solid rgba(32, 0, 130, 0.08);
+}
+
+.lc-modal-foot.is-center {
+    justify-content: center;
+}
+
+/* ---- Day breakdown (inside the day modal) --------------------------------- */
+.lc-day-ev {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--ev, var(--primary));
+    background: var(--bg-subtle);
+}
+
+.lc-day-ev + .lc-day-ev {
+    margin-top: 0.55rem;
+}
+
+.lc-day-ev-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(32, 0, 130, 0.07);
+    color: var(--ev, var(--primary));
+    font-size: 0.82rem;
+}
+
+.lc-day-ev-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.lc-day-ev-title {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text);
+}
+
+.lc-day-ev-meta {
+    display: block;
+    margin-top: 0.12rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.lc-day-ev-actions {
+    flex-shrink: 0;
+    display: flex;
+    gap: 0.35rem;
+}
+
+.lc-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid rgba(32, 0, 130, 0.14);
+    border-radius: 9px;
+    background: transparent;
+    color: var(--primary);
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.lc-icon-btn:hover {
+    background: rgba(32, 0, 130, 0.07);
+}
+
+.lc-icon-btn.is-danger {
+    border-color: rgba(225, 29, 72, 0.25);
+    color: #e11d48;
+}
+
+.lc-icon-btn.is-danger:hover {
+    background: rgba(225, 29, 72, 0.08);
+}
+
+/* ---- Forms ---------------------------------------------------------------- */
+.lc-field {
+    margin-bottom: 1rem;
+}
+
+.lc-label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.lc-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.6rem 0.75rem;
+    border: 1.5px solid rgba(32, 0, 130, 0.14);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lc-input::placeholder {
+    color: var(--muted);
+    opacity: 0.75;
+}
+
+.lc-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(32, 0, 130, 0.10);
+}
+
+textarea.lc-input {
+    resize: vertical;
+}
+
+.lc-input.is-color {
+    height: 42px;
+    padding: 0.25rem;
+    cursor: pointer;
+}
+
+.lc-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+/* ---- Buttons --------------------------------------------------------------- */
+.lc-btn-primary,
+.lc-btn-ghost,
+.lc-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.lc-btn-primary {
+    border: 0;
+    background: var(--primary);
+    color: #fff;
+}
+
+.lc-btn-primary:hover {
+    background: var(--accent);
+}
+
+.lc-btn-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.lc-btn-ghost {
+    border: 1.5px solid rgba(32, 0, 130, 0.16);
+    background: transparent;
+    color: var(--text);
+}
+
+.lc-btn-ghost:hover {
+    border-color: rgba(32, 0, 130, 0.30);
+    background: rgba(32, 0, 130, 0.04);
+}
+
+.lc-btn-danger {
+    border: 0;
+    background: #e11d48;
+    color: #fff;
+}
+
+.lc-btn-danger:hover {
+    background: #be123c;
+}
+
+/* ---- Confirm dialog -------------------------------------------------------- */
+.lc-confirm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1.75rem 1.5rem 1.25rem;
+    text-align: center;
+}
+
+.lc-confirm-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: rgba(225, 29, 72, 0.10);
+    color: #e11d48;
+    font-size: 1.3rem;
+}
+
+.lc-confirm-text {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--muted);
+}
+
+/* ---- Responsive ------------------------------------------------------------ */
+@media (max-width: 900px) {
+    .lc-day {
+        min-height: 96px;
+    }
+}
+
+@media (max-width: 700px) {
+    .lc-hero-actions {
+        width: 100%;
+    }
+
+    .lc-weekday {
+        padding: 0.55rem 0.15rem;
+        font-size: 0.6rem;
+        letter-spacing: 0.04em;
+    }
+
+    .lc-day {
+        min-height: 84px;
+        padding: 0.3rem 0.3rem 0.4rem;
+    }
+
+    .lc-day-num {
+        min-width: 22px;
+        height: 22px;
+        font-size: 0.72rem;
+    }
+
+    /* Cells are too narrow for titles — keep the coloured icon chips only. */
+    .lc-ev {
+        justify-content: center;
+        padding: 0.16rem 0.2rem;
+        border-left-width: 2px;
+    }
+
+    .lc-ev span {
+        display: none;
+    }
+
+    .lc-ev i {
+        font-size: 0.6rem;
+    }
+
+    .lc-more {
+        padding-left: 0.2rem;
+        font-size: 0.64rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .lc-modal-head,
+    .lc-modal-body,
+    .lc-modal-foot {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .lc-grid-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---- Dark mode ------------------------------------------------------------- */
+[data-theme="dark"] .lc-day {
+    background: rgba(30, 41, 59, 1);
+}
+
+[data-theme="dark"] .lc-day:hover {
+    background: rgba(51, 65, 85, 0.75);
+}
+
+[data-theme="dark"] .lc-day.is-outside,
+[data-theme="dark"] .lc-day.is-outside:hover {
+    background: rgba(15, 23, 42, 1);
+}
+
+[data-theme="dark"] .lc-grid {
+    background: rgba(51, 65, 85, 0.75);
+}
+
+[data-theme="dark"] .lc-weekdays {
+    background: rgba(15, 23, 42, 1);
+    border-bottom-color: rgba(51, 65, 85, 0.75);
+}
+
+[data-theme="dark"] .lc-ev {
+    background: rgba(148, 163, 184, 0.12);
+}
+
+[data-theme="dark"] .lc-modal {
+    border-color: rgba(51, 65, 85, 0.7);
+}
+
+[data-theme="dark"] .lc-modal-head,
+[data-theme="dark"] .lc-modal-foot {
+    border-color: rgba(51, 65, 85, 0.6);
+}
+
+[data-theme="dark"] .lc-modal-close:hover,
+[data-theme="dark"] .lc-icon-btn:hover {
+    background: rgba(148, 163, 184, 0.14);
+}
+
+[data-theme="dark"] .lc-day-ev,
+[data-theme="dark"] .lc-row-icon,
+[data-theme="dark"] .lc-day-ev-icon {
+    background: rgba(148, 163, 184, 0.12);
+}
+
+[data-theme="dark"] .lc-input {
+    border-color: rgba(51, 65, 85, 0.9);
+}
+
+[data-theme="dark"] .lc-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+[data-theme="dark"] .lc-page-link {
+    border-color: rgba(51, 65, 85, 0.8);
+    background: rgba(30, 41, 59, 1);
+}
+
+[data-theme="dark"] .lc-btn-ghost {
+    border-color: rgba(51, 65, 85, 0.9);
+}
+
+[data-theme="dark"] .lc-btn-ghost:hover {
+    border-color: rgba(99, 102, 241, 0.5);
+    background: rgba(99, 102, 241, 0.12);
+}
+
+[data-theme="dark"] .lc-confirm-icon {
+    background: rgba(244, 63, 94, 0.16);
+    color: #fda4af;
+}
+
+/* Form controls have their own UA background in dark mode. */
+[data-theme="dark"] .lc-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.8);
+}

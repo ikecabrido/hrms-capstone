@@ -1,0 +1,579 @@
+/* ==========================================================================
+   Learning module — Admin: Grade Book
+
+   Page scoped styling for pages/admin/gradebook.php. Everything is namespaced
+   under .gb-page / .gb-* so the identical-looking instructor gradebook (which
+   keeps its own inline styles) and the learner gradebook are untouched.
+   Reuses the shared .home-hero / .home-stat / .home-* components.
+   ========================================================================== */
+
+/* ---- Toolbar ------------------------------------------------------------- */
+.gb-page .gb-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+}
+
+.gb-page .gb-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 16rem;
+    min-width: 0;
+    max-width: 24rem;
+}
+
+.gb-page .gb-search > i {
+    position: absolute;
+    left: 0.8rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.gb-page .gb-search input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.62rem 0.8rem 0.62rem 2.2rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.86rem;
+}
+
+.gb-page .gb-search input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(32, 0, 130, 0.12);
+}
+
+.gb-page .gb-select {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.gb-page .gb-select select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 0.58rem 2rem 0.58rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    max-width: 14rem;
+}
+
+.gb-page .gb-select select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(32, 0, 130, 0.12);
+}
+
+.gb-page .gb-select > i {
+    position: absolute;
+    right: 0.8rem;
+    font-size: 0.62rem;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.gb-page .gb-count {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ---- Table card ---------------------------------------------------------- */
+.gb-page .gb-card {
+    min-width: 0;
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 16px;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+/* A long "Top Performer" name must not blow up the stat tile. */
+.gb-page .home-stat-value-sm {
+    font-size: 1.02rem;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.gb-page .gb-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.gb-page .gb-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.gb-page .gb-table thead th {
+    padding: 0.8rem 0.6rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--primary);
+    background: rgba(32, 0, 130, 0.03);
+    border-bottom: 1px solid rgba(32, 0, 130, 0.10);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.gb-page .gb-table thead th[data-sort] {
+    cursor: pointer;
+}
+
+.gb-page .gb-table thead th[data-sort]:hover {
+    background: rgba(32, 0, 130, 0.07);
+}
+
+.gb-page .gb-sort {
+    margin-left: 0.3rem;
+    font-size: 0.65rem;
+    opacity: 0.4;
+}
+
+.gb-page .gb-table thead th.sorted .gb-sort {
+    opacity: 1;
+    color: var(--primary);
+}
+
+.gb-page .gb-th-action {
+    width: 44px;
+}
+
+.gb-page .gb-table tbody tr {
+    border-bottom: 1px solid rgba(32, 0, 130, 0.06);
+    transition: background 0.15s ease;
+}
+
+.gb-page .gb-table tbody tr:last-child {
+    border-bottom: 0;
+}
+
+.gb-page .gb-table tbody tr.gb-row:hover {
+    background: rgba(32, 0, 130, 0.025);
+}
+
+.gb-page .gb-table td {
+    padding: 0.75rem 0.6rem;
+    font-size: 0.86rem;
+    color: var(--text);
+    vertical-align: middle;
+}
+
+/* ---- Cells --------------------------------------------------------------- */
+.gb-page .gb-student-name {
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.gb-page .gb-student-id {
+    margin-top: 0.1rem;
+    font-size: 0.73rem;
+    color: var(--muted);
+}
+
+.gb-page .gb-tag {
+    display: inline-block;
+    max-width: 8rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(32, 0, 130, 0.07);
+    color: var(--primary);
+    font-size: 0.76rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.gb-page .gb-tag.is-instructor {
+    max-width: 7rem;
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+}
+
+.gb-page .gb-quizzes {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.gb-page .gb-score {
+    font-size: 0.88rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.gb-page .gb-score.is-pass { color: #047857; }
+.gb-page .gb-score.is-fail { color: #b91c1c; }
+.gb-page .gb-score.is-none { color: var(--muted); }
+
+.gb-page .gb-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 800;
+}
+
+.gb-page .gb-letter.is-a { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.gb-page .gb-letter.is-b { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
+.gb-page .gb-letter.is-c { background: rgba(245, 158, 11, 0.14); color: #b45309; }
+.gb-page .gb-letter.is-d { background: rgba(249, 115, 22, 0.14); color: #c2410c; }
+.gb-page .gb-letter.is-f { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
+.gb-page .gb-letter.is-none { background: rgba(100, 116, 139, 0.14); color: #64748b; }
+
+.gb-page .gb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.gb-page .gb-pill.is-passed { background: rgba(16, 185, 129, 0.12); color: #047857; }
+.gb-page .gb-pill.is-progress { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; }
+.gb-page .gb-pill.is-none { background: rgba(100, 116, 139, 0.14); color: #475569; }
+
+.gb-page .gb-when {
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.gb-page .gb-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid rgba(32, 0, 130, 0.16);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--primary);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.gb-page .gb-expand-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+/* ---- Expanded quiz detail ----------------------------------------------- */
+.gb-page .gb-expand > td {
+    padding: 0.9rem 1rem 1.1rem 2rem;
+    background: rgba(32, 0, 130, 0.02);
+}
+
+.gb-page .gb-detail-title {
+    margin-bottom: 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.gb-page .gb-detail-empty {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.gb-page .gb-quiz-list {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 46rem;
+}
+
+.gb-page .gb-quiz {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid rgba(32, 0, 130, 0.07);
+    border-left: 3px solid rgba(100, 116, 139, 0.3);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+.gb-page .gb-quiz.is-pass { border-left-color: #10b981; }
+.gb-page .gb-quiz.is-fail { border-left-color: #ef4444; }
+
+.gb-page .gb-quiz-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.gb-page .gb-quiz-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gb-page .gb-quiz-module {
+    margin-top: 0.1rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gb-page .gb-quiz-score {
+    min-width: 46px;
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.gb-page .gb-quiz-score.is-pass { color: #047857; }
+.gb-page .gb-quiz-score.is-fail { color: #b91c1c; }
+.gb-page .gb-quiz-score.is-none { color: var(--muted); }
+
+.gb-page .gb-quiz-badge {
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(100, 116, 139, 0.14);
+    color: #475569;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.gb-page .gb-quiz-badge.is-pass { background: rgba(16, 185, 129, 0.14); color: #047857; }
+.gb-page .gb-quiz-badge.is-fail { background: rgba(239, 68, 68, 0.14); color: #b91c1c; }
+
+.gb-page .gb-quiz-time {
+    min-width: 60px;
+    text-align: right;
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ---- Card footer --------------------------------------------------------- */
+.gb-page .gb-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid rgba(32, 0, 130, 0.08);
+}
+
+.gb-page .gb-foot-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.gb-page .gb-foot-avg {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* The shared pagination is already styled; inside the card it only needs its
+   own border/margin removed so it sits in the footer row. */
+.gb-page .pagination-row {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    gap: 0.6rem;
+}
+
+.gb-page .page-btn {
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+}
+
+.gb-page .page-indicator {
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* ---- Empty state --------------------------------------------------------- */
+.gb-page .gb-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 3rem 1.5rem;
+    border: 1px dashed rgba(32, 0, 130, 0.18);
+    border-radius: 16px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.gb-page .gb-empty i {
+    margin-bottom: 0.4rem;
+    font-size: 1.7rem;
+    color: rgba(32, 0, 130, 0.35);
+}
+
+.gb-page .gb-empty strong {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.gb-page .gb-empty span {
+    font-size: 0.84rem;
+}
+
+/* ---- Narrow screens ------------------------------------------------------ */
+@media (max-width: 900px) {
+    .gb-page .gb-table {
+        min-width: 820px;
+    }
+}
+
+@media (max-width: 560px) {
+    .gb-page .gb-count {
+        margin-left: 0;
+    }
+}
+
+/* ---- Dark theme ---------------------------------------------------------- */
+[data-theme="dark"] .gb-page .gb-search input,
+[data-theme="dark"] .gb-page .gb-select select,
+[data-theme="dark"] .gb-page .gb-expand-btn {
+    background: var(--surface);
+    color: var(--text);
+    border-color: rgba(148, 163, 184, 0.28);
+}
+
+[data-theme="dark"] .gb-page .gb-card {
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme="dark"] .gb-page .gb-table thead th {
+    background: rgba(148, 163, 184, 0.08);
+    border-color: rgba(148, 163, 184, 0.18);
+    color: #a5b4fc;
+}
+
+[data-theme="dark"] .gb-page .gb-table thead th[data-sort]:hover {
+    background: rgba(148, 163, 184, 0.16);
+}
+
+[data-theme="dark"] .gb-page .gb-table thead th.sorted .gb-sort {
+    color: #a5b4fc;
+}
+
+[data-theme="dark"] .gb-page .gb-table tbody tr {
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+[data-theme="dark"] .gb-page .gb-table tbody tr.gb-row:hover {
+    background: rgba(148, 163, 184, 0.08);
+}
+
+[data-theme="dark"] .gb-page .gb-tag {
+    background: rgba(148, 163, 184, 0.16);
+    color: var(--text);
+}
+
+[data-theme="dark"] .gb-page .gb-tag.is-instructor {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+}
+
+[data-theme="dark"] .gb-page .gb-score.is-pass { color: #6ee7b7; }
+[data-theme="dark"] .gb-page .gb-score.is-fail { color: #fca5a5; }
+
+[data-theme="dark"] .gb-page .gb-letter.is-a { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; }
+[data-theme="dark"] .gb-page .gb-letter.is-b { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+[data-theme="dark"] .gb-page .gb-letter.is-c { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+[data-theme="dark"] .gb-page .gb-letter.is-d { background: rgba(249, 115, 22, 0.18); color: #fdba74; }
+[data-theme="dark"] .gb-page .gb-letter.is-f { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+[data-theme="dark"] .gb-page .gb-letter.is-none { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; }
+
+[data-theme="dark"] .gb-page .gb-pill.is-passed { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; }
+[data-theme="dark"] .gb-page .gb-pill.is-progress { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+[data-theme="dark"] .gb-page .gb-pill.is-none { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; }
+
+[data-theme="dark"] .gb-page .gb-expand > td {
+    background: rgba(148, 163, 184, 0.06);
+}
+
+[data-theme="dark"] .gb-page .gb-quiz {
+    border-color: rgba(148, 163, 184, 0.16);
+    border-left-color: rgba(148, 163, 184, 0.4);
+}
+
+[data-theme="dark"] .gb-page .gb-quiz.is-pass { border-left-color: #34d399; }
+[data-theme="dark"] .gb-page .gb-quiz.is-fail { border-left-color: #f87171; }
+
+[data-theme="dark"] .gb-page .gb-quiz-score.is-pass { color: #6ee7b7; }
+[data-theme="dark"] .gb-page .gb-quiz-score.is-fail { color: #fca5a5; }
+
+[data-theme="dark"] .gb-page .gb-quiz-badge {
+    background: rgba(148, 163, 184, 0.18);
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .gb-page .gb-quiz-badge.is-pass { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; }
+[data-theme="dark"] .gb-page .gb-quiz-badge.is-fail { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+
+[data-theme="dark"] .gb-page .gb-foot {
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+[data-theme="dark"] .gb-page .gb-foot-avg,
+[data-theme="dark"] .gb-page .page-indicator {
+    color: #a5b4fc;
+}
+
+[data-theme="dark"] .gb-page .page-btn {
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #c7d2fe;
+}
+
+[data-theme="dark"] .gb-page .gb-empty {
+    border-color: rgba(148, 163, 184, 0.28);
+}
+
+[data-theme="dark"] .gb-page .gb-empty i {
+    color: rgba(148, 163, 184, 0.55);
+}

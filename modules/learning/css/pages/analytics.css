@@ -1,0 +1,560 @@
+/* ==========================================================================
+   Learning module — Admin: Analytics
+
+   Page scoped styling for pages/admin/analytics.php. Everything is namespaced
+   under .an-page / .an-* so the shared .tab-* rules (used by Settings, User and
+   every other tabbed page) keep working untouched.
+   Reuses the shared .home-hero / .home-stats components.
+   ========================================================================== */
+
+/* ---- Tabs ---------------------------------------------------------------- */
+/* Three tabs only, so they behave like the Settings page: auto width pills that
+   wrap instead of the shared full-width segmented control. */
+.an-page .tab-container {
+    margin-top: 0;
+    padding: 1.1rem 1.25rem 1.25rem;
+}
+
+.an-page .tab-list {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.an-page .tab-item {
+    /* The shared rule sets width:100%; combined with a wrapping flex row that
+       would give every tab a line of its own. */
+    width: auto;
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.7rem 1.1rem;
+    font-size: 0.87rem;
+    white-space: nowrap;
+}
+
+.an-page .tab-item i {
+    font-size: 0.8rem;
+    opacity: 0.85;
+}
+
+@media (max-width: 640px) {
+    .an-page .tab-item {
+        flex: 1 1 100%;
+    }
+}
+
+/* ---- Panels -------------------------------------------------------------- */
+/* Tinted containers inside the tab card, matching the Settings groups. */
+.an-page .an-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .an-page .an-cols {
+        grid-template-columns: 1fr;
+    }
+}
+
+.an-page .an-card {
+    padding: 1.15rem 1.25rem;
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 14px;
+    background: rgba(32, 0, 130, 0.015);
+    min-width: 0;
+}
+
+.an-page .an-card + .an-card {
+    margin-top: 1rem;
+}
+
+.an-page .an-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 0.9rem;
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+}
+
+.an-page .an-card-title i {
+    font-size: 0.88rem;
+    color: var(--primary);
+}
+
+/* ---- Platform summary (donut + key figures) ------------------------------ */
+.an-page .an-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.an-page .an-ring {
+    position: relative;
+    flex-shrink: 0;
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    background: conic-gradient(var(--primary) calc(var(--an-pct, 0) * 1%), rgba(32, 0, 130, 0.10) 0);
+}
+
+.an-page .an-ring-inner {
+    position: absolute;
+    inset: 13px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--surface);
+}
+
+.an-page .an-ring-value {
+    font-size: 1.45rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--primary);
+}
+
+.an-page .an-ring-label {
+    margin-top: 0.2rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.an-page .an-kv-list {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.an-page .an-kv {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6rem 0;
+    border-top: 1px solid rgba(32, 0, 130, 0.07);
+}
+
+.an-page .an-kv:first-child {
+    padding-top: 0.15rem;
+    border-top: 0;
+}
+
+.an-page .an-kv:last-child {
+    padding-bottom: 0.15rem;
+}
+
+.an-page .an-kv-label {
+    font-size: 0.86rem;
+    color: var(--muted);
+}
+
+.an-page .an-kv-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+/* ---- Breakdown bars ------------------------------------------------------ */
+.an-page .an-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 1.05rem;
+}
+
+.an-page .an-bar-row {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr) 4.25rem;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.an-page .an-bar-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.an-page .an-bar-track {
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(32, 0, 130, 0.10);
+    overflow: hidden;
+}
+
+.an-page .an-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.an-page .an-bar-fill.is-instructors { background: var(--accent); }
+.an-page .an-bar-fill.is-learners { background: var(--primary); }
+.an-page .an-bar-fill.is-admins { background: #f59e0b; }
+
+.an-page .an-bar-value {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.an-page .an-bar-pct {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* ---- Table --------------------------------------------------------------- */
+.an-page .an-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.an-page .an-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.an-page .an-table th {
+    padding: 0.7rem 0.75rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--primary);
+    background: rgba(32, 0, 130, 0.04);
+    border-bottom: 1px solid rgba(32, 0, 130, 0.10);
+    white-space: nowrap;
+}
+
+.an-page .an-table th:first-child {
+    border-radius: 10px 0 0 10px;
+}
+
+.an-page .an-table th:last-child {
+    border-radius: 0 10px 10px 0;
+}
+
+.an-page .an-table td {
+    padding: 0.75rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(32, 0, 130, 0.06);
+}
+
+.an-page .an-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.an-page .an-table tbody tr:hover td {
+    background: rgba(32, 0, 130, 0.025);
+}
+
+.an-page .an-th-num,
+.an-page .an-td-num {
+    text-align: center;
+}
+
+.an-page .an-course {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+}
+
+.an-page .an-rank {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+.an-page .an-course-name {
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.an-page .an-completion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+}
+
+.an-page .an-mini-track {
+    width: 76px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(32, 0, 130, 0.10);
+    overflow: hidden;
+}
+
+.an-page .an-mini-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--primary);
+}
+
+.an-page .an-completion-val {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 2.5rem;
+    text-align: left;
+}
+
+.an-page .an-score {
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.an-page .an-muted {
+    color: var(--muted);
+}
+
+/* ---- Charts -------------------------------------------------------------- */
+.an-page .an-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    height: 190px;
+    padding: 0 0.25rem;
+}
+
+.an-page .an-chart-col {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+}
+
+.an-page .an-chart-value {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.an-page .an-chart-bar {
+    width: 100%;
+    max-width: 54px;
+    min-height: 4px;
+    border-radius: 8px 8px 3px 3px;
+    background: linear-gradient(180deg, var(--primary), var(--accent));
+}
+
+.an-page .an-chart-label {
+    font-size: 0.74rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ---- Grade distribution -------------------------------------------------- */
+.an-page .an-dist {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    height: 170px;
+    padding-top: 0.5rem;
+}
+
+.an-page .an-dist-col {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.2rem;
+}
+
+.an-page .an-dist-count {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.an-page .an-dist-pct {
+    font-size: 0.66rem;
+    color: var(--muted);
+}
+
+.an-page .an-dist-bar {
+    width: 100%;
+    max-width: 54px;
+    min-height: 4px;
+    border-radius: 8px 8px 3px 3px;
+}
+
+.an-page .an-grade-a { background: #10b981; }
+.an-page .an-grade-b { background: #3b82f6; }
+.an-page .an-grade-c { background: #f59e0b; }
+.an-page .an-grade-d { background: #f97316; }
+.an-page .an-grade-f { background: #ef4444; }
+
+.an-page .an-legend {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.9rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(32, 0, 130, 0.07);
+}
+
+.an-page .an-legend-item {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+}
+
+.an-page .an-legend-swatch {
+    width: 10px;
+    height: 10px;
+    margin: 0 auto 0.3rem;
+    border-radius: 3px;
+}
+
+.an-page .an-legend-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.an-page .an-legend-sub {
+    font-size: 0.62rem;
+    color: var(--muted);
+}
+
+.an-page .an-note {
+    margin: 0.75rem 0 0;
+    font-size: 0.76rem;
+    color: var(--muted);
+}
+
+.an-page .an-note i {
+    margin-right: 0.25rem;
+}
+
+/* ---- Empty state --------------------------------------------------------- */
+.an-page .an-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 2.25rem 1rem;
+    text-align: center;
+    color: var(--muted);
+}
+
+.an-page .an-empty i {
+    margin-bottom: 0.25rem;
+    font-size: 1.6rem;
+    color: rgba(32, 0, 130, 0.3);
+}
+
+.an-page .an-empty strong {
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.an-page .an-empty span {
+    font-size: 0.83rem;
+}
+
+/* ---- Dark theme ---------------------------------------------------------- */
+[data-theme="dark"] .an-page .an-card {
+    background: rgba(148, 163, 184, 0.05);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme="dark"] .an-page .an-ring {
+    background: conic-gradient(var(--primary) calc(var(--an-pct, 0) * 1%), rgba(148, 163, 184, 0.18) 0);
+}
+
+[data-theme="dark"] .an-page .an-kv {
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+[data-theme="dark"] .an-page .an-bar-track,
+[data-theme="dark"] .an-page .an-mini-track {
+    background: rgba(148, 163, 184, 0.20);
+}
+
+[data-theme="dark"] .an-page .an-bar-fill.is-admins {
+    background: #fbbf24;
+}
+
+[data-theme="dark"] .an-page .an-table th {
+    background: rgba(148, 163, 184, 0.08);
+    border-color: rgba(148, 163, 184, 0.18);
+    color: #a5b4fc;
+}
+
+[data-theme="dark"] .an-page .an-table td {
+    border-color: rgba(148, 163, 184, 0.12);
+}
+
+[data-theme="dark"] .an-page .an-table tbody tr:hover td {
+    background: rgba(148, 163, 184, 0.08);
+}
+
+[data-theme="dark"] .an-page .an-rank {
+    background: rgba(148, 163, 184, 0.16);
+    color: #c7d2fe;
+}
+
+[data-theme="dark"] .an-page .an-chart-bar {
+    background: linear-gradient(180deg, rgba(99, 102, 241, 1), rgba(129, 140, 248, 1));
+}
+
+[data-theme="dark"] .an-page .an-grade-a { background: #34d399; }
+[data-theme="dark"] .an-page .an-grade-b { background: #60a5fa; }
+[data-theme="dark"] .an-page .an-grade-c { background: #fbbf24; }
+[data-theme="dark"] .an-page .an-grade-d { background: #fb923c; }
+[data-theme="dark"] .an-page .an-grade-f { background: #f87171; }
+
+[data-theme="dark"] .an-page .an-legend {
+    border-color: rgba(148, 163, 184, 0.16);
+}
+
+[data-theme="dark"] .an-page .an-empty i {
+    color: rgba(148, 163, 184, 0.55);
+}

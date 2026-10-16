@@ -1,0 +1,669 @@
+/* ==========================================================================
+   Learning module — Home dashboards
+   Shared, consistent visual system for the admin / instructor / learner
+   home pages. Scoped to .home-dashboard so no other page is affected.
+   ========================================================================== */
+
+/* ---- Dashboard shell ---------------------------------------------------- */
+.home-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* ---- Hero --------------------------------------------------------------- */
+.home-hero {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 1.5rem 1.75rem;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(32, 0, 130, 0.96), rgba(81, 70, 183, 0.86));
+    color: #fff;
+    box-shadow: 0 14px 30px rgba(32, 0, 130, 0.20);
+}
+
+.home-hero::after {
+    content: "";
+    position: absolute;
+    top: -90px;
+    right: -60px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.20), transparent 70%);
+    pointer-events: none;
+}
+
+.home-hero-main {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+}
+
+.home-hero-main h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+
+.home-hero-main p {
+    margin: 0.35rem 0 0;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.home-hero-aside {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.home-hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.home-hero-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+}
+
+.home-hero-chip i {
+    font-size: 0.78rem;
+    opacity: 0.9;
+}
+
+/* Activity heatmap that lives inside the hero */
+.home-heatmap {
+    display: flex;
+    gap: 3px;
+}
+
+.home-heat {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.home-heat.is-1 { background: rgba(255, 255, 255, 0.42); }
+.home-heat.is-2 { background: rgba(255, 255, 255, 0.68); }
+.home-heat.is-3 { background: #ffffff; }
+
+/* ---- Tone helpers (scoped to the dashboard) ----------------------------- */
+.home-dashboard .tone-violet { background: rgba(32, 0, 130, 0.09); color: var(--primary); }
+.home-dashboard .tone-indigo { background: rgba(99, 102, 241, 0.13); color: #4f46e5; }
+.home-dashboard .tone-amber { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+.home-dashboard .tone-emerald { background: rgba(16, 185, 129, 0.15); color: #047857; }
+.home-dashboard .tone-rose { background: rgba(244, 63, 94, 0.13); color: #be123c; }
+.home-dashboard .tone-slate { background: rgba(100, 116, 139, 0.13); color: #475569; }
+
+/* ---- Stat tiles --------------------------------------------------------- */
+.home-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.home-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.05rem 1.15rem;
+    background: var(--surface);
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px rgba(32, 0, 130, 0.05);
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+a.home-stat:hover {
+    transform: translateY(-2px);
+    border-color: rgba(32, 0, 130, 0.22);
+    box-shadow: 0 12px 26px rgba(32, 0, 130, 0.12);
+}
+
+.home-stat-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+}
+
+.home-stat-body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.home-stat-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.home-stat-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: var(--text);
+}
+
+.home-stat-sub {
+    font-size: 0.76rem;
+    color: var(--muted);
+}
+
+/* ---- Columns + cards ---------------------------------------------------- */
+.home-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.home-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.home-card {
+    background: var(--surface);
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 16px;
+    padding: 1.25rem 1.4rem;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px rgba(32, 0, 130, 0.05);
+}
+
+.home-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+}
+
+.home-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    min-width: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+}
+
+.home-card-icon {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+}
+
+.home-card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.home-card-link:hover {
+    text-decoration: underline;
+}
+
+.home-card-count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ---- List rows ---------------------------------------------------------- */
+.home-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.home-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid rgba(32, 0, 130, 0.07);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.home-row:first-child { padding-top: 0.15rem; }
+.home-row:last-child { padding-bottom: 0.15rem; border-bottom: none; }
+
+a.home-row {
+    transition: color 0.15s ease;
+}
+
+a.home-row:hover .home-row-title {
+    color: var(--primary);
+}
+
+.home-row-icon,
+.home-reminder-icon,
+.home-quick-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+}
+
+.home-row-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.home-row-title {
+    display: block;
+    overflow: hidden;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-row-title.is-wrap {
+    white-space: normal;
+}
+
+.home-row-meta {
+    display: block;
+    margin-top: 0.12rem;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.home-row-trail {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.home-row-chev {
+    font-size: 0.7rem;
+    color: rgba(32, 0, 130, 0.28);
+}
+
+/* ---- Progress ----------------------------------------------------------- */
+.home-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 220px;
+    margin-top: 0.4rem;
+}
+
+.home-progress-track {
+    flex: 1;
+    min-width: 46px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(32, 0, 130, 0.10);
+    overflow: hidden;
+}
+
+.home-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--primary);
+}
+
+.home-progress-val {
+    min-width: 34px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: right;
+}
+
+/* ---- Badges / score / dot / CTA ---------------------------------------- */
+.home-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    text-transform: capitalize;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+}
+
+.home-badge.is-success { background: rgba(16, 185, 129, 0.15); color: #047857; }
+.home-badge.is-warn { background: rgba(245, 158, 11, 0.16); color: #b45309; }
+.home-badge.is-danger { background: rgba(229, 62, 62, 0.12); color: #b91c1c; }
+.home-badge.is-muted { background: rgba(100, 116, 139, 0.12); color: #475569; }
+
+.home-score {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 800;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+}
+
+.home-score.is-fail { background: rgba(245, 158, 11, 0.16); color: #b45309; }
+
+.home-dot {
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.home-dot.is-hidden { visibility: hidden; }
+
+.home-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 9px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.home-cta:hover { background: var(--accent); }
+
+/* ---- Quick access ------------------------------------------------------- */
+.home-quick {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+}
+
+.home-quick-link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0.7rem;
+    border-radius: 12px;
+    background: var(--bg-subtle);
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.87rem;
+    font-weight: 600;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.home-quick-link:hover {
+    background: rgba(32, 0, 130, 0.07);
+    transform: translateX(2px);
+}
+
+.home-quick-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-quick-chev {
+    font-size: 0.65rem;
+    color: rgba(32, 0, 130, 0.30);
+}
+
+/* ---- Reminders ---------------------------------------------------------- */
+.home-reminder {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    background: var(--bg-subtle);
+    border-left: 3px solid var(--accent);
+    color: var(--text);
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+
+.home-reminder + .home-reminder { margin-top: 0.5rem; }
+.home-reminder:hover { background: rgba(32, 0, 130, 0.06); }
+
+/* ---- Key / value rows (summary + platform health) ----------------------- */
+.home-kv {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(32, 0, 130, 0.07);
+    font-size: 0.88rem;
+}
+
+.home-kv:first-child { padding-top: 0.15rem; }
+.home-kv:last-child { padding-bottom: 0.15rem; border-bottom: none; }
+
+.home-kv-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    color: var(--muted);
+}
+
+.home-kv-label i { color: var(--primary); font-size: 0.82rem; }
+
+.home-kv-value {
+    flex-shrink: 0;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ---- Empty state -------------------------------------------------------- */
+.home-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 1.6rem 1rem;
+    text-align: center;
+    color: var(--muted);
+}
+
+.home-empty i {
+    font-size: 1.15rem;
+    color: rgba(32, 0, 130, 0.22);
+}
+
+.home-empty p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+/* ---- Responsive --------------------------------------------------------- */
+@media (max-width: 1100px) {
+    .home-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 1000px) {
+    .home-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .home-hero {
+        padding: 1.25rem;
+    }
+
+    .home-hero-main h1 {
+        font-size: 1.25rem;
+    }
+
+    .home-hero-aside {
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .home-hero-chips {
+        justify-content: flex-start;
+    }
+
+    .home-stat {
+        gap: 0.7rem;
+        padding: 0.85rem;
+    }
+
+    .home-stat-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 0.9rem;
+    }
+
+    .home-stat-value {
+        font-size: 1.25rem;
+    }
+
+    .home-card {
+        padding: 1rem;
+    }
+
+    .home-heatmap {
+        display: none;
+    }
+}
+
+@media (max-width: 460px) {
+    .home-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---- Dark mode ---------------------------------------------------------- */
+[data-theme="dark"] .home-card,
+[data-theme="dark"] .home-stat {
+    background: rgba(30, 41, 59, 1);
+    border-color: rgba(51, 65, 85, 0.6);
+}
+
+[data-theme="dark"] .home-card-title,
+[data-theme="dark"] .home-stat-value,
+[data-theme="dark"] .home-row-title,
+[data-theme="dark"] .home-kv-value {
+    color: var(--text);
+}
+
+[data-theme="dark"] .home-row,
+[data-theme="dark"] .home-kv {
+    border-color: rgba(51, 65, 85, 0.5);
+}
+
+[data-theme="dark"] .home-quick-link,
+[data-theme="dark"] .home-reminder {
+    background: rgba(15, 23, 42, 1);
+}
+
+[data-theme="dark"] .home-quick-link:hover {
+    background: rgba(51, 65, 85, 0.6);
+}
+
+[data-theme="dark"] .home-progress-track {
+    background: rgba(51, 65, 85, 0.8);
+}
+
+[data-theme="dark"] .home-empty i {
+    color: rgba(148, 163, 184, 0.5);
+}
+
+/* Badge/score text needs lifting on dark surfaces — the light-mode greens and
+   ambers are near-unreadable against a dark translucent chip. */
+[data-theme="dark"] .home-badge {
+    background: rgba(99, 102, 241, 0.18);
+    color: #c7d2fe;
+}
+
+[data-theme="dark"] .home-badge.is-success { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; }
+[data-theme="dark"] .home-badge.is-warn { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+[data-theme="dark"] .home-badge.is-danger { background: rgba(244, 63, 94, 0.18); color: #fda4af; }
+[data-theme="dark"] .home-badge.is-muted { background: rgba(148, 163, 184, 0.16); color: #cbd5e1; }
+
+[data-theme="dark"] .home-score {
+    background: rgba(99, 102, 241, 0.18);
+    color: #c7d2fe;
+}
+
+[data-theme="dark"] .home-score.is-fail { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }

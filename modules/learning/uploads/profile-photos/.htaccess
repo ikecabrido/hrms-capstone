@@ -1,0 +1,6 @@
+# User-uploaded profile pictures only. Never execute scripts here.
+Options -Indexes
+
+<FilesMatch "\.(?i:php|phtml|phar|php\d|pl|py|cgi|sh)$">
+    Require all denied
+</FilesMatch>

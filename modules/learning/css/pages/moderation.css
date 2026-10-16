@@ -1,0 +1,845 @@
+/* ==========================================================================
+   Learning module — Moderation & data tools
+
+   Page scoped styling for:
+     - includes/admin-moderation-navigation.php  (shared corner rail)
+     - pages/admin/moderation.php                (.mod-page)
+     - pages/admin/database-export.php            (.export-page)
+
+   Everything is namespaced so the shared .toolbar / .content-card-* / .tab-*
+   rules that other pages rely on stay exactly as they are.
+   ========================================================================== */
+
+/* ==========================================================================
+   1. Shared rail — "Moderation tools"
+   A fixed rail in the corner of the content area: flush under the header and
+   flush against the sidebar (or the screen edge once it is toggled off). It is
+   an overlay, so it never changes the width of the page content.
+   ========================================================================== */
+.admin-data-layout {
+    display: block;
+}
+
+.admin-data-layout > .module-content,
+.admin-data-layout > main.module-content {
+    min-width: 0;
+}
+
+.admin-data-sidebar {
+    position: fixed;
+    top: var(--header-height, 60px);
+    bottom: 0;
+    left: var(--admin-data-sidebar-left, var(--sidebar-width, 252px));
+    z-index: 998; /* over the page content, under the fixed header (999) */
+    box-sizing: border-box;
+    width: 232px;
+    /* Top padding leaves room for the collapse control pinned at the top-left. */
+    padding: 2.35rem 0.85rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    overflow-y: auto;
+    border-right: 1px solid rgba(32, 0, 130, 0.10);
+    background: var(--surface, #fff);
+    box-shadow: 4px 0 24px rgba(32, 0, 130, 0.10);
+    opacity: 1;
+    transform: translateX(0);
+    visibility: visible;
+    transition: opacity 0.16s ease, transform 0.18s ease, visibility 0s;
+}
+
+.admin-data-sidebar h2 {
+    margin: 0 0 0.35rem;
+    padding: 0 0.6rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.admin-data-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: transparent;
+    color: var(--text, #1f2937);
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-data-sidebar-link i {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: rgba(32, 0, 130, 0.07);
+    color: var(--primary);
+    font-size: 0.72rem;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-data-sidebar-link:hover { background: rgba(32, 0, 130, 0.06); }
+
+.admin-data-sidebar-link.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(32, 0, 130, 0.22);
+}
+
+.admin-data-sidebar-link.active i {
+    background: rgba(255, 255, 255, 0.20);
+    color: #fff;
+}
+
+/* Small collapse control pinned to the rail's top-left. */
+.admin-data-sidebar-collapse {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(32, 0, 130, 0.07);
+    color: var(--primary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-data-sidebar-collapse:hover { background: rgba(32, 0, 130, 0.15); }
+.admin-data-sidebar-collapse i { font-size: 0.56rem; }
+
+/* Collapsed: a small handle sitting flush in the same corner. */
+.admin-data-sidebar-expand {
+    position: fixed;
+    top: var(--header-height, 60px);
+    left: var(--admin-data-sidebar-left, var(--sidebar-width, 252px));
+    z-index: 998;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 0;
+    border-right: 1px solid rgba(32, 0, 130, 0.10);
+    border-bottom: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 0 0 12px 0;
+    background: var(--surface, #fff);
+    color: var(--primary);
+    box-shadow: 3px 3px 14px rgba(32, 0, 130, 0.14);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.admin-data-sidebar-expand:hover { background: var(--bg-subtle, #f4f5f8); }
+.admin-data-sidebar-expand i { font-size: 0.6rem; }
+
+.admin-data-navigation.admin-data-navigation--collapsed .admin-data-sidebar {
+    opacity: 0;
+    transform: translateX(-10px);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.16s ease, transform 0.18s ease, visibility 0s linear 0.18s;
+}
+
+.admin-data-navigation:not(.admin-data-navigation--collapsed) .admin-data-sidebar-expand {
+    opacity: 0;
+    transform: translateX(-6px);
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   2. Report review page (.mod-page)
+   ========================================================================== */
+
+/* Three queue tiles rather than the shared four-column home stats. */
+.mod-page .home-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+    .mod-page .home-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .mod-page .home-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---- Toolbar ------------------------------------------------------------- */
+/* A flat, themed card instead of the shared gradient glass bar. */
+.mod-page .mod-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.8rem 1rem;
+    background: var(--surface);
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px rgba(32, 0, 130, 0.05);
+}
+
+.mod-page .mod-toolbar .toolbar-search {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.mod-page .mod-toolbar .toolbar-search input {
+    width: 100%;
+    padding: 0.62rem 0.95rem;
+    border: 1px solid rgba(32, 0, 130, 0.16);
+    border-radius: 11px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.88rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mod-page .mod-toolbar .toolbar-search input:hover {
+    border-color: rgba(32, 0, 130, 0.28);
+    box-shadow: none;
+}
+
+.mod-page .mod-toolbar .toolbar-search input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(32, 0, 130, 0.12);
+}
+
+.mod-page .mod-toolbar .toolbar-search input::placeholder {
+    color: var(--muted);
+}
+
+.mod-page .mod-count {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ---- Tabs ---------------------------------------------------------------- */
+.mod-page .tab-container {
+    margin-top: 0;
+    padding: 1.1rem 1.25rem 1.25rem;
+}
+
+.mod-page .tab-list {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.15rem;
+}
+
+.mod-page .tab-item {
+    /* The shared rule sets width:100%; combined with a wrapping flex row that
+       would give every tab a line of its own. */
+    width: auto;
+    flex: 1 1 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.7rem 1.1rem;
+    font-size: 0.87rem;
+    white-space: nowrap;
+}
+
+.mod-page .tab-item i {
+    font-size: 0.8rem;
+    opacity: 0.85;
+}
+
+@media (max-width: 640px) {
+    .mod-page .tab-item {
+        flex: 1 1 100%;
+    }
+}
+
+/* ---- Panel --------------------------------------------------------------- */
+/* Tinted containers inside the tab card, matching the Settings groups. */
+.mod-page .mod-panel {
+    padding: 1.15rem 1.25rem;
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 14px;
+    background: rgba(32, 0, 130, 0.015);
+}
+
+.mod-page .mod-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.mod-page .mod-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+}
+
+.mod-page .mod-panel-title i {
+    font-size: 0.88rem;
+    color: var(--primary);
+}
+
+.mod-page .mod-panel-sub {
+    margin: 0.5rem 0 1rem;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+.mod-page .mod-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 22px;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+/* ---- Report rows --------------------------------------------------------- */
+/* The shared card markup (cards-grid / content-card-item) is kept so the
+   module's search + pagination handlers keep working; the look is overridden
+   here into a one-column queue. */
+.mod-page .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+}
+
+.mod-page .content-card-item {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 14px;
+    box-shadow: none;
+    transform: none;
+}
+
+.mod-page .content-card-thumb {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0;
+    border-radius: 12px;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+    font-size: 0.86rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.mod-page .content-card-body {
+    gap: 0.4rem;
+    padding: 0;
+}
+
+.mod-page .content-card-meta {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+}
+
+.mod-page .content-card-meta .pill {
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+.mod-page .content-card-body h3 {
+    margin: 0;
+    font-size: 0.94rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.mod-page .content-card-body p {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+.mod-page .content-card-footer {
+    margin-top: 0.35rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(32, 0, 130, 0.07);
+    font-size: 0.75rem;
+}
+
+.mod-page .content-card-footer span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--muted);
+}
+
+.mod-page .content-card-footer i {
+    font-size: 0.68rem;
+    opacity: 0.8;
+}
+
+/* ---- Status chip --------------------------------------------------------- */
+.mod-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.mod-status.is-pending  { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+.mod-status.is-reviewed { background: rgba(16, 185, 129, 0.15); color: #047857; }
+.mod-status.is-archived { background: rgba(100, 116, 139, 0.15); color: #475569; }
+
+/* ---- Empty state --------------------------------------------------------- */
+.mod-page .mod-empty,
+.export-page .mod-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 2.25rem 1rem;
+    text-align: center;
+    color: var(--muted);
+}
+
+.mod-page .mod-empty i,
+.export-page .mod-empty i {
+    margin-bottom: 0.25rem;
+    font-size: 1.6rem;
+    color: rgba(32, 0, 130, 0.3);
+}
+
+.mod-page .mod-empty strong,
+.export-page .mod-empty strong {
+    font-size: 0.94rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.mod-page .mod-empty span,
+.export-page .mod-empty span {
+    font-size: 0.83rem;
+}
+
+/* ==========================================================================
+   3. Export LD Database page (.export-page)
+   ========================================================================== */
+.export-page .ldx-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .export-page .ldx-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.export-page .ldx-card {
+    padding: 1.25rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px rgba(32, 0, 130, 0.05);
+}
+
+.export-page .ldx-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 0 0 0.7rem;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+}
+
+.export-page .ldx-card-head i {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+    font-size: 0.88rem;
+}
+
+.export-page .ldx-text {
+    margin: 0 0 0.9rem;
+    font-size: 0.87rem;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+.export-page .ldx-metric {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    margin: 0 0 1rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    background: rgba(32, 0, 130, 0.04);
+    border: 1px solid rgba(32, 0, 130, 0.08);
+}
+
+.export-page .ldx-metric-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--primary);
+}
+
+.export-page .ldx-metric-label {
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.export-page .ldx-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.export-page .ldx-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.68rem 1.05rem;
+    border: 1px solid var(--primary);
+    border-radius: 11px;
+    background: var(--primary);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.export-page .ldx-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(32, 0, 130, 0.20);
+}
+
+.export-page .ldx-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+    box-shadow: none;
+}
+
+.export-page .ldx-btn.ghost {
+    background: transparent;
+    color: var(--primary);
+    border-color: rgba(32, 0, 130, 0.22);
+}
+
+.export-page .ldx-btn.ghost:hover {
+    background: rgba(32, 0, 130, 0.06);
+    border-color: rgba(32, 0, 130, 0.35);
+    box-shadow: none;
+}
+
+.export-page .ldx-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 0.9rem 0 0;
+    padding: 0.65rem 0.8rem;
+    border-radius: 11px;
+    background: rgba(245, 158, 11, 0.10);
+    border: 1px solid rgba(245, 158, 11, 0.22);
+    font-size: 0.79rem;
+    line-height: 1.5;
+    color: #92400e;
+}
+
+.export-page .ldx-note i {
+    margin-top: 0.15rem;
+    flex-shrink: 0;
+}
+
+/* Neutral variant for informational notes. */
+.export-page .ldx-note.is-info {
+    background: rgba(32, 0, 130, 0.05);
+    border-color: rgba(32, 0, 130, 0.12);
+    color: var(--muted);
+}
+
+.export-page code {
+    padding: 0.05rem 0.3rem;
+    border-radius: 5px;
+    background: rgba(32, 0, 130, 0.07);
+    font-size: 0.84em;
+}
+
+.export-page .ldx-form {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.export-page .ldx-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.export-page input[type="file"] {
+    width: 100%;
+    padding: 0.55rem 0.6rem;
+    border: 1px dashed rgba(32, 0, 130, 0.25);
+    border-radius: 11px;
+    background: rgba(32, 0, 130, 0.02);
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.export-page input[type="file"]::file-selector-button {
+    margin-right: 0.7rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid rgba(32, 0, 130, 0.22);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--primary);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.export-page input[type="file"]::file-selector-button:hover {
+    background: rgba(32, 0, 130, 0.06);
+    border-color: rgba(32, 0, 130, 0.35);
+}
+
+.export-page .ldx-status {
+    margin: 0;
+    min-height: 1.15rem;
+    font-size: 0.83rem;
+    font-weight: 600;
+}
+
+.export-page .ldx-status.is-success { color: #047857; }
+.export-page .ldx-status.is-error { color: #b91c1c; }
+
+/* ==========================================================================
+   4. Dark theme
+   ========================================================================== */
+[data-theme="dark"] .admin-data-sidebar,
+[data-theme="dark"] .admin-data-sidebar-expand {
+    background: rgb(30, 41, 59);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme="dark"] .admin-data-sidebar-link {
+    color: var(--text);
+}
+
+[data-theme="dark"] .admin-data-sidebar-link i {
+    background: rgba(148, 163, 184, 0.16);
+    color: var(--text);
+}
+
+[data-theme="dark"] .admin-data-sidebar-link:hover {
+    background: rgba(148, 163, 184, 0.12);
+}
+
+[data-theme="dark"] .admin-data-sidebar-link.active,
+[data-theme="dark"] .admin-data-sidebar-link.active i {
+    background: var(--primary);
+    color: #fff;
+}
+
+[data-theme="dark"] .admin-data-sidebar-link.active i {
+    background: rgba(255, 255, 255, 0.20);
+}
+
+[data-theme="dark"] .admin-data-sidebar-collapse {
+    background: rgba(148, 163, 184, 0.16);
+    color: var(--text);
+}
+
+[data-theme="dark"] .admin-data-sidebar-collapse:hover {
+    background: rgba(148, 163, 184, 0.28);
+}
+
+[data-theme="dark"] .admin-data-sidebar-expand:hover {
+    background: rgba(148, 163, 184, 0.16);
+}
+
+[data-theme="dark"] .mod-page .mod-toolbar,
+[data-theme="dark"] .export-page .ldx-card {
+    background: rgb(30, 41, 59);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme="dark"] .mod-page .mod-toolbar .toolbar-search input {
+    background: var(--surface);
+    border-color: rgba(148, 163, 184, 0.28);
+    color: var(--text);
+}
+
+/* The shared dark rules flatten every .tab-item to a transparent background,
+   which would make the active pill indistinguishable from its neighbours. */
+[data-theme="dark"] .mod-page .tab-item {
+    background: rgba(148, 163, 184, 0.08);
+    border-color: rgba(148, 163, 184, 0.18);
+    color: var(--muted);
+}
+
+[data-theme="dark"] .mod-page .tab-item:hover {
+    background: rgba(148, 163, 184, 0.16);
+    border-color: rgba(148, 163, 184, 0.28);
+    color: var(--text);
+}
+
+[data-theme="dark"] .mod-page .tab-item.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+}
+
+[data-theme="dark"] .mod-page .mod-panel {
+    background: rgba(148, 163, 184, 0.05);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme="dark"] .mod-page .mod-badge {
+    background: rgba(148, 163, 184, 0.16);
+    color: var(--text);
+}
+
+/* The shared dark rules force these two backgrounds with !important. */
+[data-theme="dark"] .mod-page .content-card-item,
+[data-theme="dark"] .export-page .content-card-item {
+    background: rgb(30, 41, 59) !important;
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme="dark"] .mod-page .content-card-thumb {
+    background: rgba(148, 163, 184, 0.16) !important;
+    border-color: rgba(148, 163, 184, 0.18);
+    color: var(--text);
+}
+
+[data-theme="dark"] .mod-page .content-card-meta .pill {
+    background: rgba(148, 163, 184, 0.16);
+    color: var(--text);
+}
+
+[data-theme="dark"] .mod-page .content-card-footer {
+    border-color: rgba(148, 163, 184, 0.14);
+}
+
+[data-theme="dark"] .mod-status.is-pending  { background: rgba(251, 191, 36, 0.18); color: #fcd34d; }
+[data-theme="dark"] .mod-status.is-reviewed { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; }
+[data-theme="dark"] .mod-status.is-archived { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; }
+
+[data-theme="dark"] .mod-page .mod-empty i,
+[data-theme="dark"] .export-page .mod-empty i {
+    color: rgba(148, 163, 184, 0.55);
+}
+
+[data-theme="dark"] .export-page .ldx-card-head i {
+    background: rgba(148, 163, 184, 0.16);
+    color: var(--text);
+}
+
+[data-theme="dark"] .export-page .ldx-metric {
+    background: rgba(148, 163, 184, 0.08);
+    border-color: rgba(148, 163, 184, 0.18);
+}
+
+[data-theme="dark"] .export-page .ldx-btn.ghost {
+    color: #c7d2fe;
+    border-color: rgba(148, 163, 184, 0.32);
+}
+
+[data-theme="dark"] .export-page .ldx-btn.ghost:hover {
+    background: rgba(148, 163, 184, 0.12);
+    border-color: rgba(148, 163, 184, 0.45);
+}
+
+[data-theme="dark"] .export-page .ldx-note {
+    background: rgba(251, 191, 36, 0.12);
+    border-color: rgba(251, 191, 36, 0.26);
+    color: #fcd34d;
+}
+
+[data-theme="dark"] .export-page .ldx-note.is-info {
+    background: rgba(148, 163, 184, 0.10);
+    border-color: rgba(148, 163, 184, 0.22);
+    color: var(--text);
+}
+
+[data-theme="dark"] .export-page code {
+    background: rgba(148, 163, 184, 0.16);
+}
+
+[data-theme="dark"] .export-page input[type="file"] {
+    background: rgba(148, 163, 184, 0.06);
+    border-color: rgba(148, 163, 184, 0.32);
+}
+
+[data-theme="dark"] .export-page input[type="file"]::file-selector-button {
+    background: rgba(148, 163, 184, 0.14);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: var(--text);
+}
+
+[data-theme="dark"] .export-page .ldx-status.is-success { color: #6ee7b7; }
+[data-theme="dark"] .export-page .ldx-status.is-error { color: #fca5a5; }
