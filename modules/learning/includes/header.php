@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="assets/bcp-logo.png" type="image/png">
+    <!-- Linked with a version stamp rather than left to css/styles.css's @import, so
+         a change to it always reaches browsers and the CDN. Loads before
+         styles.css, which is where the @import used to place it. -->
+    <link rel="stylesheet" href="css/layout/sidebar.css?v=<?= (int) filemtime(__DIR__ . '/../css/layout/sidebar.css') ?>">
     <link rel="stylesheet" href="css/styles.css?v=<?= (int) filemtime(__DIR__ . '/../css/styles.css') ?>">
     <link rel="stylesheet" href="css/base/enhancements.css?v=<?= (int) filemtime(__DIR__ . '/../css/base/enhancements.css') ?>">
     <link rel="stylesheet" href="css/pages/home.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/home.css') ?>">

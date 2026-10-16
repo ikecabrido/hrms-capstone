@@ -5,7 +5,11 @@
 @import url('components/dropzone.css');
 
 /*Layout CSS*/
-@import url('layout/sidebar.css');
+/* layout/sidebar.css is linked from includes/header.php instead of imported here:
+   an @import URL never changes when the imported file does, so Cloudflare
+   (max-age=604800) and browsers kept serving a week-old copy. That is what let an
+   uploaded profile photo escape the avatar circle — the stale sheet had no
+   clipping rule — and it affects every other file imported below. */
 @import url('layout/footer.css');
 @import url('layout/header.css');
 @import url('layout/module-container.css');
