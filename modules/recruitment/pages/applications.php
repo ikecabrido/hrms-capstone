@@ -151,6 +151,7 @@
                          */
 
 
+
                         $resumeUrl = null;
 
                         if (!empty($row['resume'])) {
@@ -162,19 +163,23 @@
 
                             $storedResumePath = ltrim($storedResumePath, '/');
 
-                            // Only allow paths inside the uploads directory.
+                            // Allow only paths inside uploads/.
                             if (
                                 strpos($storedResumePath, 'uploads/') === 0 &&
                                 !in_array('..', explode('/', $storedResumePath), true)
                             ) {
-                                $baseUrl = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
-
-                                $resumeUrl = $baseUrl . '/' . implode(
-                                    '/',
-                                    array_map('rawurlencode', explode('/', $storedResumePath))
-                                );
+                                // Files are physically stored inside JobPortal/uploads/.
+                                $resumeUrl = '/modules/recruitment/JobPortal/' .
+                                    implode(
+                                        '/',
+                                        array_map(
+                                            'rawurlencode',
+                                            explode('/', $storedResumePath)
+                                        )
+                                    );
                             }
                         }
+
 
                         ?>
 
