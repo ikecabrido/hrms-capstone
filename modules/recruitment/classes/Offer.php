@@ -1,6 +1,6 @@
 <?php
 
-include_once __DIR__ . '/../../../database/db.php';
+require_once __DIR__ . '/../../../database/db.php';
 
 class Offer
 {
@@ -25,9 +25,13 @@ class Offer
                 o.base_job,
                 o.salary,
                 o.department,
+                o.benefit_package,
+                o.additional_note,
                 o.status AS offer_status,
+                o.created_at,
 
                 a.first_name,
+                a.middle_name,
                 a.last_name,
                 a.email,
                 a.phone,
@@ -47,7 +51,6 @@ class Offer
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-
     /**
      * Update offer status
      */
@@ -65,7 +68,6 @@ class Offer
         ]);
     }
 
-
     /**
      * Get one offer by ID
      */
@@ -73,7 +75,16 @@ class Offer
     {
         $stmt = $this->db->prepare("
             SELECT
-                o.*,
+                o.id AS offer_id,
+                o.application_id,
+                o.position,
+                o.base_job,
+                o.salary,
+                o.department,
+                o.benefit_package,
+                o.additional_note,
+                o.status AS offer_status,
+                o.created_at,
 
                 a.first_name,
                 a.middle_name,
@@ -81,8 +92,15 @@ class Offer
                 a.email,
                 a.address,
                 a.phone,
-                j.position_id,
-                j.department_id
+
+                j.position_id AS job_position_id,
+                j.department_id AS job_department_id,
+
+                p.position_id,
+                p.position_name,
+
+                d.department_id,
+                d.department_name
 
             FROM rao_offer o
 
@@ -91,6 +109,12 @@ class Offer
 
             INNER JOIN rao_jobs j
                 ON a.job_id = j.id
+
+            LEFT JOIN em_positions p
+                ON p.position_id = j.position_id
+
+            LEFT JOIN em_departments d
+                ON d.department_id = j.department_id
 
             WHERE o.id = :offer_id
 
@@ -106,34 +130,37 @@ class Offer
         return $offer ?: null;
     }
 
-
-
+    /**
+     * Create a job offer
+     */
     public function createOffer(array $data): bool
     {
         $sql = "
-        INSERT INTO rao_offer
-        (
-            application_id,
-            position,
-            base_job,
-            salary,
-            department,
-            benefit_package,
-            additional_note,
-            status
-        )
-        VALUES
-        (
-            :application_id,
-            :position,
-            :base_job,
-            :salary,
-            :department,
-            :benefit_package,
-            :additional_note,
-            :status
-        )
-    ";
+            INSERT INTO rao_offer
+            (
+                application_id,
+                position,
+                base_job,
+                salary,
+                department,
+                benefit_package,
+                additional_note,
+                status,
+                created_at
+            )
+            VALUES
+            (
+                :application_id,
+                :position,
+                :base_job,
+                :salary,
+                :department,
+                :benefit_package,
+                :additional_note,
+                :status,
+                NOW()
+            )
+        ";
 
         $stmt = $this->db->prepare($sql);
 
@@ -143,70 +170,11 @@ class Offer
             ':base_job'        => $data['base_job'],
             ':salary'          => $data['salary'],
             ':department'      => $data['department'],
-            ':benefit_package' => $data['benefit_package'],
-            ':additional_note' => $data['additional_note'],
-            ':status'          => $data['status']
+            ':benefit_package' => $data['benefit_package'] ?? '',
+            ':additional_note' => $data['additional_note'] ?? '',
+            ':status'          => $data['status'] ?? 'Sent'
         ]);
     }
-
-
-    /**
-     * Insert hired applicant
-     */
-    public function insertHired(array $offer): bool
-    {
-        $stmt = $this->db->prepare("
-            INSERT INTO rao_hired
-            (
-                application_id,
-                position_id,
-                department_id,
-                first_name,
-                middle_name,
-                last_name,
-                email,
-                phone,
-                address,
-                department,
-                position,
-                base_job,
-                salary
-            )
-            VALUES
-            (
-                :application_id,
-                :position_id,
-                :department_id,
-                :first_name,
-                :middle_name,
-                :last_name,
-                :email,
-                :phone,
-                :address,
-                :department,
-                :position,
-                :base_job,
-                :salary
-            )
-        ");
-
-        return $stmt->execute([
-            ':application_id' => $offer['application_id'],
-            ':position_id'    => (int) ($offer['position_id'] ?? 0),
-            ':department_id'  => (int) ($offer['department_id'] ?? 0),
-            ':first_name'     => $offer['first_name'],
-            ':middle_name'    => $offer['middle_name'] ?? '',
-            ':last_name'      => $offer['last_name'],
-            ':email'          => $offer['email'],
-            ':phone'          => $offer['phone'],
-            ':address'        => $offer['address'],
-            ':department'     => $offer['department'],
-            ':position'       => $offer['position'],
-            ':base_job'       => $offer['base_job'],
-            ':salary'         => $offer['salary']
-        ]);
-    }
-
 
     /**
      * Check whether applicant is already hired
@@ -227,9 +195,10 @@ class Offer
         return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
     }
 
-
     /**
-     * Hire an applicant from an accepted offer
+     * Hire applicant from an accepted offer.
+     *
+     * This is the ONLY method that should create the rao_hired record.
      */
     public function hireApplicant(int $offerId): bool
     {
@@ -240,34 +209,53 @@ class Offer
             $db->beginTransaction();
 
             // =========================================================
-            // 1. GET OFFER + APPLICANT INFORMATION
+            // 1. GET OFFER + APPLICANT + JOB POSITION
             // =========================================================
 
             $stmt = $db->prepare("
-            SELECT
-                o.offer_id,
-                o.application_id,
-                o.base_job,
-                o.position,
-                o.department,
-                o.salary,
-                o.status AS offer_status,
+                SELECT
+                    o.id AS offer_id,
+                    o.application_id,
+                    o.base_job,
+                    o.position,
+                    o.department,
+                    o.salary,
+                    o.status AS offer_status,
 
-                a.first_name,
-                a.middle_name,
-                a.last_name,
-                a.email,
-                a.phone,
-                a.address
+                    a.first_name,
+                    a.middle_name,
+                    a.last_name,
+                    a.email,
+                    a.phone,
+                    a.address,
 
-            FROM rao_offer o
+                    j.position_id AS job_position_id,
+                    j.department_id AS job_department_id,
 
-            INNER JOIN rao_applications a
-                ON a.id = o.application_id
+                    p.position_id,
+                    p.position_name,
 
-            WHERE o.offer_id = :offer_id
-            LIMIT 1
-        ");
+                    d.department_id,
+                    d.department_name
+
+                FROM rao_offer o
+
+                INNER JOIN rao_applications a
+                    ON a.id = o.application_id
+
+                INNER JOIN rao_jobs j
+                    ON j.id = a.job_id
+
+                LEFT JOIN em_positions p
+                    ON p.position_id = j.position_id
+
+                LEFT JOIN em_departments d
+                    ON d.department_id = j.department_id
+
+                WHERE o.id = :offer_id
+
+                LIMIT 1
+            ");
 
             $stmt->execute([
                 ':offer_id' => $offerId
@@ -279,185 +267,222 @@ class Offer
                 throw new Exception("Offer not found.");
             }
 
-
             // =========================================================
-            // 2. MAKE SURE OFFER IS ACCEPTED
+            // 2. ONLY ACCEPTED OFFERS CAN BE HIRED
             // =========================================================
 
-            if ($offer['offer_status'] !== 'Accepted') {
+            if (
+                strtolower(trim($offer['offer_status'] ?? '')) !==
+                'accepted'
+            ) {
                 throw new Exception(
                     "Only accepted offers can be hired."
                 );
             }
-
 
             // =========================================================
             // 3. CHECK IF ALREADY HIRED
             // =========================================================
 
             $stmt = $db->prepare("
-            SELECT id
-            FROM rao_hired
-            WHERE application_id = :application_id
-            LIMIT 1
-        ");
+                SELECT id
+                FROM rao_hired
+                WHERE application_id = :application_id
+                LIMIT 1
+            ");
 
             $stmt->execute([
                 ':application_id' => $offer['application_id']
             ]);
 
-            if ($stmt->fetch()) {
+            if ($stmt->fetch(PDO::FETCH_ASSOC)) {
                 throw new Exception(
                     "This applicant has already been hired."
                 );
             }
 
-
             // =========================================================
-            // 4. FIND POSITION ID
+            // 4. GET POSITION ID
             // =========================================================
 
-            $stmt = $db->prepare("
-            SELECT
-                position_id,
-                department_id
-            FROM em_positions
-            WHERE position_name = :position
-            AND status = 'Active'
-            LIMIT 1
-        ");
+            $positionId = (int) (
+                $offer['position_id']
+                ?? $offer['job_position_id']
+                ?? 0
+            );
 
-            $stmt->execute([
-                ':position' => $offer['position']
-            ]);
-
-            $position = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$position) {
+            if ($positionId <= 0) {
                 throw new Exception(
-                    "Position '{$offer['position']}' was not found in em_positions."
+                    "The position could not be identified."
                 );
             }
 
-            $positionId = (int) $position['position_id'];
-
-
             // =========================================================
-            // 5. FIND DEPARTMENT ID
+            // 5. GET DEPARTMENT ID
             // =========================================================
 
-            $stmt = $db->prepare("
-            SELECT
-                department_id
-            FROM em_departments
-            WHERE department_name = :department
-            AND status = 'Active'
-            LIMIT 1
-        ");
+            $departmentId = (int) (
+                $offer['department_id']
+                ?? $offer['job_department_id']
+                ?? 0
+            );
 
-            $stmt->execute([
-                ':department' => $offer['department']
-            ]);
+            if ($departmentId <= 0) {
 
-            $department = $stmt->fetch(PDO::FETCH_ASSOC);
+                // Fallback to department name if job.department_id
+                // is not available.
+                $departmentStmt = $db->prepare("
+                    SELECT department_id
+                    FROM em_departments
+                    WHERE TRIM(LOWER(department_name))
+                        = TRIM(LOWER(:department))
+                    AND status = 'Active'
+                    LIMIT 1
+                ");
 
-            if (!$department) {
-                throw new Exception(
-                    "Department '{$offer['department']}' was not found in em_departments."
-                );
+                $departmentStmt->execute([
+                    ':department' => $offer['department']
+                ]);
+
+                $departmentRow =
+                    $departmentStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($departmentRow) {
+                    $departmentId =
+                        (int) $departmentRow['department_id'];
+                }
             }
 
-            $departmentId = (int) $department['department_id'];
-
+            if ($departmentId <= 0) {
+                throw new Exception(
+                    "The department could not be identified."
+                );
+            }
 
             // =========================================================
             // 6. INSERT INTO RAO_HIRED
             // =========================================================
 
-            $stmt = $db->prepare("
-            INSERT INTO rao_hired (
-                application_id,
-                position_id,
-                department_id,
-                first_name,
-                middle_name,
-                last_name,
-                email,
-                phone,
-                address,
-                position,
-                department,
-                base_job,
-                salary,
-                hired_at
-            )
-            VALUES (
-                :application_id,
-                :position_id,
-                :department_id,
-                :first_name,
-                :middle_name,
-                :last_name,
-                :email,
-                :phone,
-                :address,
-                :position,
-                :department,
-                :base_job,
-                :salary,
-                NOW()
-            )
-        ");
+            $insert = $db->prepare("
+                INSERT INTO rao_hired
+                (
+                    application_id,
+                    position_id,
+                    department_id,
+                    first_name,
+                    middle_name,
+                    last_name,
+                    email,
+                    phone,
+                    address,
+                    position,
+                    department,
+                    base_job,
+                    salary,
+                    hired_at
+                )
+                VALUES
+                (
+                    :application_id,
+                    :position_id,
+                    :department_id,
+                    :first_name,
+                    :middle_name,
+                    :last_name,
+                    :email,
+                    :phone,
+                    :address,
+                    :position,
+                    :department,
+                    :base_job,
+                    :salary,
+                    NOW()
+                )
+            ");
 
-            $stmt->execute([
-                ':application_id' => $offer['application_id'],
-                ':position_id'   => $positionId,
-                ':department_id' => $departmentId,
-                ':first_name'    => $offer['first_name'],
-                ':middle_name'   => $offer['middle_name'],
-                ':last_name'     => $offer['last_name'],
-                ':email'         => $offer['email'],
-                ':phone'         => $offer['phone'],
-                ':address'       => $offer['address'],
-                ':position'      => $offer['position'],
-                ':department'    => $offer['department'],
-                ':base_job'      => $offer['base_job'],
-                ':salary'        => $offer['salary']
+            $insert->execute([
+                ':application_id' =>
+                $offer['application_id'],
+
+                ':position_id' =>
+                $positionId,
+
+                ':department_id' =>
+                $departmentId,
+
+                ':first_name' =>
+                $offer['first_name'],
+
+                ':middle_name' =>
+                $offer['middle_name'] ?? '',
+
+                ':last_name' =>
+                $offer['last_name'],
+
+                ':email' =>
+                $offer['email'],
+
+                ':phone' =>
+                $offer['phone'] ?? '',
+
+                ':address' =>
+                $offer['address'] ?? '',
+
+                ':position' =>
+                $offer['position'],
+
+                ':department' =>
+                $offer['department'],
+
+                ':base_job' =>
+                $offer['base_job'],
+
+                ':salary' =>
+                $offer['salary']
             ]);
 
+            $hiredId = $db->lastInsertId();
+
+            if (!$hiredId) {
+                throw new Exception(
+                    "Failed to create hired employee record."
+                );
+            }
 
             // =========================================================
-            // 7. MARK APPLICATION AS HIRED
+            // 7. UPDATE APPLICATION
             // =========================================================
 
-            $stmt = $db->prepare("
-            UPDATE rao_applications
-            SET
-                status = 'hired',
-                hired = 1
-            WHERE id = :application_id
-        ");
+            $updateApplication = $db->prepare("
+                UPDATE rao_applications
+                SET
+                    status = 'Hired',
+                    hired = 1
+                WHERE id = :application_id
+            ");
 
-            $stmt->execute([
-                ':application_id' => $offer['application_id']
+            $updateApplication->execute([
+                ':application_id' =>
+                $offer['application_id']
             ]);
 
-
             // =========================================================
-            // 8. MARK OFFER AS HIRED
+            // 8. KEEP OFFER AS ACCEPTED
             // =========================================================
+            //
+            // Do NOT change it to another status.
+            // The offer remains Accepted while the applicant is hired.
+            //
 
-            $stmt = $db->prepare("
-            UPDATE rao_offer
-            SET
-                status = 'Accepted'
-            WHERE offer_id = :offer_id
-        ");
+            $updateOffer = $db->prepare("
+                UPDATE rao_offer
+                SET status = 'Accepted'
+                WHERE id = :offer_id
+            ");
 
-            $stmt->execute([
+            $updateOffer->execute([
                 ':offer_id' => $offerId
             ]);
-
 
             // =========================================================
             // 9. COMMIT

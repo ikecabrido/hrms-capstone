@@ -311,9 +311,12 @@ class ApplicationController
      * Create and dispatch job offer
      */
 
+    /**
+     * Create and dispatch job offer
+     */
     public function sendOffer()
     {
-        // Only accept POST
+        // Only accept POST requests
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header("Location: index.php?page=offer");
             exit;
@@ -324,10 +327,14 @@ class ApplicationController
         try {
 
             // =========================================================
-            // GET POST DATA
+            // 1. GET POST DATA
             // =========================================================
 
             $application_id = (int) ($_POST['application_id'] ?? 0);
+
+            $selectedSalary = trim(
+                $_POST['salary'] ?? ''
+            );
 
             $benefit_package = trim(
                 $_POST['benefit_package'] ?? ''
@@ -339,7 +346,7 @@ class ApplicationController
 
 
             // =========================================================
-            // VALIDATION
+            // 2. VALIDATE APPLICATION
             // =========================================================
 
             if ($application_id <= 0) {
@@ -350,22 +357,50 @@ class ApplicationController
 
 
             // =========================================================
-            // DATABASE
+            // 3. VALIDATE SALARY
+            // =========================================================
+
+            if ($selectedSalary === '') {
+                throw new Exception(
+                    "Please select a salary offer."
+                );
+            }
+
+            if (!is_numeric($selectedSalary)) {
+                throw new Exception(
+                    "Invalid salary offer."
+                );
+            }
+
+            $selectedSalary = (float) $selectedSalary;
+
+            if ($selectedSalary <= 0) {
+                throw new Exception(
+                    "Salary offer must be greater than zero."
+                );
+            }
+
+
+            // =========================================================
+            // 4. DATABASE
             // =========================================================
 
             $db = $this->getDB();
 
 
             // =========================================================
-            // GET APPLICATION
+            // 5. GET APPLICATION
             // =========================================================
 
             $check = $db->prepare("
             SELECT
                 a.id,
                 a.first_name,
+                a.middle_name,
                 a.last_name,
                 a.email,
+                a.phone,
+                a.address,
                 a.job_id,
                 a.ready_for_offer,
                 a.is_archived,
@@ -398,10 +433,12 @@ class ApplicationController
 
 
             // =========================================================
-            // CHECK ARCHIVED
+            // 6. CHECK ARCHIVED
             // =========================================================
 
-            if ((int) $application['is_archived'] === 1) {
+            if (
+                (int) $application['is_archived'] === 1
+            ) {
                 throw new Exception(
                     "This application is archived."
                 );
@@ -409,7 +446,7 @@ class ApplicationController
 
 
             // =========================================================
-            // CHECK READY FOR OFFER
+            // 7. CHECK READY FOR OFFER
             // =========================================================
 
             if (
@@ -424,10 +461,12 @@ class ApplicationController
 
 
             // =========================================================
-            // CHECK JOB ID
+            // 8. CHECK JOB ID
             // =========================================================
 
-            $job_id = (int) ($application['job_id'] ?? 0);
+            $job_id = (int) (
+                $application['job_id'] ?? 0
+            );
 
             if ($job_id <= 0) {
                 throw new Exception(
@@ -437,36 +476,26 @@ class ApplicationController
 
 
             // =========================================================
-            // GET JOB + POSITION + SALARY
+            // 9. GET JOB + POSITION + DEPARTMENT + SALARY
             // =========================================================
             //
-            // CORRECT RELATIONSHIP:
+            // Relationship:
+            //
+            // rao_applications.job_id
+            //          ↓
+            // rao_jobs.id
             //
             // rao_jobs.position_id
             //          ↓
             // em_positions.position_id
+            //
+            // em_positions.position_id
             //          ↓
             // pr_salary_structures.position_id
             //
-            // We do NOT use j.position.
-            //
-            // Example:
-            //
-            // Job:
-            //     position_id = 10
-            //     position    = Instructor
-            //
-            // Employee Position:
-            //     position_id = 10
-            //     position_name = IT Instructor
-            //
-            // Salary:
-            //     position_id = 10
-            //     midpoint_salary = 40000
-            //
             // =========================================================
 
-            $job = $db->prepare("
+            $jobStmt = $db->prepare("
             SELECT
 
                 j.id AS job_id,
@@ -477,13 +506,15 @@ class ApplicationController
 
                 j.position AS job_position,
 
-                j.department_id,
+                j.department_id AS job_department_id,
 
-                j.department,
+                j.department AS job_department,
 
                 p.position_id,
 
                 p.position_name,
+
+                p.department_id AS position_department_id,
 
                 ss.salary_structure_id,
 
@@ -525,15 +556,15 @@ class ApplicationController
             LIMIT 1
         ");
 
-            $job->execute([
+            $jobStmt->execute([
                 ':job_id' => $job_id
             ]);
 
-            $jobData = $job->fetch(PDO::FETCH_ASSOC);
+            $jobData = $jobStmt->fetch(PDO::FETCH_ASSOC);
 
 
             // =========================================================
-            // CHECK JOB
+            // 10. CHECK JOB
             // =========================================================
 
             if (!$jobData) {
@@ -546,28 +577,73 @@ class ApplicationController
 
 
             // =========================================================
-            // CHECK POSITION
+            // 11. CHECK POSITION
             // =========================================================
 
             if (
-                empty($jobData['position_id'])
-                ||
+                empty($jobData['position_id']) ||
                 empty($jobData['position_name'])
             ) {
                 throw new Exception(
-                    "The job does not have a valid employee position."
+                    "The selected job does not have a valid employee position."
                 );
             }
 
 
             // =========================================================
-            // CHECK SALARY STRUCTURE
+            // 12. CHECK DEPARTMENT
+            // =========================================================
+
+            $department = trim(
+                $jobData['job_department'] ?? ''
+            );
+
+            if ($department === '') {
+
+                // Fallback to department from em_positions
+                if (
+                    !empty($jobData['position_department_id'])
+                ) {
+
+                    $departmentStmt = $db->prepare("
+                    SELECT department_name
+                    FROM em_departments
+                    WHERE department_id = :department_id
+                    AND status = 'Active'
+                    LIMIT 1
+                ");
+
+                    $departmentStmt->execute([
+                        ':department_id' =>
+                        (int) $jobData['position_department_id']
+                    ]);
+
+                    $departmentRow =
+                        $departmentStmt->fetch(PDO::FETCH_ASSOC);
+
+                    if ($departmentRow) {
+                        $department =
+                            trim(
+                                $departmentRow['department_name'] ?? ''
+                            );
+                    }
+                }
+            }
+
+            if ($department === '') {
+                throw new Exception(
+                    "The selected job does not have a valid department."
+                );
+            }
+
+
+            // =========================================================
+            // 13. CHECK SALARY STRUCTURE
             // =========================================================
 
             if (
                 empty($jobData['salary_structure_id'])
             ) {
-
                 throw new Exception(
                     "No active salary structure found for position \""
                         . $jobData['position_name']
@@ -579,7 +655,100 @@ class ApplicationController
 
 
             // =========================================================
-            // FINAL OFFER VALUES
+            // 14. GET SALARY VALUES
+            // =========================================================
+
+            $minimumSalary = (float) (
+                $jobData['minimum_salary'] ?? 0
+            );
+
+            $midpointSalary = (float) (
+                $jobData['midpoint_salary'] ?? 0
+            );
+
+            $maximumSalary = (float) (
+                $jobData['maximum_salary'] ?? 0
+            );
+
+
+            // =========================================================
+            // 15. VALIDATE SALARY STRUCTURE
+            // =========================================================
+
+            if ($minimumSalary <= 0) {
+                throw new Exception(
+                    "The minimum salary for \""
+                        . $jobData['position_name']
+                        . "\" is invalid."
+                );
+            }
+
+            if ($midpointSalary <= 0) {
+                throw new Exception(
+                    "The midpoint salary for \""
+                        . $jobData['position_name']
+                        . "\" is invalid."
+                );
+            }
+
+            if ($maximumSalary <= 0) {
+                throw new Exception(
+                    "The maximum salary for \""
+                        . $jobData['position_name']
+                        . "\" is invalid."
+                );
+            }
+
+
+            // =========================================================
+            // 16. DETERMINE WHICH SALARY WAS SELECTED
+            // =========================================================
+            //
+            // The form sends the actual salary amount:
+            //
+            // Minimum  → minimum_salary
+            // Midpoint  → midpoint_salary
+            // Maximum   → maximum_salary
+            //
+            // =========================================================
+
+            $salaryType = null;
+            $salary = null;
+
+            $tolerance = 0.01;
+
+
+            if (
+                abs($selectedSalary - $minimumSalary)
+                < $tolerance
+            ) {
+
+                $salaryType = 'Minimum';
+                $salary = $minimumSalary;
+            } elseif (
+                abs($selectedSalary - $midpointSalary)
+                < $tolerance
+            ) {
+
+                $salaryType = 'Midpoint';
+                $salary = $midpointSalary;
+            } elseif (
+                abs($selectedSalary - $maximumSalary)
+                < $tolerance
+            ) {
+
+                $salaryType = 'Maximum';
+                $salary = $maximumSalary;
+            } else {
+
+                throw new Exception(
+                    "The selected salary is not a valid salary option for this position."
+                );
+            }
+
+
+            // =========================================================
+            // 17. FINAL OFFER VALUES
             // =========================================================
 
             $base_job = trim(
@@ -590,17 +759,9 @@ class ApplicationController
                 $jobData['position_name'] ?? ''
             );
 
-            $department = trim(
-                $jobData['department'] ?? ''
-            );
-
-            $salary = (float) (
-                $jobData['midpoint_salary'] ?? 0
-            );
-
 
             // =========================================================
-            // VALIDATE FINAL VALUES
+            // 18. VALIDATE FINAL VALUES
             // =========================================================
 
             if ($base_job === '') {
@@ -621,17 +782,18 @@ class ApplicationController
                 );
             }
 
-            if ($salary <= 0) {
+            if (
+                $salary === null ||
+                $salary <= 0
+            ) {
                 throw new Exception(
-                    "The salary structure for \""
-                        . $position
-                        . "\" has an invalid midpoint salary."
+                    "The selected salary is invalid."
                 );
             }
 
 
             // =========================================================
-            // CHECK EXISTING OFFER
+            // 19. CHECK EXISTING OFFER
             // =========================================================
 
             $existing = $db->prepare("
@@ -659,12 +821,22 @@ class ApplicationController
             if ($existingOffer) {
 
                 $existingStatus =
-                    $existingOffer['status'] ?? '';
+                    trim(
+                        $existingOffer['status'] ?? ''
+                    );
+
+
+                // -----------------------------------------------------
+                // Already sent
+                // -----------------------------------------------------
 
                 if (
                     in_array(
                         $existingStatus,
-                        ['Sent', 'Accepted'],
+                        [
+                            'Sent',
+                            'Accepted'
+                        ],
                         true
                     )
                 ) {
@@ -672,18 +844,50 @@ class ApplicationController
                         "An offer has already been sent to this candidate."
                     );
                 }
+
+
+                // -----------------------------------------------------
+                // Rejected offers can be replaced
+                // Negotiating offers can also be updated/replaced
+                // -----------------------------------------------------
             }
 
 
             // =========================================================
-            // BEGIN TRANSACTION
+            // 20. VALIDATE EMAIL
+            // =========================================================
+
+            $email = trim(
+                $application['email'] ?? ''
+            );
+
+            if ($email === '') {
+                throw new Exception(
+                    "The applicant does not have an email address."
+                );
+            }
+
+            if (
+                !filter_var(
+                    $email,
+                    FILTER_VALIDATE_EMAIL
+                )
+            ) {
+                throw new Exception(
+                    "The applicant's email address is invalid."
+                );
+            }
+
+
+            // =========================================================
+            // 21. BEGIN TRANSACTION
             // =========================================================
 
             $db->beginTransaction();
 
 
             // =========================================================
-            // INSERT OFFER
+            // 22. INSERT OFFER
             // =========================================================
 
             $stmt = $db->prepare("
@@ -740,7 +944,20 @@ class ApplicationController
 
 
             // =========================================================
-            // SEND OFFER EMAIL
+            // 23. VERIFY OFFER INSERT
+            // =========================================================
+
+            $offerId = (int) $db->lastInsertId();
+
+            if ($offerId <= 0) {
+                throw new Exception(
+                    "Failed to create the job offer."
+                );
+            }
+
+
+            // =========================================================
+            // 24. SEND OFFER EMAIL
             // =========================================================
 
             $recipientName = trim(
@@ -750,42 +967,56 @@ class ApplicationController
             );
 
 
-            if (
-                empty($application['email'])
-            ) {
-                throw new Exception(
-                    "The applicant does not have a valid email address."
-                );
+            if ($recipientName === '') {
+                $recipientName = 'Candidate';
             }
 
 
-            $mailer = new \Controllers\OfferMailer();
+            // ---------------------------------------------------------
+            // OfferMailer
+            // ---------------------------------------------------------
+
+            $mailer =
+                new \Controllers\OfferMailer();
 
 
-            $emailSent = $mailer->sendOfferEmail(
-                $application['email'],
-                $recipientName,
-                [
-                    'department' =>
-                    $department,
+            $emailSent =
+                $mailer->sendOfferEmail(
+                    $email,
+                    $recipientName,
+                    [
 
-                    'position' =>
-                    $position,
+                        'department' =>
+                        $department,
 
-                    'base_job' =>
-                    $base_job,
+                        'position' =>
+                        $position,
 
-                    'salary' =>
-                    $salary,
+                        'base_job' =>
+                        $base_job,
 
-                    'benefits' =>
-                    $benefit_package,
+                        'salary' =>
+                        $salary,
 
-                    'additional_note' =>
-                    $additional_note
-                ]
-            );
+                        'salary_type' =>
+                        $salaryType,
 
+                        'salary_grade' =>
+                        $jobData['salary_grade']
+                            ?? null,
+
+                        'benefits' =>
+                        $benefit_package,
+
+                        'additional_note' =>
+                        $additional_note
+                    ]
+                );
+
+
+            // =========================================================
+            // 25. CHECK EMAIL RESULT
+            // =========================================================
 
             if (!$emailSent) {
 
@@ -802,31 +1033,68 @@ class ApplicationController
 
 
             // =========================================================
-            // UPDATE APPLICATION STATUS
+            // 26. UPDATE APPLICATION STATUS
             // =========================================================
 
             $update = $db->prepare("
             UPDATE rao_applications
 
-            SET status = 'offered'
+            SET
+                status = 'offered'
 
             WHERE id = :id
         ");
 
             $update->execute([
-                ':id' => $application_id
+                ':id' =>
+                $application_id
             ]);
 
 
             // =========================================================
-            // COMMIT
+            // 27. VERIFY APPLICATION UPDATE
+            // =========================================================
+
+            $verify = $db->prepare("
+            SELECT
+                status
+            FROM rao_applications
+            WHERE id = :id
+            LIMIT 1
+        ");
+
+            $verify->execute([
+                ':id' =>
+                $application_id
+            ]);
+
+            $updatedApplication =
+                $verify->fetch(PDO::FETCH_ASSOC);
+
+
+            if (
+                !$updatedApplication ||
+                strtolower(
+                    trim(
+                        $updatedApplication['status'] ?? ''
+                    )
+                ) !== 'offered'
+            ) {
+                throw new Exception(
+                    "Failed to update the applicant status to offered."
+                );
+            }
+
+
+            // =========================================================
+            // 28. COMMIT
             // =========================================================
 
             $db->commit();
 
 
             // =========================================================
-            // SUCCESS
+            // 29. SUCCESS MESSAGE
             // =========================================================
 
             $_SESSION['success'] =
@@ -834,8 +1102,19 @@ class ApplicationController
                 . ($application['first_name'] ?? '')
                 . ' '
                 . ($application['last_name'] ?? '')
-                . ".";
+                . ". Salary: ₱"
+                . number_format(
+                    $salary,
+                    2
+                )
+                . " ("
+                . $salaryType
+                . ").";
 
+
+            // =========================================================
+            // 30. REDIRECT
+            // =========================================================
 
             header(
                 "Location: index.php?page=offered-list"
@@ -849,8 +1128,7 @@ class ApplicationController
             // =========================================================
 
             if (
-                $db instanceof PDO
-                &&
+                $db instanceof PDO &&
                 $db->inTransaction()
             ) {
                 $db->rollBack();
@@ -858,7 +1136,21 @@ class ApplicationController
 
 
             // =========================================================
-            // ERROR
+            // LOG ERROR
+            // =========================================================
+
+            error_log(
+                "ApplicationController::sendOffer error: "
+                    . $e->getMessage()
+                    . " | File: "
+                    . $e->getFile()
+                    . " | Line: "
+                    . $e->getLine()
+            );
+
+
+            // =========================================================
+            // ERROR MESSAGE
             // =========================================================
 
             $_SESSION['error'] =
@@ -866,8 +1158,12 @@ class ApplicationController
                 . $e->getMessage();
 
 
+            // =========================================================
+            // REDIRECT BACK TO OFFER PAGE
+            // =========================================================
+
             header(
-                "Location: index.php?page=send-offer"
+                "Location: index.php?page=offer"
             );
 
             exit;
@@ -1712,60 +2008,88 @@ class ApplicationController
     /**
      * Accept offer
      */
+
+
     public function acceptOffer()
     {
-        if (!isset($_POST['offer_id'])) {
-
-            header(
-                "Location: index.php?page=offered-list"
-            );
-
+        if (
+            $_SERVER['REQUEST_METHOD'] !== 'POST' ||
+            empty($_POST['offer_id'])
+        ) {
+            $_SESSION['error'] = "Invalid offer request.";
+            header("Location: index.php?page=offered-list");
             exit;
         }
 
-        $offer_id =
-            (int) $_POST['offer_id'];
+        $offerId = (int) $_POST['offer_id'];
 
-        require_once __DIR__ .
-            '/../classes/Offer.php';
-
-        $offerModel =
-            new Offer();
-
-        // Update offer status
-        $offerModel->updateStatus(
-            $offer_id,
-            'Accepted'
-        );
-
-        // Get offer details
-        $offer =
-            $offerModel->getOfferById(
-                $offer_id
-            );
-
-        // Create hired record
-        if (
-            $offer &&
-            !$offerModel->alreadyHired(
-                $offer['application_id']
-            )
-        ) {
-
-            $offerModel->insertHired(
-                $offer
-            );
+        if ($offerId <= 0) {
+            $_SESSION['error'] = "Invalid offer ID.";
+            header("Location: index.php?page=offered-list");
+            exit;
         }
 
-        $_SESSION['success'] =
-            "Offer accepted and candidate hired!";
+        require_once __DIR__ . '/../classes/Offer.php';
 
-        header(
-            "Location: index.php?page=offered-list"
-        );
+        try {
+            $offerModel = new Offer();
 
+            // Get the offer details.
+            $offer = $offerModel->getOfferById($offerId);
+
+            if (!$offer) {
+                throw new Exception("Job offer not found.");
+            }
+
+            $currentStatus = strtolower(
+                trim($offer['offer_status'] ?? '')
+            );
+
+            // Prevent accepting an already accepted or hired offer again.
+            if ($currentStatus === 'accepted') {
+                if ($offerModel->alreadyHired((int) $offer['application_id'])) {
+                    $_SESSION['success'] =
+                        "This offer has already been accepted and the applicant is hired.";
+                } else {
+                    // Finish hiring if the offer was accepted previously
+                    // but the hired record does not exist.
+                    $offerModel->hireApplicant($offerId);
+
+                    $_SESSION['success'] =
+                        "Offer accepted and applicant automatically marked as Hired.";
+                }
+
+                header("Location: index.php?page=offered-list");
+                exit;
+            }
+
+            if (!in_array($currentStatus, ['sent', 'negotiating'], true)) {
+                throw new Exception(
+                    "This offer cannot be accepted. Current status: " .
+                        ($offer['offer_status'] ?? 'Unknown')
+                );
+            }
+
+            // Mark the offer as Accepted first.
+            $offerModel->updateStatus($offerId, 'Accepted');
+
+            // Automatically create the hired record and update the application.
+            $offerModel->hireApplicant($offerId);
+
+            $_SESSION['success'] =
+                "Offer accepted successfully! The applicant is now Hired.";
+        } catch (Throwable $e) {
+            error_log("Accept offer error: " . $e->getMessage());
+
+            $_SESSION['error'] =
+                "Unable to accept the offer: " . $e->getMessage();
+        }
+
+        header("Location: index.php?page=offered-list");
         exit;
     }
+
+
 
     /**
      * Reject offer
