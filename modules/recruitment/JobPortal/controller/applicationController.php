@@ -28,7 +28,7 @@ require_once __DIR__ . '/../classes/Documents.php';
  */
 define(
     'HRMS_RECRUITMENT_UPLOADS',
-    'C:\\xampp\\htdocs\\hrms-capstone\\modules\\recruitment\\uploads'
+    dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads'
 );
 
 
@@ -1163,84 +1163,44 @@ try {
         $uploadedDocuments = [];
 
 
-        $documentTypes = [
-            'resume',
-            'diploma',
-            'tor',
-            'certs',
-            'other'
+        $documentFields = [
+            'apResume'  => 'resume',
+            'apDiploma' => 'diploma',
+            'apTor'     => 'tor',
+            'apCerts'   => 'certs',
+            'apOther'   => 'other'
         ];
 
+        foreach ($documentFields as $fieldName => $documentType) {
 
-        foreach (
-            $documentTypes
-            as $documentType
-        ) {
-
-            /**
-             * File was not submitted.
-             */
-            if (
-                !isset(
-                    $_FILES[$documentType]
-                )
-            ) {
+            if (!isset($_FILES[$fieldName])) {
                 continue;
             }
 
-
-            /**
-             * User did not select a file.
-             */
             if (
-                ($_FILES[$documentType]['error'] ?? null)
+                ($_FILES[$fieldName]['error'] ?? null)
                 === UPLOAD_ERR_NO_FILE
             ) {
                 continue;
             }
 
+            $uploaded = uploadDocument(
+                $documentsModel,
+                $applicationId,
+                $documentType,
+                $_FILES[$fieldName]
+            );
 
-            /**
-             * Upload actual file.
-             */
-            $uploaded =
-                uploadDocument(
-                    $documentsModel,
+            $uploadedDocuments[$documentType] = $uploaded;
+
+            if ($documentType === 'resume') {
+
+                $updated = $applicationModel->updateResumePath(
                     $applicationId,
-                    $documentType,
-                    $_FILES[$documentType]
+                    $uploaded['file_path']
                 );
 
-
-            $uploadedDocuments[$documentType] =
-                $uploaded;
-
-
-            /**
-             * =================================================
-             * KEEP rao_applications.resume SYNCHRONIZED
-             * =================================================
-             *
-             * Example:
-             *
-             * rao_applications.resume
-             *
-             * uploads/14/My_Resume.pdf
-             */
-            if (
-                $documentType === 'resume'
-            ) {
-
-                $updated =
-                    $applicationModel
-                    ->updateResumePath(
-                        $applicationId,
-                        $uploaded['file_path']
-                    );
-
-
                 if (!$updated) {
-
                     throw new RuntimeException(
                         'Resume uploaded successfully, ' .
                             'but the application resume path could not be updated.'
