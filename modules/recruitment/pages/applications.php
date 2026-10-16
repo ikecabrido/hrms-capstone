@@ -151,7 +151,11 @@
                          */
 
                         $resumeUrl = null;
-
+                        echo '<pre>';
+                        echo 'Application ID: ' . (int) $row['id'] . PHP_EOL;
+                        echo 'Database resume path: ' .
+                            htmlspecialchars($row['resume'] ?? 'EMPTY', ENT_QUOTES, 'UTF-8');
+                        echo '</pre>';
                         if (!empty($row['resume'])) {
 
                             $storedResumePath = trim($row['resume']);
