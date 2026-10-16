@@ -1,3 +1,4 @@
+
 <?php
 
 header('Content-Type: application/json; charset=utf-8');
@@ -7,100 +8,124 @@ require_once __DIR__ . '/../classes/Education.php';
 require_once __DIR__ . '/../classes/Experience.php';
 require_once __DIR__ . '/../classes/Documents.php';
 
-
 /**
  * =========================================================
  * HRMS RECRUITMENT UPLOAD DIRECTORY
  * =========================================================
- *
- * IMPORTANT:
- *
- * This controller belongs to the JobPortal project:
- *
- * C:\xampp\htdocs\JobPortal\
- *
- * But uploaded recruitment documents must be stored
- * inside the separate hrms-capstone project:
- *
- * C:\xampp\htdocs\hrms-capstone\modules\recruitment\uploads\
- *
- * DO NOT use __DIR__ to build this path.
  */
 define(
     'HRMS_RECRUITMENT_UPLOADS',
     'C:\\xampp\\htdocs\\hrms-capstone\\modules\\recruitment\\uploads'
 );
 
-
 /**
  * =========================================================
  * JSON RESPONSE
  * =========================================================
  */
-function respond($data, int $status = 200): void
+function respond(array $data, int $status = 200): void
 {
     http_response_code($status);
 
     echo json_encode(
         $data,
         JSON_UNESCAPED_UNICODE |
-            JSON_UNESCAPED_SLASHES
+            JSON_UNESCAPED_SLASHES |
+            JSON_INVALID_UTF8_SUBSTITUTE
     );
 
     exit;
 }
 
-
 /**
  * =========================================================
- * REQUEST DATA
+ * READ REQUEST DATA
  *
- * Supports:
- * - application/json
- * - multipart/form-data
- * - application/x-www-form-urlencoded
+ * Supports JSON, multipart/form-data, and URL-encoded data.
  * =========================================================
  */
 function requestData(): array
 {
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
 
-    /**
-     * JSON request.
-     */
-    if (
-        stripos(
-            $contentType,
-            'application/json'
-        ) !== false
-    ) {
+    if (stripos($contentType, 'application/json') !== false) {
         $raw = file_get_contents('php://input');
 
-        if (!$raw) {
+        if ($raw === false || trim($raw) === '') {
             return [];
         }
 
-        $data = json_decode(
-            $raw,
-            true
-        );
+        $decoded = json_decode($raw, true);
 
-        return is_array($data)
-            ? $data
-            : [];
+        return is_array($decoded) ? $decoded : [];
     }
 
-    /**
-     * multipart/form-data and
-     * application/x-www-form-urlencoded.
-     */
     return $_POST;
 }
 
+/**
+ * =========================================================
+ * NORMALIZE FIELD NAMES
+ * =========================================================
+ */
+function normalizeRequestData(array $data): array
+{
+    /*
+     * Accept both jobId and job_id.
+     * The form should still send the actual selected job ID.
+     */
+    if (
+        !isset($data['jobId']) ||
+        trim((string) $data['jobId']) === ''
+    ) {
+        $data['jobId'] =
+            $data['job_id']
+            ?? $_POST['jobId']
+            ?? $_POST['job_id']
+            ?? $_GET['jobId']
+            ?? $_GET['job_id']
+            ?? '';
+    }
+
+    /*
+     * Support alternate field names for applicant details.
+     */
+    $aliases = [
+        'firstName'      => ['first_name'],
+        'middleName'     => ['middle_name'],
+        'lastName'       => ['last_name'],
+        'yearGraduated'  => ['year_graduated'],
+        'civilStatus'    => ['civil_status'],
+        'currentAddress' => ['current_address'],
+        'permanentAddress' => ['permanent_address'],
+        'birthplace'     => ['birthPlace'],
+        'birthdate'      => ['birthDate'],
+        'experienceDescription' => ['experience_description']
+    ];
+
+    foreach ($aliases as $canonical => $alternatives) {
+        if (
+            !isset($data[$canonical]) ||
+            trim((string) $data[$canonical]) === ''
+        ) {
+            foreach ($alternatives as $alternative) {
+                if (
+                    isset($data[$alternative]) &&
+                    trim((string) $data[$alternative]) !== ''
+                ) {
+                    $data[$canonical] = $data[$alternative];
+                    break;
+                }
+            }
+        }
+    }
+
+    return $data;
+}
 
 /**
  * =========================================================
- * CLEAN INPUT
+ * INPUT HELPER
  * =========================================================
  */
 function inputValue(
@@ -112,227 +137,147 @@ function inputValue(
         return $default;
     }
 
-    if (is_string($data[$key])) {
-        return trim($data[$key]);
-    }
-
-    return $data[$key];
+    return is_string($data[$key])
+        ? trim($data[$key])
+        : $data[$key];
 }
-
 
 /**
  * =========================================================
  * SANITIZE FILE NAME
- *
- * Example:
- *
- * My Resume 2026.pdf
- *
- * becomes:
- *
- * My_Resume_2026.pdf
  * =========================================================
  */
 function sanitizeFileName(string $fileName): string
 {
-    /**
-     * Prevent directory traversal.
-     */
     $fileName = basename($fileName);
 
-    /**
-     * Get extension.
-     */
     $extension = strtolower(
-        pathinfo(
-            $fileName,
-            PATHINFO_EXTENSION
-        )
+        pathinfo($fileName, PATHINFO_EXTENSION)
     );
 
-    /**
-     * Get filename without extension.
-     */
     $baseName = pathinfo(
         $fileName,
         PATHINFO_FILENAME
     );
 
-    /**
-     * Replace unsafe characters.
-     */
     $baseName = preg_replace(
         '/[^a-zA-Z0-9_-]/',
         '_',
         $baseName
     );
 
-    /**
-     * Remove repeated underscores.
-     */
-    $baseName = preg_replace(
-        '/_+/',
-        '_',
-        $baseName
-    );
+    $baseName = preg_replace('/_+/', '_', $baseName);
+    $baseName = trim($baseName, '_');
 
-    /**
-     * Remove underscores from beginning/end.
-     */
-    $baseName = trim(
-        $baseName,
-        '_'
-    );
-
-    /**
-     * Fallback filename.
-     */
     if ($baseName === '') {
         $baseName = 'document';
     }
 
-    /**
-     * Rebuild filename.
-     */
-    if ($extension !== '') {
-        return $baseName . '.' . $extension;
-    }
-
-    return $baseName;
+    return $extension !== ''
+        ? $baseName . '.' . $extension
+        : $baseName;
 }
-
 
 /**
  * =========================================================
  * CREATE APPLICANT UPLOAD DIRECTORY
- * =========================================================
  *
- * Physical result:
+ * uploads/{applicationId}/
  *
- * C:\xampp\htdocs\hrms-capstone\modules\recruitment\
- * uploads\{applicationId}\
- *
- * Example:
- *
- * C:\xampp\htdocs\hrms-capstone\modules\recruitment\
- * uploads\14\
+ * The directory is created only when a document is uploaded.
  * =========================================================
  */
 function createApplicantUploadDirectory(
     int $applicationId
 ): string {
-
     if ($applicationId <= 0) {
         throw new RuntimeException(
             'Invalid application ID for upload directory.'
         );
     }
 
-    /**
-     * Make sure the main recruitment uploads directory exists.
-     */
     $uploadRoot = HRMS_RECRUITMENT_UPLOADS;
 
     if (!is_dir($uploadRoot)) {
-
         if (
-            !mkdir(
-                $uploadRoot,
-                0755,
-                true
-            ) &&
+            !mkdir($uploadRoot, 0755, true) &&
             !is_dir($uploadRoot)
         ) {
             throw new RuntimeException(
-                'Unable to create recruitment uploads directory: ' .
-                    $uploadRoot
+                'Unable to create recruitment uploads directory.'
             );
         }
     }
 
-    /**
-     * Applicant-specific directory.
-     *
-     * IMPORTANT:
-     *
-     * There is NO "resumes" folder.
-     *
-     * There are NO name folders.
-     *
-     * Correct:
-     *
-     * uploads\14\
-     */
-    $applicantDir =
-        $uploadRoot .
+    if (!is_writable($uploadRoot)) {
+        throw new RuntimeException(
+            'Recruitment uploads directory is not writable.'
+        );
+    }
+
+    $applicantDir = $uploadRoot .
         DIRECTORY_SEPARATOR .
         $applicationId;
 
     if (!is_dir($applicantDir)) {
-
         if (
-            !mkdir(
-                $applicantDir,
-                0755,
-                true
-            ) &&
+            !mkdir($applicantDir, 0755, true) &&
             !is_dir($applicantDir)
         ) {
             throw new RuntimeException(
-                'Unable to create applicant upload directory: ' .
-                    $applicantDir
+                'Unable to create applicant upload directory.'
             );
         }
     }
 
-    /**
-     * Final verification.
-     */
-    if (!is_dir($applicantDir)) {
+    if (!is_dir($applicantDir) || !is_writable($applicantDir)) {
         throw new RuntimeException(
-            'Applicant upload directory does not exist: ' .
-                $applicantDir
-        );
-    }
-
-    /**
-     * Check writable.
-     */
-    if (!is_writable($applicantDir)) {
-        throw new RuntimeException(
-            'Applicant upload directory is not writable: ' .
-                $applicantDir
+            'Applicant upload directory is not writable.'
         );
     }
 
     return $applicantDir;
 }
 
+/**
+ * =========================================================
+ * NORMALIZE UPLOADED FILES
+ *
+ * Supports both:
+ *   resume / diploma / tor / certs / other
+ *
+ * and:
+ *   apResume / apDiploma / apTor / apCerts / apOther
+ * =========================================================
+ */
+function getApplicantFile(string $documentType): ?array
+{
+    $aliases = [
+        'resume'  => ['resume', 'apResume'],
+        'diploma' => ['diploma', 'apDiploma'],
+        'tor'     => ['tor', 'apTor'],
+        'certs'   => ['certs', 'apCerts'],
+        'other'   => ['other', 'apOther']
+    ];
+
+    foreach ($aliases[$documentType] ?? [$documentType] as $key) {
+        if (isset($_FILES[$key])) {
+            return $_FILES[$key];
+        }
+    }
+
+    return null;
+}
 
 /**
  * =========================================================
  * UPLOAD DOCUMENT
- * =========================================================
  *
- * PHYSICAL LOCATION:
+ * Physical path:
+ *   HRMS_RECRUITMENT_UPLOADS/{applicationId}/{filename}
  *
- * C:\xampp\htdocs\hrms-capstone\modules\recruitment\
- * uploads\{applicationId}\filename.ext
- *
- * Example:
- *
- * C:\xampp\htdocs\hrms-capstone\modules\recruitment\
- * uploads\14\My_Resume.pdf
- *
- *
- * DATABASE PATH:
- *
- * uploads/14/My_Resume.pdf
- *
- * IMPORTANT:
- *
- * The Windows absolute path is NEVER stored in the
- * database.
+ * Database path:
+ *   uploads/{applicationId}/{filename}
  * =========================================================
  */
 function uploadDocument(
@@ -341,49 +286,48 @@ function uploadDocument(
     string $documentType,
     array $file
 ): array {
+    $errorCode = $file['error'] ?? UPLOAD_ERR_NO_FILE;
 
-    /**
-     * -----------------------------------------------------
-     * 1. Validate upload error
-     * -----------------------------------------------------
-     */
-    if (
-        !isset($file['error']) ||
-        $file['error'] !== UPLOAD_ERR_OK
-    ) {
-        $errorCode =
-            $file['error'] ?? 'unknown';
-
+    if ($errorCode === UPLOAD_ERR_NO_FILE) {
         throw new RuntimeException(
-            "Failed to upload {$documentType}. " .
-                "Upload error code: {$errorCode}"
+            "No file was selected for {$documentType}."
         );
     }
 
+    if ($errorCode !== UPLOAD_ERR_OK) {
+        $uploadErrors = [
+            UPLOAD_ERR_INI_SIZE =>
+            'The uploaded file exceeds the server upload limit.',
+            UPLOAD_ERR_FORM_SIZE =>
+            'The uploaded file exceeds the form upload limit.',
+            UPLOAD_ERR_PARTIAL =>
+            'The file was only partially uploaded.',
+            UPLOAD_ERR_NO_TMP_DIR =>
+            'The server temporary upload directory is missing.',
+            UPLOAD_ERR_CANT_WRITE =>
+            'The server could not write the uploaded file.',
+            UPLOAD_ERR_EXTENSION =>
+            'A server extension stopped the upload.'
+        ];
 
-    /**
-     * -----------------------------------------------------
-     * 2. Validate temporary uploaded file
-     * -----------------------------------------------------
-     */
+        throw new RuntimeException(
+            $uploadErrors[$errorCode] ??
+                "Failed to upload {$documentType}. Error code: {$errorCode}"
+        );
+    }
+
+    $tmpName = $file['tmp_name'] ?? '';
+
     if (
-        !isset($file['tmp_name']) ||
-        !is_uploaded_file($file['tmp_name'])
+        $tmpName === '' ||
+        !is_uploaded_file($tmpName)
     ) {
         throw new RuntimeException(
             "Invalid uploaded file for {$documentType}."
         );
     }
 
-
-    /**
-     * -----------------------------------------------------
-     * 3. Get original filename
-     * -----------------------------------------------------
-     */
-    $originalName = basename(
-        $file['name'] ?? ''
-    );
+    $originalName = basename($file['name'] ?? '');
 
     if ($originalName === '') {
         throw new RuntimeException(
@@ -391,110 +335,47 @@ function uploadDocument(
         );
     }
 
+    $fileSize = (int) ($file['size'] ?? 0);
+    $maxFileSize = 10 * 1024 * 1024;
 
-    /**
-     * -----------------------------------------------------
-     * 4. Get file size
-     * -----------------------------------------------------
-     */
-    $fileSize = isset($file['size'])
-        ? (int) $file['size']
-        : 0;
-
-
-    /**
-     * -----------------------------------------------------
-     * 5. Get extension
-     * -----------------------------------------------------
-     */
-    $extension = strtolower(
-        pathinfo(
-            $originalName,
-            PATHINFO_EXTENSION
-        )
-    );
-
-
-    /**
-     * -----------------------------------------------------
-     * 6. Allowed extensions
-     * -----------------------------------------------------
-     */
-    $allowedExtensions = [
-        'pdf',
-        'doc',
-        'docx'
-    ];
-
-    if (
-        !in_array(
-            $extension,
-            $allowedExtensions,
-            true
-        )
-    ) {
+    if ($fileSize <= 0) {
         throw new RuntimeException(
-            "Invalid {$documentType} file type. " .
-                "Only PDF, DOC, and DOCX files are allowed."
+            "The {$documentType} file is empty."
         );
     }
-
-
-    /**
-     * -----------------------------------------------------
-     * 7. Maximum file size = 10 MB
-     * -----------------------------------------------------
-     */
-    $maxFileSize = 10 * 1024 * 1024;
 
     if ($fileSize > $maxFileSize) {
         throw new RuntimeException(
-            "{$documentType} file is too large. " .
-                "Maximum file size is 10 MB."
+            "{$documentType} exceeds the 10 MB limit."
         );
     }
 
+    $extension = strtolower(
+        pathinfo($originalName, PATHINFO_EXTENSION)
+    );
 
-    /**
-     * -----------------------------------------------------
-     * 8. Create applicant directory
-     * -----------------------------------------------------
-     */
-    $applicantDir =
-        createApplicantUploadDirectory(
-            $applicationId
+    $allowedExtensions = ['pdf', 'doc', 'docx'];
+
+    if (!in_array($extension, $allowedExtensions, true)) {
+        throw new RuntimeException(
+            "Invalid {$documentType} file type. Only PDF, DOC, and DOCX are allowed."
         );
+    }
 
+    $applicantDir = createApplicantUploadDirectory(
+        $applicationId
+    );
 
-    /**
-     * -----------------------------------------------------
-     * 9. Sanitize filename
-     * -----------------------------------------------------
-     */
-    $newFileName =
-        sanitizeFileName(
-            $originalName
-        );
+    $newFileName = sanitizeFileName($originalName);
 
-
-    /**
-     * -----------------------------------------------------
-     * 10. Build physical destination
-     * -----------------------------------------------------
-     */
-    $destination =
-        $applicantDir .
+    $destination = $applicantDir .
         DIRECTORY_SEPARATOR .
         $newFileName;
 
-
-    /**
-     * -----------------------------------------------------
-     * 11. Prevent filename collision
-     * -----------------------------------------------------
+    /*
+     * Prevent overwriting a file with the same name.
      */
     if (file_exists($destination)) {
-
         $baseName = pathinfo(
             $newFileName,
             PATHINFO_FILENAME
@@ -505,110 +386,41 @@ function uploadDocument(
             PATHINFO_EXTENSION
         );
 
-        $newFileName =
-            $baseName .
+        $newFileName = $baseName .
             '_' .
             date('Ymd_His') .
             '_' .
-            bin2hex(
-                random_bytes(4)
-            );
+            bin2hex(random_bytes(4));
 
         if ($fileExtension !== '') {
             $newFileName .= '.' . $fileExtension;
         }
 
-        $destination =
-            $applicantDir .
+        $destination = $applicantDir .
             DIRECTORY_SEPARATOR .
             $newFileName;
     }
 
-
-    /**
-     * -----------------------------------------------------
-     * 12. Move uploaded file
-     * -----------------------------------------------------
-     */
-    if (
-        !move_uploaded_file(
-            $file['tmp_name'],
-            $destination
-        )
-    ) {
+    if (!move_uploaded_file($tmpName, $destination)) {
         throw new RuntimeException(
-            "Unable to move uploaded {$documentType} " .
-                "file to: {$destination}"
+            "Unable to save the {$documentType} file."
         );
     }
 
-
-    /**
-     * -----------------------------------------------------
-     * 13. Verify physical file
-     * -----------------------------------------------------
-     */
-    if (!file_exists($destination)) {
-        throw new RuntimeException(
-            'Uploaded file could not be verified: ' .
-                $destination
-        );
-    }
-
-
-    /**
-     * -----------------------------------------------------
-     * 14. Database-relative path
-     * -----------------------------------------------------
-     *
-     * IMPORTANT:
-     *
-     * Store only:
-     *
-     * uploads/14/resume.pdf
-     *
-     * NOT:
-     *
-     * C:\xampp\htdocs\...
-     *
-     * NOT:
-     *
-     * hrms-capstone/modules/recruitment/...
-     *
-     * NOT:
-     *
-     * uploads/resumes/14/...
-     */
-    $relativePath =
-        'uploads/' .
+    $relativePath = 'uploads/' .
         $applicationId .
         '/' .
         $newFileName;
 
-
-    /**
-     * -----------------------------------------------------
-     * 15. Save document metadata
-     * -----------------------------------------------------
-     */
     try {
-
-        $documentId =
-            $documentsModel->create(
-                $applicationId,
-                $documentType,
-                $originalName,
-                $relativePath,
-                $fileSize
-            );
+        $documentId = $documentsModel->create(
+            $applicationId,
+            $documentType,
+            $originalName,
+            $relativePath,
+            $fileSize
+        );
     } catch (Throwable $e) {
-
-        /**
-         * Database insert failed.
-         *
-         * Remove physical file to prevent
-         * orphaned uploads.
-         */
         if (file_exists($destination)) {
             @unlink($destination);
         }
@@ -616,149 +428,65 @@ function uploadDocument(
         throw $e;
     }
 
-
-    /**
-     * -----------------------------------------------------
-     * 16. Return upload information
-     * -----------------------------------------------------
-     */
     return [
-        'document_id' =>
-        $documentId,
-
-        'document_type' =>
-        $documentType,
-
-        'original_name' =>
-        $originalName,
-
-        'file_name' =>
-        $newFileName,
-
-        'file_path' =>
-        $relativePath,
-
-        'file_extension' =>
-        $extension,
-
-        'file_size' =>
-        $fileSize,
-
-        /**
-         * Physical path is returned for debugging,
-         * but is NOT stored in the database.
-         */
-        'physical_path' =>
-        $destination
+        'document_id'    => $documentId,
+        'document_type'  => $documentType,
+        'original_name'  => $originalName,
+        'file_name'      => $newFileName,
+        'file_path'      => $relativePath,
+        'file_extension' => $extension,
+        'file_size'      => $fileSize
     ];
 }
 
-
-/**
- =========================================================
- * MODELS
- * =========================================================
- */
-
-$applicationModel =
-    new Application();
-
-$educationModel =
-    new Education();
-
-$experienceModel =
-    new Experience();
-
-$documentsModel =
-    new Documents();
-
-
 /**
  * =========================================================
- * REQUEST
+ * INITIALIZE MODELS
  * =========================================================
  */
+$applicationModel = new Application();
+$educationModel = new Education();
+$experienceModel = new Experience();
+$documentsModel = new Documents();
 
-$action =
-    $_GET['action'] ?? '';
-
+$action = $_GET['action'] ?? '';
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 try {
-
     /**
      * =====================================================
      * GET APPLICATIONS
      * =====================================================
      */
-    if (
-        $_SERVER['REQUEST_METHOD'] === 'GET' &&
-        $action === 'applications'
-    ) {
+    if ($method === 'GET' && $action === 'applications') {
+        $applications = $applicationModel->getAll();
 
-        $applications =
-            $applicationModel->getAll();
-
-
-        foreach (
-            $applications
-            as &$application
-        ) {
-
-            $firstName =
-                $application['first_name'] ?? '';
-
-            $middleName =
-                $application['middle_name'] ?? '';
-
-            $lastName =
-                $application['last_name'] ?? '';
-
-            $application['full_name'] =
-                trim(
-                    $firstName .
-                        ' ' .
-                        $middleName .
-                        ' ' .
-                        $lastName
-                );
+        foreach ($applications as &$application) {
+            $application['full_name'] = trim(
+                ($application['first_name'] ?? '') . ' ' .
+                    ($application['middle_name'] ?? '') . ' ' .
+                    ($application['last_name'] ?? '')
+            );
         }
 
         unset($application);
 
-
         respond([
-            'success' =>
-            true,
-
-            'data' =>
-            $applications
+            'success' => true,
+            'data' => $applications
         ]);
     }
-
 
     /**
      * =====================================================
      * CREATE APPLICATION
      * =====================================================
      */
-    if (
-        $_SERVER['REQUEST_METHOD'] === 'POST' &&
-        $action === 'applications'
-    ) {
+    if ($method === 'POST' && $action === 'applications') {
+        $data = normalizeRequestData(requestData());
 
         /**
-         * -------------------------------------------------
-         * Get request data
-         * -------------------------------------------------
-         */
-        $data =
-            requestData();
-
-
-        /**
-         * -------------------------------------------------
-         * Required fields
-         * -------------------------------------------------
+         * Required text fields.
          */
         $requiredFields = [
             'jobId',
@@ -773,130 +501,56 @@ try {
             'yearGraduated'
         ];
 
-
-        foreach (
-            $requiredFields
-            as $field
-        ) {
-
+        foreach ($requiredFields as $field) {
             if (
-                !isset($data[$field]) ||
-                trim(
-                    (string) $data[$field]
-                ) === ''
+                !array_key_exists($field, $data) ||
+                trim((string) $data[$field]) === ''
             ) {
-
                 respond([
-                    'success' =>
-                    false,
-
-                    'message' =>
-                    "Missing required field: {$field}"
+                    'success' => false,
+                    'message' => "Missing required field: {$field}"
                 ], 400);
             }
         }
 
-
         /**
-         * -------------------------------------------------
-         * Job ID
-         * -------------------------------------------------
+         * Validate job ID.
          */
-        $jobId =
-            (int) $data['jobId'];
+        $jobId = filter_var(
+            $data['jobId'],
+            FILTER_VALIDATE_INT
+        );
 
-
-        if ($jobId <= 0) {
-
+        if ($jobId === false || $jobId <= 0) {
             respond([
-                'success' =>
-                false,
-
-                'message' =>
-                'Invalid job ID.'
+                'success' => false,
+                'message' => 'Invalid job ID. Please select a valid job before submitting.'
             ], 400);
         }
 
-
         /**
-         * -------------------------------------------------
-         * Check vacancy
-         * -------------------------------------------------
+         * Check whether the job is still accepting applications.
          */
-        if (
-            !$applicationModel->canApply(
-                $jobId
-            )
-        ) {
-
+        if (!$applicationModel->canApply((int) $jobId)) {
             respond([
-                'success' =>
-                false,
-
-                'message' =>
-                'This job is no longer accepting applications.'
+                'success' => false,
+                'message' => 'This job is no longer accepting applications.'
             ], 409);
         }
 
-
         /**
-         * =================================================
-         * PERSONAL INFORMATION
-         * =================================================
+         * Personal information.
          */
+        $firstName = inputValue($data, 'firstName');
+        $middleName = inputValue($data, 'middleName');
+        $lastName = inputValue($data, 'lastName');
 
-        $firstName =
-            inputValue(
-                $data,
-                'firstName'
-            );
+        $email = inputValue($data, 'email');
+        $contact = inputValue($data, 'contact');
+        $gender = inputValue($data, 'gender');
+        $birthplace = inputValue($data, 'birthplace');
+        $birthdate = inputValue($data, 'birthdate');
 
-        $middleName =
-            inputValue(
-                $data,
-                'middleName'
-            );
-
-        $lastName =
-            inputValue(
-                $data,
-                'lastName'
-            );
-
-        $email =
-            inputValue(
-                $data,
-                'email'
-            );
-
-        $contact =
-            inputValue(
-                $data,
-                'contact'
-            );
-
-        $gender =
-            inputValue(
-                $data,
-                'gender'
-            );
-
-        $birthplace =
-            inputValue(
-                $data,
-                'birthplace'
-            );
-
-        $birthdate =
-            inputValue(
-                $data,
-                'birthdate'
-            );
-
-
-        /**
-         * Empty date becomes NULL.
-         */
         if (
             $birthdate === '' ||
             $birthdate === '0000-00-00'
@@ -904,170 +558,97 @@ try {
             $birthdate = null;
         }
 
+        $age = (int) inputValue($data, 'age', 0);
+        $civilStatus = inputValue($data, 'civilStatus');
+        $citizenship = inputValue($data, 'citizenship');
+        $religion = inputValue($data, 'religion');
 
-        $age =
-            (int) inputValue(
-                $data,
-                'age',
-                0
-            );
+        $address = inputValue($data, 'address');
 
-        $civilStatus =
-            inputValue(
-                $data,
-                'civilStatus'
-            );
+        $currentAddress = inputValue(
+            $data,
+            'currentAddress',
+            $address
+        );
 
-        $citizenship =
-            inputValue(
-                $data,
-                'citizenship'
-            );
+        $permanentAddress = inputValue(
+            $data,
+            'permanentAddress',
+            $address
+        );
 
-        $religion =
-            inputValue(
-                $data,
-                'religion'
-            );
-
-        $address =
-            inputValue(
-                $data,
-                'address'
-            );
-
-        $currentAddress =
-            inputValue(
-                $data,
-                'currentAddress',
-                $address
-            );
-
-        $permanentAddress =
-            inputValue(
-                $data,
-                'permanentAddress',
-                $address
-            );
-
-        $summary =
-            inputValue(
-                $data,
-                'summary'
-            );
-
-        $coverLetter =
-            inputValue(
-                $data,
-                'coverLetter'
-            );
-
+        $summary = inputValue($data, 'summary');
 
         /**
-         * =================================================
-         * CREATE APPLICATION
-         * =================================================
-         *
-         * IMPORTANT:
-         *
-         * The order MUST match Application::create().
-         *
-         * The resume is intentionally empty here because
-         * the application ID must first be generated before
-         * we can create:
-         *
-         * uploads/{applicationId}/
+         * Education information.
          */
-        $applicationId =
-            $applicationModel->create(
-                $jobId,
-                $firstName,
-                $middleName,
-                $lastName,
-                $email,
-                $contact,
-                $address,
-                $summary,
-                '',
-                'Online Posting',
-                $gender,
-                $birthplace,
-                $birthdate,
-                $age,
-                $civilStatus,
-                $citizenship,
-                $religion,
-                $currentAddress,
-                $permanentAddress
-            );
+        $school = inputValue($data, 'school');
+        $degree = inputValue($data, 'degree');
+        $yearGraduated = inputValue($data, 'yearGraduated');
 
+        /**
+         * Experience information.
+         */
+        $company = inputValue($data, 'company');
+        $position = inputValue($data, 'position');
+        $startDate = inputValue($data, 'startDate');
+        $endDate = inputValue($data, 'endDate');
 
-        $applicationId =
-            (int) $applicationId;
+        $experienceDescription = inputValue(
+            $data,
+            'experienceDescription'
+        );
 
+        /**
+         * Normalize optional date fields.
+         */
+        if ($startDate === '') {
+            $startDate = null;
+        }
+
+        if ($endDate === '') {
+            $endDate = null;
+        }
+
+        /**
+         * Create the application first to obtain its ID.
+         *
+         * Keep this argument order synchronized with
+         * Application::create().
+         */
+        $applicationId = $applicationModel->create(
+            (int) $jobId,
+            $firstName,
+            $middleName,
+            $lastName,
+            $email,
+            $contact,
+            $address,
+            $summary,
+            '',
+            'Online Posting',
+            $gender,
+            $birthplace,
+            $birthdate,
+            $age,
+            $civilStatus,
+            $citizenship,
+            $religion,
+            $currentAddress,
+            $permanentAddress
+        );
+
+        $applicationId = (int) $applicationId;
 
         if ($applicationId <= 0) {
-
             throw new RuntimeException(
                 'Application was created but no valid application ID was returned.'
             );
         }
 
-
         /**
-         * =================================================
-         * CREATE APPLICANT UPLOAD FOLDER
-         * =================================================
-         *
-         * EXACT PHYSICAL LOCATION:
-         *
-         * C:\xampp\htdocs\hrms-capstone\modules\
-         * recruitment\uploads\{applicationId}\
-         *
-         * Example:
-         *
-         * C:\xampp\htdocs\hrms-capstone\modules\
-         * recruitment\uploads\14\
-         *
-         * There is NO:
-         *
-         * uploads\resumes\
-         *
-         * and NO:
-         *
-         * uploads\FirstName_LastName\
+         * Save education information.
          */
-        $applicantFolder =
-            createApplicantUploadDirectory(
-                $applicationId
-            );
-
-
-        /**
-         * =================================================
-         * EDUCATION
-         * =================================================
-         */
-
-        $school =
-            inputValue(
-                $data,
-                'school'
-            );
-
-        $degree =
-            inputValue(
-                $data,
-                'degree'
-            );
-
-        $yearGraduated =
-            inputValue(
-                $data,
-                'yearGraduated'
-            );
-
-
         $educationModel->create(
             $applicationId,
             $school,
@@ -1075,56 +656,16 @@ try {
             $yearGraduated
         );
 
-
         /**
-         * =================================================
-         * EXPERIENCE
-         * =================================================
-         */
-
-        $company =
-            inputValue(
-                $data,
-                'company'
-            );
-
-        $position =
-            inputValue(
-                $data,
-                'position'
-            );
-
-        $startDate =
-            inputValue(
-                $data,
-                'startDate'
-            );
-
-        $endDate =
-            inputValue(
-                $data,
-                'endDate'
-            );
-
-        $experienceDescription =
-            inputValue(
-                $data,
-                'experienceDescription'
-            );
-
-
-        /**
-         * Only create experience when something
-         * was entered.
+         * Save experience only when information was supplied.
          */
         if (
             $company !== '' ||
             $position !== '' ||
-            $startDate !== '' ||
-            $endDate !== '' ||
+            $startDate !== null ||
+            $endDate !== null ||
             $experienceDescription !== ''
         ) {
-
             $experienceModel->create(
                 $applicationId,
                 $company,
@@ -1135,33 +676,16 @@ try {
             );
         }
 
-
         /**
-         * =================================================
-         * DOCUMENT UPLOADS
-         * =================================================
+         * Upload documents.
          *
-         * Frontend field names:
+         * Supports both regular field names and ap-prefixed
+         * field names from the application form.
          *
-         * resume
-         * diploma
-         * tor
-         * certs
-         * other
-         *
-         * Physical result:
-         *
-         * uploads/
-         *     {applicationId}/
-         *         resume.pdf
-         *         diploma.docx
-         *         tor.pdf
-         *         certs.pdf
-         *         other.docx
+         * The applicant directory is created only when
+         * an actual file is uploaded.
          */
-
         $uploadedDocuments = [];
-
 
         $documentTypes = [
             'resume',
@@ -1171,117 +695,59 @@ try {
             'other'
         ];
 
+        foreach ($documentTypes as $documentType) {
+            $file = getApplicantFile($documentType);
 
-        foreach (
-            $documentTypes
-            as $documentType
-        ) {
-
-            /**
-             * File was not submitted.
-             */
-            if (
-                !isset(
-                    $_FILES[$documentType]
-                )
-            ) {
+            if ($file === null) {
                 continue;
             }
 
-
-            /**
-             * User did not select a file.
-             */
             if (
-                ($_FILES[$documentType]['error'] ?? null)
+                ($file['error'] ?? UPLOAD_ERR_NO_FILE)
                 === UPLOAD_ERR_NO_FILE
             ) {
                 continue;
             }
 
+            $uploaded = uploadDocument(
+                $documentsModel,
+                $applicationId,
+                $documentType,
+                $file
+            );
+
+            $uploadedDocuments[$documentType] = $uploaded;
 
             /**
-             * Upload actual file.
+             * Keep the application's resume column synchronized.
              */
-            $uploaded =
-                uploadDocument(
-                    $documentsModel,
+            if ($documentType === 'resume') {
+                $updated = $applicationModel->updateResumePath(
                     $applicationId,
-                    $documentType,
-                    $_FILES[$documentType]
+                    $uploaded['file_path']
                 );
 
-
-            $uploadedDocuments[$documentType] =
-                $uploaded;
-
-
-            /**
-             * =================================================
-             * KEEP rao_applications.resume SYNCHRONIZED
-             * =================================================
-             *
-             * Example:
-             *
-             * rao_applications.resume
-             *
-             * uploads/14/My_Resume.pdf
-             */
-            if (
-                $documentType === 'resume'
-            ) {
-
-                $updated =
-                    $applicationModel
-                    ->updateResumePath(
-                        $applicationId,
-                        $uploaded['file_path']
-                    );
-
-
                 if (!$updated) {
-
                     throw new RuntimeException(
-                        'Resume uploaded successfully, ' .
-                            'but the application resume path could not be updated.'
+                        'Resume was uploaded, but the application resume path could not be updated.'
                     );
                 }
             }
         }
 
-
         /**
-         * =================================================
-         * SUCCESS
-         * =================================================
+         * Success response.
          */
         respond([
-            'success' =>
-            true,
-
-            'message' =>
-            'Application submitted successfully.',
-
-            'application_id' =>
-            $applicationId,
-
-            /**
-             * Relative path only.
-             */
-            'applicant_folder' =>
-            'uploads/' .
-                $applicationId .
-                '/',
-
-            /**
-             * Useful for frontend/debugging.
-             */
-            'documents' =>
-            $uploadedDocuments
-
+            'success' => true,
+            'message' => 'Application submitted successfully.',
+            'application_id' => $applicationId,
+            'applicant_folder' => empty($uploadedDocuments)
+                ? null
+                : 'uploads/' . $applicationId . '/',
+            'documents' => $uploadedDocuments
         ], 201);
     }
-
 
     /**
      * =====================================================
@@ -1289,31 +755,17 @@ try {
      * =====================================================
      */
     respond([
-        'success' =>
-        false,
-
-        'message' =>
-        'Invalid request.'
+        'success' => false,
+        'message' => 'Invalid request.'
     ], 404);
 } catch (Throwable $e) {
-
-    /**
-     * Server-side logging.
-     */
     error_log(
         'Recruitment Applications API Error: ' .
             $e->getMessage()
     );
 
-
-    /**
-     * Return error to frontend.
-     */
     respond([
-        'success' =>
-        false,
-
-        'message' =>
-        $e->getMessage()
+        'success' => false,
+        'message' => $e->getMessage()
     ], 500);
 }
