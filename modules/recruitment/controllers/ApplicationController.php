@@ -1483,86 +1483,66 @@ class ApplicationController
             // RESUME UPLOAD
             // =========================
 
+            // =========================
+            // RESUME UPLOAD
+            // =========================
+
             $resumePath = null;
 
             if ($hasResume) {
+                // Controller: modules/recruitment/controllers/
+                // Destination: modules/recruitment/JobPortal/uploads/{id}/
+                $uploadRoot = dirname(__DIR__) . '/JobPortal/uploads';
+                $uploadDir = $uploadRoot . '/' . $application_id;
 
-                $uploadDir =
-                    dirname(__DIR__) .
-                    '/uploads/resumes/';
-
-                // Create directory if it doesn't exist
-                if (!is_dir($uploadDir)) {
-
-                    if (!mkdir($uploadDir, 0777, true)) {
-
-                        throw new Exception(
-                            "Unable to create upload directory: " .
-                                $uploadDir
-                        );
-                    }
-                }
-
-                // Check directory writable
-                if (!is_writable($uploadDir)) {
-
+                if (
+                    !is_dir($uploadDir) &&
+                    !mkdir($uploadDir, 0755, true) &&
+                    !is_dir($uploadDir)
+                ) {
                     throw new Exception(
-                        "Upload directory is not writable: " .
-                            $uploadDir
+                        "Unable to create upload directory."
                     );
                 }
 
-                // Full physical destination
-                $destination =
-                    $uploadDir .
-                    $fileName;
+                if (!is_writable($uploadDir)) {
+                    throw new Exception(
+                        "Upload directory is not writable."
+                    );
+                }
 
-                // Move uploaded resume
+                // Use a unique filename; do not trust the original filename.
+                $fileName = 'resume_' .
+                    date('Ymd_His') . '_' .
+                    bin2hex(random_bytes(4)) . '.pdf';
+
+                $destination = $uploadDir . '/' . $fileName;
+
                 if (!move_uploaded_file(
                     $_FILES['resume']['tmp_name'],
                     $destination
                 )) {
-
                     throw new Exception(
                         "Unable to save uploaded resume."
                     );
                 }
 
-                // Path stored in database
-                $resumePath =
-                    'uploads/resumes/' .
-                    $fileName;
+                // Store a relative path in the database.
+                $resumePath = 'JobPortal/uploads/' .
+                    $application_id . '/' . $fileName;
 
-                // =========================
-                // UPDATE APPLICATION
-                // =========================
-
-                $updateResume =
-                    $db->prepare("
-            UPDATE rao_applications
-            SET resume = :resume
-            WHERE id = :id
-        ");
+                $updateResume = $db->prepare("
+                    UPDATE rao_applications
+                    SET resume = :resume
+                    WHERE id = :id
+                ");
 
                 $updateResume->execute([
                     ':resume' => $resumePath,
-                    ':id'     => $application_id
+                    ':id' => $application_id
                 ]);
             }
 
-
-
-            // =========================
-            // SUCCESS
-            // =========================
-
-            header(
-                "Location: index.php?page=applications&msg=" .
-                    urlencode(
-                        "Applicant saved successfully for " .
-                            $job['title']
-                    )
-            );
 
             exit;
         } catch (Throwable $e) {
