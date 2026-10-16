@@ -2,7 +2,7 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
-require_once __DIR__ . '/../database/db.php';
+require_once __DIR__ . '/../../../../database/db.php';
 require_once __DIR__ . '/../classes/Job.php';
 
 function respond($data, $status = 200)
@@ -78,7 +78,6 @@ try {
                 'max_applicants' => $maxApplicants,
                 'is_full' => $isFull
             ];
-
         }, $jobModel->all());
 
         respond($jobs);
@@ -154,8 +153,6 @@ try {
     respond([
         'error' => 'Unknown API request'
     ], 404);
-
-
 } catch (Throwable $e) {
 
     respond([
