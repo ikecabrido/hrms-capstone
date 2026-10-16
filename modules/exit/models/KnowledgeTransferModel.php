@@ -4,6 +4,72 @@ require_once 'ExitManagementModel.php';
 
 class KnowledgeTransferModel extends ExitManagementModel
 {
+    private ?bool $ldIntegrationAvailable = null;
+
+    /**
+     * Check whether the required L&D tables and schema columns are available on this server.
+     * This is a read-only feature check and never attempts schema changes.
+     */
+    public function ldKnowledgeTransferIntegrationAvailable(): bool
+    {
+        if ($this->ldIntegrationAvailable !== null) {
+            return $this->ldIntegrationAvailable;
+        }
+
+        $requiredTables = ['ld_enrollment', 'ld_course', 'ld_learning_path', 'ld_learning_path_item'];
+        foreach ($requiredTables as $tableName) {
+            if (!$this->tableExists($tableName)) {
+                $this->ldIntegrationAvailable = false;
+                return false;
+            }
+        }
+
+        $checks = [
+            'ld_learning_path' => ['kt_plan_id', 'is_public', 'type'],
+            'ld_enrollment' => ['enrolled_at', 'created_at'],
+            'ld_learning_path_item' => ['order_index', 'status'],
+        ];
+
+        foreach ($checks as $tableName => $columns) {
+            $placeholders = implode(',', array_fill(0, count($columns), '?'));
+            $stmt = $this->db->prepare(
+                "SELECT COUNT(*)
+                 FROM information_schema.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = :table_name
+                   AND COLUMN_NAME IN ($placeholders)"
+            );
+            $params = [$tableName];
+            foreach ($columns as $columnName) {
+                $params[] = $columnName;
+            }
+            $stmt->execute($params);
+
+            if ((int)$stmt->fetchColumn() < count($columns)) {
+                $this->ldIntegrationAvailable = false;
+                return false;
+            }
+        }
+
+        $uniqueEnrollmentIndexStmt = $this->db->prepare(
+            "SELECT COUNT(*)
+             FROM (
+                 SELECT INDEX_NAME
+                 FROM information_schema.STATISTICS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = 'ld_enrollment'
+                   AND NON_UNIQUE = 0
+                   AND COLUMN_NAME IN ('learner_id', 'course_id')
+                 GROUP BY INDEX_NAME
+                 HAVING COUNT(DISTINCT COLUMN_NAME) = 2
+             ) AS unique_indexes"
+        );
+        $uniqueEnrollmentIndexStmt->execute();
+
+        $this->ldIntegrationAvailable = ((int)$uniqueEnrollmentIndexStmt->fetchColumn()) > 0;
+        return $this->ldIntegrationAvailable;
+    }
+
     /**
      * Create a knowledge transfer plan
      */
@@ -203,6 +269,322 @@ class KnowledgeTransferModel extends ExitManagementModel
             WHERE id = ?
         ");
         return $stmt->execute([$planId]);
+    }
+
+    /**
+     * Check whether a schema column exists on a database table.
+     */
+    public function columnExists(string $tableName, string $columnName): bool
+    {
+        try {
+            $stmt = $this->db->prepare("SHOW COLUMNS FROM `{$tableName}` LIKE ?");
+            $stmt->execute([$columnName]);
+            return (bool)$stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get eligible L&D courses for the resignee, limited to completed/in-progress enrollments.
+     */
+    public function getResigneeCoursesForKnowledgeTransfer(int $employeeId): array
+    {
+        if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT DISTINCT e.course_id, c.title AS course_title, c.status AS course_status, e.status AS enrollment_status
+             FROM ld_enrollment e
+             INNER JOIN ld_course c ON c.id = e.course_id
+             WHERE e.learner_id = :employee_id
+               AND e.status IN ('completed', 'in_progress')
+             ORDER BY c.title ASC"
+        );
+        $stmt->execute([':employee_id' => $employeeId]);
+
+        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($courses as &$course) {
+            $course['id'] = (int)($course['course_id'] ?? 0);
+            $course['title'] = $course['course_title'] ?? 'Untitled course';
+            $course['is_default_selected'] = in_array(($course['enrollment_status'] ?? ''), ['completed', 'in_progress'], true);
+        }
+        unset($course);
+
+        return $courses;
+    }
+
+    /**
+     * Get any generated L&D learning path linked to a KT plan.
+     */
+    public function getLearningPathForPlan(int $planId): ?array
+    {
+        if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT lp.id,
+                    lp.title,
+                    lp.description,
+                    lp.assigned_to,
+                    lp.status,
+                    lp.type,
+                    lp.kt_plan_id,
+                    lp.is_public,
+                    lp.created_at,
+                    lp.updated_at,
+                    CONCAT(s.first_name, ' ', s.last_name) AS successor_name
+             FROM ld_learning_path lp
+             LEFT JOIN em_employees s ON s.employee_id = lp.assigned_to
+             WHERE lp.kt_plan_id = :plan_id
+               AND lp.type = 'knowledge_transfer'
+             ORDER BY lp.id DESC
+             LIMIT 1"
+        );
+        $stmt->execute([':plan_id' => $planId]);
+        $path = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$path) {
+            return null;
+        }
+
+        $itemStmt = $this->db->prepare(
+            "SELECT lpi.id,
+                    lpi.learning_path_id,
+                    lpi.item_type,
+                    lpi.reference_id,
+                    lpi.order_index,
+                    lpi.status,
+                    c.title AS course_title,
+                    c.status AS course_status
+             FROM ld_learning_path_item lpi
+             LEFT JOIN ld_course c ON c.id = lpi.reference_id
+             WHERE lpi.learning_path_id = :path_id
+             ORDER BY lpi.order_index ASC, lpi.id ASC"
+        );
+        $itemStmt->execute([':path_id' => (int)($path['id'] ?? 0)]);
+        $path['items'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $path;
+    }
+
+    /**
+     * Create an L&D learning path from the KT plan's selected courses.
+     */
+    public function generateLearningPathForPlan(int $planId, array $selectedCourseIds): array
+    {
+        if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
+            return ['success' => false, 'message' => 'L&D integration is not available on this server'];
+        }
+
+        $courseIds = array_values(array_filter(array_values(array_unique(array_map('intval', $selectedCourseIds))), static fn ($id) => $id > 0));
+
+        if (empty($courseIds)) {
+            return ['success' => false, 'message' => 'Select at least one eligible course to generate the learning path.'];
+        }
+
+        $createdBy = (int)($_SESSION['employee_id'] ?? 0);
+        if ($createdBy <= 0) {
+            return ['success' => false, 'message' => 'Unable to identify the current user for the learning path.'];
+        }
+
+        try {
+            $this->db->beginTransaction();
+
+            $employeeName = $this->db->prepare("SELECT CONCAT(first_name, ' ', last_name) FROM em_employees WHERE employee_id = :employee_id LIMIT 1");
+            $successorName = $this->db->prepare("SELECT CONCAT(first_name, ' ', last_name) FROM em_employees WHERE employee_id = :successor_id LIMIT 1");
+
+            $planLockStmt = $this->db->prepare(
+                "SELECT id
+                 FROM exit_knowledge_transfer_plans
+                 WHERE id = :plan_id
+                 FOR UPDATE"
+            );
+            $planLockStmt->execute([':plan_id' => $planId]);
+            $lockedPlan = $planLockStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$lockedPlan) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
+            }
+
+            $planStmt = $this->db->prepare(
+                "SELECT employee_id, successor_id, status
+                 FROM exit_knowledge_transfer_plans
+                 WHERE id = :plan_id
+                 LIMIT 1"
+            );
+            $planStmt->execute([':plan_id' => $planId]);
+            $plan = $planStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$plan) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
+            }
+
+            $planEmployeeId = (int)($plan['employee_id'] ?? 0);
+            $planSuccessorId = (int)($plan['successor_id'] ?? 0);
+            $planStatus = strtolower(trim((string)($plan['status'] ?? '')));
+
+            if ($planEmployeeId <= 0 || $planSuccessorId <= 0) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'The plan must have both a resignee and successor to generate a learning path.'];
+            }
+
+            if (in_array($planStatus, ['archived', 'cancelled', 'completed'], true) || $planSuccessorId === $planEmployeeId) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'This knowledge transfer plan is not eligible for generation.'];
+            }
+
+            $eligibleCoursesStmt = $this->db->prepare(
+                "SELECT DISTINCT e.course_id
+                 FROM ld_enrollment e
+                 INNER JOIN ld_course c ON c.id = e.course_id AND c.status = 'active'
+                 WHERE e.learner_id = :employee_id
+                   AND e.status IN ('completed', 'in_progress')
+                   AND e.course_id IN (" . implode(',', array_fill(0, count($courseIds), '?')) . ")"
+            );
+            $eligibleCoursesStmt->execute(array_merge([$planEmployeeId], $courseIds));
+            $eligibleCourseIds = array_map('intval', array_column($eligibleCoursesStmt->fetchAll(PDO::FETCH_ASSOC), 'course_id'));
+
+            if (count($eligibleCourseIds) !== count($courseIds)) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'One or more selected courses are not eligible for the resignee.'];
+            }
+
+            $duplicateCheckStmt = $this->db->prepare(
+                "SELECT id
+                 FROM ld_learning_path
+                 WHERE kt_plan_id = :plan_id
+                   AND type = 'knowledge_transfer'
+                 ORDER BY id DESC
+                 LIMIT 1"
+            );
+            $duplicateCheckStmt->execute([':plan_id' => $planId]);
+            if ($duplicateCheckStmt->fetch(PDO::FETCH_ASSOC)) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'already generated or in progress'];
+            }
+
+            $employeeName->execute([':employee_id' => $planEmployeeId]);
+            $employeeNameText = trim((string)$employeeName->fetchColumn());
+
+            $successorName->execute([':successor_id' => $planSuccessorId]);
+            $successorNameText = trim((string)$successorName->fetchColumn());
+
+            $pathTitle = 'Knowledge Transfer - ' . ($employeeNameText ?: 'Employee') . ' → ' . ($successorNameText ?: 'Successor');
+            $pathDescription = 'Generated automatically from Exit Knowledge Transfer plan #' . $planId . ' for successor handoff.';
+
+            $pathInsertSql = "
+                INSERT INTO ld_learning_path (instructor_id, title, description, assigned_to, status, type, kt_plan_id, is_public, created_at, updated_at)
+                VALUES (:instructor_id, :title, :description, :assigned_to, 'active', 'knowledge_transfer', :kt_plan_id, 0, NOW(), NOW())
+            ";
+            $pathStmt = $this->db->prepare($pathInsertSql);
+            $pathStmt->execute([
+                ':instructor_id' => $createdBy,
+                ':title' => $pathTitle,
+                ':description' => $pathDescription,
+                ':assigned_to' => $planSuccessorId,
+                ':kt_plan_id' => $planId,
+            ]);
+
+            $pathId = (int)$this->db->lastInsertId();
+
+            $itemStmt = $this->db->prepare(
+                "INSERT INTO ld_learning_path_item (learning_path_id, item_type, reference_id, order_index, status)
+                 VALUES (:learning_path_id, 'course', :reference_id, :order_index, 'active')"
+            );
+
+            foreach ($courseIds as $index => $courseId) {
+                $itemStmt->execute([
+                    ':learning_path_id' => $pathId,
+                    ':reference_id' => $courseId,
+                    ':order_index' => $index + 1,
+                ]);
+            }
+
+            $enrollmentInsertStmt = $this->db->prepare(
+                "INSERT INTO ld_enrollment (learner_id, course_id, status, enrolled_at, created_at)
+                 VALUES (:learner_id, :course_id, 'enrolled', NOW(), NOW())
+                 ON DUPLICATE KEY UPDATE id = id"
+            );
+
+            foreach ($courseIds as $courseId) {
+                $enrollmentInsertStmt->execute([
+                    ':learner_id' => $planSuccessorId,
+                    ':course_id' => $courseId,
+                ]);
+            }
+
+            $this->db->commit();
+
+            return ['success' => true, 'message' => 'Knowledge transfer learning path generated successfully.', 'path_id' => $pathId, 'course_count' => count($courseIds)];
+        } catch (PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            error_log('generateLearningPathForPlan PDOException: ' . $e->getMessage());
+
+            switch ((int)($e->errorInfo[1] ?? 0)) {
+                case 1062:
+                    return ['success' => false, 'message' => 'already generated or in progress'];
+                case 1213:
+                case 1205:
+                    return ['success' => false, 'message' => 'Another request is processing this plan, please retry'];
+                case 1452:
+                    return ['success' => false, 'message' => 'A referenced employee or course no longer exists'];
+                default:
+                    return ['success' => false, 'message' => 'Failed to generate the learning path.'];
+            }
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('generateLearningPathForPlan failure: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to generate the learning path.'];
+        }
+    }
+
+    /**
+     * Toggle the public/private visibility of the generated L&D path for a KT plan.
+     */
+    public function toggleLearningPathPublic(int $planId, bool $public): array
+    {
+        if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
+            return ['success' => false, 'message' => 'L&D integration is not available on this server'];
+        }
+
+        $lookupStmt = $this->db->prepare(
+            "SELECT id
+             FROM ld_learning_path
+             WHERE kt_plan_id = :plan_id
+               AND type = 'knowledge_transfer'
+             ORDER BY id DESC
+             LIMIT 1"
+        );
+        $lookupStmt->execute([':plan_id' => $planId]);
+
+        if (!$lookupStmt->fetch(PDO::FETCH_ASSOC)) {
+            return ['success' => false, 'message' => 'No knowledge-transfer learning path was found for this plan.'];
+        }
+
+        $stmt = $this->db->prepare(
+            "UPDATE ld_learning_path
+             SET is_public = :is_public, updated_at = NOW()
+             WHERE kt_plan_id = :plan_id
+               AND type = 'knowledge_transfer'"
+        );
+
+        $stmt->execute([
+            ':is_public' => $public ? 1 : 0,
+            ':plan_id' => $planId,
+        ]);
+
+        return ['success' => true, 'message' => $public ? 'Learning path published.' : 'Learning path made private.', 'is_public' => $public ? 1 : 0];
     }
 
     /**

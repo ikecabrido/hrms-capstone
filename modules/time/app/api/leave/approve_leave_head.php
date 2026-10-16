@@ -74,8 +74,7 @@ $isHrAdmin = AuthController::hasRole('HR_ADMIN') || AuthController::hasRole('hr'
 $isDeptHead = AuthController::hasRole('DEPARTMENT_HEAD') || AuthController::hasRole('department_head') || (is_numeric($sessionRole) && in_array((string) $sessionRole, ['4','5'], true)) || (is_string($sessionRole) && in_array(strtolower($sessionRole), ['department_head','departmenthead','dept_head','depthead'], true));
 
 if (!($isDeptHead || $isHrAdmin)) {
-    // include detected session role in debug message to help diagnose role mismatch
-    respond(403, ['success' => false, 'message' => 'Forbidden - Only department heads or HR admins can approve', 'detected_role' => $sessionRole]);
+    respond(403, ['success' => false, 'message' => 'Forbidden - Only department heads or HR admins can approve']);
 }
 
 // Verify request method
@@ -110,6 +109,11 @@ $leaveRequest = $leaveModel->getById($leave_request_id);
 
 if (!$leaveRequest) {
     respond(404, ['success' => false, 'message' => 'Leave request not found']);
+}
+
+$currentEmployeeId = (int)($_SESSION['employee_id'] ?? 0);
+if ($currentEmployeeId <= 0 || (int)$leaveRequest['employee_id'] === $currentEmployeeId) {
+    respond(403, ['success' => false, 'message' => 'You cannot approve or reject your own leave request.']);
 }
 
 // Verify department head has authority for this employee

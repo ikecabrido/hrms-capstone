@@ -1,6 +1,15 @@
 <?php
 require_once __DIR__ . '/../../auth/guard.php';
 
+$allowedExitRoles = [1, 10];
+if ((($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' || ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST')
+    && (!isset($_SESSION['role_id']) || !in_array((int)$_SESSION['role_id'], $allowedExitRoles, true))) {
+    http_response_code(403);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Permission denied']);
+    exit;
+}
+
 require_once __DIR__ . '/controllers/ExitManagementController.php';
 require_once __DIR__ . '/controllers/ResignationController.php';
 require_once __DIR__ . '/controllers/TerminationController.php';

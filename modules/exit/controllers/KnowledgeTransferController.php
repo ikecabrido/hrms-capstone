@@ -430,6 +430,80 @@ class KnowledgeTransferController extends ExitManagementController
     }
 
     /**
+     * Get all resignee L&D courses eligible for KT generation.
+     */
+    public function getResigneeCourses(int $employeeId): array
+    {
+        if (!$this->transferModel->ldKnowledgeTransferIntegrationAvailable()) {
+            return ['success' => false, 'message' => 'L&D integration is not available on this server'];
+        }
+
+        $courses = $this->transferModel->getResigneeCoursesForKnowledgeTransfer($employeeId);
+        return ['success' => true, 'data' => $courses, 'selected_course_ids' => array_values(array_map(static fn ($course) => (int)($course['id'] ?? 0), array_filter($courses, static fn ($course) => !empty($course['is_default_selected']))))];
+    }
+
+    /**
+     * Generate the successor learning path from the resignee's eligible courses.
+     */
+    public function generateLearningPath(int $planId, array $courseIds): array
+    {
+        if (empty($_SESSION['employee_id'])) {
+            return ['success' => false, 'message' => 'Permission denied'];
+        }
+
+        $planId = (int)$planId;
+        if ($planId <= 0) {
+            return ['success' => false, 'message' => 'Invalid knowledge transfer plan ID.'];
+        }
+
+        if (!$this->transferModel->ldKnowledgeTransferIntegrationAvailable()) {
+            return ['success' => false, 'message' => 'L&D integration is not available on this server'];
+        }
+
+        return $this->transferModel->generateLearningPathForPlan($planId, $courseIds);
+    }
+
+    /**
+     * Toggle the public visibility of the generated L&D KT learning path.
+     */
+    public function toggleLearningPathPublic(int $planId, bool $isPublic): array
+    {
+        if (empty($_SESSION['employee_id'])) {
+            return ['success' => false, 'message' => 'Permission denied'];
+        }
+
+        $planId = (int)$planId;
+        if ($planId <= 0) {
+            return ['success' => false, 'message' => 'Invalid knowledge transfer plan ID.'];
+        }
+
+        if (!$this->transferModel->ldKnowledgeTransferIntegrationAvailable()) {
+            return ['success' => false, 'message' => 'L&D integration is not available on this server'];
+        }
+
+        return $this->transferModel->toggleLearningPathPublic($planId, $isPublic);
+    }
+
+    /**
+     * Get the generated path associated with a KT plan.
+     */
+    public function getLearningPathForPlan(int $planId): array
+    {
+        if (!$this->transferModel->ldKnowledgeTransferIntegrationAvailable()) {
+            return ['success' => false, 'message' => 'L&D integration is not available on this server'];
+        }
+
+        $path = $this->transferModel->getLearningPathForPlan($planId);
+
+        if (!$path) {
+            return ['success' => true, 'path' => null, 'items' => []];
+        }
+
+        $items = $path['items'] ?? [];
+        return ['success' => true, 'path' => $path, 'items' => $items];
+    }
+
+    /**
      * Handle AJAX requests for knowledge transfer
      */
     public function handleAjaxRequest(string $action, array $data = []): array
@@ -485,6 +559,24 @@ class KnowledgeTransferController extends ExitManagementController
 
             case 'get_transfer_items':
                 return $this->getTransferItems($data['plan_id'] ?? 0);
+
+            case 'get_resignee_courses':
+                return $this->getResigneeCourses((int)($data['employee_id'] ?? 0));
+
+            case 'generate_kt_learning_path':
+                return $this->generateLearningPath(
+                    (int)($data['plan_id'] ?? 0),
+                    isset($data['course_ids']) && is_array($data['course_ids']) ? $data['course_ids'] : []
+                );
+
+            case 'toggle_kt_path_public':
+                return $this->toggleLearningPathPublic(
+                    (int)($data['plan_id'] ?? 0),
+                    !empty($data['is_public'])
+                );
+
+            case 'get_kt_learning_path':
+                return $this->getLearningPathForPlan((int)($data['plan_id'] ?? 0));
 
             case 'archive_transfer_plan':
                 return $this->archiveTransferPlan(

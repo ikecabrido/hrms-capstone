@@ -1,5 +1,14 @@
 <?php
 $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
+$ldIntegrationAvailable = false;
+
+try {
+    require_once __DIR__ . '/../models/KnowledgeTransferModel.php';
+    $ldModel = new KnowledgeTransferModel();
+    $ldIntegrationAvailable = $ldModel->ldKnowledgeTransferIntegrationAvailable();
+} catch (Throwable $e) {
+    $ldIntegrationAvailable = false;
+}
 ?>
 <link rel="stylesheet" href="assets/vendor/flatpickr/flatpickr.min.css">
 <link rel="stylesheet" href="assets/css/custom.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/custom.css'); ?>">
@@ -160,6 +169,38 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                 <i class="fas fa-plus"></i> Add Item
                             </button>
                         </div>
+
+                        <?php if ($ldIntegrationAvailable): ?>
+                        <div class="card border-info mt-3 mb-0">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>Learning Path</strong>
+                                <button type="button" class="btn btn-sm btn-primary" id="generateTransferLearningPathBtn">Generate Learning Path</button>
+                            </div>
+                            <div class="card-body">
+                                <div id="ldLearningPathMessage" class="alert alert-light border mb-3">
+                                    Select the leaving employee to review the resignee's completed or in-progress courses.
+                                </div>
+                                <div id="ldCourseChecklist" class="mb-3"></div>
+                                <div id="ldLearningPathGeneratedState" class="d-none">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong id="ldLearningPathTitle">Generated learning path</strong>
+                                            <div class="small text-muted">Successor handoff</div>
+                                        </div>
+                                        <div class="custom-control custom-switch mt-1">
+                                            <input type="checkbox" class="custom-control-input" id="ldLearningPathPublicToggle">
+                                            <label class="custom-control-label" for="ldLearningPathPublicToggle">Public</label>
+                                        </div>
+                                    </div>
+                                    <div id="ldLearningPathItemsList" class="list-group"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <?php else: ?>
+                        <div class="alert alert-secondary mt-3 mb-0">
+                            L&D integration is not available on this server.
+                        </div>
+                        <?php endif; ?>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>

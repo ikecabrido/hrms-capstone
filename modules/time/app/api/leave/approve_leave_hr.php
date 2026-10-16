@@ -70,6 +70,13 @@ if (!$leaveRequest) {
     exit;
 }
 
+$currentEmployeeId = (int)($_SESSION['employee_id'] ?? 0);
+if ($currentEmployeeId <= 0 || (int)$leaveRequest['employee_id'] === $currentEmployeeId) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'You cannot approve or reject your own leave request.']);
+    exit;
+}
+
 // Verify leave is in correct status for approval (must be Pending)
 if ($action === 'APPROVE' && $leaveRequest['status'] !== 'Pending') {
     http_response_code(400);

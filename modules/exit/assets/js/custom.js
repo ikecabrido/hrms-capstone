@@ -2474,6 +2474,200 @@ function submitTransferForm() {
     });
 }
 
+function renderLdCourseChecklist(courses) {
+    const $container = $('#ldCourseChecklist');
+    if (!Array.isArray(courses) || courses.length === 0) {
+        $container.html('<div class="text-muted">No completed or in-progress L&D courses found for this resignee.</div>');
+        return;
+    }
+
+    const html = courses.map((course) => {
+        const courseId = course.id || course.course_id || '';
+        const isChecked = course.is_default_selected ? 'checked' : '';
+        return `
+            <div class="custom-control custom-checkbox mb-2">
+                <input type="checkbox" class="custom-control-input ld-course-checkbox" id="ld-course-${courseId}" value="${courseId}" ${isChecked}>
+                <label class="custom-control-label" for="ld-course-${courseId}">${escapeHtml(course.title || 'Untitled course')}</label>
+            </div>
+        `;
+    }).join('');
+
+    $container.html(html);
+}
+
+function refreshTransferLearningPathState(planId) {
+    if (!planId) {
+        $('#ldLearningPathGeneratedState').addClass('d-none');
+        $('#ldLearningPathMessage').text('Select the leaving employee to review the resignee\'s completed or in-progress courses.');
+        return;
+    }
+
+    $.post('exit_management.php', {
+        ajax_action: 'get_kt_learning_path',
+        controller: 'transfer',
+        plan_id: planId
+    }, 'json').done(function(response) {
+        if (!response || !response.success) {
+            return;
+        }
+
+        const path = response.path || null;
+        if (!path) {
+            $('#ldLearningPathGeneratedState').addClass('d-none');
+            $('#ldLearningPathMessage').text('No learning path has been generated yet for this transfer plan.');
+            return;
+        }
+
+        const items = Array.isArray(response.items) ? response.items : [];
+        $('#ldLearningPathTitle').text(path.title || 'Generated learning path');
+        $('#ldLearningPathPublicToggle').prop('checked', Number(path.is_public || 0) === 1);
+        $('#ldLearningPathGeneratedState').removeClass('d-none');
+        $('#ldLearningPathMessage').text('Learning path is already generated for this plan.');
+
+        const listHtml = items.length ? items.map((item) => `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>${escapeHtml(item.item_type || 'course')}</span>
+                    <span class="badge badge-light">#${escapeHtml(String(item.reference_id || ''))}</span>
+                </div>
+            </div>
+        `).join('') : '<div class="list-group-item text-muted">No items available for this generated path.</div>';
+
+        $('#ldLearningPathItemsList').html(listHtml);
+    });
+}
+
+function loadResigneeCoursesForTransfer() {
+    const employeeId = $('#transferEmployeeSelect').val();
+    const planId = $('#transferPlanId').val();
+
+    if (!employeeId) {
+        $('#ldCourseChecklist').html('');
+        $('#ldLearningPathMessage').text('Select the leaving employee to review the resignee\'s completed or in-progress courses.');
+        $('#ldLearningPathGeneratedState').addClass('d-none');
+        return;
+    }
+
+    $.post('exit_management.php', {
+        ajax_action: 'get_resignee_courses',
+        controller: 'transfer',
+        employee_id: employeeId
+    }, 'json').done(function(response) {
+        const courses = response && response.data ? response.data : [];
+        renderLdCourseChecklist(courses);
+
+        if (!courses.length) {
+            $('#ldLearningPathMessage').text('No completed or in-progress L&D courses were found for this employee.');
+            return;
+        }
+
+        $('#ldLearningPathMessage').text('Choose which tasks should be included in the successor learning path, then generate it.');
+
+        if (planId) {
+            refreshTransferLearningPathState(planId);
+        }
+    }).fail(function() {
+        $('#ldCourseChecklist').html('<div class="text-muted">Unable to load resignee courses.</div>');
+    });
+}
+
+function generateTransferLearningPath() {
+    const employeeId = $('#transferEmployeeSelect').val();
+    const planId = $('#transferPlanId').val();
+    const selectedCourseIds = $('.ld-course-checkbox:checked').map(function() {
+        return this.value;
+    }).get();
+
+    if (!employeeId) {
+        showToast('warning', 'Select a leaving employee before generating a learning path.');
+        return;
+    }
+
+    if (!planId) {
+        showToast('warning', 'Save the transfer plan before generating the learning path.');
+        return;
+    }
+
+    if (!selectedCourseIds.length) {
+        showToast('warning', 'Choose at least one eligible course to generate the learning path.');
+        return;
+    }
+
+    $('#generateTransferLearningPathBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Generating...');
+
+    $.post('exit_management.php', {
+        ajax_action: 'generate_kt_learning_path',
+        controller: 'transfer',
+        plan_id: planId,
+        course_ids: selectedCourseIds
+    }, 'json').done(function(response) {
+        if (response && response.success) {
+            showToast('success', response.message || 'Learning path generated.');
+            refreshTransferLearningPathState(planId);
+        } else {
+            showToast('error', response && response.message ? response.message : 'Unable to generate the learning path.');
+        }
+    }).fail(function() {
+        showToast('error', 'Unable to generate the learning path right now.');
+    }).always(function() {
+        $('#generateTransferLearningPathBtn').prop('disabled', false).html('Generate Learning Path');
+    });
+}
+
+function toggleTransferLearningPathPublic() {
+    const planId = $('#transferPlanId').val();
+    const isPublic = $('#ldLearningPathPublicToggle').is(':checked');
+
+    if (!planId) {
+        showToast('warning', 'Generate a learning path first before changing its visibility.');
+        return;
+    }
+
+    $.post('exit_management.php', {
+        ajax_action: 'toggle_kt_path_public',
+        controller: 'transfer',
+        plan_id: planId,
+        is_public: isPublic ? 1 : 0
+    }, 'json').done(function(response) {
+        if (response && response.success) {
+            showToast('success', response.message || 'Learning path visibility updated.');
+            $('#ldLearningPathPublicToggle').prop('checked', !!Number(response.is_public || 0));
+        } else {
+            showToast('error', response && response.message ? response.message : 'Unable to update visibility.');
+            $('#ldLearningPathPublicToggle').prop('checked', !isPublic);
+        }
+    }).fail(function() {
+        showToast('error', 'Unable to update the learning path visibility.');
+        $('#ldLearningPathPublicToggle').prop('checked', !isPublic);
+    });
+}
+
+$(document).on('change', '#transferEmployeeSelect', function() {
+    if (!$('#transferPlanId').val()) {
+        loadResigneeCoursesForTransfer();
+    }
+});
+
+$(document).on('click', '#generateTransferLearningPathBtn', generateTransferLearningPath);
+$(document).on('change', '#ldLearningPathPublicToggle', toggleTransferLearningPathPublic);
+
+function setTransferModalMode(viewOnly = false) {
+    const $formFields = $('#transferForm').find('input:not([type=hidden]), textarea, select');
+    $formFields.prop('disabled', viewOnly);
+
+    $('#addTransferItem').toggle(!viewOnly);
+    $('#generateTransferLearningPathBtn').toggle(!viewOnly);
+    $('#transferSubmitBtn').toggle(!viewOnly);
+
+    if (viewOnly) {
+        $('#transferForm').find('.form-control').addClass('disabled');
+        $('#transferForm').find('.remove-item').prop('disabled', true);
+    } else {
+        $('#transferForm').find('.form-control').removeClass('disabled');
+        $('#transferForm').find('.remove-item').prop('disabled', false);
+    }
+}
+
 function submitSettlementForm() {
     const formData = new FormData($('#settlementForm')[0]);
     const settlementId = $('#settlementId').val();
