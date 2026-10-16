@@ -3,8 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (!modal) return;
 
-  const endpoint =
-    "/modules/recruitment/controllers/OnboardingChecklistController.php";
+  const endpoint = "controllers/OnboardingChecklistController.php";
   const title = document.getElementById("onboardingModalTitle");
   const position = document.getElementById("onboardingEmployeePosition");
   const message = document.getElementById("onboardingMessage");
