@@ -17,3 +17,36 @@ function inputData()
     return array_merge($_GET, (array)$json, $_POST);
 }
 
+function engagementApiHasAuthenticatedUser()
+{
+    return !empty($_SESSION['user'])
+        || !empty($_SESSION['employee_id'])
+        || !empty($_SESSION['user_id']);
+}
+
+function engagementApiIsHrAdmin()
+{
+    $user = $_SESSION['user'] ?? [];
+    $role = strtolower(trim((string)($user['role_name'] ?? $user['role'] ?? $_SESSION['role_name'] ?? $_SESSION['role'] ?? '')));
+    $position = strtolower(trim((string)($user['position_name'] ?? $_SESSION['position_name'] ?? '')));
+    $roleId = (int)($user['role_id'] ?? $_SESSION['role_id'] ?? 0);
+
+    return in_array($roleId, [1, 12], true)
+        || preg_match('/(^|[^a-z])(admin|hr|human resources|human resource|employee relations|engagement)([^a-z]|$)/', $role) === 1
+        || preg_match('/(^|[^a-z])(hr staff|hr officer)([^a-z]|$)/', $position) === 1;
+}
+
+function engagementApiRequireLogin()
+{
+    if (!engagementApiHasAuthenticatedUser()) {
+        jsonResponse(['error' => 'Unauthorized'], 401);
+    }
+}
+
+function engagementApiRequireHrAdmin()
+{
+    engagementApiRequireLogin();
+    if (!engagementApiIsHrAdmin()) {
+        jsonResponse(['error' => 'Unauthorized'], 403);
+    }
+}

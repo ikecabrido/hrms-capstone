@@ -1,6 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-require_once '../autoload.php';
+require_once __DIR__ . '/utils.php';
+require_once __DIR__ . '/../autoload.php';
 
 use App\Controllers\ForumController;
 
@@ -15,9 +16,12 @@ if ($method === 'OPTIONS') {
     exit(0);
 }
 
-$forumController = new ForumController();
-
+engagementApiRequireLogin();
 $action = $_GET['action'] ?? 'list';
+if (in_array($action, ['update', 'delete'], true)) {
+    engagementApiRequireHrAdmin();
+}
+$forumController = new ForumController();
 
 try {
     switch ($method) {
@@ -86,6 +90,7 @@ try {
 
         case 'PUT':
             if ($action === 'update' && isset($_GET['id'])) {
+                engagementApiRequireHrAdmin();
                 $data = json_decode(file_get_contents('php://input'), true);
                 $result = $forumController->updateForum($_GET['id'], $data);
                 if ($result) {
@@ -100,6 +105,7 @@ try {
 
         case 'DELETE':
             if ($action === 'delete' && isset($_GET['id'])) {
+                engagementApiRequireHrAdmin();
                 $result = $forumController->deleteForum($_GET['id']);
                 if ($result) {
                     echo json_encode(['success' => true, 'message' => 'Forum deleted successfully']);

@@ -6,6 +6,12 @@ use App\Controllers\CommunicationController;
 use App\Controllers\MessageController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+engagementApiRequireLogin();
+$action = $_GET['action'] ?? 'announcements';
+$isHrAdmin = engagementApiIsHrAdmin();
+if (in_array($action, ['post', 'post_department_update', 'post_event', 'delete_shared_file', 'share_lcm_policy'], true) && !$isHrAdmin) {
+    jsonResponse(['error' => 'Unauthorized'], 403);
+}
 
 function resolveCommunicationEmployeeId()
 {
@@ -40,18 +46,7 @@ function resolveCommunicationEmployeeId()
     return null;
 }
 
-$action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && $action !== 'list') {
-   jsonResponse(['error' => 'Unauthorized'], 401);
-}
-
 $ctrl = new CommunicationController();
-$apiUser = $_SESSION['user'] ?? [];
-$apiRole = strtolower(trim((string)($apiUser['role_name'] ?? $apiUser['role'] ?? $_SESSION['role_name'] ?? $_SESSION['role'] ?? '')));
-$apiRoleId = (int)($apiUser['role_id'] ?? $_SESSION['role_id'] ?? 0);
-$isHrAdmin = in_array($apiRoleId, [1, 12], true)
-    || preg_match('/(^|[^a-z])(admin|hr|human resources|human resource|employee relations|engagement)([^a-z]|$)/', $apiRole) === 1;
-$action = $_GET['action'] ?? 'announcements';
 $data = inputData();
 
 if ($action === 'messages' && empty($data['employee_id'])) {
@@ -75,6 +70,7 @@ try {
             jsonResponse($ctrl->getAnnouncements());
             break;
         case 'post':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             foreach (['title','content'] as $f) {
                 if (empty($data[$f])) jsonResponse(['error' => "$f is required"], 400);
             }
@@ -95,6 +91,7 @@ try {
             jsonResponse(['id' => $id], 201);
             break;
         case 'post_department_update':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             foreach (['title', 'content', 'department'] as $f) {
                 if (empty($data[$f])) jsonResponse(['error' => "$f is required"], 400);
             }
@@ -132,6 +129,7 @@ try {
             jsonResponse($ctrl->getNotifications());
             break;
         case 'post_event':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             foreach (['title', 'date', 'description'] as $f) {
                 if (empty($data[$f])) jsonResponse(['error' => "$f is required"], 400);
             }
@@ -210,6 +208,7 @@ try {
             ], 201);
             break;
         case 'delete_shared_file':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             if (empty($data['id'])) {
                 jsonResponse(['error' => 'File ID is required'], 400);
             }

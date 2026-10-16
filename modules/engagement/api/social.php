@@ -5,9 +5,10 @@ require_once __DIR__ . '/utils.php';
 use App\Controllers\SocialController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-$action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && !in_array($action, ['list', 'feed', 'page_data'], true)) {
-   jsonResponse(['error' => 'Unauthorized'], 401);
+engagementApiRequireLogin();
+$action = $_GET['action'] ?? 'feed';
+if (in_array($action, ['delete', 'resolve', 'edit'], true)) {
+    engagementApiRequireHrAdmin();
 }
 
 function resolveAuthorFromSession()
@@ -58,7 +59,6 @@ function resolveAuthorFromSession()
 }
 
 $ctrl = new SocialController();
-$action = $_GET['action'] ?? 'feed';
 $data = inputData();
 
 try {
@@ -99,16 +99,19 @@ try {
             jsonResponse(['success' => true, 'data' => ['comment_id' => $id]], 201);
             break;
         case 'delete':
+            engagementApiRequireHrAdmin();
             if (empty($data['post_id'])) jsonResponse(['error' => 'post_id required'], 400);
             $ctrl->deletePost((int)$data['post_id']);
             jsonResponse(['message' => 'Post deleted successfully'], 200);
             break;
         case 'resolve':
+            engagementApiRequireHrAdmin();
             if (empty($data['post_id'])) jsonResponse(['error' => 'post_id required'], 400);
             $ctrl->resolvePost((int)$data['post_id']);
             jsonResponse(['success' => true, 'message' => 'Post marked as resolved'], 200);
             break;
         case 'edit':
+            engagementApiRequireHrAdmin();
             foreach (['post_id', 'content'] as $f) {
                 if (empty($data[$f])) jsonResponse(['error' => "$f is required"], 400);
             }
@@ -121,4 +124,3 @@ try {
 } catch (Exception $e) {
     jsonResponse(['error' => $e->getMessage()], 500);
 }
-

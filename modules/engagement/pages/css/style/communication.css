@@ -1366,28 +1366,6 @@
 	line-height: 1.4;
 }
 
-.communication-area #announcements .announcement-card .announcement-more {
-	display: grid;
-	flex: 0 0 24px;
-	width: 24px;
-	height: 28px;
-	margin: -0.25rem -0.3rem 0 0;
-	padding: 0;
-	place-items: center;
-	border: 0;
-	border-radius: 6px;
-	background: transparent;
-	color: #5c7087;
-	cursor: pointer;
-}
-
-.communication-area #announcements .announcement-card .announcement-more:hover,
-.communication-area #announcements .announcement-card .announcement-more:focus {
-	background: #edf4fb;
-	color: #1b5d9f;
-	outline: none;
-}
-
 .communication-area #announcements .announcement-card .announcement-heading .badge {
 	flex: 0 0 auto;
 	margin: 0;

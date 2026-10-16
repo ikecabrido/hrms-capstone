@@ -157,9 +157,6 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                                       <span class="badge badge-secondary">
                                         <?= ucfirst($announcement['priority'] ?? 'normal') ?>
                                       </span>
-                                      <button type="button" class="announcement-more" aria-label="View announcement details" title="View announcement details" onclick="viewFullAnnouncement(<?= (int)$announcement['eer_announcements_id'] ?>)">
-                                        <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
-                                      </button>
                                     </div>
                                     <div class="announcement-meta">
                                       <span><i class="fas fa-calendar"></i> <?= date('M d, Y H:i', strtotime($announcement['created_at'])) ?></span>

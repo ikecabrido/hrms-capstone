@@ -7,17 +7,13 @@ use App\Controllers\EmployeeController;
 use App\Controllers\UserController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
-$sessionUser = $_SESSION['user'] ?? [];
-$sessionRole = strtolower(trim((string)($sessionUser['role_name'] ?? $sessionUser['role'] ?? $_SESSION['role_name'] ?? $_SESSION['role'] ?? '')));
-$sessionPosition = strtolower(trim((string)($sessionUser['position_name'] ?? $_SESSION['position_name'] ?? '')));
-$sessionRoleId = (int)($sessionUser['role_id'] ?? $_SESSION['role_id'] ?? 0);
-$isHrAdmin = in_array($sessionRoleId, [1, 12], true)
-    || preg_match('/(^|[^a-z])(admin|hr|human resources|human resource|employee relations|engagement)([^a-z]|$)/', $sessionRole) === 1
-    || preg_match('/(^|[^a-z])(hr staff|hr officer)([^a-z]|$)/', $sessionPosition) === 1;
+$isHrAdmin = engagementApiIsHrAdmin();
 $action = $_GET['action'] ?? ($_POST['action'] ?? ($_REQUEST['action'] ?? 'list'));
-$hasSessionUser = !empty($_SESSION['user']) || !empty($_SESSION['employee_id']) || !empty($_SESSION['user_id']);
-if (!$hasSessionUser && $action !== 'list') {
+if (!engagementApiHasAuthenticatedUser()) {
     jsonResponse(['error' => 'Unauthorized'], 401);
+}
+if (in_array($action, ['page_data', 'list', 'update_management', 'update', 'add_notes', 'mark_confidential', 'resolve', 'escalate'], true) && !$isHrAdmin) {
+    jsonResponse(['error' => 'Unauthorized'], 403);
 }
 
 $ctrl = new GrievanceController();
@@ -87,7 +83,7 @@ try {
             foreach (['subject', 'description'] as $f) {
                 if (empty($data[$f])) jsonResponse(['error' => "$f is required"], 400);
             }
-            $employeeId = $_SESSION['user']['employee_id'] ?? ($_SESSION['employee_id'] ?? ($_POST['employee_id'] ?? null));
+            $employeeId = $_SESSION['user']['employee_id'] ?? ($_SESSION['employee_id'] ?? null);
             $creatorId = $_SESSION['user']['id'] ?? ($_SESSION['user_id'] ?? ($_SESSION['employee_id'] ?? null));
             $payslipId = isset($data['payslip_id']) ? (int) $data['payslip_id'] : null;
             $payslipInformation = isset($data['payslip_information']) ? trim($data['payslip_information']) : null;
@@ -243,4 +239,3 @@ try {
 } catch (Exception $e) {
     jsonResponse(['error' => $e->getMessage()], 500);
 }
-

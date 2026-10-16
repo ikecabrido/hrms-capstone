@@ -221,10 +221,6 @@ function renderCommunicationAnnouncementCard(announcement) {
   const date = announcement.created_at ? new Date(announcement.created_at).toLocaleString() : '';
   const author = announcement.author_name || announcement.created_by_name || 'Admin';
   const content = String(announcement.content || '');
-  const announcementId = Number(announcement.eer_announcements_id);
-  const moreAction = announcementId > 0
-    ? '<button type="button" class="announcement-more" aria-label="View announcement details" title="View announcement details" onclick="viewFullAnnouncement(' + announcementId + ')"><i class="fas fa-ellipsis-v" aria-hidden="true"></i></button>'
-    : '';
   const contentMarkup = renderCommunicationContent(content, announcement.eer_announcements_id, 'primary')
     .replace('class="card-text"', 'class="announcement-content"');
 
@@ -234,7 +230,6 @@ function renderCommunicationAnnouncementCard(announcement) {
       '<div class="announcement-heading d-flex justify-content-between align-items-start mb-2">' +
         '<h6 class="card-title text-primary mb-1">' + title + '</h6>' +
         '<span class="badge badge-' + getPriorityBadgeClass(priority) + '">' + escapeCommunicationHtml(priorityLabel) + '</span>' +
-        moreAction +
       '</div>' +
       '<div class="announcement-meta">' +
         '<span><i class="fas fa-calendar"></i> ' + escapeCommunicationHtml(date) + '</span>' +

@@ -7,9 +7,11 @@ use App\Controllers\RewardController;
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+engagementApiRequireLogin();
 
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id'])) {
-    jsonResponse(['success' => false, 'error' => 'Unauthorized'], 401);
+$isHrAdmin = engagementApiIsHrAdmin();
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && !$isHrAdmin) {
+    jsonResponse(['success' => false, 'error' => 'Unauthorized'], 403);
 }
 
 $controller = new RewardController();
@@ -43,4 +45,3 @@ try {
 } catch (Throwable $exception) {
     jsonResponse(['success' => false, 'error' => $exception->getMessage()], 500);
 }
-

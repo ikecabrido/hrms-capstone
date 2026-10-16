@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/utils.php';
+engagementApiRequireLogin();
 require_once __DIR__ . '/../../../database/db.php';
 
 $db = Database::getInstance()->getConnection();

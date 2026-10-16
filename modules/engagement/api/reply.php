@@ -5,10 +5,11 @@ require_once __DIR__ . '/utils.php';
 use App\Controllers\ReplyController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+engagementApiRequireLogin();
 $requestMethod = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
 $action = $_GET['action'] ?? ($requestMethod === 'POST' ? 'add' : 'list');
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && $action !== 'list') {
-    jsonResponse(['error' => 'Unauthorized'], 401);
+if ($action === 'delete') {
+    engagementApiRequireHrAdmin();
 }
 
 function resolveAuthorFromSession()

@@ -1,0 +1,47 @@
+%% Engagement HR/Admin workflow, including grievance handoff from the Employee Portal
+flowchart TD
+    employeeStart([Employee has a workplace concern]) --> employeePortal[Employee Portal: submit grievance]
+    employeePortal --> sharedDatabase[(Shared HRMS database)]
+
+    start([HR/Admin opens Engagement]) --> login[/Enter login credentials/]
+    login --> validCredentials{Credentials valid?}
+    validCredentials -- No --> loginError[/Display login error/]
+    loginError --> login
+    validCredentials -- Yes --> authorized{HR Staff / Administrator?}
+    authorized -- No --> accessDenied[/Display access denied/]
+    accessDenied --> finish([End])
+    authorized -- Yes --> dashboard[Engagement Dashboard]
+    dashboard --> selectFeature{Select feature}
+
+    selectFeature --> communication[Communication: announcements, notifications and messages]
+    selectFeature --> surveys[Surveys: create/manage surveys and review responses]
+    selectFeature --> recognition[Recognition: send recognition and manage awards, rewards and badges]
+    selectFeature --> social[Social: manage posts, forums, groups and project spaces]
+    selectFeature --> grievance[Grievances: review and manage submitted cases]
+    selectFeature --> reports[Generate grievance reports]
+    selectFeature --> summaries[View dashboard summaries]
+
+    communication --> process[Process action through the relevant page or API]
+    surveys --> process
+    recognition --> process
+    social --> process
+    grievance --> review[Review and investigate grievance]
+    sharedDatabase --> review
+    review --> decision{How should the case proceed?}
+    decision --> update[Update status and record remarks or resolution]
+    decision --> escalate[Escalate case and record reason]
+    update --> sharedDatabase
+    escalate --> sharedDatabase
+    decision --> reports
+    reports --> sharedDatabase
+    selectFeature --> summaries
+    summaries --> process
+
+    process --> dataChange{Does the action change records?}
+    dataChange -- Yes --> sharedDatabase
+    sharedDatabase --> result[/Display updated page or action result/]
+    dataChange -- No --> result
+    result --> continue{Choose another feature?}
+    continue -- Yes --> selectFeature
+    continue -- No --> logout[/Log out/]
+    logout --> finish([End])

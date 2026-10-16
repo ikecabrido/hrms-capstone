@@ -7,6 +7,6 @@ import './SCRIPT/app.js';
 import '../pages/js/dashboard.js';
 import '../pages/js/communication.js';
 import '../pages/js/social.js?v=20260924-canonical-sentiment';
-import '../pages/js/recognition.js?v=20261015-taylor-recognition-mapping';
+import '../pages/js/recognition.js?v=20261015-parallel-recognition-loads';
 import '../pages/js/survey.js?v=20261013-feedback-history-layout-v1';
 import '../pages/js/grievance.js?v=20261013-all-grievances-ui-v1';

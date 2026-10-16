@@ -12,9 +12,21 @@ use App\Controllers\EmployeeController;
 use App\Controllers\CommunicationController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+engagementApiRequireLogin();
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && $action !== 'list') {
-   jsonResponse(['error' => 'Unauthorized'], 401);
+$isHrAdmin = engagementApiIsHrAdmin();
+if (in_array($action, ['adjust_points', 'delete_employee_month', 'rewards', 'assign_badge'], true) && !$isHrAdmin) {
+    jsonResponse(['error' => 'Unauthorized'], 403);
+}
+
+$sessionUser = is_array($_SESSION['user'] ?? null) ? $_SESSION['user'] : [];
+$currentEmployeeId = $sessionUser['employee_id'] ?? $_SESSION['employee_id'] ?? null;
+$currentUserId = $sessionUser['id']
+    ?? $sessionUser['user_id']
+    ?? $_SESSION['user_id']
+    ?? null;
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
 }
 
 $ctrl = new RecognitionController();
@@ -22,6 +34,17 @@ $action = $_GET['action'] ?? 'list';
 $data = inputData();
 
 try {
+    if (!$currentUserId) {
+        if ($currentEmployeeId) {
+            $db = \Database::getInstance()->getConnection();
+            $stmt = $db->prepare(
+                'SELECT user_id FROM user_account WHERE employee_id = :employee_id LIMIT 1'
+            );
+            $stmt->execute(['employee_id' => $currentEmployeeId]);
+            $currentUserId = $stmt->fetchColumn() ?: null;
+        }
+    }
+
     switch ($action) {
         case 'page_data':
             $rewardCtrl = new RewardController();
@@ -38,7 +61,12 @@ try {
                 'recognitions' => $ctrl->getRecognitions(),
                 'leaderboard' => $ctrl->getLeaderboard(),
                 'rewards' => $rewardCtrl->index(),
-                'reward_redemptions' => (new RewardRedemptionController())->index(),
+                'reward_redemptions' => array_values(array_filter(
+                    (new RewardRedemptionController())->index(),
+                    function ($redemption) use ($isHrAdmin, $currentEmployeeId) {
+                        return $isHrAdmin || (int)($redemption['employee_id'] ?? 0) === (int)$currentEmployeeId;
+                    }
+                )),
                 'badges' => (new BadgeController())->index(),
                 'employee_badges' => (new EmployeeBadgeController())->index(),
                 'award_history' => (new AwardHistoryController())->index(),
@@ -55,8 +83,6 @@ try {
                 'improvement_candidates' => $optionalRewardData([$rewardCtrl, 'getImprovementCandidates']),
             ];
 
-            $currentEmployeeId = $_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? null;
-            $currentUserId = $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? null;
             if ($currentEmployeeId) {
                 $recognitionData['my_points'] = $ctrl->getEmployeeTotalPoints($currentEmployeeId);
                 $recognitionData['my_badge_recommendations'] = $ctrl->getBadgeRecommendations($currentEmployeeId);
@@ -110,7 +136,7 @@ try {
             if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
                 jsonResponse(['error' => 'POST required'], 405);
             }
-            $senderEmployeeId = $_SESSION['employee_id'] ?? $_SESSION['user']['employee_id'] ?? null;
+            $senderEmployeeId = $currentEmployeeId;
             if (!$senderEmployeeId) {
                 jsonResponse(['error' => 'Current user is not authenticated'], 401);
             }
@@ -125,16 +151,17 @@ try {
             jsonResponse(['success' => true, 'id' => $id], 201);
             break;
         case 'adjust_points':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             if (!isset($data['employee_id'], $data['points'], $data['reason'])) {
                 jsonResponse(['error' => 'employee_id, points, and reason are required'], 400);
             }
-            $adminEmployeeId = $_SESSION['employee_id'] ?? $_SESSION['user']['employee_id'] ?? null;
+            $adminEmployeeId = $currentEmployeeId;
             if (!$adminEmployeeId) jsonResponse(['error' => 'Admin employee profile not found'], 400);
             $id = $ctrl->adjustEmployeePoints((int)$data['employee_id'], (int)$data['points'], (string)$data['reason'], (int)$adminEmployeeId);
             jsonResponse(['success' => true, 'id' => $id], 201);
             break;
         case 'history':
-            $employeeId = $_SESSION['user']['employee_id'] ?? null;
+            $employeeId = $currentEmployeeId;
             if (!$employeeId) jsonResponse(['error' => 'Unauthorized'], 401);
             jsonResponse(['success' => true, 'data' => $ctrl->getRecognitionHistory($employeeId)]);
             break;
@@ -143,12 +170,16 @@ try {
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonResponse(['error' => 'POST required'], 405);
             $awardHistoryId = $data['award_history_id'] ?? null;
             if (!$awardHistoryId) jsonResponse(['error' => 'award_history_id is required'], 400);
-            $senderUserId = $_SESSION['user']['id']
-                ?? $_SESSION['user_id']
-                ?? null;
-            $senderEmployeeId = $_SESSION['user']['employee_id']
-                ?? $_SESSION['employee_id']
-                ?? null;
+            $senderUserId = $currentUserId;
+            $senderEmployeeId = $currentEmployeeId;
+            if (!$senderEmployeeId && $senderUserId) {
+                $db = \Database::getInstance()->getConnection();
+                $stmt = $db->prepare(
+                    'SELECT employee_id FROM user_account WHERE user_id = :user_id LIMIT 1'
+                );
+                $stmt->execute(['user_id' => $senderUserId]);
+                $senderEmployeeId = $stmt->fetchColumn() ?: null;
+            }
             if (!$senderUserId) jsonResponse(['error' => 'Unauthorized'], 401);
             if (!$senderEmployeeId) jsonResponse(['error' => 'Employee profile not found'], 400);
             if ($ctrl->hasVotedForEmployeeMonth((int)$senderUserId, (int)$awardHistoryId)) {
@@ -163,6 +194,7 @@ try {
             break;
 
         case 'delete_employee_month':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonResponse(['error' => 'POST required'], 405);
             $awardHistoryId = (int)($data['award_history_id'] ?? 0);
             if (!$awardHistoryId) jsonResponse(['error' => 'award_history_id is required'], 400);
@@ -173,6 +205,7 @@ try {
             break;
 
         case 'rewards':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $action = $data['action'] ?? null;
                 $result = $ctrl->manageRewardsCatalog($action, $data);
@@ -181,10 +214,8 @@ try {
             break;
 
         case 'assign_badge':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             if (!isset($data['employee_id'], $data['badge_id'])) jsonResponse(['error' => 'employee_id and badge_id are required'], 400);
-            $currentUserId = $_SESSION['user']['id']
-                ?? $_SESSION['user_id']
-                ?? null;
             $performanceScore = $ctrl->getEmployeePerformanceScore((int)$data['employee_id']);
             $result = $ctrl->assignAchievementBadge((int)$data['employee_id'], (int)$data['badge_id'], $currentUserId, $performanceScore);
             jsonResponse(['success' => true, 'data' => $result]);
@@ -201,9 +232,6 @@ try {
         case 'employee_of_month':
             $month = $_GET['month'] ?? null;
             $year = $_GET['year'] ?? null;
-            $currentUserId = $_SESSION['user']['id']
-                ?? $_SESSION['user_id']
-                ?? null;
             $data = $ctrl->getEmployeeOfTheMonthCandidates($month, $year, $currentUserId);
             jsonResponse(['success' => true, 'data' => $data]);
             break;
@@ -212,6 +240,9 @@ try {
         case 'employee_points':
             $employeeId = $_GET['employee_id'] ?? $data['employee_id'] ?? null;
             if (!$employeeId) jsonResponse(['error' => 'employee_id is required'], 400);
+            if (!$isHrAdmin && (int)$employeeId !== (int)$currentEmployeeId) {
+                jsonResponse(['error' => 'Unauthorized'], 403);
+            }
             $data = $ctrl->getEmployeeTotalPoints($employeeId);
             jsonResponse(['success' => true, 'data' => $data]);
             break;
@@ -220,6 +251,9 @@ try {
         case 'badge_recommendations':
             $employeeId = $_GET['employee_id'] ?? $data['employee_id'] ?? null;
             if (!$employeeId) jsonResponse(['error' => 'employee_id is required'], 400);
+            if (!$isHrAdmin && (int)$employeeId !== (int)$currentEmployeeId) {
+                jsonResponse(['error' => 'Unauthorized'], 403);
+            }
             $data = $ctrl->getBadgeRecommendations($employeeId);
             jsonResponse(['success' => true, 'data' => $data]);
             break;

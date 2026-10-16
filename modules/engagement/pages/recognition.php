@@ -325,26 +325,29 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                                 $hasVoted = isset($candidate['has_voted']) ? (bool)$candidate['has_voted'] : (isset($_SESSION['employee_month_votes']) && in_array($candidate['eer_award_history_id'] ?? null, $_SESSION['employee_month_votes']));
                                 $statusBadge = $candidate['status'] === 'winner' ? 'badge-success' : ($candidate['status'] === 'shortlisted' ? 'badge-info' : 'badge-warning');
                                 ?>
-                                <div class="list-group-item d-flex justify-content-between align-items-start candidate-item" data-award-history-id="<?= htmlspecialchars($candidate['eer_award_history_id']) ?>" data-employee-id="<?= htmlspecialchars($candidate['employee_id']) ?>">
-                                  <div>
-                                    <strong><?= htmlspecialchars($candidate['employee_name'] ?? 'Unknown') ?></strong><br>
-                                    <small class="text-muted">
-                                      Department: <?= htmlspecialchars($candidate['department'] ?? 'N/A') ?> • Votes: <?= htmlspecialchars($candidate['votes'] ?? 0) ?> • Performance: <?= htmlspecialchars($candidate['performance_score'] ?? 0) ?>%
-                                    </small>
-                                    <div class="mt-1">
-                                      <span class="badge <?= $statusBadge ?>"><?= htmlspecialchars(ucfirst($candidate['status'] ?? 'nominated')) ?></span>
-                                      <?php if (!empty($candidate['nomination_reason'])): ?>
-                                        <span class="text-muted small">Reason: <?= htmlspecialchars($candidate['nomination_reason']) ?></span>
-                                      <?php endif; ?>
+                                <div class="list-group-item candidate-item nomination-candidate" data-award-history-id="<?= htmlspecialchars($candidate['eer_award_history_id']) ?>" data-employee-id="<?= htmlspecialchars($candidate['employee_id']) ?>">
+                                  <div class="nomination-candidate-main">
+                                    <div class="employee-month-name">
+                                      <span class="employee-month-icon" aria-hidden="true"><i class="<?= htmlspecialchars($candidate['award_icon'] ?? 'fas fa-trophy') ?>"></i></span>
+                                      <strong><?= htmlspecialchars($candidate['employee_name'] ?? 'Unknown') ?></strong>
+                                      <span class="badge nomination-status <?= $statusBadge ?>"><?= htmlspecialchars(ucfirst($candidate['status'] ?? 'nominated')) ?></span>
                                     </div>
+                                    <div class="nomination-candidate-stats">
+                                      <span><i class="fas fa-building" aria-hidden="true"></i><?= htmlspecialchars($candidate['department'] ?? 'N/A') ?></span>
+                                      <span><i class="fas fa-vote-yea" aria-hidden="true"></i><?= htmlspecialchars($candidate['votes'] ?? 0) ?> votes</span>
+                                      <span><i class="fas fa-chart-line" aria-hidden="true"></i><?= htmlspecialchars($candidate['performance_score'] ?? 0) ?>% performance</span>
+                                      <span><i class="fas fa-heart" aria-hidden="true"></i><?= htmlspecialchars($candidate['recognition_total'] ?? 0) ?> recognition pts</span>
+                                    </div>
+                                    <?php if (!empty($candidate['nomination_reason'])): ?>
+                                      <div class="nomination-reason">
+                                        <span class="nomination-reason-label">Reason</span>
+                                        <span><?= htmlspecialchars($candidate['nomination_reason']) ?></span>
+                                      </div>
+                                    <?php endif; ?>
                                   </div>
                                   <div class="text-right candidate-actions">
-                                    <span class="badge badge-info">Recognition: <?= htmlspecialchars($candidate['recognition_total'] ?? 0) ?> pts</span>
-                                    <?php if (!empty($candidate['eer_award_history_id'])): ?>
-                                      <button type="button" class="btn btn-sm btn-outline-danger delete-nomination mt-2" data-award-history-id="<?= htmlspecialchars($candidate['eer_award_history_id']) ?>"><i class="fas fa-trash"></i> Delete</button>
-                                    <?php endif; ?>
                                     <?php if (!empty($candidate['eer_award_history_id']) && !$hasVoted): ?>
-                                      <form method="POST" action="" class="mt-2 vote-form">
+                                      <form method="POST" action="" class="vote-form">
                                         <input type="hidden" name="action" value="vote_employee_month">
                                         <input type="hidden" name="award_history_id" value="<?= htmlspecialchars($candidate['eer_award_history_id']) ?>">
                                         <button type="submit" class="btn btn-sm btn-outline-warning">
@@ -352,7 +355,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                                         </button>
                                       </form>
                                     <?php elseif (empty($candidate['eer_award_history_id'])): ?>
-                                      <button type="button" class="btn btn-sm btn-outline-secondary mt-2" disabled>Not Nominated</button>
+                                      <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Not Nominated</button>
                                     <?php endif; ?>
                                   </div>
                                 </div>
@@ -753,7 +756,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
     <div class="modal-header"><h5 class="modal-title" id="sendRecognitionModalLabel"><i class="fas fa-award mr-2"></i>Recognize Employee</h5><button type="button" class="close" data-dismiss="modal" data-recognition-close="sendRecognitionModal"><span>&times;</span></button></div>
     <form id="send-recognition-form" data-skip="true">
       <div class="modal-body">
-        <div class="form-group"><label for="rec-receiver">Employee</label><select id="rec-receiver" class="form-control" required><option value="">Select employee</option></select><small id="rec-receiver-help" class="form-text text-muted">Select the employee to recognize.</small></div>
+        <div class="form-group"><label for="rec-receiver-name">Employee</label><input type="text" id="rec-receiver-name" class="form-control" readonly aria-readonly="true" placeholder="Select employee from a recommendation"><input type="hidden" id="rec-receiver" required></div>
         <div class="form-group"><label for="rec-message">Message</label><textarea id="rec-message" class="form-control" rows="4" required placeholder="Why are you recognizing this employee?"></textarea></div>
         <div class="form-group"><label for="rec-points">Points</label><input id="rec-points" class="form-control" type="number" min="1" value="10" required></div>
       </div>

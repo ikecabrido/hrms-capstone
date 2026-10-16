@@ -5,10 +5,8 @@ require_once __DIR__ . '/utils.php';
 use App\Controllers\SurveyTargetController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+engagementApiRequireHrAdmin();
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && $action !== 'list') {
-   jsonResponse(['error' => 'Unauthorized'], 401);
-}
 
 $ctrl = new SurveyTargetController();
 $action = $_GET['action'] ?? 'list';
@@ -36,4 +34,3 @@ try {
 } catch (Exception $e) {
     jsonResponse(['error' => $e->getMessage()], 500);
 }
-

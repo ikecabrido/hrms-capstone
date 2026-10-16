@@ -1,16 +1,20 @@
 <?php
-
-require_once '../autoload.php';
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/utils.php';
+engagementApiRequireLogin();
+require_once __DIR__ . '/../autoload.php';
 
 use App\Controllers\GroupController;
 
 header('Content-Type: application/json');
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if ($method === 'DELETE') {
+    engagementApiRequireHrAdmin();
+}
 
 $groupCtrl = new GroupController();
 
 try {
-    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
-
     if ($method === 'POST') {
         $name = $_POST['name'] ?? $_POST['group_name'] ?? null;
         $description = $_POST['description'] ?? $_POST['group_description'] ?? null;

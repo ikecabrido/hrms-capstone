@@ -1,5 +1,8 @@
 <?php
-require_once '../autoload.php';
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/utils.php';
+engagementApiRequireLogin();
+require_once __DIR__ . '/../autoload.php';
 require_once __DIR__ . '/../../../database/db.php';
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
@@ -40,14 +43,16 @@ function resolveEmployeeIdFromSession(): ?string
     return null;
 }
 
-$reactionCtrl = new ReactionController();
-
 header('Content-Type: application/json');
 
 if (!isset($_SERVER) || !is_array($_SERVER)) {
     $_SERVER = [];
 }
 $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+if ($method === 'DELETE') {
+    engagementApiRequireHrAdmin();
+}
+$reactionCtrl = new ReactionController();
 
 try {
     if ($method === 'POST') {
@@ -65,7 +70,7 @@ try {
         $rawTargetId = $input['target_id'] ?? $rawPostId;
         $postId = filter_var($rawPostId ?? $rawTargetId, FILTER_VALIDATE_INT);
         $targetId = filter_var($rawTargetId, FILTER_VALIDATE_INT);
-        $employeeId = $input['employee_id'] ?? resolveEmployeeIdFromSession();
+        $employeeId = resolveEmployeeIdFromSession();
         $userId = $_SESSION['user']['id'] ?? $_SESSION['user']['user_id'] ?? $_SESSION['user_id'] ?? null;
         $type = $input['type'] ?? 'like';
 

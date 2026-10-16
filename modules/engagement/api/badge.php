@@ -5,9 +5,14 @@ require_once __DIR__ . '/utils.php';
 use App\Controllers\BadgeController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+engagementApiRequireLogin();
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && $action !== 'list') {
-    jsonResponse(['error' => 'Unauthorized'], 401);
+if ($action === 'create') {
+    engagementApiRequireHrAdmin();
+}
+
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
 }
 
 $ctrl = new BadgeController();
@@ -24,6 +29,7 @@ try {
             jsonResponse($ctrl->show((int)$data['id']));
             break;
         case 'create':
+            engagementApiRequireHrAdmin();
             if (empty(trim((string)($data['name'] ?? '')))) {
                 jsonResponse(['error' => 'Badge name is required'], 400);
             }
@@ -36,4 +42,3 @@ try {
 } catch (Exception $e) {
     jsonResponse(['error' => $e->getMessage()], 500);
 }
-

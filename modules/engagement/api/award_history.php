@@ -5,9 +5,11 @@ require_once __DIR__ . '/utils.php';
 use App\Controllers\AwardHistoryController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+engagementApiRequireLogin();
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && $action !== 'list') {
-    jsonResponse(['error' => 'Unauthorized'], 401);
+
+if (session_status() === PHP_SESSION_ACTIVE) {
+    session_write_close();
 }
 
 $ctrl = new AwardHistoryController();
@@ -25,11 +27,9 @@ try {
             break;
         case 'create':
             if (empty($data['employee_id']) || empty($data['award_name'])) jsonResponse(['error' => 'employee_id and award_name required'], 400);
-            if (empty($data['nominated_by'])) {
-                $data['nominated_by'] = $_SESSION['employee_id']
-                    ?? $_SESSION['user']['employee_id']
-                    ?? null;
-            }
+            $data['nominated_by'] = $_SESSION['employee_id']
+                ?? $_SESSION['user']['employee_id']
+                ?? null;
             if (empty($data['nominated_by'])) {
                 $userId = $_SESSION['user']['id']
                     ?? $_SESSION['user_id']
@@ -42,6 +42,9 @@ try {
                     $data['nominated_by'] = $stmt->fetchColumn() ?: null;
                 }
             }
+            if (empty($data['nominated_by'])) {
+                jsonResponse(['error' => 'Current user is not linked to an employee record'], 400);
+            }
             $id = $ctrl->store($data);
             jsonResponse(['id' => $id], 201);
             break;
@@ -51,4 +54,3 @@ try {
 } catch (Exception $e) {
     jsonResponse(['error' => $e->getMessage()], 500);
 }
-

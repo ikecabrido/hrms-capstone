@@ -1,4 +1,7 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/utils.php';
+engagementApiRequireHrAdmin();
 require_once __DIR__ . '/../autoload.php';
 
 use App\Controllers\SurveyAnswerController;

@@ -8,8 +8,12 @@ use App\Controllers\SurveyAnswerController;
 use App\Controllers\EmployeeController;
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
 $action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && empty($_SESSION['employee_id']) && empty($_SESSION['user_id']) && !in_array($action, ['list', 'page_data'], true)) {
-   jsonResponse(['error' => 'Unauthorized'], 401);
+if (!engagementApiHasAuthenticatedUser()) {
+    jsonResponse(['error' => 'Unauthorized'], 401);
+}
+$isHrAdmin = engagementApiIsHrAdmin();
+if (in_array($action, ['page_data', 'create', 'results'], true) && !$isHrAdmin) {
+    jsonResponse(['error' => 'Unauthorized'], 403);
 }
 
 $ctrl = new SurveyController();
@@ -71,8 +75,12 @@ try {
             jsonResponse(['success' => true, 'id' => $id, 'data' => $ctrl->show($id)], 201);
             break;
         case 'feedback':
+            $evaluatorType = trim((string)($data['evaluator_type'] ?? 'HR'));
+            if (strcasecmp($evaluatorType, 'HR') === 0 && !$isHrAdmin) {
+                jsonResponse(['error' => 'Unauthorized'], 403);
+            }
             $employeeId = (int)($data['employee_id'] ?? 0);
-            if ($employeeId <= 0) {
+            if (!$isHrAdmin || strcasecmp($evaluatorType, 'HR') !== 0) {
                 $employeeId = (int)($_SESSION['user']['employee_id'] ?? $_SESSION['employee_id'] ?? $_SESSION['user']['id'] ?? $_SESSION['user_id'] ?? 0);
             }
             $comment = trim((string)($data['comment'] ?? $data['comments'] ?? ''));
@@ -84,7 +92,7 @@ try {
                 $employeeId,
                 $comment,
                 !empty($data['rating']) ? (int)$data['rating'] : null,
-                (string)($data['evaluator_type'] ?? 'HR'),
+                $evaluatorType,
                 (string)($data['category'] ?? 'general'),
                 !empty($data['is_anonymous']) ? 1 : 0
             );
@@ -113,4 +121,3 @@ try {
 } catch (Exception $e) {
     jsonResponse(['error' => $e->getMessage()], 500);
 }
-

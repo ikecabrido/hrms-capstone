@@ -1,6 +1,7 @@
 <?php
-require_once '../autoload.php';
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/utils.php';
+require_once __DIR__ . '/../autoload.php';
 
 use App\Controllers\ProjectController;
 
@@ -13,10 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
 }
 
-$projectController = new ProjectController();
-
+engagementApiRequireLogin();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? 'list';
+if (in_array($method, ['PUT', 'DELETE'], true)) {
+    engagementApiRequireHrAdmin();
+}
+$projectController = new ProjectController();
 
 try {
     switch ($method) {
@@ -82,6 +86,7 @@ try {
             break;
 
         case 'PUT':
+            engagementApiRequireHrAdmin();
             if ($action === 'update' && isset($_GET['id'])) {
                 $data = json_decode(file_get_contents('php://input'), true);
                 $result = $projectController->updateProjectStatus($_GET['id'], $data['status']);
@@ -104,6 +109,7 @@ try {
             break;
 
         case 'DELETE':
+            engagementApiRequireHrAdmin();
             if ($action === 'delete' && isset($_GET['id'])) {
                 $result = $projectController->deleteProject($_GET['id']);
                 if ($result) {

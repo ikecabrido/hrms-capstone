@@ -1,16 +1,16 @@
 <?php
-
-require_once '../autoload.php';
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once __DIR__ . '/utils.php';
+engagementApiRequireLogin();
+require_once __DIR__ . '/../autoload.php';
 
 use App\Controllers\GroupMemberController;
 
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
-$action = $_GET['action'] ?? 'list';
-if (!isset($_SESSION['user']) && $action !== 'list') {
-   jsonResponse(['error' => 'Unauthorized'], 401);
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if (in_array($method, ['POST', 'DELETE'], true)) {
+    engagementApiRequireHrAdmin();
 }
 $groupMemberCtrl = new GroupMemberController();
-$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 try {
     switch ($method) {

@@ -6,13 +6,11 @@ require_once __DIR__ . '/../../auth/User.php';
 use App\Controllers\MessageController;
 
 if (session_status() === PHP_SESSION_NONE) { session_start(); }
+engagementApiRequireLogin();
 $action = $_GET['action'] ?? 'list';
 $data = inputData();
 $employeeParam = trim((string)($data['employee_id'] ?? $_GET['employee_id'] ?? ''));
-$allowThreadsNoSession = $action === 'threads' && $employeeParam !== '';
-if (!isset($_SESSION['user']) && !$allowThreadsNoSession && $action !== 'list') {
-   jsonResponse(['error' => 'Unauthorized'], 401);
-}
+$isHrAdmin = engagementApiIsHrAdmin();
 
 $ctrl = new MessageController();
 $action = $_GET['action'] ?? 'threads';
@@ -67,7 +65,13 @@ try {
             break;
         case 'threads':
             $requestedEmployeeId = trim((string)($data['employee_id'] ?? $_GET['employee_id'] ?? ''));
-            $empId = $requestedEmployeeId !== '' ? $requestedEmployeeId : (string)(resolveCurrentEmployeeId() ?? '');
+            $currentEmployeeId = resolveCurrentEmployeeId();
+            if (!$isHrAdmin && $requestedEmployeeId !== '' && (int)$requestedEmployeeId !== $currentEmployeeId) {
+                jsonResponse(['error' => 'Unauthorized'], 403);
+            }
+            $empId = $isHrAdmin && $requestedEmployeeId !== ''
+                ? $requestedEmployeeId
+                : (string)($currentEmployeeId ?? '');
 
             if ($empId === '') {
                 if (!isset($_SESSION['user'])) {
@@ -86,6 +90,10 @@ try {
         case 'history':
             foreach (['sender_id','receiver_id'] as $f) {
                 if (empty($data[$f])) jsonResponse(['error' => "$f is required"], 400);
+            }
+            $currentEmployeeId = resolveCurrentEmployeeId();
+            if (!$isHrAdmin && (int)$data['sender_id'] !== $currentEmployeeId && (int)$data['receiver_id'] !== $currentEmployeeId) {
+                jsonResponse(['error' => 'Unauthorized'], 403);
             }
             $history = $ctrl->getMessageHistory($data['sender_id'], $data['receiver_id']);
             jsonResponse($history);

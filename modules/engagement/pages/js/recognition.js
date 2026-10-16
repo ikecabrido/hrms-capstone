@@ -41,47 +41,25 @@ function closeRecognitionModal() {
 function openRecognitionModal(recommendedEmployee = null) {
   loadRecognitionEmployees(true).then(function (employees) {
     const receiverIdInput = document.getElementById('rec-receiver');
+    const receiverNameInput = document.getElementById('rec-receiver-name');
     const matchingEmployeeId = recommendedEmployee
       ? resolveRecommendationEmployeeId(recommendedEmployee, employees)
       : '';
     const matchingEmployee = employees.find(function (employee) {
       return String(employee.employee_id) === matchingEmployeeId;
     });
-    const matchedEmployeeName = matchingEmployee
-      ? ([matchingEmployee.first_name, matchingEmployee.middle_name, matchingEmployee.last_name]
-        .filter(Boolean)
-        .join(' ') || matchingEmployee.full_name || matchingEmployee.employee_name || '')
-      : '';
-    const recommendationName = recommendedEmployee
-      ? (recommendedEmployee.source_employee_name || recommendedEmployee.employee_name || '')
-      : '';
-    if (receiverIdInput) {
-      receiverIdInput.replaceChildren(new Option('Select employee', ''));
-      employees.forEach(function (employee) {
-        const employeeId = String(employee.employee_id || '');
-        if (!employeeId) return;
-        const employeeName = [employee.first_name, employee.middle_name, employee.last_name]
-          .filter(Boolean)
-          .join(' ') || employee.full_name || employee.employee_name || ('Employee #' + employeeId);
-        const option = new Option(employeeName, employeeId);
-        option.dataset.employeeName = employeeName;
-        if (employeeId === matchingEmployeeId && recommendationName && recommendationName !== employeeName) {
-          option.textContent = recommendationName;
-        }
-        receiverIdInput.add(option);
-      });
-      receiverIdInput.value = matchingEmployeeId;
-      receiverIdInput.disabled = Boolean(matchingEmployeeId && recommendedEmployee);
-      receiverIdInput.classList.toggle('recognition-recipient-locked', receiverIdInput.disabled);
-    }
-    const receiverHelp = document.getElementById('rec-receiver-help');
-    if (receiverHelp) {
-      receiverHelp.textContent = recommendedEmployee && !matchingEmployeeId
-        ? 'This recommendation is not linked to a current employee record. Select the correct employee from the list.'
+    if (receiverIdInput) receiverIdInput.value = matchingEmployeeId;
+    if (receiverNameInput) {
+      const matchedName = matchingEmployee
+        ? ([matchingEmployee.first_name, matchingEmployee.middle_name, matchingEmployee.last_name].filter(Boolean).join(' ')
+          || matchingEmployee.full_name || matchingEmployee.employee_name || '')
         : '';
+      receiverNameInput.value = matchingEmployeeId
+        ? matchedName
+        : (recommendedEmployee ? recommendedEmployee.employee_name || '' : '');
     }
     const sendButton = document.getElementById('send-recognition-btn');
-    if (sendButton) sendButton.disabled = !employees.length;
+    if (sendButton) sendButton.disabled = !matchingEmployeeId;
     setRecognitionModalVisibility('sendRecognitionModal', true);
   }).catch(function (error) {
     console.warn('[Recognition] Could not load employees for the recipient list.', error);
@@ -183,7 +161,7 @@ function populateBadgeEmployeesFromNominations() {
     if (!employeeId || !nameElement) return;
     const option = document.createElement('option');
     option.value = employeeId;
-    option.textContent = nameElement.textContent.trim() + ' (' + employeeId + ')';
+    option.textContent = nameElement.textContent.trim();
     select.appendChild(option);
   });
 
@@ -230,6 +208,7 @@ function bindNominationFormEvents() {
 
     fetch(recognitionApiBase + '?resource=award_history&action=create', {
       method: 'POST',
+      credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         employee_id: employeeId,
@@ -356,7 +335,7 @@ function populateNominationEmployeesFromFeed() {
   employees.forEach(function(name, id) {
     const option = document.createElement('option');
     option.value = id;
-    option.textContent = name + ' (' + id + ')';
+    option.textContent = name;
     select.appendChild(option);
   });
 }
@@ -374,7 +353,7 @@ function ensureEmployeeInNominationList(employeeId, employeeName) {
   const option = document.createElement('option');
   option.value = id;
   option.setAttribute('data-employee-id', id);
-  option.textContent = (employeeName || 'Employee') + ' (' + id + ')';
+  option.textContent = employeeName || 'Employee';
   select.appendChild(option);
 }
 
@@ -734,7 +713,7 @@ function bindRecognitionSendForm() {
     const points = pointsEl ? parseInt(pointsEl.value, 10) : 10;
 
     if (!receiverId || !message || Number.isNaN(points) || points < 1) {
-      if (!receiverId) alert('Please select an employee before sending recognition.');
+      if (!receiverId) alert('Please select a recipient before sending recognition.');
       else if (!message) alert('Please enter a message before sending recognition.');
       else alert('Points must be a valid number greater than 0.');
       return;
@@ -766,9 +745,7 @@ function bindRecognitionSendForm() {
       })
       .then(res => {
         if (res && (res.id || res.success)) {
-          const receiverSelect = document.getElementById('rec-receiver');
-          const selectedOption = receiverSelect?.selectedOptions[0];
-          const receiverName = selectedOption?.dataset.employeeName || selectedOption?.textContent || 'Employee';
+          const receiverName = document.getElementById('rec-receiver-name')?.value || 'Employee';
           ensureEmployeeInNominationList(receiverId, receiverName);
           closeRecognitionModal();
           if (messageEl) messageEl.value = '';
@@ -813,32 +790,6 @@ function bindRecognitionPageEvents() {
       bindNominationFormEvents();
     }
   });
-
-    if (!window.__employeeMonthDeleteBound) {
-      window.__employeeMonthDeleteBound = true;
-      document.addEventListener('click', function (event) {
-        const deleteButton = event.target.closest('.delete-nomination');
-        if (!deleteButton) return;
-        if (!window.confirm('Delete this nomination?')) return;
-
-        const awardHistoryId = deleteButton.dataset.awardHistoryId;
-        deleteButton.disabled = true;
-        fetch(recognitionApiBase + '?resource=recognition&action=delete_employee_month', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ award_history_id: awardHistoryId })
-        })
-          .then(response => response.json().then(data => ({ response, data })))
-          .then(({ response, data }) => {
-            if (!response.ok || !data.success) throw new Error(data.error || data.message || 'Unable to delete nomination.');
-            deleteButton.closest('.candidate-item')?.remove();
-          })
-          .catch(error => {
-            deleteButton.disabled = false;
-            alert(error.message);
-          });
-      });
-    }
 
   window.addEventListener('hashchange', function() {
     activateRecognitionTabFromHash(false);
@@ -1170,13 +1121,17 @@ function bindRecognitionPageEvents() {
 
       fetch(recognitionApiBase + '?resource=recognition&action=vote_employee_month', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ award_history_id: awardHistoryId })
       }).then(r => r.json())
         .then(res => {
           if (res && res.success) {
             voteSucceeded = true;
-            window.employeeMonthVotes.push(awardHistoryId);
+            if (!window.employeeMonthVotes.includes(awardHistoryId)) {
+              window.employeeMonthVotes.push(awardHistoryId);
+            }
+            form.remove();
             refreshAllRecognitionSections();
           } else if (res && res.error) {
             alert('Error: ' + res.error);
@@ -1185,7 +1140,6 @@ function bindRecognitionPageEvents() {
           console.error('Failed to record vote', err);
           alert('Failed to record vote.');
         }).finally(() => {
-          if (btn && voteSucceeded) { btn.textContent = 'Voted (+5)'; btn.disabled = true; }
           if (btn && !voteSucceeded) { btn.textContent = 'Vote +5'; btn.disabled = false; }
         });
     }
@@ -1276,14 +1230,41 @@ function stopRecognitionAutoRefresh() {
 
 function startRecognitionAutoRefresh(intervalMs) {
   stopRecognitionAutoRefresh();
-  const refreshInterval = intervalMs || 5000;
+  const refreshInterval = intervalMs || 30000;
   recognitionRefreshTimer = setInterval(function() {
     if (!document.getElementById('employee-month') && !document.getElementById('recognition-tabs')) {
       stopRecognitionAutoRefresh();
       return;
     }
-    refreshAllRecognitionSections();
+    if (document.visibilityState === 'hidden') return;
+    refreshActiveRecognitionSection();
   }, refreshInterval);
+}
+
+function refreshActiveRecognitionSection() {
+  const activeTab = document.querySelector('#recognition-tabs .nav-link.active');
+  const activeTabId = activeTab ? (activeTab.getAttribute('href') || '').replace('#', '') : 'recognition';
+
+  switch (activeTabId) {
+    case 'employee-month':
+      loadEmployeeOfTheMonthCandidates();
+      break;
+    case 'badges':
+      loadBadges();
+      loadEmployeeBadges();
+      break;
+    case 'rewards':
+      loadRewards();
+      loadRewardRedemptions();
+      break;
+    case 'leaderboard':
+      loadRecognitionPageData();
+      break;
+    case 'recognition':
+    default:
+      loadRecognitionFeed();
+      break;
+  }
 }
 
 function refreshAllRecognitionSections() {
@@ -1445,11 +1426,10 @@ function resolveRecommendationEmployeeId(item, employees) {
 
 function renderRecognitionRecommendation(item, employees) {
   const employeeId = resolveRecommendationEmployeeId(item, employees);
-  const recommendationName = item.source_employee_name || item.employee_name || '';
-  const action = '<button type="button" class="btn btn-sm btn-outline-success recommend-recognize" data-employee-id="' + escapeHtml(employeeId) + '" data-employee-name="' + escapeHtml(recommendationName) + '">Recognize</button>';
+  const action = '<button type="button" class="btn btn-sm btn-outline-success recommend-recognize" data-employee-id="' + escapeHtml(employeeId) + '" data-employee-name="' + escapeHtml(item.employee_name || '') + '">Recognize</button>';
 
   return '<li class="list-group-item d-flex justify-content-between align-items-center"><div><strong>'
-    + escapeHtml(recommendationName || item.employee_id || 'Unknown') + '</strong><div class="text-muted small">'
+    + escapeHtml(item.employee_name || item.employee_id || 'Unknown') + '</strong><div class="text-muted small">'
     + escapeHtml(item.evaluation_period || 'Performance Review') + ' • Grade: ' + escapeHtml(item.final_grade || 'N/A')
     + ' • Score: ' + escapeHtml(item.final_rating_percent || 'N/A') + '%</div></div>' + action + '</li>';
 }
@@ -1989,17 +1969,19 @@ function loadEmployeeOfTheMonthCandidates() {
 
       container.innerHTML = '';
       res.data.forEach(function(candidate) {
-        const hasVoted = Boolean(candidate.has_voted);
+        const hasVoted = Boolean(candidate.has_voted)
+          || (window.employeeMonthVotes || []).includes(String(candidate.eer_award_history_id));
         const statusBadge = candidate.status === 'winner' ? 'badge-success' : (candidate.status === 'shortlisted' ? 'badge-info' : 'badge-warning');
         const item = document.createElement('div');
-        item.className = 'list-group-item d-flex justify-content-between align-items-start candidate-item';
+        item.className = 'list-group-item candidate-item nomination-candidate';
         item.dataset.employeeId = candidate.employee_id || '';
         item.dataset.awardHistoryId = candidate.eer_award_history_id || '';
         const voteButton = candidate.eer_award_history_id && !hasVoted
-          ? '<form method="POST" action="" class="mt-2 vote-form"><input type="hidden" name="action" value="vote_employee_month"><input type="hidden" name="award_history_id" value="' + escapeHtml(candidate.eer_award_history_id) + '"><button type="submit" class="btn btn-sm btn-outline-warning"><i class="fas fa-vote-yea"></i> Vote +5</button></form>'
-          : (candidate.eer_award_history_id ? '' : '<button type="button" class="btn btn-sm btn-outline-secondary mt-2" disabled>Not Nominated</button>');
+          ? '<form method="POST" action="" class="vote-form"><input type="hidden" name="action" value="vote_employee_month"><input type="hidden" name="award_history_id" value="' + escapeHtml(candidate.eer_award_history_id) + '"><button type="submit" class="btn btn-sm btn-outline-warning"><i class="fas fa-vote-yea"></i> Vote +5</button></form>'
+          : (candidate.eer_award_history_id ? '' : '<button type="button" class="btn btn-sm btn-outline-secondary" disabled>Not Nominated</button>');
         const awardIcon = candidate.award_icon || 'fas fa-trophy';
-        item.innerHTML = `<div><div class="employee-month-name"><span class="employee-month-icon" aria-hidden="true"><i class="${escapeHtml(awardIcon)}"></i></span><strong>${escapeHtml(candidate.employee_name || candidate.employee_id)}</strong></div><small class="text-muted">Department: ${escapeHtml(candidate.department || 'N/A')} • Votes: ${escapeHtml(candidate.votes || 0)} • Performance: ${escapeHtml(candidate.performance_score || 0)}%</small><div class="mt-1"><span class="badge ${statusBadge}">${escapeHtml((candidate.status || 'nominated').charAt(0).toUpperCase() + (candidate.status || 'nominated').slice(1))}</span>${candidate.nomination_reason ? ' <span class="text-muted small">Reason: ' + escapeHtml(candidate.nomination_reason) + '</span>' : ''}</div></div><div class="text-right">${voteButton}</div>`;
+        const statusLabel = (candidate.status || 'nominated').charAt(0).toUpperCase() + (candidate.status || 'nominated').slice(1);
+        item.innerHTML = `<div class="nomination-candidate-main"><div class="employee-month-name"><span class="employee-month-icon" aria-hidden="true"><i class="${escapeHtml(awardIcon)}"></i></span><strong>${escapeHtml(candidate.employee_name || candidate.employee_id)}</strong><span class="badge nomination-status ${statusBadge}">${escapeHtml(statusLabel)}</span></div><div class="nomination-candidate-stats"><span><i class="fas fa-building" aria-hidden="true"></i>${escapeHtml(candidate.department || 'N/A')}</span><span><i class="fas fa-vote-yea" aria-hidden="true"></i>${escapeHtml(candidate.votes || 0)} votes</span><span><i class="fas fa-chart-line" aria-hidden="true"></i>${escapeHtml(candidate.performance_score || 0)}% performance</span><span><i class="fas fa-heart" aria-hidden="true"></i>${escapeHtml(candidate.recognition_total || 0)} recognition pts</span></div>${candidate.nomination_reason ? '<div class="nomination-reason"><span class="nomination-reason-label">Reason</span><span>' + escapeHtml(candidate.nomination_reason) + '</span></div>' : ''}</div><div class="candidate-actions">${voteButton}</div>`;
         container.appendChild(item);
       });
       appendPendingNomination();
