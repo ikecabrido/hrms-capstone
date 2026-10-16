@@ -170,7 +170,7 @@
                              */
                             $storedResumePath = ltrim(
                                 $storedResumePath,
-                                '/'
+                                '/public/'
                             );
 
                             /*
