@@ -24,7 +24,10 @@ function autoFillJobAndSalary() {
 
   const selectedOption = select.options[select.selectedIndex];
 
-  // No applicant selected
+  // =========================================================
+  // NO APPLICANT SELECTED
+  // =========================================================
+
   if (!selectedOption || !selectedOption.value) {
     jobDisplay.value = "";
     jobHidden.value = "";
@@ -51,50 +54,103 @@ function autoFillJobAndSalary() {
     return;
   }
 
-  // Get applicant/job information
+  // =========================================================
+  // GET APPLICANT / JOB INFORMATION
+  // =========================================================
+
   const job = selectedOption.dataset.job || "";
   const position = selectedOption.dataset.position || "";
   const department = selectedOption.dataset.department || "";
 
-  // Get salary structure
+  // =========================================================
+  // GET SALARY STRUCTURE
+  // =========================================================
+
   const minimumSalary = parseFloat(selectedOption.dataset.minimumSalary) || 0;
 
   const midpointSalary = parseFloat(selectedOption.dataset.midpointSalary) || 0;
 
   const maximumSalary = parseFloat(selectedOption.dataset.maximumSalary) || 0;
 
-  // Fill job information
+  // =========================================================
+  // FILL JOB INFORMATION
+  // =========================================================
+
   jobDisplay.value = job;
   jobHidden.value = job;
   positionInput.value = position;
   departmentInput.value = department;
 
-  // Minimum
-  if (minimumOption && minimumSalary > 0) {
-    minimumOption.value = minimumSalary.toFixed(2);
-    minimumOption.textContent = "Minimum - ₱" + formatSalary(minimumSalary);
+  // =========================================================
+  // RESET SALARY SELECTION
+  // =========================================================
+
+  salarySelect.value = "";
+
+  // =========================================================
+  // MINIMUM
+  // =========================================================
+
+  if (minimumOption) {
+    if (minimumSalary > 0) {
+      minimumOption.value = minimumSalary.toFixed(2);
+
+      minimumOption.textContent = "Minimum - ₱" + formatSalary(minimumSalary);
+
+      minimumOption.disabled = false;
+    } else {
+      minimumOption.value = "";
+      minimumOption.textContent = "Minimum";
+      minimumOption.disabled = true;
+    }
   }
 
-  // Midpoint
-  if (midpointOption && midpointSalary > 0) {
-    midpointOption.value = midpointSalary.toFixed(2);
-    midpointOption.textContent = "Midpoint - ₱" + formatSalary(midpointSalary);
+  // =========================================================
+  // MIDPOINT
+  // =========================================================
+
+  if (midpointOption) {
+    if (midpointSalary > 0) {
+      midpointOption.value = midpointSalary.toFixed(2);
+
+      midpointOption.textContent =
+        "Midpoint - ₱" + formatSalary(midpointSalary);
+
+      midpointOption.disabled = false;
+    } else {
+      midpointOption.value = "";
+      midpointOption.textContent = "Midpoint";
+      midpointOption.disabled = true;
+    }
   }
 
-  // Maximum
-  if (maximumOption && maximumSalary > 0) {
-    maximumOption.value = maximumSalary.toFixed(2);
-    maximumOption.textContent = "Maximum - ₱" + formatSalary(maximumSalary);
+  // =========================================================
+  // MAXIMUM
+  // =========================================================
+
+  if (maximumOption) {
+    if (maximumSalary > 0) {
+      maximumOption.value = maximumSalary.toFixed(2);
+
+      maximumOption.textContent = "Maximum - ₱" + formatSalary(maximumSalary);
+
+      maximumOption.disabled = false;
+    } else {
+      maximumOption.value = "";
+      maximumOption.textContent = "Maximum";
+      maximumOption.disabled = true;
+    }
   }
 
-  // Default to midpoint
-  if (midpointSalary > 0) {
-    salarySelect.value = midpointSalary.toFixed(2);
-  } else if (minimumSalary > 0) {
-    salarySelect.value = minimumSalary.toFixed(2);
-  } else {
-    salarySelect.value = "";
-  }
+  // =========================================================
+  // IMPORTANT:
+  // DO NOT AUTOMATICALLY SELECT MIDPOINT.
+  //
+  // The HR user must explicitly select:
+  // Minimum OR Midpoint OR Maximum.
+  // =========================================================
+
+  salarySelect.value = "";
 }
 
 /**

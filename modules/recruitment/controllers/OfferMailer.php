@@ -2,7 +2,7 @@
 
 namespace Controllers;
 
-$root_path = $_SERVER['DOCUMENT_ROOT'] . '/hrms-capstone-master';
+$root_path = $_SERVER['DOCUMENT_ROOT'] . '/hrms-capstone';
 
 require_once __DIR__ . '/../PHPMailer/src/Exception.php';
 require_once __DIR__ . '/../PHPMailer/src/PHPMailer.php';
