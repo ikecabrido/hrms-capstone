@@ -52,9 +52,14 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
                                 <?php endif; ?>
                             </td>
                             <td style="text-align:center;">
-                                <a href="index.php?page=onboarding-manage&amp;id=<?= (int)($record['id'] ?? 0) ?>" class="btn-action">
+                                <button
+                                    type="button"
+                                    class="btn-action manage-onboarding"
+                                    data-id="<?= (int)($record['id'] ?? 0) ?>"
+                                    data-name="<?= htmlspecialchars($record['full_name'] ?? 'Employee', ENT_QUOTES, 'UTF-8') ?>"
+                                    data-position="<?= htmlspecialchars($record['position'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?>">
                                     <i class="fas fa-tasks"></i> Manage
-                                </a>
+                                </button>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -65,5 +70,93 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
                 <?php endif; ?>
             </tbody>
         </table>
+
+        <div id="onboardingModal" class="onboarding-modal" aria-hidden="true">
+            <div class="onboarding-modal-content">
+                <div class="onboarding-modal-header">
+                    <div>
+                        <h2 id="onboardingModalTitle">Onboarding Checklist</h2>
+                        <p id="onboardingEmployeePosition"></p>
+                    </div>
+                    <button type="button" id="closeOnboardingModal"
+                        class="onboarding-close" aria-label="Close">&times;</button>
+                </div>
+
+                <div id="onboardingMessage" class="onboarding-message"></div>
+
+                <div class="onboarding-checklist">
+                    <label class="checklist-row">
+                        <span>
+                            <input type="checkbox" data-item="requirements">
+                            Submission of requirements
+                        </span>
+                    </label>
+
+                    <div class="checklist-row">
+                        <label>
+                            <input type="checkbox" data-item="medical">
+                            Medical (Health Card / Certificate)
+                        </label>
+                        <div class="checklist-actions">
+                            <span class="uploaded-file" data-file="medical"></span>
+                            <input type="file" class="checklist-file"
+                                data-upload="medical" accept=".pdf,.jpg,.jpeg,.png"
+                                hidden>
+                            <button type="button" class="upload-btn"
+                                data-pick="medical">
+                                <i class="fas fa-upload"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="checklist-row">
+                        <label>
+                            <input type="checkbox" data-item="contract">
+                            Contract signing
+                        </label>
+                        <div class="checklist-actions">
+                            <span class="uploaded-file" data-file="contract"></span>
+                            <input type="file" class="checklist-file"
+                                data-upload="contract" accept=".pdf,.jpg,.jpeg,.png"
+                                hidden>
+                            <button type="button" class="upload-btn"
+                                data-pick="contract">
+                                <i class="fas fa-upload"></i> Upload
+                            </button>
+                        </div>
+                    </div>
+
+                    <label class="checklist-row">
+                        <span>
+                            <input type="checkbox" data-item="biometric">
+                            Enrolment in biometric
+                        </span>
+                    </label>
+
+                    <label class="checklist-row">
+                        <span>
+                            <input type="checkbox" data-item="company_id">
+                            Secure company ID
+                        </span>
+                    </label>
+
+                    <div class="checklist-row">
+                        <label>
+                            <input type="checkbox" data-item="bdo_cash_card">
+                            Enrolment to BDO cash card
+                        </label>
+                        <input type="text" id="bdoAccountNumber"
+                            placeholder="BDO account number"
+                            maxlength="100">
+                    </div>
+                </div>
+
+                <div class="onboarding-modal-footer">
+                    <span id="onboardingProgress">0 of 6 completed</span>
+                    <button type="button" id="closeOnboardingFooter"
+                        class="onboarding-save-btn">Done</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
