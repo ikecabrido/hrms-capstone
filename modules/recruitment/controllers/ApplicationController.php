@@ -1117,20 +1117,16 @@ class ApplicationController
     }
 
 
+
     public function store()
     {
-        // Make sure this is a POST request
+        // Only accept POST requests.
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-
-            header(
-                "Location: index.php?page=create-new-applicant"
-            );
-
+            header("Location: index.php?page=create-new-applicant");
             exit;
         }
 
         try {
-
             // =========================
             // DATABASE
             // =========================
@@ -1141,13 +1137,10 @@ class ApplicationController
             // JOB ID
             // =========================
 
-            $job_id =
-                (int) ($_POST['job_id'] ?? 0);
+            $job_id = (int) ($_POST['job_id'] ?? 0);
 
             if ($job_id <= 0) {
-                throw new Exception(
-                    "Please select a valid job position."
-                );
+                throw new Exception("Please select a valid job position.");
             }
 
             // =========================
@@ -1165,377 +1158,271 @@ class ApplicationController
                 ':job_id' => $job_id
             ]);
 
-            $job =
-                $jobStmt->fetch(PDO::FETCH_ASSOC);
+            $job = $jobStmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$job) {
-                throw new Exception(
-                    "Selected job does not exist."
-                );
+                throw new Exception("Selected job does not exist.");
             }
 
             // =========================
             // APPLICANT INFORMATION
             // =========================
 
-            $first_name =
-                trim($_POST['first_name'] ?? '');
+            $first_name = trim($_POST['first_name'] ?? '');
+            $middle_name = trim($_POST['middle_name'] ?? '');
+            $last_name = trim($_POST['last_name'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $phone = trim($_POST['phone'] ?? '');
+            $gender = trim($_POST['gender'] ?? '');
+            $birthplace = trim($_POST['birthplace'] ?? '');
 
-            $middle_name =
-                trim($_POST['middle_name'] ?? '');
-
-            $last_name =
-                trim($_POST['last_name'] ?? '');
-
-            $email =
-                trim($_POST['email'] ?? '');
-
-            $phone =
-                trim($_POST['phone'] ?? '');
-
-            $gender =
-                trim($_POST['gender'] ?? '');
-
-            $birthplace =
-                trim($_POST['birthplace'] ?? '');
-
-            $birthdate =
-                !empty($_POST['birthdate'])
+            $birthdate = !empty($_POST['birthdate'])
                 ? $_POST['birthdate']
                 : null;
 
-            $age =
-                !empty($_POST['age'])
+            $age = isset($_POST['age']) && $_POST['age'] !== ''
                 ? (int) $_POST['age']
                 : null;
 
-            $civil_status =
-                trim($_POST['civil_status'] ?? '');
+            $civil_status = trim($_POST['civil_status'] ?? '');
+            $citizenship = trim($_POST['citizenship'] ?? '');
+            $religion = trim($_POST['religion'] ?? '');
 
-            $citizenship =
-                trim($_POST['citizenship'] ?? '');
+            $current_address = trim($_POST['address'] ?? '');
+            $permanent_address = trim($_POST['permanent_address'] ?? '');
 
-            $religion =
-                trim($_POST['religion'] ?? '');
+            $source = trim($_POST['source'] ?? 'Direct Apply');
 
-            $current_address =
-                trim($_POST['address'] ?? '');
-
-            $permanent_address =
-                trim($_POST['permanent_address'] ?? '');
-
-            $source =
-                trim(
-                    $_POST['source'] ??
-                        'Direct Apply'
-                );
-
-
-
-            $address =
-                trim($_POST['address'] ?? '');
-
-            $source =
-                trim(
-                    $_POST['source'] ??
-                        'Direct Apply'
-                );
-
-            if ($first_name === '') {
-                throw new Exception(
-                    "First name is required."
-                );
-            }
-
-            if ($last_name === '') {
-                throw new Exception(
-                    "Last name is required."
-                );
-            }
-
-            if ($email === '') {
-                throw new Exception(
-                    "Email is required."
-                );
-            }
-
-            if (
-                !filter_var(
-                    $email,
-                    FILTER_VALIDATE_EMAIL
-                )
-            ) {
-                throw new Exception(
-                    "Please enter a valid email address."
-                );
+            if ($source === '') {
+                $source = 'Direct Apply';
             }
 
             // =========================
-            // CHECK RESUME
+            // VALIDATE APPLICANT
+            // =========================
+
+            if ($first_name === '') {
+                throw new Exception("First name is required.");
+            }
+
+            if ($last_name === '') {
+                throw new Exception("Last name is required.");
+            }
+
+            if ($email === '') {
+                throw new Exception("Email is required.");
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new Exception("Please enter a valid email address.");
+            }
+
+            // =========================
+            // CHECK RESUME UPLOAD
             // =========================
 
             $hasResume = (
                 isset($_FILES['resume']) &&
-                $_FILES['resume']['error']
+                ($_FILES['resume']['error'] ?? UPLOAD_ERR_NO_FILE)
                 !== UPLOAD_ERR_NO_FILE
             );
 
             if ($hasResume) {
-
-                if (
-                    $_FILES['resume']['error']
-                    !== UPLOAD_ERR_OK
-                ) {
-
+                if ($_FILES['resume']['error'] !== UPLOAD_ERR_OK) {
                     throw new Exception(
                         "Resume upload failed. Error code: " .
                             $_FILES['resume']['error']
                     );
                 }
 
-                // Check extension
-                $extension =
-                    strtolower(
-                        pathinfo(
-                            $_FILES['resume']['name'],
-                            PATHINFO_EXTENSION
-                        )
-                    );
+                // Allow PDF files only.
+                $extension = strtolower(
+                    pathinfo(
+                        $_FILES['resume']['name'],
+                        PATHINFO_EXTENSION
+                    )
+                );
 
                 if ($extension !== 'pdf') {
+                    throw new Exception("Only PDF resumes are allowed.");
+                }
 
+                // Validate the actual MIME type.
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo->file($_FILES['resume']['tmp_name']);
+
+                if ($mimeType !== 'application/pdf') {
                     throw new Exception(
-                        "Only PDF resumes are allowed."
+                        "The uploaded resume must be a valid PDF file."
                     );
+                }
+
+                // Limit the resume to 10 MB.
+                if ($_FILES['resume']['size'] > 10 * 1024 * 1024) {
+                    throw new Exception(
+                        "The resume must not exceed 10 MB."
+                    );
+                }
+
+                if (
+                    !is_uploaded_file($_FILES['resume']['tmp_name'])
+                ) {
+                    throw new Exception("Invalid uploaded resume.");
                 }
             }
 
             // =========================
-            // INSERT APPLICATION FIRST
+            // INSERT APPLICATION
             // =========================
-            //
-            // We insert the application first
-            // so MySQL generates the application ID.
-            //
 
+            // Insert first to generate the application ID.
             $stmt = $db->prepare("
-    INSERT INTO rao_applications
-    (
-        job_id,
-        first_name,
-        middle_name,
-        last_name,
-        email,
-        phone,
-        gender,
-        birthplace,
-        birthdate,
-        age,
-        civil_status,
-        citizenship,
-        religion,
-        address,
-        current_address,
-        permanent_address,
-        resume,
-        source
-    )
-    VALUES
-    (
-        :job_id,
-        :first_name,
-        :middle_name,
-        :last_name,
-        :email,
-        :phone,
-        :gender,
-        :birthplace,
-        :birthdate,
-        :age,
-        :civil_status,
-        :citizenship,
-        :religion,
-        :address,
-        :current_address,
-        :permanent_address,
-        NULL,
-        :source
-    )
-");
+            INSERT INTO rao_applications
+            (
+                job_id,
+                first_name,
+                middle_name,
+                last_name,
+                email,
+                phone,
+                gender,
+                birthplace,
+                birthdate,
+                age,
+                civil_status,
+                citizenship,
+                religion,
+                address,
+                current_address,
+                permanent_address,
+                resume,
+                source
+            )
+            VALUES
+            (
+                :job_id,
+                :first_name,
+                :middle_name,
+                :last_name,
+                :email,
+                :phone,
+                :gender,
+                :birthplace,
+                :birthdate,
+                :age,
+                :civil_status,
+                :citizenship,
+                :religion,
+                :address,
+                :current_address,
+                :permanent_address,
+                NULL,
+                :source
+            )
+        ");
 
             $stmt->execute([
-                ':job_id' =>
-                $job_id,
-
-                ':first_name' =>
-                $first_name,
-
-                ':middle_name' =>
-                $middle_name,
-
-                ':last_name' =>
-                $last_name,
-
-                ':email' =>
-                $email,
-
-                ':phone' =>
-                $phone,
-
-                ':gender' =>
-                $gender !== ''
-                    ? $gender
-                    : null,
-
-                ':birthplace' =>
-                $birthplace !== ''
-                    ? $birthplace
-                    : null,
-
-                ':birthdate' =>
-                $birthdate,
-
-                ':age' =>
-                $age,
-
-                ':civil_status' =>
-                $civil_status !== ''
-                    ? $civil_status
-                    : null,
-
-                ':citizenship' =>
-                $citizenship !== ''
-                    ? $citizenship
-                    : null,
-
-                ':religion' =>
-                $religion !== ''
-                    ? $religion
-                    : null,
-
-                ':address' =>
-                $current_address !== ''
-                    ? $current_address
-                    : null,
-
-                ':current_address' =>
-                $current_address !== ''
-                    ? $current_address
-                    : null,
-
-                ':permanent_address' =>
-                $permanent_address !== ''
-                    ? $permanent_address
-                    : null,
-
-                ':source' =>
-                $source
+                ':job_id' => $job_id,
+                ':first_name' => $first_name,
+                ':middle_name' => $middle_name !== '' ? $middle_name : null,
+                ':last_name' => $last_name,
+                ':email' => $email,
+                ':phone' => $phone !== '' ? $phone : null,
+                ':gender' => $gender !== '' ? $gender : null,
+                ':birthplace' => $birthplace !== '' ? $birthplace : null,
+                ':birthdate' => $birthdate,
+                ':age' => $age,
+                ':civil_status' => $civil_status !== '' ? $civil_status : null,
+                ':citizenship' => $citizenship !== '' ? $citizenship : null,
+                ':religion' => $religion !== '' ? $religion : null,
+                ':address' => $current_address !== '' ? $current_address : null,
+                ':current_address' => $current_address !== '' ? $current_address : null,
+                ':permanent_address' => $permanent_address !== '' ? $permanent_address : null,
+                ':source' => $source
             ]);
-
-
 
             // =========================
             // GET APPLICATION ID
             // =========================
 
-            $application_id =
-                (int) $db->lastInsertId();
+            $application_id = (int) $db->lastInsertId();
 
             if ($application_id <= 0) {
-                throw new Exception(
-                    "Unable to get application ID."
-                );
+                throw new Exception("Unable to get application ID.");
             }
 
             // =========================
-            // GENERATE RESUME FILENAME
-            // =========================
-            //
-            // Format:
-            // resume_YYYYMM####.pdf
-            //
-            // Examples:
-            // ID 1    -> resume_2026080001.pdf
-            // ID 25   -> resume_2026080025.pdf
-            // ID 999  -> resume_2026080999.pdf
-            // ID 2000 -> resume_2026082000.pdf
-            //
-
-            $datePrefix = date('Ym');
-
-            $paddedId = str_pad(
-                $application_id,
-                4,
-                '0',
-                STR_PAD_LEFT
-            );
-
-            $fileName =
-                'resume_' .
-                $datePrefix .
-                $paddedId .
-                '.pdf';
-
-            // Example:
-            // resume_2026080001.pdf
-
-            // =========================
             // RESUME UPLOAD
             // =========================
-
-            // =========================
-            // RESUME UPLOAD
-            // =========================
-
-            $resumePath = null;
 
             if ($hasResume) {
-                // Controller: modules/recruitment/controllers/
-                // Destination: modules/recruitment/JobPortal/uploads/{id}/
+                /*
+             * Controller directory:
+             * modules/recruitment/controllers/
+             *
+             * Upload directory:
+             * modules/recruitment/JobPortal/uploads/{application_id}/
+             */
+
                 $uploadRoot = dirname(__DIR__) . '/JobPortal/uploads';
                 $uploadDir = $uploadRoot . '/' . $application_id;
 
+                // Create the root upload directory if necessary.
+                if (
+                    !is_dir($uploadRoot) &&
+                    !mkdir($uploadRoot, 0755, true) &&
+                    !is_dir($uploadRoot)
+                ) {
+                    throw new Exception(
+                        "Unable to create the upload root directory."
+                    );
+                }
+
+                // Create the applicant-specific directory.
                 if (
                     !is_dir($uploadDir) &&
                     !mkdir($uploadDir, 0755, true) &&
                     !is_dir($uploadDir)
                 ) {
                     throw new Exception(
-                        "Unable to create upload directory."
+                        "Unable to create the applicant upload directory."
                     );
                 }
 
                 if (!is_writable($uploadDir)) {
                     throw new Exception(
-                        "Upload directory is not writable."
+                        "The applicant upload directory is not writable."
                     );
                 }
 
-                // Use a unique filename; do not trust the original filename.
+                // Generate a unique filename.
                 $fileName = 'resume_' .
                     date('Ymd_His') . '_' .
                     bin2hex(random_bytes(4)) . '.pdf';
 
                 $destination = $uploadDir . '/' . $fileName;
 
-                if (!move_uploaded_file(
-                    $_FILES['resume']['tmp_name'],
-                    $destination
-                )) {
+                // Move the uploaded file to its destination.
+                if (
+                    !move_uploaded_file(
+                        $_FILES['resume']['tmp_name'],
+                        $destination
+                    )
+                ) {
                     throw new Exception(
-                        "Unable to save uploaded resume."
+                        "Unable to save the uploaded resume."
                     );
                 }
 
-                // Store a relative path in the database.
+                // Save a relative path in the database.
                 $resumePath = 'JobPortal/uploads/' .
                     $application_id . '/' . $fileName;
 
                 $updateResume = $db->prepare("
-                    UPDATE rao_applications
-                    SET resume = :resume
-                    WHERE id = :id
-                ");
+                UPDATE rao_applications
+                SET resume = :resume
+                WHERE id = :id
+            ");
 
                 $updateResume->execute([
                     ':resume' => $resumePath,
@@ -1543,21 +1430,29 @@ class ApplicationController
                 ]);
             }
 
+            // =========================
+            // SUCCESS
+            // =========================
 
+            $_SESSION['success'] =
+                "Applicant created successfully.";
+
+            header("Location: index.php?page=applications");
             exit;
         } catch (Throwable $e) {
-
-            $_SESSION['error'] =
-                "Unable to save applicant: " .
-                $e->getMessage();
-
-            header(
-                "Location: index.php?page=create-new-applicant"
+            error_log(
+                "ApplicationController::store error: " .
+                    $e->getMessage()
             );
 
+            $_SESSION['error'] =
+                "Unable to save applicant: " . $e->getMessage();
+
+            header("Location: index.php?page=create-new-applicant");
             exit;
         }
     }
+
 
 
     /**
