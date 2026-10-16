@@ -12,7 +12,6 @@ class Experience
         $this->db = $database->getConnection();
     }
 
-
     public function create(
         int $applicationId,
         ?string $employer,
@@ -21,43 +20,24 @@ class Experience
         ?string $endDate,
         ?string $description
     ) {
-        $employer = trim((string) ($employer ?? ''));
-        $position = trim((string) ($position ?? ''));
-        $description = trim((string) ($description ?? ''));
-
         $stmt = $this->db->prepare('
-        INSERT INTO rao_experience (
-            application_id,
-            company_name,
-            employer,
-            position,
-            start_date,
-            end_date,
-            description
-        ) VALUES (
-            :application_id,
-            :company_name,
-            :employer,
-            :position,
-            :start_date,
-            :end_date,
-            :description
-        )
-    ');
+			INSERT INTO rao_experience
+				(application_id, company_name, position, start_date, end_date, description)
+			VALUES
+				(:application_id, :company_name, :position, :start_date, :end_date, :description)
+		');
 
         $stmt->execute([
             ':application_id' => $applicationId,
-            ':company_name' => $employer,
-            ':employer' => $employer !== '' ? $employer : null,
-            ':position' => $position !== '' ? $position : '',
+            ':company_name' => $employer ?: '',
+            ':position' => $position ?: '',
             ':start_date' => $startDate ?: null,
             ':end_date' => $endDate ?: null,
-            ':description' => $description
+            ':description' => $description ?: ''
         ]);
 
         return (int) $this->db->lastInsertId();
     }
-
 
     public function findByApplicationId(int $applicationId)
     {
