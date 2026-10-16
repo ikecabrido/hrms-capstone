@@ -419,17 +419,15 @@ try {
         'message' => 'Unknown action.'
     ], 400);
 } catch (Throwable $e) {
-    // Keep the technical details in the server's error log.
-    error_log(
-        'Onboarding checklist error: '
-            . $e->getMessage()
-            . ' | File: ' . $e->getFile()
-            . ' | Line: ' . $e->getLine()
-    );
+    error_log('OnboardingChecklistController ERROR: ' . $e->getMessage());
+    error_log('File: ' . $e->getFile());
+    error_log('Line: ' . $e->getLine());
+    error_log('Trace: ' . $e->getTraceAsString());
 
-    // Do not expose database credentials or internal paths to the browser.
     jsonResponse([
         'success' => false,
-        'message' => 'The request could not be completed. Check the PHP error log.'
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
     ], 500);
 }
