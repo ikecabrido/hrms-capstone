@@ -14,8 +14,9 @@ class Page
         'schedule-tracker'   => 'Schedule Tracker',
         'interview-results'  => 'Interview Results',
         'offered-list'       => 'Offered Lists',
-        'hired-applicants'   => 'Hired Applicants',
         'onboarding'         => 'Onboarding',
+        'hired-applicants'   => 'Hired Applicants',
+
     ];
 
     private $sections = [
