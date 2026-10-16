@@ -3,6 +3,26 @@ include_once __DIR__ . '/../../../classes/Employee.php';
 require_once dirname(__DIR__, 3) . '/classes/quizsession.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 
+/**
+ * Redirect from a page that renders inside the layout shell. This page is
+ * included after includes/header.php has already been echoed, so a Location
+ * header is usually impossible ("headers already sent"). When that happens,
+ * fall back to a client-side redirect instead of emitting a PHP warning.
+ */
+if (!function_exists('ld_study_redirect')) {
+    function ld_study_redirect(string $url): void
+    {
+        if (!headers_sent()) {
+            header('Location: ' . $url);
+            exit;
+        }
+
+        echo '<script>window.location.replace(' . json_encode($url) . ');</script>';
+        echo '<noscript><meta http-equiv="refresh" content="0;url=' . htmlspecialchars($url, ENT_QUOTES) . '"></noscript>';
+        exit;
+    }
+}
+
 $employeeClass = new Employee();
 $learnerId = (int) ($employeeClass->getEmployeeId() ?? 0);
 
@@ -29,8 +49,7 @@ try {
             $sessionId = (int) $result['session_id'];
         } else {
             // Failed to start — redirect back to quiz intro
-            header('Location: ?page=learner/study-subpage/quiz&quiz_id=' . $quizId . '&course_id=' . $courseId . '&error=' . urlencode($result['message'] ?? 'Failed to start'));
-            exit;
+            ld_study_redirect('?page=learner/study-subpage/quiz&quiz_id=' . $quizId . '&course_id=' . $courseId . '&error=' . urlencode($result['message'] ?? 'Failed to start'));
         }
     }
 
@@ -40,14 +59,12 @@ try {
     $session = $sessionStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
     if (!$session) {
-        header('Location: ?page=learner/study');
-        exit;
+        ld_study_redirect('?page=learner/study');
     }
 
     // If already submitted, redirect to review
     if ($session['status'] !== 'in_progress') {
-        header('Location: ?page=learner/study-subpage/quiz-review&session_id=' . $sessionId . '&course_id=' . $courseId);
-        exit;
+        ld_study_redirect('?page=learner/study-subpage/quiz-review&session_id=' . $sessionId . '&course_id=' . $courseId);
     }
 
     $quizId = (int) $session['reference_id'];
@@ -114,87 +131,69 @@ try {
     $sessionStartedAt = $session['started_at'] ?? null;
 
 } catch (Throwable $e) {
-    header('Location: ?page=learner/study');
-    exit;
+    ld_study_redirect('?page=learner/study');
 }
 ?>
-<div class="module-content" style="max-width:1200px; margin:0 auto;">
-    <!-- Top Bar: Timer + Quiz Info -->
-    <div style="display:flex; justify-content:space-between; align-items:center; padding:1rem 1.5rem; background:var(--surface, #fff); border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.08); margin-bottom:1.5rem; position:sticky; top:0; z-index:100;">
-        <div>
-            <h2 style="margin:0; font-size:1.1rem;"><?= htmlspecialchars($quiz['title'] ?? 'Quiz') ?></h2>
-            <span style="color:#999; font-size:0.85rem;"><?= htmlspecialchars($course['title'] ?? '') ?></span>
+<div class="module-content">
+    <!-- Sticky bar: quiz info + timer + submit -->
+    <div class="quiz-bar">
+        <div class="quiz-bar-info">
+            <h2 class="quiz-bar-title"><?= htmlspecialchars($quiz['title'] ?? 'Quiz') ?></h2>
+            <span class="quiz-bar-sub"><?= htmlspecialchars($course['title'] ?? '') ?></span>
         </div>
-        <div style="display:flex; align-items:center; gap:2rem;">
-            <div id="timer-display" style="font-size:1.5rem; font-weight:700; color:var(--primary); font-family:monospace;">
-                <?php if ($quizDurationSeconds !== null): ?>
-                    --:--
-                <?php else: ?>
-                    ∞
-                <?php endif; ?>
-            </div>
-            <button type="button" id="submit-quiz-btn" style="padding:0.75rem 1.5rem; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:700;">
+        <div class="quiz-bar-actions">
+            <div id="timer-display" class="quiz-timer"><?php if ($quizDurationSeconds !== null): ?>--:--<?php else: ?>&infin;<?php endif; ?></div>
+            <button type="button" id="submit-quiz-btn" class="quiz-btn quiz-btn-primary">
                 <i class="fas fa-paper-plane"></i> Submit Quiz
             </button>
         </div>
     </div>
 
-    <div style="display:grid; grid-template-columns:1fr 280px; gap:1.5rem; align-items:start;">
-        <!-- Questions Column -->
+    <div class="quiz-layout">
+        <!-- Questions -->
         <div id="questions-container">
             <?php foreach ($questions as $idx => $question):
                 $qId = $question['id'];
                 $selectedOption = $answers[$qId]['selected_option_id'] ?? null;
                 $isMarked = $answers[$qId]['is_marked_for_review'] ?? false;
             ?>
-            <div class="quiz-question" id="question-<?= $qId ?>" data-question-id="<?= $qId ?>" style="display:<?= $idx === 0 ? 'block' : 'none' ?>; padding:2rem; background:var(--surface, #fff); border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-bottom:1rem;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem;">
-                    <div style="display:flex; align-items:center; gap:0.75rem;">
-                        <span style="background:var(--primary); color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem; flex-shrink:0;"><?= $idx + 1 ?></span>
-                        <span class="pill" style="background:rgba(32,0,130,0.1); color:var(--primary);"><?= str_replace('_', ' ', ucfirst($question['question_type'])) ?></span>
+            <div class="quiz-question" id="question-<?= $qId ?>" data-question-id="<?= $qId ?>" style="display:<?= $idx === 0 ? 'block' : 'none' ?>;">
+                <div class="quiz-q-head">
+                    <div class="quiz-q-meta">
+                        <span class="quiz-q-num"><?= $idx + 1 ?></span>
+                        <span class="quiz-q-type"><?= str_replace('_', ' ', $question['question_type']) ?></span>
                     </div>
-                    <button type="button" class="mark-review-btn" data-question-id="<?= $qId ?>" style="padding:0.4rem 0.8rem; background:<?= $isMarked ? '#ffc107' : '#f0f0f0' ?>; color:<?= $isMarked ? '#000' : '#666' ?>; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:500;">
+                    <button type="button" class="mark-review-btn" data-question-id="<?= $qId ?>" style="background:<?= $isMarked ? '#ffc107' : '#f0f0f0' ?>; color:<?= $isMarked ? '#000' : '#666' ?>;">
                         <i class="fas fa-flag"></i> <?= $isMarked ? 'Unmark' : 'Mark for Review' ?>
                     </button>
                 </div>
-                <p style="font-size:1.1rem; line-height:1.7; margin-bottom:1.5rem;"><?= htmlspecialchars($question['question_text']) ?></p>
+                <p class="quiz-q-text"><?= htmlspecialchars($question['question_text']) ?></p>
 
-                <?php if ($question['question_type'] === 'true_false'): ?>
-                    <div style="display:grid; gap:0.5rem;">
-                        <?php foreach ($question['options'] as $opt): ?>
-                            <label style="display:flex; align-items:center; gap:0.75rem; padding:1rem; background:<?= $selectedOption == $opt['id'] ? 'rgba(32,0,130,0.08)' : '#f9f9f9' ?>; border:2px solid <?= $selectedOption == $opt['id'] ? 'var(--primary)' : 'transparent' ?>; border-radius:10px; cursor:pointer; transition: all 0.2s;">
-                                <input type="radio" name="answer[<?= $qId ?>]" value="<?= $opt['id'] ?>" <?= $selectedOption == $opt['id'] ? 'checked' : '' ?> style="accent-color:var(--primary);">
-                                <span style="font-size:1rem;"><?= htmlspecialchars($opt['option_text']) ?></span>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                <?php else: ?>
-                    <div style="display:grid; gap:0.5rem;">
-                        <?php foreach ($question['options'] as $opt): ?>
-                            <label style="display:flex; align-items:center; gap:0.75rem; padding:1rem; background:<?= $selectedOption == $opt['id'] ? 'rgba(32,0,130,0.08)' : '#f9f9f9' ?>; border:2px solid <?= $selectedOption == $opt['id'] ? 'var(--primary)' : 'transparent' ?>; border-radius:10px; cursor:pointer; transition: all 0.2s;">
-                                <?php if ($question['question_type'] === 'multiple_choice'): ?>
-                                    <input type="checkbox" name="answer[<?= $qId ?>][]" value="<?= $opt['id'] ?>" style="accent-color:var(--primary); width:18px; height:18px;">
-                                <?php else: ?>
-                                    <input type="radio" name="answer[<?= $qId ?>]" value="<?= $opt['id'] ?>" <?= $selectedOption == $opt['id'] ? 'checked' : '' ?> style="accent-color:var(--primary);">
-                                <?php endif; ?>
-                                <span style="font-size:1rem;"><?= htmlspecialchars($opt['option_text']) ?></span>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                <div class="quiz-options">
+                    <?php foreach ($question['options'] as $opt): $sel = ($selectedOption == $opt['id']); ?>
+                        <label class="quiz-option <?= $sel ? 'is-selected' : '' ?>">
+                            <?php if ($question['question_type'] === 'multiple_choice'): ?>
+                                <input type="checkbox" name="answer[<?= $qId ?>][]" value="<?= $opt['id'] ?>" <?= $sel ? 'checked' : '' ?>>
+                            <?php else: ?>
+                                <input type="radio" name="answer[<?= $qId ?>]" value="<?= $opt['id'] ?>" <?= $sel ? 'checked' : '' ?>>
+                            <?php endif; ?>
+                            <span><?= htmlspecialchars($opt['option_text']) ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
 
                 <!-- Prev/Next navigation within question -->
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; padding-top:1rem; border-top:1px solid rgba(32,0,130,0.08);">
-                    <button type="button" class="nav-prev-btn" <?= $idx === 0 ? 'disabled style="opacity:0.3; cursor:not-allowed;"' : '' ?> data-index="<?= $idx ?>" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.2rem;background:transparent;color:var(--muted,#666);border:1px solid rgba(32,0,130,0.15);border-radius:8px;cursor:pointer;font-weight:600;font-size:0.88rem;transition:all 0.2s;">
-                        <i class="fas fa-chevron-left" style="font-size:0.75rem;"></i> Previous
+                <div class="quiz-nav-row">
+                    <button type="button" class="nav-prev-btn quiz-btn quiz-btn-ghost" <?= $idx === 0 ? 'disabled' : '' ?> data-index="<?= $idx ?>">
+                        <i class="fas fa-chevron-left"></i> Previous
                     </button>
                     <?php if ($idx < count($questions) - 1): ?>
-                    <button type="button" class="nav-next-btn" data-index="<?= $idx ?>" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.2rem;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.88rem;transition:all 0.2s;box-shadow:0 2px 8px rgba(32,0,130,0.2);">
-                        Next <i class="fas fa-chevron-right" style="font-size:0.75rem;"></i>
+                    <button type="button" class="nav-next-btn quiz-btn quiz-btn-primary" data-index="<?= $idx ?>">
+                        Next <i class="fas fa-chevron-right"></i>
                     </button>
                     <?php else: ?>
-                    <button type="button" id="final-submit-btn" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.2rem;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.88rem;transition:all 0.2s;box-shadow:0 2px 8px rgba(32,0,130,0.2);">
-                        <i class="fas fa-check" style="font-size:0.75rem;"></i> Finish
+                    <button type="button" id="final-submit-btn" class="quiz-btn quiz-btn-primary">
+                        <i class="fas fa-check"></i> Finish
                     </button>
                     <?php endif; ?>
                 </div>
@@ -203,31 +202,27 @@ try {
         </div>
 
         <!-- Navigator Sidebar -->
-        <div style="position:sticky; top:80px;">
-            <div style="padding:1.5rem; background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-                <h3 style="margin:0 0 1rem 0; font-size:1rem;">Question Navigator</h3>
-                <div id="question-nav" style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0.5rem; margin-bottom:1rem;">
-                    <?php foreach ($questions as $idx => $question):
-                        $qId = $question['id'];
-                        $answered = isset($answers[$qId]['selected_option_id']) && $answers[$qId]['selected_option_id'] !== null;
-                        $marked = $answers[$qId]['is_marked_for_review'] ?? false;
-                    ?>
-                        <button type="button" class="nav-q-btn <?= $idx === 0 ? 'active' : '' ?>" data-index="<?= $idx ?>"
-                            style="width:36px; height:36px; border-radius:6px; border:2px solid <?= $marked ? '#ffc107' : ($answered ? 'var(--primary)' : '#ddd') ?>; background:<?= $answered ? 'rgba(32,0,130,0.08)' : '#fff' ?>; color:<?= $marked ? '#000' : ($answered ? 'var(--primary)' : '#333') ?>; cursor:pointer; font-weight:600; font-size:0.85rem; display:flex; align-items:center; justify-content:center; transition: all 0.2s; padding:0;">
-                            <?= $idx + 1 ?>
-                        </button>
-                    <?php endforeach; ?>
-                </div>
-                <div style="display:grid; gap:0.35rem; font-size:0.85rem; color:#666;">
-                    <div style="display:flex; align-items:center; gap:0.5rem;"><span style="width:14px; height:14px; background:rgba(32,0,130,0.08); border:2px solid var(--primary); border-radius:3px;"></span> Answered</div>
-                    <div style="display:flex; align-items:center; gap:0.5rem;"><span style="width:14px; height:14px; background:#fff; border:2px solid #ddd; border-radius:3px;"></span> Not Answered</div>
-                    <div style="display:flex; align-items:center; gap:0.5rem;"><span style="width:14px; height:14px; background:#fff; border:2px solid #ffc107; border-radius:3px;"></span> Marked for Review</div>
-                </div>
-                <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid #eee; text-align:center;">
-                    <span id="answered-count" style="font-weight:600; color:var(--primary);">0</span> / <?= count($questions) ?> answered
-                </div>
+        <aside class="quiz-nav-panel">
+            <h3>Question Navigator</h3>
+            <div id="question-nav" class="quiz-nav-grid">
+                <?php foreach ($questions as $idx => $question):
+                    $qId = $question['id'];
+                    $answered = isset($answers[$qId]['selected_option_id']) && $answers[$qId]['selected_option_id'] !== null;
+                    $marked = $answers[$qId]['is_marked_for_review'] ?? false;
+                ?>
+                    <button type="button" class="nav-q-btn <?= $idx === 0 ? 'active' : '' ?>" data-index="<?= $idx ?>"
+                        style="border-color:<?= $marked ? '#ffc107' : ($answered ? 'var(--primary)' : '#ddd') ?>; background:<?= $answered ? 'rgba(32,0,130,0.08)' : '#fff' ?>; color:<?= $marked ? '#000' : ($answered ? 'var(--primary)' : '#333') ?>;">
+                        <?= $idx + 1 ?>
+                    </button>
+                <?php endforeach; ?>
             </div>
-        </div>
+            <div class="quiz-nav-legend">
+                <div class="quiz-nav-legend-row"><span class="quiz-nav-swatch answered"></span> Answered</div>
+                <div class="quiz-nav-legend-row"><span class="quiz-nav-swatch"></span> Not Answered</div>
+                <div class="quiz-nav-legend-row"><span class="quiz-nav-swatch marked"></span> Marked for Review</div>
+            </div>
+            <div class="quiz-nav-count"><b id="answered-count">0</b> / <?= count($questions) ?> answered</div>
+        </aside>
     </div>
 </div>
 

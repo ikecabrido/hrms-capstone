@@ -362,7 +362,7 @@ $instructorName = $employeeClass->getEmployeeName();
             <button type="button" class="active" data-view="grid" title="Grid view"><i class="fas fa-th"></i></button>
             <button type="button" data-view="list" title="List view"><i class="fas fa-list"></i></button>
         </div>
-        <select id="isg-page-size" class="isg-page-size" title="Items per page">
+        <select id="isg-page-size" class="isg-page-size" data-display-pref="page_size" title="Items per page">
             <option value="12">12 per page</option>
             <option value="24">24 per page</option>
             <option value="36">36 per page</option>

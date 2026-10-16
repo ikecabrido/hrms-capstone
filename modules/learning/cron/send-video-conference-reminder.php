@@ -13,7 +13,6 @@
  */
 
 // ── Configuration ──────────────────────────────────────────────
-$BASE_DIR = dirname(__FILE__, 2);  // learning/
 $LOG_FILE = dirname(__FILE__) . '/conference-reminder.log';
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -27,7 +26,9 @@ function logMsg(string $msg): void {
 }
 
 // ── Connect to DB ──────────────────────────────────────────────
-require_once $BASE_DIR . '/database/db.php';
+// Paths follow the sibling crons: the app root, then this module.
+require_once dirname(__FILE__, 4) . '/database/db.php';
+require_once dirname(__FILE__, 2) . '/classes/notificationpreference.php';
 
 try {
     $db = new Database();
@@ -112,9 +113,9 @@ foreach ($firstConferences as $conf) {
 
     // Notify instructor
     $instructorId = (int)$conf['instructor_id'];
-    if ($instructorId > 0) {
+    if ($instructorId > 0 && NotificationPreference::allows($pdo, $instructorId, 'conference_reminder')) {
         $stmt2 = $pdo->prepare("
-            INSERT INTO ld_notification (user_id, type, title, message, reference_type, reference_id)
+            INSERT INTO ld_notification_inbox (user_id, type, title, message, reference_type, reference_id)
             VALUES (:uid, 'conference_reminder', :title, :msg, 'video_conference', :refId)
         ");
         $stmt2->execute([
@@ -138,8 +139,11 @@ foreach ($firstConferences as $conf) {
 
         foreach ($learners as $learner) {
             $learnerId = (int)$learner['learner_id'];
+            if (!NotificationPreference::allows($pdo, $learnerId, 'conference_reminder')) {
+                continue;
+            }
             $stmt4 = $pdo->prepare("
-                INSERT INTO ld_notification (user_id, type, title, message, reference_type, reference_id)
+                INSERT INTO ld_notification_inbox (user_id, type, title, message, reference_type, reference_id)
                 VALUES (:uid, 'conference_reminder', :title, :msg, 'video_conference', :refId)
             ");
             $stmt4->execute([
@@ -210,9 +214,9 @@ foreach ($secondConferences as $conf) {
 
     // Notify instructor
     $instructorId = (int)$conf['instructor_id'];
-    if ($instructorId > 0) {
+    if ($instructorId > 0 && NotificationPreference::allows($pdo, $instructorId, 'conference_starting')) {
         $stmt2 = $pdo->prepare("
-            INSERT INTO ld_notification (user_id, type, title, message, reference_type, reference_id)
+            INSERT INTO ld_notification_inbox (user_id, type, title, message, reference_type, reference_id)
             VALUES (:uid, 'conference_starting', :title, :msg, 'video_conference', :refId)
         ");
         $stmt2->execute([
@@ -236,8 +240,11 @@ foreach ($secondConferences as $conf) {
 
         foreach ($learners as $learner) {
             $learnerId = (int)$learner['learner_id'];
+            if (!NotificationPreference::allows($pdo, $learnerId, 'conference_starting')) {
+                continue;
+            }
             $stmt4 = $pdo->prepare("
-                INSERT INTO ld_notification (user_id, type, title, message, reference_type, reference_id)
+                INSERT INTO ld_notification_inbox (user_id, type, title, message, reference_type, reference_id)
                 VALUES (:uid, 'conference_starting', :title, :msg, 'video_conference', :refId)
             ");
             $stmt4->execute([

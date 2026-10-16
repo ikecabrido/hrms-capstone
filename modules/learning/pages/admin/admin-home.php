@@ -72,163 +72,174 @@ function adminTimeAgo($dt) {
 $completionRate = ($stats['active_enrollments'] + $stats['completed']) > 0
     ? round(($stats['completed'] / max(1, $stats['active_enrollments'] + $stats['completed'])) * 100) : 0;
 ?>
-<div class="module-header">
-    <h1 class="module-header-title"><?= htmlspecialchars($employeeClass->getGreeting()) ?></h1>
-</div>
-
 <div class="module-content">
-    <!-- Overview + Quick Access side by side -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
-        <!-- Overview -->
-        <div class="mode-card">
-            <h3 style="margin:0 0 1rem 0;"><i class="fas fa-chart-line" style="color:var(--primary);margin-right:0.5rem;"></i> Overview</h3>
-            <div class="analytics-cards">
-                <div class="analytics-card" style="cursor:pointer;" onclick="location.href='?page=admin/analytics'">
-                    <h2><i class="fas fa-users" style="margin-right:0.4rem;opacity:0.6;"></i> Total Users</h2>
-                    <p class="analytics-value"><?= $stats['users'] ?></p>
-                    <div style="font-size:0.85rem;color:#999;"><?= $stats['instructors'] ?> instructors &middot; <?= $stats['learners'] ?> learners</div>
+    <div class="home-dashboard">
+
+        <!-- Hero -->
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1><?= htmlspecialchars($employeeClass->getGreeting()) ?></h1>
+                <p>Here is how the learning platform is performing today.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-users"></i> <?= (int) $stats['users'] ?> users</span>
+                    <span class="home-hero-chip"><i class="fas fa-graduation-cap"></i> <?= (int) $stats['courses'] ?> courses</span>
+                    <span class="home-hero-chip"><i class="fas fa-star"></i> <?= $stats['avg_score'] ?>% avg score</span>
                 </div>
-                <div class="analytics-card" style="cursor:pointer;" onclick="location.href='?page=admin/analytics'">
-                    <h2><i class="fas fa-graduation-cap" style="margin-right:0.4rem;opacity:0.6;"></i> Active Courses</h2>
-                    <p class="analytics-value"><?= $stats['courses'] ?></p>
-                    <div style="font-size:0.85rem;color:#999;"><?= $completionRate ?>% completion rate</div>
-                </div>
-                <div class="analytics-card" style="cursor:pointer;" onclick="location.href='?page=admin/analytics'">
-                    <h2><i class="fas fa-book-open" style="margin-right:0.4rem;opacity:0.6;"></i> Enrollments</h2>
-                    <p class="analytics-value"><?= $stats['active_enrollments'] + $stats['completed'] ?></p>
-                    <div style="font-size:0.85rem;color:#999;"><?= $stats['active_enrollments'] ?> active &middot; <?= $stats['completed'] ?> completed</div>
-                </div>
-                <div class="analytics-card" style="cursor:pointer;" onclick="location.href='?page=admin/analytics'">
-                    <h2><i class="fas fa-star" style="margin-right:0.4rem;opacity:0.6;"></i> Avg Score</h2>
-                    <p class="analytics-value"><?= $stats['avg_score'] ?>%</p>
-                    <div style="font-size:0.85rem;color:#999;">across all courses</div>
-                </div>
+            </div>
+        </section>
+
+        <!-- Key stats -->
+        <div class="home-stats">
+            <a class="home-stat" href="?page=admin/user">
+                <span class="home-stat-icon tone-violet"><i class="fas fa-users"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Total Users</span>
+                    <span class="home-stat-value"><?= (int) $stats['users'] ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['instructors'] ?> instructors &middot; <?= (int) $stats['learners'] ?> learners</span>
+                </span>
+            </a>
+            <a class="home-stat" href="?page=admin/analytics">
+                <span class="home-stat-icon tone-indigo"><i class="fas fa-graduation-cap"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Active Courses</span>
+                    <span class="home-stat-value"><?= (int) $stats['courses'] ?></span>
+                    <span class="home-stat-sub"><?= $completionRate ?>% completion rate</span>
+                </span>
+            </a>
+            <a class="home-stat" href="?page=admin/analytics">
+                <span class="home-stat-icon tone-emerald"><i class="fas fa-book-open"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Enrollments</span>
+                    <span class="home-stat-value"><?= (int) ($stats['active_enrollments'] + $stats['completed']) ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['active_enrollments'] ?> active &middot; <?= (int) $stats['completed'] ?> completed</span>
+                </span>
+            </a>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-amber"><i class="fas fa-star"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Avg Score</span>
+                    <span class="home-stat-value"><?= $stats['avg_score'] ?>%</span>
+                    <span class="home-stat-sub">across all courses</span>
+                </span>
             </div>
         </div>
 
-        <!-- Quick Access -->
-        <div class="mode-card">
-            <h3 style="margin:0 0 1rem 0;"><i class="fas fa-bolt" style="color:var(--accent);margin-right:0.5rem;"></i> Quick Access</h3>
-            <div style="display:grid;gap:0.5rem;">
-                <?php $links = [
-                    ['icon'=>'fa-users-cog','label'=>'User Management','url'=>'?page=admin/user','bg'=>'rgba(99,102,241,0.1)','color'=>'#6366f1'],
-                    ['icon'=>'fa-chart-bar','label'=>'Analytics Dashboard','url'=>'?page=admin/analytics','bg'=>'rgba(99,102,241,0.1)','color'=>'#6366f1'],
-                    ['icon'=>'fa-calendar','label'=>'Calendar & Events','url'=>'?page=admin/calendar','bg'=>'rgba(245,158,11,0.1)','color'=>'#f59e0b'],
-                    ['icon'=>'fa-shield-alt','label'=>'Moderation','url'=>'?page=admin/moderation','bg'=>'rgba(245,158,11,0.1)','color'=>'#f59e0b'],
-                    ['icon'=>'fa-bell','label'=>'Notifications','url'=>'?page=admin/notification','bg'=>'rgba(99,102,241,0.1)','color'=>'#6366f1'],
-                    ['icon'=>'fa-user-circle','label'=>'My Profile','url'=>'?page=admin/profile','bg'=>'rgba(245,158,11,0.1)','color'=>'#f59e0b'],
-                ]; foreach ($links as $lk): ?>
-                <a href="<?= $lk['url'] ?>" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1rem;background:var(--bg-subtle);border-radius:8px;text-decoration:none;color:var(--text);font-size:0.9rem;">
-                    <div style="width:32px;height:32px;border-radius:8px;background:<?= $lk['bg'] ?>;color:<?= $lk['color'] ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas <?= $lk['icon'] ?>"></i></div>
-                    <span style="flex:1;font-weight:500;"><?= $lk['label'] ?></span>
-                    <i class="fas fa-chevron-right" style="font-size:0.7rem;color:#999;"></i>
-                </a>
-                <?php endforeach; ?>
+        <!-- Main column + sidebar -->
+        <div class="home-columns">
+            <div class="home-col">
+                <!-- Top Courses -->
+                <div class="home-card">
+                    <div class="home-card-head">
+                        <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-trophy"></i></span> Top Courses</h3>
+                        <a class="home-card-link" href="?page=admin/analytics">View analytics <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <?php if (empty($topCourses)): ?>
+                        <div class="home-empty"><i class="fas fa-trophy"></i><p>No active courses yet.</p></div>
+                    <?php else: ?>
+                        <div class="home-list">
+                            <?php foreach ($topCourses as $i => $c): $courseCompletion = $c['enrollment_count'] > 0 ? min(100, round(($c['completed_count'] / max(1, $c['enrollment_count'])) * 100)) : 0; ?>
+                            <div class="home-row">
+                                <span class="home-row-icon tone-violet"><?= $i + 1 ?></span>
+                                <span class="home-row-body">
+                                    <span class="home-row-title"><?= htmlspecialchars($c['title']) ?></span>
+                                    <span class="home-row-meta"><?= (int) $c['enrollment_count'] ?> enrolled &bull; <?= $c['avg_score'] ?>% avg</span>
+                                </span>
+                                <span class="home-progress" title="<?= (int) $c['completed_count'] ?> of <?= (int) $c['enrollment_count'] ?> enrollments completed">
+                                    <span class="home-progress-track"><span class="home-progress-fill" style="width:<?= $courseCompletion ?>%"></span></span>
+                                    <span class="home-progress-val"><?= $courseCompletion ?>%</span>
+                                </span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Recent Enrollments -->
+                <div class="home-card">
+                    <div class="home-card-head">
+                        <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-user-plus"></i></span> Recent Enrollments</h3>
+                    </div>
+                    <?php if (empty($recentEnrollments)): ?>
+                        <div class="home-empty"><i class="fas fa-user-plus"></i><p>No enrollments yet.</p></div>
+                    <?php else: ?>
+                        <div class="home-list">
+                            <?php foreach ($recentEnrollments as $r): ?>
+                            <div class="home-row">
+                                <span class="home-row-icon tone-<?= $r['status'] === 'completed' ? 'emerald' : 'amber' ?>"><i class="fas fa-user"></i></span>
+                                <span class="home-row-body">
+                                    <span class="home-row-title"><?= htmlspecialchars($r['learner_name'] ?? 'Unknown') ?></span>
+                                    <span class="home-row-meta"><?= htmlspecialchars($r['course_title']) ?></span>
+                                </span>
+                                <span class="home-badge <?= $r['status'] === 'completed' ? 'is-success' : 'is-warn' ?>"><?= htmlspecialchars(str_replace('_', ' ', $r['status'])) ?></span>
+                                <span class="home-row-meta" style="margin:0;"><?= adminTimeAgo($r['enrolled_at']) ?></span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Main Content Grid -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="home-col">
+                <!-- Quick Access -->
+                <div class="home-card">
+                    <div class="home-card-head">
+                        <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-bolt"></i></span> Quick Access</h3>
+                    </div>
+                    <div class="home-quick">
+                        <?php $links = [
+                            ['icon'=>'fa-users-cog','label'=>'User Management','url'=>'?page=admin/user','tone'=>'indigo'],
+                            ['icon'=>'fa-chart-bar','label'=>'Analytics Dashboard','url'=>'?page=admin/analytics','tone'=>'indigo'],
+                            ['icon'=>'fa-calendar','label'=>'Calendar &amp; Events','url'=>'?page=admin/calendar','tone'=>'amber'],
+                            ['icon'=>'fa-shield-alt','label'=>'Moderation','url'=>'?page=admin/moderation','tone'=>'amber'],
+                            ['icon'=>'fa-bell','label'=>'Notifications','url'=>'?page=admin/notification','tone'=>'indigo'],
+                            ['icon'=>'fa-user-circle','label'=>'My Profile','url'=>'?page=admin/profile','tone'=>'violet'],
+                        ]; foreach ($links as $lk): ?>
+                        <a class="home-quick-link" href="<?= $lk['url'] ?>">
+                            <span class="home-quick-icon tone-<?= $lk['tone'] ?>"><i class="fas <?= $lk['icon'] ?>"></i></span>
+                            <span class="home-quick-label"><?= $lk['label'] ?></span>
+                            <i class="fas fa-chevron-right home-quick-chev"></i>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
 
-        <!-- Top Courses -->
-        <div class="mode-card">
-            <h3><i class="fas fa-trophy" style="color:var(--accent);margin-right:0.5rem;"></i> Top Courses</h3>
-            <?php if (empty($topCourses)): ?>
-                <p style="color:#999;text-align:center;padding:1.5rem;">No active courses yet.</p>
-            <?php else: ?>
-                <div style="display:grid;gap:0.6rem;margin-top:0.75rem;">
-                    <?php foreach ($topCourses as $i => $c): ?>
-                        <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem;background:var(--bg-subtle);border-radius:8px;">
-                            <span style="width:24px;height:24px;border-radius:50%;background:<?= ['var(--primary)','var(--accent)','var(--primary)','var(--accent)','var(--accent)'][$i] ?>;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;flex-shrink:0;"><?= $i + 1 ?></span>
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-weight:600;font-size:0.85rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($c['title']) ?></div>
-                                <div style="font-size:0.75rem;color:#999;"><?= $c['enrollment_count'] ?> enrolled · <?= $c['avg_score'] ?>% avg</div>
+                <!-- Upcoming Events -->
+                <div class="home-card">
+                    <div class="home-card-head">
+                        <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-video"></i></span> Upcoming Events</h3>
+                    </div>
+                    <?php if (empty($upcomingEvents)): ?>
+                        <div class="home-empty"><i class="fas fa-video"></i><p>No upcoming events.</p></div>
+                    <?php else: ?>
+                        <div class="home-list">
+                            <?php foreach ($upcomingEvents as $ev): ?>
+                            <div class="home-row">
+                                <span class="home-row-icon tone-indigo" style="flex-direction:column;line-height:1.05;">
+                                    <span style="font-size:0.6rem;font-weight:700;text-transform:uppercase;"><?= date('M', strtotime($ev['scheduled_at'])) ?></span>
+                                    <span style="font-size:0.95rem;font-weight:800;"><?= date('j', strtotime($ev['scheduled_at'])) ?></span>
+                                </span>
+                                <span class="home-row-body">
+                                    <span class="home-row-title"><?= htmlspecialchars($ev['title']) ?></span>
+                                    <span class="home-row-meta"><?= date('g:i A', strtotime($ev['scheduled_at'])) ?> &bull; <?= htmlspecialchars($ev['platform']) ?> &bull; <?= (int) $ev['duration_minutes'] ?>min</span>
+                                </span>
                             </div>
-                            <?php $courseCompletion = $c['enrollment_count'] > 0 ? min(100, round(($c['completed_count'] / max(1, $c['enrollment_count'])) * 100)) : 0; ?>
-                            <div title="<?= (int) $c['completed_count'] ?> of <?= (int) $c['enrollment_count'] ?> enrollments completed" style="display:flex;align-items:center;gap:0.5rem;flex-shrink:0;">
-                                <div style="width:40px;height:6px;background:#eee;border-radius:3px;overflow:hidden;">
-                                    <div style="height:100%;width:<?= $courseCompletion ?>%;background:var(--primary);border-radius:3px;"></div>
-                                </div>
-                                <span style="font-size:0.75rem;font-weight:700;color:var(--primary);white-space:nowrap;min-width:34px;text-align:right;"><?= $courseCompletion ?>%</span>
-                            </div>
+                            <?php endforeach; ?>
                         </div>
-                    <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
-        </div>
 
-        <!-- Recent Enrollments -->
-        <div class="mode-card">
-            <h3><i class="fas fa-user-plus" style="color:var(--primary);margin-right:0.5rem;"></i> Recent Enrollments</h3>
-            <?php if (empty($recentEnrollments)): ?>
-                <p style="color:#999;text-align:center;padding:1.5rem;">No enrollments yet.</p>
-            <?php else: ?>
-                <div style="display:grid;gap:0.5rem;margin-top:0.75rem;">
-                    <?php foreach ($recentEnrollments as $r): ?>
-                        <?php
-                            $statusColors = ['completed' => 'var(--primary)', 'in_progress' => 'var(--accent)', 'enrolled' => 'var(--primary)', 'invited' => 'var(--accent)', 'withdrawn' => 'var(--accent)'];
-                            $color = $statusColors[$r['status']] ?? '#666';
-                        ?>
-                        <div style="display:flex;align-items:center;gap:0.6rem;padding:0.5rem;background:var(--bg-subtle);border-radius:8px;">
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-weight:600;font-size:0.85rem;color:var(--text);"><?= htmlspecialchars($r['learner_name'] ?? 'Unknown') ?></div>
-                                <div style="font-size:0.75rem;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($r['course_title']) ?></div>
-                            </div>
-                            <span style="font-size:0.7rem;padding:0.15rem 0.5rem;border-radius:12px;background:<?= $color ?>20;color:<?= $color ?>;font-weight:600;white-space:nowrap;"><?= $r['status'] ?></span>
-                            <span style="font-size:0.7rem;color:#bbb;white-space:nowrap;"><?= adminTimeAgo($r['enrolled_at']) ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Upcoming Events -->
-        <div class="mode-card">
-            <h3><i class="fas fa-video" style="color:var(--accent);margin-right:0.5rem;"></i> Upcoming Events</h3>
-            <?php if (empty($upcomingEvents)): ?>
-                <p style="color:#999;text-align:center;padding:1.5rem;">No upcoming events.</p>
-            <?php else: ?>
-                <div style="display:grid;gap:0.5rem;margin-top:0.75rem;">
-                    <?php foreach ($upcomingEvents as $ev): ?>
-                        <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem;background:var(--bg-subtle);border-radius:8px;border-left:3px solid var(--accent);">
-                            <div style="width:40px;height:40px;border-radius:8px;background:var(--accent);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1;">
-                                <span style="font-size:0.65rem;font-weight:600;"><?= date('M', strtotime($ev['scheduled_at'])) ?></span>
-                                <span style="font-size:0.9rem;font-weight:800;"><?= date('j', strtotime($ev['scheduled_at'])) ?></span>
-                            </div>
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-weight:600;font-size:0.85rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($ev['title']) ?></div>
-                                <div style="font-size:0.75rem;color:#999;"><?= date('g:i A', strtotime($ev['scheduled_at'])) ?> · <?= htmlspecialchars($ev['platform']) ?> · <?= $ev['duration_minutes'] ?>min</div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Platform Health -->
-        <div class="mode-card">
-            <h3><i class="fas fa-heartbeat" style="color:var(--primary);margin-right:0.5rem;"></i> Platform Health</h3>
-            <div style="display:grid;gap:0.75rem;margin-top:0.75rem;">
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;background:var(--bg-subtle);border-radius:8px;">
-                    <span style="font-size:0.85rem;color:#666;"><i class="fas fa-book" style="margin-right:0.4rem;color:var(--primary);"></i> Total Courses</span>
-                    <span style="font-weight:700;color:var(--text);"><?= $stats['courses'] ?></span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;background:var(--bg-subtle);border-radius:8px;">
-                    <span style="font-size:0.85rem;color:#666;"><i class="fas fa-project-diagram" style="margin-right:0.4rem;color:var(--primary);"></i> Programs</span>
-                    <span style="font-weight:700;color:var(--text);"><?= $stats['programs'] ?></span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;background:var(--bg-subtle);border-radius:8px;">
-                    <span style="font-size:0.85rem;color:#666;"><i class="fas fa-certificate" style="margin-right:0.4rem;color:var(--accent);"></i> Certificates Issued</span>
-                    <span style="font-weight:700;color:var(--text);"><?= $stats['certificates'] ?></span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;background:var(--bg-subtle);border-radius:8px;">
-                    <span style="font-size:0.85rem;color:#666;"><i class="fas fa-flag" style="margin-right:0.4rem;color:var(--accent);"></i> Pending Reports</span>
-                    <span style="font-weight:700;color:<?= $stats['pending_reports'] > 0 ? 'var(--accent)' : 'var(--text)' ?>;"><?= $stats['pending_reports'] ?></span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem;background:var(--bg-subtle);border-radius:8px;">
-                    <span style="font-size:0.85rem;color:#666;"><i class="fas fa-chart-line" style="margin-right:0.4rem;color:var(--accent);"></i> Completion Rate</span>
-                    <span style="font-weight:700;color:var(--text);"><?= $completionRate ?>%</span>
+                <!-- Platform Health -->
+                <div class="home-card">
+                    <div class="home-card-head">
+                        <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-heartbeat"></i></span> Platform Health</h3>
+                    </div>
+                    <div class="home-kv"><span class="home-kv-label"><i class="fas fa-book"></i> Total Courses</span><span class="home-kv-value"><?= (int) $stats['courses'] ?></span></div>
+                    <div class="home-kv"><span class="home-kv-label"><i class="fas fa-project-diagram"></i> Programs</span><span class="home-kv-value"><?= (int) $stats['programs'] ?></span></div>
+                    <div class="home-kv"><span class="home-kv-label"><i class="fas fa-certificate"></i> Certificates Issued</span><span class="home-kv-value"><?= (int) $stats['certificates'] ?></span></div>
+                    <div class="home-kv"><span class="home-kv-label"><i class="fas fa-flag"></i> Pending Reports</span><span class="home-kv-value" <?= $stats['pending_reports'] > 0 ? 'style="color:var(--accent);"' : '' ?>><?= (int) $stats['pending_reports'] ?></span></div>
+                    <div class="home-kv"><span class="home-kv-label"><i class="fas fa-chart-line"></i> Completion Rate</span><span class="home-kv-value"><?= $completionRate ?>%</span></div>
                 </div>
             </div>
         </div>

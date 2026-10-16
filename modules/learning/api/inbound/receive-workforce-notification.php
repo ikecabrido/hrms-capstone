@@ -2,7 +2,7 @@
 /**
  * Inbound: receive-workforce-notification.php
  * Receives a Workforce notification (type + title + message) and, when the payload
- * carries a `data` block, the matching domain record; then stores one ld_notification
+ * carries a `data` block, the matching domain record; then stores one ld_notification_inbox
  * row per resolved recipient.
  *
  * Contract: modules/learning/rainz/updated learndev and workforce md integration.md
@@ -512,7 +512,7 @@ try {
         }
 
         $insertNotification = $pdo->prepare(
-            'INSERT INTO ld_notification (user_id, type, title, message, reference_type, reference_id, is_read)
+            'INSERT INTO ld_notification_inbox (user_id, type, title, message, reference_type, reference_id, is_read)
              VALUES (:user_id, :type, :title, :message, :reference_type, :reference_id, 0)'
         );
         $notificationIds = [];

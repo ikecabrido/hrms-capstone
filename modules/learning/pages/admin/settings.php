@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 4) . '/database/db.php';
 
 $employeeClass = new Employee();
 $settings = [];
+$pdo = null;
 
 try {
     $database = new Database();
@@ -18,232 +19,339 @@ try {
     $settings = [];
 }
 
-// getAll() already returns [key => value] pairs
+// getAll() already returns [key => value] pairs.
 $sv = is_array($settings) ? $settings : [];
-$defaultQuizDurationMinutes = isset($sv['default_quiz_duration_minutes'])
-    ? (float) $sv['default_quiz_duration_minutes']
-    : (float) ($sv['default_quiz_duration_seconds'] ?? $sv['default_quiz_duration'] ?? 600) / 60;
+
+// Reads a setting, falling back to the same default the rest of the module
+// uses when the row is missing or left blank.
+$val = static function (string $key, string $default = '') use ($sv): string {
+    $value = $sv[$key] ?? null;
+    if ($value === null || $value === '') {
+        $value = $default;
+    }
+    return htmlspecialchars((string) $value, ENT_QUOTES);
+};
+
+$rawTimezone = (string) ($sv['site_timezone'] ?? '') !== '' ? (string) $sv['site_timezone'] : 'Asia/Manila';
+$rawPageSize = (string) ($sv['default_page_size'] ?? '') !== '' ? (string) $sv['default_page_size'] : '12';
+
+// Quiz duration is stored in seconds but edited in minutes.
+$quizSeconds = (float) ($sv['default_quiz_duration_seconds'] ?? $sv['default_quiz_duration'] ?? 0);
+if ($quizSeconds <= 0) {
+    $quizSeconds = 600;
+}
+$quizMinutes = $quizSeconds / 60;
+$quizMinutesLabel = rtrim(rtrim(number_format($quizMinutes, 2, '.', ''), '0'), '.');
+if ($quizMinutesLabel === '') {
+    $quizMinutesLabel = '10';
+}
+
+$darkModeOn = (string) ($sv['dark_mode'] ?? '0') === '1';
+
+$timezoneOptions = [
+    'Asia/Manila' => 'Asia/Manila (GMT+8)',
+    'UTC' => 'UTC',
+    'America/New_York' => 'America/New_York (GMT-5)',
+];
+$pageSizeOptions = [12, 24, 36];
+
+// Courses offered in the mapping builders.
+$courseList = [];
+if ($pdo instanceof PDO) {
+    try {
+        $courseStmt = $pdo->query("SELECT id, title FROM ld_course WHERE status = 'active' ORDER BY title ASC");
+        $courseList = $courseStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+        $courseList = [];
+    }
+}
 ?>
-<div class="module-content">
-    <div class="toolbar">
-        <div class="toolbar-search">
-            <input type="search" placeholder="Search settings..." aria-label="Search settings" />
+<div class="module-content settings-page">
+    <section class="home-hero">
+        <div class="home-hero-main">
+            <h1>Settings</h1>
+            <p>Defaults and integrations for the Learning &amp; Development module.</p>
         </div>
-        <div class="toolbar-actions">
-            <button type="button" class="toolbar-mode-toggle" data-view="grid" aria-label="Toggle view">Grid</button>
-        </div>
-    </div>
+    </section>
 
     <div class="tab-container">
         <div class="tab-list">
-            <button type="button" class="tab-item active" data-tab="tab-general">General</button>
-            <button type="button" class="tab-item" data-tab="tab-quiz">Quiz Defaults</button>
-            <button type="button" class="tab-item" data-tab="tab-moderation">Moderation</button>
-            <button type="button" class="tab-item" data-tab="tab-upload">Upload Limits</button>
-            <button type="button" class="tab-item" data-tab="tab-certificate">Certificates</button>
-            <button type="button" class="tab-item" data-tab="tab-integration">Integration</button>
-            <button type="button" class="tab-item" data-tab="tab-course-mappings">Course Mappings</button>
+            <button type="button" class="tab-item active" data-tab="tab-general"><i class="fas fa-sliders"></i> General</button>
+            <button type="button" class="tab-item" data-tab="tab-learning"><i class="fas fa-graduation-cap"></i> Learning Defaults</button>
+            <button type="button" class="tab-item" data-tab="tab-integrations"><i class="fas fa-plug"></i> Integrations</button>
         </div>
 
-        <!-- General Settings -->
-        <div class="tab-content active" data-tab="tab-general">
-            <div class="mode-card">
-                <h2>General Settings</h2>
-                <p>Site-wide configuration for the Learning & Development module.</p>
-                <form id="settings-general-form" data-skip="true" style="margin-top:1rem;">
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Site Timezone</span>
-                            <select name="site_timezone" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;">
-                                <option value="Asia/Manila" <?= ($sv['site_timezone'] ?? '') === 'Asia/Manila' ? 'selected' : '' ?>>Asia/Manila (GMT+8)</option>
-                                <option value="UTC" <?= ($sv['site_timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
-                                <option value="America/New_York" <?= ($sv['site_timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>America/New_York</option>
-                            </select>
-                        </label>
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Default Page Size</span>
-                            <select name="default_page_size" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;">
-                                <option value="12" <?= ($sv['default_page_size'] ?? '12') == '12' ? 'selected' : '' ?>>12</option>
-                                <option value="24" <?= ($sv['default_page_size'] ?? '') == '24' ? 'selected' : '' ?>>24</option>
-                                <option value="36" <?= ($sv['default_page_size'] ?? '') == '36' ? 'selected' : '' ?>>36</option>
-                            </select>
-                        </label>
+        <!-- ================= General ================= -->
+        <div class="tab-content active" id="tab-general" data-tab="tab-general">
+            <form id="settings-general-form" data-skip="true">
+                <section class="settings-group">
+                    <div class="settings-group-head">
+                        <h2><i class="fas fa-globe"></i> Locale &amp; display</h2>
+                        <p>How the module reads dates and how long its lists are.</p>
                     </div>
-                    <div style="margin-top:1.5rem;">
-                        <label style="display:flex; align-items:center; gap:0.75rem; cursor:pointer;">
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0;">Dark Mode</span>
-                            <input type="checkbox" id="admin-dark-mode-toggle" name="dark_mode" <?= ($sv['dark_mode'] ?? '') === '1' ? 'checked' : '' ?> style="width:18px; height:18px; accent-color:var(--primary); cursor:pointer;">
-                            <span id="admin-dark-mode-label" style="font-size:0.85rem; color:var(--muted);"></span>
-                        </label>
-                    </div>
-                    <div style="margin-top:1.5rem;">
-                        <button type="submit" class="mode-button">Save General Settings</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                    <div class="settings-rows">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-timezone">Site timezone</label>
+                                <span class="settings-hint">Used for class schedules, deadlines and reports.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <select id="set-timezone" name="site_timezone" class="settings-field">
+                                    <?php foreach ($timezoneOptions as $tzValue => $tzLabel): ?>
+                                        <option value="<?= htmlspecialchars($tzValue, ENT_QUOTES) ?>" <?= $rawTimezone === $tzValue ? 'selected' : '' ?>><?= htmlspecialchars($tzLabel) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
 
-        <!-- Quiz Defaults -->
-        <div class="tab-content" data-tab="tab-quiz">
-            <div class="mode-card">
-                <h2>Quiz & Evaluation Defaults</h2>
-                <p>Default values used when creating new quizzes and evaluations.</p>
-                <form id="settings-quiz-form" data-skip="true" style="margin-top:1rem;">
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Default Quiz Duration (minutes)</span>
-                            <input type="number" name="default_quiz_duration_minutes" value="<?= htmlspecialchars((string) $defaultQuizDurationMinutes) ?>" min="1" step="0.01" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Default Max Attempts</span>
-                            <input type="number" name="default_max_attempts" value="<?= htmlspecialchars($sv['default_max_attempts'] ?? '2') ?>" min="1" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Default Passing Score (%)</span>
-                            <input type="number" name="default_passing_score" value="<?= htmlspecialchars($sv['default_passing_score'] ?? '70') ?>" min="0" max="100" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
-                    </div>
-                    <div style="margin-top:1.5rem;">
-                        <button type="submit" class="mode-button">Save Quiz Defaults</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-page-size">Default list length</label>
+                                <span class="settings-hint">Items shown per page in the module's lists and catalogs.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <select id="set-page-size" name="default_page_size" class="settings-field">
+                                    <?php foreach ($pageSizeOptions as $size): ?>
+                                        <option value="<?= $size ?>" <?= (string) $size === $rawPageSize ? 'selected' : '' ?>><?= $size ?> items</option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
 
-        <!-- Moderation -->
-        <div class="tab-content" data-tab="tab-moderation">
-            <div class="mode-card">
-                <h2>Moderation Settings</h2>
-                <p>Configure content moderation and report handling.</p>
-                <form id="settings-moderation-form" data-skip="true" style="margin-top:1rem;">
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Auto-Archive Reports After (days)</span>
-                            <input type="number" name="report_auto_archive_days" value="<?= htmlspecialchars($sv['report_auto_archive_days'] ?? '7') ?>" min="1" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="admin-dark-mode-toggle">Dark mode</label>
+                                <span class="settings-hint">Applies to your account on this device.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="hidden" name="dark_mode" id="set-dark-mode" value="<?= $darkModeOn ? '1' : '0' ?>">
+                                <label class="settings-switch" for="admin-dark-mode-toggle">
+                                    <input type="checkbox" id="admin-dark-mode-toggle" <?= $darkModeOn ? 'checked' : '' ?>>
+                                    <span class="settings-switch-track"></span>
+                                </label>
+                                <span id="admin-dark-mode-label" class="settings-suffix"></span>
+                            </div>
+                        </div>
                     </div>
-                    <div style="margin-top:1.5rem;">
-                        <button type="submit" class="mode-button">Save Moderation Settings</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+                </section>
 
-        <!-- Upload Limits -->
-        <div class="tab-content" data-tab="tab-upload">
-            <div class="mode-card">
-                <h2>File Upload Limits</h2>
-                <p>Configure maximum file sizes for lesson materials and attachments.</p>
-                <form id="settings-upload-form" data-skip="true" style="margin-top:1rem;">
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Max Upload Size (MB)</span>
-                            <input type="number" name="max_upload_size_mb" value="<?= htmlspecialchars($sv['max_upload_size_mb'] ?? '50') ?>" min="1" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
-                    </div>
-                    <div style="margin-top:1.5rem;">
-                        <button type="submit" class="mode-button">Save Upload Settings</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Certificates -->
-        <div class="tab-content" data-tab="tab-certificate">
-            <div class="mode-card">
-                <h2>Certificate Settings</h2>
-                <p>Configure certificate validity and verification.</p>
-                <form id="settings-certificate-form" data-skip="true" style="margin-top:1rem;">
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Certificate Validity (days, 0 = never expires)</span>
-                            <input type="number" name="certificate_validity_days" value="<?= htmlspecialchars($sv['certificate_validity_days'] ?? '0') ?>" min="0" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
-                    </div>
-                    <div style="margin-top:1.5rem;">
-                        <button type="submit" class="mode-button">Save Certificate Settings</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Integration -->
-        <div class="tab-content" data-tab="tab-integration">
-            <div class="mode-card">
-                <h2>Integration Settings</h2>
-                <p>API keys and cross-module integration configuration.</p>
-                <form id="settings-integration-form" data-skip="true" style="margin-top:1rem;">
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:1.25rem;">
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Enrollment Invitation Expiry (days)</span>
-                            <input type="number" name="invitation_expiry_days" value="<?= htmlspecialchars($sv['invitation_expiry_days'] ?? '7') ?>" min="1" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Video Conference Reminder First (minutes)</span>
-                            <input type="number" name="video_conference_reminder_first_minutes" value="<?= htmlspecialchars($sv['video_conference_reminder_first_minutes'] ?? '30') ?>" min="5" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
-                        <label>
-                            <span style="display:block; font-weight:600; color:var(--primary); margin-bottom:0.3rem;">Video Conference Reminder Second (minutes)</span>
-                            <input type="number" name="video_conference_reminder_second_minutes" value="<?= htmlspecialchars($sv['video_conference_reminder_second_minutes'] ?? '15') ?>" min="5" style="width:100%; padding:0.75rem; border:1px solid var(--border); border-radius:8px;" />
-                        </label>
-                    </div>
-                    <div style="margin-top:1.5rem;">
-                        <button type="submit" class="mode-button">Save Integration Settings</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <!-- Course Mappings -->
-        <div class="tab-content" data-tab="tab-course-mappings">
-            <div class="mode-card">
-                <h2>Recommendation Course Mappings</h2>
-                <p>Map <strong>development_area</strong> values from Performance Management to Learning courses. When an approved appraisal recommendation arrives, the system looks up this table to find which course to auto-assign.</p>
-                <div style="margin-top:1rem; display:flex; gap:0.75rem; align-items:end; flex-wrap:wrap;">
-                    <label style="flex:1; min-width:180px;">
-                        <span style="display:block; font-size:0.8rem; font-weight:600; color:var(--primary); margin-bottom:0.25rem;">Development Area</span>
-                        <input type="text" id="rec-dev-area" placeholder="e.g. Leadership" style="width:100%; padding:0.6rem; border:1px solid var(--border); border-radius:6px;">
-                    </label>
-                    <label style="flex:1; min-width:180px;">
-                        <span style="display:block; font-size:0.8rem; font-weight:600; color:var(--primary); margin-bottom:0.25rem;">Course</span>
-                        <select id="rec-course-id" style="width:100%; padding:0.6rem; border:1px solid var(--border); border-radius:6px;">
-                            <option value="0">— Select course —</option>
-                            <?php
-                            $courseList = [];
-                            try {
-                                $courseStmt = $pdo->query("SELECT id, title FROM ld_course WHERE status = 'active' ORDER BY title ASC");
-                                $courseList = $courseStmt->fetchAll(PDO::FETCH_ASSOC);
-                            } catch (Throwable $e) {}
-                            foreach ($courseList as $cl): ?>
-                                <option value="<?= (int)$cl['id'] ?>"><?= htmlspecialchars($cl['title']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </label>
-                    <button type="button" id="rec-add-btn" style="padding:0.6rem 1.2rem; background:var(--primary); color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; white-space:nowrap;">+ Add</button>
+                <div class="settings-actions">
+                    <button type="submit" class="home-cta settings-save"><i class="fas fa-floppy-disk"></i> Save changes</button>
                 </div>
-                <div id="rec-mapping-table" style="margin-top:1rem;"></div>
-            </div>
+            </form>
+        </div>
 
-            <div class="mode-card" style="margin-top:1.5rem;">
-                <h2>Recognition Course Mappings</h2>
-                <p>Map <strong>recognition_category</strong> values from Employee Recognition to Learning courses. When an approved recognition arrives, the system looks up this table to find which course to auto-assign.</p>
-                <div style="margin-top:1rem; display:flex; gap:0.75rem; align-items:end; flex-wrap:wrap;">
-                    <label style="flex:1; min-width:180px;">
-                        <span style="display:block; font-size:0.8rem; font-weight:600; color:var(--primary); margin-bottom:0.25rem;">Recognition Category</span>
-                        <input type="text" id="recog-category" placeholder="e.g. performance" style="width:100%; padding:0.6rem; border:1px solid var(--border); border-radius:6px;">
+        <!-- ================= Learning defaults ================= -->
+        <div class="tab-content" id="tab-learning" data-tab="tab-learning">
+            <form id="settings-learning-form" data-skip="true">
+                <section class="settings-group">
+                    <div class="settings-group-head">
+                        <h2><i class="fas fa-circle-question"></i> Quizzes &amp; evaluations</h2>
+                        <p>Starting values for new assessments. Each quiz can still override them.</p>
+                    </div>
+                    <div class="settings-rows">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-quiz-minutes">Default time limit</label>
+                                <span class="settings-hint">Countdown given to learners when they start an assessment.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-quiz-minutes" name="default_quiz_duration_minutes" class="settings-field" value="<?= htmlspecialchars($quizMinutesLabel, ENT_QUOTES) ?>" min="1" step="0.5" required>
+                                <span class="settings-suffix">minutes</span>
+                            </div>
+                        </div>
+
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-max-attempts">Default attempts allowed</label>
+                                <span class="settings-hint">How many times a learner may retake an assessment.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-max-attempts" name="default_max_quiz_attempts" class="settings-field" value="<?= $val('default_max_quiz_attempts', '2') ?>" min="1" required>
+                                <span class="settings-suffix">attempts</span>
+                            </div>
+                        </div>
+
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-passing-score">Default passing score</label>
+                                <span class="settings-hint">Score a learner must reach for an assessment to count as passed.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-passing-score" name="default_passing_score" class="settings-field" value="<?= $val('default_passing_score', '70') ?>" min="0" max="100" required>
+                                <span class="settings-suffix">%</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-group">
+                    <div class="settings-group-head">
+                        <h2><i class="fas fa-certificate"></i> Certificates</h2>
+                        <p>How long a certificate stays valid after it is issued.</p>
+                    </div>
+                    <div class="settings-rows">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-certificate-days">Certificate validity</label>
+                                <span class="settings-hint">Use 0 to issue certificates that never expire.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-certificate-days" name="certificate_default_validity_days" class="settings-field" value="<?= $val('certificate_default_validity_days', '0') ?>" min="0" required>
+                                <span class="settings-suffix">days</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-group">
+                    <div class="settings-group-head">
+                        <h2><i class="fas fa-cloud-arrow-up"></i> Content &amp; uploads</h2>
+                        <p>Limits applied to lesson materials and attachments.</p>
+                    </div>
+                    <div class="settings-rows">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-upload-mb">Maximum upload size</label>
+                                <span class="settings-hint">Largest file a learner or instructor may attach.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-upload-mb" name="file_upload_max_mb" class="settings-field" value="<?= $val('file_upload_max_mb', '25') ?>" min="1" required>
+                                <span class="settings-suffix">MB</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-group">
+                    <div class="settings-group-head">
+                        <h2><i class="fas fa-shield-halved"></i> Moderation</h2>
+                        <p>Housekeeping for learner reports.</p>
+                    </div>
+                    <div class="settings-rows">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-archive-days">Auto-archive reviewed reports</label>
+                                <span class="settings-hint">Reports older than this are filed away automatically.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-archive-days" name="report_auto_archive_days" class="settings-field" value="<?= $val('report_auto_archive_days', '7') ?>" min="1" required>
+                                <span class="settings-suffix">days</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="settings-actions">
+                    <button type="submit" class="home-cta settings-save"><i class="fas fa-floppy-disk"></i> Save changes</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ================= Integrations ================= -->
+        <div class="tab-content" id="tab-integrations" data-tab="tab-integrations">
+            <form id="settings-integrations-form" data-skip="true">
+                <section class="settings-group">
+                    <div class="settings-group-head">
+                        <h2><i class="fas fa-envelope-open-text"></i> Enrollments</h2>
+                        <p>How long a learner has to accept an enrollment invitation.</p>
+                    </div>
+                    <div class="settings-rows">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-invitation-days">Invitation expiry</label>
+                                <span class="settings-hint">After this the invitation has to be sent again.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-invitation-days" name="enrollment_invitation_expiry_days" class="settings-field" value="<?= $val('enrollment_invitation_expiry_days', '7') ?>" min="1" required>
+                                <span class="settings-suffix">days</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-group">
+                    <div class="settings-group-head">
+                        <h2><i class="fas fa-video"></i> Video conference reminders</h2>
+                        <p>Two heads-up notifications sent before a scheduled session starts.</p>
+                    </div>
+                    <div class="settings-rows">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-reminder-first">First reminder</label>
+                                <span class="settings-hint">Sent this long before the session begins.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-reminder-first" name="video_conference_reminder_first_minutes" class="settings-field" value="<?= $val('video_conference_reminder_first_minutes', '30') ?>" min="5" required>
+                                <span class="settings-suffix">min before</span>
+                            </div>
+                        </div>
+
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <label for="set-reminder-second">Second reminder</label>
+                                <span class="settings-hint">Final nudge sent as the session gets close.</span>
+                            </div>
+                            <div class="settings-row-control">
+                                <input type="number" id="set-reminder-second" name="video_conference_reminder_second_minutes" class="settings-field" value="<?= $val('video_conference_reminder_second_minutes', '15') ?>" min="5" required>
+                                <span class="settings-suffix">min before</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="settings-actions">
+                    <button type="submit" class="home-cta settings-save"><i class="fas fa-floppy-disk"></i> Save changes</button>
+                </div>
+            </form>
+
+            <section class="settings-group">
+                <div class="settings-group-head">
+                    <h2><i class="fas fa-diagram-project"></i> Recommendation course mappings</h2>
+                    <p>Links a <strong>development area</strong> from Performance Management to a course. Approved appraisal recommendations are auto-assigned from here.</p>
+                </div>
+                <div class="settings-mapping-add">
+                    <label>
+                        <span>Development area</span>
+                        <input type="text" id="rec-dev-area" class="settings-field" placeholder="e.g. Leadership">
                     </label>
-                    <label style="flex:1; min-width:180px;">
-                        <span style="display:block; font-size:0.8rem; font-weight:600; color:var(--primary); margin-bottom:0.25rem;">Course</span>
-                        <select id="recog-course-id" style="width:100%; padding:0.6rem; border:1px solid var(--border); border-radius:6px;">
-                            <option value="0">— Select course —</option>
+                    <label>
+                        <span>Course</span>
+                        <select id="rec-course-id" class="settings-field">
+                            <option value="0">&mdash; Select course &mdash;</option>
                             <?php foreach ($courseList as $cl): ?>
-                                <option value="<?= (int)$cl['id'] ?>"><?= htmlspecialchars($cl['title']) ?></option>
+                                <option value="<?= (int) $cl['id'] ?>"><?= htmlspecialchars($cl['title']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
-                    <button type="button" id="recog-add-btn" style="padding:0.6rem 1.2rem; background:var(--primary); color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; white-space:nowrap;">+ Add</button>
+                    <button type="button" id="rec-add-btn" class="settings-add-btn"><i class="fas fa-plus"></i> Add mapping</button>
                 </div>
-                <div id="recog-mapping-table" style="margin-top:1rem;"></div>
-            </div>
+                <div id="rec-mapping-table" class="settings-table-wrap"></div>
+            </section>
+
+            <section class="settings-group">
+                <div class="settings-group-head">
+                    <h2><i class="fas fa-award"></i> Recognition course mappings</h2>
+                    <p>Links a <strong>recognition category</strong> from Employee Recognition to a course that is auto-assigned when a recognition is approved.</p>
+                </div>
+                <div class="settings-mapping-add">
+                    <label>
+                        <span>Recognition category</span>
+                        <input type="text" id="recog-category" class="settings-field" placeholder="e.g. performance">
+                    </label>
+                    <label>
+                        <span>Course</span>
+                        <select id="recog-course-id" class="settings-field">
+                            <option value="0">&mdash; Select course &mdash;</option>
+                            <?php foreach ($courseList as $cl): ?>
+                                <option value="<?= (int) $cl['id'] ?>"><?= htmlspecialchars($cl['title']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <button type="button" id="recog-add-btn" class="settings-add-btn"><i class="fas fa-plus"></i> Add mapping</button>
+                </div>
+                <div id="recog-mapping-table" class="settings-table-wrap"></div>
+            </section>
         </div>
     </div>
 </div>
@@ -251,12 +359,13 @@ $defaultQuizDurationMinutes = isset($sv['default_quiz_duration_minutes'])
 (function() {
     'use strict';
 
-    function handleSettingsForm(formId, endpoint) {
+    function handleSettingsForm(formId, endpoint, prepare) {
         var form = document.getElementById(formId);
         if (!form) return;
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             var fd = new FormData(form);
+            if (typeof prepare === 'function') prepare(fd);
             fetch(endpoint, { method: 'POST', body: fd })
             .then(function(r) { return r.json(); })
             .then(function(data) {
@@ -270,33 +379,40 @@ $defaultQuizDurationMinutes = isset($sv['default_quiz_duration_minutes'])
         });
     }
 
+    // The time limit is edited in minutes but the module stores seconds.
+    function toSeconds(fd) {
+        var minutes = parseFloat(fd.get('default_quiz_duration_minutes'));
+        fd.delete('default_quiz_duration_minutes');
+        if (!isNaN(minutes) && minutes > 0) {
+            fd.set('default_quiz_duration_seconds', String(Math.round(minutes * 60)));
+        }
+    }
+
     var darkToggle = document.getElementById('admin-dark-mode-toggle');
     var darkLabel = document.getElementById('admin-dark-mode-label');
-    function updateDarkModeLabel() {
-        if (!darkLabel || !darkToggle) return;
-        darkLabel.textContent = darkToggle.checked ? 'Dark mode is on' : 'Dark mode is off';
+    var darkValue = document.getElementById('set-dark-mode');
+
+    function applyDarkMode(on) {
+        if (on) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        }
+        if (darkValue) darkValue.value = on ? '1' : '0';
+        if (darkLabel) darkLabel.textContent = on ? 'On' : 'Off';
     }
+
     if (darkToggle) {
-        if (localStorage.getItem('theme') === 'dark') { darkToggle.checked = true; }
-        updateDarkModeLabel();
-        darkToggle.addEventListener('change', function() {
-            if (darkToggle.checked) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'light');
-            }
-            updateDarkModeLabel();
-        });
+        darkToggle.checked = localStorage.getItem('theme') === 'dark';
+        applyDarkMode(darkToggle.checked);
+        darkToggle.addEventListener('change', function() { applyDarkMode(darkToggle.checked); });
     }
 
     handleSettingsForm('settings-general-form', 'pages/admin/ajax/edit-settings.php');
-    handleSettingsForm('settings-quiz-form', 'pages/admin/ajax/edit-settings.php');
-    handleSettingsForm('settings-moderation-form', 'pages/admin/ajax/edit-settings.php');
-    handleSettingsForm('settings-upload-form', 'pages/admin/ajax/edit-settings.php');
-    handleSettingsForm('settings-certificate-form', 'pages/admin/ajax/edit-settings.php');
-    handleSettingsForm('settings-integration-form', 'pages/admin/ajax/edit-settings.php');
+    handleSettingsForm('settings-learning-form', 'pages/admin/ajax/edit-settings.php', toSeconds);
+    handleSettingsForm('settings-integrations-form', 'pages/admin/ajax/edit-settings.php');
 })();
 </script>
-<script src="js/admin/course-mappings.js"></script>
+<script src="js/admin/course-mappings.js?v=<?= (int) filemtime(__DIR__ . '/../../js/admin/course-mappings.js') ?>"></script>

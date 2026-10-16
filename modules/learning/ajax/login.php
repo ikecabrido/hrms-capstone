@@ -86,6 +86,32 @@ if ($user && $user['employment_status'] === 'Active'
     $_SESSION['last_activity'] = time();
     $_SESSION['learning_role'] = resolveLearningRole($user, $connection);
 
+    // Capture the previous sign-in, then record this one. user_account.last_login
+    // is HRMS-owned but exists precisely for this; we only write the timestamp.
+    try {
+        $prevStmt = $connection->prepare('SELECT last_login FROM user_account WHERE user_id = :uid LIMIT 1');
+        $prevStmt->execute([':uid' => $user['user_id']]);
+        $_SESSION['ld_prev_login'] = $prevStmt->fetchColumn() ?: null;
+
+        $connection->prepare('UPDATE user_account SET last_login = NOW() WHERE user_id = :uid')
+            ->execute([':uid' => $user['user_id']]);
+    } catch (Throwable $e) {
+        $_SESSION['ld_prev_login'] = null;
+    }
+
+    // Register the new session so it can appear in the profile Security list.
+    require_once __DIR__ . '/../classes/UserSession.php';
+    try {
+        (new UserSession($connection))->register(
+            (int) $user['employee_id'],
+            (int) $user['user_id'],
+            $_SERVER['REMOTE_ADDR'] ?? null,
+            $_SERVER['HTTP_USER_AGENT'] ?? null
+        );
+    } catch (Throwable $e) {
+        // best-effort
+    }
+
     echo json_encode([
         'success'  => true,
         'redirect' => 'index.php',

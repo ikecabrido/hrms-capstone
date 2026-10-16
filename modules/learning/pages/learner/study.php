@@ -20,6 +20,27 @@ $tabCondition = [
     'invited' => " AND e.status = 'invited'",
 ][$currentTab];
 
+// Free-text search over course title / description / category / instructor.
+$searchQuery = trim((string) ($_GET['q'] ?? ''));
+$searchCondition = '';
+if ($searchQuery !== '') {
+    $searchCondition = " AND (c.title LIKE :search OR c.description LIKE :search OR c.category LIKE :search"
+        . " OR CONCAT(COALESCE(emp.first_name, ''), ' ', COALESCE(emp.last_name, '')) LIKE :search)";
+}
+
+// Result ordering.
+$sort = (string) ($_GET['sort'] ?? 'last_accessed');
+if (!in_array($sort, ['last_accessed', 'alpha', 'progress'], true)) {
+    $sort = 'last_accessed';
+}
+$studyOrderBy = [
+    'last_accessed' => 'e.last_accessed_at DESC, e.enrolled_at DESC',
+    'alpha' => 'c.title ASC, c.id ASC',
+    'progress' => "(CASE WHEN (SELECT COUNT(*) FROM ld_module m WHERE m.course_id = c.id AND m.status = 'active') = 0"
+        . " THEN 0 ELSE (SELECT COUNT(DISTINCT p.item_type, p.reference_id) FROM ld_progress p WHERE p.enrollment_id = e.id AND p.status = 'completed')"
+        . " / (SELECT COUNT(*) FROM ld_module m WHERE m.course_id = c.id AND m.status = 'active') END) DESC, e.last_accessed_at DESC",
+][$sort];
+
 $enrolledCourses = [];
 $studyPaths = [];
 $pathInvitations = [];
@@ -39,9 +60,14 @@ try {
         SELECT COUNT(*)
         FROM ld_enrollment e
         JOIN ld_course c ON c.id = e.course_id
-        WHERE e.learner_id = :learner_id{$tabCondition}
+        LEFT JOIN em_employees emp ON emp.employee_id = c.instructor_id
+        WHERE e.learner_id = :learner_id{$tabCondition}{$searchCondition}
     ");
-    $countStmt->execute([':learner_id' => $learnerId]);
+    $countParams = [':learner_id' => $learnerId];
+    if ($searchQuery !== '') {
+        $countParams[':search'] = '%' . $searchQuery . '%';
+    }
+    $countStmt->execute($countParams);
     $totalCourses = (int)$countStmt->fetchColumn();
 
     $tabCountStmt = $pdo->prepare('SELECT status, COUNT(*) AS total FROM ld_enrollment WHERE learner_id = :learner_id GROUP BY status');
@@ -116,11 +142,14 @@ try {
         FROM ld_enrollment e
         JOIN ld_course c ON c.id = e.course_id
         LEFT JOIN em_employees emp ON emp.employee_id = c.instructor_id
-        WHERE e.learner_id = :learner_id{$tabCondition}
-        ORDER BY e.last_accessed_at DESC, e.enrolled_at DESC
+        WHERE e.learner_id = :learner_id{$tabCondition}{$searchCondition}
+        ORDER BY {$studyOrderBy}
         LIMIT :limit OFFSET :offset
     ");
     $stmt->bindValue(':learner_id', $learnerId, PDO::PARAM_INT);
+    if ($searchQuery !== '') {
+        $stmt->bindValue(':search', '%' . $searchQuery . '%', PDO::PARAM_STR);
+    }
     $stmt->bindValue(':limit', $pageSize, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
@@ -248,120 +277,6 @@ function getStudyGradient($category, $gradients) {
 }
 ?>
 
-<style>
-/* Layout */
-.study-page-main{min-height:calc(100vh - 60px)}
-
-/* Sidebar header */
-.sp-sidebar-header{padding:1.25rem 2.5rem 1.25rem 1.25rem;border-bottom:1px solid rgba(32,0,130,0.06)}
-.sp-sidebar-title{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted,#888);font-weight:700;margin-bottom:0.75rem}
-.sp-course-card{display:block;text-decoration:none;padding:0.75rem;background:rgba(32,0,130,0.04);border-radius:10px;border:1px solid rgba(32,0,130,0.08);transition:all 0.2s}
-.sp-course-card:hover{border-color:rgba(32,0,130,0.2);background:rgba(32,0,130,0.06)}
-.sp-course-name{font-size:0.9rem;font-weight:700;color:var(--text);margin-bottom:0.3rem;line-height:1.3}
-.sp-course-meta{font-size:0.72rem;color:var(--muted,#888)}
-.sp-progress{margin-top:0.5rem}
-.sp-progress-label{font-size:0.68rem;color:var(--muted,#888);font-weight:500;margin-bottom:0.25rem}
-.sp-progress-track{height:4px;background:rgba(32,0,130,0.08);border-radius:99px;overflow:hidden}
-.sp-progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),rgba(81,70,183,0.8));border-radius:99px}
-
-/* Sidebar nav */
-.sp-nav{flex:1;overflow-y:auto;padding:0.5rem 0}
-.sp-mod{border-bottom:1px solid rgba(32,0,130,0.04)}
-.sp-mod-head{display:flex;align-items:center;gap:0.6rem;padding:0.65rem 1.25rem;cursor:pointer;font-size:0.8rem;font-weight:600;color:var(--text);transition:background 0.15s;user-select:none}
-.sp-mod-head:hover{background:rgba(32,0,130,0.03)}
-.sp-mod-num{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;background:rgba(32,0,130,0.06);color:var(--primary)}
-.sp-mod-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp-chevron{font-size:0.55rem;color:var(--muted,#aaa);transition:transform 0.2s}
-.sp-chevron.open{transform:rotate(90deg)}
-.sp-items{display:none;padding:0 0 0.25rem}
-.sp-items.expanded{display:block}
-.sp-item{display:flex;align-items:center;gap:0.4rem;padding:0.4rem 1.25rem 0.4rem 2.5rem;font-size:0.75rem;color:var(--muted,#666);text-decoration:none;transition:all 0.15s;border-right:3px solid transparent}
-.sp-item:hover{background:rgba(32,0,130,0.03);color:var(--text);border-left:3px solid var(--primary);border-right:none}
-.sp-item.done{color:var(--muted,#888)}
-.sp-item-icon{width:18px;text-align:center;font-size:0.65rem;flex-shrink:0}
-.sp-item-icon.ok{color:#10b981}
-.sp-empty{text-align:center;padding:2rem 1rem;color:var(--muted,#999);font-size:0.85rem}
-.sp-empty i{font-size:1.5rem;margin-bottom:0.5rem;display:block;opacity:0.4}
-
-/* Toggle button */
-.sp-toggle-btn{position:fixed;top:var(--header-height,60px);left:var(--sidebar-width,252px);display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;z-index:50;background:var(--surface,#fff);border:1px solid rgba(32,0,130,0.1);border-radius:0 8px 8px 0;font-size:0.65rem;color:var(--primary);cursor:pointer;transition:left 0.3s ease,background 0.2s,box-shadow 0.2s;box-shadow:2px 2px 8px rgba(32,0,130,0.08)}
-.sp-toggle-btn:hover{background:rgba(32,0,130,0.08);box-shadow:2px 2px 12px rgba(32,0,130,0.15)}
-.sp-toggle-btn i{font-size:0.65rem;transition:transform 0.25s}
-
-/* Overlay sidebar (fixed drawer, slides from right) */
-.sp-overlay{position:fixed;top:var(--header-height,60px);left:0;right:0;bottom:0;background:rgba(0,0,0,0.35);z-index:998;opacity:0;pointer-events:none;transition:opacity 0.3s ease,left 0.3s ease}
-.sp-close-btn{position:absolute;top:1rem;right:0.75rem;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--muted,#999);cursor:pointer;font-size:0.85rem;transition:all 0.15s}
-.sp-close-btn:hover{background:rgba(32,0,130,0.06);color:var(--text)}
-.sp-overlay.visible{opacity:1;pointer-events:auto}
-.study-page-sidebar{position:fixed;top:var(--header-height,60px);bottom:0;left:var(--sidebar-width,252px);width:320px;z-index:999;background:var(--surface,#fff);border-right:1px solid rgba(32,0,130,0.1);box-shadow:4px 0 24px rgba(0,0,0,0.12);display:flex;flex-direction:column;overflow:hidden;border-radius:0;border:none;padding:0;transform:translateX(-100%);visibility:hidden;pointer-events:none;transition:transform 0.3s ease,visibility 0.3s ease,left 0.3s ease}
-.study-page-sidebar.open{transform:translateX(0);visibility:visible;pointer-events:auto}
-
-
-/* Existing study page styles */
-.study-page{padding:0}
-.study-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
-.study-header h1{font-size:1.4rem;font-weight:800;color:var(--text);margin:0}
-.study-header p{font-size:0.88rem;color:var(--muted,#888);margin:0.25rem 0 0}
-.study-search{position:relative;flex:0 0 280px}
-.study-search input{width:100%;padding:0.65rem 1rem 0.65rem 2.5rem;border:1.5px solid rgba(32,0,130,0.12);border-radius:10px;font-size:0.88rem;background:var(--surface,#fff);color:var(--text);transition:border-color 0.2s}
-.study-search input:focus{outline:none;border-color:var(--primary)}
-.study-search i{position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--muted,#aaa);font-size:0.85rem}
-.study-header-stats{display:flex;gap:0.75rem}
-.study-stat-box{display:flex;align-items:center;gap:0.6rem;padding:0.6rem 1rem;background:var(--surface,#fff);border:1px solid rgba(32,0,130,0.08);border-radius:12px;box-shadow:0 2px 8px rgba(32,0,130,0.06)}
-.study-stat-value{font-size:1.1rem;font-weight:800;color:var(--text,#333);line-height:1.2}
-.study-stat-label{font-size:0.68rem;color:var(--muted,#999);font-weight:600;text-transform:uppercase;letter-spacing:0.05em}
-.study-header-actions{display:flex;gap:0.75rem;align-items:center}
-.study-sort{display:flex;align-items:center;gap:0.4rem}
-.study-tabs{display:flex;gap:6px;background:#e8e4f0;border-radius:12px;padding:4px;margin-bottom:1.5rem;overflow-x:auto}
-.study-tabs::-webkit-scrollbar{display:none}
-.study-tab{flex:1 1 0;min-width:0;padding:0.55rem 0.75rem;border:none;border-radius:8px;background:rgba(255,255,255,0.7);color:var(--text);font-size:0.8rem;font-weight:600;cursor:pointer;text-align:center;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.35rem;white-space:nowrap}
-.study-tab:hover{background:rgba(255,255,255,0.95)}
-.study-tab.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(32,0,130,0.3)}
-.study-tab-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 5px;border-radius:999px;background:rgba(32,0,130,0.1);font-size:0.68rem;font-weight:700}
-.study-tab.active .study-tab-count{background:rgba(255,255,255,0.25);color:#fff}
-.study-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem}
-.study-card{background:var(--surface,#fff);border-radius:14px;overflow:hidden;border:1px solid rgba(32,0,130,0.08);transition:all 0.25s ease;cursor:pointer}
-.study-card:hover{transform:translateY(-4px);box-shadow:0 12px 35px rgba(32,0,130,0.12)}
-.study-card-thumb{height:140px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
-.study-card-thumb-icon{font-size:2.5rem;color:rgba(255,255,255,0.9)}
-.study-card-badge{position:absolute;top:0.75rem;left:0.75rem;padding:0.3rem 0.7rem;border-radius:6px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}
-.study-card-status{position:absolute;top:0.75rem;right:0.75rem;padding:0.3rem 0.7rem;border-radius:6px;font-size:0.7rem;font-weight:700}
-.study-card-body{padding:1rem 1.15rem}
-.study-card-title{font-size:0.95rem;font-weight:700;color:var(--text);margin:0 0 0.3rem;line-height:1.3}
-.study-card-instructor{font-size:0.78rem;color:var(--muted,#888);margin:0 0 0.5rem;display:flex;align-items:center;gap:0.35rem}
-.study-card-desc{font-size:0.82rem;color:var(--muted,#666);line-height:1.5;margin:0 0 0.75rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.study-card-stats{display:flex;gap:0.75rem;margin-bottom:0.75rem}
-.study-card-stat{font-size:0.72rem;color:var(--muted,#888);display:flex;align-items:center;gap:0.25rem}
-.study-card-stat i{font-size:0.7rem;color:var(--primary)}
-.study-card-progress{margin-top:0.5rem}
-.study-card-progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem}
-.study-card-progress-label{font-size:0.72rem;color:var(--muted,#888)}
-.study-card-progress-pct{font-size:0.72rem;font-weight:700;color:var(--primary)}
-.study-card-progress-bar{height:5px;background:rgba(32,0,130,0.08);border-radius:999px;overflow:hidden}
-.study-card-progress-fill{height:100%;border-radius:999px;transition:width 0.5s ease}
-.study-card-footer{display:flex;align-items:center;justify-content:space-between;padding:0.65rem 1.15rem;border-top:1px solid rgba(32,0,130,0.06)}
-.study-invitation-actions{display:flex;gap:0.4rem}
-.study-invitation-action{padding:0.35rem 0.65rem;border:1px solid rgba(32,0,130,0.16);border-radius:6px;background:var(--surface,#fff);color:var(--text);font-size:0.72rem;font-weight:700;cursor:pointer}
-.study-invitation-action[data-action="accept"]{background:var(--primary);border-color:var(--primary);color:#fff}
-.study-invitation-action:disabled{opacity:0.55;cursor:wait}
-.study-card-time{font-size:0.72rem;color:var(--muted,#aaa)}
-.study-card-action{font-size:0.78rem;font-weight:700;color:var(--primary);display:flex;align-items:center;gap:0.3rem}
-.study-card-quiz-score{margin-top:0.5rem;padding:0.5rem 0.7rem;background:rgba(32,0,130,0.04);border-radius:8px;display:flex;align-items:center;justify-content:space-between}
-.study-card-quiz-label{font-size:0.72rem;color:var(--muted,#888)}
-.study-card-quiz-value{font-size:0.78rem;font-weight:700}
-.study-card-quiz-value.passed{color:#10b981}
-.study-card-quiz-value.failed{color:#ef4444}
-.study-card-cert{display:flex;align-items:center;justify-content:space-between;margin-top:0.5rem;padding:0.5rem 0.7rem;background:linear-gradient(135deg,rgba(251,191,36,0.12) 0%,rgba(245,158,11,0.12) 100%);border:1px solid rgba(245,158,11,0.25);border-radius:8px}
-.study-card-cert-label{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.72rem;font-weight:700;color:#b45309}
-.study-card-cert-label i{color:#f59e0b}
-.study-card-cert-btn{padding:0.3rem 0.65rem;border:none;border-radius:6px;background:#f59e0b;color:#fff;font-size:0.68rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:0.25rem;transition:background 0.2s}
-.study-card-cert-btn:hover{background:#d97706}
-.study-empty{text-align:center;padding:3rem 1rem;color:var(--muted,#999)}
-.study-empty i{font-size:2.5rem;color:var(--muted,#ddd);margin-bottom:1rem;display:block}
-.study-empty h3{color:var(--text);margin:0 0 0.5rem}
-.study-empty p{font-size:0.9rem;margin:0}
-@media(max-width:768px){.study-header{flex-direction:column;align-items:stretch}.study-header-actions{flex-direction:column}.study-header-stats{flex-wrap:wrap}.study-search{flex:0 0 auto}.study-grid{grid-template-columns:1fr}}
-</style>
 
 <!-- Overlay -->
 <div class="sp-overlay" id="sidebarOverlay"></div>
@@ -398,13 +313,13 @@ function getStudyGradient($category, $gradients) {
                                 <?php foreach ($lm['lessons'] as $sl): $done = $sl['progress_status'] === 'completed'; ?>
                                     <a href="?page=learner/study-subpage/lesson&lesson_id=<?= $sl['id'] ?>&course_id=<?= $lastCourse['id'] ?>" class="sp-item <?= $done ? 'done' : '' ?>">
                                         <span class="sp-item-icon <?= $done ? 'ok' : '' ?>"><?= $done ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-file-alt"></i>' ?></span>
-                                        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($sl['title']) ?></span>
+                                        <span class="sp-item-label"><?= htmlspecialchars($sl['title']) ?></span>
                                     </a>
                                 <?php endforeach; ?>
                                 <?php foreach ($lm['quizzes'] as $sq): $qDone = $sq['attempt_status'] === 'passed'; ?>
                                     <a href="?page=learner/study-subpage/quiz&quiz_id=<?= $sq['id'] ?>&course_id=<?= $lastCourse['id'] ?>" class="sp-item <?= $qDone ? 'done' : '' ?>">
                                         <span class="sp-item-icon <?= $qDone ? 'ok' : '' ?>"><?= $qDone ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-question-circle"></i>' ?></span>
-                                        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($sq['title']) ?></span>
+                                        <span class="sp-item-label"><?= htmlspecialchars($sq['title']) ?></span>
                                     </a>
                                 <?php endforeach; ?>
                             </div>
@@ -413,51 +328,58 @@ function getStudyGradient($category, $gradients) {
                 <?php endif; ?>
             </nav>
         <?php else: ?>
-            <div class="sp-sidebar-header"><div class="sp-empty" style="padding:2rem 1rem;"><i class="fas fa-book-open"></i>No courses yet</div></div>
+            <div class="sp-sidebar-header"><div class="sp-empty"><i class="fas fa-book-open"></i>No courses yet</div></div>
         <?php endif; ?>
     </aside>
 
-    <button class="sp-toggle-btn" id="spToggleBtn" onclick="studyToggleSidebar()" title="Toggle Course Panel">
-        <i class="fas fa-chevron-right"></i>
-    </button>
         <div class="module-content study-page">
-            <div class="study-header">
-                <div>
+            <div class="home-dashboard study-dashboard">
+
+            <!-- Hero -->
+            <section class="home-hero study-hero">
+                <div class="home-hero-main">
                     <h1>My Learning</h1>
-                    <p><?= count($enrolledCourses) ?> enrolled course<?= count($enrolledCourses) !== 1 ? 's' : '' ?> and <?= count($studyPaths) ?> learning path<?= count($studyPaths) !== 1 ? 's' : '' ?> &mdash; continue where you left off</p>
+                    <p><?= (int) $totalCourses ?> course<?= $totalCourses === 1 ? '' : 's' ?><?php if (!empty($studyPaths)): ?> and <?= count($studyPaths) ?> learning path<?= count($studyPaths) === 1 ? '' : 's' ?><?php endif; ?> &mdash; pick up where you left off</p>
                 </div>
-                <div class="study-header-stats">
-                    <div class="study-stat-box"><i class="fas fa-fire" style="color:#f59e0b; font-size:1.1rem;"></i><div><div class="study-stat-value"><?= $studyStreak ?></div><div class="study-stat-label">Day Streak</div></div></div>
-                    <div class="study-stat-box"><i class="fas fa-clock" style="color:var(--primary); font-size:1.1rem;"></i><div><div class="study-stat-value"><?= $studyTimeDisplay ?></div><div class="study-stat-label">Study Time</div></div></div>
+                <div class="home-hero-aside">
+                    <div class="home-hero-chips">
+                        <span class="home-hero-chip"><i class="fas fa-fire"></i> <?= (int) $studyStreak ?> day<?= $studyStreak === 1 ? '' : 's' ?> streak</span>
+                        <span class="home-hero-chip"><i class="fas fa-clock"></i> <?= htmlspecialchars($studyTimeDisplay) ?> studied</span>
+                        <span class="home-hero-chip"><i class="fas fa-book-open"></i> <?= (int) $tabCounts['in_progress'] ?> in progress</span>
+                    </div>
+                    <button type="button" class="study-hero-btn" onclick="studyToggleSidebar()" title="Open the course panel">
+                        <i class="fas fa-list-ul"></i> Course Panel
+                    </button>
                 </div>
-                <div class="study-header-actions">
-                    <div class="study-search"><i class="fas fa-search"></i><input type="search" id="study-search-input" placeholder="Search your courses..." /></div>
-                    <div class="study-sort">
-                        <label for="study-sort-select" style="font-size:0.78rem; color:var(--muted,#888); white-space:nowrap;">Sort by</label>
-                        <select id="study-sort-select" style="padding:0.55rem 0.75rem; border:1.5px solid rgba(32,0,130,0.12); border-radius:8px; font-size:0.82rem; background:var(--surface,#fff); color:var(--text,#333); cursor:pointer;">
-                            <option value="last_accessed">Last Accessed</option>
-                            <option value="alpha">Alphabetical</option>
-                            <option value="progress">Progress</option>
+            </section>
+
+            <!-- Browse bar -->
+            <div class="study-bar">
+                <div class="study-tabs" id="study-tabs">
+                    <button type="button" class="study-tab<?= $currentTab === 'all' ? ' active' : '' ?>" data-tab="all">All <span class="study-tab-count"><?= $tabCounts['all'] ?></span></button>
+                    <button type="button" class="study-tab<?= $currentTab === 'in_progress' ? ' active' : '' ?>" data-tab="in_progress">In Progress <span class="study-tab-count"><?= $tabCounts['in_progress'] ?></span></button>
+                    <button type="button" class="study-tab<?= $currentTab === 'completed' ? ' active' : '' ?>" data-tab="completed">Completed <span class="study-tab-count"><?= $tabCounts['completed'] ?></span></button>
+                    <button type="button" class="study-tab<?= $currentTab === 'invited' ? ' active' : '' ?>" data-tab="invited">Invitations <span class="study-tab-count"><?= $tabCounts['invited'] ?></span></button>
+                </div>
+                <div class="study-filters">
+                    <div class="study-search"><i class="fas fa-search"></i><input type="search" id="study-search-input" value="<?= htmlspecialchars($searchQuery) ?>" placeholder="Search your courses..." /></div>
+                    <div class="study-field">
+                        <label for="study-sort-select">Sort</label>
+                        <select id="study-sort-select">
+                            <option value="last_accessed"<?= $sort === 'last_accessed' ? ' selected' : '' ?>>Last accessed</option>
+                            <option value="alpha"<?= $sort === 'alpha' ? ' selected' : '' ?>>Alphabetical</option>
+                            <option value="progress"<?= $sort === 'progress' ? ' selected' : '' ?>>Progress</option>
                         </select>
                     </div>
-                    <div class="study-sort">
-                        <label for="study-page-size" style="font-size:0.78rem; color:var(--muted,#888); white-space:nowrap;">Show</label>
-                        <select id="study-page-size" style="padding:0.55rem 0.75rem; border:1.5px solid rgba(32,0,130,0.12); border-radius:8px; font-size:0.82rem; background:var(--surface,#fff); color:var(--text,#333); cursor:pointer;">
+                    <div class="study-field">
+                        <label for="study-page-size">Show</label>
+                        <select id="study-page-size">
                             <option value="12">12 / page</option>
                             <option value="24">24 / page</option>
                             <option value="36">36 / page</option>
                         </select>
                     </div>
                 </div>
-            </div>
-
-            <?php
-            ?>
-            <div class="study-tabs" id="study-tabs">
-                <button type="button" class="study-tab<?= $currentTab === 'all' ? ' active' : '' ?>" data-tab="all">All <span class="study-tab-count"><?= $tabCounts['all'] ?></span></button>
-                <button type="button" class="study-tab<?= $currentTab === 'in_progress' ? ' active' : '' ?>" data-tab="in_progress">In Progress <span class="study-tab-count"><?= $tabCounts['in_progress'] ?></span></button>
-                <button type="button" class="study-tab<?= $currentTab === 'completed' ? ' active' : '' ?>" data-tab="completed">Completed <span class="study-tab-count"><?= $tabCounts['completed'] ?></span></button>
-                <button type="button" class="study-tab<?= $currentTab === 'invited' ? ' active' : '' ?>" data-tab="invited">Invitations <span class="study-tab-count"><?= $tabCounts['invited'] ?></span></button>
             </div>
 
             <div class="study-grid" id="study-grid">
@@ -480,21 +402,21 @@ function getStudyGradient($category, $gradients) {
                 if ($lastAccessed) { $diff = time() - strtotime($lastAccessed); if ($diff < 60) $timeAgo = 'Just now'; elseif ($diff < 3600) $timeAgo = floor($diff / 60) . 'm ago'; elseif ($diff < 86400) $timeAgo = floor($diff / 3600) . 'h ago'; else $timeAgo = floor($diff / 86400) . 'd ago'; }
             ?>
                 <article class="study-card" data-course-id="<?= $id ?>" data-status="<?= htmlspecialchars($status) ?>" data-search="<?= strtolower($course['title'] . ' ' . $category . ' ' . $instructor) ?>" data-sort-alpha="<?= strtolower($course['title'] ?? '') ?>" data-sort-progress="<?= (int)($course['progress_pct'] ?? 0) ?>" data-sort-time="<?= strtotime($course['last_accessed_at'] ?? '1970-01-01') ?>">
-                    <div class="study-card-thumb" style="background:<?= $gradient ?>"><i class="fas fa-graduation-cap study-card-thumb-icon"></i><span class="study-card-badge" style="background:rgba(0,0,0,0.25);color:#fff;"><?= $category ?></span><span class="study-card-status" style="background:<?= $statusBg ?>;color:#fff;"><?= $statusLabel ?></span></div>
+                    <div class="study-card-thumb" style="background:<?= $gradient ?>"><i class="fas fa-graduation-cap study-card-thumb-icon"></i><span class="study-card-badge"><?= $category ?></span><span class="study-card-status" style="background:<?= $statusBg ?>;"><?= $statusLabel ?></span></div>
                     <div class="study-card-body">
                         <h3 class="study-card-title"><?= $title ?></h3>
                         <?php if ($instructor): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> <?= $instructor ?></div><?php endif; ?>
                         <p class="study-card-desc"><?= $desc ?></p>
-                        <div class="study-card-stats"><span class="study-card-stat"><i class="fas fa-folder"></i> <?= $modules ?> modules</span><span class="study-card-stat"><i class="fas fa-file-alt"></i> <?= $lessons ?> lessons</span></div>
+                        <div class="study-card-stats"><span class="study-card-stat"><i class="fas fa-folder"></i> <?= $modules ?> module<?= $modules === 1 ? '' : 's' ?></span><span class="study-card-stat"><i class="fas fa-file-alt"></i> <?= $lessons ?> lesson<?= $lessons === 1 ? '' : 's' ?></span></div>
                         <div class="study-card-progress"><div class="study-card-progress-header"><span class="study-card-progress-label">Progress</span><span class="study-card-progress-pct"><?= $pct ?>%</span></div><div class="study-card-progress-bar"><div class="study-card-progress-fill" style="width:<?= $pct ?>%;background:<?= $barColor ?>;"></div></div></div>
                         <?php $quizScore = (int)($course['avg_quiz_score'] ?? 0); $quizzesPassed = (int)($course['quizzes_passed'] ?? 0); $quizzesTotal = (int)($course['quizzes_total'] ?? 0); $hasCert = !empty($course['certificate']); if ($quizzesTotal > 0 || $quizScore > 0): ?>
-                        <div class="study-card-quiz-score"><span class="study-card-quiz-label"><i class="fas fa-check-circle" style="margin-right:0.3rem;"></i>Quiz Score</span><span class="study-card-quiz-value <?= $quizScore >= 70 ? 'passed' : 'failed' ?>"><?= $quizScore > 0 ? $quizScore . '% (' . $quizzesPassed . '/' . $quizzesTotal . ')' : 'No attempts' ?></span></div>
+                        <div class="study-card-quiz-score"><span class="study-card-quiz-label"><i class="fas fa-check-circle"></i>Quiz Score</span><span class="study-card-quiz-value <?= $quizScore >= 70 ? 'passed' : 'failed' ?>"><?= $quizScore > 0 ? $quizScore . '% (' . $quizzesPassed . '/' . $quizzesTotal . ')' : 'No attempts' ?></span></div>
                         <?php endif; ?>
                         <?php if ($hasCert): $certCode = htmlspecialchars($course['certificate']['verification_code'] ?? ''); ?>
                         <div class="study-card-cert"><span class="study-card-cert-label"><i class="fas fa-award"></i> Certificate earned</span><a href="?page=public/verify-certificate&back=learner/study&code=<?= $certCode ?>" target="_blank" class="study-card-cert-btn" onclick="event.stopPropagation();"><i class="fas fa-external-link-alt"></i> View</a></div>
                         <?php endif; ?>
                     </div>
-                    <div class="study-card-footer"><span class="study-card-time"><?= $timeAgo ? '<i class="fas fa-clock" style="margin-right:0.25rem;"></i>' . $timeAgo : '' ?></span><?php if ($status === 'invited'): ?><div class="study-invitation-actions"><button type="button" class="study-invitation-action" data-kind="course" data-action="decline" data-id="<?= (int) $course['enrollment_id'] ?>">Decline</button><button type="button" class="study-invitation-action" data-kind="course" data-action="accept" data-id="<?= (int) $course['enrollment_id'] ?>">Enroll</button></div><?php else: ?><span class="study-card-action"><?= $status === 'completed' ? 'View Results <i class="fas fa-arrow-right"></i>' : 'Continue <i class="fas fa-arrow-right"></i>' ?></span><?php endif; ?></div>
+                    <div class="study-card-footer"><span class="study-card-time"><?= $timeAgo ? '<i class="fas fa-clock"></i>' . $timeAgo : '' ?></span><?php if ($status === 'invited'): ?><div class="study-invitation-actions"><button type="button" class="study-invitation-action" data-kind="course" data-action="decline" data-id="<?= (int) $course['enrollment_id'] ?>">Decline</button><button type="button" class="study-invitation-action" data-kind="course" data-action="accept" data-id="<?= (int) $course['enrollment_id'] ?>">Enroll</button></div><?php else: ?><span class="study-card-action"><?= $status === 'completed' ? 'View Results <i class="fas fa-arrow-right"></i>' : 'Continue <i class="fas fa-arrow-right"></i>' ?></span><?php endif; ?></div>
                 </article>
             <?php endforeach; ?>
             <?php foreach ($visibleStudyPaths as $studyPath):
@@ -502,14 +424,14 @@ function getStudyGradient($category, $gradients) {
                 $pathProgress = (int) $studyPath['progress_pct'];
             ?>
                 <article class="study-card" data-search="<?= htmlspecialchars(strtolower(($studyPath['title'] ?? '') . ' ' . ($studyPath['instructor_name'] ?? '')), ENT_QUOTES) ?>">
-                    <div class="study-card-thumb" style="background:linear-gradient(135deg,#a34b16,#e5a525);"><i class="fas fa-route study-card-thumb-icon"></i><span class="study-card-badge" style="background:rgba(0,0,0,0.25);color:#fff;">Learning Path</span><span class="study-card-status" style="background:<?= $studyPath['study_status'] === 'completed' ? 'rgba(16,185,129,0.9)' : 'rgba(59,130,246,0.9)' ?>;color:#fff;"><?= $studyPath['study_status'] === 'completed' ? 'Completed' : 'In Progress' ?></span></div>
-                    <div class="study-card-body"><h3 class="study-card-title"><?= htmlspecialchars($studyPath['title']) ?></h3><?php if (!empty($studyPath['instructor_name'])): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($studyPath['instructor_name']) ?></div><?php endif; ?><p class="study-card-desc"><?= htmlspecialchars(mb_substr(strip_tags($studyPath['description'] ?? ''), 0, 100)) ?></p><div class="study-card-stats"><span class="study-card-stat"><i class="fas fa-list-ol"></i> <?= (int) $studyPath['step_count'] ?> steps</span><span class="study-card-stat"><i class="fas fa-graduation-cap"></i> <?= (int) $studyPath['course_count'] ?> courses</span></div><div class="study-card-progress"><div class="study-card-progress-header"><span class="study-card-progress-label">Progress</span><span class="study-card-progress-pct"><?= $pathProgress ?>%</span></div><div class="study-card-progress-bar"><div class="study-card-progress-fill" style="width:<?= $pathProgress ?>%;background:<?= $pathProgress >= 100 ? '#10b981' : '#3b82f6' ?>;"></div></div></div></div>
-                    <div class="study-card-footer"><span class="study-card-time">My Learning Path</span><a class="study-card-action" href="?page=learner/my-learning-path&amp;path_id=<?= $pathId ?>" style="text-decoration:none;">Open path <i class="fas fa-arrow-right"></i></a></div>
+                    <div class="study-card-thumb" style="background:linear-gradient(135deg,#a34b16,#e5a525);"><i class="fas fa-route study-card-thumb-icon"></i><span class="study-card-badge">Learning Path</span><span class="study-card-status" style="background:<?= $studyPath['study_status'] === 'completed' ? 'rgba(16,185,129,0.9)' : 'rgba(59,130,246,0.9)' ?>;"><?= $studyPath['study_status'] === 'completed' ? 'Completed' : 'In Progress' ?></span></div>
+                    <div class="study-card-body"><h3 class="study-card-title"><?= htmlspecialchars($studyPath['title']) ?></h3><?php if (!empty($studyPath['instructor_name'])): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($studyPath['instructor_name']) ?></div><?php endif; ?><p class="study-card-desc"><?= htmlspecialchars(mb_substr(strip_tags($studyPath['description'] ?? ''), 0, 100)) ?></p><div class="study-card-stats"><span class="study-card-stat"><i class="fas fa-list-ol"></i> <?= (int) $studyPath['step_count'] ?> step<?= (int) $studyPath['step_count'] === 1 ? '' : 's' ?></span><span class="study-card-stat"><i class="fas fa-graduation-cap"></i> <?= (int) $studyPath['course_count'] ?> course<?= (int) $studyPath['course_count'] === 1 ? '' : 's' ?></span></div><div class="study-card-progress"><div class="study-card-progress-header"><span class="study-card-progress-label">Progress</span><span class="study-card-progress-pct"><?= $pathProgress ?>%</span></div><div class="study-card-progress-bar"><div class="study-card-progress-fill" style="width:<?= $pathProgress ?>%;background:<?= $pathProgress >= 100 ? '#10b981' : '#3b82f6' ?>;"></div></div></div></div>
+                    <div class="study-card-footer"><span class="study-card-time">My Learning Path</span><a class="study-card-action" href="?page=learner/my-learning-path&amp;path_id=<?= $pathId ?>">Open path <i class="fas fa-arrow-right"></i></a></div>
                 </article>
             <?php endforeach; ?>
             <?php if ($currentTab === 'invited'): foreach ($pathInvitations as $pathInvitation): ?>
                 <article class="study-card" data-search="<?= htmlspecialchars(strtolower(($pathInvitation['title'] ?? '') . ' ' . ($pathInvitation['instructor_name'] ?? '')), ENT_QUOTES) ?>">
-                    <div class="study-card-thumb" style="background:linear-gradient(135deg,#a34b16,#e5a525);"><i class="fas fa-route study-card-thumb-icon"></i><span class="study-card-badge" style="background:rgba(0,0,0,0.25);color:#fff;">Learning Path</span><span class="study-card-status" style="background:rgba(245,158,11,0.9);color:#fff;">Invited</span></div>
+                    <div class="study-card-thumb" style="background:linear-gradient(135deg,#a34b16,#e5a525);"><i class="fas fa-route study-card-thumb-icon"></i><span class="study-card-badge">Learning Path</span><span class="study-card-status" style="background:rgba(245,158,11,0.9);">Invited</span></div>
                     <div class="study-card-body"><h3 class="study-card-title"><?= htmlspecialchars($pathInvitation['title']) ?></h3><?php if (!empty($pathInvitation['instructor_name'])): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> From <?= htmlspecialchars($pathInvitation['instructor_name']) ?></div><?php endif; ?><p class="study-card-desc"><?= htmlspecialchars(mb_substr(strip_tags($pathInvitation['description'] ?? ''), 0, 100)) ?></p></div>
                     <div class="study-card-footer"><span class="study-card-time">Path invitation</span><div class="study-invitation-actions"><button type="button" class="study-invitation-action" data-kind="path" data-action="decline" data-id="<?= (int) $pathInvitation['invitation_id'] ?>">Reject</button><button type="button" class="study-invitation-action" data-kind="path" data-action="accept" data-id="<?= (int) $pathInvitation['invitation_id'] ?>">Enroll</button></div></div>
                 </article>
@@ -533,8 +455,18 @@ if ($totalPages > 1):
             <?php endif; ?>
 
             <?php if (empty($enrolledCourses) && empty($visibleStudyPaths) && ($currentTab !== 'invited' || empty($pathInvitations))): ?>
-            <div class="study-empty"><i class="fas fa-book-open"></i><h3>No courses yet</h3><p>Visit the <a href="?page=learner/catalog" style="color:var(--primary);font-weight:600;">catalog</a> to find courses to take.</p></div>
+            <div class="study-empty">
+                <i class="fas <?= $searchQuery !== '' ? 'fa-search' : 'fa-book-open' ?>"></i>
+                <?php if ($searchQuery !== ''): ?>
+                    <h3>No matching courses</h3>
+                    <p>Nothing matches &ldquo;<?= htmlspecialchars($searchQuery) ?>&rdquo;. Try another search or browse the <a class="home-card-link" href="?page=learner/catalog">catalog</a>.</p>
+                <?php else: ?>
+                    <h3>No courses yet</h3>
+                    <p>Visit the <a class="home-card-link" href="?page=learner/catalog">catalog</a> to find courses to take.</p>
+                <?php endif; ?>
+            </div>
             <?php endif; ?>
+            </div>
         </div>
 
 
@@ -542,7 +474,7 @@ if ($totalPages > 1):
 <script>
 (function() {
     'use strict';
-    var currentTab = <?= json_encode($currentTab) ?>, searchQuery = '', currentPage = <?= $page ?>, pageSize = <?= $pageSize ?>, totalPages = <?= $totalPages ?>;
+    var currentTab = <?= json_encode($currentTab) ?>, searchQuery = <?= json_encode(mb_strtolower($searchQuery)) ?>, currentPage = <?= $page ?>, pageSize = <?= $pageSize ?>, totalPages = <?= $totalPages ?>;
     var grid = document.getElementById('study-grid');
     var pagination = document.getElementById('study-pagination');
     var indicator = pagination ? pagination.querySelector('.page-indicator') : null;
@@ -758,10 +690,8 @@ document.addEventListener('keydown', function(e) { if (e.key === 'Escape') study
     function syncPositions() {
         var w = getNavWidth();
         var panel = document.getElementById('studyPageSidebar');
-        var btn = document.getElementById('spToggleBtn');
         var overlay = document.getElementById('sidebarOverlay');
         if (panel) panel.style.left = w + 'px';
-        if (btn) btn.style.left = w + 'px';
         if (overlay) overlay.style.left = w + 'px';
     }
     var observer = new MutationObserver(syncPositions);

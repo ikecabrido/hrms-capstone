@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once dirname(__FILE__, 6) . '/database/db.php';
+require_once dirname(__FILE__, 4) . '/classes/notificationpreference.php';
 
 try {
     $learnerId = (int) ($_SESSION['employee_id'] ?? 0);
@@ -87,12 +88,16 @@ try {
 
         if (!empty($instructors)) {
             $notifStmt = $pdo->prepare("
-                INSERT INTO ld_notification (user_id, type, title, message, is_read, created_at)
+                INSERT INTO ld_notification_inbox (user_id, type, title, message, is_read, created_at)
                 VALUES (:uid, 'training_request', 'New Training Request', :msg, 0, NOW())
             ");
             foreach ($instructors as $instrId) {
+                $instrId = (int) $instrId;
+                if (!NotificationPreference::allows($pdo, $instrId, 'training_request')) {
+                    continue;
+                }
                 $notifStmt->execute([
-                    ':uid' => (int) $instrId,
+                    ':uid' => $instrId,
                     ':msg' => $learnerName . ' requested training for "' . $skill['name'] . '".',
                 ]);
             }

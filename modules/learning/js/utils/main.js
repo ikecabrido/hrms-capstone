@@ -61,7 +61,8 @@
         document.querySelectorAll('.menu-link, .active-menu-link').forEach(function (el) {
         el.className = 'menu-link';
         });
-        var a = document.querySelector('.sidebar a[data-page="' + page + '"]');
+        // Scoped to menu links so the sidebar profile block keeps its own class.
+        var a = document.querySelector('.sidebar a.menu-link[data-page="' + page + '"], .sidebar a.active-menu-link[data-page="' + page + '"]');
         if (a) a.className = 'active-menu-link';
     }
 

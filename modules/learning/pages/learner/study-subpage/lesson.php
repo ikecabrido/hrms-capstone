@@ -16,6 +16,7 @@ $enrollment = null;
 $moduleId = 0;
 $currentPageType = 'lesson';
 $currentPageId = $lessonId;
+$youtubeId = null;
 
 try {
     $database = new Database();
@@ -50,7 +51,6 @@ try {
         $fileStmt->execute([':lid' => $lessonId]);
         $files = $fileStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $youtubeId = null;
         if ($lesson['video_url']) {
             if (preg_match('#(?:youtube\.com/(?:watch\?.*v=|embed/|v/)|youtu\.be/)([a-zA-Z0-9_-]{11})#', $lesson['video_url'], $m)) {
                 $youtubeId = $m[1];
@@ -63,24 +63,42 @@ try {
 }
 
 if (!$lesson) {
-    echo '<div class="module-content"><div class="mode-card"><h2>Lesson Not Found</h2><p>The lesson you are looking for does not exist.</p>';
-    echo '<a href="?page=learner/study" style="display:inline-block; margin-top:1rem; padding:0.6rem 1.2rem; background:var(--primary); color:#fff; border-radius:8px; text-decoration:none; font-weight:600;">Back to Study</a></div></div>';
+    ?>
+    <div class="module-content">
+        <div class="study-doc">
+            <div class="study-panel" style="text-align:center;">
+                <i class="fas fa-triangle-exclamation" style="display:block;margin-bottom:0.75rem;color:var(--muted);font-size:2rem;"></i>
+                <h2 style="margin:0 0 0.5rem;">Lesson Not Found</h2>
+                <p style="margin:0 0 1.25rem;color:var(--muted);">The lesson you are looking for does not exist.</p>
+                <a class="study-btn" href="?page=learner/study"><i class="fas fa-arrow-left"></i> Back to Study</a>
+            </div>
+        </div>
+    </div>
+    <?php
     return;
 }
-$typeIcon = match($lesson['content_type']) { 'video' => 'fa-video', 'text' => 'fa-file-alt', 'file' => 'fa-paperclip', 'mixed' => 'fa-layer-group', default => 'fa-book-open' };
-?>
 
-<style>
-.study-pill{display:inline-flex;align-items:center;padding:0.3rem 0.75rem;border-radius:999px;font-size:0.72rem;font-weight:700;letter-spacing:0.02em}
-.study-pill-primary{background:linear-gradient(135deg,rgba(32,0,130,0.88),rgba(81,70,183,0.75));color:#fff}
-.study-pill-success{background:rgba(16,185,129,0.1);color:#10b981}
-</style>
+$typeIcon = match($lesson['content_type']) {
+    'video' => 'fa-video',
+    'text' => 'fa-file-alt',
+    'file' => 'fa-paperclip',
+    'mixed' => 'fa-layer-group',
+    default => 'fa-book-open',
+};
+$typeLabel = match($lesson['content_type']) {
+    'video' => 'Video',
+    'text' => 'Reading',
+    'file' => 'Document',
+    'mixed' => 'Mixed media',
+    default => 'Lesson',
+};
+?>
 
 <div class="module-content">
 <?php require_once __DIR__ . '/includes/course-sidebar.php'; ?>
 
     <div class="study-breadcrumb">
-        <a href="?page=learner/study"><i class="fas fa-book-open" style="margin-right:0.25rem;"></i> My Study</a>
+        <a href="?page=learner/study"><i class="fas fa-book-open"></i> My Study</a>
         <i class="fas fa-chevron-right sep"></i>
         <a href="?page=learner/study-subpage/course&course_id=<?= $courseId ?>"><?= htmlspecialchars($lesson['course_title']) ?></a>
         <i class="fas fa-chevron-right sep"></i>
@@ -89,63 +107,76 @@ $typeIcon = match($lesson['content_type']) { 'video' => 'fa-video', 'text' => 'f
         <span class="current">Lesson <?= $lesson['order_index'] + 1 ?></span>
     </div>
 
-    <div class="mode-card" style="margin-bottom:1.5rem;">
-        <div style="display:flex; gap:0.45rem; margin-bottom:0.75rem; flex-wrap:wrap;">
-            <span class="study-pill study-pill-primary"><i class="fas <?= $typeIcon ?>" style="margin-right:4px;"></i><?= ucfirst($lesson['content_type']) ?></span>
-            <?php if ($isCompleted): ?>
-                <span class="study-pill study-pill-success"><i class="fas fa-check-circle" style="margin-right:3px;"></i> Completed</span>
-            <?php endif; ?>
+    <div class="study-doc">
+        <!-- Lesson header -->
+        <div class="study-header-card">
+            <div class="study-pills">
+                <span class="study-pill study-pill-primary"><i class="fas <?= $typeIcon ?>"></i><?= $typeLabel ?></span>
+                <?php if ($isCompleted): ?>
+                    <span class="study-pill study-pill-success"><i class="fas fa-check-circle"></i> Completed</span>
+                <?php endif; ?>
+            </div>
+            <h1 class="study-header-title"><?= htmlspecialchars($lesson['title']) ?></h1>
+            <p class="study-header-desc">
+                <i class="fas fa-folder-open" style="margin-right:0.35rem;color:var(--primary);"></i><?= htmlspecialchars($lesson['module_title']) ?>
+                &middot; Lesson <?= $lesson['order_index'] + 1 ?>
+            </p>
         </div>
-        <h1 style="margin:0 0 0.5rem 0; font-size:1.55rem; color:var(--text); font-weight:800; letter-spacing:-0.02em;"><?= htmlspecialchars($lesson['title']) ?></h1>
+
+        <?php if (!empty($youtubeId)): ?>
+            <div class="study-panel">
+                <h2 class="study-panel-title"><i class="fab fa-youtube" style="color:#dc3545;"></i> Video Lesson</h2>
+                <div class="study-video">
+                    <iframe src="https://www.youtube.com/embed/<?= htmlspecialchars($youtubeId) ?>" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" title="Video lesson"></iframe>
+                </div>
+            </div>
+        <?php elseif (!empty($lesson['video_url'])): ?>
+            <div class="study-panel">
+                <h2 class="study-panel-title"><i class="fas fa-video" style="color:#dc3545;"></i> Video Lesson</h2>
+                <a href="<?= htmlspecialchars($lesson['video_url']) ?>" target="_blank" rel="noopener" class="study-btn" style="background:#dc3545;">
+                    <i class="fas fa-external-link-alt"></i> Open Video
+                </a>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($lesson['content_body'])): ?>
+            <div class="study-panel">
+                <h2 class="study-panel-title"><i class="fas fa-file-alt"></i> Lesson Content</h2>
+                <div class="study-prose"><?= $lesson['content_body'] ?></div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($files)): ?>
+            <div class="study-panel">
+                <h2 class="study-panel-title"><i class="fas fa-paperclip"></i> Attached Files</h2>
+                <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                    <?php foreach ($files as $file): ?>
+                        <a class="study-file" href="pages/learner/study-subpage/ajax/progress/download-material.php?file_id=<?= (int) $file['id'] ?>&course_id=<?= $courseId ?>">
+                            <i class="fas fa-file"></i>
+                            <span class="study-file-name"><?= htmlspecialchars($file['title']) ?></span>
+                            <i class="fas fa-download study-file-dl"></i>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($enrollment) && !$isCompleted): ?>
+            <div class="study-panel" style="text-align:center;">
+                <p style="margin:0 0 1rem;color:var(--muted);">Finished with this lesson?</p>
+                <button type="button" id="mark-complete-btn" class="study-btn study-btn-success" onclick="markLessonComplete()">
+                    <i class="fas fa-check-circle"></i> Mark as Complete
+                </button>
+                <div id="complete-status" style="display:none;margin-top:0.75rem;color:#10b981;font-weight:700;">
+                    <i class="fas fa-check"></i> Lesson marked as complete!
+                </div>
+            </div>
+        <?php elseif ($isCompleted): ?>
+            <div class="study-panel" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;color:#10b981;font-weight:700;">
+                <i class="fas fa-check-circle"></i> You have completed this lesson.
+            </div>
+        <?php endif; ?>
     </div>
-
-    <?php if (!empty($youtubeId)): ?>
-        <div class="mode-card" style="margin-bottom:1.5rem;">
-            <h2 style="margin-bottom:0.75rem; font-size:1.1rem;"><i class="fab fa-youtube" style="color:#dc3545; margin-right:0.4rem;"></i>Video Lesson</h2>
-            <div style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:12px; background:#000;">
-                <iframe src="https://www.youtube.com/embed/<?= htmlspecialchars($youtubeId) ?>" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-            </div>
-        </div>
-    <?php elseif (!empty($lesson['video_url'])): ?>
-        <div class="mode-card" style="margin-bottom:1.5rem;">
-            <h2 style="margin-bottom:0.75rem; font-size:1.1rem;"><i class="fas fa-video" style="color:#dc3545; margin-right:0.4rem;"></i>Video Lesson</h2>
-            <a href="<?= htmlspecialchars($lesson['video_url']) ?>" target="_blank" style="display:inline-flex; align-items:center; gap:0.5rem; padding:0.75rem 1.5rem; background:#dc3545; color:#fff; border-radius:8px; text-decoration:none; font-weight:600;"><i class="fas fa-external-link-alt"></i> Open Video</a>
-        </div>
-    <?php endif; ?>
-
-    <?php if ($lesson['content_body']): ?>
-        <div class="mode-card" style="margin-bottom:1.5rem;">
-            <h2 style="margin-bottom:0.75rem; font-size:1.1rem;"><i class="fas fa-file-alt" style="color:var(--primary); margin-right:0.4rem;"></i>Lesson Content</h2>
-            <div style="line-height:1.8; font-size:0.95rem; color:var(--text);"><?= $lesson['content_body'] ?></div>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($files)): ?>
-        <div class="mode-card" style="margin-bottom:1.5rem;">
-            <h2 style="margin-bottom:0.75rem; font-size:1.1rem;"><i class="fas fa-paperclip" style="color:var(--muted, #888); margin-right:0.4rem;"></i>Attached Files</h2>
-            <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                <?php foreach ($files as $file): ?>
-                    <a href="pages/learner/study-subpage/ajax/progress/download-material.php?file_id=<?= $file['id'] ?>&course_id=<?= $courseId ?>" style="display:flex; align-items:center; gap:0.75rem; padding:0.85rem 1.25rem; background:var(--bg-subtle, #f9f9f9); border:1px solid rgba(32,0,130,0.08); border-radius:10px; text-decoration:none; color:inherit; transition:all 0.2s;">
-                        <i class="fas fa-file" style="color:var(--primary);"></i>
-                        <div style="flex:1; font-weight:500; color:var(--text);"><?= htmlspecialchars($file['title']) ?></div>
-                        <i class="fas fa-download" style="color:var(--muted, #888);"></i>
-                    </a>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($enrollment) && !$isCompleted): ?>
-        <div class="mode-card" style="text-align:center; padding:2rem;">
-            <p style="color:var(--muted, #666); margin-bottom:1rem;">Finished with this lesson?</p>
-            <button id="mark-complete-btn" onclick="markLessonComplete()" style="padding:0.75rem 1.5rem; background:#10b981; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.95rem; display:inline-flex; align-items:center; gap:0.4rem;">
-                <i class="fas fa-check-circle"></i> Mark as Complete
-            </button>
-            <div id="complete-status" style="margin-top:0.75rem; display:none; color:#10b981; font-weight:600;">
-                <i class="fas fa-check"></i> Lesson marked as complete!
-            </div>
-        </div>
-    <?php endif; ?>
 
 <script>
 function markLessonComplete() {
@@ -160,6 +191,10 @@ function markLessonComplete() {
         if (data.success) {
             btn.style.display = 'none';
             document.getElementById('complete-status').style.display = 'block';
+            /* Tick the lesson in the course panel and open it so the learner
+               can move straight on to the next item. */
+            if (typeof studyMarkActiveItemCompleted === 'function') studyMarkActiveItemCompleted();
+            if (typeof studyOpenSidebar === 'function') studyOpenSidebar();
         } else {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-check-circle"></i> Mark as Complete';

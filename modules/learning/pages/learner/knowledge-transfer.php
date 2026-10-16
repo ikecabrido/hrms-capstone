@@ -42,122 +42,138 @@ function ktTimeAgo($dt) {
     if ($d < 604800) return floor($d / 86400) . 'd ago';
     return date('M j, Y', strtotime($dt));
 }
+
+$planStatusBadge = static function (string $status): array {
+    switch ($status) {
+        case 'active':    return ['is-success', 'Active'];
+        case 'completed': return ['is-muted', 'Completed'];
+        case 'cancelled': return ['is-danger', 'Cancelled'];
+        default:          return ['is-muted', ucfirst($status)];
+    }
+};
+
+$itemTone = static function (string $status): array {
+    switch ($status) {
+        case 'in_progress': return ['tone-amber', 'fa-spinner'];
+        case 'completed':   return ['tone-emerald', 'fa-check-circle'];
+        default:            return ['tone-slate', 'fa-circle'];
+    }
+};
+
+$activePlans = count(array_filter($ktPlans, fn($p) => ($p['status'] ?? '') === 'active'));
 ?>
-<div class="module-header">
-    <h1 class="module-header-title"><i class="fas fa-exchange-alt" style="margin-right:0.5rem;"></i> Knowledge Transfer</h1>
-    <p class="module-header-subtitle">View and manage your assigned knowledge transfer plans.</p>
-</div>
+<div class="module-content lt-page">
+    <div class="home-dashboard">
 
-<div class="module-content">
-    <?php if (empty($ktPlans)): ?>
-        <div class="mode-card" style="text-align:center; padding:3rem;">
-            <i class="fas fa-exchange-alt" style="font-size:2.5rem; color:var(--primary); opacity:0.3; display:block; margin-bottom:1rem;"></i>
-            <h3 style="margin:0 0 0.5rem; color:var(--text);">No Knowledge Transfer Plans</h3>
-            <p style="margin:0; color:var(--muted); font-size:0.9rem;">You don't have any knowledge transfer plans assigned to you yet.</p>
-        </div>
-    <?php else: ?>
-        <?php foreach ($ktPlans as $plan):
-            $statusColors = ['active' => '#059669', 'completed' => '#2563eb', 'cancelled' => '#dc3545'];
-            $statusColor = $statusColors[$plan['status']] ?? '#666';
-            $itemsDone = count(array_filter($plan['items'] ?? [], fn($it) => $it['status'] === 'completed'));
-            $itemsTotal = count($plan['items'] ?? []);
-            $progress = $itemsTotal > 0 ? round(($itemsDone / $itemsTotal) * 100) : 0;
-        ?>
-            <div class="mode-card" style="margin-bottom:1.5rem;">
-                <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1rem; flex-wrap:wrap; gap:0.75rem;">
-                    <div>
-                        <h3 style="margin:0 0 0.25rem; color:var(--text);">
-                            <i class="fas fa-exchange-alt" style="color:var(--primary); margin-right:0.3rem;"></i>
-                            Plan #<?= $plan['id'] ?> — Knowledge Transfer from <?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?>
-                        </h3>
-                        <p style="margin:0; font-size:0.85rem; color:var(--muted);">
-                            Created <?= ktTimeAgo($plan['created_at']) ?>
-                        </p>
-                    </div>
-                    <span style="padding:0.3rem 0.7rem; border-radius:999px; font-size:0.72rem; font-weight:700; background:<?= $statusColor ?>15; color:<?= $statusColor ?>;">
-                        <?= ucfirst($plan['status']) ?>
-                    </span>
-                </div>
-
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:1rem; margin-bottom:1.25rem;">
-                    <div style="padding:0.75rem; background:rgba(32,0,130,0.04); border-radius:8px;">
-                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--primary); font-weight:700;">From</div>
-                        <div style="margin-top:0.2rem; font-size:0.9rem; font-weight:600; color:var(--text);"><?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?></div>
-                    </div>
-                    <div style="padding:0.75rem; background:rgba(32,0,130,0.04); border-radius:8px;">
-                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--primary); font-weight:700;">Duration</div>
-                        <div style="margin-top:0.2rem; font-size:0.9rem; color:var(--text);">
-                            <?php
-                            $startDisplay = !empty($plan['start_date']) ? date('M d, Y', strtotime($plan['start_date'])) : 'No start date';
-                            $endDisplay = !empty($plan['end_date']) ? date('M d, Y', strtotime($plan['end_date'])) : 'No end date';
-                            echo htmlspecialchars($startDisplay . ' — ' . $endDisplay);
-                            ?>
-                        </div>
-                    </div>
-                    <div style="padding:0.75rem; background:rgba(32,0,130,0.04); border-radius:8px;">
-                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--primary); font-weight:700;">Progress</div>
-                        <div style="margin-top:0.2rem; font-size:0.9rem; font-weight:600; color:var(--text);"><?= $itemsDone ?>/<?= $itemsTotal ?> items (<?= $progress ?>%)</div>
-                    </div>
-                </div>
-
-                <!-- Progress bar -->
-                <div style="height:6px; border-radius:999px; background:rgba(32,0,130,0.08); overflow:hidden; margin-bottom:1.25rem;">
-                    <div style="height:100%; width:<?= $progress ?>%; border-radius:999px; background:linear-gradient(90deg, #059669, #10b981); transition:width 0.3s;"></div>
-                </div>
-
-                <!-- Transfer items -->
-                <h4 style="margin:0 0 0.75rem; font-size:0.78rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em;">
-                    <i class="fas fa-list-check" style="margin-right:0.3rem;"></i>Transfer Items (<?= $itemsTotal ?>)
-                </h4>
-
-                <?php if (empty($plan['items'])): ?>
-                    <p style="color:var(--muted); font-size:0.88rem;">No transfer items have been added to this plan yet.</p>
-                <?php else: ?>
-                    <div style="display:grid; gap:0.5rem;">
-                        <?php foreach ($plan['items'] as $item):
-                            $itemColors = ['pending' => '#666', 'in_progress' => '#d97706', 'completed' => '#059669'];
-                            $itemColor = $itemColors[$item['status']] ?? '#666';
-                            $itemIcons = ['pending' => 'fa-circle', 'in_progress' => 'fa-spinner', 'completed' => 'fa-check-circle'];
-                            $itemIcon = $itemIcons[$item['status']] ?? 'fa-circle';
-                        ?>
-                            <div class="kt-item-row" data-item-id="<?= $item['id'] ?>" data-plan-id="<?= $plan['id'] ?>"
-                                 style="display:flex; align-items:center; gap:0.75rem; padding:0.85rem 1rem; background:rgba(32,0,130,0.03); border:1px solid rgba(32,0,130,0.08); border-radius:10px; transition:border-color 0.2s;">
-                                <i class="fas <?= $itemIcon ?>" style="color:<?= $itemColor ?>; font-size:0.9rem; flex-shrink:0;"></i>
-                                <div style="flex:1; min-width:0;">
-                                    <div style="font-weight:700; font-size:0.9rem; color:var(--text);"><?= htmlspecialchars($item['title']) ?></div>
-                                    <div style="font-size:0.75rem; color:var(--muted); margin-top:0.15rem; text-transform:capitalize;">
-                                        <?= $item['item_type'] ?> &bull; Priority: <?= $item['priority'] ?>
-                                        <?php if (!empty($item['description'])): ?>
-                                            &bull; <?= htmlspecialchars(mb_substr($item['description'], 0, 80)) ?><?= strlen($item['description']) > 80 ? '...' : '' ?>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                                <?php if ($plan['status'] === 'active'): ?>
-                                    <div style="display:flex; gap:0.3rem; flex-shrink:0;">
-                                        <?php if ($item['status'] === 'pending'): ?>
-                                            <button class="kt-status-btn" data-item-id="<?= $item['id'] ?>" data-new-status="in_progress"
-                                                    style="padding:0.3rem 0.6rem; font-size:0.7rem; font-weight:700; background:rgba(217,119,6,0.1); color:#d97706; border:1px solid rgba(217,119,6,0.2); border-radius:999px; cursor:pointer; white-space:nowrap;">
-                                                <i class="fas fa-play" style="margin-right:0.15rem;"></i>Start
-                                            </button>
-                                        <?php elseif ($item['status'] === 'in_progress'): ?>
-                                            <button class="kt-status-btn" data-item-id="<?= $item['id'] ?>" data-new-status="completed"
-                                                    style="padding:0.3rem 0.6rem; font-size:0.7rem; font-weight:700; background:rgba(5,150,105,0.1); color:#059669; border:1px solid rgba(5,150,105,0.2); border-radius:999px; cursor:pointer; white-space:nowrap;">
-                                                <i class="fas fa-check" style="margin-right:0.15rem;"></i>Complete
-                                            </button>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php else: ?>
-                                    <span style="font-size:0.68rem; padding:0.15rem 0.5rem; border-radius:999px; background:<?= $itemColor ?>15; color:<?= $itemColor ?>; font-weight:600; text-transform:capitalize; white-space:nowrap;">
-                                        <?= str_replace('_', ' ', $item['status']) ?>
-                                    </span>
-                                <?php endif; ?>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1>Knowledge Transfer</h1>
+                <p>Knowledge transfer plans where you are the successor.</p>
             </div>
-        <?php endforeach; ?>
-    <?php endif; ?>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-exchange-alt"></i> <?= count($ktPlans) ?> plan<?= count($ktPlans) !== 1 ? 's' : '' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-bolt"></i> <?= $activePlans ?> active</span>
+                </div>
+            </div>
+        </section>
+
+        <?php if (empty($ktPlans)): ?>
+            <div class="home-card">
+                <div class="home-empty">
+                    <i class="fas fa-exchange-alt"></i>
+                    <p>You don't have any knowledge transfer plans assigned to you yet.</p>
+                </div>
+            </div>
+        <?php else: ?>
+            <?php foreach ($ktPlans as $plan):
+                [$statusBadgeClass, $statusBadgeLabel] = $planStatusBadge((string) ($plan['status'] ?? ''));
+                $items = $plan['items'] ?? [];
+                $itemsDone = count(array_filter($items, fn($it) => ($it['status'] ?? '') === 'completed'));
+                $itemsTotal = count($items);
+                $progress = $itemsTotal > 0 ? (int) round(($itemsDone / $itemsTotal) * 100) : 0;
+                $startDisplay = !empty($plan['start_date']) ? date('M d, Y', strtotime($plan['start_date'])) : 'No start date';
+                $endDisplay = !empty($plan['end_date']) ? date('M d, Y', strtotime($plan['end_date'])) : 'No end date';
+            ?>
+                <div class="home-card">
+                    <div class="home-card-head">
+                        <h2 class="home-card-title">
+                            <span class="home-card-icon"><i class="fas fa-exchange-alt"></i></span>
+                            Plan #<?= (int) $plan['id'] ?> — from <?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?>
+                        </h2>
+                        <span class="home-badge <?= $statusBadgeClass ?>"><?= htmlspecialchars($statusBadgeLabel) ?></span>
+                    </div>
+
+                    <div class="home-row-meta" style="margin-bottom:0.4rem;">Created <?= ktTimeAgo($plan['created_at']) ?></div>
+
+                    <div class="home-kv">
+                        <span class="home-kv-label"><i class="fas fa-user-tie"></i> From</span>
+                        <span class="home-kv-value"><?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?></span>
+                    </div>
+                    <div class="home-kv">
+                        <span class="home-kv-label"><i class="fas fa-calendar"></i> Duration</span>
+                        <span class="home-kv-value"><?= htmlspecialchars($startDisplay . ' — ' . $endDisplay) ?></span>
+                    </div>
+                    <div class="home-kv">
+                        <span class="home-kv-label"><i class="fas fa-list-check"></i> Progress</span>
+                        <span class="home-kv-value"><?= $itemsDone ?>/<?= $itemsTotal ?> items</span>
+                    </div>
+
+                    <div class="home-progress" style="max-width:none;margin-top:0.75rem;">
+                        <span class="home-progress-track">
+                            <span class="home-progress-fill" style="width:<?= $progress ?>%"></span>
+                        </span>
+                        <span class="home-progress-val"><?= $progress ?>%</span>
+                    </div>
+
+                    <div class="lt-subhead"><i class="fas fa-list-check"></i> Transfer items (<?= $itemsTotal ?>)</div>
+
+                    <?php if (empty($items)): ?>
+                        <div class="home-empty">
+                            <i class="fas fa-list-check"></i>
+                            <p>No transfer items have been added to this plan yet.</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="home-list">
+                            <?php foreach ($items as $item):
+                                [$tone, $icon] = $itemTone((string) ($item['status'] ?? 'pending'));
+                            ?>
+                                <div class="home-row kt-item-row" data-item-id="<?= (int) $item['id'] ?>" data-plan-id="<?= (int) $plan['id'] ?>">
+                                    <span class="home-row-icon <?= $tone ?>"><i class="fas <?= $icon ?>"></i></span>
+                                    <span class="home-row-body">
+                                        <span class="home-row-title"><?= htmlspecialchars($item['title']) ?></span>
+                                        <span class="home-row-meta">
+                                            <?= htmlspecialchars(ucfirst(str_replace('_', ' ', (string) $item['item_type']))) ?>
+                                            &bull; Priority: <?= htmlspecialchars((string) $item['priority']) ?>
+                                            <?php if (!empty($item['description'])): ?>
+                                                &bull; <?= htmlspecialchars(mb_substr($item['description'], 0, 80)) ?><?= mb_strlen($item['description']) > 80 ? '…' : '' ?>
+                                            <?php endif; ?>
+                                        </span>
+                                    </span>
+                                    <span class="home-row-trail">
+                                        <?php if (($plan['status'] ?? '') === 'active' && ($item['status'] ?? '') === 'pending'): ?>
+                                            <button type="button" class="kt-status-btn lt-item-btn start" data-item-id="<?= (int) $item['id'] ?>" data-new-status="in_progress">
+                                                <i class="fas fa-play"></i> Start
+                                            </button>
+                                        <?php elseif (($plan['status'] ?? '') === 'active' && ($item['status'] ?? '') === 'in_progress'): ?>
+                                            <button type="button" class="kt-status-btn lt-item-btn done" data-item-id="<?= (int) $item['id'] ?>" data-new-status="completed">
+                                                <i class="fas fa-check"></i> Complete
+                                            </button>
+                                        <?php else: ?>
+                                            <span class="home-badge <?= $tone === 'tone-emerald' ? 'is-success' : ($tone === 'tone-amber' ? 'is-warn' : 'is-muted') ?>">
+                                                <?= htmlspecialchars(str_replace('_', ' ', (string) $item['status'])) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+
+    </div>
 </div>
 
 <script>

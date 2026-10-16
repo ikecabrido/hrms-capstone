@@ -8,6 +8,29 @@ if (!isset($_SESSION['employee_id'])) {
     exit();
 }
 
+require_once dirname(__DIR__, 2) . '/database/db.php';
+require_once __DIR__ . '/classes/UserSession.php';
+
+// Register/refresh this session and make sure it has not been signed out from
+// another device (profile → Security → Sign out other sessions).
+try {
+    $ldSessionPdo = (new Database())->getConnection();
+    $ldSessionActive = (new UserSession($ldSessionPdo))->touch(
+        (int) $_SESSION['employee_id'],
+        isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null,
+        $_SERVER['REMOTE_ADDR'] ?? null,
+        $_SERVER['HTTP_USER_AGENT'] ?? null
+    );
+    if (!$ldSessionActive) {
+        $_SESSION = [];
+        session_destroy();
+        header('Location: login.php');
+        exit();
+    }
+} catch (Throwable $e) {
+    // Session tracking is best-effort; never block the app on it.
+}
+
 require_once 'classes/Page.php';
 require_once 'classes/CSRF.php';
 
@@ -17,25 +40,28 @@ $currentPage = $pageController->getPage();
 // Ensure CSRF token exists
 $csrfToken = CSRF::getToken();
 
-// Default items-per-page, configurable from Admin > Settings > General.
-$ldDefaultPageSize = 12;
+// Display preferences: the employee's saved list length and default card view.
+// page_size falls back to the module default from Admin > Settings > General;
+// both are handed to the page scripts below (pagination reads
+// LD_DEFAULT_PAGE_SIZE, the grid/list toggles read LD_DISPLAY_PREFS).
+$ldDisplayPrefs = ['page_size' => 12, 'view_mode' => 'grid'];
 try {
-    require_once 'classes/Setting.php';
-    $ldSettingClass = new Setting();
-    $ldDefaultPageSize = (int) ($ldSettingClass->get('default_page_size') ?: 12);
-    if (!in_array($ldDefaultPageSize, [12, 24, 36], true)) {
-        $ldDefaultPageSize = 12;
-    }
+    require_once 'classes/displaypreference.php';
+    $ldDisplayPrefs = DisplayPreference::effective(
+        $ldSessionPdo ?? (new Database())->getConnection(),
+        (int) $_SESSION['employee_id']
+    );
 } catch (Throwable $e) {
-    $ldDefaultPageSize = 12;
+    // keep the built-in defaults
 }
+$ldDefaultPageSize = (int) $ldDisplayPrefs['page_size'];
 
 include 'includes/sidebar.php';
 include 'includes/header.php';
 ?>
 
 <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
-<script>window.LD_DEFAULT_PAGE_SIZE = <?= (int) $ldDefaultPageSize ?>; window.CSRF_TOKEN = <?= json_encode($csrfToken) ?>;</script>
+<script>window.LD_DEFAULT_PAGE_SIZE = <?= (int) $ldDefaultPageSize ?>; window.LD_DISPLAY_PREFS = <?= json_encode($ldDisplayPrefs) ?>; window.CSRF_TOKEN = <?= json_encode($csrfToken) ?>;</script>
 
 <main class="main-content">
     <div class="container" data-page="<?= htmlspecialchars($currentPage) ?>">
@@ -92,11 +118,11 @@ include 'includes/header.php';
                     s.textContent = old.textContent;
                     old.parentNode.replaceChild(s, old);
                 });
-                // Update active sidebar link
+                // Update active sidebar link (scoped to menu links so the profile block keeps its class)
                 document.querySelectorAll('.menu-link, .active-menu-link').forEach(function(el) {
                     el.className = 'menu-link';
                 });
-                var active = document.querySelector('a[data-page="' + result.rendered + '"]');
+                var active = document.querySelector('.sidebar a.menu-link[data-page="' + result.rendered + '"], .sidebar a.active-menu-link[data-page="' + result.rendered + '"]');
                 if (active) active.className = 'active-menu-link';
                 history.pushState({ page: result.rendered }, '', '?page=' + encodeURIComponent(result.rendered));
                 window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: result.rendered } }));
@@ -128,7 +154,7 @@ include 'includes/header.php';
                 document.querySelectorAll('.menu-link, .active-menu-link').forEach(function(el) {
                     el.className = 'menu-link';
                 });
-                var active = document.querySelector('a[data-page="' + page + '"]');
+                var active = document.querySelector('.sidebar a.menu-link[data-page="' + page + '"], .sidebar a.active-menu-link[data-page="' + page + '"]');
                 if (active) active.className = 'active-menu-link';
                 window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: page } }));
             })
@@ -142,7 +168,7 @@ include 'includes/header.php';
     }
 
     // Notification badge
-    fetch('pages/learner/ajax/get-pending-notification.php', getFetchOptions())
+    fetch('pages/shared/ajax/get-pending-notification.php', getFetchOptions())
         .then(function(r) { return r.json(); })
         .then(function(data) {
             var count = data.total || 0;

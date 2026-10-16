@@ -20,16 +20,47 @@ function studyToggleModule(header) {
 }
 
 /* Open / close sidebar */
-function studyToggleSidebar() {
+function studyOpenSidebar() {
     var sidebar = document.getElementById('studySidebar');
     var overlay = document.getElementById('sidebarOverlay');
+    if (!sidebar || sidebar.classList.contains('open')) return;
+    sidebar.classList.add('open');
+    if (overlay) overlay.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+}
+
+function studyToggleSidebar() {
+    var sidebar = document.getElementById('studySidebar');
     if (!sidebar) return;
     if (sidebar.classList.contains('open')) {
         studyCloseSidebar();
     } else {
-        sidebar.classList.add('open');
-        if (overlay) overlay.classList.add('visible');
-        document.body.style.overflow = 'hidden';
+        studyOpenSidebar();
+    }
+}
+
+/* Reflect an inline completion (e.g. "Mark as Complete") in the panel without a
+   reload: tick the active item and advance the progress bar. */
+function studyMarkActiveItemCompleted() {
+    var link = document.querySelector('.study-sidebar-item.active-item');
+    if (!link || link.classList.contains('completed-item')) return;
+
+    link.classList.add('completed-item');
+    var icon = link.querySelector('.study-sidebar-item-icon');
+    if (icon) {
+        icon.classList.add('done');
+        icon.innerHTML = '<i class="fas fa-check-circle"></i>';
+    }
+
+    var nav = document.querySelector('.study-sidebar-nav');
+    var total = nav ? parseInt(nav.getAttribute('data-total-items'), 10) : 0;
+    var fill = document.querySelector('.study-sidebar-progress-fill');
+    var label = document.querySelector('.study-sidebar-progress-label');
+    if (total > 0 && fill) {
+        var current = parseFloat(fill.style.width) || 0;
+        var next = Math.min(100, current + (100 / total));
+        fill.style.width = next + '%';
+        if (label) label.textContent = Math.round(next) + '% complete';
     }
 }
 

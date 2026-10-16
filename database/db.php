@@ -12,7 +12,8 @@ class Database
 
     public function __construct()
     {
-        $configFile = dirname(__DIR__, 2) . '/db_config.php';
+        // db_config.php lives at the project root (one level up from database/).
+        $configFile = dirname(__DIR__) . '/db_config.php';
 
         if (file_exists($configFile)) {
             $config = require $configFile;

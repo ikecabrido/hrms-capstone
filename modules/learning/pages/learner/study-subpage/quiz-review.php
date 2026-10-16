@@ -1,5 +1,6 @@
 <?php
 include_once __DIR__ . '/../../../classes/Employee.php';
+require_once dirname(__DIR__, 3) . '/classes/enrollment.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 
 $employeeClass = new Employee();
@@ -13,6 +14,10 @@ $questions = [];
 $answers = [];
 $score = null;
 $passed = false;
+$enrollment = null;
+$moduleId = 0;
+$currentPageType = 'quiz';
+$currentPageId = 0;
 
 try {
     $database = new Database();
@@ -24,11 +29,12 @@ try {
 
     if ($session) {
         $quizId = (int) $session['reference_id'];
+        $currentPageId = $quizId;
 
         $quizStmt = $pdo->prepare("
              SELECT q.id, q.title, q.passing_score,
                  q.show_answers_after_submit AS show_answers,
-                   m.title AS module_title, c.title AS course_title
+                   m.id AS module_id, m.title AS module_title, c.title AS course_title
             FROM ld_quiz q
             JOIN ld_module m ON m.id = q.module_id
             JOIN ld_course c ON c.id = m.course_id
@@ -37,10 +43,19 @@ try {
         $quizStmt->execute([':id' => $quizId]);
         $quiz = $quizStmt->fetch(PDO::FETCH_ASSOC);
 
+        if ($quiz) {
+            $moduleId = (int) $quiz['module_id'];
+        }
+
         if (!$courseId) {
             $courseStmt = $pdo->prepare("SELECT m.course_id FROM ld_quiz q JOIN ld_module m ON m.id = q.module_id WHERE q.id = :qid LIMIT 1");
             $courseStmt->execute([':qid' => $quizId]);
             $courseId = (int) $courseStmt->fetchColumn();
+        }
+
+        if ($courseId) {
+            $enrollmentObj = new Enrollment($pdo);
+            $enrollment = $enrollmentObj->getByLearnerAndCourse($learnerId, $courseId);
         }
 
         $questionOrder = json_decode($session['question_order'], true) ?? [];
@@ -108,12 +123,14 @@ $totalCount = count($answers);
 ?>
 
 <div class="module-content">
-    <div style="margin-bottom:1.5rem; display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; flex-wrap:wrap;">
-        <a href="?page=learner/study" style="color:var(--primary); text-decoration:none; font-weight:500;">My Study</a>
-        <i class="fas fa-chevron-right" style="color:#ccc; font-size:0.7rem;"></i>
-        <a href="?page=learner/study-subpage/course&course_id=<?= $courseId ?>" style="color:var(--primary); text-decoration:none; font-weight:500;"><?= htmlspecialchars($quiz['course_title']) ?></a>
-        <i class="fas fa-chevron-right" style="color:#ccc; font-size:0.7rem;"></i>
-        <span style="color:#666;">Quiz Results</span>
+<?php require_once __DIR__ . '/includes/course-sidebar.php'; ?>
+
+    <div class="study-breadcrumb">
+        <a href="?page=learner/study"><i class="fas fa-book-open"></i> My Study</a>
+        <i class="fas fa-chevron-right sep"></i>
+        <a href="?page=learner/study-subpage/course&course_id=<?= $courseId ?>"><?= htmlspecialchars($quiz['course_title']) ?></a>
+        <i class="fas fa-chevron-right sep"></i>
+        <span class="current">Quiz Results</span>
     </div>
 
     <!-- Score Card -->
@@ -174,4 +191,14 @@ $totalCount = count($answers);
             <i class="fas fa-arrow-left"></i> Back to Course
         </a>
     </div>
+
+<?php require_once __DIR__ . '/includes/course-sidebar-footer.php'; ?>
 </div>
+
+<script>
+/* Submitting a quiz lands here — open the course panel so the learner can pick
+   up the next item straight away. */
+(function() {
+    if (typeof studyOpenSidebar === 'function') studyOpenSidebar();
+})();
+</script>

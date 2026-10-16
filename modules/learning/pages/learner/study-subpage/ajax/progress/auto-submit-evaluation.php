@@ -46,10 +46,16 @@ try {
     $enrollmentRow = $enrollment->getByLearnerAndCourse($learnerId, $courseId);
 
     if ($enrollmentRow) {
-        $enrollment->touchLastAccessed((int) $enrollmentRow['id']);
+        try {
+            $enrollment->touchLastAccessed((int) $enrollmentRow['id']);
 
-        if ($result['passed'] === true) {
-            $enrollment->markCompleted((int) $enrollmentRow['id']);
+            if ($result['passed'] === true) {
+                $enrollment->markCompleted((int) $enrollmentRow['id']);
+            }
+        } catch (Throwable $e) {
+            // The attempt itself is already finalized. A downstream grade or
+            // enrollment hiccup must not make the learner think submission failed.
+            $result['enrollment_warning'] = $e->getMessage();
         }
     }
 

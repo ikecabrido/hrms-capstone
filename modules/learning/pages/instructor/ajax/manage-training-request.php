@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once dirname(__FILE__, 6) . '/database/db.php';
+require_once dirname(__FILE__, 4) . '/classes/notificationpreference.php';
 
 try {
     $instructorId = (int) ($_SESSION['employee_id'] ?? 0);
@@ -71,15 +72,19 @@ try {
             'completed' => $instrName . ' completed the training for "' . $req['skill_name'] . '". You can now enroll.',
         ];
 
-        $notifStmt = $pdo->prepare("
-            INSERT INTO ld_notification (user_id, type, title, message, is_read, created_at)
-            VALUES (:uid, 'training_request', :title, :msg, 0, NOW())
-        ");
-        $notifStmt->execute([
-            ':uid' => (int) $req['learner_id'],
-            ':title' => 'Training Request ' . ucfirst($newStatus),
-            ':msg' => $statusMessages[$newStatus] ?? 'Your training request status has been updated.',
-        ]);
+        // Skipped when the learner has switched this type off; the request itself
+        // is still updated, only the notification is withheld.
+        if (NotificationPreference::allows($pdo, (int) $req['learner_id'], 'training_request')) {
+            $notifStmt = $pdo->prepare("
+                INSERT INTO ld_notification_inbox (user_id, type, title, message, is_read, created_at)
+                VALUES (:uid, 'training_request', :title, :msg, 0, NOW())
+            ");
+            $notifStmt->execute([
+                ':uid' => (int) $req['learner_id'],
+                ':title' => 'Training Request ' . ucfirst($newStatus),
+                ':msg' => $statusMessages[$newStatus] ?? 'Your training request status has been updated.',
+            ]);
+        }
     } catch (Throwable $e) { /* notification may not exist */ }
 
     echo json_encode([

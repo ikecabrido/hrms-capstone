@@ -1,151 +1,311 @@
 <?php
 include_once __DIR__ . '/../../classes/Employee.php';
 require_once dirname(__DIR__, 4) . '/database/db.php';
+require_once __DIR__ . '/../../includes/notification-display.php';
 
 $employeeClass = new Employee();
 $adminId = (int) ($employeeClass->getEmployeeId() ?? 0);
 
 $notifications = [];
+$unreadNotifications = [];
 $announcements = [];
+$notificationCount = 0;
 $unreadCount = 0;
+$announcementCount = 0;
 
 try {
     $pdo = (new Database())->getConnection();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_notification WHERE user_id = :uid AND is_read = 0");
-    $stmt->execute([':uid' => $adminId]);
-    $unreadCount = (int) $stmt->fetchColumn();
+    // Tile numbers come from the table: the lists below stop at the 50 newest rows.
+    $totals = $pdo->prepare(
+        "SELECT COUNT(*) AS total, COALESCE(SUM(is_read = 0), 0) AS unread
+         FROM ld_notification_inbox
+         WHERE user_id = :uid"
+    );
+    $totals->execute([':uid' => $adminId]);
+    $totalsRow = $totals->fetch(PDO::FETCH_ASSOC) ?: [];
+    $notificationCount = (int) ($totalsRow['total'] ?? 0);
+    $unreadCount = (int) ($totalsRow['unread'] ?? 0);
 
-    $stmt = $pdo->prepare("SELECT id, type, title, message, reference_type, reference_id, is_read, created_at FROM ld_notification WHERE user_id = :uid ORDER BY created_at DESC LIMIT 50");
-    $stmt->execute([':uid' => $adminId]);
-    $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $listStmt = $pdo->prepare(
+        "SELECT id, type, title, message, reference_type, reference_id, is_read, created_at,
+                TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds,
+                DATE_FORMAT(created_at, '%b %e, %Y') AS created_label
+         FROM ld_notification_inbox
+         WHERE user_id = :uid
+         ORDER BY created_at DESC
+         LIMIT 50"
+    );
+    $listStmt->execute([':uid' => $adminId]);
+    $notifications = $listStmt->fetchAll(PDO::FETCH_ASSOC);
+    $unreadNotifications = array_values(array_filter($notifications, static function ($row) {
+        return (int) ($row['is_read'] ?? 0) === 0;
+    }));
 
-    $stmt = $pdo->prepare("SELECT id, title, message, audience, posted_by, status, created_at, expires_at FROM ld_announcement WHERE status = 'active' AND (expires_at IS NULL OR expires_at >= NOW()) ORDER BY created_at DESC LIMIT 50");
-    $stmt->execute();
-    $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Throwable $e) {}
+    $announcementCount = (int) $pdo->query(
+        "SELECT COUNT(*) FROM ld_announcement
+         WHERE status = 'active' AND (expires_at IS NULL OR expires_at >= NOW())"
+    )->fetchColumn();
 
-function adminNotifTimeAgo($datetime) {
-    $now = time(); $ts = strtotime($datetime); $diff = $now - $ts;
-    if ($diff < 60) return 'just now';
-    if ($diff < 3600) return floor($diff / 60) . 'm ago';
-    if ($diff < 86400) return floor($diff / 3600) . 'h ago';
-    if ($diff < 604800) return floor($diff / 86400) . 'd ago';
-    return date('M j, Y', $ts);
+    $announcementStmt = $pdo->prepare(
+        "SELECT id, title, message, audience, posted_by, status, created_at, expires_at,
+                TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds,
+                DATE_FORMAT(created_at, '%b %e, %Y') AS created_label,
+                DATE_FORMAT(expires_at, '%b %e, %Y') AS expires_label
+         FROM ld_announcement
+         WHERE status = 'active' AND (expires_at IS NULL OR expires_at >= NOW())
+         ORDER BY created_at DESC
+         LIMIT 50"
+    );
+    $announcementStmt->execute();
+    $announcements = $announcementStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Throwable $e) {
+    DbError::capture($e, 'admin/notification');
 }
 
-function adminNotifIcon($type) {
-    $icons = ['invitation'=>'fa-user-plus','certificate'=>'fa-certificate','announcement'=>'fa-bullhorn','enrollment'=>'fa-graduation-cap','grade'=>'fa-chart-line','reminder'=>'fa-clock','message'=>'fa-envelope','report'=>'fa-flag'];
-    return $icons[$type] ?? 'fa-bell';
+/**
+ * Notification feed rows. The shared .cards-grid / .content-card-item hooks are
+ * kept so search and pagination keep working; rows carry the notification id so
+ * the page script can mark them read.
+ */
+function renderAdminNotificationRows(array $items): void
+{
+    if (empty($items)) {
+        ntfEmptyState('fa-bell-slash', 'No notifications', 'Enrollments, grades, certificates and reminders addressed to you will appear here.');
+        return;
+    }
+
+    echo '<div class="cards-grid" data-page-size="12">';
+    foreach ($items as $item) {
+        $id = (int) ($item['id'] ?? 0);
+        $type = (string) ($item['type'] ?? 'update');
+        $isRead = (int) ($item['is_read'] ?? 0) === 1;
+
+        echo '<article class="content-card-item ntf-item ' . ($isRead ? 'is-read' : 'is-unread') . '"'
+            . ' data-notif-id="' . $id . '"'
+            . ' data-read="' . ($isRead ? 'true' : 'false') . '"'
+            . ' data-status="' . ($isRead ? 'read' : 'unread') . '"'
+            . ' data-type="' . htmlspecialchars($type) . '">';
+        echo '<span class="ntf-icon is-' . ldNotifTone($type) . '" aria-hidden="true"><i class="fas ' . ldNotifIcon($type) . '"></i></span>';
+        echo '<div class="content-card-body">';
+        echo '<div class="content-card-meta">'
+            . '<span class="pill">' . htmlspecialchars(ldNotifLabel($type)) . '</span>'
+            . '<span class="ntf-time"><i class="far fa-clock" aria-hidden="true"></i> ' . htmlspecialchars(ldNotifAge($item)) . '</span>'
+            . '</div>';
+        echo '<h3>' . htmlspecialchars((string) ($item['title'] ?? 'Untitled notification')) . '</h3>';
+        echo '<p>' . htmlspecialchars((string) ($item['message'] ?? '')) . '</p>';
+        echo '</div>';
+        echo '</article>';
+    }
+    echo '</div>';
+
+    ntfPaginationRow(count($items));
 }
 
-function adminNotifColor($type) {
-    $colors = ['invitation'=>'#6f42c1','certificate'=>'#ffc107','announcement'=>'#17a2b8','enrollment'=>'#28a745','grade'=>'#007bff','reminder'=>'#fd7e14','message'=>'#6610f2','report'=>'#dc3545'];
-    return $colors[$type] ?? 'var(--primary)';
+/** Announcement cards for the announcements tab. */
+function renderAdminAnnouncements(array $items): void
+{
+    if (empty($items)) {
+        ntfEmptyState('fa-bullhorn', 'No announcements', 'Announcements you publish to the Learning module audiences will be listed here.');
+        return;
+    }
+
+    echo '<div class="cards-grid" data-page-size="12">';
+    foreach ($items as $item) {
+        $title = (string) ($item['title'] ?? 'Untitled announcement');
+        $audience = ldNotifAudienceLabel($item['audience'] ?? null);
+        $expires = trim((string) ($item['expires_label'] ?? ''));
+        $expires = ($expires === '' || empty($item['expires_at'])) ? null : $expires;
+
+        echo '<article class="content-card-item ntf-item ntf-announce" data-status="announcement">';
+        echo '<span class="ntf-icon is-indigo" aria-hidden="true"><i class="fas fa-bullhorn"></i></span>';
+        echo '<div class="content-card-body">';
+        echo '<div class="content-card-meta">'
+            . '<span class="pill">' . htmlspecialchars($audience) . '</span>'
+            . '<span class="ntf-time"><i class="far fa-clock" aria-hidden="true"></i> ' . htmlspecialchars(ldNotifAge($item)) . '</span>'
+            . '</div>';
+        echo '<h3>' . htmlspecialchars($title) . '</h3>';
+        echo '<p>' . htmlspecialchars((string) ($item['message'] ?? '')) . '</p>';
+        if ($expires !== null) {
+            echo '<div class="content-card-footer"><span><i class="fas fa-hourglass-half" aria-hidden="true"></i> Expires ' . htmlspecialchars($expires) . '</span></div>';
+        }
+        echo '</div>';
+        echo '</article>';
+    }
+    echo '</div>';
+
+    ntfPaginationRow(count($items));
 }
 ?>
-<div class="module-content">
-    <div class="toolbar">
-        <div class="toolbar-search">
-            <input type="search" id="admin-notif-search" placeholder="Search notifications..." />
-        </div>
-        <div class="toolbar-actions">
-            <button type="button" id="admin-mark-all-read" style="padding:0.5rem 1rem;background:var(--primary);color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:500;"><i class="fas fa-check-double"></i> Mark All Read</button>
-            <?php include dirname(__DIR__, 2) . '/includes/announcement-composer-trigger.php'; ?>
-        </div>
-    </div>
-    <?php $announcementComposerRole = 'admin'; include dirname(__DIR__, 2) . '/includes/announcement-composer.php'; ?>
+<div class="module-content ntf-page">
+    <div class="home-dashboard">
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1>Notifications</h1>
+                <p>System alerts, enrollment and grading activity, plus the announcements you publish to learners and instructors.</p>
+            </div>
+        </section>
 
-    <div style="margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;">
-        <h2 style="margin:0;">Notifications</h2>
-        <?php if ($unreadCount > 0): ?>
-            <span style="background:#dc3545;color:#fff;padding:0.25rem 0.75rem;border-radius:20px;font-size:0.85rem;font-weight:600;"><?= $unreadCount ?> unread</span>
-        <?php endif; ?>
-    </div>
-
-    <div class="tab-container">
-        <div class="tab-list">
-            <button type="button" class="tab-item active" data-tab="tab-admin-all">All (<?= count($notifications) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-admin-unread">Unread (<?= $unreadCount ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-admin-announcements">Announcements (<?= count($announcements) ?>)</button>
-        </div>
-
-        <div class="tab-content active" data-tab="tab-admin-all">
-            <?php if (empty($notifications)): ?>
-                <div class="mode-card"><div style="padding:3rem;text-align:center;background:#f9f9f9;border-radius:12px;"><i class="fas fa-bell-slash" style="font-size:3rem;color:#ccc;margin-bottom:1rem;display:block;"></i><h3>No notifications</h3></div></div>
-            <?php else: ?>
-                <div class="mode-card">
-                    <div style="display:grid;gap:0.5rem;">
-                        <?php foreach ($notifications as $notif): ?>
-                            <div class="admin-notif-row" data-nid="<?= $notif['id'] ?>" data-read="<?= $notif['is_read'] ? 'true' : 'false' ?>" style="display:flex;align-items:flex-start;gap:1rem;padding:1rem 1.25rem;background:<?= $notif['is_read'] ? '#fff' : 'rgba(32,0,130,0.03)' ?>;border-radius:10px;border-left:3px solid <?= adminNotifColor($notif['type']) ?>;cursor:pointer;">
-                                <div style="width:36px;height:36px;border-radius:50%;background:<?= adminNotifColor($notif['type']) ?>;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas <?= adminNotifIcon($notif['type']) ?>" style="font-size:0.85rem;"></i></div>
-                                <div style="flex:1;min-width:0;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;">
-                                        <strong style="<?= $notif['is_read'] ? '' : 'font-weight:700;' ?>"><?= htmlspecialchars($notif['title']) ?></strong>
-                                        <span style="color:#999;font-size:0.8rem;white-space:nowrap;"><?= adminNotifTimeAgo($notif['created_at']) ?></span>
-                                    </div>
-                                    <p style="margin:0.3rem 0 0 0;color:#555;font-size:0.9rem;"><?= htmlspecialchars($notif['message']) ?></p>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <div class="tab-content" data-tab="tab-admin-unread">
-            <div class="mode-card">
-                <?php $unreadItems = array_filter($notifications, fn($n) => !$n['is_read']); ?>
-                <?php if (empty($unreadItems)): ?>
-                    <div style="padding:3rem;text-align:center;background:#f9f9f9;border-radius:12px;"><i class="fas fa-check-circle" style="font-size:3rem;color:#28a745;margin-bottom:1rem;display:block;"></i><h3>All caught up!</h3></div>
-                <?php else: ?>
-                    <div style="display:grid;gap:0.5rem;">
-                        <?php foreach ($unreadItems as $notif): ?>
-                            <div class="admin-notif-row" data-nid="<?= $notif['id'] ?>" style="display:flex;align-items:flex-start;gap:1rem;padding:1rem;background:rgba(32,0,130,0.03);border-radius:10px;border-left:3px solid <?= adminNotifColor($notif['type']) ?>;cursor:pointer;">
-                                <div style="width:36px;height:36px;border-radius:50%;background:<?= adminNotifColor($notif['type']) ?>;color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas <?= adminNotifIcon($notif['type']) ?>" style="font-size:0.85rem;"></i></div>
-                                <div style="flex:1;"><strong style="font-weight:700;"><?= htmlspecialchars($notif['title']) ?></strong><p style="margin:0.3rem 0 0;color:#555;font-size:0.9rem;"><?= htmlspecialchars($notif['message']) ?></p></div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+        <div class="home-stats">
+            <div class="home-stat">
+                <span class="home-stat-icon tone-violet"><i class="fas fa-bell"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Notifications</span>
+                    <span class="home-stat-value" data-count="total"><?= $notificationCount ?></span>
+                    <span class="home-stat-sub">addressed to you</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-rose"><i class="fas fa-envelope-open-text"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Unread</span>
+                    <span class="home-stat-value" data-count="unread"><?= $unreadCount ?></span>
+                    <span class="home-stat-sub">still need a look</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-indigo"><i class="fas fa-bullhorn"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Announcements</span>
+                    <span class="home-stat-value"><?= $announcementCount ?></span>
+                    <span class="home-stat-sub">active right now</span>
+                </span>
             </div>
         </div>
 
-        <div class="tab-content" data-tab="tab-admin-announcements">
-            <?php if (empty($announcements)): ?>
-                <div class="mode-card"><div style="padding:3rem;text-align:center;background:#f9f9f9;border-radius:12px;"><i class="fas fa-bullhorn" style="font-size:3rem;color:#ccc;margin-bottom:1rem;display:block;"></i><h3>No announcements</h3></div></div>
-            <?php else: ?>
-                <?php foreach ($announcements as $ann): ?>
-                    <div class="mode-card" style="margin-bottom:1rem;border-left:4px solid #17a2b8;">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;">
-                            <div style="flex:1;"><div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;"><i class="fas fa-bullhorn" style="color:#17a2b8;"></i><strong style="font-size:1.1rem;"><?= htmlspecialchars($ann['title']) ?></strong></div><p style="color:#555;line-height:1.6;margin:0;"><?= nl2br(htmlspecialchars($ann['message'])) ?></p></div>
-                            <span style="color:#999;font-size:0.8rem;white-space:nowrap;"><?= adminNotifTimeAgo($ann['created_at']) ?></span>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+        <div class="ntf-toolbar">
+            <div class="toolbar-search">
+                <input type="search" placeholder="Search notifications..." aria-label="Search notifications" />
+            </div>
+            <div class="ntf-actions-bar">
+                <?php ntfPreferencesButton(); ?>
+                <button type="button" id="ntf-mark-all-read" class="ntf-btn">
+                    <i class="fas fa-check-double" aria-hidden="true"></i> Mark all read
+                </button>
+                <?php include dirname(__DIR__, 2) . '/includes/announcement-composer-trigger.php'; ?>
+            </div>
+        </div>
+        <?php ntfPreferencesPanel(); ?>
+        <?php $announcementComposerRole = 'admin'; include dirname(__DIR__, 2) . '/includes/announcement-composer.php'; ?>
+
+        <div class="tab-container">
+            <div class="tab-list">
+                <button type="button" class="tab-item active" data-tab="tab-notif-all">
+                    <i class="fas fa-inbox" aria-hidden="true"></i> All (<?= count($notifications) ?>)
+                </button>
+                <button type="button" class="tab-item" data-tab="tab-notif-unread">
+                    <i class="fas fa-envelope-open-text" aria-hidden="true"></i> Unread (<span data-count="unread"><?= $unreadCount ?></span>)
+                </button>
+                <button type="button" class="tab-item" data-tab="tab-notif-announcements">
+                    <i class="fas fa-bullhorn" aria-hidden="true"></i> Announcements (<?= count($announcements) ?>)
+                </button>
+            </div>
+
+            <div class="tab-content active" data-tab="tab-notif-all" id="tab-notif-all">
+                <?php renderAdminNotificationRows($notifications); ?>
+            </div>
+
+            <div class="tab-content" data-tab="tab-notif-unread" id="tab-notif-unread">
+                <?php renderAdminNotificationRows($unreadNotifications); ?>
+            </div>
+
+            <div class="tab-content" data-tab="tab-notif-announcements" id="tab-notif-announcements">
+                <?php renderAdminAnnouncements($announcements); ?>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-(function() {
-    document.querySelectorAll('.admin-notif-row').forEach(function(row) {
-        row.addEventListener('click', function() {
-            var nid = this.dataset.nid;
-            if (this.dataset.read === 'false') {
-                fetch('pages/instructor/ajax/mark-notification-read.php', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'id=' + nid })
-                    .then(function(r){return r.json();}).then(function(d){ if(d.success){ row.dataset.read='true'; row.style.background='#fff'; } });
-            }
+(function () {
+    'use strict';
+
+    var page = document.querySelector('.ntf-page');
+    if (!page) return;
+
+    var csrfToken = window.CSRF_TOKEN
+        || (document.querySelector('meta[name="csrf-token"]') || {}).content
+        || '';
+
+    function setUnreadCounts(value) {
+        document.querySelectorAll('.ntf-page [data-count="unread"]').forEach(function (node) {
+            node.textContent = String(value);
         });
+    }
+
+    function currentUnreadCount() {
+        var node = document.querySelector('.ntf-page [data-count="unread"]');
+        return Math.max(0, parseInt(node ? node.textContent : '0', 10) || 0);
+    }
+
+    function markRowRead(row) {
+        row.dataset.read = 'true';
+        row.dataset.status = 'read';
+        row.classList.remove('is-unread');
+        row.classList.add('is-read');
+    }
+
+    page.addEventListener('click', function (event) {
+        var row = event.target.closest('.ntf-item');
+        if (!row || !page.contains(row) || row.dataset.read !== 'false') return;
+
+        var notificationId = row.dataset.notifId;
+        if (!notificationId) return;
+
+        row.dataset.read = 'pending';
+        fetch('pages/admin/ajax/mark-notification-read.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            },
+            body: 'id=' + encodeURIComponent(notificationId)
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data || data.success !== true) throw new Error('failed');
+                markRowRead(row);
+                setUnreadCounts(currentUnreadCount() - 1);
+            })
+            .catch(function () {
+                row.dataset.read = 'false';
+            });
     });
-    document.getElementById('admin-mark-all-read').addEventListener('click', function() {
-        fetch('pages/instructor/ajax/mark-all-notification-read.php', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'all=1' })
-            .then(function(r){return r.json();}).then(function(d){ if(d.success) location.reload(); });
-    });
-    document.getElementById('admin-notif-search').addEventListener('input', function() {
-        var q = this.value.toLowerCase();
-        document.querySelectorAll('.admin-notif-row').forEach(function(r) { r.style.display = r.textContent.toLowerCase().indexOf(q) !== -1 ? '' : 'none'; });
-    });
+
+    var markAllButton = document.getElementById('ntf-mark-all-read');
+    if (markAllButton) {
+        markAllButton.addEventListener('click', function () {
+            markAllButton.disabled = true;
+            fetch('pages/admin/ajax/mark-all-notification-read.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: 'all=1'
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (!data || data.success !== true) throw new Error('failed');
+                    page.querySelectorAll('.ntf-item[data-read="false"]').forEach(markRowRead);
+                    setUnreadCounts(0);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('All notifications marked as read.', 'success');
+                    }
+                })
+                .catch(function () {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Could not update your notifications.', 'error');
+                    }
+                })
+                .finally(function () {
+                    markAllButton.disabled = false;
+                });
+        });
+    }
 })();
 </script>

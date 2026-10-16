@@ -8,7 +8,7 @@ if (!isset($_SESSION['employee_id'])) {
 }
 
 require_once dirname(__DIR__, 5) . '/database/db.php';
-require_once dirname(__DIR__, 5) . '/classes/progress.php';
+require_once __DIR__ . '/../../../classes/progress.php';
 
 try {
     $learnerId = (int) $_SESSION['employee_id'];

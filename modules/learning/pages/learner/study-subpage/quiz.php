@@ -8,8 +8,11 @@ $learnerId = (int) ($employeeClass->getEmployeeId() ?? 0);
 
 $quizId = (int) ($_GET['quiz_id'] ?? 0);
 $courseId = (int) ($_GET['course_id'] ?? 0);
+$errorMessage = trim((string) ($_GET['error'] ?? ''));
 $quiz = null;
 $bestAttempt = null;
+$recentAttempt = null;
+$attemptCount = 0;
 $enrollment = null;
 $moduleId = 0;
 $currentPageType = 'quiz';
@@ -61,29 +64,46 @@ try {
 }
 
 if (!$quiz) {
-    echo '<div class="module-content"><div class="mode-card"><h2>Quiz Not Found</h2><p>The quiz you are looking for does not exist.</p>';
-    echo '<a href="?page=learner/study" style="display:inline-block; margin-top:1rem; padding:0.6rem 1.2rem; background:var(--primary); color:#fff; border-radius:8px; text-decoration:none; font-weight:600;">Back to Study</a></div></div>';
+    ?>
+    <div class="module-content">
+        <div class="study-doc">
+            <div class="study-panel" style="text-align:center;">
+                <i class="fas fa-triangle-exclamation" style="display:block;margin-bottom:0.75rem;color:var(--muted);font-size:2rem;"></i>
+                <h2 style="margin:0 0 0.5rem;">Quiz Not Found</h2>
+                <p style="margin:0 0 1.25rem;color:var(--muted);">The quiz you are looking for does not exist.</p>
+                <a class="study-btn" href="?page=learner/study"><i class="fas fa-arrow-left"></i> Back to Study</a>
+            </div>
+        </div>
+    </div>
+    <?php
     return;
 }
 
+$questionCount = (int) $quiz['question_count'];
+$hasQuestions = $questionCount > 0;
 $canAttempt = true;
-if ($quiz['attempt_limit'] && $attemptCount >= $quiz['attempt_limit']) $canAttempt = false;
-?>
+if ($quiz['attempt_limit'] && $attemptCount >= (int) $quiz['attempt_limit']) {
+    $canAttempt = false;
+}
 
-<style>
-.study-pill{display:inline-flex;align-items:center;padding:0.3rem 0.75rem;border-radius:999px;font-size:0.72rem;font-weight:700;letter-spacing:0.02em}
-.study-pill-primary{background:linear-gradient(135deg,rgba(32,0,130,0.88),rgba(81,70,183,0.75));color:#fff}
-.study-pill-outline{background:rgba(32,0,130,0.06);color:var(--primary)}
-.quiz-stat-card{padding:1rem;background:rgba(32,0,130,0.05);border-radius:10px;text-align:center}
-.quiz-stat-label{font-size:0.72rem;color:var(--muted,#888);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.25rem}
-.quiz-stat-value{font-size:1.5rem;font-weight:700;color:var(--primary)}
-</style>
+$passingScore = $quiz['passing_score'] !== null ? (float) $quiz['passing_score'] : null;
+$passingLabel = $passingScore === null
+    ? 'N/A'
+    : rtrim(rtrim(number_format($passingScore, 2, '.', ''), '0'), '.') . '%';
+
+$fmtScore = static function ($score): string {
+    return $score === null ? 'N/A' : rtrim(rtrim(number_format((float) $score, 1, '.', ''), '0'), '.') . '%';
+};
+
+$showBest = $bestAttempt !== null;
+$showRecent = $recentAttempt !== null && (!$showBest || (int) $recentAttempt['id'] !== (int) $bestAttempt['id']);
+?>
 
 <div class="module-content">
 <?php require_once __DIR__ . '/includes/course-sidebar.php'; ?>
 
     <div class="study-breadcrumb">
-        <a href="?page=learner/study"><i class="fas fa-book-open" style="margin-right:0.25rem;"></i> My Study</a>
+        <a href="?page=learner/study"><i class="fas fa-book-open"></i> My Study</a>
         <i class="fas fa-chevron-right sep"></i>
         <a href="?page=learner/study-subpage/course&course_id=<?= $courseId ?>"><?= htmlspecialchars($quiz['course_title']) ?></a>
         <i class="fas fa-chevron-right sep"></i>
@@ -92,73 +112,115 @@ if ($quiz['attempt_limit'] && $attemptCount >= $quiz['attempt_limit']) $canAttem
         <span class="current">Quiz</span>
     </div>
 
-    <div class="mode-card" style="max-width:700px; margin:0 auto;">
-        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
-            <div style="width:56px;height:56px;border-radius:14px;background:rgba(32,0,130,0.1);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                <i class="fas fa-question-circle" style="font-size:1.5rem;"></i>
+    <div class="study-doc">
+        <?php if ($errorMessage !== ''): ?>
+            <div class="study-alert study-alert-error" role="alert">
+                <i class="fas fa-circle-exclamation"></i>
+                <span><?= htmlspecialchars($errorMessage) ?></span>
             </div>
-            <div>
-                <h1 style="margin:0;font-size:1.5rem;color:var(--text);font-weight:800;"><?= htmlspecialchars($quiz['title']) ?></h1>
-                <?php if ($quiz['description']): ?>
-                    <p style="color:var(--muted,#555);line-height:1.5;margin:0.25rem 0 0;font-size:0.9rem;"><?= nl2br(htmlspecialchars($quiz['description'])) ?></p>
-                <?php endif; ?>
+        <?php endif; ?>
+
+        <!-- Quiz header -->
+        <div class="study-header-card">
+            <div class="study-pills">
+                <span class="study-pill study-pill-primary"><i class="fas fa-question-circle"></i> Quiz</span>
+                <span class="study-pill study-pill-outline"><?= htmlspecialchars($quiz['module_title']) ?></span>
+            </div>
+            <h1 class="study-header-title"><?= htmlspecialchars($quiz['title']) ?></h1>
+            <?php if (!empty($quiz['description'])): ?>
+                <p class="study-header-desc"><?= nl2br(htmlspecialchars($quiz['description'])) ?></p>
+            <?php endif; ?>
+        </div>
+
+        <!-- Quiz facts -->
+        <div class="home-stats">
+            <div class="home-stat">
+                <span class="home-stat-icon"><i class="fas fa-list-ol"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Questions</span>
+                    <span class="home-stat-value"><?= $questionCount ?></span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon"><i class="fas fa-clock"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Time Limit</span>
+                    <span class="home-stat-value"><?= $quiz['time_limit_minutes'] ? (int) $quiz['time_limit_minutes'] . ' min' : 'None' ?></span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon"><i class="fas fa-bullseye"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Passing Score</span>
+                    <span class="home-stat-value"><?= htmlspecialchars($passingLabel) ?></span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon"><i class="fas fa-rotate"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Attempts</span>
+                    <span class="home-stat-value"><?= $quiz['attempt_limit'] ? $attemptCount . ' / ' . (int) $quiz['attempt_limit'] : (string) $attemptCount ?></span>
+                </span>
             </div>
         </div>
 
-        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;margin-bottom:1.5rem;">
-            <tbody>
-                <tr style="border-bottom:1px solid rgba(32,0,130,0.08);">
-                    <td style="padding:0.75rem 1rem;color:var(--muted,#888);font-weight:600;width:50%;">Questions</td>
-                    <td style="padding:0.75rem 1rem;font-weight:700;color:var(--primary);text-align:right;"><?= $quiz['question_count'] ?></td>
-                </tr>
-                <tr style="border-bottom:1px solid rgba(32,0,130,0.08);">
-                    <td style="padding:0.75rem 1rem;color:var(--muted,#888);font-weight:600;">Time Limit</td>
-                    <td style="padding:0.75rem 1rem;font-weight:700;color:var(--primary);text-align:right;"><?= $quiz['time_limit_minutes'] ? $quiz['time_limit_minutes'] . ' min' : 'None' ?></td>
-                </tr>
-                <tr style="border-bottom:1px solid rgba(32,0,130,0.08);">
-                    <td style="padding:0.75rem 1rem;color:var(--muted,#888);font-weight:600;">Passing Score</td>
-                    <td style="padding:0.75rem 1rem;font-weight:700;color:var(--primary);text-align:right;"><?= $quiz['passing_score'] ? $quiz['passing_score'] . '%' : 'N/A' ?></td>
-                </tr>
-                <tr style="border-bottom:1px solid rgba(32,0,130,0.08);">
-                    <td style="padding:0.75rem 1rem;color:var(--muted,#888);font-weight:600;">Attempts Used</td>
-                    <td style="padding:0.75rem 1rem;font-weight:700;color:var(--primary);text-align:right;"><?= $quiz['attempt_limit'] ? $attemptCount . ' / ' . $quiz['attempt_limit'] : $attemptCount . ' taken' ?></td>
-                </tr>
-                <?php if ($bestAttempt): ?>
-                    <tr style="border-bottom:1px solid rgba(32,0,130,0.08);">
-                        <td style="padding:0.75rem 1rem;color:var(--muted,#888);font-weight:600;">Highest Score</td>
-                        <td style="padding:0.75rem 1rem;text-align:right;">
-                            <span style="font-weight:700;color:<?= $bestAttempt['passed'] ? '#10b981' : '#dc3545' ?>;">"><?= $bestAttempt['score'] !== null ? round($bestAttempt['score'], 1) . '%' : 'N/A' ?></span>
-                            <a href="?page=learner/study-subpage/quiz-review&session_id=<?= $bestAttempt['id'] ?>&course_id=<?= $courseId ?>" style="font-size:0.78rem;color:var(--primary);font-weight:600;margin-left:0.5rem;">Review</a>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-                <?php if ($recentAttempt && (!$bestAttempt || $recentAttempt['id'] !== $bestAttempt['id'])): ?>
-                    <tr>
-                        <td style="padding:0.75rem 1rem;color:var(--muted,#888);font-weight:600;">Recent Score</td>
-                        <td style="padding:0.75rem 1rem;text-align:right;">
-                            <span style="font-weight:700;color:<?= $recentAttempt['passed'] ? '#10b981' : '#dc3545' ?>;">"><?= $recentAttempt['score'] !== null ? round($recentAttempt['score'], 1) . '%' : 'N/A' ?></span>
-                            <a href="?page=learner/study-subpage/quiz-review&session_id=<?= $recentAttempt['id'] ?>&course_id=<?= $courseId ?>" style="font-size:0.78rem;color:var(--primary);font-weight:600;margin-left:0.5rem;">Review</a>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-                <?php if ($bestAttempt && !$recentAttempt): ?>
-                    <tr>
-                        <td style="padding:0.75rem 1rem;color:var(--muted,#888);font-weight:600;">Recent Score</td>
-                        <td style="padding:0.75rem 1rem;font-weight:700;color:var(--primary);text-align:right;"><?= round($bestAttempt['score'], 1) . '%' ?></td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+        <?php if ($showBest || $showRecent): ?>
+            <div class="study-panel">
+                <h2 class="study-panel-title"><i class="fas fa-chart-simple"></i> Your Results</h2>
+                <div class="home-list">
+                    <?php if ($showBest): ?>
+                        <div class="home-row">
+                            <span class="home-row-icon"><i class="fas fa-medal"></i></span>
+                            <span class="home-row-body">
+                                <span class="home-row-title">Best score</span>
+                                <span class="home-row-meta"><?= htmlspecialchars(date('M j, Y', strtotime((string) $bestAttempt['submitted_at']))) ?></span>
+                            </span>
+                            <span class="home-row-trail">
+                                <span class="home-badge <?= $bestAttempt['passed'] ? 'is-success' : 'is-danger' ?>"><?= $fmtScore($bestAttempt['score']) ?></span>
+                                <a class="home-card-link" href="?page=learner/study-subpage/quiz-review&session_id=<?= (int) $bestAttempt['id'] ?>&course_id=<?= $courseId ?>">Review <i class="fas fa-arrow-right"></i></a>
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($showRecent): ?>
+                        <div class="home-row">
+                            <span class="home-row-icon"><i class="fas fa-clock-rotate-left"></i></span>
+                            <span class="home-row-body">
+                                <span class="home-row-title">Most recent attempt</span>
+                                <span class="home-row-meta"><?= htmlspecialchars(date('M j, Y', strtotime((string) $recentAttempt['submitted_at']))) ?></span>
+                            </span>
+                            <span class="home-row-trail">
+                                <span class="home-badge <?= $recentAttempt['passed'] ? 'is-success' : 'is-danger' ?>"><?= $fmtScore($recentAttempt['score']) ?></span>
+                                <a class="home-card-link" href="?page=learner/study-subpage/quiz-review&session_id=<?= (int) $recentAttempt['id'] ?>&course_id=<?= $courseId ?>">Review <i class="fas fa-arrow-right"></i></a>
+                            </span>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
 
-        <div style="text-align:center;">
-            <?php if ($canAttempt): ?>
-                <a href="?page=learner/study-subpage/quiz-taker&quiz_id=<?= $quizId ?>&course_id=<?= $courseId ?>" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 2rem;background:var(--primary);color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:1.05rem;transition:all 0.2s;">
+        <!-- Start / status -->
+        <div class="study-panel" style="text-align:center;">
+            <?php if (!$hasQuestions): ?>
+                <div class="study-alert study-alert-info" style="justify-content:center;">
+                    <i class="fas fa-circle-info"></i>
+                    <span>This quiz doesn't have any questions yet. Please check back later.</span>
+                </div>
+            <?php elseif (!$canAttempt): ?>
+                <div class="study-alert study-alert-info" style="justify-content:center;">
+                    <i class="fas fa-ban"></i>
+                    <span>You have reached the maximum number of attempts (<?= (int) $quiz['attempt_limit'] ?>).</span>
+                </div>
+            <?php else: ?>
+                <a class="study-btn" href="?page=learner/study-subpage/quiz-taker&quiz_id=<?= $quizId ?>&course_id=<?= $courseId ?>">
                     <i class="fas fa-play"></i> <?= $attemptCount > 0 ? 'Retake Quiz' : 'Start Quiz' ?>
                 </a>
-            <?php else: ?>
-                <div style="padding:1rem;background:var(--bg-subtle,#f8f9fa);border-radius:10px;color:var(--muted,#666);">
-                    <i class="fas fa-ban" style="margin-right:0.4rem;"></i> Maximum attempts reached (<?= $quiz['attempt_limit'] ?>)
-                </div>
+                <p style="margin:0.9rem 0 0;color:var(--muted);font-size:0.82rem;">
+                    <?php if ($quiz['attempt_limit']): ?>
+                        <?= $attemptCount ?> of <?= (int) $quiz['attempt_limit'] ?> attempts used
+                    <?php else: ?>
+                        Unlimited attempts
+                    <?php endif; ?>
+                </p>
             <?php endif; ?>
         </div>
     </div>

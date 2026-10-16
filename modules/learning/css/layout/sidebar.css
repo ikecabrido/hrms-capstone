@@ -60,6 +60,47 @@
         font-size: 2rem;
         font-weight: bold;
         color: var(--surface);
+        overflow: hidden;
+    }
+
+    .user_avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* Invisible wrapper: keeps the original sidebar-header look while making
+       the avatar/name block navigate to the profile page. */
+    .sidebar-profile-link {
+        display: block;
+        text-align: center;
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+    /* Structural guard: keyed on placement inside .sidebar-header, not on the
+       class name, so menu-link/active-menu-link styles (flex row, accent box)
+       can never restyle this block — even if a script swaps its class or a
+       cached JS file runs the old unscoped active-link selector. */
+    .sidebar .sidebar-header a[data-page] {
+        display: block !important;
+        text-align: center;
+        text-decoration: none !important;
+        color: inherit !important;
+        background: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    /* The name/position paragraphs must never inherit a link underline either. */
+    .sidebar .sidebar-header a[data-page] .employee_name,
+    .sidebar .sidebar-header a[data-page] .employee_position {
+        text-decoration: none !important;
     }
 
     .sidebar-header h1 {

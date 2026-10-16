@@ -22,7 +22,7 @@ class User
      */
     public function getNotifications(int $userId, int $limit = 20): array
     {
-        $sql = 'SELECT id, type, title, message, reference_type, reference_id, is_read, created_at FROM ld_notification WHERE user_id = :user_id ORDER BY created_at DESC LIMIT :limit';
+        $sql = 'SELECT id, type, title, message, reference_type, reference_id, is_read, created_at FROM ld_notification_inbox WHERE user_id = :user_id ORDER BY created_at DESC LIMIT :limit';
         $stmt = $this->conn->prepare($sql);
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -36,7 +36,7 @@ class User
      */
     public function getUnreadNotificationCount(int $userId): int
     {
-        $stmt = $this->conn->prepare('SELECT COUNT(*) FROM ld_notification WHERE user_id = :user_id AND is_read = :is_read');
+        $stmt = $this->conn->prepare('SELECT COUNT(*) FROM ld_notification_inbox WHERE user_id = :user_id AND is_read = :is_read');
         $stmt->execute([
             ':user_id' => $userId,
             ':is_read' => 0,
@@ -54,7 +54,7 @@ class User
             return ['success' => false, 'message' => 'Notification ID is required.'];
         }
 
-        $stmt = $this->conn->prepare('UPDATE ld_notification SET is_read = 1 WHERE id = :id');
+        $stmt = $this->conn->prepare('UPDATE ld_notification_inbox SET is_read = 1 WHERE id = :id');
         $stmt->execute([':id' => $notificationId]);
 
         return ['success' => true, 'id' => $notificationId, 'message' => 'Notification marked as read.'];
@@ -69,7 +69,7 @@ class User
             return ['success' => false, 'message' => 'User ID is required.'];
         }
 
-        $stmt = $this->conn->prepare('UPDATE ld_notification SET is_read = 1 WHERE user_id = :user_id AND is_read = 0');
+        $stmt = $this->conn->prepare('UPDATE ld_notification_inbox SET is_read = 1 WHERE user_id = :user_id AND is_read = 0');
         $stmt->execute([':user_id' => $userId]);
 
         return ['success' => true, 'message' => 'All notifications marked as read.'];
@@ -103,7 +103,7 @@ class User
             return ['success' => false, 'message' => 'Notification message is required.'];
         }
 
-        $stmt = $this->conn->prepare('INSERT INTO ld_notification (user_id, type, title, message, reference_type, reference_id) VALUES (:user_id, :type, :title, :message, :reference_type, :reference_id)');
+        $stmt = $this->conn->prepare('INSERT INTO ld_notification_inbox (user_id, type, title, message, reference_type, reference_id) VALUES (:user_id, :type, :title, :message, :reference_type, :reference_id)');
         $stmt->execute([
             ':user_id' => $userId,
             ':type' => $type,
@@ -129,7 +129,7 @@ class User
             return ['success' => false, 'message' => 'Notification ID is required.'];
         }
 
-        $stmt = $this->conn->prepare('DELETE FROM ld_notification WHERE id = :id');
+        $stmt = $this->conn->prepare('DELETE FROM ld_notification_inbox WHERE id = :id');
         $stmt->execute([':id' => $notificationId]);
 
         return ['success' => true, 'id' => $notificationId, 'message' => 'Notification deleted successfully'];

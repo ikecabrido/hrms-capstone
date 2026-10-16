@@ -53,11 +53,21 @@ class Grade
         $passingScore = $this->getCoursePassingThreshold($courseId);
         $status = $passingScore !== null ? ($finalScore >= $passingScore ? 'passed' : 'failed') : 'passed';
 
+        /*
+         * ld_grade.id is a plain primary key on this schema (it is not
+         * AUTO_INCREMENT), so an insert that omitted it would default to 0 and
+         * collide with the first row. Allocate the next id explicitly.
+         */
+        $idStmt = $this->conn->prepare('SELECT COALESCE(MAX(id), 0) + 1 FROM ld_grade');
+        $idStmt->execute();
+        $gradeId = (int) $idStmt->fetchColumn();
+
         $stmt = $this->conn->prepare(
-            'INSERT INTO ld_grade (learner_id, course_id, final_score, status)
-             VALUES (:learner_id, :course_id, :final_score, :status)'
+            'INSERT INTO ld_grade (id, learner_id, course_id, final_score, status)
+             VALUES (:id, :learner_id, :course_id, :final_score, :status)'
         );
         $stmt->execute([
+            ':id' => $gradeId,
             ':learner_id' => $learnerId,
             ':course_id' => $courseId,
             ':final_score' => $finalScore,
@@ -67,7 +77,7 @@ class Grade
         return [
             'success' => true,
             'message' => 'Grade recorded.',
-            'id' => (int) $this->conn->lastInsertId(),
+            'id' => $gradeId,
             'final_score' => $finalScore,
             'status' => $status,
         ];

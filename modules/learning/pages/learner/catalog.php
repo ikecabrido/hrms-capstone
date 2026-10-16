@@ -643,9 +643,213 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
 @media (max-width: 480px) {
     .catalog-grid { grid-template-columns: 1fr; }
 }
+
+/* ==========================================================================
+   Catalog refresh — a layering pass over the base rules above.
+   Every hook the catalog JS relies on (ids, data-* and class names) is kept.
+   ========================================================================== */
+
+.catalog-page .home-hero { margin-bottom: 1rem; }
+
+/* ---- Toolbar ------------------------------------------------------------ */
+.catalog-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 0.8rem;
+    background: var(--surface, #fff);
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 24px rgba(32, 0, 130, 0.06);
+    margin-bottom: 1rem;
+}
+
+.catalog-search { min-width: 0; }
+.catalog-search input {
+    width: 100%;
+    padding: 0.62rem 1rem 0.62rem 2.4rem;
+    background: rgba(32, 0, 130, 0.035);
+    border: 1px solid rgba(32, 0, 130, 0.12);
+    border-radius: 11px;
+}
+.catalog-search input:focus {
+    background: var(--surface, #fff);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(32, 0, 130, 0.10);
+}
+
+.catalog-view-toggle {
+    padding: 2px;
+    gap: 2px;
+    background: rgba(32, 0, 130, 0.045);
+    border: 1px solid rgba(32, 0, 130, 0.12);
+    border-radius: 11px;
+}
+.catalog-view-toggle button {
+    padding: 0.45rem 0.6rem;
+    border-radius: 9px;
+    color: var(--muted);
+}
+.catalog-view-toggle button:hover { background: rgba(32, 0, 130, 0.07); color: var(--text); }
+.catalog-view-toggle button.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 3px 8px rgba(32, 0, 130, 0.28);
+}
+
+.catalog-sort-select {
+    padding: 0.55rem 0.7rem;
+    background: var(--surface, #fff);
+    border: 1px solid rgba(32, 0, 130, 0.12);
+    border-radius: 11px;
+}
+.catalog-count { padding: 0 0.15rem; font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+
+.catalog-request-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.56rem 1.05rem;
+    box-shadow: 0 6px 16px rgba(32, 0, 130, 0.20);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.catalog-request-btn:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(32, 0, 130, 0.26);
+}
+
+@media (max-width: 900px) {
+    .catalog-toolbar { display: flex; flex-wrap: wrap; }
+    .catalog-search { flex: 1 1 100%; }
+    .catalog-count { margin-left: auto; }
+}
+
+/* ---- Master tabs -------------------------------------------------------- */
+.catalog-master-tabs { gap: 0.6rem; margin-bottom: 0.6rem; }
+.catalog-master-tab {
+    padding: 0.8rem 1rem;
+    background: var(--surface, #fff);
+    border: 1px solid rgba(32, 0, 130, 0.12);
+    border-radius: 13px;
+    color: var(--text);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
+}
+.catalog-master-tab:hover { border-color: rgba(32, 0, 130, 0.28); }
+.catalog-master-tab.active {
+    background: linear-gradient(135deg, rgba(32, 0, 130, 0.98), rgba(81, 70, 183, 0.92));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 12px 24px rgba(32, 0, 130, 0.22);
+}
+.catalog-master-tab .catalog-tab-count { background: rgba(32, 0, 130, 0.08); color: var(--primary); }
+.catalog-master-tab.active .catalog-tab-count { background: rgba(255, 255, 255, 0.22); color: #fff; }
+
+/* ---- Type tabs (segmented control) -------------------------------------- */
+.catalog-tabs {
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 1rem;
+    background: rgba(32, 0, 130, 0.05);
+    border: 1px solid rgba(32, 0, 130, 0.06);
+    border-radius: 13px;
+}
+.catalog-tab-btn {
+    padding: 0.6rem 0.6rem;
+    background: transparent;
+    border-radius: 9px;
+    color: var(--muted);
+}
+.catalog-tab-btn:hover { background: rgba(32, 0, 130, 0.06); color: var(--text); }
+.catalog-tab-btn.active { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(32, 0, 130, 0.24); }
+.catalog-tab-btn .catalog-tab-count { background: rgba(32, 0, 130, 0.08); color: var(--primary); }
+.catalog-tab-btn.active .catalog-tab-count { background: rgba(255, 255, 255, 0.22); color: #fff; }
+
+/* ---- Recommendation rail ------------------------------------------------ */
+.rec-track { padding-bottom: 0.35rem; }
+
+/* ---- Cards -------------------------------------------------------------- */
+.catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 1.1rem;
+    margin-bottom: 1.25rem;
+}
+.catalog-card {
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px rgba(32, 0, 130, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.catalog-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 38px rgba(32, 0, 130, 0.16);
+    border-color: rgba(32, 0, 130, 0.24);
+}
+.catalog-card-thumb { height: 132px; }
+.catalog-card-thumb .thumb-icon { font-size: 2.4rem; }
+.catalog-card-type-badge { padding: 0.24rem 0.62rem; border-radius: 999px; font-size: 0.66rem; letter-spacing: 0.05em; }
+.catalog-card-enrolled-badge { padding: 0.24rem 0.62rem; border-radius: 999px; }
+.catalog-card-body { padding: 0.95rem 1.05rem 0.7rem; }
+.catalog-card-body h4 { font-size: 0.98rem; }
+.catalog-card-body .cc-instructor { font-size: 0.78rem; }
+.catalog-card-stats { gap: 0.9rem; padding: 0.6rem 1.05rem; }
+.catalog-card-footer { padding: 0.6rem 1.05rem; }
+.cc-enroll-btn { padding: 0.46rem 1.05rem; border-radius: 999px; font-size: 0.77rem; }
+.cc-enroll-btn.enroll { box-shadow: 0 6px 14px rgba(32, 0, 130, 0.18); }
+
+/* ---- Dark mode ---------------------------------------------------------- */
+[data-theme="dark"] .catalog-toolbar,
+[data-theme="dark"] .catalog-master-tab:not(.active),
+[data-theme="dark"] .catalog-card {
+    background: rgba(30, 41, 59, 1);
+    border-color: rgba(51, 65, 85, 0.75);
+    box-shadow: none;
+}
+[data-theme="dark"] .catalog-search input,
+[data-theme="dark"] .catalog-sort-select {
+    background: rgba(15, 23, 42, 1);
+    border-color: rgba(51, 65, 85, 0.9);
+    color: var(--text);
+}
+[data-theme="dark"] .catalog-search input:focus { background: rgba(15, 23, 42, 1); }
+[data-theme="dark"] .catalog-view-toggle { background: rgba(15, 23, 42, 1); border-color: rgba(51, 65, 85, 0.9); }
+[data-theme="dark"] .catalog-view-toggle button:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+[data-theme="dark"] .catalog-tabs { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.07); }
+[data-theme="dark"] .catalog-tab-btn { color: var(--muted); }
+[data-theme="dark"] .catalog-tab-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+[data-theme="dark"] .catalog-tab-btn .catalog-tab-count,
+[data-theme="dark"] .catalog-master-tab .catalog-tab-count { background: rgba(255, 255, 255, 0.10); color: var(--text); }
+[data-theme="dark"] .catalog-card-stats,
+[data-theme="dark"] .catalog-card-footer { border-top-color: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .catalog-card:hover { border-color: rgba(99, 102, 241, 0.55); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45); }
+[data-theme="dark"] .cc-enroll-btn.enrolled { background: rgba(16, 185, 129, 0.16); color: #34d399; }
+[data-theme="dark"] .catalog-empty i { color: rgba(148, 163, 184, 0.4); }
+
+/* The modal tab bar is hard-coded light in modal-system.css — realign it here. */
+[data-theme="dark"] #catalog-entity-content .entity-content-tabs {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
 </style>
 
-<div class="module-content">
+<div class="module-content catalog-page">
+    <!-- Catalog hero -->
+    <section class="home-hero" aria-labelledby="catalog-hero-title">
+        <div class="home-hero-main">
+            <h1 id="catalog-hero-title">Course Catalog</h1>
+            <p>Browse courses, modules, lessons and quizzes — plus trainings, learning paths and live sessions.</p>
+        </div>
+        <div class="home-hero-aside">
+            <div class="home-hero-chips">
+                <span class="home-hero-chip"><i class="fas fa-graduation-cap"></i> <?= $elearningCatalogCount ?> e-learning</span>
+                <span class="home-hero-chip"><i class="fas fa-chalkboard-teacher"></i> <?= $trainingCatalogCount ?> trainings</span>
+                <span class="home-hero-chip"><i class="fas fa-check-circle"></i> <?= $enrolledCatalogCount ?> enrolled</span>
+            </div>
+        </div>
+    </section>
+
     <!-- Toolbar -->
     <div class="catalog-toolbar" id="browse-courses">
         <div class="catalog-search">
@@ -794,22 +998,22 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
                 $parts = [];
                 if ($moduleCount > 0) $parts[] = $moduleCount . ' modules';
                 if ($lessonCount > 0) $parts[] = $lessonCount . ' lessons';
-                $footerInfo = implode(' . ', $parts);
+                $footerInfo = implode(' · ', $parts);
             } elseif ($itemType === 'module') {
                 $lc = (int)($item['lesson_count'] ?? 0);
                 $qc = (int)($item['quiz_count'] ?? 0);
                 $parts = [];
                 if ($lc > 0) $parts[] = $lc . ' lessons';
                 if ($qc > 0) $parts[] = $qc . ' quizzes';
-                $footerInfo = implode(' . ', $parts);
+                $footerInfo = implode(' · ', $parts);
             } elseif ($itemType === 'learning-path') {
                 $ic = (int)($item['item_count'] ?? 0);
                 $footerInfo = $ic . ' steps';
             } elseif ($itemType === 'video-conference') {
                 if (!empty($item['scheduled_at'])) $footerInfo = date('M j, g:i A', strtotime($item['scheduled_at']));
-                if (!empty($item['duration_minutes'])) $footerInfo .= ($footerInfo ? ' . ' : '') . $item['duration_minutes'] . ' min';
+                if (!empty($item['duration_minutes'])) $footerInfo .= ($footerInfo ? ' · ' : '') . $item['duration_minutes'] . ' min';
             } elseif ($itemType === 'quiz') {
-                $footerInfo = ($item['question_count'] ?? 0) . ' questions . Pass: ' . ($item['passing_score'] ?? 0) . '%';
+                $footerInfo = ($item['question_count'] ?? 0) . ' questions · Pass: ' . ($item['passing_score'] ?? 0) . '%';
             } elseif ($itemType === 'lesson') {
                 $footerInfo = ucfirst($item['content_type'] ?? 'text');
             } elseif ($itemType === 'program') {
@@ -855,7 +1059,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
                 <?php endif; ?>
             </div>
             <div class="catalog-card-body">
-                <h4><?= htmlspecialchars($title) ?></h4>
+                <h4 title="<?= htmlspecialchars($title) ?>"><?= htmlspecialchars($title) ?></h4>
                 <?php if ($meta): ?>
                 <div class="cc-instructor"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($meta) ?></div>
                 <?php endif; ?>
@@ -936,7 +1140,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
         <div class="entity-content-header ld-modal-header">
             <h2 id="cem-title"></h2>
             <div class="entity-content-actions">
-                <a id="cem-view-btn" href="#" style="padding:0.6rem 0.95rem; background:var(--primary); color:var(--surface); border:none; border-radius:999px; cursor:pointer; font-weight:700; text-decoration:none; box-shadow:0 4px 15px rgba(32,0,130,0.15);">View Course</a>
+                <a id="cem-view-btn" href="#" style="padding:0.6rem 0.95rem; background:var(--primary); color:#fff; border:none; border-radius:999px; cursor:pointer; font-weight:700; text-decoration:none; box-shadow:0 4px 15px rgba(32,0,130,0.15);">View Course</a>
                 <button id="cem-enroll-btn" style="display:none; padding:0.6rem 0.95rem; background:#10b981; color:#fff; border:none; border-radius:999px; cursor:pointer; font-weight:700; box-shadow:0 4px 15px rgba(16,185,129,0.2);">Enroll Now</button>
                 <button id="cem-close-btn" style="padding:0.6rem 0.95rem; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; cursor:pointer; font-weight:700;">Close</button>
             </div>
@@ -984,7 +1188,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
             <div id="request-status" style="margin-bottom:1rem; display:none; padding:0.75rem; border-radius:8px; font-weight:500;"></div>
             <div class="ld-modal-actions" style="display:flex; gap:1rem; justify-content:flex-end;">
                 <button type="button" id="cancel-request-btn" style="padding:0.75rem 1.5rem; border:1.5px solid rgba(32,0,130,0.15); border-radius:8px; background:transparent; font-weight:700; font-size:0.85rem; cursor:pointer;">Cancel</button>
-                <button type="submit" style="padding:0.75rem 1.5rem; background:var(--primary); color:var(--surface); border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem;">Submit Request</button>
+                <button type="submit" style="padding:0.75rem 1.5rem; background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.85rem;">Submit Request</button>
             </div>
         </form>
     </div>

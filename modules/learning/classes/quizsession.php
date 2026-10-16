@@ -550,18 +550,23 @@ public function saveAnswer(
         ]);
 
         // Also record into the simple attempt log used by Analytics/Results summaries.
-        $attempt = $this->conn->prepare(
-            'INSERT INTO ld_quiz_attempt (learner_id, quiz_id, quiz_session_id, score, total_items, passed)
-             VALUES (:learner_id, :quiz_id, :quiz_session_id, :score, :total_items, :passed)'
-        );
-        $attempt->execute([
-            ':learner_id' => $session['learner_id'],
-            ':quiz_id' => $session['item_type'] === 'quiz' ? $session['reference_id'] : null,
-            ':quiz_session_id' => $sessionId,
-            ':score' => $score,
-            ':total_items' => $total,
-            ':passed' => $passed ?? false,
-        ]);
+        // ld_quiz_attempt is a quiz-only summary (quiz_id is NOT NULL and every
+        // reader joins it back to ld_quiz), so evaluations are tracked through
+        // their ld_quiz_session row instead of being written here with a null id.
+        if ($session['item_type'] === 'quiz') {
+            $attempt = $this->conn->prepare(
+                'INSERT INTO ld_quiz_attempt (learner_id, quiz_id, quiz_session_id, score, total_items, passed)
+                 VALUES (:learner_id, :quiz_id, :quiz_session_id, :score, :total_items, :passed)'
+            );
+            $attempt->execute([
+                ':learner_id' => $session['learner_id'],
+                ':quiz_id' => $session['reference_id'],
+                ':quiz_session_id' => $sessionId,
+                ':score' => $score,
+                ':total_items' => $total,
+                ':passed' => $passed ?? false,
+            ]);
+        }
 
         return [
             'success' => true,

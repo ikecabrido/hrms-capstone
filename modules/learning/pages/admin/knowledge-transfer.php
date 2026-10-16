@@ -45,251 +45,361 @@ try {
     error_log('admin/knowledge-transfer.php load failed: ' . $e->getMessage());
 }
 
-function kt_status_badge($status) {
+/** Badge class + label for a plan status. */
+function ktStatusMeta(string $status): array {
     $map = [
-        'active'    => ['bg' => 'rgba(5,150,105,0.1)', 'color' => '#059669', 'label' => 'Active'],
-        'completed' => ['bg' => 'rgba(37,99,235,0.1)', 'color' => '#2563eb', 'label' => 'Completed'],
-        'cancelled' => ['bg' => 'rgba(220,53,69,0.1)', 'color' => '#dc3545', 'label' => 'Cancelled'],
+        'active'    => ['is-active', 'Active'],
+        'completed' => ['is-completed', 'Completed'],
+        'cancelled' => ['is-cancelled', 'Cancelled'],
     ];
-    $s = $map[$status] ?? ['bg' => 'rgba(100,100,100,0.1)', 'color' => '#666', 'label' => ucfirst($status)];
-    return '<span style="display:inline-block;padding:0.2rem 0.7rem;border-radius:999px;font-size:0.72rem;font-weight:700;background:' . $s['bg'] . ';color:' . $s['color'] . ';">' . $s['label'] . '</span>';
+    return $map[$status] ?? ['is-muted', ucfirst($status)];
+}
+
+/** Lowercased text the toolbar search matches against. */
+function ktSearchKey(array $plan): string {
+    $raw = ($plan['employee_name'] ?? '') . ' ' . ($plan['successor_name'] ?? '') . ' ' . ($plan['status'] ?? '');
+    return htmlspecialchars(strtolower($raw), ENT_QUOTES, 'UTF-8');
+}
+
+/** Readable date, or a dash when the plan has none. */
+function ktDate(?string $date): string {
+    return !empty($date) ? date('M d, Y', strtotime($date)) : '&mdash;';
 }
 ?>
 <?php include __DIR__ . '/../../includes/admin-user-navigation.php'; ?>
-<div class="module-header">
-    <h1 class="module-header-title">Knowledge Transfer</h1>
-</div>
+<div class="module-content kt-page">
+    <section class="home-hero">
+        <div class="home-hero-main">
+            <h1>Knowledge Transfer</h1>
+            <p>Handover plans between leaving employees and the successors taking over their work.</p>
+        </div>
+        <div class="home-hero-aside">
+            <div class="home-hero-chips">
+                <span class="home-hero-chip"><i class="fas fa-exchange-alt"></i> <?= (int) $stats['total'] ?> plan<?= $stats['total'] !== 1 ? 's' : '' ?></span>
+                <span class="home-hero-chip"><i class="fas fa-bolt"></i> <?= (int) $stats['active'] ?> active</span>
+            </div>
+        </div>
+    </section>
 
-<div class="module-content">
-    <!-- Stats Cards -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin-bottom:1.5rem;">
-        <div class="analytics-card">
-            <h2><i class="fas fa-exchange-alt" style="margin-right:0.4rem;opacity:0.6;"></i> Total Plans</h2>
-            <p class="analytics-value"><?= $stats['total'] ?></p>
+    <div class="home-stats">
+        <div class="home-stat">
+            <span class="home-stat-icon tone-violet"><i class="fas fa-exchange-alt"></i></span>
+            <span class="home-stat-body">
+                <span class="home-stat-label">Total Plans</span>
+                <span class="home-stat-value"><?= (int) $stats['total'] ?></span>
+                <span class="home-stat-sub"><?= (int) $stats['cancelled'] ?> cancelled</span>
+            </span>
         </div>
-        <div class="analytics-card">
-            <h2><i class="fas fa-play-circle" style="margin-right:0.4rem;opacity:0.6;color:#059669;"></i> Active</h2>
-            <p class="analytics-value" style="color:#059669;"><?= $stats['active'] ?></p>
+        <div class="home-stat">
+            <span class="home-stat-icon tone-emerald"><i class="fas fa-play-circle"></i></span>
+            <span class="home-stat-body">
+                <span class="home-stat-label">Active</span>
+                <span class="home-stat-value"><?= (int) $stats['active'] ?></span>
+                <span class="home-stat-sub">in progress</span>
+            </span>
         </div>
-        <div class="analytics-card">
-            <h2><i class="fas fa-check-circle" style="margin-right:0.4rem;opacity:0.6;color:#2563eb;"></i> Completed</h2>
-            <p class="analytics-value" style="color:#2563eb;"><?= $stats['completed'] ?></p>
+        <div class="home-stat">
+            <span class="home-stat-icon tone-indigo"><i class="fas fa-check-circle"></i></span>
+            <span class="home-stat-body">
+                <span class="home-stat-label">Completed</span>
+                <span class="home-stat-value"><?= (int) $stats['completed'] ?></span>
+                <span class="home-stat-sub">handovers closed</span>
+            </span>
         </div>
-        <div class="analytics-card">
-            <h2><i class="fas fa-tasks" style="margin-right:0.4rem;opacity:0.6;"></i> Transfer Items</h2>
-            <p class="analytics-value"><?= $stats['items_total'] ?></p>
-            <div style="font-size:0.8rem;color:#999;"><?= $stats['items_completed'] ?> completed</div>
+        <div class="home-stat">
+            <span class="home-stat-icon tone-amber"><i class="fas fa-list-check"></i></span>
+            <span class="home-stat-body">
+                <span class="home-stat-label">Transfer Items</span>
+                <span class="home-stat-value"><?= (int) $stats['items_total'] ?></span>
+                <span class="home-stat-sub"><?= (int) $stats['items_completed'] ?> completed</span>
+            </span>
         </div>
     </div>
 
-    <!-- Toolbar -->
-    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap;">
-        <div style="flex:1;min-width:200px;position:relative;">
-            <i class="fas fa-search" style="position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.85rem;"></i>
-            <input type="search" id="kt-search" placeholder="Search by employee, successor, or status..."
-                   style="width:100%;padding:0.6rem 1rem 0.6rem 2.5rem;border:1.5px solid rgba(32,0,130,0.1);border-radius:10px;background:rgba(32,0,130,0.03);font-size:0.88rem;outline:none;box-sizing:border-box;"
-                   aria-label="Search knowledge transfer plans" />
-        </div>
-        <select id="kt-status-filter"
-                style="padding:0.55rem 0.75rem;border:1.5px solid rgba(32,0,130,0.1);border-radius:8px;background:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;outline:none;">
-            <option value="">All Statuses</option>
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-        </select>
+    <div class="kt-toolbar">
+        <label class="kt-search">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input type="search" id="kt-search" placeholder="Search by employee, successor, or status..." aria-label="Search knowledge transfer plans" />
+        </label>
+        <label class="kt-filter">
+            <select id="kt-status-filter" aria-label="Filter plans by status">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+        </label>
+        <span id="kt-count" class="kt-count" aria-live="polite"><?= (int) $stats['total'] ?> plan<?= $stats['total'] !== 1 ? 's' : '' ?></span>
     </div>
 
-    <!-- Plans Grid -->
-    <div id="kt-plans-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem;">
+    <div id="kt-plans-grid" class="kt-grid">
         <?php if (empty($plans)): ?>
-            <div id="kt-empty" style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--muted);">
-                <i class="fas fa-exchange-alt" style="font-size:2rem;display:block;margin-bottom:0.75rem;opacity:0.4;"></i>
-                <p style="margin:0;font-size:0.95rem;font-weight:600;">No knowledge transfer plans found</p>
-                <p style="margin:0.4rem 0 0;font-size:0.82rem;opacity:0.7;">Plans are created from the Exit Management module.</p>
+            <div id="kt-empty" class="kt-empty">
+                <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                <strong>No knowledge transfer plans found</strong>
+                <span>Plans are created from the Exit Management module.</span>
             </div>
         <?php else: ?>
-            <?php foreach ($plans as $plan): ?>
-                <div class="mode-card kt-plan-card" data-status="<?= htmlspecialchars($plan['status']) ?>"
-                     data-search="<?= strtolower(htmlspecialchars($plan['employee_name'] . ' ' . $plan['successor_name'] . ' ' . $plan['status'])) ?>"
-                     style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;"
-                     onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 35px rgba(32,0,130,0.12)'"
-                     onmouseout="this.style.transform='';this.style.boxShadow=''">
-                    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.75rem;">
-                        <div style="display:flex;align-items:center;gap:0.6rem;">
-                            <div style="width:40px;height:40px;border-radius:10px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">
-                                <i class="fas fa-exchange-alt"></i>
-                            </div>
-                            <div>
-                                <h3 style="margin:0;font-size:0.95rem;font-weight:700;color:var(--text);"><?= htmlspecialchars($plan['employee_name'] ?: 'N/A') ?></h3>
-                                <span style="font-size:0.72rem;color:var(--muted);">Plan #<?= $plan['id'] ?></span>
-                            </div>
+            <?php foreach ($plans as $plan):
+                [$badgeClass, $badgeLabel] = ktStatusMeta((string) $plan['status']);
+                $itemCount = (int) $plan['item_count'];
+                $itemsDone = (int) $plan['items_done'];
+                $progress = $itemCount > 0 ? (int) round(($itemsDone / $itemCount) * 100) : 0;
+                $employee = $plan['employee_name'] !== '' && $plan['employee_name'] !== null ? $plan['employee_name'] : 'N/A';
+            ?>
+                <article class="kt-plan-card" data-id="<?= (int) $plan['id'] ?>"
+                         data-status="<?= htmlspecialchars((string) $plan['status'], ENT_QUOTES, 'UTF-8') ?>"
+                         data-search="<?= ktSearchKey($plan) ?>">
+                    <div class="kt-card-head">
+                        <span class="kt-card-avatar"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
+                        <div class="kt-card-ident">
+                            <h3 class="kt-card-name"><?= htmlspecialchars($employee) ?></h3>
+                            <span class="kt-card-id">Plan #<?= (int) $plan['id'] ?></span>
                         </div>
-                        <?= kt_status_badge($plan['status']) ?>
+                        <span class="kt-badge <?= $badgeClass ?>"><?= htmlspecialchars($badgeLabel) ?></span>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem;">
+
+                    <div class="kt-card-meta">
                         <div>
-                            <span style="display:block;font-size:0.65rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;">Successor</span>
-                            <span style="font-size:0.82rem;color:var(--text);"><?= htmlspecialchars($plan['successor_name'] ?: '—') ?></span>
+                            <span class="kt-meta-label">Successor</span>
+                            <span class="kt-meta-value"><?= htmlspecialchars($plan['successor_name'] ?: '—') ?></span>
                         </div>
                         <div>
-                            <span style="display:block;font-size:0.65rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;">Duration</span>
-                            <span style="font-size:0.82rem;color:var(--text);">
-                                <?php
-                                $startDisplay = !empty($plan['start_date']) ? date('M d, Y', strtotime($plan['start_date'])) : 'No start date';
-                                $endDisplay = !empty($plan['end_date']) ? date('M d, Y', strtotime($plan['end_date'])) : 'No end date';
-                                echo htmlspecialchars($startDisplay . ' – ' . $endDisplay);
-                                ?>
+                            <span class="kt-meta-label">Duration</span>
+                            <span class="kt-meta-value"><?= ktDate($plan['start_date']) ?> &ndash; <?= ktDate($plan['end_date']) ?></span>
+                        </div>
+                    </div>
+
+                    <?php if ($itemCount > 0): ?>
+                        <div class="kt-progress">
+                            <span class="kt-progress-label">Progress</span>
+                            <span class="kt-progress-track">
+                                <span class="kt-progress-fill" style="width:<?= $progress ?>%"></span>
                             </span>
+                            <span class="kt-progress-val"><?= $progress ?>%</span>
                         </div>
-                    </div>
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding-top:0.6rem;border-top:1px solid rgba(32,0,130,0.06);">
-                        <div style="display:flex;align-items:center;gap:0.4rem;">
-                            <i class="fas fa-list-check" style="font-size:0.72rem;color:var(--muted);"></i>
-                            <span style="font-size:0.78rem;color:var(--muted);"><?= $plan['item_count'] ?> items</span>
-                            <?php if ((int) $plan['item_count'] > 0): ?>
-                                <span style="font-size:0.72rem;color:var(--muted);">· <?= $plan['items_done'] ?>/<?= $plan['item_count'] ?> done</span>
-                            <?php endif; ?>
-                        </div>
-                        <button class="kt-view-btn" data-id="<?= $plan['id'] ?>"
-                                style="padding:0.35rem 0.75rem;font-size:0.75rem;background:rgba(32,0,130,0.08);color:var(--primary);border:1px solid rgba(32,0,130,0.15);border-radius:999px;cursor:pointer;font-weight:600;">
-                            <i class="fas fa-eye" style="margin-right:0.25rem;"></i>View
+                    <?php endif; ?>
+
+                    <div class="kt-card-foot">
+                        <span class="kt-card-items">
+                            <i class="fas fa-list-check" aria-hidden="true"></i>
+                            <?= $itemCount ?> item<?= $itemCount !== 1 ? 's' : '' ?>
+                            <?php if ($itemCount > 0): ?>&middot; <?= $itemsDone ?>/<?= $itemCount ?> done<?php endif; ?>
+                        </span>
+                        <button type="button" class="kt-view-btn" data-id="<?= (int) $plan['id'] ?>">
+                            <i class="fas fa-eye" aria-hidden="true"></i> View
                         </button>
                     </div>
-                </div>
+                </article>
             <?php endforeach; ?>
         <?php endif; ?>
     </div>
 
-    <div id="kt-no-results" style="display:none;text-align:center;padding:2.5rem;color:var(--muted);">
-        <i class="fas fa-search" style="font-size:1.5rem;display:block;margin-bottom:0.5rem;opacity:0.4;"></i>
-        <p style="margin:0;font-weight:600;">No matching plans found</p>
+    <div id="kt-no-results" class="kt-no-results" style="display:none;">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <strong>No matching plans found</strong>
+        <span>Try a different search term or status filter.</span>
     </div>
 </div>
 
-<!-- View Modal -->
-<div id="kt-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);z-index:10000;align-items:center;justify-content:center;">
-    <div style="background:var(--surface);border-radius:18px;width:90%;max-width:720px;max-height:85vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;">
-        <div style="padding:1.5rem 1.5rem 1rem;border-bottom:1px solid rgba(32,0,130,0.08);display:flex;align-items:center;justify-content:space-between;">
-            <h2 id="kt-modal-title" style="margin:0;font-size:1.15rem;font-weight:800;color:var(--text);">Knowledge Transfer Plan</h2>
-            <button id="kt-modal-close" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);padding:0.25rem;"><i class="fas fa-times"></i></button>
+<!-- Plan detail modal -->
+<div id="kt-modal-overlay" class="kt-modal-overlay" style="display:none;">
+    <div class="kt-modal" role="dialog" aria-modal="true" aria-labelledby="kt-modal-title">
+        <div class="kt-modal-head">
+            <h2 id="kt-modal-title">Knowledge Transfer Plan</h2>
+            <button type="button" id="kt-modal-close" class="kt-modal-close" aria-label="Close plan details">
+                <i class="fas fa-times" aria-hidden="true"></i>
+            </button>
         </div>
-        <div id="kt-modal-body" style="padding:1.25rem 1.5rem;overflow-y:auto;flex:1;"></div>
+        <div id="kt-modal-body" class="kt-modal-body"></div>
     </div>
 </div>
 
 <script>
 (function() {
+    var grid = document.getElementById('kt-plans-grid');
     var searchInput = document.getElementById('kt-search');
     var statusFilter = document.getElementById('kt-status-filter');
     var noResults = document.getElementById('kt-no-results');
+    var countEl = document.getElementById('kt-count');
 
+    var overlay = document.getElementById('kt-modal-overlay');
+    var modalBody = document.getElementById('kt-modal-body');
+    var modalTitle = document.getElementById('kt-modal-title');
+    var closeBtn = document.getElementById('kt-modal-close');
+
+    var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var STATUS = {
+        'active':      { cls: 'is-active',      label: 'Active' },
+        'completed':   { cls: 'is-completed',   label: 'Completed' },
+        'cancelled':   { cls: 'is-cancelled',   label: 'Cancelled' },
+        'in_progress': { cls: 'is-in_progress', label: 'In Progress' },
+        'pending':     { cls: 'is-pending',     label: 'Pending' }
+    };
+    var PRIORITY = { 'low': 'Low', 'medium': 'Medium', 'high': 'High' };
+
+    function esc(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function badge(status) {
+        var meta = STATUS[String(status)] || { cls: 'is-muted', label: String(status || 'Unknown') };
+        return '<span class="kt-badge ' + meta.cls + '">' + esc(meta.label) + '</span>';
+    }
+
+    function formatDate(value) {
+        if (!value) return '&mdash;';
+        var match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value));
+        if (!match) return esc(value);
+        var month = MONTHS[parseInt(match[2], 10) - 1] || match[2];
+        return month + ' ' + parseInt(match[3], 10) + ', ' + match[1];
+    }
+
+    function titleCase(value) {
+        var text = String(value || '').replace(/_/g, ' ');
+        return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function detail(label, value) {
+        return '<div><span class="kt-detail-label">' + esc(label) + '</span>' +
+               '<span class="kt-detail-value">' + value + '</span></div>';
+    }
+
+    function stateBlock(tone, icon, message) {
+        return '<div class="kt-modal-state' + (tone ? ' ' + tone : '') + '">' +
+               '<i class="fas ' + icon + '"></i><span>' + esc(message) + '</span></div>';
+    }
+
+    // ---- Filtering ----------------------------------------------------------
     function filterCards() {
-        var q = (searchInput.value || '').toLowerCase().trim();
-        var status = statusFilter.value;
+        var query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+        var status = statusFilter ? statusFilter.value : '';
         var cards = document.querySelectorAll('.kt-plan-card');
         var visible = 0;
+
         cards.forEach(function(card) {
-            var matchSearch = !q || card.dataset.search.indexOf(q) > -1;
+            var matchSearch = !query || (card.dataset.search || '').indexOf(query) > -1;
             var matchStatus = !status || card.dataset.status === status;
             var show = matchSearch && matchStatus;
             card.style.display = show ? '' : 'none';
             if (show) visible++;
         });
-        noResults.style.display = (cards.length > 0 && visible === 0) ? '' : 'none';
+
+        if (noResults) noResults.style.display = (cards.length > 0 && visible === 0) ? '' : 'none';
+
+        if (countEl) {
+            if (cards.length === 0) {
+                countEl.textContent = 'No plans';
+            } else if (visible === cards.length) {
+                countEl.textContent = cards.length + ' plan' + (cards.length !== 1 ? 's' : '');
+            } else {
+                countEl.textContent = visible + ' of ' + cards.length + ' plans';
+            }
+        }
     }
-    searchInput.addEventListener('input', filterCards);
-    statusFilter.addEventListener('change', filterCards);
 
-    // View modal
-    var overlay = document.getElementById('kt-modal-overlay');
-    var body = document.getElementById('kt-modal-body');
-    var title = document.getElementById('kt-modal-title');
+    if (searchInput) searchInput.addEventListener('input', filterCards);
+    if (statusFilter) statusFilter.addEventListener('change', filterCards);
 
-    document.querySelectorAll('.kt-view-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            var planId = btn.dataset.id;
-            title.textContent = 'Knowledge Transfer Plan';
-            body.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
-            overlay.style.display = 'flex';
+    // ---- Detail modal -------------------------------------------------------
+    function renderPlan(plan, items) {
+        var html = '<div class="kt-detail-grid">';
+        html += detail('Employee', esc(plan.employee_name || 'N/A'));
+        html += detail('Successor', esc(plan.successor_name || '—'));
+        html += detail('Start date', formatDate(plan.start_date));
+        html += detail('End date', formatDate(plan.end_date));
+        html += detail('Created', formatDate(plan.created_at));
+        html += '<div><span class="kt-detail-label">Status</span>' +
+                '<span class="kt-detail-value">' + badge(plan.status) + '</span></div>';
+        html += '</div>';
 
-            fetch('../../modules/exit/pages/ajax/get-knowledge-transfer.php?id=' + planId, {
-                credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (!data.success || !data.plan) {
-                    body.innerHTML = '<p style="color:#dc3545;">Unable to load plan details.</p>';
-                    return;
+        html += '<div class="kt-detail-items">';
+        html += '<h3 class="kt-detail-subhead"><i class="fas fa-list-check"></i> Transfer items (' + items.length + ')</h3>';
+
+        if (items.length === 0) {
+            html += '<div class="kt-item-empty"><i class="fas fa-inbox"></i><span>No transfer items have been added to this plan yet.</span></div>';
+        } else {
+            html += '<div class="kt-item-list">';
+            items.forEach(function(item) {
+                var priorityKey = PRIORITY[String(item.priority)] ? String(item.priority) : 'low';
+                var priorityLabel = PRIORITY[String(item.priority)] || titleCase(item.priority);
+
+                html += '<div class="kt-item">';
+                html += '<div class="kt-item-head">' +
+                        '<span class="kt-item-title">' + esc(item.title) + '</span>' +
+                        badge(item.status) +
+                        '</div>';
+                html += '<div class="kt-item-meta">Type: <strong>' + esc(titleCase(item.item_type)) + '</strong>' +
+                        ' &bull; Priority: <span class="kt-prio is-' + priorityKey + '">' + esc(priorityLabel) + '</span></div>';
+                if (item.description) {
+                    html += '<p class="kt-item-desc">' + esc(item.description) + '</p>';
                 }
-                var p = data.plan;
-                var items = data.items || [];
-                var badges = <?= json_encode([
-                    'active' => kt_status_badge('active'),
-                    'completed' => kt_status_badge('completed'),
-                    'cancelled' => kt_status_badge('cancelled'),
-                ]) ?>;
-                var itemStatusBadge = {
-                    'pending': '<span style="display:inline-block;padding:0.15rem 0.5rem;border-radius:999px;font-size:0.68rem;font-weight:700;background:rgba(100,100,100,0.1);color:#666;">Pending</span>',
-                    'in_progress': '<span style="display:inline-block;padding:0.15rem 0.5rem;border-radius:999px;font-size:0.68rem;font-weight:700;background:rgba(217,119,6,0.1);color:#d97706;">In Progress</span>',
-                    'completed': '<span style="display:inline-block;padding:0.15rem 0.5rem;border-radius:999px;font-size:0.68rem;font-weight:700;background:rgba(5,150,105,0.1);color:#059669;">Completed</span>'
-                };
-                var priorityLabel = {
-                    'low': '<span style="font-size:0.68rem;color:#666;">Low</span>',
-                    'medium': '<span style="font-size:0.68rem;color:#d97706;">Medium</span>',
-                    'high': '<span style="font-size:0.68rem;color:#dc3545;font-weight:700;">High</span>'
-                };
-
-                var html = '';
-                html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.25rem;">';
-                html += '<div><label style="display:block;font-size:0.68rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;">Employee</label><p style="margin:0.35rem 0 0;font-size:0.92rem;font-weight:600;">' + (p.employee_name || 'N/A') + '</p></div>';
-                html += '<div><label style="display:block;font-size:0.68rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;">Successor</label><p style="margin:0.35rem 0 0;font-size:0.92rem;">' + (p.successor_name || '—') + '</p></div>';
-                html += '<div><label style="display:block;font-size:0.68rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;">Start Date</label><p style="margin:0.35rem 0 0;font-size:0.92rem;">' + p.start_date + '</p></div>';
-                html += '<div><label style="display:block;font-size:0.68rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;">End Date</label><p style="margin:0.35rem 0 0;font-size:0.92rem;">' + p.end_date + '</p></div>';
-                html += '<div><label style="display:block;font-size:0.68rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;">Status</label><p style="margin:0.35rem 0 0;">' + (badges[p.status] || p.status) + '</p></div>';
-                html += '</div>';
-
-                // Items
-                html += '<div style="border-top:1px solid rgba(32,0,130,0.08);padding-top:1rem;">';
-                html += '<h3 style="margin:0 0 0.75rem;font-size:0.85rem;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.06em;"><i class="fas fa-list-check" style="margin-right:0.4rem;"></i>Transfer Items (' + items.length + ')</h3>';
-
-                if (items.length === 0) {
-                    html += '<div style="text-align:center;padding:1.5rem;color:var(--muted);opacity:0.6;"><i class="fas fa-inbox" style="font-size:1.2rem;display:block;margin-bottom:0.4rem;"></i>No transfer items yet.</div>';
-                } else {
-                    html += '<div style="display:grid;gap:0.5rem;">';
-                    items.forEach(function(item) {
-                        html += '<div style="padding:0.85rem 1rem;background:rgba(32,0,130,0.03);border:1px solid rgba(32,0,130,0.08);border-radius:10px;">';
-                        html += '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem;">';
-                        html += '<span style="font-weight:700;font-size:0.88rem;color:var(--text);">' + item.title + '</span>';
-                        html += itemStatusBadge[item.status] || '';
-                        html += '</div>';
-                        html += '<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.25rem;">Type: <strong>' + item.item_type + '</strong> &bull; Priority: ' + (priorityLabel[item.priority] || item.priority) + '</div>';
-                        if (item.description) {
-                            html += '<div style="font-size:0.8rem;color:var(--muted);line-height:1.5;">' + item.description + '</div>';
-                        }
-                        if (item.notes) {
-                            html += '<div style="font-size:0.75rem;color:var(--border);margin-top:0.25rem;"><em>Notes: ' + item.notes + '</em></div>';
-                        }
-                        html += '</div>';
-                    });
-                    html += '</div>';
+                if (item.notes) {
+                    html += '<p class="kt-item-notes"><em>Notes: ' + esc(item.notes) + '</em></p>';
                 }
                 html += '</div>';
-
-                body.innerHTML = html;
-            })
-            .catch(function() {
-                body.innerHTML = '<p style="color:#dc3545;">Failed to load plan details.</p>';
             });
-        });
-    });
+            html += '</div>';
+        }
 
-    document.getElementById('kt-modal-close').addEventListener('click', function() {
+        html += '</div>';
+        return html;
+    }
+
+    function closeModal() {
+        if (!overlay) return;
         overlay.style.display = 'none';
-    });
-    overlay.addEventListener('click', function(e) {
-        if (e.target === overlay) overlay.style.display = 'none';
-    });
+        if (modalBody) modalBody.innerHTML = '';
+    }
+
+    function openPlan(planId) {
+        if (!planId || !overlay || !modalBody) return;
+
+        if (modalTitle) modalTitle.textContent = 'Knowledge Transfer Plan';
+        modalBody.innerHTML = stateBlock('', 'fa-spinner fa-spin', 'Loading plan...');
+        overlay.style.display = 'flex';
+        if (closeBtn) closeBtn.focus();
+
+        fetch('pages/admin/ajax/get-kt-plan.php?id=' + encodeURIComponent(planId), {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (!data.success || !data.plan) {
+                modalBody.innerHTML = stateBlock('is-error', 'fa-triangle-exclamation', data.error || 'Unable to load this plan.');
+                return;
+            }
+            modalBody.innerHTML = renderPlan(data.plan, data.items || []);
+        })
+        .catch(function() {
+            modalBody.innerHTML = stateBlock('is-error', 'fa-triangle-exclamation', 'Failed to load plan details.');
+        });
+    }
+
+    if (grid) {
+        grid.addEventListener('click', function(e) {
+            var card = e.target.closest('.kt-plan-card');
+            if (card && card.dataset.id) openPlan(card.dataset.id);
+        });
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeModal();
+        });
+        overlay.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+    }
+
+    filterCards();
 })();
 </script>

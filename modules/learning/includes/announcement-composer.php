@@ -186,11 +186,16 @@
         button.disabled = true;
         status.textContent = 'Publishing...';
 
-        fetch('pages/admin/ajax/add-announcement.php', {
+        var payload = new FormData(form);
+        // The endpoint validates the token from the header or the body; the form
+        // itself carries no hidden field, so it rides along in the body.
+        if (window.CSRF_TOKEN) payload.append('csrf_token', window.CSRF_TOKEN);
+
+        fetch('pages/shared/ajax/add-announcement.php', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            body: new FormData(form)
+            body: payload
         })
         .then(function(response) {
             return response.json().then(function(result) {

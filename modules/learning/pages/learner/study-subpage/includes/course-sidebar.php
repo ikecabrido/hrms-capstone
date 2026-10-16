@@ -59,6 +59,36 @@ foreach ($allModules as &$am) {
     $am['quizzes'] = $qStmt->fetchAll(PDO::FETCH_ASSOC);
 }
 unset($am);
+
+/* Used by the panel JS to advance the progress bar when an item is completed
+   inline (without a page reload). */
+$totalSidebarItems = 0;
+foreach ($allModules as $amCount) {
+    $totalSidebarItems += count($amCount['lessons']) + count($amCount['quizzes']);
+}
+
+/* Course-level evaluations belong to the course, not a module, so they are
+   listed once at the bottom of the panel. They are the final assessment and are
+   not counted towards the progress bar (which tracks lessons and quizzes). */
+$evalStmt = $pdo->prepare("
+    SELECT e.id, e.title,
+        (SELECT s.passed FROM ld_quiz_session s
+         WHERE s.learner_id = :lid AND s.item_type = 'evaluation' AND s.reference_id = e.id
+           AND s.status IN ('submitted','expired')
+         ORDER BY s.score DESC, s.id DESC LIMIT 1) AS best_passed,
+        (SELECT s.score FROM ld_quiz_session s
+         WHERE s.learner_id = :lid AND s.item_type = 'evaluation' AND s.reference_id = e.id
+           AND s.status IN ('submitted','expired')
+         ORDER BY s.score DESC, s.id DESC LIMIT 1) AS best_score,
+        (SELECT COUNT(*) FROM ld_quiz_session s
+         WHERE s.learner_id = :lid AND s.item_type = 'evaluation' AND s.reference_id = e.id
+           AND s.status IN ('submitted','expired')) AS attempt_count
+    FROM ld_evaluation e
+    WHERE e.course_id = :cid AND e.status = 'active'
+    ORDER BY e.id ASC
+");
+$evalStmt->execute([':cid' => $courseId, ':lid' => $learnerId]);
+$courseEvaluations = $evalStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <style>
@@ -137,10 +167,12 @@ unset($am);
 }
 
 /* ── Breadcrumb (shared across study pages) ──────────────────── */
-.study-breadcrumb{margin-bottom:1.25rem;display:flex;align-items:center;gap:0.5rem;font-size:0.85rem}
+.study-breadcrumb{margin-bottom:1.25rem;display:flex;align-items:center;gap:0.5rem;row-gap:0.3rem;flex-wrap:wrap;font-size:0.85rem;line-height:1.4}
+.study-breadcrumb a,.study-breadcrumb .current{display:inline-flex;align-items:center;min-width:0;max-width:42ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .study-breadcrumb a{color:var(--primary);text-decoration:none;font-weight:600;transition:opacity 0.2s}
 .study-breadcrumb a:hover{opacity:0.8}
-.study-breadcrumb .sep{color:var(--muted,#ccc);font-size:0.65rem}
+.study-breadcrumb a i{margin-right:0.25rem}
+.study-breadcrumb .sep{color:var(--muted,#ccc);font-size:0.65rem;flex-shrink:0}
 .study-breadcrumb .current{color:var(--muted,#666);font-weight:500}
 </style>
 
@@ -165,7 +197,7 @@ unset($am);
             </div>
         <?php endif; ?>
     </div>
-    <nav class="study-sidebar-nav">
+    <nav class="study-sidebar-nav" data-total-items="<?= (int) $totalSidebarItems ?>">
         <?php foreach ($allModules as $mIdx => $am):
             $isCurrentModule = ($am['id'] == $moduleId);
         ?>
@@ -206,6 +238,36 @@ unset($am);
                 </div>
             </div>
         <?php endforeach; ?>
+
+        <?php if (!empty($courseEvaluations)):
+            $evalSectionActive = ($currentPageType === 'evaluation');
+        ?>
+            <div class="study-sidebar-module">
+                <div class="study-sidebar-module-header <?= $evalSectionActive ? 'active-module' : '' ?>" onclick="studyToggleModule(this)">
+                    <span class="study-sidebar-module-num <?= $evalSectionActive ? 'active-num' : '' ?>"><i class="fas fa-clipboard-check"></i></span>
+                    <span class="study-sidebar-module-title">Course <?= count($courseEvaluations) > 1 ? 'Evaluations' : 'Evaluation' ?></span>
+                    <i class="fas fa-chevron-right study-sidebar-chevron open"></i>
+                </div>
+                <div class="study-sidebar-items expanded">
+                    <?php foreach ($courseEvaluations as $ev):
+                        $isActive = ($currentPageType === 'evaluation' && $currentPageId == $ev['id']);
+                        $evalPassed = ((int) $ev['best_passed'] === 1);
+                        $evalAttempted = ((int) $ev['attempt_count'] > 0);
+                        $evalScore = $ev['best_score'] !== null ? round((float) $ev['best_score'], 1) : null;
+                    ?>
+                        <a href="?page=learner/study-subpage/evaluation&evaluation_id=<?= $ev['id'] ?>&course_id=<?= $courseId ?>" class="study-sidebar-item <?= $isActive ? 'active-item' : '' ?> <?= $evalPassed ? 'completed-item' : '' ?>">
+                            <span class="study-sidebar-item-icon <?= $evalPassed ? 'done' : ($evalAttempted ? 'fail' : '') ?>">
+                                <?php if ($evalPassed): ?><i class="fas fa-check-circle"></i><?php elseif ($evalAttempted): ?><i class="fas fa-times-circle"></i><?php else: ?><i class="fas fa-clipboard-list"></i><?php endif; ?>
+                            </span>
+                            <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><?= htmlspecialchars($ev['title']) ?></span>
+                            <?php if ($evalScore !== null): ?>
+                                <span style="font-size:0.68rem;font-weight:600;padding:0.1rem 0.4rem;border-radius:99px;<?= $evalPassed ? 'background:rgba(16,185,129,0.1);color:#10b981' : 'background:rgba(220,53,69,0.1);color:#dc3545' ?>"><?= $evalScore ?>%</span>
+                            <?php endif; ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
     </nav>
 </aside>
 

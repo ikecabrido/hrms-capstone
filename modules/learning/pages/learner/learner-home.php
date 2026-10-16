@@ -103,7 +103,7 @@ try {
     $stmt->execute([':lid' => $employeeId]);
     $inactiveCourses = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($inactiveCourses as $ic) {
-        $reminders[] = ['icon' => 'fa-clock', 'bg' => 'rgba(245,158,11,0.1)', 'color' => '#f59e0b', 'title' => 'You haven\'t accessed "' . htmlspecialchars($ic['title']) . '" in ' . $ic['days_inactive'] . ' days', 'link' => '?page=learner/study-subpage/course&course_id=' . $ic['course_id']];
+        $reminders[] = ['icon' => 'fa-clock', 'tone' => 'amber', 'title' => 'You haven\'t accessed "' . htmlspecialchars($ic['title']) . '" in ' . $ic['days_inactive'] . ' days', 'link' => '?page=learner/study-subpage/course&course_id=' . $ic['course_id']];
     }
 
     // 2. Courses starting soon
@@ -117,7 +117,7 @@ try {
     $startingSoon = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($startingSoon as $ss) {
         $daysUntil = floor((strtotime($ss['start_date']) - time()) / 86400);
-        $reminders[] = ['icon' => 'fa-calendar-check', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1', 'title' => '"' . htmlspecialchars($ss['title']) . '" starts in ' . ($daysUntil === 0 ? 'less than a day' : $daysUntil . ' day' . ($daysUntil !== 1 ? 's' : '')), 'link' => '?page=learner/study-subpage/course&course_id=' . $ss['id']];
+        $reminders[] = ['icon' => 'fa-calendar-check', 'tone' => 'indigo', 'title' => '"' . htmlspecialchars($ss['title']) . '" starts in ' . ($daysUntil === 0 ? 'less than a day' : $daysUntil . ' day' . ($daysUntil !== 1 ? 's' : '')), 'link' => '?page=learner/study-subpage/course&course_id=' . $ss['id']];
     }
 
     // 3. Low quiz scores to retake
@@ -132,7 +132,7 @@ try {
     $stmt->execute([':lid' => $employeeId]);
     $failedQuizzes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($failedQuizzes as $fq) {
-        $reminders[] = ['icon' => 'fa-redo', 'bg' => 'rgba(245,158,11,0.1)', 'color' => '#f59e0b', 'title' => 'You scored ' . round($fq['score']) . '% on "' . htmlspecialchars($fq['quiz_title']) . '" — retake available', 'link' => '?page=learner/study-subpage/quiz&quiz_id=' . $fq['quiz_id'] . '&course_id=' . $fq['course_id']];
+        $reminders[] = ['icon' => 'fa-redo', 'tone' => 'amber', 'title' => 'You scored ' . round($fq['score']) . '% on "' . htmlspecialchars($fq['quiz_title']) . '" — retake available', 'link' => '?page=learner/study-subpage/quiz&quiz_id=' . $fq['quiz_id'] . '&course_id=' . $fq['course_id']];
     }
 
     // Recent grades
@@ -213,7 +213,7 @@ try {
     }
 
     // Notifications
-    $stmt = $pdo->prepare("SELECT type, title, message, is_read, created_at FROM ld_notification WHERE user_id = :uid ORDER BY created_at DESC LIMIT 5");
+    $stmt = $pdo->prepare("SELECT type, title, message, is_read, created_at FROM ld_notification_inbox WHERE user_id = :uid ORDER BY created_at DESC LIMIT 5");
     $stmt->execute([':uid' => $employeeId]);
     $recentNotifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -239,106 +239,92 @@ function homeDaysLeft($date) {
 $heatmap = [];
 foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_accessed']; }
 ?>
-<div class="module-header">
-    <h1 class="module-header-title"><?= htmlspecialchars($employeeClass->getGreeting()) ?></h1>
-</div>
-
 <div class="module-content">
-    <!-- Study Streak Banner -->
-    <?php if ($streak > 0 || !empty($activeDays)): ?>
-    <div class="mode-card" style="background:linear-gradient(135deg, rgba(255,152,0,0.1), rgba(255,193,7,0.05)); border-left:4px solid var(--accent); margin-bottom:1.5rem; display:flex; align-items:center; gap:1.5rem; padding:1.25rem 1.5rem;">
-        <div style="font-size:2.5rem; color:var(--accent); flex-shrink:0;"><i class="fas fa-fire"></i></div>
-        <div style="flex:1;">
-            <h2 style="margin:0; color:var(--accent); font-size:1.5rem;"><?= $streak ?> Day<?= $streak !== 1 ? 's' : '' ?> Streak!</h2>
-            <p style="margin:0.25rem 0 0 0; color:#666; font-size:0.9rem;"><?= $streak > 0 ? "Great momentum! Keep learning daily to build your streak." : "Start learning today to build your streak!" ?></p>
-        </div>
-        <!-- Mini heatmap -->
-        <div style="display:flex; gap:3px; flex-shrink:0;">
-            <?php
-            $startDate = new DateTime('-27 days');
-            for ($i = 0; $i < 28; $i++) {
-                $d = clone $startDate;
-                $d->modify('+' . $i . ' days');
-                $ds = $d->format('Y-m-d');
-                $count = $heatmap[$ds] ?? 0;
-                $bg = $count >= 3 ? 'var(--primary)' : ($count >= 2 ? 'var(--primary)' : ($count >= 1 ? 'var(--primary)' : '#eee'));
-            ?>
-                <div style="width:10px; height:10px; border-radius:2px; background:<?= $bg ?>;" title="<?= $ds ?>: <?= $count ?> courses"></div>
-            <?php } ?>
-        </div>
-    </div>
-    <?php endif; ?>
+    <div class="home-dashboard">
 
-    <!-- Overview + Quick Access side by side -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
-        <!-- Overview -->
-        <div class="mode-card">
-            <h3 style="margin:0 0 1rem 0;"><i class="fas fa-chart-line" style="color:var(--primary);margin-right:0.5rem;"></i> Overview</h3>
-            <div class="analytics-cards">
-                <div class="analytics-card" style="cursor:pointer;" onclick="location.href='?page=learner/study'">
-                    <h2><i class="fas fa-book-open" style="margin-right:0.4rem;opacity:0.6;"></i> My Courses</h2>
-                    <p class="analytics-value"><?= $stats['my_courses'] ?></p>
-                    <div style="font-size:0.85rem;color:#999;"><?= $stats['in_progress'] ?> active</div>
+        <!-- Hero -->
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1><?= htmlspecialchars($employeeClass->getGreeting()) ?></h1>
+                <p>Here is your learning snapshot for today.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-fire"></i> <?= (int) $streak ?> day<?= $streak !== 1 ? 's' : '' ?> streak</span>
+                    <span class="home-hero-chip"><i class="fas fa-book-open"></i> <?= (int) $stats['in_progress'] ?> in progress</span>
+                    <span class="home-hero-chip"><i class="fas fa-certificate"></i> <?= (int) $stats['certificates'] ?> certificates</span>
                 </div>
-                <div class="analytics-card" style="cursor:pointer;" onclick="location.href='?page=learner/result'">
-                    <h2><i class="fas fa-check-circle" style="margin-right:0.4rem;opacity:0.6;"></i> Completed</h2>
-                    <p class="analytics-value"><?= $stats['completed'] ?></p>
-                    <div style="font-size:0.85rem;color:#999;"><?= $stats['certificates'] ?> certificates</div>
+                <?php if ($streak > 0 || !empty($activeDays)): ?>
+                <div class="home-heatmap" title="Your activity over the last 28 days">
+                    <?php
+                    $startDate = new DateTime('-27 days');
+                    for ($i = 0; $i < 28; $i++) {
+                        $d = clone $startDate;
+                        $d->modify('+' . $i . ' days');
+                        $ds = $d->format('Y-m-d');
+                        $count = $heatmap[$ds] ?? 0;
+                        $level = $count >= 3 ? 3 : ($count >= 2 ? 2 : ($count >= 1 ? 1 : 0));
+                    ?>
+                    <span class="home-heat<?= $level > 0 ? ' is-' . $level : '' ?>" title="<?= $ds ?>: <?= $count ?> course<?= $count !== 1 ? 's' : '' ?>"></span>
+                    <?php } ?>
                 </div>
-                <div class="analytics-card">
-                    <h2><i class="fas fa-star" style="margin-right:0.4rem;opacity:0.6;"></i> Avg Score</h2>
-                    <p class="analytics-value"><?= $stats['avg_score'] ?>%</p>
-                    <div style="font-size:0.85rem;color:#999;">overall</div>
-                </div>
-                <div class="analytics-card">
-                    <h2><i class="fas fa-fire" style="margin-right:0.4rem;opacity:0.6;"></i> Streak</h2>
-                    <p class="analytics-value"><?= $streak ?></p>
-                    <div style="font-size:0.85rem;color:#999;">day<?= $streak !== 1 ? 's' : '' ?></div>
-                </div>
+                <?php endif; ?>
+            </div>
+        </section>
+
+        <!-- Key stats -->
+        <div class="home-stats">
+            <a class="home-stat" href="?page=learner/study">
+                <span class="home-stat-icon tone-violet"><i class="fas fa-book-open"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">My Courses</span>
+                    <span class="home-stat-value"><?= (int) $stats['my_courses'] ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['in_progress'] ?> active</span>
+                </span>
+            </a>
+            <a class="home-stat" href="?page=learner/result">
+                <span class="home-stat-icon tone-emerald"><i class="fas fa-check-circle"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Completed</span>
+                    <span class="home-stat-value"><?= (int) $stats['completed'] ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['certificates'] ?> certificates</span>
+                </span>
+            </a>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-amber"><i class="fas fa-star"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Avg Score</span>
+                    <span class="home-stat-value"><?= $stats['avg_score'] ?>%</span>
+                    <span class="home-stat-sub">overall</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-rose"><i class="fas fa-fire"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Streak</span>
+                    <span class="home-stat-value"><?= (int) $streak ?></span>
+                    <span class="home-stat-sub">day<?= $streak !== 1 ? 's' : '' ?></span>
+                </span>
             </div>
         </div>
 
-        <!-- Quick Access -->
-        <div class="mode-card">
-            <h3><i class="fas fa-bolt" style="color:var(--accent);margin-right:0.5rem;"></i> Quick Access</h3>
-            <div style="display:grid;gap:0.5rem;margin-top:0.75rem;">
-                <?php
-                $links = [
-                    ['icon' => 'fa-graduation-cap', 'label' => 'Browse Catalog', 'url' => '?page=learner/catalog', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1'],
-                    ['icon' => 'fa-route', 'label' => 'My Learning Path', 'url' => '?page=learner/my-learning-path', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1'],
-                    ['icon' => 'fa-book-open', 'label' => 'My Study', 'url' => '?page=learner/study', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1'],
-                    ['icon' => 'fa-check-circle', 'label' => 'Grade Book', 'url' => '?page=learner/result', 'bg' => 'rgba(99,102,241,0.1)', 'color' => '#6366f1'],
-                    ['icon' => 'fa-calendar', 'label' => 'Calendar', 'url' => '?page=learner/calendar', 'bg' => 'rgba(245,158,11,0.1)', 'color' => '#f59e0b'],
-                    ['icon' => 'fa-sticky-note', 'label' => 'Notes', 'url' => '?page=learner/notes', 'bg' => 'rgba(245,158,11,0.1)', 'color' => '#f59e0b'],
-                    ['icon' => 'fa-user-circle', 'label' => 'My Profile', 'url' => '?page=learner/profile', 'bg' => 'rgba(245,158,11,0.1)', 'color' => '#f59e0b'],
-                ];
-                foreach ($links as $lk): ?>
-                <a href="<?= $lk['url'] ?>" style="display:flex;align-items:center;gap:0.75rem;padding:0.7rem 1rem;background:var(--bg-subtle);border-radius:8px;text-decoration:none;color:var(--text);font-size:0.9rem;">
-                    <div style="width:32px;height:32px;border-radius:8px;background:<?= $lk['bg'] ?>;color:<?= $lk['color'] ?>;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas <?= $lk['icon'] ?>"></i></div>
-                    <span style="flex:1;font-weight:500;"><?= $lk['label'] ?></span>
-                    <i class="fas fa-chevron-right" style="font-size:0.7rem;color:#999;"></i>
-                </a>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-
-    <div style="display:grid; grid-template-columns:2fr 1fr; gap:1.5rem;">
-        <div>
+        <!-- Main column + sidebar -->
+        <div class="home-columns">
+        <div class="home-col">
             <!-- Personalized Reminders -->
             <?php if (!empty($reminders)): ?>
-            <div class="mode-card" style="margin-bottom:1.5rem; border-left:4px solid var(--accent);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="margin:0;"><i class="fas fa-lightbulb" style="color:var(--accent); margin-right:0.5rem;"></i> Reminders</h3>
-                    <span style="font-size:0.8rem; color:#999;"><?= count($reminders) ?> item<?= count($reminders) !== 1 ? 's' : '' ?></span>
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-lightbulb"></i></span> Reminders</h3>
+                    <span class="home-card-count"><?= count($reminders) ?> item<?= count($reminders) !== 1 ? 's' : '' ?></span>
                 </div>
-                <div style="display:grid; gap:0.5rem;">
+                <div>
                     <?php foreach ($reminders as $rm): ?>
-                        <a href="<?= $rm['link'] ?>" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:rgba(23,162,184,0.05); border-radius:8px; text-decoration:none; color:#333; transition:background 0.2s;">
-                            <div style="width:32px; height:32px; border-radius:8px; background:<?= $rm['color'] ?>20; color:<?= $rm['color'] ?>; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas <?= $rm['icon'] ?>"></i></div>
-                            <span style="flex:1; font-size:0.9rem; line-height:1.4;"><?= $rm['title'] ?></span>
-                            <i class="fas fa-chevron-right" style="color:#ccc; font-size:0.8rem;"></i>
-                        </a>
+                    <a class="home-reminder" href="<?= $rm['link'] ?>">
+                        <span class="home-reminder-icon tone-<?= $rm['tone'] ?>"><i class="fas <?= $rm['icon'] ?>"></i></span>
+                        <span class="home-row-body"><span class="home-row-title is-wrap"><?= $rm['title'] ?></span></span>
+                        <i class="fas fa-chevron-right home-row-chev"></i>
+                    </a>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -346,33 +332,31 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
 
             <!-- Continue Learning with Progress -->
             <?php if (!empty($continueLearning)): ?>
-            <div class="mode-card" style="margin-bottom:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="margin:0;"><i class="fas fa-play-circle" style="color:var(--primary); margin-right:0.5rem;"></i> Continue Learning</h3>
-                    <a href="?page=learner/study" style="color:var(--primary); font-size:0.9rem; text-decoration:none;">View All &rarr;</a>
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-play-circle"></i></span> Continue Learning</h3>
+                    <a class="home-card-link" href="?page=learner/study">View all <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div style="display:grid; gap:0.75rem;">
+                <div class="home-list">
                     <?php foreach ($continueLearning as $cl):
                         $total = (int) ($cl['total_lessons'] ?? 1);
                         $done = (int) ($cl['completed_lessons'] ?? 0);
                         $pct = $total > 0 ? round(($done / $total) * 100) : 0;
                     ?>
-                    <a href="?page=learner/study-subpage/course&course_id=<?= (int) $cl['course_id'] ?>" style="display:flex; align-items:center; gap:1rem; padding:1rem; background:var(--bg-subtle); border-radius:10px; text-decoration:none; color:#333; transition:background 0.2s;">
-                        <div style="width:48px; height:48px; border-radius:10px; background:linear-gradient(135deg,var(--primary),var(--text)); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-graduation-cap"></i></div>
-                        <div style="flex:1; min-width:0;">
-                            <strong style="display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= htmlspecialchars($cl['title']) ?></strong>
-                            <span style="color:#999; font-size:0.85rem; display:block;"><?= htmlspecialchars($cl['instructor_name'] ?? '') ?> &bull; <?= $done ?>/<?= $total ?> lessons</span>
-                            <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.35rem;">
-                                <div style="flex:1; background:var(--border); height:5px; border-radius:3px; overflow:hidden;">
-                                    <div style="background:<?= $pct >= 70 ? 'var(--primary)' : ($pct >= 30 ? 'var(--accent)' : 'var(--primary)') ?>; height:100%; width:<?= $pct ?>%;"></div>
-                                </div>
-                                <span style="font-size:0.75rem; font-weight:600; color:var(--primary); min-width:30px; text-align:right;"><?= $pct ?>%</span>
-                            </div>
-                        </div>
-                        <div style="text-align:right; flex-shrink:0;">
-                            <span style="color:#999; font-size:0.75rem; display:block;"><?= homeTimeAgo($cl['last_accessed_at']) ?></span>
-                            <i class="fas fa-chevron-right" style="color:#ccc; margin-top:0.25rem;"></i>
-                        </div>
+                    <a class="home-row" href="?page=learner/study-subpage/course&course_id=<?= (int) $cl['course_id'] ?>">
+                        <span class="home-row-icon tone-violet"><i class="fas fa-graduation-cap"></i></span>
+                        <span class="home-row-body">
+                            <span class="home-row-title"><?= htmlspecialchars($cl['title']) ?></span>
+                            <span class="home-row-meta"><?= htmlspecialchars($cl['instructor_name'] ?? '') ?> &bull; <?= $done ?>/<?= $total ?> lessons</span>
+                            <span class="home-progress">
+                                <span class="home-progress-track"><span class="home-progress-fill" style="width:<?= $pct ?>%"></span></span>
+                                <span class="home-progress-val"><?= $pct ?>%</span>
+                            </span>
+                        </span>
+                        <span class="home-row-trail">
+                            <span class="home-row-meta"><?= homeTimeAgo($cl['last_accessed_at']) ?></span>
+                            <i class="fas fa-chevron-right home-row-chev"></i>
+                        </span>
                     </a>
                     <?php endforeach; ?>
                 </div>
@@ -381,20 +365,20 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
 
             <!-- Upcoming Deadlines -->
             <?php if (!empty($upcomingDeadlines)): ?>
-            <div class="mode-card" style="margin-bottom:1.5rem; border-left:4px solid var(--accent);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="margin:0;"><i class="fas fa-clock" style="color:var(--accent); margin-right:0.5rem;"></i> Upcoming Deadlines</h3>
-                    <a href="?page=learner/calendar" style="color:var(--primary); font-size:0.9rem; text-decoration:none;">Calendar &rarr;</a>
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-clock"></i></span> Upcoming Deadlines</h3>
+                    <a class="home-card-link" href="?page=learner/calendar">Calendar <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div style="display:grid; gap:0.5rem;">
+                <div class="home-list">
                     <?php foreach ($upcomingDeadlines as $dl):
                         $dl2 = homeDaysLeft($dl['enrollment_deadline']);
                         $urgent = ($dl2 === 'Today' || $dl2 === 'Tomorrow' || $dl2 === 'Overdue');
                     ?>
-                    <a href="?page=learner/study-subpage/course&course_id=<?= $dl['course_id'] ?>" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:<?= $urgent ? 'var(--bg-subtle)' : 'var(--bg-subtle)' ?>; border-radius:8px; text-decoration:none; color:#333;">
-                        <i class="fas <?= $urgent ? 'fa-exclamation-triangle' : 'fa-calendar-day' ?>" style="color:<?= $urgent ? 'var(--accent)' : '#666' ?>;"></i>
-                        <span style="flex:1; font-size:0.95rem;"><?= htmlspecialchars($dl['title']) ?></span>
-                        <span style="font-size:0.8rem; font-weight:600; color:<?= $urgent ? 'var(--accent)' : '#666' ?>;"><?= $dl2 ?></span>
+                    <a class="home-row" href="?page=learner/study-subpage/course&course_id=<?= $dl['course_id'] ?>">
+                        <span class="home-row-icon tone-<?= $urgent ? 'rose' : 'slate' ?>"><i class="fas <?= $urgent ? 'fa-exclamation-triangle' : 'fa-calendar-day' ?>"></i></span>
+                        <span class="home-row-body"><span class="home-row-title"><?= htmlspecialchars($dl['title']) ?></span></span>
+                        <span class="home-badge <?= $urgent ? 'is-danger' : 'is-muted' ?>"><?= $dl2 ?></span>
                     </a>
                     <?php endforeach; ?>
                 </div>
@@ -403,23 +387,23 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
 
             <!-- Upcoming Video Conferences -->
             <?php if (!empty($upcomingVC)): ?>
-            <div class="mode-card" style="margin-bottom:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="margin:0;"><i class="fas fa-video" style="color:var(--accent); margin-right:0.5rem;"></i> Online Training</h3>
-                    <a href="?page=learner/calendar" style="color:var(--primary); font-size:0.9rem; text-decoration:none;">View All &rarr;</a>
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-video"></i></span> Online Training</h3>
+                    <a class="home-card-link" href="?page=learner/calendar">View all <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div style="display:grid; gap:0.5rem;">
+                <div class="home-list">
                     <?php foreach ($upcomingVC as $vc):
                         $isSoon = (strtotime($vc['scheduled_at']) - time()) < 86400;
                     ?>
-                    <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:<?= $isSoon ? 'rgba(0,123,255,0.08)' : 'var(--bg-subtle)' ?>; border-radius:8px; border-left:3px solid <?= $isSoon ? 'var(--accent)' : 'var(--border)' ?>;">
-                        <div style="width:36px; height:36px; border-radius:8px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.85rem;"><i class="fas fa-video"></i></div>
-                        <div style="flex:1; min-width:0;">
-                            <strong style="display:block; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= htmlspecialchars($vc['title']) ?></strong>
-                            <span style="font-size:0.8rem; color:#666;"><?= htmlspecialchars($vc['platform'] ?? '') ?> &bull; <?= date('M j, g:i A', strtotime($vc['scheduled_at'])) ?></span>
-                        </div>
+                    <div class="home-row">
+                        <span class="home-row-icon tone-indigo"><i class="fas fa-video"></i></span>
+                        <span class="home-row-body">
+                            <span class="home-row-title"><?= htmlspecialchars($vc['title']) ?></span>
+                            <span class="home-row-meta"><?= htmlspecialchars($vc['platform'] ?? '') ?> &bull; <?= date('M j, g:i A', strtotime($vc['scheduled_at'])) ?></span>
+                        </span>
                         <?php if ($isSoon && !empty($vc['meeting_link'])): ?>
-                            <a href="<?= htmlspecialchars($vc['meeting_link']) ?>" target="_blank" style="padding:0.4rem 0.8rem; background:var(--accent); color:#fff; border:none; border-radius:6px; text-decoration:none; font-size:0.8rem; font-weight:500;">Join</a>
+                            <a class="home-cta" href="<?= htmlspecialchars($vc['meeting_link']) ?>" target="_blank" rel="noopener">Join</a>
                         <?php endif; ?>
                     </div>
                     <?php endforeach; ?>
@@ -429,19 +413,17 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
 
             <!-- Recent Grades -->
             <?php if (!empty($recentGrades)): ?>
-            <div class="mode-card" style="margin-bottom:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="margin:0;"><i class="fas fa-chart-line" style="color:var(--primary); margin-right:0.5rem;"></i> Recent Results</h3>
-                    <a href="?page=learner/result" style="color:var(--primary); font-size:0.9rem; text-decoration:none;">View All &rarr;</a>
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-chart-line"></i></span> Recent Results</h3>
+                    <a class="home-card-link" href="?page=learner/result">View all <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div style="display:grid; gap:0.5rem;">
-                    <?php foreach ($recentGrades as $rg): ?>
-                    <div style="display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid var(--bg-subtle);">
-                        <div style="width:40px; height:40px; border-radius:8px; background:<?= $rg['status'] === 'passed' ? 'var(--bg-subtle)' : 'var(--bg-subtle)' ?>; color:<?= $rg['status'] === 'passed' ? 'var(--primary)' : 'var(--accent)' ?>; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:700; font-size:0.85rem;"><?= round($rg['final_score']) ?>%</div>
-                        <div style="flex:1; min-width:0;">
-                            <strong style="display:block; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= htmlspecialchars($rg['title']) ?></strong>
-                            <span style="font-size:0.8rem; color:<?= $rg['status'] === 'passed' ? 'var(--primary)' : 'var(--accent)' ?>; font-weight:500;"><?= ucfirst($rg['status']) ?></span>
-                        </div>
+                <div class="home-list">
+                    <?php foreach ($recentGrades as $rg): $passed = ($rg['status'] === 'passed'); ?>
+                    <div class="home-row">
+                        <span class="home-score<?= $passed ? '' : ' is-fail' ?>"><?= round($rg['final_score']) ?>%</span>
+                        <span class="home-row-body"><span class="home-row-title"><?= htmlspecialchars($rg['title']) ?></span></span>
+                        <span class="home-badge <?= $passed ? 'is-success' : 'is-warn' ?>"><?= htmlspecialchars($rg['status']) ?></span>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -449,67 +431,104 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
             <?php endif; ?>
 
             <!-- Course Recommendations -->
-            <div id="home-recs-section" class="mode-card" style="margin-bottom:1.5rem; display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h3 style="margin:0;"><i class="fas fa-magic" style="color:var(--primary); margin-right:0.5rem;"></i> Suggested For You</h3>
-                    <a href="?page=learner/catalog" style="color:var(--primary); font-size:0.9rem; text-decoration:none;">Browse Catalog &rarr;</a>
+            <div id="home-recs-section" class="home-card" style="display:none;">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-magic"></i></span> Suggested For You</h3>
+                    <a class="home-card-link" href="?page=learner/catalog">Browse catalog <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div id="home-recs-grid" style="display:grid; grid-template-columns:1fr; gap:0.75rem;"></div>
+                <div id="home-recs-grid" class="home-list"></div>
             </div>
-
 
         </div>
 
         <!-- Sidebar -->
-        <div>
-            <!-- Bookmarks -->
-            <div class="mode-card" style="margin-bottom:1.5rem;">
-                <h3 style="margin:0 0 0.75rem 0; font-size:1rem;"><i class="fas fa-bookmark" style="color:var(--primary); margin-right:0.4rem;"></i> Bookmarks</h3>
-                <?php if (empty($bookmarks)): ?>
-                    <p style="color:#999; font-size:0.9rem; text-align:center; padding:1rem 0;">No bookmarks yet</p>
-                <?php else: ?>
-                    <?php foreach ($bookmarks as $bm): ?>
-                    <a href="<?= htmlspecialchars($bm['link']) ?>" style="display:block; padding:0.6rem 0; border-bottom:1px solid var(--bg-subtle); text-decoration:none; color:#333; font-size:0.9rem;">
-                        <i class="fas fa-bookmark" style="color:var(--accent); margin-right:0.4rem; font-size:0.8rem;"></i><?= htmlspecialchars($bm['title']) ?>
+        <div class="home-col">
+            <!-- Quick Access -->
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-bolt"></i></span> Quick Access</h3>
+                </div>
+                <div class="home-quick">
+                    <?php
+                    $links = [
+                        ['icon' => 'fa-graduation-cap', 'label' => 'Browse Catalog', 'url' => '?page=learner/catalog', 'tone' => 'indigo'],
+                        ['icon' => 'fa-route', 'label' => 'My Learning Path', 'url' => '?page=learner/my-learning-path', 'tone' => 'indigo'],
+                        ['icon' => 'fa-book-open', 'label' => 'My Study', 'url' => '?page=learner/study', 'tone' => 'indigo'],
+                        ['icon' => 'fa-check-circle', 'label' => 'Grade Book', 'url' => '?page=learner/result', 'tone' => 'emerald'],
+                        ['icon' => 'fa-calendar', 'label' => 'Calendar', 'url' => '?page=learner/calendar', 'tone' => 'amber'],
+                        ['icon' => 'fa-sticky-note', 'label' => 'Notes', 'url' => '?page=learner/notes', 'tone' => 'amber'],
+                        ['icon' => 'fa-user-circle', 'label' => 'My Profile', 'url' => '?page=learner/profile', 'tone' => 'violet'],
+                    ];
+                    foreach ($links as $lk): ?>
+                    <a class="home-quick-link" href="<?= $lk['url'] ?>">
+                        <span class="home-quick-icon tone-<?= $lk['tone'] ?>"><i class="fas <?= $lk['icon'] ?>"></i></span>
+                        <span class="home-quick-label"><?= $lk['label'] ?></span>
+                        <i class="fas fa-chevron-right home-quick-chev"></i>
                     </a>
                     <?php endforeach; ?>
+                </div>
+            </div>
+
+            <!-- Bookmarks -->
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-bookmark"></i></span> Bookmarks</h3>
+                    <span class="home-card-count"><?= count($bookmarks) ?></span>
+                </div>
+                <?php if (empty($bookmarks)): ?>
+                    <div class="home-empty"><i class="fas fa-bookmark"></i><p>No bookmarks yet</p></div>
+                <?php else: ?>
+                    <div class="home-list">
+                        <?php foreach ($bookmarks as $bm): ?>
+                        <a class="home-row" href="<?= htmlspecialchars($bm['link']) ?>">
+                            <span class="home-row-icon tone-violet"><i class="fas fa-bookmark"></i></span>
+                            <span class="home-row-body"><span class="home-row-title"><?= htmlspecialchars($bm['title']) ?></span></span>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
             </div>
 
             <!-- Favorites -->
-            <div class="mode-card" style="margin-bottom:1.5rem;">
-                <h3 style="margin:0 0 0.75rem 0; font-size:1rem;"><i class="fas fa-heart" style="color:var(--accent); margin-right:0.4rem;"></i> Favorites</h3>
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-heart"></i></span> Favorites</h3>
+                    <span class="home-card-count"><?= count($favorites) ?></span>
+                </div>
                 <?php if (empty($favorites)): ?>
-                    <p style="color:#999; font-size:0.9rem; text-align:center; padding:1rem 0;">No favorites yet</p>
+                    <div class="home-empty"><i class="fas fa-heart"></i><p>No favorites yet</p></div>
                 <?php else: ?>
-                    <?php foreach ($favorites as $fav): ?>
-                    <a href="<?= htmlspecialchars($fav['link']) ?>" style="display:block; padding:0.6rem 0; border-bottom:1px solid var(--bg-subtle); text-decoration:none; color:#333; font-size:0.9rem;">
-                        <i class="fas fa-heart" style="color:var(--accent); margin-right:0.4rem; font-size:0.8rem;"></i><?= htmlspecialchars($fav['title']) ?>
-                    </a>
-                    <?php endforeach; ?>
+                    <div class="home-list">
+                        <?php foreach ($favorites as $fav): ?>
+                        <a class="home-row" href="<?= htmlspecialchars($fav['link']) ?>">
+                            <span class="home-row-icon tone-rose"><i class="fas fa-heart"></i></span>
+                            <span class="home-row-body"><span class="home-row-title"><?= htmlspecialchars($fav['title']) ?></span></span>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
             </div>
 
             <!-- Notifications -->
-            <div class="mode-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                    <h3 style="margin:0; font-size:1rem;"><i class="fas fa-bell" style="color:var(--primary); margin-right:0.4rem;"></i> Notifications</h3>
-                    <a href="?page=learner/notification" style="color:var(--primary); font-size:0.8rem; text-decoration:none;">View All &rarr;</a>
+            <div class="home-card">
+                <div class="home-card-head">
+                    <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-bell"></i></span> Notifications</h3>
+                    <a class="home-card-link" href="?page=learner/notification">View all <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <?php if (empty($recentNotifications)): ?>
-                    <p style="color:#999; font-size:0.9rem; text-align:center; padding:1rem 0;">No notifications</p>
+                    <div class="home-empty"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>
                 <?php else: ?>
-                    <?php foreach ($recentNotifications as $notif): ?>
-                    <div style="padding:0.6rem 0; border-bottom:1px solid var(--bg-subtle); font-size:0.85rem;">
-                        <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.15rem;">
-                            <?php if (!$notif['is_read']): ?>
-                                <span style="width:6px; height:6px; background:var(--accent); border-radius:50%; display:inline-block;"></span>
-                            <?php endif; ?>
-                            <strong style="font-size:0.85rem;"><?= htmlspecialchars($notif['title']) ?></strong>
+                    <div class="home-list">
+                        <?php foreach ($recentNotifications as $notif): ?>
+                        <div class="home-row">
+                            <span class="home-dot<?= $notif['is_read'] ? ' is-hidden' : '' ?>"></span>
+                            <span class="home-row-body">
+                                <span class="home-row-title"><?= htmlspecialchars($notif['title']) ?></span>
+                                <span class="home-row-meta"><?= htmlspecialchars(mb_substr($notif['message'], 0, 60)) ?></span>
+                            </span>
                         </div>
-                        <p style="margin:0; color:#888; font-size:0.8rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= htmlspecialchars(mb_substr($notif['message'], 0, 60)) ?></p>
+                        <?php endforeach; ?>
                     </div>
-                    <?php endforeach; ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -526,15 +545,15 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
             var grid = document.getElementById('home-recs-grid');
             var html = '';
             data.recommendations.slice(0, 4).forEach(function(rec) {
-                var skills = rec.skills.length > 0 ? '<span style="font-size:0.7rem;color:#999;">' + rec.skills.slice(0,2).join(', ') + '</span>' : '';
-                html += '<a href="' + rec.link + '" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:var(--bg-subtle);border-radius:8px;text-decoration:none;color:#333;">
-                    <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--text));color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-graduation-cap"></i></div>
-                    <div style="flex:1;min-width:0;">
-                        <strong style="display:block;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + rec.title + '</strong>
-                        <span style="font-size:0.8rem;color:#999;">' + rec.reasons[0] + '</span>
-                    </div>
-                    <i class="fas fa-chevron-right" style="color:#ccc;font-size:0.8rem;"></i>
-                </a>';
+                var reason = (rec.reasons && rec.reasons.length) ? rec.reasons[0] : '';
+                html += '<a class="home-row" href="' + rec.link + '">'
+                    + '<span class="home-row-icon tone-violet"><i class="fas fa-graduation-cap"></i></span>'
+                    + '<span class="home-row-body">'
+                    + '<span class="home-row-title">' + rec.title + '</span>'
+                    + '<span class="home-row-meta">' + reason + '</span>'
+                    + '</span>'
+                    + '<i class="fas fa-chevron-right home-row-chev"></i>'
+                    + '</a>';
             });
             grid.innerHTML = html;
             section.style.display = 'block';

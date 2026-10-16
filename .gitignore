@@ -2,3 +2,7 @@ db_config.php
 .env
 .env.*
 !.env.example
+
+# User-uploaded profile pictures (kept out of version control)
+modules/learning/uploads/profile-photos/*
+!modules/learning/uploads/profile-photos/.htaccess

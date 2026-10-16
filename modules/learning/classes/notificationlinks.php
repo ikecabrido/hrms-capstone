@@ -3,7 +3,7 @@
  * NotificationLinks — where a bell row opens, decided by this module.
  *
  * The bell menu itself is shared markup: includes/sidebar.php prints it for all twelve
- * modules from the same ld_notification store, and nothing in that markup says where a
+ * modules from the same ld_notification_inbox store, and nothing in that markup says where a
  * row leads. The pages a row *does* lead to belong to this module, so the destination is
  * decided here and handed to this module's own scripts (js/bell-links.js applies it,
  * js/notification-highlight.js pins what was clicked). Nothing outside modules/learning
@@ -237,7 +237,7 @@ final class NotificationLinks
 
         $stmt = $pdo->prepare(
             'SELECT ' . self::COLUMNS . '
-               FROM ld_notification
+               FROM ld_notification_inbox
               WHERE user_id = :user_id
               ORDER BY created_at DESC, id DESC
               LIMIT ' . $limit

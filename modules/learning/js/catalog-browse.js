@@ -137,7 +137,7 @@
         }
         var html = '';
         filtered.forEach(function(rec) {
-            var reasons = (rec.reasons || []).slice(0, 2).join(' . ');
+            var reasons = (rec.reasons || []).slice(0, 2).join(' · ');
             var recId = rec.id || 0;
             var recType = rec.type || 'course';
             html += '<article class="catalog-card rec-card"' +
@@ -290,7 +290,7 @@
             var tabName = btn.dataset.contentTab || btn.dataset.cemTab;
             var isActive = emState.activeTab === tabName;
             btn.classList.toggle('active', isActive);
-            btn.style.background = isActive ? 'rgba(32,0,130,0.08)' : '#fff';
+            btn.style.background = isActive ? 'rgba(32,0,130,0.08)' : 'var(--surface)';
             btn.style.border = isActive ? 'none' : '1px solid rgba(32,0,130,0.12)';
             btn.style.color = isActive ? 'var(--primary)' : 'var(--text)';
         });
@@ -636,11 +636,11 @@
                     var icon = item.type === 'evaluation' ? '<i class="fas fa-clipboard-check" style="color:#10b981;margin-right:0.5rem;font-size:0.85rem;"></i>' : isQuiz ? '<i class="fas fa-question-circle" style="color:#f59e0b;margin-right:0.5rem;font-size:0.85rem;"></i>' : '<i class="fas fa-book-open" style="color:#3b82f6;margin-right:0.5rem;font-size:0.85rem;"></i>';
                     var clickable = (isQuiz && refId > 0) || (isModule && refId > 0);
                     var cursor = clickable ? 'cursor:pointer;' : '';
-                    var hoverAttr = clickable ? 'onmouseover="this.style.background=\'rgba(32,0,130,0.02)\'" onmouseout="this.style.background=\'#fff\'"' : '';
+                    var hoverAttr = clickable ? 'onmouseover="this.style.background=\'rgba(32,0,130,0.02)\'" onmouseout="this.style.background=\'var(--surface)\'"' : '';
                     var gridCols = clickable ? '1.2fr 0.8fr 0.8fr 0.3fr' : '1.5fr 0.8fr 0.8fr';
 
                     var statusKey = status === 'Completed' || status === 'Passed' ? 'completed' : status === 'In progress' ? 'in_progress' : 'not_started';
-                    html += '<div class="perf-row"' + (clickable ? ' data-quiz-id="' + (isQuiz ? refId : '') + '" data-module-id="' + (isModule ? refId : '') + '" data-row-idx="' + idx + '"' : '') + ' data-status="' + statusKey + '" style="border:1px solid rgba(32,0,130,0.12); border-radius:12px; background:#fff; overflow:hidden;">';
+                    html += '<div class="perf-row"' + (clickable ? ' data-quiz-id="' + (isQuiz ? refId : '') + '" data-module-id="' + (isModule ? refId : '') + '" data-row-idx="' + idx + '"' : '') + ' data-status="' + statusKey + '" style="border:1px solid rgba(32,0,130,0.12); border-radius:12px; background:var(--surface); overflow:hidden;">';
                     html += '<div class="perf-row-main" style="display:grid; grid-template-columns:' + gridCols + '; gap:0.75rem; align-items:center; padding:0.9rem 1rem; ' + cursor + '" ' + hoverAttr + '>';
                     html += '<strong style="color:var(--text);">' + icon + (item.title || item.name || 'Item') + '</strong>';
                     html += '<span style="color:var(--text);">' + score + '%</span>';

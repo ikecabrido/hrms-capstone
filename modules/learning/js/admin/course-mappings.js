@@ -1,8 +1,23 @@
-/* Course Mappings CRUD — admin/settings.php */
+/* Course Mappings CRUD — admin/settings.php (Integrations tab) */
 (function() {
     'use strict';
 
     function escHtml(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+    function tableHtml(firstHeader, firstValue, rows) {
+        var html = '<table class="settings-table"><thead><tr>';
+        html += '<th>' + escHtml(firstHeader) + '</th>';
+        html += '<th>Course</th>';
+        html += '<th>Actions</th>';
+        html += '</tr></thead><tbody>';
+        rows.forEach(function(cells) { html += '<tr>' + cells + '</tr>'; });
+        html += '</tbody></table>';
+        return html;
+    }
+
+    function emptyHtml() {
+        return '<p class="settings-empty">No mappings yet &mdash; add one above.</p>';
+    }
 
     function loadRecommendationMappings() {
         fetch('pages/admin/ajax/recommendation-map.php?action=list')
@@ -12,27 +27,16 @@
             var items = data.items || [];
             var el = document.getElementById('rec-mapping-table');
             if (!el) return;
-            if (items.length === 0) {
-                el.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No mappings configured. Add one above.</p>';
-                return;
-            }
-            var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-            html += '<thead><tr style="border-bottom:2px solid var(--border);">';
-            html += '<th style="text-align:left;padding:0.5rem;color:var(--primary);">Development Area</th>';
-            html += '<th style="text-align:left;padding:0.5rem;color:var(--primary);">Course</th>';
-            html += '<th style="text-align:right;padding:0.5rem;color:var(--primary);">Actions</th>';
-            html += '</tr></thead><tbody>';
-            items.forEach(function(item) {
-                html += '<tr style="border-bottom:1px solid var(--border);">';
-                html += '<td style="padding:0.5rem;">' + escHtml(item.development_area) + '</td>';
-                html += '<td style="padding:0.5rem;">' + escHtml(item.course_title) + '</td>';
-                html += '<td style="padding:0.5rem;text-align:right;">';
-                html += '<button onclick="editRecMap(' + item.id + ')" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem;margin-right:0.5rem;">Edit</button>';
-                html += '<button onclick="deleteRecMap(' + item.id + ')" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:0.8rem;">Delete</button>';
-                html += '</td></tr>';
+            if (items.length === 0) { el.innerHTML = emptyHtml(); return; }
+            var rows = items.map(function(item) {
+                return '<td>' + escHtml(item.development_area) + '</td>'
+                    + '<td>' + escHtml(item.course_title) + '</td>'
+                    + '<td>'
+                    + '<button type="button" class="settings-row-action" onclick="editRecMap(' + item.id + ')">Edit</button>'
+                    + '<button type="button" class="settings-row-action is-danger" onclick="deleteRecMap(' + item.id + ')">Delete</button>'
+                    + '</td>';
             });
-            html += '</tbody></table>';
-            el.innerHTML = html;
+            el.innerHTML = tableHtml('Development Area', 'development_area', rows);
         });
     }
 
@@ -44,27 +48,16 @@
             var items = data.items || [];
             var el = document.getElementById('recog-mapping-table');
             if (!el) return;
-            if (items.length === 0) {
-                el.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No mappings configured. Add one above.</p>';
-                return;
-            }
-            var html = '<table style="width:100%;border-collapse:collapse;font-size:0.85rem;">';
-            html += '<thead><tr style="border-bottom:2px solid var(--border);">';
-            html += '<th style="text-align:left;padding:0.5rem;color:var(--primary);">Recognition Category</th>';
-            html += '<th style="text-align:left;padding:0.5rem;color:var(--primary);">Course</th>';
-            html += '<th style="text-align:right;padding:0.5rem;color:var(--primary);">Actions</th>';
-            html += '</tr></thead><tbody>';
-            items.forEach(function(item) {
-                html += '<tr style="border-bottom:1px solid var(--border);">';
-                html += '<td style="padding:0.5rem;">' + escHtml(item.recognition_category) + '</td>';
-                html += '<td style="padding:0.5rem;">' + escHtml(item.course_title) + '</td>';
-                html += '<td style="padding:0.5rem;text-align:right;">';
-                html += '<button onclick="editRecogMap(' + item.id + ')" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem;margin-right:0.5rem;">Edit</button>';
-                html += '<button onclick="deleteRecogMap(' + item.id + ')" style="background:none;border:none;color:#dc3545;cursor:pointer;font-size:0.8rem;">Delete</button>';
-                html += '</td></tr>';
+            if (items.length === 0) { el.innerHTML = emptyHtml(); return; }
+            var rows = items.map(function(item) {
+                return '<td>' + escHtml(item.recognition_category) + '</td>'
+                    + '<td>' + escHtml(item.course_title) + '</td>'
+                    + '<td>'
+                    + '<button type="button" class="settings-row-action" onclick="editRecogMap(' + item.id + ')">Edit</button>'
+                    + '<button type="button" class="settings-row-action is-danger" onclick="deleteRecogMap(' + item.id + ')">Delete</button>'
+                    + '</td>';
             });
-            html += '</tbody></table>';
-            el.innerHTML = html;
+            el.innerHTML = tableHtml('Recognition Category', 'recognition_category', rows);
         });
     }
 
@@ -173,9 +166,10 @@
             loadRecommendationMappings();
             loadRecognitionMappings();
         }
-        // Reload on tab switch
-        var tabContent = document.querySelector('[data-tab="tab-course-mappings"]');
-        if (tabContent && window.MutationObserver) {
+        // Refresh the tables when the Integrations tab is opened.
+        var tabContent = document.querySelector('.tab-content[data-tab="tab-integrations"]');
+        if (tabContent && window.MutationObserver && !tabContent.dataset.mapObserver) {
+            tabContent.dataset.mapObserver = '1';
             new MutationObserver(function() {
                 if (tabContent.classList.contains('active')) {
                     loadRecommendationMappings();

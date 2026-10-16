@@ -2,357 +2,439 @@
 include_once __DIR__ . '/../../classes/Employee.php';
 require_once dirname(__DIR__, 4) . '/database/db.php';
 require_once __DIR__ . '/../../classes/certificate-expiry-checker.php';
+require_once __DIR__ . '/../../includes/notification-display.php';
 
 $employeeClass = new Employee();
 $learnerId = (int) ($employeeClass->getEmployeeId() ?? 0);
 
 $notifications = [];
+$unreadNotifications = [];
+$expiryNotifications = [];
 $announcements = [];
+$certificates = [];
+$notificationCount = 0;
 $unreadCount = 0;
+$announcementCount = 0;
+$expiryCount = 0;
 
 try {
     $pdo = (new Database())->getConnection();
 
-    // Generate certificate expiry notifications
-    checkCertificateExpiryNotifications($pdo, $learnerId);
+    // Certificate expiry notices are generated on every visit, so the tiles and
+    // the expiry tab always agree with what the learner can see. A failure here
+    // must not take the page down with it.
+    try {
+        checkCertificateExpiryNotifications($pdo, $learnerId);
+    } catch (Throwable $generatorError) {
+        error_log('[learning] certificate expiry notification generation failed: ' . $generatorError->getMessage());
+    }
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_notification WHERE user_id = :uid AND is_read = 0");
-    $stmt->execute([':uid' => $learnerId]);
-    $unreadCount = (int) $stmt->fetchColumn();
+    $totals = $pdo->prepare(
+        "SELECT COUNT(*) AS total, COALESCE(SUM(is_read = 0), 0) AS unread
+         FROM ld_notification_inbox
+         WHERE user_id = :uid"
+    );
+    $totals->execute([':uid' => $learnerId]);
+    $totalsRow = $totals->fetch(PDO::FETCH_ASSOC) ?: [];
+    $notificationCount = (int) ($totalsRow['total'] ?? 0);
+    $unreadCount = (int) ($totalsRow['unread'] ?? 0);
 
-    $stmt = $pdo->prepare("SELECT id, type, title, message, reference_type, reference_id, is_read, created_at FROM ld_notification WHERE user_id = :uid ORDER BY created_at DESC LIMIT 50");
-    $stmt->execute([':uid' => $learnerId]);
-    $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $listStmt = $pdo->prepare(
+        "SELECT id, type, title, message, reference_type, reference_id, is_read, created_at,
+                TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds,
+                DATE_FORMAT(created_at, '%b %e, %Y') AS created_label
+         FROM ld_notification_inbox
+         WHERE user_id = :uid
+         ORDER BY created_at DESC
+         LIMIT 50"
+    );
+    $listStmt->execute([':uid' => $learnerId]);
+    $notifications = $listStmt->fetchAll(PDO::FETCH_ASSOC);
+    $unreadNotifications = array_values(array_filter($notifications, static function ($row) {
+        return (int) ($row['is_read'] ?? 0) === 0;
+    }));
 
-    $stmt = $pdo->prepare("SELECT id, title, message, audience, posted_by, status, created_at, expires_at FROM ld_announcement WHERE status = 'active' AND (FIND_IN_SET('learner', audience) > 0 OR FIND_IN_SET('all', audience) > 0) AND (expires_at IS NULL OR expires_at >= NOW()) ORDER BY created_at DESC LIMIT 50");
-    $stmt->execute();
-    $announcements = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $expiryStmt = $pdo->prepare(
+        "SELECT id, type, title, message, reference_type, reference_id, is_read, created_at,
+                TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds,
+                DATE_FORMAT(created_at, '%b %e, %Y') AS created_label
+         FROM ld_notification_inbox
+         WHERE user_id = :uid AND type = 'certificate_expiry'
+         ORDER BY created_at DESC
+         LIMIT 50"
+    );
+    $expiryStmt->execute([':uid' => $learnerId]);
+    $expiryNotifications = $expiryStmt->fetchAll(PDO::FETCH_ASSOC);
+    $expiryCount = count($expiryNotifications);
+
+    // One lookup for every certificate referenced by a notice, instead of a query
+    // per row while the list renders.
+    $referenceIds = [];
+    foreach (array_merge($notifications, $expiryNotifications) as $row) {
+        if (($row['type'] ?? '') === 'certificate_expiry' && !empty($row['reference_id'])) {
+            $referenceIds[(int) $row['reference_id']] = true;
+        }
+    }
+
+    if (!empty($referenceIds)) {
+        $ids = array_keys($referenceIds);
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $certStmt = $pdo->prepare(
+            "SELECT id, verification_code, course_id
+             FROM ld_certificate
+             WHERE status = 'active' AND id IN ($placeholders)"
+        );
+        $certStmt->execute($ids);
+        foreach ($certStmt->fetchAll(PDO::FETCH_ASSOC) as $certificate) {
+            $certificates[(int) $certificate['id']] = $certificate;
+        }
+    }
+
+    $announcementCount = (int) $pdo->query(
+        "SELECT COUNT(*) FROM ld_announcement
+         WHERE status = 'active' AND (expires_at IS NULL OR expires_at >= NOW())
+           AND (FIND_IN_SET('learner', audience) > 0 OR FIND_IN_SET('all', audience) > 0)"
+    )->fetchColumn();
+
+    $announcementStmt = $pdo->prepare(
+        "SELECT id, title, message, audience, posted_by, status, created_at, expires_at,
+                TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds,
+                DATE_FORMAT(created_at, '%b %e, %Y') AS created_label,
+                DATE_FORMAT(expires_at, '%b %e, %Y') AS expires_label
+         FROM ld_announcement
+         WHERE status = 'active' AND (expires_at IS NULL OR expires_at >= NOW())
+           AND (FIND_IN_SET('learner', audience) > 0 OR FIND_IN_SET('all', audience) > 0)
+         ORDER BY created_at DESC
+         LIMIT 50"
+    );
+    $announcementStmt->execute();
+    $announcements = $announcementStmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
-    // defaults
+    DbError::capture($e, 'learner/notification');
 }
 
-function timeAgo($datetime) {
-    $now = time();
-    $ts = strtotime($datetime);
-    $diff = $now - $ts;
-    if ($diff < 60) return 'just now';
-    if ($diff < 3600) return floor($diff / 60) . 'm ago';
-    if ($diff < 86400) return floor($diff / 3600) . 'h ago';
-    if ($diff < 604800) return floor($diff / 86400) . 'd ago';
-    return date('M j, Y', $ts);
+/**
+ * Notification feed rows. Certificate notices additionally expose the verify and
+ * renew actions; everything else is a plain read-only row.
+ */
+function renderLearnerNotificationRows(array $items, array $certificates): void
+{
+    if (empty($items)) {
+        ntfEmptyState('fa-bell-slash', 'No notifications', 'Enrollments, grades, certificates and reminders will show up here.');
+        return;
+    }
+
+    echo '<div class="cards-grid" data-page-size="12">';
+    foreach ($items as $item) {
+        $id = (int) ($item['id'] ?? 0);
+        $type = (string) ($item['type'] ?? 'update');
+        $isRead = (int) ($item['is_read'] ?? 0) === 1;
+        $certificate = ($type === 'certificate_expiry' && !empty($item['reference_id']))
+            ? ($certificates[(int) $item['reference_id']] ?? null)
+            : null;
+
+        echo '<article class="content-card-item ntf-item ' . ($isRead ? 'is-read' : 'is-unread') . '"'
+            . ' data-notif-id="' . $id . '"'
+            . ' data-read="' . ($isRead ? 'true' : 'false') . '"'
+            . ' data-status="' . ($isRead ? 'read' : 'unread') . '"'
+            . ' data-type="' . htmlspecialchars($type) . '">';
+        echo '<span class="ntf-icon is-' . ldNotifTone($type) . '" aria-hidden="true"><i class="fas ' . ldNotifIcon($type) . '"></i></span>';
+        echo '<div class="content-card-body">';
+        echo '<div class="content-card-meta">'
+            . '<span class="pill">' . htmlspecialchars(ldNotifLabel($type)) . '</span>'
+            . '<span class="ntf-time"><i class="far fa-clock" aria-hidden="true"></i> ' . htmlspecialchars(ldNotifAge($item)) . '</span>'
+            . '</div>';
+        echo '<h3>' . htmlspecialchars((string) ($item['title'] ?? 'Untitled notification')) . '</h3>';
+        echo '<p>' . htmlspecialchars((string) ($item['message'] ?? '')) . '</p>';
+
+        if ($certificate && !empty($certificate['verification_code'])) {
+            $courseId = (int) ($certificate['course_id'] ?? 0);
+            echo '<div class="content-card-footer is-actions"><div class="ntf-actions">';
+            echo '<a class="ntf-btn ghost" target="_blank" rel="noopener" href="?page=public/verify-certificate&amp;back=learner/notification&amp;code=' . urlencode((string) $certificate['verification_code']) . '">'
+                . '<i class="fas fa-external-link-alt" aria-hidden="true"></i> View certificate</a>';
+            if ($courseId > 0) {
+                echo '<button type="button" class="ntf-btn cert-renew-btn" data-course-id="' . $courseId . '">'
+                    . '<i class="fas fa-sync-alt" aria-hidden="true"></i> Renew course</button>';
+            }
+            echo '</div></div>';
+        }
+
+        echo '</div>';
+        echo '</article>';
+    }
+    echo '</div>';
+
+    ntfPaginationRow(count($items));
 }
 
-function notifIcon($type) {
-    $icons = [
-        'invitation' => 'fa-user-plus',
-        'certificate' => 'fa-certificate',
-        'certificate_expiry' => 'fa-exclamation-triangle',
-        'announcement' => 'fa-bullhorn',
-        'enrollment' => 'fa-graduation-cap',
-        'grade' => 'fa-chart-line',
-        'reminder' => 'fa-clock',
-        'message' => 'fa-envelope',
-        'update' => 'fa-sync',
-    ];
-    return $icons[$type] ?? 'fa-bell';
-}
+/** Announcement cards for the announcements tab. */
+function renderLearnerAnnouncements(array $items): void
+{
+    if (empty($items)) {
+        ntfEmptyState('fa-bullhorn', 'No announcements', 'When instructors or admins publish an update for learners it will appear here.');
+        return;
+    }
 
-function notifColor($type) {
-    $colors = [
-        'invitation' => '#6f42c1',
-        'certificate' => '#ffc107',
-        'certificate_expiry' => '#dc3545',
-        'announcement' => '#17a2b8',
-        'enrollment' => '#28a745',
-        'grade' => '#007bff',
-        'reminder' => '#fd7e14',
-        'message' => '#6610f2',
-    ];
-    return $colors[$type] ?? 'var(--primary)';
+    echo '<div class="cards-grid" data-page-size="12">';
+    foreach ($items as $item) {
+        $title = (string) ($item['title'] ?? 'Untitled announcement');
+        $audience = ldNotifAudienceLabel($item['audience'] ?? null);
+        $expires = trim((string) ($item['expires_label'] ?? ''));
+        $expires = ($expires === '' || empty($item['expires_at'])) ? null : $expires;
+
+        echo '<article class="content-card-item ntf-item ntf-announce" data-status="announcement">';
+        echo '<span class="ntf-icon is-indigo" aria-hidden="true"><i class="fas fa-bullhorn"></i></span>';
+        echo '<div class="content-card-body">';
+        echo '<div class="content-card-meta">'
+            . '<span class="pill">' . htmlspecialchars($audience) . '</span>'
+            . '<span class="ntf-time"><i class="far fa-clock" aria-hidden="true"></i> ' . htmlspecialchars(ldNotifAge($item)) . '</span>'
+            . '</div>';
+        echo '<h3>' . htmlspecialchars($title) . '</h3>';
+        echo '<p>' . htmlspecialchars((string) ($item['message'] ?? '')) . '</p>';
+        if ($expires !== null) {
+            echo '<div class="content-card-footer"><span><i class="fas fa-hourglass-half" aria-hidden="true"></i> Expires ' . htmlspecialchars($expires) . '</span></div>';
+        }
+        echo '</div>';
+        echo '</article>';
+    }
+    echo '</div>';
+
+    ntfPaginationRow(count($items));
 }
 ?>
-<div class="module-content">
-    <div class="toolbar">
-        <div class="toolbar-search">
-            <input type="search" id="notif-search" placeholder="Search notifications..." aria-label="Search notifications" />
-        </div>
-        <div class="toolbar-actions">
-            <button type="button" id="mark-all-read-btn" style="padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:500; display:inline-flex; align-items:center; gap:0.5rem;">
-                <i class="fas fa-check-double"></i> Mark All Read
-            </button>
-            
-        </div>
-    </div>
-
-    <!-- Unread badge -->
-    <div style="margin-bottom:1.5rem; display:flex; align-items:center; gap:1rem;">
-        <h2 style="margin:0;">Notifications</h2>
-        <?php if ($unreadCount > 0): ?>
-            <span style="background:#dc3545; color:#fff; padding:0.25rem 0.75rem; border-radius:20px; font-size:0.85rem; font-weight:600;"><?= $unreadCount ?> unread</span>
-        <?php endif; ?>
-    </div>
-
-    <div class="tab-container">
-        <div class="tab-list">
-            <button type="button" class="tab-item active" data-tab="tab-all-notifs">All (<?= count($notifications) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-unread">Unread (<?= $unreadCount ?>)</button>
-            <?php $expiryCount = count(array_filter($notifications, fn($n) => $n['type'] === 'certificate_expiry')); ?>
-            <button type="button" class="tab-item" data-tab="tab-expiry">Certificate Expiry (<?= $expiryCount ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-announcements">Announcements (<?= count($announcements) ?>)</button>
-        </div>
-
-        <!-- All Notifications -->
-        <div class="tab-content active" data-tab="tab-all-notifs">
-            <?php if (empty($notifications)): ?>
-                <div class="mode-card">
-                    <div style="padding:3rem; text-align:center; background:#f9f9f9; border-radius:12px;">
-                        <i class="fas fa-bell-slash" style="font-size:3rem; color:#ccc; margin-bottom:1rem; display:block;"></i>
-                        <h3>No notifications yet</h3>
-                        <p style="color:#999;">You'll see notifications about enrollments, grades, and announcements here.</p>
-                    </div>
-                </div>
-            <?php else: ?>
-                <div class="mode-card">
-                    <div id="notification-list" style="display:grid; gap:0.5rem;">
-                        <?php foreach ($notifications as $notif): ?>
-                            <div class="notif-row" data-notif-id="<?= $notif['id'] ?>" data-read="<?= $notif['is_read'] ? 'true' : 'false' ?>" style="display:flex; align-items:flex-start; gap:1rem; padding:1rem 1.25rem; background:<?= $notif['is_read'] ? '#fff' : 'rgba(32,0,130,0.03)' ?>; border-radius:10px; border-left:3px solid <?= notifColor($notif['type']) ?>; cursor:pointer; transition: background 0.2s;">
-                                <div style="width:36px; height:36px; border-radius:50%; background:<?= notifColor($notif['type']) ?>; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                    <i class="fas <?= notifIcon($notif['type']) ?>" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div style="flex:1; min-width:0;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-                                        <strong style="<?= $notif['is_read'] ? '' : 'font-weight:700;' ?>"><?= htmlspecialchars($notif['title']) ?></strong>
-                                        <span style="color:#999; font-size:0.8rem; white-space:nowrap;"><?= timeAgo($notif['created_at']) ?></span>
-                                    </div>
-                                    <p style="margin:0.3rem 0 0 0; color:#555; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars($notif['message']) ?></p>
-                                    <?php if (!$notif['is_read']): ?>
-                                        <span style="display:inline-block; margin-top:0.4rem; width:8px; height:8px; background:#dc3545; border-radius:50;"></span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <div class="pagination-row" id="notif-all-pagination">
-                    <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
-                    <span class="page-indicator">Page 1 of 1</span>
-                    <button type="button" class="page-btn" data-action="next">Next</button>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Unread Only -->
-        <div class="tab-content" data-tab="tab-unread">
-            <div class="mode-card">
-                <div id="unread-list" style="display:grid; gap:0.5rem;">
-                    <?php $unreadItems = array_filter($notifications, fn($n) => !$n['is_read']); ?>
-                    <?php if (empty($unreadItems)): ?>
-                        <div style="padding:3rem; text-align:center; background:#f9f9f9; border-radius:12px;">
-                            <i class="fas fa-check-circle" style="font-size:3rem; color:#28a745; margin-bottom:1rem; display:block;"></i>
-                            <h3>All caught up!</h3>
-                            <p style="color:#999;">You have no unread notifications.</p>
-                        </div>
-                    <?php else: ?>
-                        <?php foreach ($unreadItems as $notif): ?>
-                            <div class="notif-row" data-notif-id="<?= $notif['id'] ?>" style="display:flex; align-items:flex-start; gap:1rem; padding:1rem 1.25rem; background:rgba(32,0,130,0.03); border-radius:10px; border-left:3px solid <?= notifColor($notif['type']) ?>; cursor:pointer;">
-                                <div style="width:36px; height:36px; border-radius:50%; background:<?= notifColor($notif['type']) ?>; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                    <i class="fas <?= notifIcon($notif['type']) ?>" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div style="flex:1; min-width:0;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-                                        <strong style="font-weight:700;"><?= htmlspecialchars($notif['title']) ?></strong>
-                                        <span style="color:#999; font-size:0.8rem; white-space:nowrap;"><?= timeAgo($notif['created_at']) ?></span>
-                                    </div>
-                                    <p style="margin:0.3rem 0 0 0; color:#555; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars($notif['message']) ?></p>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
+<div class="module-content ntf-page ntf-page--four">
+    <div class="home-dashboard">
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1>Notifications</h1>
+                <p>Enrollment, grading and certificate updates, plus every announcement published to learners.</p>
             </div>
-            <div class="pagination-row" id="notif-unread-pagination" style="display:none;">
-                <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
-                <span class="page-indicator">Page 1 of 1</span>
-                <button type="button" class="page-btn" data-action="next">Next</button>
+        </section>
+
+        <div class="home-stats">
+            <div class="home-stat">
+                <span class="home-stat-icon tone-violet"><i class="fas fa-bell"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Notifications</span>
+                    <span class="home-stat-value" data-count="total"><?= $notificationCount ?></span>
+                    <span class="home-stat-sub">all activity</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-rose"><i class="fas fa-envelope-open-text"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Unread</span>
+                    <span class="home-stat-value" data-count="unread"><?= $unreadCount ?></span>
+                    <span class="home-stat-sub">waiting for you</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-amber"><i class="fas fa-certificate"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Certificate expiry</span>
+                    <span class="home-stat-value"><?= $expiryCount ?></span>
+                    <span class="home-stat-sub">need renewing</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-indigo"><i class="fas fa-bullhorn"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Announcements</span>
+                    <span class="home-stat-value"><?= $announcementCount ?></span>
+                    <span class="home-stat-sub">from your team</span>
+                </span>
             </div>
         </div>
 
-        <!-- Certificate Expiry -->
-        <div class="tab-content" data-tab="tab-expiry">
-            <?php $expiryNotifs = array_filter($notifications, fn($n) => $n['type'] === 'certificate_expiry'); ?>
-            <?php if (empty($expiryNotifs)): ?>
-                <div class="mode-card">
-                    <div style="padding:3rem; text-align:center; background:#f9f9f9; border-radius:12px;">
-                        <i class="fas fa-certificate" style="font-size:3rem; color:#28a745; margin-bottom:1rem; display:block;"></i>
-                        <h3>No expiring certificates</h3>
-                        <p style="color:#999;">Your certificates are all valid and not expiring soon.</p>
-                    </div>
-                </div>
-            <?php else: ?>
-                <div class="mode-card">
-                    <div style="display:grid; gap:0.5rem;">
-                        <?php foreach ($expiryNotifs as $notif): ?>
-                            <div class="notif-row" data-notif-id="<?= $notif['id'] ?>" data-read="<?= $notif['is_read'] ? 'true' : 'false' ?>" style="display:flex; align-items:flex-start; gap:1rem; padding:1rem 1.25rem; background:<?= $notif['is_read'] ? '#fff' : 'rgba(32,0,130,0.03)' ?>; border-radius:10px; border-left:3px solid #dc3545; cursor:pointer; transition: background 0.2s;">
-                                <div style="width:36px; height:36px; border-radius:50%; background:#dc3545; color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                    <i class="fas fa-exclamation-triangle" style="font-size:0.85rem;"></i>
-                                </div>
-                                <div style="flex:1; min-width:0;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-                                        <strong style="<?= $notif['is_read'] ? '' : 'font-weight:700;' ?>"><?= htmlspecialchars($notif['title']) ?></strong>
-                                        <span style="color:#999; font-size:0.8rem; white-space:nowrap;"><?= timeAgo($notif['created_at']) ?></span>
-                                    </div>
-                                    <p style="margin:0.3rem 0 0 0; color:#555; font-size:0.9rem; line-height:1.5;"><?= htmlspecialchars($notif['message']) ?></p>
-                                    <?php if ($notif['reference_id']): ?>
-                                        <?php
-                                        $certLinkStmt = $pdo->prepare("SELECT verification_code, course_id FROM ld_certificate WHERE id = :cid AND status = 'active' LIMIT 1");
-                                        $certLinkStmt->execute([':cid' => $notif['reference_id']]);
-                                        $certLinkRow = $certLinkStmt->fetch(PDO::FETCH_ASSOC);
-                                        $certLinkCode = $certLinkRow ? $certLinkRow['verification_code'] : null;
-                                        $certCourseId = $certLinkRow ? (int)$certLinkRow['course_id'] : 0;
-                                        ?>
-                                        <?php if ($certLinkCode): ?>
-                                        <div style="display:flex; gap:0.4rem; margin-top:0.5rem; flex-wrap:wrap;">
-                                            <a href="?page=public/verify-certificate&back=learner/notification&code=<?= htmlspecialchars($certLinkCode) ?>" target="_blank" style="padding:0.35rem 0.7rem; background:rgba(220,53,69,0.08); color:#dc3545; border-radius:6px; font-size:0.78rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.25rem;"><i class="fas fa-external-link-alt"></i>View Certificate</a>
-                                            <?php if ($certCourseId > 0): ?>
-                                            <button type="button" class="cert-renew-btn" data-course-id="<?= $certCourseId ?>" onclick="renewCourse(this, <?= $certCourseId ?>)" style="padding:0.35rem 0.7rem; background:var(--primary); color:#fff; border:none; border-radius:6px; font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:0.25rem; transition:all 0.2s;"><i class="fas fa-sync-alt"></i>Renew Course</button>
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-                                    <?php if (!$notif['is_read']): ?>
-                                        <span style="display:inline-block; margin-top:0.4rem; width:8px; height:8px; background:#dc3545; border-radius:50%;"></span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <div class="pagination-row" id="notif-expiry-pagination" style="display:none;">
-                    <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
-                    <span class="page-indicator">Page 1 of 1</span>
-                    <button type="button" class="page-btn" data-action="next">Next</button>
-                </div>
-            <?php endif; ?>
+        <div class="ntf-toolbar">
+            <div class="toolbar-search">
+                <input type="search" placeholder="Search notifications..." aria-label="Search notifications" />
+            </div>
+            <div class="ntf-actions-bar">
+                <?php ntfPreferencesButton(); ?>
+                <button type="button" id="ntf-mark-all-read" class="ntf-btn">
+                    <i class="fas fa-check-double" aria-hidden="true"></i> Mark all read
+                </button>
+            </div>
         </div>
 
-        <!-- Announcements -->
-        <div class="tab-content" data-tab="tab-announcements">
-            <?php if (empty($announcements)): ?>
-                <div class="mode-card">
-                    <div style="padding:3rem; text-align:center; background:#f9f9f9; border-radius:12px;">
-                        <i class="fas fa-bullhorn" style="font-size:3rem; color:#ccc; margin-bottom:1rem; display:block;"></i>
-                        <h3>No announcements</h3>
-                        <p style="color:#999;">There are no active announcements at this time.</p>
-                    </div>
-                </div>
-            <?php else: ?>
-                <?php foreach ($announcements as $ann): ?>
-                    <div class="mode-card" style="margin-bottom:1rem; border-left:4px solid #17a2b8;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;">
-                            <div style="flex:1;">
-                                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
-                                    <i class="fas fa-bullhorn" style="color:#17a2b8;"></i>
-                                    <strong style="font-size:1.1rem;"><?= htmlspecialchars($ann['title']) ?></strong>
-                                </div>
-                                <p style="color:#555; line-height:1.6; margin:0;"><?= nl2br(htmlspecialchars($ann['message'])) ?></p>
-                            </div>
-                            <span style="color:#999; font-size:0.8rem; white-space:nowrap;"><?= timeAgo($ann['created_at']) ?></span>
-                        </div>
-                        <?php if (!empty($ann['expires_at'])): ?>
-                            <div style="margin-top:0.75rem; font-size:0.8rem; color:#999;">
-                                <i class="fas fa-clock"></i> Expires <?= date('M j, Y', strtotime($ann['expires_at'])) ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
+        <?php ntfPreferencesPanel(); ?>
+
+        <div class="tab-container">
+            <div class="tab-list">
+                <button type="button" class="tab-item active" data-tab="tab-notif-all">
+                    <i class="fas fa-inbox" aria-hidden="true"></i> All (<?= count($notifications) ?>)
+                </button>
+                <button type="button" class="tab-item" data-tab="tab-notif-unread">
+                    <i class="fas fa-envelope-open-text" aria-hidden="true"></i> Unread (<span data-count="unread"><?= $unreadCount ?></span>)
+                </button>
+                <button type="button" class="tab-item" data-tab="tab-notif-expiry">
+                    <i class="fas fa-certificate" aria-hidden="true"></i> Certificate expiry (<?= $expiryCount ?>)
+                </button>
+                <button type="button" class="tab-item" data-tab="tab-notif-announcements">
+                    <i class="fas fa-bullhorn" aria-hidden="true"></i> Announcements (<?= count($announcements) ?>)
+                </button>
+            </div>
+
+            <div class="tab-content active" data-tab="tab-notif-all" id="tab-notif-all">
+                <?php renderLearnerNotificationRows($notifications, $certificates); ?>
+            </div>
+
+            <div class="tab-content" data-tab="tab-notif-unread" id="tab-notif-unread">
+                <?php if (empty($unreadNotifications)) {
+                    ntfEmptyState('fa-circle-check', 'All caught up', 'You have read every notification you received.');
+                } else {
+                    renderLearnerNotificationRows($unreadNotifications, $certificates);
+                } ?>
+            </div>
+
+            <div class="tab-content" data-tab="tab-notif-expiry" id="tab-notif-expiry">
+                <?php if (empty($expiryNotifications)) {
+                    ntfEmptyState('fa-certificate', 'No expiring certificates', 'Your certificates are valid and none of them are nearing their expiry date.');
+                } else {
+                    renderLearnerNotificationRows($expiryNotifications, $certificates);
+                } ?>
+            </div>
+
+            <div class="tab-content" data-tab="tab-notif-announcements" id="tab-notif-announcements">
+                <?php renderLearnerAnnouncements($announcements); ?>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-(function() {
-    // Mark individual notification as read on click
-    document.querySelectorAll('.notif-row').forEach(function(row) {
-        row.addEventListener('click', function() {
-            var notifId = this.dataset.notifId;
-            var isRead = this.dataset.read;
-            if (isRead === 'false') {
-                fetch('pages/learner/ajax/mark-notification-read.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: 'notification_id=' + notifId
-                }).then(function(r) { return r.json(); }).then(function(data) {
-                    if (data.success) {
-                        row.dataset.read = 'true';
-                        row.style.background = '#fff';
-                        var dot = row.querySelector('span[style*="border-radius:50"]');
-                        if (dot) dot.remove();
-                    }
-                });
-            }
-        });
-    });
+(function () {
+    'use strict';
 
-    // Mark all as read
-    document.getElementById('mark-all-read-btn').addEventListener('click', function() {
-        fetch('pages/learner/ajax/mark-all-notification-read.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: 'all=1'
-        }).then(function(r) { return r.json(); }).then(function(data) {
-            if (data.success) {
-                document.querySelectorAll('.notif-row').forEach(function(row) {
-                    row.dataset.read = 'true';
-                    row.style.background = '#fff';
-                    var dot = row.querySelector('span[style*="border-radius:50"]');
-                    if (dot) dot.remove();
-                });
-                // Update badges
-                var badge = document.querySelector('span[style*="#dc3545"]');
-                if (badge) badge.style.display = 'none';
-            }
-        });
-    });
+    var page = document.querySelector('.ntf-page');
+    if (!page) return;
 
-    // Search filter
-    document.getElementById('notif-search').addEventListener('input', function() {
-        var q = this.value.toLowerCase();
-        document.querySelectorAll('.notif-row').forEach(function(row) {
-            var text = row.textContent.toLowerCase();
-            row.style.display = text.indexOf(q) !== -1 ? '' : 'none';
-        });
-    });
+    var csrfToken = window.CSRF_TOKEN
+        || (document.querySelector('meta[name="csrf-token"]') || {}).content
+        || '';
 
-    // Certificate renewal
-    window.renewCourse = function(btn, courseId) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enrolling...';
+    function setUnreadCounts(value) {
+        document.querySelectorAll('.ntf-page [data-count="unread"]').forEach(function (node) {
+            node.textContent = String(value);
+        });
+    }
+
+    function currentUnreadCount() {
+        var node = document.querySelector('.ntf-page [data-count="unread"]');
+        return Math.max(0, parseInt(node ? node.textContent : '0', 10) || 0);
+    }
+
+    function markRowRead(row) {
+        row.dataset.read = 'true';
+        row.dataset.status = 'read';
+        row.classList.remove('is-unread');
+        row.classList.add('is-read');
+    }
+
+    // Certificate notices offer a one-click re-enrol. Registered first so the
+    // row handler below still records the notice as read afterwards.
+    page.addEventListener('click', function (event) {
+        var button = event.target.closest('.cert-renew-btn');
+        if (!button) return;
+
+        var courseId = parseInt(button.dataset.courseId || '0', 10);
+        if (!courseId) return;
+
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Enrolling...';
+
         fetch('pages/learner/ajax/enroll-course.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            },
             body: JSON.stringify({ course_id: courseId })
-        }).then(function(r) { return r.json(); }).then(function(data) {
-            if (data.success) {
-                btn.innerHTML = '<i class="fas fa-check"></i> Enrolled';
-                btn.style.background = '#10b981';
-                if (typeof window.showToast === 'function') {
-                    window.showToast('Re-enrolled in course successfully', 'success');
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data || data.success !== true) {
+                    throw new Error((data && (data.error || data.message)) || 'Could not re-enrol in this course.');
                 }
-            } else {
-                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Renew Course';
-                btn.disabled = false;
+                button.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i> Enrolled';
+                button.classList.add('is-done');
                 if (typeof window.showToast === 'function') {
-                    window.showToast(data.error || data.message || 'Failed to re-enroll', 'error');
+                    window.showToast('Re-enrolled in the course successfully.', 'success');
                 }
-            }
-        }).catch(function() {
-            btn.innerHTML = '<i class="fas fa-sync-alt"></i> Renew Course';
-            btn.disabled = false;
-            if (typeof window.showToast === 'function') {
-                window.showToast('Network error', 'error');
-            }
+            })
+            .catch(function (error) {
+                button.innerHTML = '<i class="fas fa-sync-alt" aria-hidden="true"></i> Renew course';
+                button.disabled = false;
+                if (typeof window.showToast === 'function') {
+                    window.showToast(error.message || 'Could not re-enrol in this course.', 'error');
+                }
+            });
+    });
+
+    page.addEventListener('click', function (event) {
+        var row = event.target.closest('.ntf-item');
+        if (!row || !page.contains(row) || row.dataset.read !== 'false') return;
+
+        var notificationId = row.dataset.notifId;
+        if (!notificationId) return;
+
+        row.dataset.read = 'pending';
+        fetch('pages/learner/ajax/mark-notification-read.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-Token': csrfToken
+            },
+            body: 'notification_id=' + encodeURIComponent(notificationId)
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data || data.success !== true) throw new Error('failed');
+                markRowRead(row);
+                setUnreadCounts(currentUnreadCount() - 1);
+            })
+            .catch(function () {
+                row.dataset.read = 'false';
+            });
+    });
+
+    var markAllButton = document.getElementById('ntf-mark-all-read');
+    if (markAllButton) {
+        markAllButton.addEventListener('click', function () {
+            markAllButton.disabled = true;
+            fetch('pages/learner/ajax/mark-all-notification-read.php', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: 'all=1'
+            })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (!data || data.success !== true) throw new Error('failed');
+                    page.querySelectorAll('.ntf-item[data-read="false"]').forEach(markRowRead);
+                    setUnreadCounts(0);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('All notifications marked as read.', 'success');
+                    }
+                })
+                .catch(function () {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('Could not update your notifications.', 'error');
+                    }
+                })
+                .finally(function () {
+                    markAllButton.disabled = false;
+                });
         });
-    };
+    }
 })();
 </script>

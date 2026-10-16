@@ -11,7 +11,7 @@ class NotificationMarkRead {
     /** Mark one notification read, returning how many rows changed. */
     public static function markOne(PDO $pdo, int $userId, int $notificationId): int {
         $stmt = $pdo->prepare(
-            'UPDATE ld_notification SET is_read = 1 WHERE id = :id AND user_id = :user_id'
+            'UPDATE ld_notification_inbox SET is_read = 1 WHERE id = :id AND user_id = :user_id'
         );
         $stmt->execute([':id' => $notificationId, ':user_id' => $userId]);
 
@@ -21,7 +21,7 @@ class NotificationMarkRead {
     /** Mark every unread notification for the reader, returning how many rows changed. */
     public static function markAll(PDO $pdo, int $userId): int {
         $stmt = $pdo->prepare(
-            'UPDATE ld_notification SET is_read = 1 WHERE user_id = :user_id AND is_read = 0'
+            'UPDATE ld_notification_inbox SET is_read = 1 WHERE user_id = :user_id AND is_read = 0'
         );
         $stmt->execute([':user_id' => $userId]);
 

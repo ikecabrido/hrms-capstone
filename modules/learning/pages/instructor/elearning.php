@@ -184,7 +184,7 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
             <button type="button" data-view="list" title="List view"><i class="fas fa-list"></i></button>
         </div>
         <span class="catalog-count" id="catalog-count"></span>
-        <select id="catalog-page-size" style="border:1.5px solid rgba(32,0,130,0.2); background:var(--surface,#fff); color:var(--text,#333); border-radius:8px; padding:0.45rem 0.6rem; font-size:0.78rem; font-weight:600; cursor:pointer; outline:none;">
+        <select id="catalog-page-size" data-display-pref="page_size" style="border:1.5px solid rgba(32,0,130,0.2); background:var(--surface,#fff); color:var(--text,#333); border-radius:8px; padding:0.45rem 0.6rem; font-size:0.78rem; font-weight:600; cursor:pointer; outline:none;">
             <option value="12">12</option>
             <option value="24">24</option>
             <option value="36">36</option>
