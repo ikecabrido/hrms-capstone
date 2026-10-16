@@ -8,15 +8,18 @@ require_once __DIR__ . '/../classes/Education.php';
 require_once __DIR__ . '/../classes/Experience.php';
 require_once __DIR__ . '/../classes/Documents.php';
 
+
 /**
  * =========================================================
  * HRMS RECRUITMENT UPLOAD DIRECTORY
+ * Works relative to the deployed project directory.
  * =========================================================
  */
 define(
     'HRMS_RECRUITMENT_UPLOADS',
-    'C:\\xampp\\htdocs\\hrms-capstone\\modules\\recruitment\\uploads'
+    dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads'
 );
+
 
 /**
  * =========================================================
