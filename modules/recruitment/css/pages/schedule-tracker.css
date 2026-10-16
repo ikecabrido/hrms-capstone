@@ -1,0 +1,109 @@
+.table-filter-bar {
+  padding: 12px 16px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-pill:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.filter-pill.active-all {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  font-weight: 600;
+}
+
+.filter-pill.active-initial {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+  font-weight: 600;
+}
+
+.filter-pill.active-technical {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+  font-weight: 600;
+}
+
+.filter-pill.active-final {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+  font-weight: 600;
+}
+
+.filter-pill.active-completed {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+  font-weight: 600;
+}
+
+.schedule-table.completed-view .interviewer-column,
+.schedule-table.completed-view .stage-column {
+  display: none;
+}
+
+.completed-position-column,
+.completed-department-column {
+  display: none;
+}
+
+.schedule-table.completed-view .date-column,
+.schedule-table.completed-view .time-column {
+  display: none;
+}
+
+.schedule-table.completed-view .completed-position-column,
+.schedule-table.completed-view .completed-department-column {
+  display: table-cell;
+}
+
+.star-rating {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.rating-star {
+  font-size: 32px;
+  color: #cbd5e1 !important;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.rating-star:hover {
+  transform: scale(1.15);
+}
+
+.rating-star.active {
+  color: #f59e0b !important;
+}

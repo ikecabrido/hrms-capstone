@@ -20,23 +20,24 @@ switch ($action) {
         break;
 
     case 'get_employee_details':
-    getEmployeeDetails();
-    break;
+        getEmployeeDetails();
+        break;
 
     case 'update_employee':
         updateEmployee();
-        break;    
+        break;
 
     case 'get_employees':
         getEmployees();
-        break;    
+        break;
 
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action.']);
         break;
 }
 
-function getPositionsAndRoles() {
+function getPositionsAndRoles()
+{
     $department_id = intval($_GET['department_id'] ?? 0);
 
     if (!$department_id) {
@@ -61,7 +62,8 @@ function getPositionsAndRoles() {
     }
 }
 
-function registerEmployee() {
+function registerEmployee()
+{
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
         return;
@@ -98,7 +100,8 @@ function registerEmployee() {
     echo json_encode($result);
 }
 
-function getEmployeeDetails() {
+function getEmployeeDetails()
+{
     $employee_id = intval($_GET['employee_id'] ?? 0);
 
     if (!$employee_id) {
@@ -122,10 +125,10 @@ function getEmployeeDetails() {
                 d.department_name,
                 p.position_name,
                 r.role_name
-            FROM hrms_employee e
-            LEFT JOIN hrms_department d ON e.department = d.department_id
-            LEFT JOIN hrms_position   p ON e.position   = p.position_id
-            LEFT JOIN hrms_roles      r ON e.role        = r.role_id
+            FROM em_employees e
+            LEFT JOIN em_departments d ON e.department = d.department_id
+            LEFT JOIN em_positions   p ON e.position   = p.position_id
+            LEFT JOIN em_roles      r ON e.role        = r.role_id
             WHERE e.employee_id = :employee_id
         ");
         $stmt->execute([':employee_id' => $employee_id]);
@@ -158,7 +161,8 @@ function getEmployeeDetails() {
     }
 }
 
-function updateEmployee() {
+function updateEmployee()
+{
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
         return;
@@ -178,12 +182,12 @@ function updateEmployee() {
         $conn = $db->getConnection();
 
         // Get role for the department
-        $roleStmt = $conn->prepare("SELECT role_id FROM hrms_roles WHERE department = :dept_id LIMIT 1");
+        $roleStmt = $conn->prepare("SELECT role_id FROM em_roles WHERE department = :dept_id LIMIT 1");
         $roleStmt->execute([':dept_id' => $department_id]);
         $role_id = $roleStmt->fetchColumn();
 
         $stmt = $conn->prepare("
-            UPDATE hrms_employee
+            UPDATE em_employees
             SET department = :department_id,
                 position   = :position_id,
                 role       = :role_id
@@ -202,7 +206,8 @@ function updateEmployee() {
     }
 }
 
-    function getEmployees() {
+function getEmployees()
+{
     try {
         $db   = new Database();
         $conn = $db->getConnection();
@@ -216,15 +221,14 @@ function updateEmployee() {
                 e.status,
                 d.department_name,
                 p.position_name
-            FROM hrms_employee e
-            LEFT JOIN hrms_department d ON e.department = d.department_id
-            LEFT JOIN hrms_position   p ON e.position   = p.position_id
+            FROM em_employees e
+            LEFT JOIN em_departments d ON e.department = d.department_id
+            LEFT JOIN em_positions   p ON e.position   = p.position_id
             ORDER BY e.last_name ASC
         ");
 
         $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode(['success' => true, 'data' => $employees]);
-
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }

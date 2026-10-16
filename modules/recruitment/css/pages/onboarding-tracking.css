@@ -1,0 +1,169 @@
+.onboarding-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.onboarding-modal.show {
+  display: flex;
+}
+
+.onboarding-modal-content {
+  width: 100%;
+  max-width: 860px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #191919;
+  color: #f3f4f6;
+  border: 1px solid #343434;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.onboarding-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.onboarding-modal-header h2 {
+  margin: 0 0 6px;
+  font-size: 21px;
+}
+
+.onboarding-modal-header p {
+  margin: 0;
+  color: #a1a1aa;
+}
+
+.onboarding-close {
+  background: transparent;
+  border: none;
+  color: #d4d4d8;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.checklist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #343434;
+}
+
+.checklist-row label,
+.checklist-row > span {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+}
+
+.checklist-row input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #16a34a;
+  cursor: pointer;
+}
+
+.checklist-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.upload-btn,
+.onboarding-save-btn {
+  padding: 9px 14px;
+  border: 1px solid #484848;
+  border-radius: 9px;
+  background: #252525;
+  color: #f3f4f6;
+  cursor: pointer;
+}
+
+.upload-btn:hover {
+  background: #353535;
+}
+
+#bdoAccountNumber {
+  width: 220px;
+  max-width: 100%;
+  padding: 10px 12px;
+  background: #202020;
+  color: #f3f4f6;
+  border: 1px solid #3b3b3b;
+  border-radius: 8px;
+}
+
+.uploaded-file {
+  color: #86efac;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.onboarding-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+#onboardingProgress {
+  color: #a1a1aa;
+  font-size: 13px;
+}
+
+.onboarding-save-btn {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.onboarding-message {
+  display: none;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
+
+.onboarding-message.show {
+  display: block;
+}
+
+.onboarding-message.error {
+  background: #451a1a;
+  color: #fecaca;
+}
+
+.onboarding-message.success {
+  background: #14532d;
+  color: #dcfce7;
+}
+
+@media (max-width: 600px) {
+  .onboarding-modal-content {
+    padding: 16px;
+  }
+
+  .checklist-row {
+    align-items: flex-start;
+  }
+
+  .onboarding-modal-footer {
+    align-items: flex-start;
+  }
+}

@@ -110,16 +110,14 @@ WHERE LOWER(TRIM(status)) = 'shortlisted'
         ->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0;        ?>
 
   <div class="module-header">
-      <h1>Applications</h1>
-  </div>
+              <h2 style="margin: 0; color: #1e293b; font-size: 1.5rem;">📊 Recruitment Overview</h2>
+          </div>
 
   <div class="module-content">
 
       <link rel="stylesheet" href="style.css">
       <div class="dashboard-content">
-          <div class="page-header" style="margin-bottom: 25px;">
-              <h2 style="margin: 0; color: #1e293b; font-size: 1.5rem;">📊 Recruitment Overview</h2>
-          </div>
+   
 
           <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
 

@@ -1,0 +1,299 @@
+/* Layout & Headers */
+.module-header {
+  margin-bottom: 24px;
+}
+
+.module-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.module-header p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.module-content {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.card-body {
+  padding: 24px;
+}
+
+/* Table Design */
+.table {
+  width: 100%;
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.table tbody td {
+  padding: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+  color: #334155;
+  font-size: 0.875rem;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Elements Styling */
+.app-id-badge {
+  font-family: monospace;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.candidate-name {
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+/* Contact Info Layout Fix */
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.contact-link i {
+  color: #2563eb;
+  font-size: 0.875rem;
+  width: 14px;
+  text-align: center;
+}
+
+.contact-link:hover {
+  text-decoration: underline;
+}
+
+.contact-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.contact-phone i {
+  color: #94a3b8;
+  font-size: 0.8rem;
+  width: 14px;
+  text-align: center;
+}
+/* Ensure table layout stretches properly without clipping actions */
+.module-content .card-body {
+  padding: 24px;
+  overflow: hidden;
+}
+
+.table-responsive {
+  width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100% !important;
+  min-width: 900px; /* Forces full width so all columns have breathing room */
+}
+
+/* Ensure padding on cells doesn't crush buttons */
+.table td,
+.table th {
+  padding: 14px 16px !important;
+  white-space: nowrap !important;
+}
+
+/* Allow position badge to stay formatted nicely */
+.badge-position {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  text-align: center !important;
+}
+/* Position Badge Styling */
+.badge-position {
+  display: inline-block !important;
+  white-space: nowrap !important; /* Prevents text from breaking onto new lines */
+  max-width: none !important; /* Removes max-width restrictions */
+  word-break: normal !important; /* Ensures words are never broken mid-letter */
+  overflow-wrap: normal !important;
+  background-color: #eff6ff !important;
+  color: #1d4ed8 !important;
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 0.8rem !important;
+  text-align: center !important;
+}
+
+.text-date {
+  color: #64748b;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+/* Action Buttons Fix (View Resume & View Application) */
+.btn-action {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  white-space: nowrap !important;
+  padding: 8px 14px !important;
+  font-size: 0.825rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  line-height: 1 !important;
+}
+
+.btn-action i {
+  font-size: 0.875rem !important;
+  margin: 0 !important;
+  position: static !important;
+}
+
+.btn-primary.btn-action {
+  background-color: #2563eb !important;
+  border: 1px solid #2563eb !important;
+  color: #ffffff !important;
+}
+
+.btn-primary.btn-action:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.btn-outline-primary.btn-action {
+  background-color: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+.btn-outline-primary.btn-action:hover {
+  background-color: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+/* Empty State */
+.empty-state {
+  color: #94a3b8;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+  color: #cbd5e1;
+}
+/* Custom View Resume Button */
+.btn-view-resume {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 7px 14px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  color: #2563eb !important;
+  background-color: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  width: auto !important;
+  height: auto !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+
+.btn-view-resume:hover {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+/* Custom View Application Button */
+.btn-view-app {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 7px 14px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  background-color: #2563eb !important;
+  border: 1px solid #2563eb !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  width: auto !important;
+  height: auto !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+
+.btn-view-app:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
+/* Reset any bad global positioning on FontAwesome icons inside these buttons */
+.btn-view-resume i,
+.btn-view-app i {
+  position: static !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 0.875rem !important;
+  float: none !important;
+  display: inline-block !important;
+  line-height: 1 !important;
+}

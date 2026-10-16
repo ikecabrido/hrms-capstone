@@ -1,0 +1,216 @@
+/* Card Container */
+.application-card {
+  max-width: 800px;
+  margin: 32px auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* Form Header */
+.form-header {
+  background: #f8fafc;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.form-header h2 {
+  margin: 0 0 6px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.form-header p {
+  margin: 0;
+  font-size: 0.925rem;
+  color: #64748b;
+}
+
+/* Form Layout */
+.application-form {
+  padding: 32px;
+}
+
+.form-section {
+  margin-bottom: 32px;
+}
+
+.form-section:last-of-type {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 20px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.section-title i {
+  color: #2563eb;
+}
+
+/* Grid Layout */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group.full-width {
+  grid-column: span 2;
+}
+
+/* Labels and Inputs */
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.form-group label .required {
+  color: #dc2626;
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="tel"],
+.form-group select {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Custom Select Dropdowns */
+.select-wrapper {
+  position: relative;
+}
+
+.form-group select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 36px;
+}
+
+.select-wrapper::after {
+  content: "\f0d7";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* File Input Styling */
+.file-input {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  color: #475569;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  cursor: pointer;
+}
+
+.file-input::file-selector-button {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.file-input::file-selector-button:hover {
+  background-color: #dbeafe;
+}
+
+/* Submit Actions */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2563eb;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.btn-submit:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-submit:active {
+  transform: translateY(1px);
+}
+
+/* Responsive Viewports */
+@media (max-width: 640px) {
+  .application-form {
+    padding: 20px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group.full-width {
+    grid-column: span 1;
+  }
+
+  .btn-submit {
+    width: 100%;
+    justify-content: center;
+  }
+}
