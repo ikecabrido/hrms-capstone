@@ -23,7 +23,7 @@ class Page
         'top'             => ['dashboard-overview'],
         'recruitment'     => ['job-list', 'applications', 'parsed-resume'],
         'interviews'      => ['schedule-tracker', 'interview-results'],
-        'hiring'          => ['offered-list', 'hired-applicants', 'onboarding'],
+        'hiring'          => ['offered-list', 'onboarding', 'hired-applicants'],
     ];
 
     /*
