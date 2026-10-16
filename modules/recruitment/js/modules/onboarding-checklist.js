@@ -115,24 +115,6 @@ document.addEventListener("DOMContentLoaded", () => {
     updateProgress();
   }
 
-  // ---------------------------------------------------------
-  // LOAD CHECKLIST
-  // ---------------------------------------------------------
-  async function loadChecklist(id, version) {
-    const result = await request("load", {
-      method: "GET",
-      cache: "no-store",
-      // The controller reads onboarding_id from GET.
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    // The ID is sent separately below using the query string.
-    // This function is replaced by the ID-aware request immediately
-    // after declaration in the request helper usage.
-  }
-
   // ID-aware GET request for loading an employee checklist.
   async function fetchChecklist(id) {
     const url = new URL(endpoint, window.location.origin);
