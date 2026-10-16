@@ -147,6 +147,7 @@
                     </div>
 
                     <form id="applyForm" onsubmit="handleApplySubmit(event)">
+                        <input type="hidden" id="jobId" name="jobId" value="">
                         <div class="part-label">
                             <div class="part-num">1</div>
                             <h4>Personal information</h4>
