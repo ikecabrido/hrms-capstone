@@ -105,6 +105,19 @@ try {
         case 'sync_info':
             echo $controller->getSyncInfo();
             break;
+        case 'sync_if_due':
+            if ($method === 'POST') {
+                echo $controller->syncIfDue();
+            } else {
+                http_response_code(405);
+                echo json_encode([
+                    'success' => false,
+                    'ran' => false,
+                    'reason' => 'method_not_allowed',
+                    'last_sync' => null
+                ]);
+            }
+            break;
         case 'debug':
 
             echo json_encode([

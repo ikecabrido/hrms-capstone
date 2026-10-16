@@ -70,12 +70,8 @@ if (!$session_user_id) {
 
 // Check if user is department head or HR admin
 $sessionRole = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? null;
-$isHrAdmin = AuthController::hasRole('HR_ADMIN') || (is_string($sessionRole) && in_array(strtolower($sessionRole), ['hr_admin','admin','hr']));
-$isDeptHead = AuthController::hasRole('DEPARTMENT_HEAD') || (is_string($sessionRole) && strtolower($sessionRole) === 'department_head');
-// numeric role fallbacks (compat mapping)
-$sessionRoleValue = (string) ($sessionRole ?? '');
-if (!$isHrAdmin && in_array($sessionRoleValue, ['2','3','7'], true)) $isHrAdmin = true;
-if (!$isDeptHead && $sessionRoleValue === '4') $isDeptHead = true;
+$isHrAdmin = AuthController::hasRole('HR_ADMIN') || AuthController::hasRole('hr') || AuthController::hasRole('admin') || (is_numeric($sessionRole) && in_array((string) $sessionRole, ['2','3','7'], true)) || (is_string($sessionRole) && in_array(strtolower($sessionRole), ['hr_admin','hr','admin'], true));
+$isDeptHead = AuthController::hasRole('DEPARTMENT_HEAD') || AuthController::hasRole('department_head') || (is_numeric($sessionRole) && in_array((string) $sessionRole, ['4','5'], true)) || (is_string($sessionRole) && in_array(strtolower($sessionRole), ['department_head','departmenthead','dept_head','depthead'], true));
 
 if (!($isDeptHead || $isHrAdmin)) {
     // include detected session role in debug message to help diagnose role mismatch

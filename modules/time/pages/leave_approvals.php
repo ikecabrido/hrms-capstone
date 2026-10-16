@@ -11,6 +11,7 @@ require_once __DIR__ . '/../classes/Employee.php';
 require_once __DIR__ . '/../app/helpers/Helper.php';
 require_once __DIR__ . '/../app/helpers/LeaveAbsenceHelper.php';
 require_once __DIR__ . '/../app/core/Session.php';
+require_once __DIR__ . '/../app/core/TimeDatabase.php';
 require_once __DIR__ . '/../includes/ta_paths.php';
 
 Session::start();
@@ -163,39 +164,78 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = trim($_POST['action'] ?? '');
     $leave_request_id = (int)($_POST['leave_request_id'] ?? 0);
     $remarks = Helper::sanitize($_POST['remarks'] ?? '');
-    $is_hr = in_array($role, ['admin', 'hr'], true);
-    $is_department_head = $role === 'DEPARTMENT_HEAD';
+    $is_hr = AuthController::hasRole('admin') || AuthController::hasRole('hr') || AuthController::hasRole('HR_ADMIN');
+    $is_department_head = AuthController::hasRole('DEPARTMENT_HEAD') || AuthController::hasRole('department_head');
     $submittedEmployeePageSize = max(5, min(50, (int)($_POST['employee_page_size'] ?? $recordsPerPage)));
     $submittedEmployeeSearch = trim($_POST['employee_search'] ?? $employeeSearch);
 
-    // Debug logging
     error_log("DEBUG: POST received - Action: $action, LeaveID: $leave_request_id, User: $user_id, Role: $role");
 
-    if ($leave_request_id && $action === 'approve') {
-        $result = $leaveController->approve($leave_request_id, $user_id, $remarks);
-        if ($result['success']) {
-            $_SESSION['flash_message'] = "Leave request approved successfully!";
-            $_SESSION['flash_type'] = "success";
-            header("Location: " . $_SERVER['PHP_SELF'] . "?page=leave_approvals&employee_page={$employeePage}&leave_page={$leavePage}&employee_page_size={$submittedEmployeePageSize}&employee_search=" . urlencode($submittedEmployeeSearch));
-            exit;
-        }
+    if ($leave_request_id && in_array($action, ['approve', 'reject'], true)) {
+        $targetRequest = $leaveModel->getById($leave_request_id);
 
-        $message = $result['message'] ?? 'Failed to process approval.';
-        $messageType = "error";
-    } elseif ($leave_request_id && $action === 'reject') {
-        if (empty($remarks)) {
-            $message = "Rejection reason is required.";
-            $messageType = "error";
+        if (!$targetRequest) {
+            $message = 'Leave request not found.';
+            $messageType = 'error';
         } else {
-            $result = $leaveController->reject($leave_request_id, $user_id, $remarks);
-            if ($result['success']) {
-                $_SESSION['flash_message'] = "Leave request rejected.";
-                $_SESSION['flash_type'] = "warning";
-                header("Location: " . $_SERVER['PHP_SELF'] . "?page=leave_approvals&employee_page={$employeePage}&leave_page={$leavePage}&employee_page_size={$submittedEmployeePageSize}&employee_search=" . urlencode($submittedEmployeeSearch));
-                exit;
+            $sessionEmployeeId = (int)($user_id ?? AuthController::getCurrentUserId());
+            if ((int) $targetRequest['employee_id'] === $sessionEmployeeId) {
+                $message = 'You cannot approve or reject your own leave request.';
+                $messageType = 'error';
+            } elseif (!$is_hr && !$is_department_head) {
+                $message = 'You are not authorized to approve or reject leave requests.';
+                $messageType = 'error';
+            } else {
+                $isDepartmentHeadAllowed = false;
+                if ($is_department_head) {
+                    $database = TimeDatabase::getInstance();
+                    $conn = $database->getConnection();
+                    $headDeptQuery = "SELECT 1
+                                      FROM ta_department_heads dh
+                                      INNER JOIN em_employees e ON e.employee_id = :employee_id
+                                      LEFT JOIN em_departments d ON e.department_id = d.department_id
+                                      WHERE dh.user_id = :user_id
+                                        AND dh.is_active = 1
+                                        AND dh.department = COALESCE(d.department_name, e.department)";
+                    $headStmt = $conn->prepare($headDeptQuery);
+                    $headStmt->bindParam(':employee_id', $targetRequest['employee_id'], PDO::PARAM_INT);
+                    $headStmt->bindParam(':user_id', $sessionEmployeeId, PDO::PARAM_INT);
+                    $headStmt->execute();
+                    $isDepartmentHeadAllowed = (bool) $headStmt->fetch(PDO::FETCH_ASSOC);
+                }
+
+                if ($is_department_head && !$is_hr && !$isDepartmentHeadAllowed) {
+                    $message = 'You are not authorized to approve or reject leave requests for this department.';
+                    $messageType = 'error';
+                } else {
+                    if ($action === 'approve') {
+                        $result = $leaveController->approve($leave_request_id, $user_id, $remarks);
+                        if ($result['success']) {
+                            $_SESSION['flash_message'] = "Leave request approved successfully!";
+                            $_SESSION['flash_type'] = "success";
+                            header("Location: " . $_SERVER['PHP_SELF'] . "?page=leave_approvals&employee_page={$employeePage}&leave_page={$leavePage}&employee_page_size={$submittedEmployeePageSize}&employee_search=" . urlencode($submittedEmployeeSearch));
+                            exit;
+                        }
+                        $message = $result['message'] ?? 'Failed to process approval.';
+                        $messageType = "error";
+                    } elseif ($action === 'reject') {
+                        if (empty(trim($remarks))) {
+                            $message = "Rejection reason is required.";
+                            $messageType = "error";
+                        } else {
+                            $result = $leaveController->reject($leave_request_id, $user_id, $remarks);
+                            if ($result['success']) {
+                                $_SESSION['flash_message'] = "Leave request rejected.";
+                                $_SESSION['flash_type'] = "warning";
+                                header("Location: " . $_SERVER['PHP_SELF'] . "?page=leave_approvals&employee_page={$employeePage}&leave_page={$leavePage}&employee_page_size={$submittedEmployeePageSize}&employee_search=" . urlencode($submittedEmployeeSearch));
+                                exit;
+                            }
+                            $message = $result['message'] ?? 'Failed to process rejection.';
+                            $messageType = "error";
+                        }
+                    }
+                }
             }
-            $message = $result['message'] ?? 'Failed to process rejection.';
-            $messageType = "error";
         }
     }
 }

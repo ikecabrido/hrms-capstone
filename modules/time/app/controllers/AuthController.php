@@ -54,6 +54,9 @@ class AuthController
         $roleIdMap = [
             'time' => ['4', '5'],
             'hr' => ['2', '3', '7'],
+            'hr_admin' => ['2', '3', '7'],
+            'admin' => ['2', '3', '7'],
+            'department_head' => ['4', '5'],
             'exit' => ['10'],
             'employee' => ['2'],
         ];
@@ -69,7 +72,10 @@ class AuthController
         // Additional aliases for legacy role names like "HR Staff" or "Time Management".
         $roleNameAliases = [
             'time' => ['time', 'timemanagement', 'attendance', 'timekeeping', 'timekeeper', 'timezone'],
-            'hr' => ['hr', 'hrstaff', 'hrofficer', 'humanresources', 'hradmin'],
+            'hr' => ['hr', 'hrstaff', 'hrofficer', 'humanresources', 'hradmin', 'hr_admin', 'admin'],
+            'hr_admin' => ['hr', 'hrstaff', 'hrofficer', 'humanresources', 'hradmin', 'hr_admin', 'admin'],
+            'admin' => ['admin', 'hr', 'hradmin', 'hr_admin'],
+            'department_head' => ['departmenthead', 'department_head', 'depthead', 'dept_head'],
         ];
 
         $nameAliases = $roleNameAliases[$requestedRole] ?? [];

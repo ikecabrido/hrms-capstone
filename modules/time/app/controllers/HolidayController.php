@@ -270,6 +270,93 @@ class HolidayController
     }
 
     /**
+     * Runs a holiday sync only when the API data is stale or missing.
+     * Returns an explicit JSON payload that the page can use without UI noise.
+     */
+    public function syncIfDue()
+    {
+        $now = time();
+        $throttleFile = dirname(__DIR__, 2) . '/logs/last_holiday_sync_attempt.txt';
+        $lastAttempt = file_exists($throttleFile) ? (int)@file_get_contents($throttleFile) : 0;
+
+        if ($lastAttempt > 0 && ($now - $lastAttempt) < 86400) {
+            $lastSync = $this->holiday->getLastSync('PH');
+            return json_encode([
+                'success' => true,
+                'ran' => false,
+                'reason' => 'throttled',
+                'last_sync' => $lastSync['last_synced'] ?? null
+            ]);
+        }
+
+        @file_put_contents($throttleFile, (string)$now);
+
+        $lastSync = $this->holiday->getLastSync('PH');
+        $lastSyncTs = $lastSync['last_synced'] ?? null;
+        $needsSync = $this->shouldSyncHolidays($lastSyncTs);
+
+        if (!$needsSync['needs_sync']) {
+            return json_encode([
+                'success' => true,
+                'ran' => false,
+                'reason' => $needsSync['reason'],
+                'last_sync' => $lastSyncTs
+            ]);
+        }
+
+        $result = $this->nagerService->syncHolidays($_SESSION['user_id'] ?? null);
+        $latestSync = $this->holiday->getLastSync('PH');
+        $latestSyncTs = $latestSync['last_synced'] ?? null;
+
+        if ($result['success']) {
+            return json_encode([
+                'success' => true,
+                'ran' => true,
+                'reason' => $needsSync['reason'],
+                'last_sync' => $latestSyncTs
+            ]);
+        }
+
+        return json_encode([
+            'success' => false,
+            'ran' => false,
+            'reason' => $result['message'] ?? 'sync_failed',
+            'last_sync' => $latestSyncTs
+        ]);
+    }
+
+    /**
+     * Determine whether the API data is stale or missing for the current and
+     * next year. Returns the reason for skipping or running the sync.
+     */
+    private function shouldSyncHolidays($lastSyncTs)
+    {
+        $currentYear = (int)date('Y');
+        $nextYear = $currentYear + 1;
+        $reason = 'up_to_date';
+
+        if (!$lastSyncTs) {
+            $reason = 'never_synced';
+        } elseif ((time() - strtotime($lastSyncTs)) > (30 * 24 * 60 * 60)) {
+            $reason = 'stale';
+        }
+
+        foreach ([$currentYear, $nextYear] as $year) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) AS total FROM ta_holidays WHERE is_active = 1 AND country_code = 'PH' AND source = 'api_nager' AND YEAR(holiday_date) = :year");
+            $stmt->bindParam(':year', $year, \PDO::PARAM_INT);
+            $stmt->execute();
+            $count = (int)$stmt->fetchColumn();
+
+            if ($count === 0) {
+                $reason = 'missing_year_data';
+                return ['needs_sync' => true, 'reason' => $reason];
+            }
+        }
+
+        return ['needs_sync' => ($lastSyncTs === null || (time() - strtotime($lastSyncTs)) > (30 * 24 * 60 * 60)), 'reason' => $reason];
+    }
+
+    /**
      * Get JSON input
      */
     private function getJsonInput()
@@ -380,13 +467,16 @@ class HolidayController
         }
 
         // Always return success with valid data structure
-        return json_encode([
-            'success' => true,
-            'message' => 'Holiday page data retrieved',
-            'holidays' => $allHolidays,
-            'upcoming' => $upcomingHolidays,
-            'total' => count($allHolidays),
-            'upcomingCount' => count($upcomingHolidays)
+$lastSync = $this->holiday->getLastSync('PH');
+
+            return json_encode([
+                'success' => true,
+                'message' => 'Holiday page data retrieved',
+                'holidays' => $allHolidays,
+                'upcoming' => $upcomingHolidays,
+                'total' => count($allHolidays),
+                'upcomingCount' => count($upcomingHolidays),
+                'last_sync' => $lastSync['last_synced'] ?? null
         ]);
     }
 

@@ -64,6 +64,23 @@
         }
 
         window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: page } }));
+
+        try {
+            const apiRoot = window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : './app/api');
+            const storageKey = 'ta_holiday_sync_due_session';
+            if (typeof window.sessionStorage !== 'undefined' && !sessionStorage.getItem(storageKey)) {
+                sessionStorage.setItem(storageKey, '1');
+                fetch(apiRoot + '/holidays/holiday_api.php?action=sync_if_due', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' }
+                }).catch(function () {
+                    // Silent background refresh; no UI noise during page load.
+                });
+            }
+        } catch (err) {
+            console.warn('Holiday auto-sync trigger skipped:', err);
+        }
     }
 
     // ─── Tab Switcher ─────────────────────────────────────────────────────────────

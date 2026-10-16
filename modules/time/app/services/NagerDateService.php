@@ -108,7 +108,8 @@ class NagerDateService
     }
 
     /**
-     * Sync holidays for current year and next year
+     * Sync holidays for current year and next year without deleting existing
+     * manual records or API rows that are not being refreshed.
      */
     public function syncHolidays($createdBy = null)
     {
@@ -116,24 +117,14 @@ class NagerDateService
             $currentYear = date('Y');
             $nextYear = $currentYear + 1;
 
-            // Fetch holidays for current and next year
             $holidays = $this->fetchHolidaysForYears($currentYear, $nextYear);
 
             if (empty($holidays)) {
                 throw new Exception("No holidays fetched from API");
             }
 
-            // Clear existing non-recurring holidays for these years
-            $this->clearOldHolidays($currentYear);
-            $this->clearOldHolidays($nextYear);
-
-            // Insert new holidays
-            $this->bulkInsertHolidays($holidays, $createdBy);
-
-            // Fix any empty holiday names
+            $this->upsertApiHolidays($holidays, $createdBy);
             $this->fixEmptyHolidayNames();
-
-            // Log the sync
             $this->logSync(count($holidays));
 
             return [
@@ -147,6 +138,58 @@ class NagerDateService
                 'message' => $e->getMessage(),
                 'count' => 0
             ];
+        }
+    }
+
+    /**
+     * Upsert holidays that originate from Nager.Date while leaving manual
+     * records and other sources untouched.
+     */
+    private function upsertApiHolidays($holidays, $createdBy = null)
+    {
+        try {
+            $this->db->beginTransaction();
+
+            foreach ($holidays as $holiday) {
+                $holidayDate = $holiday['holiday_date'] ?? '';
+                if ($holidayDate === '') {
+                    continue;
+                }
+
+                $existing = $this->db->prepare("SELECT id FROM ta_holidays WHERE holiday_date = :holiday_date AND country_code = :country_code AND source = 'api_nager' LIMIT 1");
+                $existing->bindParam(':holiday_date', $holidayDate);
+                $existing->bindParam(':country_code', $this->countryCode);
+                $existing->execute();
+                $row = $existing->fetch(PDO::FETCH_ASSOC);
+
+                $query = $row
+                    ? "UPDATE ta_holidays SET name = :name, description = :description, is_recurring = :is_recurring, category = :category, holiday_scope = :holiday_scope, province_name = :province_name, is_working_day = :is_working_day, created_by = :created_by, updated_at = CURRENT_TIMESTAMP WHERE holiday_date = :holiday_date AND country_code = :country_code AND source = 'api_nager'"
+                    : "INSERT INTO ta_holidays (name, holiday_date, is_recurring, country_code, description, category, holiday_scope, province_name, is_working_day, source, is_active, created_by) VALUES (:name, :holiday_date, :is_recurring, :country_code, :description, :category, :holiday_scope, :province_name, :is_working_day, 'api_nager', 1, :created_by)";
+
+                $stmt = $this->db->prepare($query);
+                $stmt->bindParam(':name', $holiday['name']);
+                $stmt->bindParam(':holiday_date', $holidayDate);
+                $stmt->bindParam(':is_recurring', $holiday['is_recurring']);
+                $stmt->bindParam(':country_code', $this->countryCode);
+                $stmt->bindParam(':description', $holiday['description']);
+                $stmt->bindParam(':category', $holiday['category']);
+                $stmt->bindParam(':holiday_scope', $holiday['holiday_scope']);
+                $stmt->bindParam(':province_name', $holiday['province_name'], PDO::PARAM_STR);
+                $stmt->bindParam(':is_working_day', $holiday['is_working_day']);
+                $stmt->bindParam(':created_by', $createdBy, PDO::PARAM_INT);
+
+                if (!$stmt->execute()) {
+                    throw new Exception('Failed to persist holiday record');
+                }
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
         }
     }
 

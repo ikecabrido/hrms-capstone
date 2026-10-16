@@ -16,6 +16,9 @@ class TimeDatabase
         $candidates = [
             dirname(__DIR__, 5) . '/db_config.php',
             dirname(__DIR__, 4) . '/db_config.php',
+            dirname(__DIR__, 3) . '/db_config.php',
+            dirname(__DIR__, 2) . '/db_config.php',
+            dirname(__DIR__, 1) . '/db_config.php',
             (isset($_SERVER['DOCUMENT_ROOT']) ? dirname((string) $_SERVER['DOCUMENT_ROOT']) : '') . '/db_config.php',
             (isset($_SERVER['DOCUMENT_ROOT']) ? (string) $_SERVER['DOCUMENT_ROOT'] : '') . '/db_config.php'
         ];
@@ -36,9 +39,11 @@ class TimeDatabase
             $this->pass = $config['password'];
         } else {
             $serverName = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? '';
-            $isLocalHost = in_array(strtolower($serverName), ['localhost', '127.0.0.1'], true) || PHP_SAPI === 'cli';
+            $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? '';
+            $isLocalHost = in_array(strtolower((string)$serverName), ['localhost', '127.0.0.1'], true)
+                || (!empty($docRoot) && str_contains(strtolower((string)$docRoot), 'xampp'));
 
-            if (!$isLocalHost) {
+            if (PHP_SAPI === 'cli' || !$isLocalHost) {
                 throw new RuntimeException('Database configuration not found. Place db_config.php in the project root or document root before accessing the Time and Attendance module.');
             }
 

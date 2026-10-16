@@ -96,15 +96,22 @@ class Page {
         }
 
         $throttleFile = dirname(__DIR__) . '/logs/last_leave_accrual_run.txt';
-        $lastRun = file_exists($throttleFile) ? (int)@file_get_contents($throttleFile) : 0;
-        if ((time() - $lastRun) < 21600) { // 6 hours
+        $attemptFile = dirname(__DIR__) . '/logs/last_leave_accrual_attempt.txt';
+        $lastAttempt = file_exists($attemptFile) ? (int)@file_get_contents($attemptFile) : 0;
+        if ($lastAttempt > 0 && (time() - $lastAttempt) < 900) {
             return;
         }
+        @file_put_contents($attemptFile, (string)time());
 
         require_once $runnerPath;
         try {
-            LeaveAccrualRunner::run();
-            @file_put_contents($throttleFile, (string)time());
+            $result = LeaveAccrualRunner::run();
+            if (!empty($result['success'])) {
+                @file_put_contents($throttleFile, (string)time());
+                return;
+            }
+
+            error_log('Monthly leave accrual failed: ' . ($result['error'] ?? 'unknown error'));
         } catch (\Throwable $e) {
             error_log('Monthly leave accrual failed: ' . $e->getMessage());
         }
@@ -121,15 +128,22 @@ class Page {
         }
 
         $throttleFile = dirname(__DIR__) . '/logs/last_leave_yearly_allocation_run.txt';
-        $lastRun = file_exists($throttleFile) ? (int)@file_get_contents($throttleFile) : 0;
-        if ((time() - $lastRun) < 86400) { // 24 hours
+        $attemptFile = dirname(__DIR__) . '/logs/last_leave_yearly_allocation_attempt.txt';
+        $lastAttempt = file_exists($attemptFile) ? (int)@file_get_contents($attemptFile) : 0;
+        if ($lastAttempt > 0 && (time() - $lastAttempt) < 900) {
             return;
         }
+        @file_put_contents($attemptFile, (string)time());
 
         require_once $runnerPath;
         try {
-            LeaveYearlyAllocationRunner::run();
-            @file_put_contents($throttleFile, (string)time());
+            $result = LeaveYearlyAllocationRunner::run();
+            if (!empty($result['success'])) {
+                @file_put_contents($throttleFile, (string)time());
+                return;
+            }
+
+            error_log('Yearly leave allocation failed: ' . ($result['error'] ?? 'unknown error'));
         } catch (\Throwable $e) {
             error_log('Yearly leave allocation failed: ' . $e->getMessage());
         }

@@ -11,6 +11,7 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Methods: POST');
 
 require_once __DIR__ . '/../core/Session.php';
+require_once __DIR__ . '/../controllers/AuthController.php';
 require_once __DIR__ . '/../controllers/LeaveController.php';
 require_once __DIR__ . '/../models/Leave.php';
 
@@ -25,7 +26,8 @@ if (!Session::get('user_id')) {
 
 // Check if user is HR admin
 $user_role = Session::get('role');
-if ($user_role !== 'HR_ADMIN') {
+$isHrAdmin = AuthController::hasRole('HR_ADMIN') || AuthController::hasRole('hr') || AuthController::hasRole('admin') || (is_numeric($user_role) && in_array((string) $user_role, ['2','3','7'], true)) || (is_string($user_role) && in_array(strtolower($user_role), ['hr_admin', 'hr', 'admin'], true));
+if (!$isHrAdmin) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Forbidden - Only HR admins can approve']);
     exit;
