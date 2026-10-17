@@ -165,6 +165,10 @@ try {
             UPDATE ta_attendance
             SET time_out = :time_out,
                 recorded_by = 'QR',
+                is_approved = 1,
+                approved_by = NULL,
+                approval_remarks = 'Auto-approved',
+                approved_at = NOW(),
                 updated_at = NOW()
             WHERE attendance_id = :attendance_id
         ");
@@ -208,6 +212,10 @@ try {
                 SET time_in = :time_in,
                     recorded_by = 'QR',
                     status = 'PRESENT',
+                    is_approved = 1,
+                    approved_by = NULL,
+                    approval_remarks = 'Auto-approved',
+                    approved_at = NOW(),
                     updated_at = NOW()
                 WHERE attendance_id = :attendance_id
             ");
@@ -225,6 +233,10 @@ try {
                     time_in,
                     recorded_by,
                     status,
+                    is_approved,
+                    approved_by,
+                    approval_remarks,
+                    approved_at,
                     created_at,
                     updated_at
                 ) VALUES (
@@ -234,6 +246,10 @@ try {
                     :time_in,
                     'QR',
                     'PRESENT',
+                    1,
+                    NULL,
+                    'Auto-approved',
+                    NOW(),
                     NOW(),
                     NOW()
                 )

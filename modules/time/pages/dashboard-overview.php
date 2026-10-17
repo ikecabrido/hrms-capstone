@@ -37,7 +37,6 @@ $employeesNearTerminationCount = count($employeesNearTermination);
 $todayStats = $attendanceModel->getTodaySummary();
 $allEmployees = $employeeModel->getTotalCount('ACTIVE');
 $todayRecords = $attendanceModel->getTodayAllEmployees(100);
-$pendingApprovals = $attendanceModel->getPendingApprovals(10);
 
 // Get all active employees for QR Directory
 $activeEmployees = $employeeModel->getAll('Active');
@@ -304,16 +303,6 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         </div>
 
-                        <div class="kpi-card kpi-pending">
-                            <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">
-                                <i class="fas fa-clipboard-list"></i>
-                            </div>
-                            <div style="flex:1;">
-                                <div style="font-size:12px;opacity:0.95;font-weight:700;letter-spacing:0.6px;">PENDING APPROVALS</div>
-                                <div style="font-size:22px;font-weight:800;margin-top:6px;"> <?php echo count($pendingApprovals); ?></div>
-                                <div style="font-size:12px;opacity:0.95;margin-top:4px;">Manual entries</div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Middle column: Today's Attendance panel (full width of middle column) -->

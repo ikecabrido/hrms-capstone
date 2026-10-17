@@ -87,11 +87,17 @@ class AttendanceHolidayIntegration
             $holiday = HolidayHelper::getHolidayByDate($date);
 
             $query = "INSERT INTO ta_attendance 
-                     (employee_id, attendance_date, attendance_status, notes, created_at)
-                     VALUES (?, ?, ?, ?, NOW())
+                     (employee_id, attendance_date, attendance_status, notes, recorded_by, status, is_approved, approved_by, approval_remarks, approved_at, created_at)
+                     VALUES (?, ?, ?, ?, 'MANUAL', 'HOLIDAY', 1, NULL, 'Auto-approved', NOW(), NOW())
                      ON DUPLICATE KEY UPDATE
                      attendance_status = 'HOLIDAY',
                      notes = ?,
+                     recorded_by = COALESCE(recorded_by, 'MANUAL'),
+                     status = 'HOLIDAY',
+                     is_approved = 1,
+                     approved_by = NULL,
+                     approval_remarks = 'Auto-approved',
+                     approved_at = NOW(),
                      updated_at = NOW()";
 
             $stmt = $this->db->prepare($query);

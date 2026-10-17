@@ -87,8 +87,8 @@ class QRAttendanceController
 
                 // Insert new attendance record
                 $insertQuery = "INSERT INTO ta_attendance 
-                               (employee_id, attendance_date, time_in, status, recorded_by, shift_id) 
-                               VALUES (?, ?, ?, 'PRESENT', 'QR', ?)";
+                               (employee_id, attendance_date, time_in, status, recorded_by, shift_id, is_approved, approved_by, approval_remarks, approved_at) 
+                               VALUES (?, ?, ?, 'PRESENT', 'QR', ?, 1, NULL, 'Auto-approved', NOW())";
                 
                 $insertStmt = $this->conn->prepare($insertQuery);
                 if (!$insertStmt) {
@@ -107,7 +107,7 @@ class QRAttendanceController
                 $action = 'TIME_IN';
 
                 $updateQuery = "UPDATE ta_attendance 
-                               SET time_in = ?, status = 'PRESENT', recorded_by = 'QR'
+                               SET time_in = ?, status = 'PRESENT', recorded_by = 'QR', is_approved = 1, approved_by = NULL, approval_remarks = 'Auto-approved', approved_at = NOW()
                                WHERE attendance_id = ?";
                 
                 $updateStmt = $this->conn->prepare($updateQuery);
@@ -123,7 +123,7 @@ class QRAttendanceController
                 $action = 'TIME_OUT';
 
                 $updateQuery = "UPDATE ta_attendance 
-                               SET time_out = ?, status = 'COMPLETED'
+                               SET time_out = ?, status = 'COMPLETED', is_approved = 1, approved_by = NULL, approval_remarks = 'Auto-approved', approved_at = NOW()
                                WHERE attendance_id = ?";
                 
                 $updateStmt = $this->conn->prepare($updateQuery);

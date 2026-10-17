@@ -73,7 +73,7 @@ $countQ = $db->prepare("SELECT COUNT(attendance_id) AS cnt FROM ta_attendance WH
 $countQ->bindParam(':days_back', $daysBack, PDO::PARAM_INT);
 
 // Insert function
-$ins = $db->prepare("INSERT INTO ta_attendance (employee_id, shift_id, attendance_date, recorded_by, status, created_at, updated_at) VALUES (:employee_id, NULL, :attendance_date, 'SYSTEM', 'ABSENT', NOW(), NOW())");
+$ins = $db->prepare("INSERT INTO ta_attendance (employee_id, shift_id, attendance_date, recorded_by, status, is_approved, approved_by, approval_remarks, approved_at, created_at, updated_at) VALUES (:employee_id, NULL, :attendance_date, 'SYSTEM', 'ABSENT', 1, NULL, 'Auto-approved', NOW(), NOW(), NOW())");
 
 try {
     $db->beginTransaction();

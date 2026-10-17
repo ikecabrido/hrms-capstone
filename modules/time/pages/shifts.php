@@ -268,8 +268,8 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             <?php for ($d = 1; $d <= 6; $d++): ?>
                             <div class="weekday-row">
                                 <?php $__day_names = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; $__day_label = $__day_names[$d-1] ?? 'Day'; ?>
-                                <label class="weekday-label"><input type="checkbox" id="create_day_<?php echo $d; ?>_enabled" class="create-day-enabled"> <?php echo $__day_label; ?></label>
-                                <div id="create_day_<?php echo $d; ?>_controls" class="weekday-controls" style="display:none;">
+                                <label class="weekday-label"><input type="checkbox" id="create_day_<?php echo $d; ?>_enabled" class="create-day-enabled" onchange="toggleWeekdayControls(this)"> <?php echo $__day_label; ?></label>
+                                <div id="create_day_<?php echo $d; ?>_controls" class="weekday-controls">
                                     <div class="weekday-control-field">
                                         <label for="create_day_<?php echo $d; ?>_start">Start</label>
                                         <input type="time" id="create_day_<?php echo $d; ?>_start">
@@ -340,14 +340,14 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                     </div>
                     </div>
                     </div>
-                    <div class="edit-form-section">
+                    <div class="edit-form-section weekday-template-section">
                         <div class="edit-section-title"><i class="fas fa-calendar-week"></i><span>Weekday Template</span></div>
                         <div class="weekday-template-grid">
                             <?php for ($d = 1; $d <= 6; $d++): ?>
                             <div class="weekday-row">
                                 <?php $__day_names = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; $__day_label = $__day_names[$d-1] ?? 'Day'; ?>
-                                <label class="weekday-label"><input type="checkbox" id="edit_day_<?php echo $d; ?>_enabled"> <?php echo $__day_label; ?></label>
-                                <div id="edit_day_<?php echo $d; ?>_controls" class="weekday-controls" style="display:none;">
+                                <label class="weekday-label"><input type="checkbox" id="edit_day_<?php echo $d; ?>_enabled" class="edit-day-enabled" onchange="toggleWeekdayControls(this)"> <?php echo $__day_label; ?></label>
+                                <div id="edit_day_<?php echo $d; ?>_controls" class="weekday-controls">
                                     <div class="weekday-control-field">
                                         <label for="edit_day_<?php echo $d; ?>_start">Start</label>
                                         <input type="time" id="edit_day_<?php echo $d; ?>_start">
@@ -388,23 +388,22 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
             <form method="POST" class="shift-form" style="padding: 0;">
                 <div class="modal-body">
                     <!-- Search and Filter Section -->
-                    <div id="employeeSearchFilterContainer" style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
-                        <div style="flex: 1; min-width: 250px; position: relative;">
+                    <div id="employeeSearchFilterContainer">
+                        <div>
                             <input 
                                 type="text" 
                                 id="employeeSearchInput" 
-                                placeholder="Search employees..." 
-                                style="width: 100%; padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px;"
+                                placeholder="Search employees..."
                                 oninput="filterEmployeeList(this.value)"
                             >
                             <div id="selectedEmployeeDisplay" style="display:none; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius:6px; background:#fff; font-weight:600;">
                                 <!-- Filled dynamically in edit mode -->
                             </div>
                         </div>
-                        <button id="employeeSearchButton" type="button" class="btn btn-info" onclick="searchEmployees()" title="Search" style="padding: 10px 15px; display: flex; align-items: center; gap: 8px;">
+                        <button id="employeeSearchButton" type="button" class="btn btn-info" onclick="searchEmployees()" title="Search">
                             <i class="fas fa-search"></i>
                         </button>
-                        <select id="employeeFilterStatus" style="padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; cursor: pointer;" onchange="filterEmployeeByStatus(this.value)">
+                        <select id="employeeFilterStatus" onchange="filterEmployeeByStatus(this.value)">
                             <option value="">All Employees</option>
                             <option value="assigned">Assigned</option>
                             <option value="unassigned">Unassigned</option>
@@ -448,22 +447,6 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                     <div class="form-group">
                         <label for="effective_to"><i class="fas fa-calendar-times"></i> Effective To (Optional)</label>
                         <input type="date" id="effective_to" name="effective_to">
-                    </div>
-
-                    <!-- No Saturday Checkbox -->
-                    <div class="form-group" style="display: flex; align-items: center; gap: 12px; background: #f0f8ff; padding: 15px; border-radius: 6px; border-left: 4px solid #2196F3;">
-                        <input 
-                            type="checkbox" 
-                            id="exclude_saturday" 
-                            name="exclude_saturday"
-                            style="width: 20px; height: 20px; cursor: pointer;"
-                        >
-                        <label for="exclude_saturday" style="margin: 0; cursor: pointer; flex: 1;">
-                            <strong style="color: #1565c0;">No Saturday?</strong>
-                            <p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">
-                                Check this to exclude Saturdays from the shift assignment
-                            </p>
-                        </label>
                     </div>
 
                     <!-- Hidden field to store selected employees -->
@@ -686,5 +669,5 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
         </div>
     </div>
     </div>
-    <script src="<?= htmlspecialchars((ta_base_path() ?: '') . '/assets/js/shifts.js', ENT_QUOTES, 'UTF-8'); ?>"></script>
+    <script src="<?= htmlspecialchars((ta_base_path() ?: '') . '/assets/js/shifts.js?v=' . filemtime(__DIR__ . '/../assets/js/shifts.js'), ENT_QUOTES, 'UTF-8'); ?>"></script>
 

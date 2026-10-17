@@ -36,8 +36,6 @@ try {
     }
     if (empty($weekdays)) throw new Exception('No active weekday configuration for this shift');
 
-    $excludeSaturday = !empty($data['exclude_saturday']);
-
     $conn->beginTransaction();
 
     $interval = new DateInterval('P1D');
@@ -54,7 +52,6 @@ try {
             $dstr = $date->format('Y-m-d');
             $w = (int)$date->format('w');
             if ($w === 0) continue; // skip Sunday
-            if ($excludeSaturday && $w === 6) continue; // skip Saturday when requested
             if (empty($weekdays[$w])) continue;
 
             // deactivate overlaps

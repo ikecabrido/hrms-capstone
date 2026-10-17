@@ -176,7 +176,15 @@ class Attendance
 
         if ($existingRecord && empty($existingRecord['time_in'])) {
             $query = "UPDATE $this->table
-                      SET time_in = :time_in, recorded_by = :method, status = :status, late_minutes = :late_minutes, updated_at = CURRENT_TIMESTAMP
+                      SET time_in = :time_in,
+                          recorded_by = :method,
+                          status = :status,
+                          late_minutes = :late_minutes,
+                          is_approved = 1,
+                          approved_by = NULL,
+                          approval_remarks = 'Auto-approved',
+                          approved_at = NOW(),
+                          updated_at = CURRENT_TIMESTAMP
                       WHERE attendance_id = :attendance_id";
 
             $stmt = $this->conn->prepare($query);
@@ -190,8 +198,8 @@ class Attendance
         }
 
         $query = "INSERT INTO $this->table 
-                  (employee_id, time_in, attendance_date, recorded_by, status, late_minutes)
-                  VALUES (:employee_id, :time_in, :attendance_date, :method, :status, :late_minutes)";
+                  (employee_id, time_in, attendance_date, recorded_by, status, late_minutes, is_approved, approved_by, approval_remarks, approved_at)
+                  VALUES (:employee_id, :time_in, :attendance_date, :method, :status, :late_minutes, 1, NULL, 'Auto-approved', NOW())";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':employee_id', $employee_id);
@@ -216,7 +224,12 @@ class Attendance
         }
 
         $query = "UPDATE $this->table 
-                  SET time_out = :time_out, updated_at = CURRENT_TIMESTAMP
+                  SET time_out = :time_out,
+                      is_approved = 1,
+                      approved_by = NULL,
+                      approval_remarks = 'Auto-approved',
+                      approved_at = NOW(),
+                      updated_at = CURRENT_TIMESTAMP
                   WHERE attendance_id = :attendance_id
                   AND (time_out IS NULL OR time_out = '0000-00-00 00:00:00')";
 
@@ -244,7 +257,12 @@ class Attendance
         }
 
         $query = "UPDATE $this->table 
-                  SET time_out = :time_out, updated_at = CURRENT_TIMESTAMP
+                  SET time_out = :time_out,
+                      is_approved = 1,
+                      approved_by = NULL,
+                      approval_remarks = 'Auto-approved',
+                      approved_at = NOW(),
+                      updated_at = CURRENT_TIMESTAMP
                   WHERE attendance_id = :attendance_id
                   AND (time_out IS NULL OR time_out = '0000-00-00 00:00:00')";
 
@@ -349,54 +367,16 @@ class Attendance
     }
 
     /**
-     * Get pending approvals
-     */
-    public function getPendingApprovals($limit = 50, $offset = 0)
-    {
-        $query = "SELECT a.*, CONCAT(COALESCE(e.first_name, ''), ' ', COALESCE(e.last_name, '')) AS full_name,
-                 COALESCE(d.department_name, '') AS department
-              FROM $this->table a
-              JOIN em_employees e ON a.employee_id = e.employee_id
-              LEFT JOIN em_departments d ON e.department_id = d.department_id
-              WHERE a.is_approved = 0
-              ORDER BY a.created_at DESC
-              LIMIT :limit OFFSET :offset";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Approve attendance record
-     */
-    public function approve($attendance_id, $approved_by, $remarks = "")
-    {
-        $query = "UPDATE $this->table 
-                  SET is_approved = 1, 
-                      approved_by = :approved_by,
-                      approval_remarks = :remarks,
-                      approved_at = NOW()
-                  WHERE attendance_id = :attendance_id";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':attendance_id', $attendance_id);
-        $stmt->bindParam(':approved_by', $approved_by);
-        $stmt->bindParam(':remarks', $remarks);
-
-        return $stmt->execute();
-    }
-
-    /**
      * Update attendance status and optionally late minutes
      */
     public function updateStatus($attendance_id, $status, $late_minutes = null)
     {
         $query = "UPDATE $this->table 
-                  SET status = :status";
+                  SET status = :status,
+                      is_approved = 1,
+                      approved_by = NULL,
+                      approval_remarks = 'Auto-approved',
+                      approved_at = NOW()";
 
         if ($late_minutes !== null) {
             $query .= ", late_minutes = :late_minutes";
@@ -438,7 +418,7 @@ class Attendance
 
         // If a record exists but has no time_in, update it to ABSENT (idempotent)
         if ($existingRecord && empty($existingRecord['time_in'])) {
-            $query = "UPDATE {$this->table} SET status = 'ABSENT', recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP";
+            $query = "UPDATE {$this->table} SET status = 'ABSENT', recorded_by = 'SYSTEM', is_approved = 1, approved_by = NULL, approval_remarks = 'Auto-approved', approved_at = NOW(), updated_at = CURRENT_TIMESTAMP";
             $columnCheck = $this->conn->prepare("SHOW COLUMNS FROM {$this->table} LIKE 'notes'");
             $columnCheck->execute();
             if ($columnCheck->rowCount() > 0 && $notes !== null) {
@@ -463,8 +443,8 @@ class Attendance
         $hasNotesColumn = $columnCheck->rowCount() > 0;
 
         $query = "INSERT INTO {$this->table}
-                  (employee_id, attendance_date, status, recorded_by, late_minutes";
-        $values = ") VALUES (:employee_id, :attendance_date, 'ABSENT', 'SYSTEM', 0";
+                  (employee_id, attendance_date, status, recorded_by, late_minutes, is_approved, approved_by, approval_remarks, approved_at";
+        $values = ") VALUES (:employee_id, :attendance_date, 'ABSENT', 'SYSTEM', 0, 1, NULL, 'Auto-approved', NOW()";
 
         if ($hasNotesColumn) {
             $query .= ", notes";
@@ -508,7 +488,7 @@ class Attendance
         }
 
         if ($existingRecord && empty($existingRecord['time_in'])) {
-            $query = "UPDATE {$this->table} SET status = 'LATE', late_minutes = :late_minutes, recorded_by = 'SYSTEM', updated_at = CURRENT_TIMESTAMP";
+            $query = "UPDATE {$this->table} SET status = 'LATE', late_minutes = :late_minutes, recorded_by = 'SYSTEM', is_approved = 1, approved_by = NULL, approval_remarks = 'Auto-approved', approved_at = NOW(), updated_at = CURRENT_TIMESTAMP";
             $columnCheck = $this->conn->prepare("SHOW COLUMNS FROM {$this->table} LIKE 'notes'");
             $columnCheck->execute();
             if ($columnCheck->rowCount() > 0 && $notes !== null) {
@@ -530,8 +510,8 @@ class Attendance
         $hasNotesColumn = $columnCheck->rowCount() > 0;
 
         $query = "INSERT INTO {$this->table}
-                  (employee_id, attendance_date, status, recorded_by, late_minutes";
-        $values = ") VALUES (:employee_id, :attendance_date, 'LATE', 'SYSTEM', :late_minutes";
+                  (employee_id, attendance_date, status, recorded_by, late_minutes, is_approved, approved_by, approval_remarks, approved_at";
+        $values = ") VALUES (:employee_id, :attendance_date, 'LATE', 'SYSTEM', :late_minutes, 1, NULL, 'Auto-approved', NOW()";
 
         if ($hasNotesColumn) {
             $query .= ", notes";

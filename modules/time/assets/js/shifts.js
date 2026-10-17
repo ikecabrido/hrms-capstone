@@ -65,6 +65,107 @@
             window.openModal = openModal;
             window.closeModal = closeModal;
 
+            function findNearestCheckedDay(prefix, day) {
+                const candidates = [];
+                for (let d = day - 1; d >= 1; d--) candidates.push(d);
+                for (let d = day + 1; d <= 6; d++) candidates.push(d);
+
+                for (const candidate of candidates) {
+                    const checkbox = document.getElementById(prefix + '_day_' + candidate + '_enabled');
+                    if (checkbox && checkbox.checked) {
+                        return candidate;
+                    }
+                }
+                return null;
+            }
+
+            function prefillWeekdayTimesFromNearestCheckedDay(prefix, day) {
+                const startInput = document.getElementById(prefix + '_day_' + day + '_start');
+                const endInput = document.getElementById(prefix + '_day_' + day + '_end');
+                if (!startInput || !endInput) return;
+                if (startInput.value || endInput.value) return;
+
+                const nearestDay = findNearestCheckedDay(prefix, day);
+                if (nearestDay === null) return;
+
+                const nearestStartInput = document.getElementById(prefix + '_day_' + nearestDay + '_start');
+                const nearestEndInput = document.getElementById(prefix + '_day_' + nearestDay + '_end');
+                if (nearestStartInput && nearestStartInput.value && !startInput.value) {
+                    startInput.value = nearestStartInput.value;
+                }
+                if (nearestEndInput && nearestEndInput.value && !endInput.value) {
+                    endInput.value = nearestEndInput.value;
+                }
+            }
+
+            function validateWeekdayTemplate(prefix, contextLabel) {
+                const weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+                for (let d = 1; d <= 6; d++) {
+                    const checkbox = document.getElementById(prefix + '_day_' + d + '_enabled');
+                    if (!checkbox || !checkbox.checked) continue;
+
+                    const startInput = document.getElementById(prefix + '_day_' + d + '_start');
+                    const endInput = document.getElementById(prefix + '_day_' + d + '_end');
+                    const breakStartInput = document.getElementById(prefix + '_day_' + d + '_break_start');
+                    const breakEndInput = document.getElementById(prefix + '_day_' + d + '_break_end');
+
+                    const label = weekdayNames[d - 1] || 'Selected day';
+                    if (!startInput || !endInput || !startInput.value || !endInput.value) {
+                        alert(label + ' requires a start time and an end time before saving.');
+                        return false;
+                    }
+
+                    if (endInput.value <= startInput.value) {
+                        alert(label + ' end time must be after the start time.');
+                        return false;
+                    }
+
+                    const hasBreakStart = !!(breakStartInput && breakStartInput.value);
+                    const hasBreakEnd = !!(breakEndInput && breakEndInput.value);
+                    if (hasBreakStart !== hasBreakEnd) {
+                        alert(label + ' break start and break end must be entered together.');
+                        return false;
+                    }
+
+                    if (hasBreakStart && hasBreakEnd) {
+                        if (breakStartInput.value >= breakEndInput.value) {
+                            alert(label + ' break end time must be later than the break start time.');
+                            return false;
+                        }
+                        if (breakStartInput.value <= startInput.value || breakEndInput.value >= endInput.value) {
+                            alert(label + ' break times must be inside the shift start and end times.');
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            function toggleWeekdayControls(checkbox) {
+                if (!(checkbox instanceof HTMLElement)) return;
+                const row = checkbox.closest('.weekday-row');
+                const controls = row ? row.querySelector(':scope > .weekday-controls') : null;
+                if (!controls) return;
+
+                controls.style.display = checkbox.checked ? 'grid' : 'none';
+
+                if (checkbox.checked) {
+                    const match = checkbox.id.match(/^(create|edit)_day_(\d+)_enabled$/);
+                    if (!match) return;
+                    const prefix = match[1];
+                    const day = Number(match[2]);
+                    if (Number.isNaN(day)) return;
+                    prefillWeekdayTimesFromNearestCheckedDay(prefix, day);
+                }
+            }
+
+            window.toggleWeekdayControls = toggleWeekdayControls;
+            window.findNearestCheckedDay = findNearestCheckedDay;
+            window.prefillWeekdayTimesFromNearestCheckedDay = prefillWeekdayTimesFromNearestCheckedDay;
+            window.validateWeekdayTemplate = validateWeekdayTemplate;
+
             if (!window.__shiftModalHandlersBound) {
                 window.__shiftModalHandlersBound = true;
                 document.addEventListener('click', function (event) {
@@ -666,7 +767,6 @@ function initShiftsPage() {
             const shiftId = document.getElementById('shift_id').value;
             const effectiveFrom = document.getElementById('effective_from').value;
             const effectiveTo = document.getElementById('effective_to').value;
-            const excludeSaturday = document.getElementById('exclude_saturday').checked;
 
             if (!shiftId) {
                 alert('Please select a shift');
@@ -678,13 +778,11 @@ function initShiftsPage() {
                 return;
             }
 
-            // Send request to assign shift to multiple employees using template assign API
             const payload = {
                 shift_id: parseInt(shiftId, 10),
                 employees: Array.from(selectedEmployees).map(x => parseInt(x,10)),
                 start_date: effectiveFrom,
-                end_date: effectiveTo || effectiveFrom,
-                exclude_saturday: excludeSaturday ? 1 : 0
+                end_date: effectiveTo || effectiveFrom
             };
 
             fetch(TIME_API_ROOT + '/shifts/assign_to_template.php', {
@@ -699,7 +797,7 @@ function initShiftsPage() {
                 if (data.success) {
                     alert('Shifts assigned successfully to ' + selectedEmployees.size + ' employee(s)');
                     closeModal('assignmentModal');
-                    location.reload(); // Reload to see updates
+                    location.reload();
                 } else {
                     alert('Error: ' + (data.message || 'Failed to assign shifts'));
                 }
@@ -731,7 +829,6 @@ function initShiftsPage() {
             const shiftId = document.getElementById('shift_id').value;
             const effectiveFrom = document.getElementById('effective_from').value;
             const effectiveTo = document.getElementById('effective_to').value;
-            const excludeSaturday = document.getElementById('exclude_saturday').checked;
 
             if (!shiftId) {
                 alert('Please select a shift');
@@ -748,7 +845,6 @@ function initShiftsPage() {
             formData.append('shift_id', shiftId);
             formData.append('effective_from', effectiveFrom);
             formData.append('effective_to', effectiveTo || null);
-            formData.append('exclude_saturday', excludeSaturday ? '1' : '0');
 
             fetch(TIME_API_ROOT + '/update_employee_assignment.php', {
                 method: 'POST',
@@ -840,10 +936,6 @@ function initShiftsPage() {
                                 if (effFrom && activeAssign.effective_from) effFrom.value = (activeAssign.effective_from || '').split(' ')[0];
                                 const effTo = document.getElementById('effective_to');
                                 if (effTo) effTo.value = activeAssign.effective_to ? (activeAssign.effective_to.split ? activeAssign.effective_to.split(' ')[0] : activeAssign.effective_to) : '';
-                                const excl = document.getElementById('exclude_saturday');
-                                if (excl) {
-                                    excl.checked = !!activeAssign.exclude_saturday || false;
-                                }
                             }
                         }
                     } catch (err) {
@@ -858,13 +950,29 @@ function initShiftsPage() {
         };
 
         function openCreateShiftModal() {
-            // Reset the form completely
             const form = document.querySelector('#createShiftModal .shift-form');
             if (form) {
                 document.getElementById('shift_name').value = '';
                 document.getElementById('create_start_date').value = '';
                 document.getElementById('create_end_date').value = '';
             }
+
+            for (let d = 1; d <= 6; d++) {
+                const checkbox = document.getElementById('create_day_' + d + '_enabled');
+                const controls = document.getElementById('create_day_' + d + '_controls');
+                const startInput = document.getElementById('create_day_' + d + '_start');
+                const endInput = document.getElementById('create_day_' + d + '_end');
+                const breakStartInput = document.getElementById('create_day_' + d + '_break_start');
+                const breakEndInput = document.getElementById('create_day_' + d + '_break_end');
+
+                if (checkbox) checkbox.checked = false;
+                if (controls) controls.style.display = 'none';
+                if (startInput) startInput.value = '';
+                if (endInput) endInput.value = '';
+                if (breakStartInput) breakStartInput.value = '';
+                if (breakEndInput) breakEndInput.value = '';
+            }
+
             openModal('createShiftModal');
             try {
                 const today = new Date().toISOString().split('T')[0];
@@ -874,23 +982,6 @@ function initShiftsPage() {
                 if (endInput) { endInput.value = today; endInput.setAttribute('min', today); }
             } catch (e) { /* ignore */ }
         }
-
-        // Create shift: weekday toggles for create modal
-        function attachDayToggles(prefix) {
-            for (let d = 1; d <= 6; d++) {
-                const cb = document.getElementById(prefix + '_day_' + d + '_enabled');
-                const controls = document.getElementById(prefix + '_day_' + d + '_controls');
-                if (!cb || !controls) continue;
-                cb.addEventListener('change', function() {
-                    controls.style.display = cb.checked ? 'grid' : 'none';
-                });
-            }
-        }
-
-        (function initializeDayToggles() {
-            attachDayToggles('create');
-            attachDayToggles('edit');
-        })();
 
         // Handle Create Shift form submit
         const createShiftForm = document.getElementById('createShiftForm');
@@ -907,6 +998,7 @@ function initShiftsPage() {
             const endDate = document.getElementById('create_end_date').value;
             if (!shiftName) { alert('Shift name is required'); return; }
             if (!startDate || !endDate) { alert('Please set effective start and end dates'); return; }
+            if (!validateWeekdayTemplate('create')) return;
 
             const weekdays = {};
             for (let d = 1; d <= 6; d++) {
@@ -916,7 +1008,6 @@ function initShiftsPage() {
                 const e = document.getElementById('create_day_' + d + '_end').value;
                 const bs = document.getElementById('create_day_' + d + '_break_start').value || null;
                 const be = document.getElementById('create_day_' + d + '_break_end').value || null;
-                if (!s || !e) { alert('Start and end time required for selected weekdays'); return; }
                 weekdays[d] = { assigned: 1, start: s, end: e };
                 if (bs || be) { weekdays[d].break_start = bs; weekdays[d].break_end = be; }
             }
@@ -938,9 +1029,8 @@ function initShiftsPage() {
             }).catch(err => { console.error(err); alert('Network or server error'); });
         }
 
-        function openEditShiftModalSafe(shiftId, shiftName, startTime, endTime, breakDuration, description, isActive, excludeSaturday) {
+        function openEditShiftModalSafe(shiftId, shiftName, startTime, endTime, breakDuration, description, isActive) {
             try {
-                // Ensure values are the correct type
                 const params = {
                     shiftId: parseInt(shiftId),
                     shiftName: String(shiftName),
@@ -948,27 +1038,29 @@ function initShiftsPage() {
                     endTime: String(endTime),
                     breakDuration: parseInt(breakDuration) || 0,
                     description: String(description),
-                    isActive: Boolean(isActive && isActive !== 'false'),
-                    excludeSaturday: Boolean(excludeSaturday && excludeSaturday !== 'false')
+                    isActive: Boolean(isActive && isActive !== 'false')
                 };
-                
-                // Populate the edit modal with current values
+
                 const editForm = document.getElementById('editShiftModal');
                 if (!editForm) {
                     console.error('Edit shift modal not found');
                     return;
                 }
-                
+
                 document.getElementById('edit_shift_id').value = params.shiftId;
                 document.getElementById('edit_shift_name').value = params.shiftName;
                 document.getElementById('edit_start_time').value = params.startTime;
                 document.getElementById('edit_end_time').value = params.endTime;
                 document.getElementById('edit_break_duration').value = params.breakDuration;
                 document.getElementById('edit_description').value = params.description;
-                
-                console.log('Edit modal populated:', params);
-                
-                // Open the modal
+
+                for (let d = 1; d <= 6; d++) {
+                    const checkbox = document.getElementById('edit_day_' + d + '_enabled');
+                    const controls = document.getElementById('edit_day_' + d + '_controls');
+                    if (checkbox) checkbox.checked = false;
+                    if (controls) controls.style.display = 'none';
+                }
+
                 openModal('editShiftModal');
             } catch (error) {
                 console.error('Error opening edit modal:', error);
@@ -1526,8 +1618,6 @@ function initShiftsPage() {
                         if (effFrom && activeAssign.effective_from) effFrom.value = (activeAssign.effective_from || '').split(' ')[0];
                         const effTo = document.getElementById('effective_to');
                         if (effTo && activeAssign.effective_to) effTo.value = (activeAssign.effective_to || '').split ? activeAssign.effective_to.split(' ')[0] : activeAssign.effective_to;
-                        const excl = document.getElementById('exclude_saturday');
-                        if (excl) excl.checked = !!(activeAssign.exclude_saturday || activeAssign.excludeSaturday || false);
                     }
                 }
 
@@ -1827,6 +1917,8 @@ function initShiftsPage() {
         }
 
         function buildEditTemplateWeekdays() {
+            if (!validateWeekdayTemplate('edit')) return null;
+
             const weekdays = {};
             for (let d = 1; d <= 6; d++) {
                 const enabled = !!document.getElementById('edit_day_' + d + '_enabled')?.checked;
@@ -1836,10 +1928,6 @@ function initShiftsPage() {
                 const breakEnd = document.getElementById('edit_day_' + d + '_break_end')?.value || null;
 
                 if (enabled) {
-                    if (!start || !end) {
-                        alert('Please set both start and end times for all enabled weekdays.');
-                        return null;
-                    }
                     weekdays[d] = {
                         assigned: 1,
                         start: start,
@@ -1852,8 +1940,8 @@ function initShiftsPage() {
                         assigned: 0,
                         start: null,
                         end: null,
-                        break_start: breakStart,
-                        break_end: breakEnd
+                        break_start: null,
+                        break_end: null
                     };
                 }
             }

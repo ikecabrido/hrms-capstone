@@ -212,6 +212,7 @@ class LeaveAccrualRunner
             $startMonth = max($startMonth, $hireMonth, $yearStart);
         }
 
+        $months = [];
         $loopMonth = $startMonth;
         while (self::compareMonth($loopMonth, $currentMonth) <= 0) {
             if ($currentYearRow && !empty($currentYearRow['last_monthly_accrual_month']) && self::compareMonth($loopMonth, $currentYearRow['last_monthly_accrual_month']) <= 0) {
