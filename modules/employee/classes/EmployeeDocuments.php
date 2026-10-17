@@ -5,10 +5,10 @@ include_once __DIR__ . '/../../../database/db.php';
 /**
  * EmployeeDocuments
  *
- * Wraps `employee_documents` (uploaded files) and `employee_requirements`
+ * Wraps `em_documents` (uploaded files) and `em_requirements`
  * (document checklist), both FK employee_id -> em_employees.employee_id
- * ON DELETE CASCADE. employee_requirements.document_id FK ->
- * employee_documents.document_id ON DELETE SET NULL.
+ * ON DELETE CASCADE. em_requirements.document_id FK ->
+ * em_documents.document_id ON DELETE SET NULL.
  *
  * Uploaded files are stored on disk under /assets/documents/YYYY/MM/,
  * matching the path convention already present in the current data
@@ -28,12 +28,12 @@ class EmployeeDocuments
         }
     }
 
-    // ---------- employee_documents ----------
+    // ---------- em_documents ----------
 
     public function getDocuments($employeeId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_documents WHERE employee_id = :employee_id ORDER BY created_at DESC"
+            "SELECT * FROM em_documents WHERE employee_id = :employee_id ORDER BY created_at DESC"
         );
         $stmt->execute([':employee_id' => $employeeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -42,7 +42,7 @@ class EmployeeDocuments
     public function getDocumentById($documentId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_documents WHERE document_id = :id LIMIT 1"
+            "SELECT * FROM em_documents WHERE document_id = :id LIMIT 1"
         );
         $stmt->execute([':id' => $documentId]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
@@ -57,7 +57,7 @@ class EmployeeDocuments
     public function addDocument($employeeId, $uploadedBy, array $fileMeta)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_documents
+            "INSERT INTO em_documents
                 (employee_id, document_name, document_type, file_path, file_name,
                  file_size, uploaded_by, mime_type, category, expiry_date)
              VALUES
@@ -83,19 +83,19 @@ class EmployeeDocuments
     public function deleteDocument($documentId, $employeeId)
     {
         $stmt = $this->conn->prepare(
-            "DELETE FROM employee_documents WHERE document_id = :id AND employee_id = :employee_id"
+            "DELETE FROM em_documents WHERE document_id = :id AND employee_id = :employee_id"
         );
         return $stmt->execute([':id' => $documentId, ':employee_id' => $employeeId]);
     }
 
-    // ---------- employee_requirements ----------
+    // ---------- em_requirements ----------
 
     public function getRequirements($employeeId)
     {
         $stmt = $this->conn->prepare(
             "SELECT r.*, d.file_name, d.file_path
-             FROM employee_requirements r
-             LEFT JOIN employee_documents d ON r.document_id = d.document_id
+             FROM em_requirements r
+             LEFT JOIN em_documents d ON r.document_id = d.document_id
              WHERE r.employee_id = :employee_id
              ORDER BY r.requirement_id"
         );
@@ -106,7 +106,7 @@ class EmployeeDocuments
     public function addRequirement($employeeId, array $data)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_requirements
+            "INSERT INTO em_requirements
                 (employee_id, document_id, requirement_name, status, remarks, submitted_date, follow_up_date)
              VALUES
                 (:employee_id, :document_id, :requirement_name, :status, :remarks, :submitted_date, :follow_up_date)"
@@ -125,7 +125,7 @@ class EmployeeDocuments
     public function updateRequirementStatus($requirementId, $employeeId, array $data)
     {
         $stmt = $this->conn->prepare(
-            "UPDATE employee_requirements
+            "UPDATE em_requirements
              SET status = :status,
                  remarks = :remarks,
                  submitted_date = :submitted_date,
@@ -147,7 +147,7 @@ class EmployeeDocuments
     public function deleteRequirement($requirementId, $employeeId)
     {
         $stmt = $this->conn->prepare(
-            "DELETE FROM employee_requirements WHERE requirement_id = :id AND employee_id = :employee_id"
+            "DELETE FROM em_requirements WHERE requirement_id = :id AND employee_id = :employee_id"
         );
         return $stmt->execute([':id' => $requirementId, ':employee_id' => $employeeId]);
     }
@@ -158,7 +158,7 @@ class EmployeeDocuments
     public function getRequirementStatusCounts()
     {
         $stmt = $this->conn->query(
-            "SELECT status, COUNT(*) AS cnt FROM employee_requirements GROUP BY status"
+            "SELECT status, COUNT(*) AS cnt FROM em_requirements GROUP BY status"
         );
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

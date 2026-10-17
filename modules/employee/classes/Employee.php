@@ -244,7 +244,7 @@ class Employee
     /**
      * Update an existing employee's core record.
      * Returns an array of [field => [old, new]] for fields that actually changed
-     * (used by the controller to write employee_change_history entries).
+     * (used by the controller to write em_change_history entries).
      */
     public function updateEmployee($employeeId, array $data)
     {

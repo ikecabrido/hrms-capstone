@@ -9,10 +9,10 @@ include_once __DIR__ . '/../../../database/db.php';
  * employee_id -> em_employees.employee_id ON DELETE CASCADE):
  *  - em_education            (authoritative education table per approval;
  *                              employee_education is NOT used)
- *  - employee_certifications
- *  - employee_skills
- *  - employee_languages
- *  - employee_work_experience (authoritative work-history table per approval;
+ *  - em_certifications
+ *  - em_skills
+ *  - em_languages
+ *  - em_work_experience (authoritative work-history table per approval;
  *                              employment_history is NOT used)
  */
 class EmployeeRecords
@@ -66,12 +66,12 @@ class EmployeeRecords
         return $stmt->execute([':id' => $educationId, ':employee_id' => $employeeId]);
     }
 
-    // ---------- employee_certifications ----------
+    // ---------- em_certifications ----------
 
     public function getCertifications($employeeId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_certifications WHERE employee_id = :employee_id ORDER BY cert_id"
+            "SELECT * FROM em_certifications WHERE employee_id = :employee_id ORDER BY cert_id"
         );
         $stmt->execute([':employee_id' => $employeeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -80,7 +80,7 @@ class EmployeeRecords
     public function addCertification($employeeId, array $data)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_certifications
+            "INSERT INTO em_certifications
                 (employee_id, cert_name, issuing_organization, date_issued, expiry_date)
              VALUES
                 (:employee_id, :cert_name, :issuing_organization, :date_issued, :expiry_date)"
@@ -97,17 +97,17 @@ class EmployeeRecords
     public function deleteCertification($certId, $employeeId)
     {
         $stmt = $this->conn->prepare(
-            "DELETE FROM employee_certifications WHERE cert_id = :id AND employee_id = :employee_id"
+            "DELETE FROM em_certifications WHERE cert_id = :id AND employee_id = :employee_id"
         );
         return $stmt->execute([':id' => $certId, ':employee_id' => $employeeId]);
     }
 
-    // ---------- employee_skills ----------
+    // ---------- em_skills ----------
 
     public function getSkills($employeeId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_skills WHERE employee_id = :employee_id ORDER BY skill_id"
+            "SELECT * FROM em_skills WHERE employee_id = :employee_id ORDER BY skill_id"
         );
         $stmt->execute([':employee_id' => $employeeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -116,7 +116,7 @@ class EmployeeRecords
     public function addSkill($employeeId, array $data)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_skills (employee_id, skill_name, proficiency)
+            "INSERT INTO em_skills (employee_id, skill_name, proficiency)
              VALUES (:employee_id, :skill_name, :proficiency)"
         );
         return $stmt->execute([
@@ -129,17 +129,17 @@ class EmployeeRecords
     public function deleteSkill($skillId, $employeeId)
     {
         $stmt = $this->conn->prepare(
-            "DELETE FROM employee_skills WHERE skill_id = :id AND employee_id = :employee_id"
+            "DELETE FROM em_skills WHERE skill_id = :id AND employee_id = :employee_id"
         );
         return $stmt->execute([':id' => $skillId, ':employee_id' => $employeeId]);
     }
 
-    // ---------- employee_languages ----------
+    // ---------- em_languages ----------
 
     public function getLanguages($employeeId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_languages WHERE employee_id = :employee_id ORDER BY language_id"
+            "SELECT * FROM em_languages WHERE employee_id = :employee_id ORDER BY language_id"
         );
         $stmt->execute([':employee_id' => $employeeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -148,7 +148,7 @@ class EmployeeRecords
     public function addLanguage($employeeId, array $data)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_languages (employee_id, language_name, proficiency)
+            "INSERT INTO em_languages (employee_id, language_name, proficiency)
              VALUES (:employee_id, :language_name, :proficiency)"
         );
         return $stmt->execute([
@@ -161,17 +161,17 @@ class EmployeeRecords
     public function deleteLanguage($languageId, $employeeId)
     {
         $stmt = $this->conn->prepare(
-            "DELETE FROM employee_languages WHERE language_id = :id AND employee_id = :employee_id"
+            "DELETE FROM em_languages WHERE language_id = :id AND employee_id = :employee_id"
         );
         return $stmt->execute([':id' => $languageId, ':employee_id' => $employeeId]);
     }
 
-    // ---------- employee_work_experience ----------
+    // ---------- em_work_experience ----------
 
     public function getWorkExperience($employeeId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_work_experience WHERE employee_id = :employee_id ORDER BY start_date DESC"
+            "SELECT * FROM em_work_experience WHERE employee_id = :employee_id ORDER BY start_date DESC"
         );
         $stmt->execute([':employee_id' => $employeeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -180,7 +180,7 @@ class EmployeeRecords
     public function addWorkExperience($employeeId, array $data)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_work_experience
+            "INSERT INTO em_work_experience
                 (employee_id, company_name, position, start_date, end_date, salary, reason_for_leaving)
              VALUES
                 (:employee_id, :company_name, :position, :start_date, :end_date, :salary, :reason_for_leaving)"
@@ -199,7 +199,7 @@ class EmployeeRecords
     public function deleteWorkExperience($workExpId, $employeeId)
     {
         $stmt = $this->conn->prepare(
-            "DELETE FROM employee_work_experience WHERE work_exp_id = :id AND employee_id = :employee_id"
+            "DELETE FROM em_work_experience WHERE work_exp_id = :id AND employee_id = :employee_id"
         );
         return $stmt->execute([':id' => $workExpId, ':employee_id' => $employeeId]);
     }

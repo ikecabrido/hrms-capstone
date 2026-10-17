@@ -5,7 +5,7 @@ include_once __DIR__ . '/../../../database/db.php';
 /**
  * EmployeeHistory
  *
- * Wraps `employee_change_history`, the existing audit-log table.
+ * Wraps `em_change_history`, the existing audit-log table.
  * FK employee_id -> em_employees.employee_id ON DELETE CASCADE.
  *
  * Columns (verified): change_id, employee_id, change_type, user_id,
@@ -29,7 +29,7 @@ class EmployeeHistory
     public function getHistoryForEmployee($employeeId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_change_history
+            "SELECT * FROM em_change_history
              WHERE employee_id = :employee_id
              ORDER BY created_at DESC"
         );
@@ -46,7 +46,7 @@ class EmployeeHistory
         $limit = (int) $limit;
         $stmt = $this->conn->prepare(
             "SELECT h.*, e.first_name, e.last_name, e.employee_code
-             FROM employee_change_history h
+             FROM em_change_history h
              LEFT JOIN em_employees e ON h.employee_id = e.employee_id
              ORDER BY h.created_at DESC
              LIMIT $limit"
@@ -62,7 +62,7 @@ class EmployeeHistory
     public function logChange($employeeId, $changeType, $fieldName, $oldValue, $newValue, $updatedBy = null, $userId = null, $remarks = null, $changeReason = null)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_change_history
+            "INSERT INTO em_change_history
                 (employee_id, change_type, user_id, field_name, old_value, new_value,
                  effective_date, remarks, updated_by, ip_address, change_reason)
              VALUES

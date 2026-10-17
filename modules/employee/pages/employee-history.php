@@ -18,7 +18,7 @@ $changeTypes = [
 
 <div class="module-header">
     <h1>Employee History</h1>
-    <p>Audit log of changes made to employee records (sourced from <code>employee_change_history</code>).</p>
+    <p>Audit log of changes made to employee records (sourced from <code>em_change_history</code>).</p>
 </div>
 
 <div class="module-content">

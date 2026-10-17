@@ -9,8 +9,8 @@ include_once __DIR__ . '/../../../database/db.php';
  *  - em_personal_information (1:1 per employee)
  *  - em_family_background (1:1 per employee)
  *  - em_government_ids (1:1 per employee)
- *  - employee_dependents (1:many)
- *  - employee_emergency_contacts (1:many)
+ *  - em_dependents (1:many)
+ *  - em_emergency_contacts (1:many)
  *
  * All FKs are employee_id -> em_employees.employee_id ON DELETE CASCADE.
  */
@@ -145,12 +145,12 @@ class EmployeeProfile
         return $stmt->execute($values);
     }
 
-    // ---------- employee_dependents (1:many) ----------
+    // ---------- em_dependents (1:many) ----------
 
     public function getDependents($employeeId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_dependents WHERE employee_id = :employee_id ORDER BY dependent_id"
+            "SELECT * FROM em_dependents WHERE employee_id = :employee_id ORDER BY dependent_id"
         );
         $stmt->execute([':employee_id' => $employeeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -159,7 +159,7 @@ class EmployeeProfile
     public function addDependent($employeeId, array $data)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_dependents (employee_id, name, relationship, birth_date)
+            "INSERT INTO em_dependents (employee_id, name, relationship, birth_date)
              VALUES (:employee_id, :name, :relationship, :birth_date)"
         );
         return $stmt->execute([
@@ -174,17 +174,17 @@ class EmployeeProfile
     {
         // employee_id included in WHERE to prevent cross-employee deletion via id guessing
         $stmt = $this->conn->prepare(
-            "DELETE FROM employee_dependents WHERE dependent_id = :id AND employee_id = :employee_id"
+            "DELETE FROM em_dependents WHERE dependent_id = :id AND employee_id = :employee_id"
         );
         return $stmt->execute([':id' => $dependentId, ':employee_id' => $employeeId]);
     }
 
-    // ---------- employee_emergency_contacts (1:many) ----------
+    // ---------- em_emergency_contacts (1:many) ----------
 
     public function getEmergencyContacts($employeeId)
     {
         $stmt = $this->conn->prepare(
-            "SELECT * FROM employee_emergency_contacts WHERE employee_id = :employee_id ORDER BY contact_id"
+            "SELECT * FROM em_emergency_contacts WHERE employee_id = :employee_id ORDER BY contact_id"
         );
         $stmt->execute([':employee_id' => $employeeId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -193,7 +193,7 @@ class EmployeeProfile
     public function addEmergencyContact($employeeId, array $data)
     {
         $stmt = $this->conn->prepare(
-            "INSERT INTO employee_emergency_contacts (employee_id, name, relationship, contact_number, address)
+            "INSERT INTO em_emergency_contacts (employee_id, name, relationship, contact_number, address)
              VALUES (:employee_id, :name, :relationship, :contact_number, :address)"
         );
         return $stmt->execute([
@@ -208,7 +208,7 @@ class EmployeeProfile
     public function deleteEmergencyContact($contactId, $employeeId)
     {
         $stmt = $this->conn->prepare(
-            "DELETE FROM employee_emergency_contacts WHERE contact_id = :id AND employee_id = :employee_id"
+            "DELETE FROM em_emergency_contacts WHERE contact_id = :id AND employee_id = :employee_id"
         );
         return $stmt->execute([':id' => $contactId, ':employee_id' => $employeeId]);
     }

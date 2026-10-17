@@ -296,6 +296,8 @@ function createEmployee()
     }
 
     try {
+        $conn->beginTransaction();
+
         $employeeClass = new Employee($conn);
         $newId = $employeeClass->createEmployee($_POST);
 
@@ -305,9 +307,16 @@ function createEmployee()
             $currentEmployeeName, $currentUserId, 'New employee record created.'
         );
 
+        $conn->commit();
         echo json_encode(['success' => true, 'message' => 'Employee created successfully.', 'employee_id' => $newId]);
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'Failed to create employee: ' . $e->getMessage()]);
+    } catch (Throwable $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+
+        error_log($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Server error']);
     }
 }
 
@@ -1109,7 +1118,7 @@ function renewContract()
         ]);
 
         // Optional contract document, reusing the existing document-upload
-        // pipeline/table (employee_documents) — no new table created.
+        // pipeline/table (em_documents) — no new table created.
         if (!empty($_FILES['contract_document']) && $_FILES['contract_document']['error'] !== UPLOAD_ERR_NO_FILE) {
             if ($_FILES['contract_document']['error'] !== UPLOAD_ERR_OK) {
                 logContractRenewalHistory($employeeId, $previousEndDate, $contractEnd, $currentEmployeeName, $currentUserId, $remarks);
@@ -1144,7 +1153,7 @@ function renewContract()
 }
 
 /**
- * Logs the renewal to the existing employee_change_history audit table.
+ * Logs the renewal to the existing em_change_history audit table.
  * Kept separate from Contract Renewal History (em_contract_renewals) —
  * they serve different purposes, per the existing EmployeeHistory class.
  */

@@ -246,7 +246,7 @@ $selectedEmployeeId = isset($_GET['employee_id']) ? (int) $_GET['employee_id'] :
                 </div>
             </div>
 
-            <!-- Work Experience (employee_work_experience) -->
+            <!-- Work Experience (em_work_experience) -->
             <div id="tab-workexp" class="tab-content">
                 <div class="form-section">
                     <h3>Work Experience</h3>
