@@ -180,7 +180,7 @@ class PayrollModel
             FROM ta_attendance
             WHERE employee_id = :employee_id
               AND attendance_date BETWEEN :start_date AND :end_date
-              AND is_approved = 1
+             
         ");
         $stmt->execute([
             ':employee_id' => $employeeId,
@@ -734,7 +734,7 @@ class PayrollModel
             FROM ta_attendance
             WHERE employee_id = :employee_id
               AND attendance_date = :attendance_date
-              AND is_approved = 1
+              
         ");
         $stmt->execute([
             ':employee_id' => $employeeId,
@@ -1091,7 +1091,7 @@ class PayrollModel
         FROM ta_attendance
         WHERE employee_id = :employee_id
           AND attendance_date BETWEEN :start_date AND :end_date
-          AND is_approved = 1
+         
     ");
         $stmt->execute([
             ':employee_id' => $employeeId,
@@ -1201,9 +1201,7 @@ class PayrollModel
             $period['end_date']
         );
         foreach ($attendanceRows as $row) {
-            if ((int)$row['is_approved'] !== 1) {
-                continue;
-            }
+
             if (in_array($row['status'], ['PRESENT', 'LATE', 'EARLY_OUT'], true)) {
                 $payableDates[$row['attendance_date']] = true;
             }
