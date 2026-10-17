@@ -26,7 +26,7 @@ class Database
             // Local development configuration
             $this->host = "localhost";
             $this->port = "3306";
-            $this->db   = "payroll_test";
+            $this->db   = "bestlink";
             $this->user = "root";
             $this->pass = "";
         }

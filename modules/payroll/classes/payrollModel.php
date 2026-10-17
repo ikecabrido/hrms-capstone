@@ -622,13 +622,13 @@ class PayrollModel
             $classifiedClasses[] = $class;
         }
 
-        $isHoliday = $this->isPaidHoliday($date);
+
         $isPaidLeave = $this->isPaidLeaveDate(
             $employeeId,
             $date
         );
 
-        if ($isHoliday || $isPaidLeave) {
+        if ($isPaidLeave) {
             // Paid holiday/leave covers regular teaching load only.
             $regularHours = $regularScheduledHours;
             $overloadHours = 0.0;
@@ -666,7 +666,6 @@ class PayrollModel
             'regular_gross' => round($regularGross, 2),
             'overload_gross' => round($overloadGross, 2),
             'gross' => round($gross, 2),
-            'is_holiday' => $isHoliday,
             'is_paid_leave' => $isPaidLeave,
             'qualification' => $employee['graduate_level'] ?? 'None'
         ];
@@ -696,7 +695,7 @@ class PayrollModel
                 $semesterId
             );
 
-            if ($daily['total_hours'] > 0 || $daily['is_holiday'] || $daily['is_paid_leave']) {
+            if ($daily['total_hours'] > 0 || $daily['is_paid_leave']) {
                 $days[] = $daily;
                 $totalRegularHours += $daily['regular_hours'];
                 $totalOverloadHours += $daily['overload_hours'];
@@ -748,18 +747,7 @@ class PayrollModel
         ];
     }
 
-    private function isPaidHoliday(string $date): bool
-    {
-        $stmt = $this->db->prepare("
-            SELECT COUNT(*)
-            FROM ta_holidays
-            WHERE holiday_date = :holiday_date
-              AND is_active = 1
-              AND is_working_day = 0
-        ");
-        $stmt->execute([':holiday_date' => $date]);
-        return (int)$stmt->fetchColumn() > 0;
-    }
+
 
     private function isPaidLeaveDate(int $employeeId, string $date): bool
     {
@@ -1187,12 +1175,9 @@ class PayrollModel
             $period['start_date'],
             $period['end_date']
         );
-        $holidayDates = $this->getPaidHolidayDates(
-            $period['start_date'],
-            $period['end_date']
-        );
 
-        $payableDates = [];
+        // Dates the employee actually has an attendance record for.
+        $workedDates = [];
 
         // Approved attendance counts as a payable workday.
         $attendanceRows = $this->getAttendanceRecords(
@@ -1203,37 +1188,71 @@ class PayrollModel
         foreach ($attendanceRows as $row) {
 
             if (in_array($row['status'], ['PRESENT', 'LATE', 'EARLY_OUT'], true)) {
-                $payableDates[$row['attendance_date']] = true;
+                $workedDates[$row['attendance_date']] = true;
             }
         }
 
-        // Approved leave is paid.
-        foreach ($approvedLeaveDates as $date => $_leave) {
-            $payableDates[$date] = true;
-        }
 
-        // Non-working holidays are paid when they fall on a normal
-        // Monday-Saturday workday. Existing attendance on that date is
-        // already represented by the same date key, preventing double pay.
-        foreach ($holidayDates as $date) {
-            $dayOfWeek = date('N', strtotime($date));
-            if ($dayOfWeek <= 6) {
-                $payableDates[$date] = true;
+        $leaveOnlyDates = []; // date => leave info
+        foreach ($approvedLeaveDates as $date => $leave) {
+            if (!isset($workedDates[$date])) {
+                $leaveOnlyDates[$date] = $leave;
             }
         }
 
-        $payableDays = count($payableDates);
-        $gross = $dailyRate * $payableDays;
+        $workedDays = count($workedDates);
+        $leaveDays = count($leaveOnlyDates);
+        $payableDays = $workedDays + $workedDays + $leaveDays;
+
+        // Earning lines shown on the payroll breakdown and the payslip.
+        $rateText = number_format($dailyRate, 2);
+        $earningLines = [];
+
+        if ($workedDays > 0) {
+            $earningLines[] = [
+                'description' => 'Daily Rate (' . $rateText . ' × ' .
+                    number_format($workedDays, 2) . ' days worked)',
+                'amount' => round($dailyRate * $workedDays, 2)
+            ];
+        }
+
+        $leaveByType = [];
+        foreach ($leaveOnlyDates as $leave) {
+            $type = $leave['leave_type_name'] ?? 'Leave';
+            $leaveByType[$type] = ($leaveByType[$type] ?? 0) + 1;
+        }
+        foreach ($leaveByType as $type => $days) {
+            $earningLines[] = [
+                'description' => 'Paid Leave - ' . $type . ' (' . $rateText .
+                    ' × ' . number_format($days, 2) . ' days)',
+                'amount' => round($dailyRate * $days, 2)
+            ];
+        }
+
+
+        if (!$earningLines) {
+            $earningLines[] = [
+                'description' => 'Daily Rate (' . $rateText . ' × 0.00 days worked)',
+                'amount' => 0.00
+            ];
+        }
+
+        // Gross is the sum of the displayed lines, so the payslip always adds up.
+        $gross = 0.0;
+        foreach ($earningLines as $line) {
+            $gross += $line['amount'];
+        }
 
         return [
             'gross' => round($gross, 2),
             'salary' => $salary,
             'daily_rate' => round($dailyRate, 2),
             'payable_days' => $payableDays,
+            'worked_days' => $workedDays,
+            'earning_lines' => $earningLines,
             'days_worked' => (int)$attendance['present_days'],
             'absent_days' => (int)$attendance['absent_days'],
-            'paid_leave_days' => count($approvedLeaveDates),
-            'paid_holiday_days' => count($holidayDates),
+            'paid_leave_days' => $leaveDays,
             'hours_worked' => (float)$attendance['total_hours_worked'],
             'late_minutes' => (int)$attendance['total_late_minutes']
         ];
@@ -1271,28 +1290,8 @@ class PayrollModel
         return $dates;
     }
 
-    private function getPaidHolidayDates(
-        string $startDate,
-        string $endDate
-    ): array {
-        $stmt = $this->db->prepare("
-            SELECT holiday_date
-            FROM ta_holidays
-            WHERE holiday_date BETWEEN :start_date AND :end_date
-              AND is_active = 1
-              AND is_working_day = 0
-            ORDER BY holiday_date
-        ");
-        $stmt->execute([
-            ':start_date' => $startDate,
-            ':end_date' => $endDate
-        ]);
 
-        return array_map(
-            static fn($row) => $row['holiday_date'],
-            $stmt->fetchAll(PDO::FETCH_ASSOC)
-        );
-    }
+
 
     /* ============================================================
        MAIN PAYROLL CALCULATION
@@ -1360,11 +1359,9 @@ class PayrollModel
 
             foreach ($facultyPayroll['days'] as $day) {
                 if ($day['regular_gross'] > 0) {
-                    $label = $day['is_holiday']
-                        ? 'Faculty Regular Holiday Pay'
-                        : ($day['is_paid_leave']
-                            ? 'Faculty Regular Paid Leave'
-                            : 'Faculty Regular Teaching Pay');
+                    $label =  ($day['is_paid_leave']
+                        ? 'Faculty Regular Paid Leave'
+                        : 'Faculty Regular Teaching Pay');
 
                     $earnings[] = [
                         'description' => $label . ' - ' .
@@ -1415,13 +1412,11 @@ class PayrollModel
             );
             $grossPay = $result['gross'];
 
-            $earnings[] = [
-                'description' => 'Daily Rate (' .
-                    number_format($result['daily_rate'], 2) .
-                    ' × ' . number_format($result['payable_days'], 2) .
-                    ' payable days)',
-                'amount' => $grossPay
-            ];
+            // One line per reason a day is paid (worked / paid leave /
+            // holiday), so a payable day with no attendance is explained.
+            foreach ($result['earning_lines'] as $line) {
+                $earnings[] = $line;
+            }
         }
 
         /* ========================================================

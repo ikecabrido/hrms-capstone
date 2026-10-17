@@ -513,21 +513,9 @@ if (realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
      * back to null — which PayrollModel already treats as "no SMS data
      * available" (faculty schedule methods simply return []).
      */
-    function pp_get_sms_connection(): ?PDO
-    {
-        try {
-            $dsn = 'mysql:host=localhost;dbname=demo;charset=utf8';
-            return new PDO($dsn, 'root', '', [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]);
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
 
     $db = (new Database())->getConnection();
-    $smsDb = pp_get_sms_connection();
+    $smsDb = $db;
     $controller = new PayrollController($db, $smsDb);
 
     $action = $_REQUEST['action'] ?? '';
