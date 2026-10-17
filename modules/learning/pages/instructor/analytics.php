@@ -76,7 +76,7 @@ try {
     $studentLeaderboard = $pdo->prepare("
         SELECT e.learner_id,
             CONCAT(emp.first_name, ' ', emp.last_name) AS learner_name,
-            emp.position_id AS learner_position,
+            pos.position_name AS learner_position,
             COUNT(DISTINCT e.course_id) AS courses_enrolled,
             SUM(CASE WHEN e.status = 'completed' THEN 1 ELSE 0 END) AS courses_completed,
             ROUND(COALESCE(AVG(g.final_score),0),1) AS avg_score,
@@ -84,9 +84,10 @@ try {
         FROM ld_enrollment e
         JOIN ld_course c ON c.id = e.course_id
         LEFT JOIN em_employees emp ON emp.employee_id = e.learner_id
+        LEFT JOIN em_positions pos ON pos.position_id = emp.position_id
         LEFT JOIN ld_grade g ON g.learner_id = e.learner_id AND g.course_id = e.course_id
         WHERE c.instructor_id = :iid AND e.status IN ('enrolled','in_progress','completed')
-        GROUP BY e.learner_id, emp.first_name, emp.last_name, emp.position_id
+        GROUP BY e.learner_id, emp.first_name, emp.last_name, pos.position_name
         ORDER BY avg_score DESC, courses_completed DESC
         LIMIT 20
     ");
@@ -149,7 +150,8 @@ try {
             SUM(CASE WHEN g.final_score >= 90 THEN 1 ELSE 0 END) AS grade_a,
             SUM(CASE WHEN g.final_score >= 80 AND g.final_score < 90 THEN 1 ELSE 0 END) AS grade_b,
             SUM(CASE WHEN g.final_score >= 70 AND g.final_score < 80 THEN 1 ELSE 0 END) AS grade_c,
-            SUM(CASE WHEN g.final_score < 70 THEN 1 ELSE 0 END) AS grade_f,
+            SUM(CASE WHEN g.final_score >= 60 AND g.final_score < 70 THEN 1 ELSE 0 END) AS grade_d,
+            SUM(CASE WHEN g.final_score < 60 THEN 1 ELSE 0 END) AS grade_f,
             COUNT(*) AS total
         FROM ld_grade g JOIN ld_course c ON c.id = g.course_id WHERE c.instructor_id = :iid
     ");
@@ -176,428 +178,528 @@ try {
 $totalEnroll = $stats['completed'] + $stats['in_progress'];
 $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) * 100) : 0;
 ?>
-<div class="module-content analytics-dashboard">
-    <div class="toolbar">
-        
-    </div>
-
-    <!-- Primary Stats -->
-    <div class="analytics-cards" style="margin-bottom:1.5rem;">
-        <div class="analytics-card" style="border-top:3px solid var(--primary);cursor:pointer;" onclick="document.querySelector('[data-tab=tab-overview]').click()">
-            <h2><i class="fas fa-graduation-cap" style="margin-right:0.4rem;opacity:0.6;"></i> Courses</h2>
-            <p class="analytics-value"><?= $stats['my_courses'] ?></p>
-            <div style="font-size:0.85rem;color:#999;"><?= $stats['my_modules'] ?> modules &bull; <?= $stats['total_quizzes'] ?> quizzes</div>
-        </div>
-        <div class="analytics-card" style="border-top:3px solid var(--primary);cursor:pointer;" onclick="document.querySelector('[data-tab=tab-students]').click()">
-            <h2><i class="fas fa-users" style="margin-right:0.4rem;opacity:0.6;"></i> Learners</h2>
-            <p class="analytics-value"><?= $stats['my_learners'] ?></p>
-            <div style="font-size:0.85rem;color:#999;"><?= $stats['completed'] ?> completed &bull; <?= $stats['in_progress'] ?> active</div>
-        </div>
-        <div class="analytics-card" style="border-top:3px solid var(--accent);">
-            <h2><i class="fas fa-star" style="margin-right:0.4rem;opacity:0.6;"></i> Avg Score</h2>
-            <p class="analytics-value"><?= $stats['avg_score'] ?>%</p>
-            <div style="font-size:0.85rem;color:#999;"><?= $stats['pass_rate'] ?>% completion rate</div>
-        </div>
-        <div class="analytics-card" style="border-top:3px solid var(--danger);cursor:pointer;" onclick="document.querySelector('[data-tab=tab-students]').click()">
-            <h2><i class="fas fa-exclamation-triangle" style="margin-right:0.4rem;opacity:0.6;"></i> At-Risk</h2>
-            <p class="analytics-value" style="color:<?= count($atRiskStudents) > 0 ? 'var(--danger)' : 'inherit' ?>;"><?= count($atRiskStudents) ?></p>
-            <div style="font-size:0.85rem;color:#999;">students need attention</div>
-        </div>
-    </div>
-
-    <div class="tab-container">
-        <div class="tab-list">
-            <button type="button" class="tab-item active" data-tab="tab-overview">Overview</button>
-            <button type="button" class="tab-item" data-tab="tab-students">Students</button>
-            <button type="button" class="tab-item" data-tab="tab-courses">Courses</button>
-            <button type="button" class="tab-item" data-tab="tab-grades">Grades</button>
-        </div>
-
-        <!-- ==================== OVERVIEW TAB ==================== -->
-        <div class="tab-content active" data-tab="tab-overview">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-                <!-- Completion Gauge -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-chart-pie" style="color:var(--primary);margin-right:0.5rem;"></i> Course Completion</h3>
-                    <div style="display:flex;align-items:center;gap:2rem;padding:1.5rem 0;">
-                        <div style="position:relative;width:120px;height:120px;">
-                            <svg width="120" height="120" viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" stroke-width="12"/>
-                                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--primary)" stroke-width="12" stroke-dasharray="<?= $completionRate * 3.14 ?> <?= 314 - ($completionRate * 3.14) ?>" stroke-dashoffset="78.5" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center;"/>
-                            </svg>
-                            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.5rem;font-weight:700;color:var(--primary);"><?= $completionRate ?>%</div>
-                        </div>
-                        <div>
-                            <p style="margin:0;font-size:1.1rem;"><strong><?= $stats['completed'] ?></strong> courses completed</p>
-                            <p style="margin:0.25rem 0;color:#666;">out of <?= $totalEnroll ?> total enrollments</p>
-                            <p style="margin:0.25rem 0;color:#999;font-size:0.9rem;"><?= $stats['in_progress'] ?> currently in progress</p>
-                        </div>
-                    </div>
+<div class="module-content an-page">
+    <div class="home-dashboard">
+        <section class="home-hero" aria-labelledby="ia-title">
+            <div class="home-hero-main">
+                <h1 id="ia-title">Analytics</h1>
+                <p>How your courses, learners and grades are performing.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-graduation-cap"></i> <?= (int) $stats['my_courses'] ?> course<?= (int) $stats['my_courses'] === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-users"></i> <?= (int) $stats['my_learners'] ?> learner<?= (int) $stats['my_learners'] === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-star"></i> <?= $stats['avg_score'] ?>% avg score</span>
                 </div>
+            </div>
+        </section>
 
-                <!-- Enrollment Trend -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-chart-line" style="color:var(--primary);margin-right:0.5rem;"></i> Enrollment Trend</h3>
-                    <?php if (empty($monthlyEnrollments)): ?>
-                        <p style="color:#999;text-align:center;padding:2rem;">No enrollment data yet.</p>
-                    <?php else: ?>
-                        <div style="padding:1.5rem 0;">
-                            <div style="display:flex;align-items:flex-end;gap:0.5rem;height:140px;">
-                                <?php
-                                $maxCnt = max(array_column($monthlyEnrollments, 'cnt'));
-                                $maxCnt = max($maxCnt, 1);
-                                foreach ($monthlyEnrollments as $me):
-                                    $h = round(($me['cnt'] / $maxCnt) * 120);
-                                ?>
-                                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.25rem;">
-                                        <span style="font-size:0.75rem;font-weight:600;color:var(--primary);"><?= $me['cnt'] ?></span>
-                                        <div style="width:100%;max-width:50px;height:<?= $h ?>px;background:linear-gradient(180deg,var(--primary),var(--text));border-radius:6px 6px 0 0;"></div>
-                                        <span style="font-size:0.7rem;color:#999;"><?= date('M', strtotime($me['month'].'-01')) ?></span>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Top Courses -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-trophy" style="color:var(--primary);margin-right:0.5rem;"></i> Top Courses</h3>
-                    <?php if (empty($coursePerformance)): ?>
-                        <p style="color:#999;text-align:center;padding:1rem;">No courses yet.</p>
-                    <?php else: ?>
-                        <?php foreach (array_slice($coursePerformance, 0, 5) as $idx => $cp):
-                            $cpCompRate = $cp['enrollment_count'] > 0 ? round(($cp['completed_count'] / $cp['enrollment_count']) * 100) : 0;
-                        ?>
-                            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem;background:var(--bg-subtle);border-radius:8px;margin-bottom:0.5rem;">
-                                <div style="width:28px;height:28px;border-radius:6px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;"><?= $idx + 1 ?></div>
-                                <div style="flex:1;min-width:0;">
-                                    <strong style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:0.9rem;"><?= htmlspecialchars($cp['title']) ?></strong>
-                                    <span style="color:#999;font-size:0.8rem;"><?= $cp['enrollment_count'] ?> enrolled &bull; <?= $cp['avg_score'] ?>% avg</span>
-                                </div>
-                                <div style="width:60px;background:var(--border);height:6px;border-radius:3px;overflow:hidden;flex-shrink:0;">
-                                    <div style="background:<?= $cpCompRate >= 70 ? 'var(--primary)' : ($cpCompRate >= 40 ? 'var(--accent)' : 'var(--danger)') ?>;height:100%;width:<?= $cpCompRate ?>%;"></div>
-                                </div>
-                                <span style="font-size:0.8rem;font-weight:600;color:var(--primary);min-width:35px;text-align:right;"><?= $cpCompRate ?>%</span>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
-
-                <!-- At-Risk Alert -->
-                <div class="mode-card" style="<?= count($atRiskStudents) > 0 ? 'border-left:4px solid var(--danger);' : '' ?>">
-                    <h3><i class="fas fa-exclamation-triangle" style="color:var(--danger);margin-right:0.5rem;"></i> At-Risk Students</h3>
-                    <?php if (empty($atRiskStudents)): ?>
-                        <div style="text-align:center;padding:1.5rem;">
-                            <div style="font-size:2rem;color:var(--primary);margin-bottom:0.5rem;"><i class="fas fa-check-circle"></i></div>
-                            <p style="color:var(--primary);font-weight:500;">All students are on track!</p>
-                        </div>
-                    <?php else: ?>
-                        <?php foreach (array_slice($atRiskStudents, 0, 5) as $ar):
-                            $riskColor = $ar['risk_reason'] === 'inactive' ? 'var(--danger)' : ($ar['risk_reason'] === 'failing' ? 'var(--accent)' : 'var(--accent)');
-                            $riskLabel = $ar['risk_reason'] === 'inactive' ? $ar['days_inactive'].'d inactive' : ($ar['risk_reason'] === 'failing' ? $ar['avg_score'].'% avg' : 'Slow progress');
-                        ?>
-                            <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem;background:<?= $riskColor ?>08;border-radius:8px;margin-bottom:0.5rem;border-left:3px solid <?= $riskColor ?>;">
-                                <div style="width:32px;height:32px;border-radius:50%;background:<?= $riskColor ?>;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0;"><?= strtoupper(substr($ar['learner_name'],0,2)) ?></div>
-                                <div style="flex:1;min-width:0;">
-                                    <strong style="font-size:0.9rem;display:block;"><?= htmlspecialchars($ar['learner_name']) ?></strong>
-                                    <span style="font-size:0.8rem;color:#999;"><?= htmlspecialchars(mb_substr($ar['course_title'],0,30)) ?></span>
-                                </div>
-                                <span style="font-size:0.75rem;padding:0.2rem 0.5rem;background:<?= $riskColor ?>;color:#fff;border-radius:4px;font-weight:500;"><?= $riskLabel ?></span>
-                            </div>
-                        <?php endforeach; ?>
-                        <?php if (count($atRiskStudents) > 5): ?>
-                            <p style="text-align:center;margin:0.5rem 0 0;font-size:0.85rem;color:#999;">+<?= count($atRiskStudents) - 5 ?> more at-risk students</p>
-                        <?php endif; ?>
-                    <?php endif; ?>
-                </div>
+        <div class="home-stats">
+            <div class="home-stat is-link" title="Show the overview tab" onclick="document.querySelector('.tab-item[data-tab=tab-overview]').click()">
+                <span class="home-stat-icon tone-violet"><i class="fas fa-graduation-cap"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Courses</span>
+                    <span class="home-stat-value"><?= (int) $stats['my_courses'] ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['my_modules'] ?> modules &middot; <?= (int) $stats['total_quizzes'] ?> quizzes</span>
+                </span>
+            </div>
+            <div class="home-stat is-link" title="Show the students tab" onclick="document.querySelector('.tab-item[data-tab=tab-students]').click()">
+                <span class="home-stat-icon tone-indigo"><i class="fas fa-users"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Learners</span>
+                    <span class="home-stat-value"><?= (int) $stats['my_learners'] ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['completed'] ?> completed &middot; <?= (int) $stats['in_progress'] ?> active</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-emerald"><i class="fas fa-star"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Avg Score</span>
+                    <span class="home-stat-value"><?= $stats['avg_score'] ?>%</span>
+                    <span class="home-stat-sub"><?= $stats['pass_rate'] ?>% pass rate</span>
+                </span>
+            </div>
+            <div class="home-stat is-link" title="Show the students tab" onclick="document.querySelector('.tab-item[data-tab=tab-students]').click()">
+                <span class="home-stat-icon tone-rose"><i class="fas fa-triangle-exclamation"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">At-Risk</span>
+                    <span class="home-stat-value"><?= count($atRiskStudents) ?></span>
+                    <span class="home-stat-sub"><?= count($atRiskStudents) === 1 ? 'student needs attention' : 'students need attention' ?></span>
+                </span>
             </div>
         </div>
 
-        <!-- ==================== STUDENTS TAB ==================== -->
-        <div class="tab-content" data-tab="tab-students">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-                <!-- Student Leaderboard -->
-                <div class="mode-card" style="grid-column:span 2;">
-                    <h3><i class="fas fa-trophy" style="color:var(--primary);margin-right:0.5rem;"></i> Student Leaderboard</h3>
-                    <?php if (empty($studentLeaderboard)): ?>
-                        <p style="color:#999;text-align:center;padding:2rem;">No student data yet.</p>
-                    <?php else: ?>
-                        <div style="overflow-x:auto;margin-top:1rem;">
-                            <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
-                                <thead style="background:var(--bg-subtle);border-bottom:2px solid #ddd;">
+        <div class="tab-container">
+            <div class="tab-list">
+                <button type="button" class="tab-item active" data-tab="tab-overview"><i class="fas fa-gauge-high"></i> Overview</button>
+                <button type="button" class="tab-item" data-tab="tab-students"><i class="fas fa-users"></i> Students</button>
+                <button type="button" class="tab-item" data-tab="tab-courses"><i class="fas fa-book-open"></i> Courses</button>
+                <button type="button" class="tab-item" data-tab="tab-grades"><i class="fas fa-chart-bar"></i> Grades</button>
+            </div>
+
+            <!-- ==================== OVERVIEW ==================== -->
+            <div class="tab-content active" data-tab="tab-overview">
+                <div class="an-cols">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-chart-pie"></i> Course Completion</h3>
+                        <div class="an-summary">
+                            <div class="an-ring" style="--an-pct: <?= (int) $completionRate ?>;">
+                                <div class="an-ring-inner">
+                                    <span class="an-ring-value"><?= (int) $completionRate ?>%</span>
+                                    <span class="an-ring-label">Completed</span>
+                                </div>
+                            </div>
+                            <div class="an-kv-list">
+                                <div class="an-kv">
+                                    <span class="an-kv-label">Courses completed</span>
+                                    <span class="an-kv-value"><?= (int) $stats['completed'] ?></span>
+                                </div>
+                                <div class="an-kv">
+                                    <span class="an-kv-label">Total enrollments</span>
+                                    <span class="an-kv-value"><?= $totalEnroll ?></span>
+                                </div>
+                                <div class="an-kv">
+                                    <span class="an-kv-label">In progress</span>
+                                    <span class="an-kv-value"><?= (int) $stats['in_progress'] ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-chart-line"></i> Enrollment Trend</h3>
+                        <?php if (empty($monthlyEnrollments)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-chart-line"></i>
+                            <strong>No enrollment data yet</strong>
+                            <span>Monthly enrollments will be charted here.</span>
+                        </div>
+                        <?php else:
+                            $maxCnt = max(array_column($monthlyEnrollments, 'cnt'));
+                            $maxCnt = max($maxCnt, 1);
+                        ?>
+                        <div class="an-chart">
+                            <?php foreach ($monthlyEnrollments as $me):
+                                $meH = round(($me['cnt'] / $maxCnt) * 100);
+                            ?>
+                            <div class="an-chart-col">
+                                <span class="an-chart-value"><?= (int) $me['cnt'] ?></span>
+                                <span class="an-chart-bar" style="height:<?= max(2, (int) $meH) ?>%;" title="<?= (int) $me['cnt'] ?> enrollments"></span>
+                                <span class="an-chart-label"><?= date('M', strtotime($me['month'] . '-01')) ?></span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="an-stack">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-trophy"></i> Top Courses</h3>
+                        <?php if (empty($coursePerformance)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-book-open"></i>
+                            <strong>No courses yet</strong>
+                            <span>Courses you author will be ranked here.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-table-wrap">
+                            <table class="an-table">
+                                <thead>
                                     <tr>
-                                        <th style="padding:1rem;text-align:center;width:50px;">#</th>
-                                        <th style="padding:1rem;text-align:left;">Student</th>
-                                        <th style="padding:1rem;text-align:center;">Enrolled</th>
-                                        <th style="padding:1rem;text-align:center;">Completed</th>
-                                        <th style="padding:1rem;text-align:center;">Avg Score</th>
-                                        <th style="padding:1rem;text-align:center;">Last Active</th>
-                                        <th style="padding:1rem;text-align:center;">Status</th>
+                                        <th>Course</th>
+                                        <th class="an-th-num">Enrolled</th>
+                                        <th class="an-th-num">Avg Score</th>
+                                        <th class="an-th-num">Completion</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach (array_slice($coursePerformance, 0, 5) as $idx => $cp):
+                                        $cpCompRate = $cp['enrollment_count'] > 0 ? (int) round(($cp['completed_count'] / $cp['enrollment_count']) * 100) : 0;
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <div class="an-course">
+                                                <span class="an-rank"><?= $idx + 1 ?></span>
+                                                <span class="an-course-name" title="<?= htmlspecialchars($cp['title']) ?>"><?= htmlspecialchars($cp['title']) ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="an-td-num"><?= (int) $cp['enrollment_count'] ?></td>
+                                        <td class="an-td-num"><span class="an-score"><?= $cp['avg_score'] ?>%</span></td>
+                                        <td class="an-td-num">
+                                            <div class="an-completion">
+                                                <span class="an-mini-track"><span class="an-mini-fill" style="width:<?= max(0, min(100, $cpCompRate)) ?>%;"></span></span>
+                                                <span class="an-completion-val"><?= $cpCompRate ?>%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-triangle-exclamation"></i> At-Risk Students</h3>
+                        <?php if (empty($atRiskStudents)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-circle-check"></i>
+                            <strong>All students are on track</strong>
+                            <span>Nobody is flagged as at risk right now.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-table-wrap">
+                            <table class="an-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Course</th>
+                                        <th class="an-th-num">Signal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach (array_slice($atRiskStudents, 0, 5) as $ar):
+                                        $arPill = $ar['risk_reason'] === 'inactive' ? 'is-bad' : ($ar['risk_reason'] === 'failing' ? 'is-warn' : 'is-neutral');
+                                        $arLabel = $ar['risk_reason'] === 'inactive' ? $ar['days_inactive'] . 'd inactive' : ($ar['risk_reason'] === 'failing' ? $ar['avg_score'] . '% avg' : 'Slow progress');
+                                    ?>
+                                    <tr>
+                                        <td><strong><?= htmlspecialchars($ar['learner_name']) ?></strong></td>
+                                        <td class="an-muted"><?= htmlspecialchars($ar['course_title']) ?></td>
+                                        <td class="an-td-num"><span class="an-pill <?= $arPill ?>"><?= htmlspecialchars($arLabel) ?></span></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php if (count($atRiskStudents) > 5): ?>
+                        <p class="an-note"><i class="fas fa-info-circle"></i> <?= count($atRiskStudents) - 5 ?> more at-risk student<?= count($atRiskStudents) - 5 === 1 ? '' : 's' ?> on the Students tab.</p>
+                        <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== STUDENTS ==================== -->
+            <div class="tab-content" data-tab="tab-students">
+                <div class="an-stack">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-trophy"></i> Student Leaderboard</h3>
+                        <?php if (empty($studentLeaderboard)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-users"></i>
+                            <strong>No student data yet</strong>
+                            <span>Learners appear here once they enrol in your courses.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-table-wrap">
+                            <table class="an-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th class="an-th-num">Enrolled</th>
+                                        <th class="an-th-num">Completed</th>
+                                        <th class="an-th-num">Avg Score</th>
+                                        <th class="an-th-num">Last Active</th>
+                                        <th class="an-th-num">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($studentLeaderboard as $idx => $sl):
-                                        $daysSinceActive = $sl['last_active'] ? floor((time() - strtotime($sl['last_active'])) / 86400) : 999;
-                                        $statusColor = $daysSinceActive <= 3 ? 'var(--primary)' : ($daysSinceActive <= 7 ? 'var(--accent)' : 'var(--danger)');
-                                        $statusText = $daysSinceActive <= 3 ? 'Active' : ($daysSinceActive <= 7 ? 'Recent' : 'Inactive');
-                                        $medalColor = $idx === 0 ? 'var(--accent)' : ($idx === 1 ? 'var(--border)' : ($idx === 2 ? '#cd7f32' : 'var(--primary)'));
+                                        $daysSinceActive = $sl['last_active'] ? (int) floor((time() - strtotime($sl['last_active'])) / 86400) : 999;
+                                        $slPill = $daysSinceActive <= 3 ? 'is-good' : ($daysSinceActive <= 7 ? 'is-warn' : 'is-bad');
+                                        $slStatus = $daysSinceActive <= 3 ? 'Active' : ($daysSinceActive <= 7 ? 'Recent' : 'Inactive');
+                                        $slScore = $sl['avg_score'] >= 80 ? '' : ($sl['avg_score'] >= 60 ? 'is-warn' : 'is-low');
                                     ?>
-                                        <tr style="border-bottom:1px solid #eee;">
-                                            <td style="padding:0.75rem 1rem;text-align:center;">
-                                                <span style="width:28px;height:28px;border-radius:50%;background:<?= $medalColor ?>;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;"><?= $idx + 1 ?></span>
-                                            </td>
-                                            <td style="padding:0.75rem 1rem;">
-                                                <strong><?= htmlspecialchars($sl['learner_name']) ?></strong>
-                                                <?php if (!empty($sl['learner_position'])): ?>
-                                                    <div style="font-size:0.8rem;color:#999;"><?= htmlspecialchars($sl['learner_position']) ?></div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;"><?= $sl['courses_enrolled'] ?></td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;"><?= $sl['courses_completed'] ?></td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;font-weight:700;color:<?= $sl['avg_score'] >= 80 ? 'var(--primary)' : ($sl['avg_score'] >= 60 ? 'var(--accent)' : 'var(--danger)') ?>;"><?= $sl['avg_score'] ?>%</td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;color:#999;font-size:0.85rem;"><?= $sl['last_active'] ? date('M j', strtotime($sl['last_active'])) : 'Never' ?></td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;">
-                                                <span style="padding:0.2rem 0.6rem;border-radius:4px;font-size:0.8rem;font-weight:500;background:<?= $statusColor ?>15;color:<?= $statusColor ?>;"><?= $statusText ?></span>
-                                            </td>
-                                        </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="an-course">
+                                                <span class="an-rank"><?= $idx + 1 ?></span>
+                                                <span>
+                                                    <span class="an-course-name" title="<?= htmlspecialchars($sl['learner_name']) ?>"><?= htmlspecialchars($sl['learner_name']) ?></span>
+                                                    <?php if (!empty($sl['learner_position'])): ?>
+                                                    <span class="an-sub"><?= htmlspecialchars($sl['learner_position']) ?></span>
+                                                    <?php endif; ?>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="an-td-num"><?= (int) $sl['courses_enrolled'] ?></td>
+                                        <td class="an-td-num"><?= (int) $sl['courses_completed'] ?></td>
+                                        <td class="an-td-num"><span class="an-score <?= $slScore ?>"><?= $sl['avg_score'] ?>%</span></td>
+                                        <td class="an-td-num an-muted"><?= $sl['last_active'] ? date('M j', strtotime($sl['last_active'])) : 'Never' ?></td>
+                                        <td class="an-td-num"><span class="an-pill <?= $slPill ?>"><?= $slStatus ?></span></td>
+                                    </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
-                    <?php endif; ?>
-                </div>
+                        <?php endif; ?>
+                    </div>
 
-                <!-- At-Risk Detail -->
-                <div class="mode-card" style="grid-column:span 2;<?= count($atRiskStudents) > 0 ? 'border-left:4px solid var(--danger);' : '' ?>">
-                    <h3><i class="fas fa-exclamation-triangle" style="color:var(--danger);margin-right:0.5rem;"></i> Students Needing Attention</h3>
-                    <?php if (empty($atRiskStudents)): ?>
-                        <p style="color:var(--primary);text-align:center;padding:1.5rem;">No students flagged as at-risk.</p>
-                    <?php else: ?>
-                        <div style="overflow-x:auto;margin-top:1rem;">
-                            <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
-                                <thead style="background:var(--bg-subtle);border-bottom:2px solid #ddd;">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-triangle-exclamation"></i> Students Needing Attention</h3>
+                        <?php if (empty($atRiskStudents)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-circle-check"></i>
+                            <strong>No students flagged as at-risk</strong>
+                            <span>Inactive or failing learners will be listed here.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-table-wrap">
+                            <table class="an-table">
+                                <thead>
                                     <tr>
-                                        <th style="padding:1rem;text-align:left;">Student</th>
-                                        <th style="padding:1rem;text-align:left;">Course</th>
-                                        <th style="padding:1rem;text-align:center;">Status</th>
-                                        <th style="padding:1rem;text-align:center;">Avg Score</th>
-                                        <th style="padding:1rem;text-align:center;">Days Inactive</th>
-                                        <th style="padding:1rem;text-align:center;">Risk</th>
+                                        <th>Student</th>
+                                        <th>Course</th>
+                                        <th class="an-th-num">Status</th>
+                                        <th class="an-th-num">Avg Score</th>
+                                        <th class="an-th-num">Days Inactive</th>
+                                        <th class="an-th-num">Risk</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($atRiskStudents as $ar):
-                                        $riskColor = $ar['risk_reason'] === 'inactive' ? 'var(--danger)' : ($ar['risk_reason'] === 'failing' ? 'var(--accent)' : 'var(--accent)');
-                                        $riskLabel = $ar['risk_reason'] === 'inactive' ? 'Inactive' : ($ar['risk_reason'] === 'failing' ? 'Failing' : 'Slow');
+                                        $arPill = $ar['risk_reason'] === 'inactive' ? 'is-bad' : ($ar['risk_reason'] === 'failing' ? 'is-warn' : 'is-neutral');
+                                        $arLabel = $ar['risk_reason'] === 'inactive' ? 'Inactive' : ($ar['risk_reason'] === 'failing' ? 'Failing' : 'Slow');
+                                        $arScore = $ar['avg_score'] >= 70 ? '' : 'is-low';
                                     ?>
-                                        <tr style="border-bottom:1px solid #eee;background:<?= $riskColor ?>05;">
-                                            <td style="padding:0.75rem 1rem;"><strong><?= htmlspecialchars($ar['learner_name']) ?></strong></td>
-                                            <td style="padding:0.75rem 1rem;color:#666;"><?= htmlspecialchars(mb_substr($ar['course_title'],0,35)) ?></td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;font-size:0.85rem;color:<?= $ar['enrollment_status'] === 'in_progress' ? 'var(--accent)' : 'var(--accent)' ?>;"><?= ucfirst(str_replace('_',' ',$ar['enrollment_status'])) ?></td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;font-weight:600;color:<?= $ar['avg_score'] >= 70 ? 'var(--primary)' : 'var(--danger)' ?>;"><?= $ar['avg_score'] ?>%</td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;"><?= $ar['days_inactive'] ?>d</td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;">
-                                                <span style="padding:0.2rem 0.6rem;border-radius:4px;font-size:0.8rem;font-weight:600;background:<?= $riskColor ?>;color:#fff;"><?= $riskLabel ?></span>
-                                            </td>
-                                        </tr>
+                                    <tr>
+                                        <td><strong><?= htmlspecialchars($ar['learner_name']) ?></strong></td>
+                                        <td class="an-muted"><?= htmlspecialchars($ar['course_title']) ?></td>
+                                        <td class="an-td-num"><span class="an-pill is-neutral"><?= ucfirst(str_replace('_', ' ', $ar['enrollment_status'])) ?></span></td>
+                                        <td class="an-td-num"><span class="an-score <?= $arScore ?>"><?= $ar['avg_score'] ?>%</span></td>
+                                        <td class="an-td-num"><?= (int) $ar['days_inactive'] ?>d</td>
+                                        <td class="an-td-num"><span class="an-pill <?= $arPill ?>"><?= $arLabel ?></span></td>
+                                    </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== COURSES TAB ==================== -->
-        <div class="tab-content" data-tab="tab-courses">
-            <!-- Per-Course Engagement -->
-            <div class="mode-card" style="margin-bottom:1.5rem;">
-                <h3><i class="fas fa-book-open" style="color:var(--primary);margin-right:0.5rem;"></i> Course Engagement</h3>
-                <?php if (empty($courseEngagement)): ?>
-                    <p style="color:#999;text-align:center;padding:2rem;">No active courses.</p>
-                <?php else: ?>
-                    <?php foreach ($courseEngagement as $ce):
-                        $lessonComp = $ce['total_lessons'] > 0 ? round(($ce['completed_lessons'] / $ce['total_lessons']) * 100) : 0;
-                        $quizComp = $ce['total_quizzes'] > 0 ? round(($ce['quizzes_taken'] / max(1, $ce['total_quizzes'] * max(1, $stats['my_learners']))) * 100) : 0;
-                    ?>
-                        <div style="padding:1.25rem;background:var(--bg-subtle);border-radius:10px;margin-bottom:0.75rem;">
-                            <strong style="font-size:1rem;"><?= htmlspecialchars($ce['title']) ?></strong>
-                            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:0.75rem;">
-                                <div>
-                                    <div style="font-size:0.8rem;color:#999;margin-bottom:0.25rem;">Lessons Completed</div>
-                                    <div style="display:flex;align-items:center;gap:0.5rem;">
-                                        <div style="flex:1;background:var(--border);height:6px;border-radius:3px;overflow:hidden;"><div style="background:var(--primary);height:100%;width:<?= $lessonComp ?>%;"></div></div>
-                                        <span style="font-size:0.85rem;font-weight:600;"><?= $ce['completed_lessons'] ?>/<?= $ce['total_lessons'] ?></span>
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style="font-size:0.8rem;color:#999;margin-bottom:0.25rem;">Quizzes</div>
-                                    <div style="font-weight:600;font-size:1.1rem;"><?= $ce['quizzes_taken'] ?> <span style="font-size:0.8rem;color:#999;font-weight:normal;">/ <?= $ce['total_quizzes'] ?> total</span></div>
-                                </div>
-                                <div>
-                                    <div style="font-size:0.8rem;color:#999;margin-bottom:0.25rem;">Avg Quiz Score</div>
-                                    <div style="font-weight:600;font-size:1.1rem;color:<?= $ce['avg_quiz_score'] >= 70 ? 'var(--primary)' : 'var(--danger)' ?>;"><?= $ce['avg_quiz_score'] ?>%</div>
-                                </div>
-                                <div>
-                                    <div style="font-size:0.8rem;color:#999;margin-bottom:0.25rem;">Lesson Completion</div>
-                                    <div style="font-weight:600;font-size:1.1rem;color:<?= $lessonComp >= 70 ? 'var(--primary)' : ($lessonComp >= 40 ? 'var(--accent)' : 'var(--danger)') ?>;"><?= $lessonComp ?>%</div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <!-- Course Overview Table -->
-            <div class="mode-card">
-                <h3><i class="fas fa-table" style="color:var(--primary);margin-right:0.5rem;"></i> Course Overview</h3>
-                <?php if (empty($coursePerformance)): ?>
-                    <p style="color:#999;text-align:center;padding:2rem;">No courses yet.</p>
-                <?php else: ?>
-                    <div style="overflow-x:auto;margin-top:1rem;">
-                        <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
-                            <thead style="background:var(--bg-subtle);border-bottom:2px solid #ddd;">
-                                <tr>
-                                    <th style="padding:0.75rem 1rem;text-align:left;">Course</th>
-                                    <th style="padding:0.75rem 1rem;text-align:center;">Status</th>
-                                    <th style="padding:0.75rem 1rem;text-align:center;">Enrolled</th>
-                                    <th style="padding:0.75rem 1rem;text-align:center;">Completed</th>
-                                    <th style="padding:0.75rem 1rem;text-align:center;">Active</th>
-                                    <th style="padding:0.75rem 1rem;text-align:center;">Completion %</th>
-                                    <th style="padding:0.75rem 1rem;text-align:center;">Avg Score</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($coursePerformance as $cp):
-                                    $cpRate = $cp['enrollment_count'] > 0 ? round(($cp['completed_count'] / $cp['enrollment_count']) * 100) : 0;
-                                ?>
-                                    <tr style="border-bottom:1px solid #eee;">
-                                        <td style="padding:0.75rem 1rem;"><strong><?= htmlspecialchars(mb_substr($cp['title'],0,40)) ?></strong></td>
-                                        <td style="padding:0.75rem 1rem;text-align:center;">
-                                            <span style="padding:0.2rem 0.5rem;border-radius:4px;font-size:0.8rem;background:<?= $cp['status']==='active'?'var(--bg-subtle)':'var(--bg-subtle)' ?>;color:<?= $cp['status']==='active'?'var(--primary)':'var(--accent)' ?>;"><?= ucfirst($cp['status']) ?></span>
-                                        </td>
-                                        <td style="padding:0.75rem 1rem;text-align:center;"><?= $cp['enrollment_count'] ?></td>
-                                        <td style="padding:0.75rem 1rem;text-align:center;color:var(--primary);font-weight:600;"><?= $cp['completed_count'] ?></td>
-                                        <td style="padding:0.75rem 1rem;text-align:center;color:var(--accent);font-weight:600;"><?= $cp['active_count'] ?></td>
-                                        <td style="padding:0.75rem 1rem;text-align:center;">
-                                            <div style="display:flex;align-items:center;gap:0.4rem;justify-content:center;">
-                                                <div style="width:50px;background:var(--border);height:5px;border-radius:3px;overflow:hidden;"><div style="background:var(--primary);height:100%;width:<?= $cpRate ?>%;"></div></div>
-                                                <span><?= $cpRate ?>%</span>
-                                            </div>
-                                        </td>
-                                        <td style="padding:0.75rem 1rem;text-align:center;font-weight:600;color:<?= $cp['avg_score']>=70?'var(--primary)':($cp['avg_score']>=50?'var(--accent)':'var(--danger)') ?>;"><?= $cp['avg_score'] ?>%</td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- ==================== GRADES TAB ==================== -->
-        <div class="tab-content" data-tab="tab-grades">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-                <!-- Grade Distribution -->
-                <div class="mode-card">
-    <h3><i class="fas fa-chart-bar" style="color:var(--primary);margin-right:0.5rem;"></i> Grade Distribution</h3>
-    <?php
-    $gdTotal = $gradeDistribution['total'] ?? 0;
-    $gA = $gradeDistribution['grade_a'] ?? 0;
-    $gB = $gradeDistribution['grade_b'] ?? 0;
-    $gC = $gradeDistribution['grade_c'] ?? 0;
-    $gD = 0;
-    $gF = $gradeDistribution['grade_f'] ?? 0;
-    $gdMax = max(max($gA,$gB,$gC,$gD,$gF),1);
-    $bluePalette=['#1a0052','var(--primary)','var(--accent)','rgba(81,70,183,0.6)','rgba(81,70,183,0.35)'];
-    $gradeLabels=[['label'=>'A','desc'=>'90-100'],['label'=>'B','desc'=>'80-89'],['label'=>'C','desc'=>'70-79'],['label'=>'D','desc'=>'60-69'],['label'=>'F','desc'=>'<60']];
-    $gradeCounts=[$gA,$gB,$gC,$gD,$gF];
-    ?>
-    <div style="display:flex;align-items:flex-end;gap:0.6rem;height:160px;padding:1rem 0.5rem 0;">
-        <?php for($i=0;$i<5;$i++):
-            $cnt=$gradeCounts[$i];
-            $barH=$gdMax>0?($cnt/$gdMax)*100:0;
-            $pct=$gdTotal>0?round(($cnt/$gdTotal)*100):0;
-        ?>
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.25rem;height:100%;justify-content:flex-end;">
-            <span style="font-size:0.75rem;font-weight:800;color:var(--text);"><?= $cnt ?></span>
-            <span style="font-size:0.6rem;color:rgba(32,0,130,0.4);"><?= $pct ?>%</span>
-            <div style="width:100%;height:<?= $barH ?>%;min-height:4px;background:<?= $bluePalette[$i] ?>;border-radius:5px 5px 2px 2px;"></div>
-        </div>
-        <?php endfor; ?>
-    </div>
-    <div style="display:flex;gap:0.6rem;padding:0.4rem 0.5rem 0;">
-        <?php for($i=0;$i<5;$i++): ?>
-        <div style="flex:1;text-align:center;">
-            <div style="width:10px;height:10px;border-radius:2px;background:<?= $bluePalette[$i] ?>;margin:0 auto 0.15rem;"></div>
-            <div style="font-size:0.7rem;font-weight:800;color:var(--text);"><?= $gradeLabels[$i]["label"] ?></div>
-            <div style="font-size:0.55rem;color:rgba(32,0,130,0.4);"><?= $gradeLabels[$i]["desc"] ?></div>
-        </div>
-        <?php endfor; ?>
-    </div>
-    <?php if($gdTotal===0): ?><p style="color:#999;text-align:center;margin-top:0.5rem;">No grades recorded.</p><?php endif; ?>
-</div>
-
-                <!-- Score Summary -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-chart-line" style="color:var(--primary);margin-right:0.5rem;"></i> Score Summary</h3>
-                    <div style="padding:1.5rem 0;">
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
-                            <div style="text-align:center;padding:1rem;background:var(--bg-subtle);border-radius:10px;">
-                                <div style="font-size:2rem;font-weight:700;color:var(--primary);"><?= $stats['avg_score'] ?>%</div>
-                                <div style="font-size:0.85rem;color:#999;">Average Score</div>
-                            </div>
-                            <div style="text-align:center;padding:1rem;background:var(--bg-subtle);border-radius:10px;">
-                                <div style="font-size:2rem;font-weight:700;color:var(--primary);"><?= $stats['pass_rate'] ?>%</div>
-                                <div style="font-size:0.85rem;color:#999;">Pass Rate</div>
-                            </div>
-                            <div style="text-align:center;padding:1rem;background:var(--bg-subtle);border-radius:10px;">
-                                <div style="font-size:2rem;font-weight:700;color:var(--accent);"><?= $gdTotal ?></div>
-                                <div style="font-size:0.85rem;color:#999;">Total Grades</div>
-                            </div>
-                            <div style="text-align:center;padding:1rem;background:var(--bg-subtle);border-radius:10px;">
-                                <div style="font-size:2rem;font-weight:700;color:var(--accent);"><?= $stats['total_quizzes'] ?></div>
-                                <div style="font-size:0.85rem;color:#999;">Quizzes Created</div>
-                            </div>
-                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
+            </div>
 
-                <!-- Recent Grades -->
-                <div class="mode-card" style="grid-column:span 2;">
-                    <h3><i class="fas fa-clock" style="color:var(--primary);margin-right:0.5rem;"></i> Recent Grades</h3>
-                    <?php if (empty($recentGrades)): ?>
-                        <p style="color:#999;text-align:center;padding:2rem;">No grades recorded yet.</p>
-                    <?php else: ?>
-                        <div style="overflow-x:auto;margin-top:1rem;">
-                            <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
-                                <thead style="background:var(--bg-subtle);border-bottom:2px solid #ddd;">
+            <!-- ==================== COURSES ==================== -->
+            <div class="tab-content" data-tab="tab-courses">
+                <div class="an-stack">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-book-open"></i> Course Engagement</h3>
+                        <?php if (empty($courseEngagement)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-book-open"></i>
+                            <strong>No active courses</strong>
+                            <span>Engagement appears once a published course has learners.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-table-wrap">
+                            <table class="an-table">
+                                <thead>
                                     <tr>
-                                        <th style="padding:1rem;text-align:left;">Student</th>
-                                        <th style="padding:1rem;text-align:left;">Course</th>
-                                        <th style="padding:1rem;text-align:center;">Score</th>
-                                        <th style="padding:1rem;text-align:center;">Status</th>
-                                        <th style="padding:1rem;text-align:center;">Date</th>
+                                        <th>Course</th>
+                                        <th class="an-th-num">Lessons</th>
+                                        <th class="an-th-num">Quizzes Taken</th>
+                                        <th class="an-th-num">Avg Quiz Score</th>
+                                        <th class="an-th-num">Lesson Completion</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($recentGrades as $rg): ?>
-                                        <tr style="border-bottom:1px solid #eee;">
-                                            <td style="padding:0.75rem 1rem;"><strong><?= htmlspecialchars($rg['learner_name']) ?></strong></td>
-                                            <td style="padding:0.75rem 1rem;color:#666;"><?= htmlspecialchars(mb_substr($rg['course_title'],0,35)) ?></td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;font-weight:700;color:<?= $rg['final_score']>=70?'var(--primary)':($rg['final_score']>=50?'var(--accent)':'var(--danger)') ?>;"><?= round($rg['final_score'],1) ?>%</td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;">
-                                                <span style="padding:0.2rem 0.6rem;border-radius:4px;font-size:0.8rem;font-weight:500;background:<?= $rg['status']==='passed'?'var(--bg-subtle)':'var(--bg-subtle)' ?>;color:<?= $rg['status']==='passed'?'var(--primary)':'var(--danger)' ?>;"><?= ucfirst($rg['status']) ?></span>
-                                            </td>
-                                            <td style="padding:0.75rem 1rem;text-align:center;color:#999;font-size:0.9rem;"><?= $rg['issued_at'] ? date('M j, Y', strtotime($rg['issued_at'])) : '—' ?></td>
-                                        </tr>
+                                    <?php foreach ($courseEngagement as $ce):
+                                        $lessonComp = $ce['total_lessons'] > 0 ? (int) round(($ce['completed_lessons'] / $ce['total_lessons']) * 100) : 0;
+                                        $ceScore = $ce['avg_quiz_score'] >= 70 ? '' : 'is-low';
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <div class="an-course">
+                                                <span class="an-course-name" title="<?= htmlspecialchars($ce['title']) ?>"><?= htmlspecialchars($ce['title']) ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="an-td-num"><?= (int) $ce['completed_lessons'] ?> / <?= (int) $ce['total_lessons'] ?></td>
+                                        <td class="an-td-num"><?= (int) $ce['quizzes_taken'] ?> / <?= (int) $ce['total_quizzes'] ?></td>
+                                        <td class="an-td-num">
+                                            <?php if ((int) $ce['total_quizzes'] > 0): ?>
+                                            <span class="an-score <?= $ceScore ?>"><?= $ce['avg_quiz_score'] ?>%</span>
+                                            <?php else: ?>
+                                            <span class="an-muted">&mdash;</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="an-td-num">
+                                            <div class="an-completion">
+                                                <span class="an-mini-track"><span class="an-mini-fill" style="width:<?= max(0, min(100, $lessonComp)) ?>%;"></span></span>
+                                                <span class="an-completion-val"><?= $lessonComp ?>%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
-                    <?php endif; ?>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-table"></i> Course Overview</h3>
+                        <?php if (empty($coursePerformance)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-book-open"></i>
+                            <strong>No courses yet</strong>
+                            <span>Your courses and their enrolment figures appear here.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-table-wrap">
+                            <table class="an-table">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th class="an-th-num">Status</th>
+                                        <th class="an-th-num">Enrolled</th>
+                                        <th class="an-th-num">Completed</th>
+                                        <th class="an-th-num">Active</th>
+                                        <th class="an-th-num">Completion</th>
+                                        <th class="an-th-num">Avg Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($coursePerformance as $cp):
+                                        $cpRate = $cp['enrollment_count'] > 0 ? (int) round(($cp['completed_count'] / $cp['enrollment_count']) * 100) : 0;
+                                        $cpScore = $cp['avg_score'] >= 70 ? '' : ($cp['avg_score'] >= 50 ? 'is-warn' : 'is-low');
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <div class="an-course">
+                                                <span class="an-course-name" title="<?= htmlspecialchars($cp['title']) ?>"><?= htmlspecialchars($cp['title']) ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="an-td-num"><span class="an-pill <?= $cp['status'] === 'active' ? 'is-good' : 'is-neutral' ?>"><?= ucfirst($cp['status']) ?></span></td>
+                                        <td class="an-td-num"><?= (int) $cp['enrollment_count'] ?></td>
+                                        <td class="an-td-num"><?= (int) $cp['completed_count'] ?></td>
+                                        <td class="an-td-num"><?= (int) $cp['active_count'] ?></td>
+                                        <td class="an-td-num">
+                                            <div class="an-completion">
+                                                <span class="an-mini-track"><span class="an-mini-fill" style="width:<?= max(0, min(100, $cpRate)) ?>%;"></span></span>
+                                                <span class="an-completion-val"><?= $cpRate ?>%</span>
+                                            </div>
+                                        </td>
+                                        <td class="an-td-num"><span class="an-score <?= $cpScore ?>"><?= $cp['avg_score'] ?>%</span></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== GRADES ==================== -->
+            <div class="tab-content" data-tab="tab-grades">
+                <?php
+                $gdTotal = (int) ($gradeDistribution['total'] ?? 0);
+                $gradeBands = [
+                    ['key' => 'a', 'label' => 'A', 'range' => '90-100', 'count' => (int) ($gradeDistribution['grade_a'] ?? 0)],
+                    ['key' => 'b', 'label' => 'B', 'range' => '80-89', 'count' => (int) ($gradeDistribution['grade_b'] ?? 0)],
+                    ['key' => 'c', 'label' => 'C', 'range' => '70-79', 'count' => (int) ($gradeDistribution['grade_c'] ?? 0)],
+                    ['key' => 'd', 'label' => 'D', 'range' => '60-69', 'count' => (int) ($gradeDistribution['grade_d'] ?? 0)],
+                    ['key' => 'f', 'label' => 'F', 'range' => 'Below 60', 'count' => (int) ($gradeDistribution['grade_f'] ?? 0)],
+                ];
+                $maxG = max(1, max(array_column($gradeBands, 'count')));
+                ?>
+                <div class="an-cols">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-chart-bar"></i> Grade Distribution</h3>
+                        <?php if ($gdTotal === 0): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-graduation-cap"></i>
+                            <strong>No grades to display</strong>
+                            <span>Grades will be charted here once quizzes are graded.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-dist">
+                            <?php foreach ($gradeBands as $band):
+                                $bandH = round(($band['count'] / $maxG) * 100);
+                                $bandPct = (int) round(($band['count'] / $gdTotal) * 100);
+                            ?>
+                            <div class="an-dist-col">
+                                <span class="an-dist-count"><?= $band['count'] ?></span>
+                                <span class="an-dist-pct"><?= $bandPct ?>%</span>
+                                <span class="an-dist-bar an-grade-<?= $band['key'] ?>" style="height:<?= max(2, (int) $bandH) ?>%;"></span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="an-legend">
+                            <?php foreach ($gradeBands as $band): ?>
+                            <div class="an-legend-item">
+                                <div class="an-legend-swatch an-grade-<?= $band['key'] ?>"></div>
+                                <div class="an-legend-label"><?= $band['label'] ?></div>
+                                <div class="an-legend-sub"><?= $band['range'] ?></div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <p class="an-note"><i class="fas fa-info-circle"></i> Based on the <?= $gdTotal ?> grade<?= $gdTotal === 1 ? '' : 's' ?> issued in your courses.</p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-chart-line"></i> Score Summary</h3>
+                        <div class="an-kv-list">
+                            <div class="an-kv">
+                                <span class="an-kv-label">Average score</span>
+                                <span class="an-kv-value"><?= $stats['avg_score'] ?>%</span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Pass rate</span>
+                                <span class="an-kv-value"><?= $stats['pass_rate'] ?>%</span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Total grades</span>
+                                <span class="an-kv-value"><?= $gdTotal ?></span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Quizzes created</span>
+                                <span class="an-kv-value"><?= (int) $stats['total_quizzes'] ?></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="an-stack">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-clock"></i> Recent Grades</h3>
+                        <?php if (empty($recentGrades)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-clock"></i>
+                            <strong>No grades recorded yet</strong>
+                            <span>Recently issued grades will be listed here.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-table-wrap">
+                            <table class="an-table">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Course</th>
+                                        <th class="an-th-num">Score</th>
+                                        <th class="an-th-num">Status</th>
+                                        <th class="an-th-num">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($recentGrades as $rg):
+                                        $rgScore = $rg['final_score'] >= 70 ? '' : ($rg['final_score'] >= 50 ? 'is-warn' : 'is-low');
+                                    ?>
+                                    <tr>
+                                        <td><strong><?= htmlspecialchars($rg['learner_name']) ?></strong></td>
+                                        <td class="an-muted"><?= htmlspecialchars($rg['course_title']) ?></td>
+                                        <td class="an-td-num"><span class="an-score <?= $rgScore ?>"><?= round($rg['final_score'], 1) ?>%</span></td>
+                                        <td class="an-td-num"><span class="an-pill <?= $rg['status'] === 'passed' ? 'is-good' : 'is-bad' ?>"><?= ucfirst($rg['status']) ?></span></td>
+                                        <td class="an-td-num an-muted"><?= $rg['issued_at'] ? date('M j, Y', strtotime($rg['issued_at'])) : '&mdash;' ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>

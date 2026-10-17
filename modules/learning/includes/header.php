@@ -21,6 +21,11 @@
 <link rel="stylesheet" href="css/pages/analytics.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/analytics.css') ?>">
     <link rel="stylesheet" href="css/pages/moderation.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/moderation.css') ?>">
     <link rel="stylesheet" href="css/pages/notifications.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/notifications.css') ?>">
+    <link rel="stylesheet" href="css/pages/catalog.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/catalog.css') ?>">
+    <link rel="stylesheet" href="css/pages/certificates.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/certificates.css') ?>">
+    <link rel="stylesheet" href="css/pages/skill-gaps.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/skill-gaps.css') ?>">
+    <link rel="stylesheet" href="css/pages/certificate-verify.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/certificate-verify.css') ?>">
+    <link rel="stylesheet" href="css/pages/workforce-integration.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/workforce-integration.css') ?>">
     <link rel="stylesheet" href="css/components/modal-system.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/components/modal-system.css') ?>">
     <link rel="stylesheet" href="css/components/dropzone.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">

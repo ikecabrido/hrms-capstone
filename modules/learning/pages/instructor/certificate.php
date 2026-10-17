@@ -107,444 +107,447 @@ function certTimeAgo($dt) {
     if ($d < 604800) return floor($d / 86400) . 'd ago';
     return date('M j, Y', strtotime($dt));
 }
+
+$expiryStatusLabels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' => 'Critical', 'expired' => 'Expired', 'archived' => 'Revoked'];
 ?>
-<style>
-.expiry-table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface, #fff); border-radius: 12px; overflow: hidden; border: 1px solid rgba(32,0,130,0.08); }
-.expiry-table th { padding: 0.75rem 1rem; text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary); background: rgba(32,0,130,0.03); border-bottom: 1px solid rgba(32,0,130,0.08); }
-.expiry-table td { padding: 0.75rem 1rem; font-size: 0.85rem; border-bottom: 1px solid rgba(32,0,130,0.05); color: var(--text, #333); }
-.expiry-table tr:last-child td { border-bottom: none; }
-.expiry-table tr:hover td { background: rgba(32,0,130,0.02); }
-.expiry-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.72rem; font-weight: 700; }
-.expiry-badge.valid { background: rgba(16,185,129,0.1); color: #10b981; }
-.expiry-badge.warning { background: rgba(245,158,11,0.1); color: #d97706; }
-.expiry-badge.critical { background: rgba(220,53,69,0.1); color: #dc3545; }
-.expiry-badge.expired { background: rgba(220,53,69,0.15); color: #dc3545; }
-</style>
-<div class="module-content">
-    <div class="toolbar">
-        <div class="toolbar-search">
-            <input type="search" id="cert-search" placeholder="Search certificates, users, or templates..." aria-label="Search" />
-        </div>
-        <div class="toolbar-actions">
-            <select class="toolbar-filter" id="cert-status-filter" aria-label="Filter by status">
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- Stats -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:0.75rem; margin-bottom:1.5rem;">
-        <div style="padding:1rem 1.15rem; border-radius:12px; border:1.5px solid rgba(32,0,130,0.15); background:rgba(32,0,130,0.03); text-align:center;">
-            <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Total</div>
-            <div style="font-size:1.6rem; font-weight:800; color:var(--text); margin-top:0.2rem;"><?= $stats['total'] ?></div>
-        </div>
-        <div style="padding:1rem 1.15rem; border-radius:12px; border:1.5px solid rgba(16,185,129,0.2); background:rgba(16,185,129,0.03); text-align:center;">
-            <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#10b981; font-weight:700;">Active</div>
-            <div style="font-size:1.6rem; font-weight:800; color:var(--text); margin-top:0.2rem;"><?= $stats['active'] ?></div>
-        </div>
-        <div style="padding:1rem 1.15rem; border-radius:12px; border:1.5px solid rgba(245,158,11,0.2); background:rgba(245,158,11,0.03); text-align:center;">
-            <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#d97706; font-weight:700;">Expiring 30d</div>
-            <div style="font-size:1.6rem; font-weight:800; color:var(--text); margin-top:0.2rem;"><?= $stats['expiring_30'] ?></div>
-        </div>
-        <div style="padding:1rem 1.15rem; border-radius:12px; border:1.5px solid rgba(220,53,69,0.2); background:rgba(220,53,69,0.03); text-align:center;">
-            <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#dc3545; font-weight:700;">Expiring 7d</div>
-            <div style="font-size:1.6rem; font-weight:800; color:var(--text); margin-top:0.2rem;"><?= $stats['expiring_7'] ?></div>
-        </div>
-        <div style="padding:1rem 1.15rem; border-radius:12px; border:1.5px solid rgba(239,68,68,0.2); background:rgba(239,68,68,0.03); text-align:center;">
-            <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#ef4444; font-weight:700;">Revoked</div>
-            <div style="font-size:1.6rem; font-weight:800; color:var(--text); margin-top:0.2rem;"><?= $stats['archived'] ?></div>
-        </div>
-    </div>
-
-    <div class="tab-container">
-        <div class="tab-list">
-            <button type="button" class="tab-item active" data-tab="tab-certificates">Certificates (<?= count($issuedCertificates) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-expiry">Expiry (<?= $stats['expiring_30'] + $stats['expiring_7'] + $stats['expired'] ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-users">Users (<?= count($userCerts) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-templates">Templates (<?= count($templates) ?>)</button>
-        </div>
-
-        <!-- Tab 1: Certificates (Card View) -->
-        <div class="tab-content active" data-tab="tab-certificates">
-            <?php if (empty($issuedCertificates)): ?>
-                <div class="mode-card" style="text-align:center; padding:2rem;">
-                    <div style="font-size:3rem; opacity:0.2; color:var(--primary); margin-bottom:1rem;"><i class="fas fa-award"></i></div>
-                    <h3 style="color:var(--text);">No Certificates Issued</h3>
-                    <p style="color:rgba(32,0,130,0.5);">Certificates will appear here once learners complete their courses.</p>
+<div class="module-content cert-page">
+    <div class="home-dashboard">
+        <section class="home-hero" aria-labelledby="cert-title">
+            <div class="home-hero-main">
+                <h1 id="cert-title">Certificates</h1>
+                <p>Issue, verify and monitor the certificates your learners have earned, and manage the templates behind them.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-award"></i> <?= $stats['total'] ?> issued</span>
+                    <span class="home-hero-chip"><i class="fas fa-circle-check"></i> <?= $stats['active'] ?> active</span>
+                    <span class="home-hero-chip"><i class="fas fa-hourglass-half"></i> <?= $stats['expiring_30'] ?> expiring &le;30d</span>
+                    <span class="home-hero-chip"><i class="fas fa-triangle-exclamation"></i> <?= $stats['expiring_7'] ?> expiring &le;7d</span>
+                    <span class="home-hero-chip"><i class="fas fa-ban"></i> <?= $stats['archived'] ?> revoked</span>
                 </div>
-            <?php else: ?>
-                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1.25rem;">
-                    <?php foreach ($issuedCertificates as $cert):
-                        $name = htmlspecialchars($cert['first_name'] . ' ' . $cert['last_name']);
-                        $initials = strtoupper(substr($cert['first_name'], 0, 1) . substr($cert['last_name'], 0, 1));
-                        $isExpired = $cert['valid_until'] && strtotime($cert['valid_until']) < time();
-                        $daysLeft = $cert['days_left'] ?? null;
-                        $statusColor = $cert['expiry_status'] === 'critical' ? '#dc3545' : ($cert['expiry_status'] === 'warning' ? '#d97706' : ($isExpired ? '#ef4444' : ($cert['status'] === 'active' ? '#10b981' : '#f59e0b')));
-                        $statusLabel = $isExpired ? 'Expired' : ucfirst($cert['status']);
-                        $expiryBadge = '';
-                        if ($cert['status'] === 'active' && $daysLeft !== null) {
-                            if ($daysLeft <= 0) {
-                                $expiryBadge = '<span style="margin-top:0.3rem;padding:0.15rem 0.5rem;border-radius:999px;font-size:0.65rem;font-weight:700;background:rgba(220,53,69,0.1);color:#dc3545;">Expired</span>';
-                            } elseif ($daysLeft <= 7) {
-                                $expiryBadge = '<span style="margin-top:0.3rem;padding:0.15rem 0.5rem;border-radius:999px;font-size:0.65rem;font-weight:700;background:rgba(220,53,69,0.1);color:#dc3545;">' . $daysLeft . 'd left</span>';
-                            } elseif ($daysLeft <= 30) {
-                                $expiryBadge = '<span style="margin-top:0.3rem;padding:0.15rem 0.5rem;border-radius:999px;font-size:0.65rem;font-weight:700;background:rgba(245,158,11,0.1);color:#d97706;">' . $daysLeft . 'd left</span>';
+            </div>
+        </section>
+
+        <div class="cert-toolbar">
+            <label class="cert-search">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search" id="cert-search" placeholder="Search certificates, users, or templates..." aria-label="Search certificates" />
+            </label>
+            <label class="cert-select">
+                <select id="cert-status-filter" aria-label="Filter by status">
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="archived">Revoked</option>
+                </select>
+                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </label>
+            <span class="cert-count" id="cert-count" aria-live="polite"><?= count($issuedCertificates) ?> certificate<?= count($issuedCertificates) === 1 ? '' : 's' ?></span>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab-list" role="tablist">
+                <button type="button" class="tab-item active" data-tab="tab-certificates" role="tab" aria-selected="true"><i class="fas fa-award" aria-hidden="true"></i> Certificates <span class="cert-tab-count"><?= count($issuedCertificates) ?></span></button>
+                <button type="button" class="tab-item" data-tab="tab-expiry" role="tab" aria-selected="false"><i class="fas fa-hourglass-half" aria-hidden="true"></i> Expiry <span class="cert-tab-count"><?= $stats['expiring_30'] + $stats['expiring_7'] + $stats['expired'] ?></span></button>
+                <button type="button" class="tab-item" data-tab="tab-users" role="tab" aria-selected="false"><i class="fas fa-users" aria-hidden="true"></i> Users <span class="cert-tab-count"><?= count($userCerts) ?></span></button>
+                <button type="button" class="tab-item" data-tab="tab-templates" role="tab" aria-selected="false"><i class="fas fa-file-lines" aria-hidden="true"></i> Templates <span class="cert-tab-count"><?= count($templates) ?></span></button>
+            </div>
+
+            <!-- Tab 1: Certificates (card view) -->
+            <div class="tab-content active" data-tab="tab-certificates" role="tabpanel">
+                <?php if (empty($issuedCertificates)): ?>
+                    <div class="cert-empty">
+                        <i class="fas fa-award" aria-hidden="true"></i>
+                        <strong>No certificates issued</strong>
+                        <p>Certificates will appear here once learners complete their courses.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="cert-grid">
+                        <?php foreach ($issuedCertificates as $cert):
+                            $name = htmlspecialchars($cert['first_name'] . ' ' . $cert['last_name']);
+                            $initials = strtoupper(substr($cert['first_name'], 0, 1) . substr($cert['last_name'], 0, 1));
+                            $isExpired = $cert['valid_until'] && strtotime($cert['valid_until']) < time();
+                            $daysLeft = $cert['days_left'] ?? null;
+                            $statusLabel = $isExpired ? 'Expired' : ucfirst($cert['status']);
+                            $statusTone = $isExpired ? 'is-danger' : ($cert['status'] === 'active' ? 'is-success' : 'is-muted');
+                            $expiryFlag = '';
+                            if ($cert['status'] === 'active' && $daysLeft !== null) {
+                                if ($daysLeft <= 0) {
+                                    $expiryFlag = '<span class="cert-flag is-danger"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> Expired</span>';
+                                } elseif ($daysLeft <= 7) {
+                                    $expiryFlag = '<span class="cert-flag is-danger"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> ' . $daysLeft . 'd left</span>';
+                                } elseif ($daysLeft <= 30) {
+                                    $expiryFlag = '<span class="cert-flag is-warn"><i class="fas fa-clock" aria-hidden="true"></i> ' . $daysLeft . 'd left</span>';
+                                }
                             }
-                        }
-                    ?>
-                        <div class="cert-card-item" data-search="<?= strtolower($name . ' ' . $cert['email'] . ' ' . $cert['course_title']) ?>" data-status="<?= $cert['status'] ?>" data-expiry="<?= $cert['expiry_status'] ?>" style="border:2px solid rgba(32,0,130,0.08); border-radius:14px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                            <div style="background:linear-gradient(135deg, #320082, #5b21b6); padding:1.25rem; text-align:center; color:#fff; position:relative; overflow:hidden;">
-                                <div style="position:absolute; top:-15px; right:-15px; width:60px; height:60px; background:rgba(255,255,255,0.06); border-radius:50%;"></div>
-                                <div style="position:absolute; bottom:-20px; left:-10px; width:50px; height:50px; background:rgba(255,255,255,0.04); border-radius:50%;"></div>
-                                <div style="font-size:2rem; margin-bottom:0.4rem; position:relative;"><i class="fas fa-award"></i></div>
-                                <div style="font-weight:800; font-size:1rem; position:relative;"><?= htmlspecialchars($cert['course_title']) ?></div>
-                                <div style="display:flex; flex-direction:column; align-items:center; position:relative;">
-                                    <span style="display:inline-block; margin-top:0.4rem; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.7rem; font-weight:700; background:rgba(255,255,255,0.2); color:#fff;"><?= $statusLabel ?></span>
-                                    <?= $expiryBadge ? str_replace('background:rgba(220,53,69,0.1)', 'background:rgba(220,53,69,0.3)', str_replace('background:rgba(245,158,11,0.1)', 'background:rgba(245,158,11,0.3)', str_replace('color:#dc3545', 'color:#fff', str_replace('color:#d97706', 'color:#fff', $expiryBadge)))) : '' ?>
+                            $issuedText = $cert['issued_at'] ? date('M j, Y', strtotime($cert['issued_at'])) : 'N/A';
+                            $validText = $cert['valid_until'] ? date('M j, Y', strtotime($cert['valid_until'])) : 'No expiry';
+                            $currentDate = $cert['valid_until'] ? date('Y-m-d', strtotime($cert['valid_until'])) : '';
+                        ?>
+                        <article class="cert-card-item" tabindex="0" role="button"
+                            aria-label="View certificate details for <?= $name ?>"
+                            data-search="<?= strtolower($name . ' ' . $cert['email'] . ' ' . $cert['course_title']) ?>"
+                            data-status="<?= htmlspecialchars($cert['status']) ?>"
+                            data-expiry="<?= htmlspecialchars($cert['expiry_status']) ?>"
+                            data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>"
+                            data-name="<?= htmlspecialchars($cert['first_name'] . ' ' . $cert['last_name'], ENT_QUOTES) ?>"
+                            data-email="<?= htmlspecialchars($cert['email'], ENT_QUOTES) ?>"
+                            data-initials="<?= htmlspecialchars($initials, ENT_QUOTES) ?>"
+                            data-issued="<?= htmlspecialchars($issuedText, ENT_QUOTES) ?>"
+                            data-valid="<?= htmlspecialchars($validText, ENT_QUOTES) ?>"
+                            data-code="<?= htmlspecialchars($cert['verification_code'], ENT_QUOTES) ?>"
+                            data-verify="?page=public/verify-certificate&amp;back=instructor/certificate&amp;code=<?= htmlspecialchars(urlencode($cert['verification_code']), ENT_QUOTES) ?>">
+                            <div class="cert-band">
+                                <i class="fas fa-award cert-band-icon" aria-hidden="true"></i>
+                                <div class="cert-band-title"><?= htmlspecialchars($cert['course_title']) ?></div>
+                                <div class="cert-flags">
+                                    <span class="cert-flag <?= $statusTone ?>"><?= htmlspecialchars($statusLabel) ?></span>
+                                    <?= $expiryFlag ?>
                                 </div>
                             </div>
-                            <div style="padding:1rem 1.25rem;">
-                                <div style="display:flex; align-items:center; gap:0.65rem; margin-bottom:0.75rem;">
-                                    <div style="width:36px; height:36px; min-width:36px; border-radius:50%; background:linear-gradient(135deg, #320082, #5b21b6); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.75rem;"><?= $initials ?></div>
-                                    <div>
-                                        <div style="font-weight:700; color:var(--text); font-size:0.9rem;"><?= $name ?></div>
-                                        <div style="font-size:0.75rem; color:rgba(32,0,130,0.45);"><?= htmlspecialchars($cert['email']) ?></div>
+                            <div class="cert-body">
+                                <div class="cert-person">
+                                    <span class="cert-avatar" aria-hidden="true"><?= htmlspecialchars($initials) ?></span>
+                                    <div class="cert-person-text">
+                                        <div class="cert-person-name"><?= $name ?></div>
+                                        <div class="cert-person-mail"><?= htmlspecialchars($cert['email']) ?></div>
                                     </div>
                                 </div>
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.8rem; margin-bottom:0.75rem;">
+                                <div class="cert-meta">
                                     <div>
-                                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--primary); font-weight:700;">Issued</div>
-                                        <div style="color:rgba(32,0,130,0.6); margin-top:0.1rem;"><?= $cert['issued_at'] ? date('M j, Y', strtotime($cert['issued_at'])) : 'N/A' ?></div>
+                                        <span class="cert-meta-label">Issued</span>
+                                        <span class="cert-meta-value"><?= $issuedText ?></span>
                                     </div>
                                     <div>
-                                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--primary); font-weight:700;">Valid Until</div>
-                                        <div style="color:rgba(32,0,130,0.6); margin-top:0.1rem;"><?= $cert['valid_until'] ? date('M j, Y', strtotime($cert['valid_until'])) : 'No expiry' ?></div>
+                                        <span class="cert-meta-label">Valid Until</span>
+                                        <span class="cert-meta-value"><?= $validText ?></span>
                                     </div>
                                 </div>
-                                <div style="font-family:monospace; font-size:0.72rem; color:rgba(32,0,130,0.5); background:rgba(32,0,130,0.04); padding:0.5rem 0.7rem; border-radius:6px; margin-bottom:0.75rem; word-break:break-all;">
-                                    <i class="fas fa-fingerprint" style="color:var(--primary); margin-right:0.2rem;"></i><?= htmlspecialchars($cert['verification_code']) ?>
-                                </div>
-                                <div style="display:flex; gap:0.5rem;">
-                                    <a href="?page=public/verify-certificate&back=instructor/certificate&code=<?= htmlspecialchars($cert['verification_code']) ?>" style="flex:1; text-align:center; padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:var(--primary); color:var(--surface); text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;"><i class="fas fa-eye"></i> View</a>
+                                <div class="cert-code"><i class="fas fa-fingerprint" aria-hidden="true"></i><span><?= htmlspecialchars($cert['verification_code']) ?></span></div>
+                                <div class="cert-actions">
+                                    <a class="cert-btn is-primary" href="?page=public/verify-certificate&amp;back=instructor/certificate&amp;code=<?= htmlspecialchars($cert['verification_code']) ?>"><i class="fas fa-eye" aria-hidden="true"></i> View</a>
                                     <?php if ($cert['status'] === 'active'): ?>
-                                    <button class="cert-extend-btn" data-id="<?= $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" data-current="<?= $cert['valid_until'] ?? '' ?>" onclick="openExtendModal(this)" style="padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:rgba(16,185,129,0.1); color:#10b981; border:none; cursor:pointer;"><i class="fas fa-clock"></i></button>
-                                    <button class="cert-revoke-btn" data-id="<?= $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" onclick="confirmRevoke(this)" style="padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:rgba(239,68,68,0.1); color:#ef4444; border:none; cursor:pointer;"><i class="fas fa-ban"></i></button>
+                                    <button type="button" class="cert-btn is-icon is-success cert-extend-btn" data-id="<?= (int) $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" data-current="<?= htmlspecialchars($currentDate, ENT_QUOTES) ?>" onclick="openExtendModal(this)" title="Extend validity" aria-label="Extend validity"><i class="fas fa-clock" aria-hidden="true"></i></button>
+                                    <button type="button" class="cert-btn is-icon is-danger cert-revoke-btn" data-id="<?= (int) $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" onclick="confirmRevoke(this)" title="Revoke certificate" aria-label="Revoke certificate"><i class="fas fa-ban" aria-hidden="true"></i></button>
                                     <?php endif; ?>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Tab 2: Expiry Dashboard -->
-        <div class="tab-content" data-tab="tab-expiry">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; gap:0.5rem; flex-wrap:wrap;">
-                <select id="expiry-filter" class="toolbar-filter" aria-label="Filter by expiry status">
-                    <option value="all">All Certificates (<?= count($expiryData) ?>)</option>
-                    <option value="warning">Expiring 30d (<?= $stats['expiring_30'] ?>)</option>
-                    <option value="critical">Expiring 7d (<?= $stats['expiring_7'] ?>)</option>
-                    <option value="expired">Expired (<?= $stats['expired'] ?>)</option>
-                    <option value="valid">Valid (<?= $stats['valid'] ?>)</option>
-                </select>
+                        </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
-            <?php if (empty($expiryData)): ?>
-                <div class="mode-card" style="text-align:center; padding:2rem;">
-                    <div style="font-size:3rem; opacity:0.2; color:var(--primary); margin-bottom:1rem;"><i class="fas fa-clock"></i></div>
-                    <h3 style="color:var(--text);">No Certificates to Track</h3>
-                    <p style="color:rgba(32,0,130,0.5);">Certificate expiry information will appear here.</p>
-                </div>
-            <?php else: ?>
-                <div style="overflow-x:auto;">
-                    <table class="expiry-table" id="expiry-table">
-                        <thead>
-                            <tr>
-                                <th>Learner</th>
-                                <th>Course</th>
-                                <th>Issued</th>
-                                <th>Valid Until</th>
-                                <th>Days Left</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($expiryData as $cert):
-                                $name = htmlspecialchars($cert['first_name'] . ' ' . $cert['last_name']);
-                                $validUntilRaw = $cert['valid_until'] ? date('Y-m-d', strtotime($cert['valid_until'])) : '';
-                            ?>
-                                <tr class="expiry-row" data-expiry="<?= $cert['expiry_status'] ?>" data-search="<?= strtolower($name . ' ' . htmlspecialchars($cert['course_title'])) ?>">
+
+            <!-- Tab 2: Expiry dashboard -->
+            <div class="tab-content" data-tab="tab-expiry" role="tabpanel">
+                <?php if (empty($expiryData)): ?>
+                    <div class="cert-empty">
+                        <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                        <strong>No certificates to track</strong>
+                        <p>Certificate expiry information will appear here.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="cert-panel-head">
+                        <label class="cert-select">
+                            <select id="expiry-filter" aria-label="Filter by expiry status">
+                                <option value="all">All Certificates (<?= count($expiryData) ?>)</option>
+                                <option value="warning">Expiring 30d (<?= $stats['expiring_30'] ?>)</option>
+                                <option value="critical">Expiring 7d (<?= $stats['expiring_7'] ?>)</option>
+                                <option value="expired">Expired (<?= $stats['expired'] ?>)</option>
+                                <option value="valid">Valid (<?= $stats['valid'] ?>)</option>
+                                <option value="archived">Revoked (<?= $stats['archived'] ?>)</option>
+                            </select>
+                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                        </label>
+                        <span class="cert-panel-note" id="expiry-count" aria-live="polite"></span>
+                    </div>
+                    <div class="cert-table-wrap">
+                        <table class="cert-table" id="expiry-table">
+                            <thead>
+                                <tr>
+                                    <th>Learner</th>
+                                    <th>Course</th>
+                                    <th>Issued</th>
+                                    <th>Valid Until</th>
+                                    <th class="is-center">Days Left</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($expiryData as $cert):
+                                    $name = htmlspecialchars($cert['first_name'] . ' ' . $cert['last_name']);
+                                    $validUntilRaw = $cert['valid_until'] ? date('Y-m-d', strtotime($cert['valid_until'])) : '';
+                                    $daysCls = $cert['days_left'] === null ? '' : ($cert['days_left'] <= 7 ? 'is-danger' : ($cert['days_left'] <= 30 ? 'is-warn' : 'is-ok'));
+                                ?>
+                                <tr class="expiry-row" data-expiry="<?= htmlspecialchars($cert['expiry_status']) ?>" data-search="<?= strtolower($name . ' ' . htmlspecialchars($cert['course_title'])) ?>">
                                     <td>
-                                        <div style="font-weight:600;"><?= $name ?></div>
-                                        <div style="font-size:0.72rem; color:rgba(32,0,130,0.4);">ID: <?= htmlspecialchars($cert['email']) ?></div>
+                                        <div class="cert-cell-name"><?= $name ?></div>
+                                        <div class="cert-cell-sub"><?= htmlspecialchars($cert['email']) ?></div>
                                     </td>
                                     <td><?= htmlspecialchars($cert['course_title']) ?></td>
-                                    <td><?= $cert['issued_at'] ? date('M j, Y', strtotime($cert['issued_at'])) : 'N/A' ?></td>
-                                    <td><?= $cert['valid_until'] ? date('M j, Y', strtotime($cert['valid_until'])) : 'No expiry' ?></td>
-                                    <td>
+                                    <td class="cert-cell-muted"><?= $cert['issued_at'] ? date('M j, Y', strtotime($cert['issued_at'])) : 'N/A' ?></td>
+                                    <td class="cert-cell-muted"><?= $cert['valid_until'] ? date('M j, Y', strtotime($cert['valid_until'])) : 'No expiry' ?></td>
+                                    <td class="is-center">
                                         <?php if ($cert['days_left'] !== null && $cert['status'] === 'active'): ?>
-                                            <span style="font-weight:700; color: <?= $cert['days_left'] <= 7 ? '#dc3545' : ($cert['days_left'] <= 30 ? '#d97706' : '#10b981') ?>;">
-                                                <?= $cert['days_left'] > 0 ? $cert['days_left'] . 'd' : 'Expired' ?>
-                                            </span>
+                                            <span class="cert-days <?= $daysCls ?>"><?= $cert['days_left'] > 0 ? $cert['days_left'] . 'd' : 'Expired' ?></span>
                                         <?php else: ?>
-                                            --
+                                            <span class="cert-cell-muted">--</span>
                                         <?php endif; ?>
                                     </td>
+                                    <td><span class="cert-badge is-<?= htmlspecialchars($cert['expiry_status']) ?>"><?= $expiryStatusLabels[$cert['expiry_status']] ?? 'Unknown' ?></span></td>
                                     <td>
-                                        <?php
-                                        $labels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' => 'Critical', 'expired' => 'Expired', 'archived' => 'Revoked'];
-                                        $cls = $cert['expiry_status'] === 'archived' ? 'expired' : $cert['expiry_status'];
-                                        ?>
-                                        <span class="expiry-badge <?= $cls ?>"><?= $labels[$cert['expiry_status']] ?? 'Unknown' ?></span>
-                                    </td>
-                                    <td>
-                                        <div style="display:flex; gap:0.3rem; flex-wrap:nowrap;">
-                                            <a href="?page=public/verify-certificate&back=instructor/certificate&code=<?= htmlspecialchars($cert['verification_code']) ?>" style="padding:0.3rem 0.6rem; background:rgba(32,0,130,0.08); color:var(--primary); border-radius:6px; font-size:0.72rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.2rem; white-space:nowrap;"><i class="fas fa-eye"></i> View</a>
+                                        <div class="cert-row-actions">
+                                            <a class="cert-btn is-soft" href="?page=public/verify-certificate&amp;back=instructor/certificate&amp;code=<?= htmlspecialchars($cert['verification_code']) ?>"><i class="fas fa-eye" aria-hidden="true"></i> View</a>
                                             <?php if ($cert['status'] === 'active'): ?>
-                                            <button type="button" class="expiry-extend-btn" data-id="<?= $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" data-current="<?= $validUntilRaw ?>" onclick="openExtendModal(this)" style="padding:0.3rem 0.6rem; background:rgba(16,185,129,0.08); color:#16a34a; border:none; border-radius:6px; font-size:0.72rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:0.2rem; white-space:nowrap;"><i class="fas fa-calendar-plus"></i> Extend</button>
-                                            <button type="button" class="expiry-revoke-btn" data-id="<?= $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" onclick="confirmRevoke(this)" style="padding:0.3rem 0.6rem; background:rgba(220,53,69,0.08); color:#dc3545; border:none; border-radius:6px; font-size:0.72rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:0.2rem; white-space:nowrap;"><i class="fas fa-ban"></i> Revoke</button>
+                                            <button type="button" class="cert-btn is-success expiry-extend-btn" data-id="<?= (int) $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" data-current="<?= htmlspecialchars($validUntilRaw, ENT_QUOTES) ?>" onclick="openExtendModal(this)"><i class="fas fa-calendar-plus" aria-hidden="true"></i> Extend</button>
+                                            <button type="button" class="cert-btn is-danger expiry-revoke-btn" data-id="<?= (int) $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" onclick="confirmRevoke(this)"><i class="fas fa-ban" aria-hidden="true"></i> Revoke</button>
                                             <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-                <div class="pagination-row" id="expiry-pagination">
-                    <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
-                    <span class="page-indicator">Page 1 of 1</span>
-                    <button type="button" class="page-btn" data-action="next">Next</button>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Tab 3: Users (Ranked by cert count) -->
-        <div class="tab-content" data-tab="tab-users">
-            <?php if (!empty($userCerts)): ?>
-            <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:1rem; gap:0.5rem;">
-                <label style="font-size:0.78rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em;">Sort by:</label>
-                <select id="users-sort" style="padding:0.4rem 0.8rem; border:1px solid rgba(32,0,130,0.15); border-radius:8px; font-size:0.82rem; color:var(--text); background:var(--surface); cursor:pointer;">
-                    <option value="most-certs">Most Certificates</option>
-                    <option value="newly-acquired">Newly Acquired</option>
-                </select>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination-row" id="expiry-pagination">
+                        <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
+                        <span class="page-indicator">Page 1 of 1</span>
+                        <button type="button" class="page-btn" data-action="next">Next</button>
+                    </div>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
-            <?php if (empty($userCerts)): ?>
-                <div class="mode-card" style="text-align:center; padding:2rem;">
-                    <div style="font-size:3rem; opacity:0.2; color:var(--primary); margin-bottom:1rem;"><i class="fas fa-users"></i></div>
-                    <h3 style="color:var(--text);">No Certificate Holders</h3>
-                    <p style="color:rgba(32,0,130,0.5);">Users who earn certificates will appear here.</p>
-                </div>
-            <?php else: ?>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
-                        <thead>
-                            <tr style="border-bottom:2px solid rgba(32,0,130,0.12); text-align:left;">
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Rank</th>
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">User</th>
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; text-align:center;">Total Certs</th>
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; text-align:center;">Active</th>
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Last Certificate</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($userCerts as $idx => $uc):
-                                $name = htmlspecialchars($uc['first_name'] . ' ' . $uc['last_name']);
-                                $initials = strtoupper(substr($uc['first_name'], 0, 1) . substr($uc['last_name'], 0, 1));
-                                $rank = $idx + 1;
-                                $rankBadge = $rank === 1 ? 'linear-gradient(135deg, #FFD700, #FFA500)' : ($rank === 2 ? 'linear-gradient(135deg, #C0C0C0, #A0A0A0)' : ($rank === 3 ? 'linear-gradient(135deg, #CD7F32, #A0522D)' : 'rgba(32,0,130,0.08)'));
-                                $rankTextColor = $rank <= 3 ? '#fff' : 'rgba(32,0,130,0.5)';
-                                $rankIcon = $rank === 1 ? 'fas fa-trophy' : ($rank === 2 ? 'fas fa-medal' : ($rank === 3 ? 'fas fa-award' : ''));
-                                $rowBg = $rank === 1 ? 'rgba(255,215,0,0.04)' : ($rank === 2 ? 'rgba(192,192,192,0.03)' : ($rank === 3 ? 'rgba(205,125,50,0.02)' : ''));
-                            ?>
-                                <tr class="user-cert-row" data-search="<?= strtolower($name . ' ' . $uc['email']) ?>" data-cert-count="<?= $uc['cert_count'] ?>" data-last-cert="<?= $uc['last_cert_date'] ?>" style="border-bottom:1px solid rgba(32,0,130,0.06); transition:background 0.15s;<?= $rowBg ? ' background:' . $rowBg . ';' : '' ?>" onmouseover="this.style.background='rgba(32,0,130,0.03)'" onmouseout="this.style.background='<?= $rowBg ?>'">
-                                    <td style="padding:0.85rem 1rem;">
-                                        <div style="width:36px; height:36px; border-radius:50%; background:<?= $rankBadge ?>; color:<?= $rankTextColor ?>; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem;">
-                                            <?php if ($rankIcon): ?><i class="<?= $rankIcon ?>" style="font-size:0.85rem;"></i><?php else: ?><?= $rank ?><?php endif; ?>
-                                        </div>
+
+            <!-- Tab 3: Users (ranked by certificate count) -->
+            <div class="tab-content" data-tab="tab-users" role="tabpanel">
+                <?php if (empty($userCerts)): ?>
+                    <div class="cert-empty">
+                        <i class="fas fa-users" aria-hidden="true"></i>
+                        <strong>No certificate holders</strong>
+                        <p>Users who earn certificates will appear here.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="cert-panel-head">
+                        <span class="cert-panel-note">Ranked by certificates earned</span>
+                        <label class="cert-select cert-panel-spacer">
+                            <select id="users-sort" aria-label="Sort users">
+                                <option value="most-certs">Most Certificates</option>
+                                <option value="newly-acquired">Newly Acquired</option>
+                            </select>
+                            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                        </label>
+                    </div>
+                    <div class="cert-table-wrap">
+                        <table class="cert-table">
+                            <thead>
+                                <tr>
+                                    <th class="is-center">Rank</th>
+                                    <th>User</th>
+                                    <th class="is-center">Certificates</th>
+                                    <th class="is-center">Active</th>
+                                    <th>Last Certificate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($userCerts as $idx => $uc):
+                                    $name = htmlspecialchars($uc['first_name'] . ' ' . $uc['last_name']);
+                                    $initials = strtoupper(substr($uc['first_name'], 0, 1) . substr($uc['last_name'], 0, 1));
+                                    $rank = $idx + 1;
+                                    $rankIcon = $rank === 1 ? 'fas fa-trophy' : ($rank === 2 ? 'fas fa-medal' : ($rank === 3 ? 'fas fa-award' : ''));
+                                    $rankClass = $rank <= 3 ? ' is-rank-' . $rank : '';
+                                ?>
+                                <tr class="user-cert-row<?= $rankClass ?>" data-search="<?= strtolower($name . ' ' . $uc['email']) ?>" data-cert-count="<?= (int) $uc['cert_count'] ?>" data-last-cert="<?= htmlspecialchars((string) $uc['last_cert_date'], ENT_QUOTES) ?>">
+                                    <td class="is-center">
+                                        <div class="cert-rank"><?php if ($rankIcon): ?><i class="<?= $rankIcon ?>" aria-hidden="true"></i><?php else: ?><?= $rank ?><?php endif; ?></div>
                                     </td>
-                                    <td style="padding:0.85rem 1rem;">
-                                        <div style="display:flex; align-items:center; gap:0.65rem;">
-                                            <div style="width:36px; height:36px; min-width:36px; border-radius:50%; background:linear-gradient(135deg, rgba(16,185,129,0.9), rgba(52,211,153,0.75)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.75rem;"><?= $initials ?></div>
-                                            <div>
-                                                <div style="font-weight:700; color:var(--text);"><?= $name ?></div>
-                                                <div style="font-size:0.75rem; color:rgba(32,0,130,0.45);"><?= htmlspecialchars($uc['email']) ?></div>
+                                    <td>
+                                        <div class="cert-person">
+                                            <span class="cert-avatar" aria-hidden="true"><?= $initials ?></span>
+                                            <div class="cert-person-text">
+                                                <div class="cert-person-name"><?= $name ?></div>
+                                                <div class="cert-person-mail"><?= htmlspecialchars($uc['email']) ?></div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td style="padding:0.85rem 1rem; text-align:center;">
-                                        <span style="display:inline-block; padding:0.3rem 0.7rem; border-radius:999px; font-weight:800; font-size:0.9rem; background:var(--primary); color:var(--surface);"><?= $uc['cert_count'] ?></span>
-                                    </td>
-                                    <td style="padding:0.85rem 1rem; text-align:center; font-weight:700; color:#10b981;"><?= $uc['active_count'] ?></td>
-                                    <td style="padding:0.85rem 1rem; font-size:0.85rem; color:rgba(32,0,130,0.5);"><?= certTimeAgo($uc['last_cert_date']) ?></td>
+                                    <td class="is-center"><span class="cert-count-pill"><?= (int) $uc['cert_count'] ?></span></td>
+                                    <td class="is-center"><span class="cert-active-count"><?= (int) $uc['active_count'] ?></span></td>
+                                    <td class="cert-cell-muted"><?= certTimeAgo($uc['last_cert_date']) ?></td>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Tab 4: Templates -->
-        <div class="tab-content" data-tab="tab-templates">
-            <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:1rem;">
-                <button id="btn-add-template" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.55rem 1.1rem; border-radius:8px; border:none; background:var(--primary); color:var(--surface); font-weight:700; font-size:0.82rem; cursor:pointer; transition:opacity 0.15s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'"><i class="fas fa-plus"></i> Add Template</button>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
             </div>
-            <?php if (empty($templates)): ?>
-                <div class="mode-card" style="text-align:center; padding:2rem;">
-                    <div style="font-size:3rem; opacity:0.2; color:var(--primary); margin-bottom:1rem;"><i class="fas fa-file-alt"></i></div>
-                    <h3 style="color:var(--text);">No Templates</h3>
-                    <p style="color:rgba(32,0,130,0.5);">Create certificate templates to standardize course completion awards.</p>
+
+            <!-- Tab 4: Templates -->
+            <div class="tab-content" data-tab="tab-templates" role="tabpanel">
+                <div class="cert-panel-head">
+                    <span class="cert-panel-note"><?= count($templates) ?> template<?= count($templates) === 1 ? '' : 's' ?></span>
+                    <button type="button" id="btn-add-template" class="cert-btn is-primary is-auto cert-panel-spacer"><i class="fas fa-plus" aria-hidden="true"></i> Add Template</button>
                 </div>
-            <?php else: ?>
-                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1.25rem;">
-                    <?php foreach ($templates as $t):
-                        $isLinked = !empty($t['course_title']);
-                    ?>
-                        <div class="template-card" data-search="<?= strtolower($t['title'] . ' ' . ($t['course_title'] ?? '')) ?>" style="border:1px solid rgba(32,0,130,0.12); border-radius:14px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                            <div style="background:linear-gradient(135deg, rgba(32,0,130,0.08), rgba(81,70,183,0.05)); padding:1.25rem; border-bottom:1px solid rgba(32,0,130,0.08);">
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem;">
-                                    <div style="font-weight:700; color:var(--text); font-size:1.05rem;"><?= htmlspecialchars($t['title']) ?></div>
-                                    <span style="padding:0.2rem 0.5rem; border-radius:999px; font-size:0.65rem; font-weight:700; background:rgba(16,185,129,0.1); color:#10b981; white-space:nowrap;">Active</span>
+                <?php if (empty($templates)): ?>
+                    <div class="cert-empty">
+                        <i class="fas fa-file-lines" aria-hidden="true"></i>
+                        <strong>No templates</strong>
+                        <p>Create certificate templates to standardize course completion awards.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="cert-template-grid">
+                        <?php foreach ($templates as $t):
+                            $isLinked = !empty($t['course_title']);
+                        ?>
+                        <article class="template-card" data-search="<?= strtolower($t['title'] . ' ' . ($t['course_title'] ?? '')) ?>">
+                            <div class="template-head">
+                                <div>
+                                    <div class="template-title"><?= htmlspecialchars($t['title']) ?></div>
+                                    <div class="template-sub"><?= $isLinked ? htmlspecialchars($t['course_title']) : 'General Template' ?></div>
                                 </div>
-                                <div style="font-size:0.8rem; color:rgba(32,0,130,0.5); margin-top:0.25rem;"><?= $isLinked ? htmlspecialchars($t['course_title']) : 'General Template' ?></div>
+                                <span class="cert-badge is-valid">Active</span>
                             </div>
-                            <div style="padding:1rem 1.25rem;">
+                            <div class="template-body">
                                 <?php if ($t['description']): ?>
-                                    <p style="font-size:0.85rem; color:rgba(32,0,130,0.6); line-height:1.6; margin-bottom:0.75rem;"><?= htmlspecialchars(mb_substr($t['description'], 0, 150)) ?><?= mb_strlen($t['description']) > 150 ? '...' : '' ?></p>
+                                    <p class="template-desc"><?= htmlspecialchars(mb_substr($t['description'], 0, 150)) ?><?= mb_strlen($t['description']) > 150 ? '...' : '' ?></p>
                                 <?php endif; ?>
-                                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:rgba(32,0,130,0.4);">
+                                <div class="template-foot">
                                     <span>Created <?= date('M j, Y', strtotime($t['created_at'])) ?></span>
-                                    <div style="display:flex; gap:0.4rem;">
-                                        <button class="btn-edit-template" data-id="<?= $t['id'] ?>" data-title="<?= htmlspecialchars($t['title'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($t['description'] ?? '', ENT_QUOTES) ?>" data-course="<?= $t['course_id'] ?? '' ?>" style="padding:0.35rem 0.7rem; border-radius:6px; border:1px solid rgba(32,0,130,0.15); background:transparent; color:var(--primary, #320082); font-size:0.75rem; font-weight:700; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='rgba(32,0,130,0.06)'" onmouseout="this.style.background='transparent'"><i class="fas fa-pen" style="margin-right:0.2rem;"></i>Edit</button>
-                                        <button class="btn-delete-template" data-id="<?= $t['id'] ?>" data-title="<?= htmlspecialchars($t['title'], ENT_QUOTES) ?>" style="padding:0.35rem 0.7rem; border-radius:6px; border:1px solid rgba(239,68,68,0.2); background:transparent; color:#ef4444; font-size:0.75rem; font-weight:700; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='rgba(239,68,68,0.06)'" onmouseout="this.style.background='transparent'"><i class="fas fa-trash" style="margin-right:0.2rem;"></i>Delete</button>
+                                    <div class="template-actions">
+                                        <button type="button" class="cert-btn is-outline btn-edit-template" data-id="<?= (int) $t['id'] ?>" data-title="<?= htmlspecialchars($t['title'], ENT_QUOTES) ?>" data-desc="<?= htmlspecialchars($t['description'] ?? '', ENT_QUOTES) ?>" data-course="<?= $t['course_id'] ?? '' ?>"><i class="fas fa-pen" aria-hidden="true"></i> Edit</button>
+                                        <button type="button" class="cert-btn is-outline btn-delete-template" data-id="<?= (int) $t['id'] ?>" data-title="<?= htmlspecialchars($t['title'], ENT_QUOTES) ?>"><i class="fas fa-trash" aria-hidden="true"></i> Delete</button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+                        </article>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Confirm Modal -->
-<div id="confirm-modal-overlay" class="modal-overlay" style="display:none; z-index:10000; background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);">
-    <div style="background:var(--surface, #fff); border-radius:16px; width:90%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.2); padding:1.5rem; text-align:center;">
-        <div style="font-size:2rem; color:#ef4444; margin-bottom:0.75rem;"><i class="fas fa-exclamation-triangle"></i></div>
-        <p id="confirm-modal-message" style="font-size:0.95rem; color:var(--text, #222); margin-bottom:1.25rem; line-height:1.5;"></p>
-        <div style="display:flex; gap:0.75rem; justify-content:center;">
-            <button id="confirm-modal-cancel" style="padding:0.55rem 1.2rem; border:1.5px solid rgba(32,0,130,0.15); border-radius:8px; background:transparent; color:var(--text, #222); font-weight:700; font-size:0.85rem; cursor:pointer;">Cancel</button>
-            <button id="confirm-modal-ok" style="padding:0.55rem 1.2rem; border:none; border-radius:8px; background:#ef4444; color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer;">Delete</button>
+<div id="confirm-modal-overlay" class="modal-overlay" style="display:none;">
+    <div class="cert-modal is-sm" role="dialog" aria-modal="true" aria-describedby="confirm-modal-message">
+        <div class="cert-modal-body is-center">
+            <div class="cert-modal-icon is-danger"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></div>
+            <p id="confirm-modal-message" class="cert-modal-text"></p>
+        </div>
+        <div class="cert-modal-foot is-center">
+            <button type="button" id="confirm-modal-cancel" class="cert-btn is-soft">Cancel</button>
+            <button type="button" id="confirm-modal-ok" class="cert-btn is-danger-solid">Delete</button>
         </div>
     </div>
 </div>
 
-<!-- Add Template Modal -->
-<div id="template-modal-overlay" class="modal-overlay" style="display:none; z-index:9999; background:rgba(0,0,0,0.45);backdrop-filter:blur(3px);">
-    <div style="background:var(--surface, #fff); border-radius:16px; width:90%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.5rem; border-bottom:1px solid rgba(32,0,130,0.08);">
-            <h3 id="template-modal-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text, #222);">New Certificate Template</h3>
-            <button id="close-template-modal" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:rgba(32,0,130,0.4); padding:0.25rem;"><i class="fas fa-times"></i></button>
+<!-- Add / Edit Template Modal -->
+<div id="template-modal-overlay" class="modal-overlay" style="display:none;">
+    <div class="cert-modal is-md" role="dialog" aria-modal="true" aria-labelledby="template-modal-title">
+        <div class="cert-modal-head">
+            <h3 id="template-modal-title" class="cert-modal-title">New Certificate Template</h3>
+            <button type="button" id="close-template-modal" class="cert-modal-close" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
         </div>
-        <form id="template-form" data-skip style="padding:1.5rem;">
-            <input type="hidden" name="template_id" id="template-form-id" value="" />
-            <div style="margin-bottom:1rem;">
-                <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--primary, #320082); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem;">Template Title *</label>
-                <input type="text" name="title" required placeholder="e.g. Standard Course Completion" style="width:100%; padding:0.6rem 0.8rem; border:1.5px solid rgba(32,0,130,0.12); border-radius:8px; font-size:0.9rem; background:var(--surface, #fff); color:var(--text, #222); box-sizing:border-box;" />
+        <form id="template-form" data-skip>
+            <div class="cert-modal-body">
+                <input type="hidden" name="template_id" id="template-form-id" value="" />
+                <div class="cert-field">
+                    <label for="template-title">Template Title *</label>
+                    <input type="text" id="template-title" name="title" required placeholder="e.g. Standard Course Completion" />
+                </div>
+                <div class="cert-field">
+                    <label for="template-description">Description</label>
+                    <textarea id="template-description" name="description" rows="3" placeholder="Brief description of this template..."></textarea>
+                </div>
+                <div class="cert-field is-last">
+                    <label for="template-course">Link to Course (optional)</label>
+                    <select id="template-course" name="course_id">
+                        <option value="">-- General Template --</option>
+                        <?php foreach ($courses as $c): ?>
+                            <option value="<?= (int) $c['id'] ?>"><?= htmlspecialchars($c['title']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
-            <div style="margin-bottom:1rem;">
-                <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--primary, #320082); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem;">Description</label>
-                <textarea name="description" rows="3" placeholder="Brief description of this template..." style="width:100%; padding:0.6rem 0.8rem; border:1.5px solid rgba(32,0,130,0.12); border-radius:8px; font-size:0.9rem; resize:vertical; background:var(--surface, #fff); color:var(--text, #222); box-sizing:border-box;"></textarea>
-            </div>
-            <div style="margin-bottom:1.25rem;">
-                <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--primary, #320082); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem;">Link to Course (optional)</label>
-                <select name="course_id" style="width:100%; padding:0.6rem 0.8rem; border:1.5px solid rgba(32,0,130,0.12); border-radius:8px; font-size:0.9rem; background:var(--surface, #fff); color:var(--text, #222); box-sizing:border-box;">
-                    <option value="">-- General Template --</option>
-                    <?php foreach ($courses as $c): ?>
-                        <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['title']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
-                <button type="button" id="cancel-template-modal" style="padding:0.55rem 1.2rem; border:1.5px solid rgba(32,0,130,0.15); border-radius:8px; background:transparent; color:var(--text, #222); font-weight:700; font-size:0.85rem; cursor:pointer;">Cancel</button>
-                <button type="submit" id="template-form-submit" style="padding:0.55rem 1.2rem; border:none; border-radius:8px; background:var(--primary, #320082); color:var(--surface, #fff); font-weight:700; font-size:0.85rem; cursor:pointer;"><i class="fas fa-save" style="margin-right:0.3rem;"></i> Create Template</button>
+            <div class="cert-modal-foot">
+                <button type="button" id="cancel-template-modal" class="cert-btn is-soft">Cancel</button>
+                <button type="submit" id="template-form-submit" class="cert-btn is-primary is-auto"><i class="fas fa-save" aria-hidden="true"></i> Create Template</button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- Extend Modal -->
-<div id="extend-modal-overlay" class="modal-overlay" style="display:none; z-index:10001; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px);">
-    <div style="background:var(--surface, #fff); border-radius:16px; width:90%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.2); padding:1.5rem;">
-        <h3 style="margin:0 0 0.5rem; font-size:1.1rem; font-weight:800; color:var(--text);">Extend Certificate</h3>
-        <p style="margin:0 0 1rem; font-size:0.85rem; color:rgba(32,0,130,0.5);">Set a new expiry date for <strong id="extend-course-name"></strong>.</p>
-        <div style="margin-bottom:1rem;">
-            <label style="display:block; font-size:0.78rem; font-weight:600; color:var(--text); margin-bottom:0.3rem;">New Expiry Date</label>
-            <input type="date" id="extend-date-input" style="width:100%; padding:0.6rem 0.8rem; border:1.5px solid rgba(32,0,130,0.15); border-radius:8px; font-size:0.88rem; background:var(--surface, #fff); color:var(--text); box-sizing:border-box;">
+<div id="extend-modal-overlay" class="modal-overlay" style="display:none;">
+    <div class="cert-modal is-sm" role="dialog" aria-modal="true" aria-labelledby="extend-modal-title">
+        <div class="cert-modal-head">
+            <h3 id="extend-modal-title" class="cert-modal-title">Extend Certificate</h3>
+            <button type="button" class="cert-modal-close" onclick="closeExtendModal()" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
         </div>
-        <div id="extend-error" style="display:none; padding:0.5rem 0.75rem; background:rgba(220,53,69,0.08); color:#dc3545; border-radius:8px; font-size:0.82rem; margin-bottom:1rem;"></div>
-        <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
-            <button type="button" onclick="closeExtendModal()" style="padding:0.55rem 1.1rem; background:rgba(32,0,130,0.08); color:var(--primary); border:none; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer;">Cancel</button>
-            <button type="button" id="extend-confirm-btn" onclick="submitExtend()" style="padding:0.55rem 1.1rem; background:#16a34a; color:#fff; border:none; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer;">Extend</button>
+        <div class="cert-modal-body">
+            <p class="cert-field-hint">Set a new expiry date for <strong id="extend-course-name"></strong>.</p>
+            <div class="cert-field is-last">
+                <label for="extend-date-input">New Expiry Date</label>
+                <input type="date" id="extend-date-input" />
+            </div>
+            <div id="extend-error" class="cert-inline-error is-last"></div>
+        </div>
+        <div class="cert-modal-foot">
+            <button type="button" class="cert-btn is-soft" onclick="closeExtendModal()">Cancel</button>
+            <button type="button" id="extend-confirm-btn" class="cert-btn is-success" onclick="submitExtend()">Extend</button>
         </div>
     </div>
 </div>
 
 <!-- Revoke Confirm Modal -->
-<div id="revoke-modal-overlay" class="modal-overlay" style="display:none; z-index:10001; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px);">
-    <div style="background:var(--surface, #fff); border-radius:16px; width:90%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.2); padding:1.5rem; text-align:center;">
-        <div style="font-size:2.5rem; color:#dc3545; margin-bottom:0.75rem;"><i class="fas fa-exclamation-triangle"></i></div>
-        <h3 style="margin:0 0 0.5rem; font-size:1.1rem; color:var(--text);">Revoke Certificate?</h3>
-        <p style="margin:0 0 1.25rem; font-size:0.85rem; color:rgba(32,0,130,0.5);">This will revoke the certificate for <strong id="revoke-course-name"></strong>. The learner will lose access to this credential.</p>
-        <div id="revoke-error" style="display:none; padding:0.5rem 0.75rem; background:rgba(220,53,69,0.08); color:#dc3545; border-radius:8px; font-size:0.82rem; margin-bottom:1rem;"></div>
-        <div style="display:flex; gap:0.5rem; justify-content:center;">
-            <button type="button" onclick="closeRevokeModal()" style="padding:0.55rem 1.1rem; background:rgba(32,0,130,0.08); color:var(--primary); border:none; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer;">Cancel</button>
-            <button type="button" id="revoke-confirm-btn" onclick="submitRevoke()" style="padding:0.55rem 1.1rem; background:#dc3545; color:#fff; border:none; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer;">Revoke</button>
+<div id="revoke-modal-overlay" class="modal-overlay" style="display:none;">
+    <div class="cert-modal is-sm" role="dialog" aria-modal="true" aria-labelledby="revoke-modal-title">
+        <div class="cert-modal-body is-center">
+            <div class="cert-modal-icon is-danger"><i class="fas fa-ban" aria-hidden="true"></i></div>
+            <h3 id="revoke-modal-title" class="cert-modal-lead">Revoke certificate?</h3>
+            <p class="cert-modal-text">This will revoke the certificate for <strong id="revoke-course-name"></strong>. The learner will lose access to this credential.</p>
+            <div id="revoke-error" class="cert-inline-error is-left is-last"></div>
+        </div>
+        <div class="cert-modal-foot is-center">
+            <button type="button" class="cert-btn is-soft" onclick="closeRevokeModal()">Cancel</button>
+            <button type="button" id="revoke-confirm-btn" class="cert-btn is-danger-solid" onclick="submitRevoke()">Revoke</button>
         </div>
     </div>
 </div>
 
 <!-- Certificate Detail Modal -->
-<div id="cert-detail-modal" class="modal-overlay" style="display:none; z-index:10000; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px);">
-    <div style="background:var(--surface, #fff); border-radius:18px; width:90%; max-width:520px; max-height:88vh; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.25); display:flex; flex-direction:column;">
-        <div id="cert-detail-header" style="background:linear-gradient(135deg, rgba(16,185,129,0.1), rgba(52,211,153,0.06)); padding:1.75rem 1.5rem; text-align:center; border-bottom:1px solid rgba(16,185,129,0.12); position:relative;">
-            <button onclick="document.getElementById('cert-detail-modal').style.display='none'" style="position:absolute; top:0.75rem; right:0.75rem; background:none; border:none; font-size:1.2rem; cursor:pointer; color:rgba(32,0,130,0.4); padding:0.25rem;"><i class="fas fa-times"></i></button>
-            <div style="font-size:2.5rem; color:#10b981; margin-bottom:0.5rem;"><i class="fas fa-award"></i></div>
-            <h2 id="cert-detail-course" style="margin:0 0 0.25rem; font-size:1.2rem; font-weight:800; color:var(--text);"></h2>
-            <div id="cert-detail-status" style="display:flex; flex-direction:column; align-items:center; gap:0.3rem;"></div>
+<div id="cert-detail-modal" class="modal-overlay" style="display:none;">
+    <div class="cert-modal is-lg" role="dialog" aria-modal="true" aria-labelledby="cert-detail-course">
+        <div class="cert-detail-hero">
+            <button type="button" class="cert-modal-close" onclick="closeCertDetail()" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
+            <i class="fas fa-award cert-band-icon" aria-hidden="true"></i>
+            <h2 id="cert-detail-course" class="cert-detail-course"></h2>
+            <div id="cert-detail-status" class="cert-flags"></div>
         </div>
-        <div style="padding:1.5rem; overflow-y:auto; flex:1;">
-            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem; padding-bottom:1.25rem; border-bottom:1px solid rgba(32,0,130,0.08);">
-                <div id="cert-detail-avatar" style="width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, rgba(16,185,129,0.9), rgba(52,211,153,0.75)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem; flex-shrink:0;"></div>
+        <div class="cert-detail-body">
+            <div class="cert-detail-person">
+                <div id="cert-detail-avatar" class="cert-detail-avatar"></div>
                 <div>
-                    <div id="cert-detail-name" style="font-weight:700; color:var(--text); font-size:1rem;"></div>
-                    <div id="cert-detail-email" style="font-size:0.8rem; color:rgba(32,0,130,0.45);"></div>
+                    <div id="cert-detail-name" class="cert-detail-name"></div>
+                    <div id="cert-detail-email" class="cert-detail-mail"></div>
                 </div>
             </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+            <div class="cert-meta">
                 <div>
-                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--primary); font-weight:700;">Issued</div>
-                    <div id="cert-detail-issued" style="color:var(--text); margin-top:0.2rem; font-size:0.92rem; font-weight:600;"></div>
+                    <span class="cert-meta-label">Issued</span>
+                    <span id="cert-detail-issued" class="cert-meta-value"></span>
                 </div>
                 <div>
-                    <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--primary); font-weight:700;">Valid Until</div>
-                    <div id="cert-detail-valid" style="color:var(--text); margin-top:0.2rem; font-size:0.92rem; font-weight:600;"></div>
+                    <span class="cert-meta-label">Valid Until</span>
+                    <span id="cert-detail-valid" class="cert-meta-value"></span>
                 </div>
             </div>
-            <div style="margin-bottom:1.25rem;">
-                <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--primary); font-weight:700; margin-bottom:0.4rem;">Verification Code</div>
-                <div id="cert-detail-code" style="font-family:monospace; font-size:0.82rem; color:rgba(32,0,130,0.6); background:rgba(32,0,130,0.04); padding:0.6rem 0.85rem; border-radius:8px; word-break:break-all;"></div>
+            <div class="cert-detail-code-block">
+                <span class="cert-meta-label">Verification Code</span>
+                <div id="cert-detail-code" class="cert-code"></div>
             </div>
-            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                <a id="cert-detail-view" href="#" style="flex:1; text-align:center; padding:0.6rem; border-radius:8px; font-size:0.85rem; font-weight:700; background:var(--primary); color:var(--surface); text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem;"><i class="fas fa-eye"></i> Verify</a>
-                <button id="cert-detail-extend" style="flex:1; padding:0.6rem; border-radius:8px; font-size:0.85rem; font-weight:700; background:rgba(16,185,129,0.1); color:#10b981; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem;"><i class="fas fa-clock"></i> Extend</button>
-                <button id="cert-detail-revoke" style="flex:1; padding:0.6rem; border-radius:8px; font-size:0.85rem; font-weight:700; background:rgba(239,68,68,0.1); color:#ef4444; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem;"><i class="fas fa-ban"></i> Revoke</button>
+            <div class="cert-detail-actions">
+                <a id="cert-detail-view" class="cert-btn is-primary" href="#"><i class="fas fa-eye" aria-hidden="true"></i> Verify</a>
+                <button type="button" id="cert-detail-extend" class="cert-btn is-success"><i class="fas fa-clock" aria-hidden="true"></i> Extend</button>
+                <button type="button" id="cert-detail-revoke" class="cert-btn is-danger"><i class="fas fa-ban" aria-hidden="true"></i> Revoke</button>
             </div>
         </div>
     </div>
@@ -554,59 +557,49 @@ function certTimeAgo($dt) {
 (function() {
     var searchInput = document.getElementById('cert-search');
     var statusFilter = document.getElementById('cert-status-filter');
+    var expiryFilter = document.getElementById('expiry-filter');
+    var countEl = document.getElementById('cert-count');
 
     function filterAll() {
         var query = (searchInput ? searchInput.value : '').toLowerCase().trim();
         var status = statusFilter ? statusFilter.value : 'all';
+        var visibleCards = 0;
 
-        // Filter certificate cards
         document.querySelectorAll('.cert-card-item').forEach(function(card) {
             var searchText = (card.getAttribute('data-search') || '').toLowerCase();
             var rowStatus = card.getAttribute('data-status') || '';
-            var matchSearch = query === '' || searchText.indexOf(query) > -1;
-            var matchStatus = status === 'all' || rowStatus === status;
-            card.style.display = (matchSearch && matchStatus) ? '' : 'none';
+            var show = (query === '' || searchText.indexOf(query) > -1) && (status === 'all' || rowStatus === status);
+            card.style.display = show ? '' : 'none';
+            if (show) visibleCards++;
         });
 
-        // Filter user rows
         document.querySelectorAll('.user-cert-row').forEach(function(row) {
             var searchText = (row.getAttribute('data-search') || '').toLowerCase();
-            var matchSearch = query === '' || searchText.indexOf(query) > -1;
-            row.style.display = matchSearch ? '' : 'none';
+            row.style.display = (query === '' || searchText.indexOf(query) > -1) ? '' : 'none';
         });
 
-        // Filter template cards
         document.querySelectorAll('.template-card').forEach(function(card) {
             var searchText = (card.getAttribute('data-search') || '').toLowerCase();
-            var matchSearch = query === '' || searchText.indexOf(query) > -1;
-            card.style.display = matchSearch ? '' : 'none';
+            card.style.display = (query === '' || searchText.indexOf(query) > -1) ? '' : 'none';
         });
 
-        // Filter expiry table rows
-        var expiryFilter = document.getElementById('expiry-filter');
         var expiryVal = expiryFilter ? expiryFilter.value : 'all';
         document.querySelectorAll('.expiry-row').forEach(function(row) {
             var searchText = (row.getAttribute('data-search') || '').toLowerCase();
             var expiryStatus = row.getAttribute('data-expiry') || '';
-            var matchSearch = query === '' || searchText.indexOf(query) > -1;
-            var matchExpiry = expiryVal === 'all' || expiryStatus === expiryVal;
-            row.style.display = (matchSearch && matchExpiry) ? '' : 'none';
+            var show = (query === '' || searchText.indexOf(query) > -1) && (expiryVal === 'all' || expiryStatus === expiryVal);
+            row.style.display = show ? '' : 'none';
         });
+
+        if (countEl) countEl.textContent = visibleCards + ' certificate' + (visibleCards === 1 ? '' : 's');
     }
-
-    if (searchInput) searchInput.addEventListener('input', filterAll);
-    if (statusFilter) statusFilter.addEventListener('change', filterAll);
-
-    var expiryFilter = document.getElementById('expiry-filter');
-    if (expiryFilter) expiryFilter.addEventListener('change', filterAll);
 
     // Expiry table pagination
     var expiryPageSize = 12;
     var expiryPage = 1;
     function paginateExpiry() {
         var rows = Array.from(document.querySelectorAll('.expiry-row'));
-        var ef = document.getElementById('expiry-filter');
-        var efilter = ef ? ef.value : 'all';
+        var efilter = expiryFilter ? expiryFilter.value : 'all';
         var q = (searchInput ? searchInput.value : '').toLowerCase().trim();
         var vis = rows.filter(function(r) {
             var txt = (r.getAttribute('data-search') || '').toLowerCase();
@@ -617,6 +610,10 @@ function certTimeAgo($dt) {
         expiryPage = Math.min(expiryPage, tot);
         var st = (expiryPage - 1) * expiryPageSize;
         vis.forEach(function(r, i) { r.style.display = (i >= st && i < st + expiryPageSize) ? '' : 'none'; });
+
+        var note = document.getElementById('expiry-count');
+        if (note) note.textContent = vis.length + ' certificate' + (vis.length === 1 ? '' : 's');
+
         var pg = document.getElementById('expiry-pagination');
         if (pg) {
             pg.querySelector('.page-indicator').textContent = 'Page ' + expiryPage + ' of ' + tot;
@@ -625,6 +622,13 @@ function certTimeAgo($dt) {
             pg.style.display = tot <= 1 ? 'none' : '';
         }
     }
+
+    function applyFilters() { filterAll(); paginateExpiry(); }
+
+    if (searchInput) searchInput.addEventListener('input', function() { expiryPage = 1; applyFilters(); });
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+    if (expiryFilter) expiryFilter.addEventListener('change', function() { expiryPage = 1; applyFilters(); });
+
     var expiryPg = document.getElementById('expiry-pagination');
     if (expiryPg) {
         expiryPg.addEventListener('click', function(e) {
@@ -635,7 +639,7 @@ function certTimeAgo($dt) {
             paginateExpiry();
         });
     }
-    if (expiryFilter) expiryFilter.addEventListener('change', function() { expiryPage = 1; paginateExpiry(); });
+
     // Users sort
     var usersSort = document.getElementById('users-sort');
     if (usersSort) {
@@ -650,49 +654,42 @@ function certTimeAgo($dt) {
                     var ca = parseInt(a.getAttribute('data-cert-count') || '0', 10);
                     var cb = parseInt(b.getAttribute('data-cert-count') || '0', 10);
                     if (cb !== ca) return cb - ca;
-                    var da = a.getAttribute('data-last-cert') || '';
-                    var db = b.getAttribute('data-last-cert') || '';
-                    return db.localeCompare(da);
-                } else {
-                    var da = a.getAttribute('data-last-cert') || '';
-                    var db = b.getAttribute('data-last-cert') || '';
-                    if (db !== da) return db.localeCompare(da);
-                    var ca = parseInt(a.getAttribute('data-cert-count') || '0', 10);
-                    var cb = parseInt(b.getAttribute('data-cert-count') || '0', 10);
-                    return cb - ca;
+                    return (b.getAttribute('data-last-cert') || '').localeCompare(a.getAttribute('data-last-cert') || '');
                 }
+                var da = a.getAttribute('data-last-cert') || '';
+                var db = b.getAttribute('data-last-cert') || '';
+                if (db !== da) return db.localeCompare(da);
+                return parseInt(b.getAttribute('data-cert-count') || '0', 10) - parseInt(a.getAttribute('data-cert-count') || '0', 10);
             });
 
             rows.forEach(function(row, i) {
                 tbody.appendChild(row);
-                var rankDiv = row.querySelector('td:first-child > div');
-                if (rankDiv) {
-                    var rank = i + 1;
-                    if (rank === 1) { rankDiv.style.background = 'linear-gradient(135deg, #FFD700, #FFA500)'; rankDiv.style.color = '#fff'; rankDiv.innerHTML = '<i class="fas fa-trophy" style="font-size:0.85rem;"></i>'; }
-                    else if (rank === 2) { rankDiv.style.background = 'linear-gradient(135deg, #C0C0C0, #A0A0A0)'; rankDiv.style.color = '#fff'; rankDiv.innerHTML = '<i class="fas fa-medal" style="font-size:0.85rem;"></i>'; }
-                    else if (rank === 3) { rankDiv.style.background = 'linear-gradient(135deg, #CD7F32, #A0522D)'; rankDiv.style.color = '#fff'; rankDiv.innerHTML = '<i class="fas fa-award" style="font-size:0.85rem;"></i>'; }
-                    else { rankDiv.style.background = 'rgba(32,0,130,0.08)'; rankDiv.style.color = 'rgba(32,0,130,0.5)'; rankDiv.innerHTML = rank; }
-                }
-                var rowBg = rank === 1 ? 'rgba(255,215,0,0.04)' : (rank === 2 ? 'rgba(192,192,192,0.03)' : (rank === 3 ? 'rgba(205,125,50,0.02)' : ''));
-                row.style.background = rowBg;
-                row.setAttribute('onmouseout', "this.style.background='" + rowBg + "'");
+                row.classList.remove('is-rank-1', 'is-rank-2', 'is-rank-3');
+                var rank = i + 1;
+                if (rank <= 3) row.classList.add('is-rank-' + rank);
+                var rankDiv = row.querySelector('.cert-rank');
+                if (!rankDiv) return;
+                if (rank === 1) rankDiv.innerHTML = '<i class="fas fa-trophy" aria-hidden="true"></i>';
+                else if (rank === 2) rankDiv.innerHTML = '<i class="fas fa-medal" aria-hidden="true"></i>';
+                else if (rank === 3) rankDiv.innerHTML = '<i class="fas fa-award" aria-hidden="true"></i>';
+                else rankDiv.textContent = rank;
             });
         });
     }
 
-    // Cert card pagination\r\n    var certPageSize = 9;\r\n    var certPage = 1;\r\n    function paginateCerts() {\r\n        var cards = Array.from(document.querySelectorAll(".cert-card-item"));\r\n        var query = (searchInput ? searchInput.value : "").toLowerCase().trim();\r\n        var status = statusFilter ? statusFilter.value : "all";\r\n        var visible = cards.filter(function(c) {\r\n            var txt = (c.getAttribute("data-search") || "").toLowerCase();\r\n            var st = c.getAttribute("data-status") || "";\r\n            return (query === "" || txt.indexOf(query) > -1) && (status === "all" || st === status);\r\n        });\r\n        var totalPages = Math.max(1, Math.ceil(visible.length / certPageSize));\r\n        certPage = Math.min(certPage, totalPages);\r\n        var start = (certPage - 1) * certPageSize;\r\n        cards.forEach(function(c) { c.style.display = "none"; });\r\n        visible.slice(start, start + certPageSize).forEach(function(c) { c.style.display = ""; });\r\n        var pg = document.getElementById("cert-pagination");\r\n        if (pg) {\r\n            pg.querySelector(".page-indicator").textContent = "Page " + certPage + " of " + totalPages;\r\n            pg.querySelector("[data-action=prev]").disabled = certPage <= 1;\r\n            pg.querySelector("[data-action=next]").disabled = certPage >= totalPages;\r\n            pg.style.display = totalPages <= 1 ? "none" : "";\r\n        }\r\n    }\r\n    var certPg = document.getElementById("cert-pagination");\r\n    if (certPg) {\r\n        certPg.addEventListener("click", function(e) {\r\n            var btn = e.target.closest("[data-action]");\r\n            if (!btn || btn.disabled) return;\r\n            if (btn.dataset.action === "prev" && certPage > 1) certPage--;\r\n            if (btn.dataset.action === "next") certPage++;\r\n            paginateCerts();\r\n        });\r\n    }\r\n    // Override filterAll to also paginate certs\r\n    var origFilterAll = filterAll;\r\n    filterAll = function() { origFilterAll(); paginateCerts(); };\r\n\r\n    // --- Template Modal ---
+    // --- Template modal ---
     function openTemplateModal() { document.getElementById('template-modal-overlay').style.display = 'flex'; }
     function closeTemplateModal() {
         document.getElementById('template-modal-overlay').style.display = 'none';
         document.getElementById('template-form').reset();
         document.getElementById('template-form-id').value = '';
         document.getElementById('template-modal-title').textContent = 'New Certificate Template';
-        document.getElementById('template-form-submit').innerHTML = '<i class="fas fa-save" style="margin-right:0.3rem;"></i> Create Template';
+        document.getElementById('template-form-submit').innerHTML = '<i class="fas fa-save" aria-hidden="true"></i> Create Template';
     }
     function openEditModal(id, title, desc, courseId) {
         document.getElementById('template-form-id').value = id;
         document.getElementById('template-modal-title').textContent = 'Edit Certificate Template';
-        document.getElementById('template-form-submit').innerHTML = '<i class="fas fa-save" style="margin-right:0.3rem;"></i> Save Changes';
+        document.getElementById('template-form-submit').innerHTML = '<i class="fas fa-save" aria-hidden="true"></i> Save Changes';
         var form = document.getElementById('template-form');
         form.querySelector('input[name=title]').value = title;
         form.querySelector('textarea[name=description]').value = desc;
@@ -704,7 +701,7 @@ function certTimeAgo($dt) {
     document.getElementById('cancel-template-modal').addEventListener('click', closeTemplateModal);
     document.getElementById('template-modal-overlay').addEventListener('click', function(e) { if (e.target.id === 'template-modal-overlay') closeTemplateModal(); });
 
-    // --- Confirm Modal ---
+    // --- Confirm modal ---
     var confirmCallback = null;
     function openConfirmModal(msg, onConfirm) {
         document.getElementById('confirm-modal-message').textContent = msg;
@@ -721,14 +718,12 @@ function certTimeAgo($dt) {
         confirmCallback = null;
     });
 
-    // Edit buttons
     document.querySelectorAll('.btn-edit-template').forEach(function(btn) {
         btn.addEventListener('click', function() {
             openEditModal(btn.getAttribute('data-id'), btn.getAttribute('data-title'), btn.getAttribute('data-desc'), btn.getAttribute('data-course'));
         });
     });
 
-    // Delete buttons
     document.querySelectorAll('.btn-delete-template').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var id = btn.getAttribute('data-id');
@@ -758,7 +753,7 @@ function certTimeAgo($dt) {
         var url = isEdit ? 'pages/instructor/ajax/edit-certificate-template.php' : 'pages/instructor/ajax/add-certificate-template.php';
         var submitBtn = form.querySelector('button[type=submit]');
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:0.3rem;"></i> ' + (isEdit ? 'Saving...' : 'Creating...');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> ' + (isEdit ? 'Saving...' : 'Creating...');
         fetch(url, { method: 'POST', body: fd })
         .then(function(r) { return r.json(); })
         .then(function(data) {
@@ -772,11 +767,11 @@ function certTimeAgo($dt) {
         }).catch(function() { if (window.showToast) window.showToast('Network error', 'error'); })
         .finally(function() {
             submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-save" style="margin-right:0.3rem;"></i> ' + (isEdit ? 'Save Changes' : 'Create Template');
+            submitBtn.innerHTML = '<i class="fas fa-save" aria-hidden="true"></i> ' + (isEdit ? 'Save Changes' : 'Create Template');
         });
     });
 
-    // --- Extend Modal ---
+    // --- Extend modal ---
     var extendCertId = 0;
     window.openExtendModal = function(btn) {
         extendCertId = parseInt(btn.dataset.id);
@@ -824,7 +819,7 @@ function certTimeAgo($dt) {
         });
     };
 
-    // --- Revoke Modal ---
+    // --- Revoke modal ---
     var revokeCertId = 0;
     window.confirmRevoke = function(btn) {
         revokeCertId = parseInt(btn.dataset.id);
@@ -865,104 +860,74 @@ function certTimeAgo($dt) {
         });
     };
 
-    // --- Certificate Detail Modal ---
-    document.body.addEventListener('click', function(e) {
-        var card = e.target.closest('.cert-card-item');
-        if (!card) return;
-        if (e.target.closest('a, button')) return;
-
-        var name = card.getAttribute('data-search') || '';
-        var status = card.getAttribute('data-status') || 'active';
+    // --- Certificate detail modal ---
+    function certStatusTone(expiryStatus, status) {
+        if (expiryStatus === 'critical' || expiryStatus === 'expired') return 'is-danger';
+        if (expiryStatus === 'warning') return 'is-warn';
+        if (expiryStatus === 'archived' || status === 'archived') return 'is-muted';
+        return '';
+    }
+    function certStatusLabel(expiryStatus, status) {
+        var labels = { active: 'Active', warning: 'Expiring Soon', critical: 'Critical', expired: 'Expired', archived: 'Revoked', valid: 'Valid' };
+        return labels[expiryStatus] || labels[status] || 'Active';
+    }
+    function openCertDetail(card) {
         var expiryStatus = card.getAttribute('data-expiry') || 'valid';
+        var status = card.getAttribute('data-status') || 'active';
 
-        var headerEl = card.querySelector('[style*="background:linear-gradient"]');
-        var courseTitle = '';
-        if (headerEl) {
-            var h4 = headerEl.querySelector('div[style*="font-weight:700"]');
-            if (h4) courseTitle = h4.textContent.trim();
-        }
-        if (!courseTitle) {
-            var allDivs = card.querySelectorAll('div[style*="font-weight:700"]');
-            for (var i = 0; i < allDivs.length; i++) {
-                if (allDivs[i].textContent.trim().length > 3 && !allDivs[i].closest('[style*="grid-template-columns"]')) {
-                    courseTitle = allDivs[i].textContent.trim();
-                    break;
-                }
-            }
-        }
+        document.getElementById('cert-detail-course').textContent = card.getAttribute('data-course') || 'Certificate';
+        document.getElementById('cert-detail-status').innerHTML =
+            '<span class="cert-flag ' + certStatusTone(expiryStatus, status) + '">' + certStatusLabel(expiryStatus, status) + '</span>';
+        document.getElementById('cert-detail-avatar').textContent = card.getAttribute('data-initials') || '??';
+        document.getElementById('cert-detail-name').textContent = card.getAttribute('data-name') || 'Unknown';
+        document.getElementById('cert-detail-email').textContent = card.getAttribute('data-email') || '';
+        document.getElementById('cert-detail-issued').textContent = card.getAttribute('data-issued') || 'N/A';
+        document.getElementById('cert-detail-valid').textContent = card.getAttribute('data-valid') || 'No expiry';
+        document.getElementById('cert-detail-code').textContent = card.getAttribute('data-code') || '\u2014';
+        document.getElementById('cert-detail-view').href = card.getAttribute('data-verify') || '#';
 
-        var fullName = '';
-        var email = '';
-        var initials = '';
-        var nameDivs = card.querySelectorAll('div[style*="font-weight:700"]');
-        for (var j = 0; j < nameDivs.length; j++) {
-            var t = nameDivs[j].textContent.trim();
-            if (t.indexOf('@') === -1 && t !== courseTitle && t.length > 2 && t.length < 60) {
-                fullName = t;
-                break;
-            }
-        }
-        var emailDiv = card.querySelector('div[style*="font-size:0.75rem"][style*="rgba(32,0,130,0.45)"]');
-        if (emailDiv) email = emailDiv.textContent.trim();
-        var initialsDiv = card.querySelector('div[style*="border-radius:50%"][style*="linear-gradient(135deg, rgba(16"]');
-        if (initialsDiv) initials = initialsDiv.textContent.trim();
-
-        var issued = '';
-        var validUntil = '';
-        var verifyCode = '';
-        var verifyLink = '';
-        var certId = 0;
-        var gridLabels = card.querySelectorAll('div[style*="text-transform:uppercase"][style*="font-size:0.65rem"]');
-        gridLabels.forEach(function(lbl) {
-            var val = lbl.nextElementSibling;
-            if (!val) return;
-            var txt = val.textContent.trim();
-            var label = lbl.textContent.trim().toLowerCase();
-            if (label === 'issued') issued = txt;
-            if (label === 'valid until') validUntil = txt;
-        });
-        var codeEl = card.querySelector('div[style*="font-family:monospace"]');
-        if (codeEl) verifyCode = codeEl.textContent.trim();
-        var viewLink = card.querySelector('a[href*="verify-certificate"]');
-        if (viewLink) verifyLink = viewLink.getAttribute('href');
         var extendBtn = card.querySelector('.cert-extend-btn');
         var revokeBtn = card.querySelector('.cert-revoke-btn');
-        if (extendBtn) certId = parseInt(extendBtn.dataset.id) || 0;
-
-        var statusColors = {active:'#10b981',warning:'#d97706',critical:'#dc3545',expired:'#ef4444',archived:'#f59e0b',valid:'#10b981'};
-        var statusLabels = {active:'Active',warning:'Expiring Soon',critical:'Critical',expired:'Expired',archived:'Revoked',valid:'Valid'};
-        var sColor = statusColors[expiryStatus] || statusColors[status] || '#10b981';
-        var sLabel = statusLabels[expiryStatus] || statusLabels[status] || 'Active';
-
-        document.getElementById('cert-detail-course').textContent = courseTitle || 'Certificate';
-        document.getElementById('cert-detail-status').innerHTML = '<span style="display:inline-block; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.7rem; font-weight:700; background:' + sColor + '15; color:' + sColor + ';">' + sLabel + '</span>';
-        document.getElementById('cert-detail-avatar').textContent = initials || '??';
-        document.getElementById('cert-detail-name').textContent = fullName || 'Unknown';
-        document.getElementById('cert-detail-email').textContent = email || '';
-        document.getElementById('cert-detail-issued').textContent = issued || 'N/A';
-        document.getElementById('cert-detail-valid').textContent = validUntil || 'No expiry';
-        document.getElementById('cert-detail-code').textContent = verifyCode || '—';
-        document.getElementById('cert-detail-view').href = verifyLink || '#';
-
         var extendBtnModal = document.getElementById('cert-detail-extend');
         var revokeBtnModal = document.getElementById('cert-detail-revoke');
-        if (extendBtn && extendBtnModal) {
+        if (extendBtn) {
             extendBtnModal.style.display = '';
-            extendBtnModal.onclick = function() { extendBtn.click(); document.getElementById('cert-detail-modal').style.display = 'none'; };
-        } else if (extendBtnModal) {
+            extendBtnModal.onclick = function() { extendBtn.click(); closeCertDetail(); };
+        } else {
             extendBtnModal.style.display = 'none';
         }
-        if (revokeBtn && revokeBtnModal) {
+        if (revokeBtn) {
             revokeBtnModal.style.display = '';
-            revokeBtnModal.onclick = function() { revokeBtn.click(); document.getElementById('cert-detail-modal').style.display = 'none'; };
-        } else if (revokeBtnModal) {
+            revokeBtnModal.onclick = function() { revokeBtn.click(); closeCertDetail(); };
+        } else {
             revokeBtnModal.style.display = 'none';
         }
 
         document.getElementById('cert-detail-modal').style.display = 'flex';
+    }
+    function closeCertDetail() {
+        document.getElementById('cert-detail-modal').style.display = 'none';
+    }
+    window.closeCertDetail = closeCertDetail;
+
+    document.body.addEventListener('click', function(e) {
+        var card = e.target.closest('.cert-card-item');
+        if (!card) return;
+        if (e.target.closest('a, button')) return;
+        openCertDetail(card);
+    });
+    document.body.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        if (!e.target.closest) return;
+        var card = e.target.closest('.cert-card-item');
+        if (!card || e.target.closest('a, button')) return;
+        e.preventDefault();
+        openCertDetail(card);
     });
     document.getElementById('cert-detail-modal').addEventListener('click', function(e) {
-        if (e.target === this) this.style.display = 'none';
+        if (e.target === this) closeCertDetail();
     });
+
+    applyFilters();
 })();
 </script>

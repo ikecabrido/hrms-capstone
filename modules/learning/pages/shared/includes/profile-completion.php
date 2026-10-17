@@ -3,10 +3,18 @@
  * Profile completion meter. Expects $profileData.
  * Each criterion carries data-criterion / data-done so the shared script can
  * recompute the meter after a bio or contact change without a page reload.
+ *
+ * Once every criterion is met there is nothing left to ask for, so the card is not
+ * rendered at all — the script hides it in place for the change that reaches 100%
+ * without a reload.
  */
 $completion = $profileData['completion'];
+
+if ((int) $completion['percent'] >= 100) {
+    return;
+}
 ?>
-<div class="mode-card" style="margin-bottom:1.5rem;">
+<div class="mode-card" id="profile-completion-card" style="margin-bottom:1.5rem;">
     <div class="pfl-completion-head">
         <h3><i class="fas fa-circle-check" aria-hidden="true"></i> Profile completion</h3>
         <span class="pfl-completion-pct" id="profile-completion-pct"><?= (int) $completion['percent'] ?>%</span>

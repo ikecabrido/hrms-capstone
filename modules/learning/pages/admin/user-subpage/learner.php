@@ -9,6 +9,7 @@ $profileLearningRole = 'learner';
 $enrollments = [];
 $quizAttempts = [];
 $certificates = [];
+$ktSuccessors = [];
 
 try {
     $pdo = (new Database())->getConnection();
@@ -85,6 +86,18 @@ try {
     ]);
     $ktPlans = $ktStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Active employees for the successor picker in the KT modal. Rendered
+    // server-side because the Exit module endpoint the page used to call does
+    // not exist, which left the picker permanently empty.
+    $ktSuccessorStmt = $pdo->prepare("
+        SELECT employee_id, CONCAT(first_name, ' ', IFNULL(CONCAT(middle_name, ' '), ''), last_name) AS full_name
+        FROM em_employees
+        WHERE employment_status = 'Active' AND employee_id <> :eid
+        ORDER BY first_name ASC, last_name ASC
+    ");
+    $ktSuccessorStmt->execute([':eid' => $employeeId]);
+    $ktSuccessors = $ktSuccessorStmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (Throwable $e) {
     DbError::capture($e, 'admin/user-subpage/learner');
     $profile = null;
@@ -93,6 +106,7 @@ try {
     $quizAttempts = [];
     $certificates = [];
     $ktPlans = [];
+    $ktSuccessors = [];
 }
 
 function lrnTimeAgo($dt) {
@@ -369,6 +383,9 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
                 <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Successor (optional; can be assigned later)</label>
                 <select id="kt-successor" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none; background:#fff;">
                     <option value="">Select successor...</option>
+                    <?php foreach ($ktSuccessors as $ktCandidate): ?>
+                        <option value="<?= (int) $ktCandidate['employee_id'] ?>"><?= htmlspecialchars($ktCandidate['full_name']) ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
@@ -414,26 +431,12 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
     var closeBtn = document.getElementById('kt-modal-close');
     var empNameInput = document.getElementById('kt-employee-name');
 
-    fetch('../../modules/exit/pages/ajax/get-employees.php')
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (!data.success) return;
-            data.employees.forEach(function(emp) {
-                if (emp.employee_id == employeeId) return;
-                var opt = document.createElement('option');
-                opt.value = emp.employee_id;
-                opt.textContent = emp.full_name;
-                successorSelect.appendChild(opt);
-            });
-        })
-        .catch(function() { console.error('Failed to load employee list.'); });
-
     document.addEventListener('click', function(e) {
         var btn = e.target.closest('.kt-view-btn');
         if (btn) {
             e.preventDefault();
             var planId = btn.dataset.id;
-            fetch('../../modules/exit/pages/ajax/get-knowledge-transfer.php?id=' + planId, {
+            fetch('pages/admin/ajax/get-kt-plan.php?id=' + planId, {
                 credentials: 'same-origin',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
@@ -457,7 +460,7 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
         if (editBtn) {
             e.preventDefault();
             var planId = editBtn.dataset.id;
-            fetch('../../modules/exit/pages/ajax/get-knowledge-transfer.php?id=' + planId, {
+            fetch('pages/admin/ajax/get-kt-plan.php?id=' + planId, {
                 credentials: 'same-origin',
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
@@ -508,7 +511,7 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
         var payload = { employee_id: employeeId, successor_id: successorId, start_date: startDate, end_date: endDate, status: status };
         if (editingPlanId) payload.id = editingPlanId;
 
-        fetch('../../modules/learning/pages/admin/ajax/save-kt-plan.php', {
+        fetch('pages/admin/ajax/save-kt-plan.php', {
             method: 'POST', credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
             body: JSON.stringify(payload)

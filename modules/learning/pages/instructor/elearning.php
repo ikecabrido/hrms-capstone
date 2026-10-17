@@ -46,16 +46,8 @@ try {
     error_log('elearning.php bootstrap failed: ' . $e->getMessage());
 }
 
-function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
+function renderCatalogCards($items, $type, $typeIcons) {
     if (empty($items)) return;
-    $catGradients = $catGradients ?? [];
-    $gradients = [
-        'course' => 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'module' => 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-        'lesson' => 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-        'quiz' => 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-        'evaluation' => 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-    ];
     $links = [
         'course' => '?page=instructor/elearning-subpage/course&id=',
         'module' => '?page=instructor/elearning-subpage/module&id=',
@@ -67,8 +59,6 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
         $id = (int)($item['id'] ?? 0);
         $title = htmlspecialchars(trim($item['title'] ?? 'Untitled'));
         $status = htmlspecialchars(trim($item['status'] ?? 'active'));
-        $cat = strtolower(trim($item['category'] ?? $type));
-        $gradient = $catGradients[$cat] ?? ($gradients[$type] ?? $gradients['course']);
         $icon = $typeIcons[$type] ?? 'fa-cube';
         $link = ($links[$type] ?? '#') . $id;
         $desc = trim($item['description'] ?? '');
@@ -80,217 +70,158 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
         if ($type === 'course' && !empty($item['category'])) $meta = htmlspecialchars($item['category']);
 
         echo '<article class="catalog-card" data-type="' . $type . '" data-entity-id="' . $id . '" data-status="' . $status . '">';
-        echo '<div class="catalog-card-thumb" style="background:' . $gradient . ';">';
+        echo '<div class="catalog-card-thumb" data-tone="' . $type . '">';
         echo '<i class="fas ' . $icon . ' thumb-icon"></i>';
-        echo '<div class="thumb-overlay"></div>';
         echo '<span class="catalog-card-type-badge">' . ucfirst(htmlspecialchars($type)) . '</span>';
         echo '</div>';
         echo '<div class="catalog-card-body"><h4>' . $title . '</h4>';
         echo '<p class="cc-desc">' . $shortDesc . '</p></div>';
         if ($meta) {
-            echo '<div class="catalog-card-stats"><span><i class="fas fa-info-circle"></i> ' . $meta . '</span></div>';
+            echo '<div class="catalog-card-stats"><span><i class="fas fa-circle-info"></i> ' . $meta . '</span></div>';
         }
         echo '<div class="catalog-card-footer">';
-        echo '<span class="cc-deadline" style="font-size:0.72rem;color:var(--muted);text-transform:capitalize;">' . $status . '</span>';
-        echo '<button class="cc-enroll-btn enroll" style="background:rgba(32,0,130,0.08);color:var(--primary);" onclick="event.stopPropagation();window.location.href=\'' . htmlspecialchars($link) . '\';"><i class="fas fa-eye"></i> View</button>';
+        echo '<span class="cc-deadline">' . $status . '</span>';
+        echo '<button class="cc-enroll-btn enroll" onclick="event.stopPropagation();window.location.href=\'' . htmlspecialchars($link) . '\';"><i class="fas fa-eye"></i> View</button>';
         echo '</div></article>';
     }
 }
 ?>
 
-<style>
-.catalog-toolbar{position:sticky;top:calc(var(--header-height,60px) + 0.75rem);z-index:100;display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:linear-gradient(135deg, rgba(32,0,130,0.08), rgba(81,70,183,0.06));border-radius:12px;border:1.5px solid rgba(32,0,130,0.15);margin-bottom:1rem;flex-wrap:wrap;box-shadow:0 4px 16px rgba(32,0,130,0.08);backdrop-filter:blur(10px);}
-.catalog-toolbar .catalog-search input,.catalog-toolbar select,.catalog-toolbar .catalog-view-toggle,.catalog-toolbar .catalog-request-btn{background:var(--surface,#fff)!important;border-color:rgba(32,0,130,0.15)!important;}
-.catalog-search{flex:1;min-width:200px;position:relative;}
-.catalog-search input{width:100%;padding:0.6rem 1rem 0.6rem 2.5rem;border:1.5px solid rgba(32,0,130,0.1);border-radius:10px;background:rgba(32,0,130,0.03);font-size:0.88rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;}
-.catalog-search input:focus{border-color:var(--primary,#320082);box-shadow:0 0 0 3px rgba(32,0,130,0.08);}
-.catalog-search i{position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--muted,#999);font-size:0.85rem;}
-.catalog-view-toggle{display:flex;border:1.5px solid rgba(32,0,130,0.1);border-radius:8px;overflow:hidden;}
-.catalog-view-toggle button{padding:0.45rem 0.7rem;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:0.85rem;transition:all 0.15s;}
-.catalog-view-toggle button.active{background:var(--primary);color:#fff;}
-.catalog-request-btn{padding:0.5rem 1rem;background:var(--primary);color:#fff;border:none;border-radius:999px;font-weight:700;font-size:0.82rem;cursor:pointer;text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;gap:0.4rem;transition:opacity 0.2s;}
-.catalog-request-btn:hover{opacity:0.85;}
-.catalog-add-wrap{position:relative;display:inline-flex;flex-direction:column;align-items:center;}
-.catalog-add-btn{width:2.4rem;height:2.4rem;border:none;border-radius:50%;background:var(--primary);color:#fff;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(32,0,130,0.25);transition:transform 0.15s, opacity 0.15s;}
-.catalog-add-label{display:none;}
-.catalog-add-btn:hover{opacity:0.88;transform:scale(1.06);}
-.catalog-add-tip{position:absolute;top:calc(100% + 0.5rem);left:50%;transform:translateX(-50%) translateY(-4px);background:var(--primary);color:#fff;padding:0.35rem 0.8rem;border-radius:999px;font-size:0.75rem;font-weight:700;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.18s, transform 0.18s;z-index:50;box-shadow:0 4px 12px rgba(32,0,130,0.3);}
-.catalog-add-tip::before{content:'';position:absolute;top:-4px;left:50%;transform:translateX(-50%) rotate(45deg);width:8px;height:8px;background:var(--primary);border-radius:2px;}
-.catalog-add-wrap:hover .catalog-add-tip,.catalog-add-wrap:focus-within .catalog-add-tip{opacity:1;transform:translateX(-50%) translateY(0);}
-.catalog-count{font-size:0.8rem;color:var(--muted,#999);white-space:nowrap;}
-.catalog-tabs{display:flex;gap:6px;margin-bottom:1rem;overflow-x:auto;scrollbar-width:none;background:rgba(32,0,130,0.04);border-radius:12px;padding:4px;}
-.catalog-tabs::-webkit-scrollbar{display:none}
-.catalog-tab-btn{flex:1 1 0;min-width:0;padding:0.55rem 0.5rem;border:none;border-radius:8px;background:rgba(255,255,255,0.7);color:var(--text,#333);font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.35rem;}
-.catalog-tab-btn:hover{background:rgba(255,255,255,0.95)}
-.catalog-tab-btn.active{background:var(--primary,#320082);color:#fff;box-shadow:0 2px 8px rgba(32,0,130,0.3)}
-.catalog-tab-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:rgba(32,0,130,0.1);font-size:0.7rem;font-weight:700;color:var(--text,#333)}
-.catalog-tab-btn.active .catalog-tab-count{background:rgba(255,255,255,0.25);color:#fff}
-.catalog-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:1.5rem;}
-.catalog-card{background:var(--surface,#fff);border-radius:14px;overflow:hidden;border:1px solid rgba(32,0,130,0.08);cursor:pointer;transition:transform 0.25s,box-shadow 0.25s,border-color 0.25s;position:relative;}
-.catalog-card:hover{transform:translateY(-4px);box-shadow:0 12px 35px rgba(32,0,130,0.12);border-color:rgba(32,0,130,0.2);}
-.catalog-card-thumb{height:140px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-.catalog-card-thumb .thumb-icon{font-size:2.5rem;color:rgba(255,255,255,0.9);z-index:1;}
-.catalog-card-thumb .thumb-overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.3) 100%);}
-.catalog-card-type-badge{position:absolute;top:0.75rem;left:0.75rem;padding:0.2rem 0.6rem;border-radius:6px;background:rgba(255,255,255,0.9);color:var(--primary);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;z-index:2;}
-.catalog-card-body{padding:1rem 1.1rem 0.75rem;}
-.catalog-card-body h4{margin:0 0 0.35rem;font-size:1rem;font-weight:700;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.catalog-card-body .cc-desc{font-size:0.82rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0 0 0.75rem;}
-.catalog-card-stats{display:flex;gap:0.75rem;padding:0.6rem 1.1rem;border-top:1px solid rgba(32,0,130,0.06);font-size:0.75rem;color:var(--muted);}
-.catalog-card-stats span{display:flex;align-items:center;gap:0.3rem;}
-.catalog-card-stats i{color:var(--primary);font-size:0.7rem;}
-.catalog-card-footer{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1.1rem;border-top:1px solid rgba(32,0,130,0.06);}
-.catalog-card-footer .cc-deadline{font-size:0.75rem;color:var(--muted);}
-.cc-enroll-btn{padding:0.45rem 1rem;border-radius:999px;border:none;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
-.cc-enroll-btn.enroll{background:var(--primary);color:#fff;}
-.cc-enroll-btn.enroll:hover{opacity:0.85;transform:scale(1.03);}
-.catalog-grid.list-view{grid-template-columns:1fr;gap:0.75rem;}
-.catalog-grid.list-view .catalog-card{display:flex;flex-direction:row;}
-.catalog-grid.list-view .catalog-card-thumb{width:180px;height:auto;min-height:120px;flex-shrink:0;}
-.catalog-grid.list-view .catalog-card-body,.catalog-grid.list-view .catalog-card-stats,.catalog-grid.list-view .catalog-card-footer{border-top:none;}
-.catalog-grid.list-view .catalog-card-body{flex:1;padding-top:1rem;}
-.catalog-empty{grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--muted);}
-.catalog-empty i{font-size:2rem;margin-bottom:0.5rem;display:block;}
-.catalog-empty h4{margin:0 0 0.5rem;}
-.catalog-empty p{margin:0;}
-@media(max-width:1200px){.catalog-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:900px){.catalog-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:768px){.catalog-grid{grid-template-columns:repeat(2,1fr);gap:1rem}.catalog-toolbar{flex-wrap:nowrap}.catalog-search{min-width:0;flex:1}}
-@media(max-width:480px){
-    .catalog-grid{grid-template-columns:1fr}
-    .catalog-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"search search add" "view count size";align-items:center;gap:0.6rem;padding:0.75rem;}
-    .catalog-toolbar .catalog-search{grid-area:search;width:100%;min-width:0;}
-    .catalog-toolbar .catalog-view-toggle{grid-area:view;}
-    .catalog-toolbar .catalog-count{grid-area:count;justify-self:end;}
-    .catalog-toolbar select{grid-area:size;min-width:3.5rem;}
-    .catalog-add-wrap{grid-area:add;flex-direction:row;justify-self:end;}
-    .catalog-add-btn{width:auto;height:44px;min-width:44px;padding:0 0.75rem;border-radius:9px;gap:0.45rem;font-size:0.85rem;}
-    .catalog-add-label{display:inline;}
-    .catalog-add-tip{display:none;}
-    .catalog-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.5rem;overflow:visible;background:transparent;padding:0;}
-    .catalog-tab-btn{min-height:48px;min-width:0;padding:0.65rem 0.75rem;flex:none;justify-content:flex-start;gap:0.45rem;font-size:0.82rem;text-align:left;white-space:normal;}
-    .catalog-tab-count{margin-left:auto;flex-shrink:0;}
-}
-</style>
+<div class="module-content catalog-page catalog-manager">
+    <div class="home-dashboard">
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1>E-Learning</h1>
+                <p>Author the courses, modules, lessons, quizzes and evaluations that make up the curriculum your learners work through.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-graduation-cap" aria-hidden="true"></i> <?= count($courseRows) ?> course<?= count($courseRows) === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-cube" aria-hidden="true"></i> <?= count($moduleRows) ?> module<?= count($moduleRows) === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-book-open" aria-hidden="true"></i> <?= count($lessonRows) ?> lesson<?= count($lessonRows) === 1 ? '' : 's' ?></span>
+                    <?php $assessmentCount = count($quizRows) + count($evaluationRows); ?>
+                    <span class="home-hero-chip"><i class="fas fa-clipboard-check" aria-hidden="true"></i> <?= $assessmentCount ?> assessment<?= $assessmentCount === 1 ? '' : 's' ?></span>
+                </div>
+            </div>
+        </section>
 
-<div class="module-content">
-    <!-- Toolbar -->
-    <div class="catalog-toolbar">
-        <div class="catalog-search">
-            <i class="fas fa-search"></i>
-            <input type="search" id="catalog-search-input" placeholder="Search courses, modules, lessons..." aria-label="Search elearning" />
+        <!-- Toolbar -->
+        <div class="catalog-toolbar">
+            <div class="catalog-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" id="catalog-search-input" placeholder="Search courses, modules, lessons..." aria-label="Search e-learning" />
+            </div>
+            <div class="catalog-view-toggle" role="group" aria-label="Result layout">
+                <button type="button" class="active" data-view="grid" title="Grid view" aria-label="Grid view"><i class="fas fa-th-large" aria-hidden="true"></i></button>
+                <button type="button" data-view="list" title="List view" aria-label="List view"><i class="fas fa-list" aria-hidden="true"></i></button>
+            </div>
+            <span class="catalog-count" id="catalog-count"></span>
+            <select id="catalog-page-size" class="cat-page-size" data-display-pref="page_size" aria-label="Items per page" title="Items per page">
+                <option value="12">12</option>
+                <option value="24">24</option>
+                <option value="36">36</option>
+            </select>
+            <div class="catalog-add-wrap" id="catalog-add-wrap">
+                <button type="button" id="catalog-add-btn" class="cat-add-btn">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                    <span class="catalog-add-tip" id="catalog-add-tip">Add Course</span>
+                </button>
+            </div>
         </div>
-        <div class="catalog-view-toggle">
-            <button type="button" class="active" data-view="grid" title="Grid view"><i class="fas fa-th"></i></button>
-            <button type="button" data-view="list" title="List view"><i class="fas fa-list"></i></button>
-        </div>
-        <span class="catalog-count" id="catalog-count"></span>
-        <select id="catalog-page-size" data-display-pref="page_size" style="border:1.5px solid rgba(32,0,130,0.2); background:var(--surface,#fff); color:var(--text,#333); border-radius:8px; padding:0.45rem 0.6rem; font-size:0.78rem; font-weight:600; cursor:pointer; outline:none;">
-            <option value="12">12</option>
-            <option value="24">24</option>
-            <option value="36">36</option>
-        </select>
-        <div class="catalog-add-wrap" id="catalog-add-wrap">
-            <button type="button" id="catalog-add-btn" class="catalog-add-btn" title="Add Course" aria-label="Add Course"><i class="fas fa-plus"></i><span class="catalog-add-label">Add Course</span></button>
-            <span class="catalog-add-tip" id="catalog-add-tip">Add Course</span>
-        </div>
-    </div>
 
-    <!-- Tabs -->
-    <div class="catalog-tabs" id="catalog-tabs">
-        <button type="button" class="catalog-tab-btn active" data-tab="tab-course">
-            <i class="fas fa-graduation-cap"></i> Courses
-            <span class="catalog-tab-count"><?= count($courseRows) ?></span>
-        </button>
-        <button type="button" class="catalog-tab-btn" data-tab="tab-module">
-            <i class="fas fa-cube"></i> Modules
-            <span class="catalog-tab-count"><?= count($moduleRows) ?></span>
-        </button>
-        <button type="button" class="catalog-tab-btn" data-tab="tab-lesson">
-            <i class="fas fa-book-open"></i> Lessons
-            <span class="catalog-tab-count"><?= count($lessonRows) ?></span>
-        </button>
-        <button type="button" class="catalog-tab-btn" data-tab="tab-quiz">
-            <i class="fas fa-question-circle"></i> Quizzes
-            <span class="catalog-tab-count"><?= count($quizRows) ?></span>
-        </button>
-        <button type="button" class="catalog-tab-btn" data-tab="tab-evaluation">
-            <i class="fas fa-clipboard-check"></i> Evaluations
-            <span class="catalog-tab-count"><?= count($evaluationRows) ?></span>
-        </button>
-        <button type="button" class="catalog-tab-btn" data-tab="tab-template">
-            <i class="fas fa-layer-group"></i> Templates
-        </button>
-    </div>
-
-    <!-- Tab Content -->
-    <div class="tab-content active" data-tab="tab-course">
-        <div class="catalog-grid" id="catalog-grid">
-            <?php $typeIcons = ['course' => 'fa-graduation-cap', 'module' => 'fa-cube', 'lesson' => 'fa-book-open', 'quiz' => 'fa-question-circle', 'evaluation' => 'fa-clipboard-check']; $catGradients = []; renderCatalogCards($courseRows, 'course', $typeIcons, $catGradients); ?>
+        <!-- Tabs -->
+        <div class="catalog-tabs" id="catalog-tabs">
+            <button type="button" class="catalog-tab-btn active" data-tab="tab-course">
+                <i class="fas fa-graduation-cap" aria-hidden="true"></i> Courses
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-module">
+                <i class="fas fa-cube" aria-hidden="true"></i> Modules
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-lesson">
+                <i class="fas fa-book-open" aria-hidden="true"></i> Lessons
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-quiz">
+                <i class="fas fa-circle-question" aria-hidden="true"></i> Quizzes
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-evaluation">
+                <i class="fas fa-clipboard-check" aria-hidden="true"></i> Evaluations
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-template">
+                <i class="fas fa-layer-group" aria-hidden="true"></i> Templates
+            </button>
         </div>
-    </div>
 
-    <div class="tab-content" data-tab="tab-module">
-        <div class="catalog-grid">
-            <?php renderCatalogCards($moduleRows, 'module', $typeIcons, $catGradients); ?>
+        <!-- Tab Content -->
+        <div class="tab-content active" data-tab="tab-course">
+            <div class="catalog-grid" id="catalog-grid">
+                <?php $typeIcons = ['course' => 'fa-graduation-cap', 'module' => 'fa-cube', 'lesson' => 'fa-book-open', 'quiz' => 'fa-circle-question', 'evaluation' => 'fa-clipboard-check']; renderCatalogCards($courseRows, 'course', $typeIcons); ?>
+            </div>
         </div>
-    </div>
 
-    <div class="tab-content" data-tab="tab-lesson">
-        <div class="catalog-grid">
-            <?php renderCatalogCards($lessonRows, 'lesson', $typeIcons, $catGradients); ?>
+        <div class="tab-content" data-tab="tab-module">
+            <div class="catalog-grid">
+                <?php renderCatalogCards($moduleRows, 'module', $typeIcons); ?>
+            </div>
         </div>
-    </div>
 
-    <div class="tab-content" data-tab="tab-quiz">
-        <div class="catalog-grid">
-            <?php renderCatalogCards($quizRows, 'quiz', $typeIcons, $catGradients); ?>
+        <div class="tab-content" data-tab="tab-lesson">
+            <div class="catalog-grid">
+                <?php renderCatalogCards($lessonRows, 'lesson', $typeIcons); ?>
+            </div>
         </div>
-    </div>
 
-    <div class="tab-content" data-tab="tab-evaluation">
-        <div class="catalog-grid">
-            <?php renderCatalogCards($evaluationRows, 'evaluation', $typeIcons, $catGradients); ?>
+        <div class="tab-content" data-tab="tab-quiz">
+            <div class="catalog-grid">
+                <?php renderCatalogCards($quizRows, 'quiz', $typeIcons); ?>
+            </div>
         </div>
-    </div>
 
-    <div class="tab-content" data-tab="tab-template">
-        <div style="padding:0 0 1rem;">
-            <p style="margin:0; color:var(--muted); font-size:0.9rem;">Reuse course structures. Save from the Structure Builder.</p>
+        <div class="tab-content" data-tab="tab-evaluation">
+            <div class="catalog-grid">
+                <?php renderCatalogCards($evaluationRows, 'evaluation', $typeIcons); ?>
+            </div>
         </div>
-        <div class="catalog-grid" id="templates-grid">
-            <div style="grid-column:1/-1; text-align:center; padding:2rem; color:var(--muted);">Loading templates...</div>
+
+        <div class="tab-content" data-tab="tab-template">
+            <div class="cat-section-intro">
+                <h3>Course templates</h3>
+                <p>Reuse a proven course outline. Save one from the Structure Builder, then clone it into a new course.</p>
+            </div>
+            <div class="catalog-grid" id="templates-grid">
+                <div class="catalog-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><p>Loading templates...</p></div>
+            </div>
         </div>
-    </div>
 
-    <!-- Empty State -->
-    <div class="catalog-empty" id="catalog-empty" style="display:none;">
-        <i class="fas fa-search"></i>
-        <h4>No items found</h4>
-        <p>Try selecting a different tab or adjusting your search.</p>
-    </div>
+        <!-- Empty State -->
+        <div class="catalog-empty" id="catalog-empty" style="display:none;">
+            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+            <h4>No items found</h4>
+            <p>Try selecting a different tab or adjusting your search.</p>
+        </div>
 
-    <!-- Pagination -->
-    <div class="pagination-row" id="catalog-pagination">
-        <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
-        <span class="page-indicator" id="page-indicator">Page 1 of 1</span>
-        <button type="button" class="page-btn" data-action="next">Next</button>
+        <!-- Pagination -->
+        <div class="pagination-row" id="catalog-pagination">
+            <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
+            <span class="page-indicator" id="page-indicator">Page 1 of 1</span>
+            <button type="button" class="page-btn" data-action="next">Next</button>
+        </div>
     </div>
 
     <!-- Clone Template Modal -->
-    <div id="clone-template-modal" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="clone-template-title" style="display:none; z-index:10000;">
-        <div class="ld-modal-panel" style="background:var(--surface,#fff); border:1px solid rgba(32,0,130,0.12); border-radius:18px; width:min(440px,92vw); box-shadow:0 18px 45px rgba(32,0,130,0.18);">
-            <div class="ld-modal-header" style="display:flex; justify-content:space-between; align-items:center; padding:1.25rem 1.5rem; border-bottom:1px solid rgba(32,0,130,0.12); background:linear-gradient(135deg, rgba(32,0,130,0.08), rgba(81,70,183,0.05));">
-                <h2 id="clone-template-title" style="margin:0; font-size:1.1rem; color:var(--primary);"><i class="fas fa-copy" style="margin-right:0.4rem;"></i>Clone Template</h2>
-                <button type="button" id="clone-modal-close" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:var(--text);">✕</button>
+    <div id="clone-template-modal" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="clone-template-title" style="display:none;">
+        <div class="ld-modal-panel cat-modal-panel">
+            <div class="ld-modal-header">
+                <h2 id="clone-template-title"><i class="fas fa-copy" aria-hidden="true"></i> Clone Template</h2>
+                <button type="button" id="clone-modal-close" class="cat-modal-close" aria-label="Close">✕</button>
             </div>
-            <div class="ld-modal-body" style="padding:1.5rem;">
-                <label style="display:block; margin-bottom:1.25rem;">
-                    <span style="display:block; margin-bottom:0.35rem; color:var(--primary); font-weight:600;">New course title</span>
-                    <input type="text" id="clone-title-input" placeholder="Enter a title for the new course" style="width:100%; padding:0.8rem; border-radius:8px; border:1.5px solid rgba(32,0,130,0.15); box-sizing:border-box; font-size:0.95rem;" />
+            <div class="ld-modal-body">
+                <label class="cat-field">
+                    <span class="cat-field-label">New course title</span>
+                    <input type="text" id="clone-title-input" placeholder="Enter a title for the new course" />
                 </label>
-                <div class="ld-modal-actions" style="display:flex; gap:0.75rem;">
-                    <button type="button" id="clone-modal-confirm" style="flex:1; padding:0.75rem; background:var(--primary); color:var(--surface); border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:0.9rem;">Clone</button>
-                    <button type="button" id="clone-modal-cancel" style="flex:1; padding:0.75rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.18); border-radius:8px; cursor:pointer; font-weight:700; font-size:0.9rem;">Cancel</button>
+                <div class="ld-modal-actions">
+                    <button type="button" id="clone-modal-confirm" class="cat-btn-primary">Clone</button>
+                    <button type="button" id="clone-modal-cancel" class="cat-btn-quiet">Cancel</button>
                 </div>
             </div>
         </div>
@@ -304,11 +235,11 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
             var grid=document.getElementById('templates-grid');
             if(!grid)return;
             var templates=data.success?data.items:[];
-            if(templates.length===0){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--muted);"><i class="fas fa-layer-group" style="font-size:2rem;margin-bottom:0.5rem;display:block;"></i>No templates yet. Go to Structure Builder and save a course as template.</div>';return;}
+            if(templates.length===0){grid.innerHTML='<div class="catalog-empty"><i class="fas fa-layer-group" aria-hidden="true"></i><h4>No templates yet</h4><p>Open the Structure Builder and save a course as a template to reuse it here.</p></div>';return;}
             grid.innerHTML=templates.map(function(t){
-                return '<article class="catalog-card"><div class="catalog-card-thumb" style="background:linear-gradient(135deg,#667eea,#764ba2);"><i class="fas fa-layer-group thumb-icon"></i><div class="thumb-overlay"></div><span class="catalog-card-type-badge">Template</span></div><div class="catalog-card-body"><h4>'+t.title+'</h4>'+(t.description?'<p class="cc-desc">'+t.description.substring(0,100)+'</p>':'')+'</div><div class="catalog-card-stats"><span><i class="fas fa-cube"></i> '+t.module_count+' modules</span><span><i class="fas fa-book-open"></i> '+t.lesson_count+' lessons</span></div><div class="catalog-card-footer"><span class="cc-deadline">Created '+new Date(t.created_at).toLocaleDateString()+'</span><button class="cc-enroll-btn enroll" style="background:rgba(32,0,130,0.08);color:var(--primary);" onclick="event.stopPropagation();cloneTemplate('+t.id+');"><i class="fas fa-copy"></i> Clone</button></div></article>';
+                return '<article class="catalog-card" data-status="template"><div class="catalog-card-thumb" data-tone="template"><i class="fas fa-layer-group thumb-icon"></i><span class="catalog-card-type-badge">Template</span></div><div class="catalog-card-body"><h4>'+t.title+'</h4>'+(t.description?'<p class="cc-desc">'+t.description.substring(0,100)+'</p>':'')+'</div><div class="catalog-card-stats"><span><i class="fas fa-cube"></i> '+t.module_count+' modules</span><span><i class="fas fa-book-open"></i> '+t.lesson_count+' lessons</span></div><div class="catalog-card-footer"><span class="cc-deadline is-meta">Created '+new Date(t.created_at).toLocaleDateString()+'</span><button class="cc-enroll-btn enroll" onclick="event.stopPropagation();cloneTemplate('+t.id+');"><i class="fas fa-copy"></i> Clone</button></div></article>';
             }).join('');
-        }).catch(function(){var g=document.getElementById('templates-grid');if(g)g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#ef4444;">Failed to load templates.</div>';});
+        }).catch(function(){var g=document.getElementById('templates-grid');if(g)g.innerHTML='<div class="catalog-empty is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><h4>Could not load templates</h4><p>Check your connection and try again.</p></div>';});
     }
     var _pendingCloneId=null;
     function cloneTemplate(templateId){
@@ -403,49 +334,49 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
         syncAddBtn();
     })();
     </script>
-</div>
-
-<!-- Entity Detail Content -->
-<div id="entity-content" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10000; align-items:center; justify-content:center;">
-    <div id="entity-content-panel" class="entity-content-box ld-modal-panel" data-size="standard">
-        <div class="entity-content-header ld-modal-header">
-            <h2 id="modal-title"></h2>
-            <div class="entity-content-actions">
-                <button id="modal-edit-btn" style="padding:0.6rem 0.95rem; background:var(--primary); color:var(--surface); border:none; border-radius:999px; cursor:pointer; font-weight:700;">Edit</button>
-                <button id="modal-archive-btn" style="padding:0.6rem 0.95rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.18); border-radius:999px; cursor:pointer; font-weight:700;">Archive</button>
-                <button id="modal-close-btn" style="padding:0.6rem 0.95rem; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; cursor:pointer; font-weight:700;">Close</button>
-            </div>
-        </div>
-        <div class="entity-content-tabs">
-            <button type="button" class="entity-content-tab active" data-content-tab="overview" style="padding:0.7rem 1rem; border:none; background:rgba(32,0,130,0.08); color:var(--primary); border-radius:999px; font-weight:700; cursor:pointer;">Overview</button>
-            <button type="button" class="entity-content-tab" data-content-tab="structure" style="padding:0.7rem 1rem; border:1px solid rgba(32,0,130,0.12); background:var(--surface, #fff); color:var(--text); border-radius:999px; font-weight:700; cursor:pointer;">Structure</button>
-            <button type="button" class="entity-content-tab" data-content-tab="monitor" style="padding:0.7rem 1rem; border:1px solid rgba(32,0,130,0.12); background:var(--surface, #fff); color:var(--text); border-radius:999px; font-weight:700; cursor:pointer;">Monitor</button>
-        </div>
-        <div class="entity-content-body ld-modal-body">
-            <div id="entity-content-overview" class="entity-content-panel" style="display:block;">
-                <div id="modal-content-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
-                    <div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Status</label><p id="modal-overview-status" style="margin:0.55rem 0 0 0; font-size:1rem; color:var(--text);">Active</p></div>
-                    <div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Parent</label><p id="modal-overview-parent" style="margin:0.55rem 0 0 0; font-size:1rem; color:var(--text);">-</p></div>
-                    <div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Children</label><p id="modal-overview-children" style="margin:0.55rem 0 0 0; font-size:1rem; color:var(--text);">0</p></div>
+    <!-- Entity Detail Content -->
+    <div id="entity-content" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="modal-title" style="display:none;">
+        <div id="entity-content-panel" class="entity-content-box ld-modal-panel" data-size="standard">
+            <div class="entity-content-header ld-modal-header">
+                <h2 id="modal-title"></h2>
+                <div class="entity-content-actions">
+                    <button id="modal-edit-btn" class="ec-btn is-primary">Edit</button>
+                    <button id="modal-archive-btn" class="ec-btn is-quiet">Archive</button>
+                    <button id="modal-close-btn" class="ec-btn is-quiet">Close</button>
                 </div>
-                <div><label style="color:var(--primary); font-weight:700; font-size:0.74rem; letter-spacing:0.08em; text-transform:uppercase;">Description</label><p id="modal-description" style="margin:0.75rem 0 0 0; font-size:1rem; line-height:1.7; color:var(--text);">-</p></div>
             </div>
-            <div id="entity-content-structure" class="entity-content-panel" style="display:none;"><div id="entity-content-structure-content"></div></div>
-            <div id="entity-content-monitor" class="entity-content-panel" style="display:none;"><div id="entity-content-monitor-content"></div></div>
+            <div class="entity-content-tabs">
+                <button type="button" class="entity-content-tab active" data-content-tab="overview"><i class="fas fa-eye" aria-hidden="true"></i>Overview</button>
+                <button type="button" class="entity-content-tab" data-content-tab="structure"><i class="fas fa-sitemap" aria-hidden="true"></i>Structure</button>
+                <button type="button" class="entity-content-tab" data-content-tab="monitor"><i class="fas fa-chart-line" aria-hidden="true"></i>Monitor</button>
+            </div>
+            <div class="entity-content-body ld-modal-body">
+                <div id="entity-content-overview" class="entity-content-panel" style="display:block;">
+                    <div id="modal-content-grid" class="ec-fields">
+                        <div class="ec-field"><span class="ec-field-label">Status</span><p id="modal-overview-status" class="ec-field-value">Active</p></div>
+                        <div class="ec-field"><span class="ec-field-label">Parent</span><p id="modal-overview-parent" class="ec-field-value">-</p></div>
+                        <div class="ec-field"><span class="ec-field-label">Children</span><p id="modal-overview-children" class="ec-field-value">0</p></div>
+                    </div>
+                    <div class="ec-section">
+                        <span class="ec-section-title">Description</span>
+                        <p id="modal-description" class="ec-section-text">-</p>
+                    </div>
+                </div>
+                <div id="entity-content-structure" class="entity-content-panel" style="display:none;"><div id="entity-content-structure-content"></div></div>
+                <div id="entity-content-monitor" class="entity-content-panel" style="display:none;"><div id="entity-content-monitor-content"></div></div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Archive Confirmation Modal -->
-<div id="archive-confirm-overlay" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="archive-confirm-title" style="display:none; z-index:10001;">
-    <div class="ld-modal-panel" style="background:var(--surface,#fff); border:1px solid rgba(32,0,130,0.12); border-radius:18px; width:min(420px,90vw); box-shadow:0 18px 45px rgba(32,0,130,0.18);">
-        <div class="ld-modal-body" style="padding:1.5rem 1.5rem 0;">
-            <h3 id="archive-confirm-title" style="margin:0 0 0.5rem; font-size:1.1rem; color:var(--primary);"><i class="fas fa-box-archive" style="margin-right:0.4rem;"></i>Archive Item</h3>
-            <p id="archive-confirm-message" style="margin:0; color:var(--text); font-size:0.92rem; line-height:1.5;">Are you sure you want to archive this item?</p>
-        </div>
-        <div class="ld-modal-actions" style="display:flex; gap:0.75rem; padding:1.25rem 1.5rem 1.5rem; justify-content:flex-end;">
-            <button type="button" id="archive-confirm-cancel" style="padding:0.6rem 1.2rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.18); border-radius:999px; cursor:pointer; font-weight:700; font-size:0.85rem;">Cancel</button>
-            <button type="button" id="archive-confirm-ok" style="padding:0.6rem 1.2rem; background:#ef4444; color:#fff; border:none; border-radius:999px; cursor:pointer; font-weight:700; font-size:0.85rem;">Archive</button>
+    <!-- Archive Confirmation Modal -->
+    <div id="archive-confirm-overlay" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="archive-confirm-title" style="display:none;">
+        <div class="ld-modal-panel ld-modal-confirm">
+            <h3 id="archive-confirm-title" class="cat-modal-title"><i class="fas fa-box-archive" aria-hidden="true"></i> Archive Item</h3>
+            <p id="archive-confirm-message" class="cat-modal-text">Are you sure you want to archive this item?</p>
+            <div class="ld-modal-actions">
+                <button type="button" id="archive-confirm-cancel" class="cat-btn-quiet">Cancel</button>
+                <button type="button" id="archive-confirm-ok" class="cat-btn-danger">Archive</button>
+            </div>
         </div>
     </div>
 </div>
@@ -469,11 +400,7 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
 
     function syncContentTabs(){
         entityContent.querySelectorAll('.entity-content-tab').forEach(function(b){
-            var isActive=b.dataset.contentTab===state.activeTab;
-            b.classList.toggle('active',isActive);
-            b.style.background=isActive?'rgba(32,0,130,0.08)':'var(--surface,#fff)';
-            b.style.color=isActive?'var(--primary)':'var(--text)';
-            b.style.border=isActive?'none':'1px solid rgba(32,0,130,0.12)';
+            b.classList.toggle('active',b.dataset.contentTab===state.activeTab);
         });
         entityContent.querySelectorAll('.entity-content-panel').forEach(function(p){p.style.display='none';});
         var active=entityContent.querySelector('#entity-content-'+state.activeTab);
@@ -487,58 +414,66 @@ function renderCatalogCards($items, $type, $typeIcons, $catGradients) {
         if(config)document.getElementById('modal-overview-parent').textContent=type;
     }
 
+    function escCat(value){
+        return String(value==null?'':value).replace(/[&<>"']/g,function(ch){
+            return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+        });
+    }
+
     function renderStructurePanel(type,id){
         var el=document.getElementById('entity-content-structure-content');
         if(!el)return;
-        el.innerHTML='<p style="color:var(--muted);text-align:center;">Loading structure...</p>';
+        el.innerHTML='<div class="ec-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading structure...</div>';
         var url=null;
         if(type==='Course')url='pages/instructor/elearning-subpage/ajax/get-lessons-by-course.php?course_id='+id;
         else if(type==='Module')url='pages/instructor/elearning-subpage/ajax/get-lessons-by-module.php?module_id='+id;
         else if(type==='Lesson')url='pages/instructor/elearning-subpage/ajax/get-quizzes-by-lesson.php?lesson_id='+id;
-        else{el.innerHTML='<p style="color:var(--muted);text-align:center;">No structure available.</p>';return;}
+        else{el.innerHTML='<div class="ec-empty is-inline"><i class="fas fa-diagram-project" aria-hidden="true"></i>No structure available for this item.</div>';return;}
         fetch(url,{credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest'}})
         .then(function(r){return r.json();})
         .then(function(data){
             var items=data.success&&Array.isArray(data.items)?data.items:[];
-            if(items.length===0){el.innerHTML='<p style="color:var(--muted);text-align:center;">No items found.</p>';return;}
-            var html='<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+            if(items.length===0){el.innerHTML='<div class="ec-empty is-inline"><i class="fas fa-diagram-project" aria-hidden="true"></i>No linked items found.</div>';return;}
+            var html='<div class="ec-list">';
             items.forEach(function(item,i){
-                var label=item.title||('Item '+(i+1));
-                var subLabel=item.module_title||item.course_title||'';
-                html+='<div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.9rem;border:1px solid rgba(32,0,130,0.08);border-radius:8px;background:var(--surface,#fff);">';
-                html+='<span style="width:1.5rem;height:1.5rem;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(32,0,130,0.08);color:var(--primary);font-size:0.7rem;font-weight:700;">'+(i+1)+'</span>';
-                html+='<div style="flex:1;"><div style="font-weight:600;font-size:0.88rem;color:var(--text);">'+label+'</div>';
-                if(subLabel)html+='<div style="font-size:0.75rem;color:var(--muted);">'+subLabel+'</div>';
+                var label=escCat(item.title||('Item '+(i+1)));
+                var subLabel=escCat(item.module_title||item.course_title||'');
+                var status=String(item.status||'active');
+                var isActive=status.toLowerCase()==='active';
+                html+='<div class="ec-row">';
+                html+='<span class="ec-row-num">'+(i+1)+'</span>';
+                html+='<div class="ec-row-body"><div class="ec-row-title">'+label+'</div>';
+                if(subLabel)html+='<div class="ec-row-meta">'+subLabel+'</div>';
                 html+='</div>';
-                html+='<span style="font-size:0.72rem;padding:0.2rem 0.5rem;border-radius:999px;background:'+(item.status==='active'?'rgba(16,185,129,0.1);color:#10b981':'rgba(107,114,128,0.1);color:#6b7280')+'">'+(item.status||'active')+'</span>';
+                html+='<span class="ec-pill '+(isActive?'is-success':'is-muted')+'">'+escCat(status)+'</span>';
                 html+='</div>';
             });
             html+='</div>';
             el.innerHTML=html;
         })
-        .catch(function(){el.innerHTML='<p style="color:var(--muted);text-align:center;">Failed to load structure.</p>';});
+        .catch(function(){el.innerHTML='<div class="ec-empty is-inline is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Failed to load structure.</div>';});
     }
 
     function renderMonitorPanel(type,id){
         var el=document.getElementById('entity-content-monitor-content');
-        el.innerHTML='<p style="color:var(--muted);text-align:center;">Loading performance data...</p>';
+        el.innerHTML='<div class="ec-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading performance data...</div>';
         var endpoint=null;
         if(type==='Module')endpoint='elearning-subpage/ajax/get-module-by-id.php?id='+id;
         else if(type==='Quiz')endpoint='elearning-subpage/ajax/get-quiz-by-id.php?id='+id;
-        else{el.innerHTML='<p style="color:var(--muted);text-align:center;">No performance data available.</p>';return;}
+        else{el.innerHTML='<div class="ec-empty is-inline"><i class="fas fa-chart-line" aria-hidden="true"></i>No performance data available.</div>';return;}
         fetch(endpoint,{credentials:'same-origin',headers:{'X-Requested-With':'XMLHttpRequest'}})
         .then(function(r){return r.json();})
         .then(function(data){
-            if(!data.success||!data.data){el.innerHTML='<p style="color:var(--muted);text-align:center;">No data.</p>';return;}
+            if(!data.success||!data.data){el.innerHTML='<div class="ec-empty is-inline">No data.</div>';return;}
             var d=data.data;
-            var html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;">';
-            if(d.lesson_count!==undefined)html+='<div style="text-align:center;padding:0.75rem;border:1px solid rgba(32,0,130,0.08);border-radius:8px;"><div style="font-size:1.3rem;font-weight:700;color:var(--primary);">'+d.lesson_count+'</div><div style="font-size:0.75rem;color:var(--muted);">Lessons</div></div>';
-            if(d.quiz_count!==undefined)html+='<div style="text-align:center;padding:0.75rem;border:1px solid rgba(32,0,130,0.08);border-radius:8px;"><div style="font-size:1.3rem;font-weight:700;color:var(--primary);">'+d.quiz_count+'</div><div style="font-size:0.75rem;color:var(--muted);">Quizzes</div></div>';
-            if(d.passing_score!==undefined)html+='<div style="text-align:center;padding:0.75rem;border:1px solid rgba(32,0,130,0.08);border-radius:8px;"><div style="font-size:1.3rem;font-weight:700;color:var(--primary);">'+d.passing_score+'%</div><div style="font-size:0.75rem;color:var(--muted);">Pass Score</div></div>';
+            var html='<div class="ec-cards">';
+            if(d.lesson_count!==undefined)html+='<div class="ec-card is-center is-success"><div class="ec-card-label">Lessons</div><div class="ec-card-value">'+escCat(d.lesson_count)+'</div></div>';
+            if(d.quiz_count!==undefined)html+='<div class="ec-card is-center is-info"><div class="ec-card-label">Quizzes</div><div class="ec-card-value">'+escCat(d.quiz_count)+'</div></div>';
+            if(d.passing_score!==undefined)html+='<div class="ec-card is-center"><div class="ec-card-label">Pass Score</div><div class="ec-card-value">'+escCat(d.passing_score)+'%</div></div>';
             html+='</div>';
             el.innerHTML=html;
         })
-        .catch(function(){el.innerHTML='<p style="color:var(--muted);text-align:center;">Failed to load data.</p>';});
+        .catch(function(){el.innerHTML='<div class="ec-empty is-inline is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Failed to load data.</div>';});
     }
 
     if(modalCloseBtn)modalCloseBtn.onclick=function(){entityContent.style.display='none';state.type=null;state.id=null;};

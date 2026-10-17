@@ -110,137 +110,288 @@ $formatDate = static function ($value): string {
 $escape = static function ($value): string {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES, 'UTF-8');
 };
-$renderStatusControl = static function (string $type, array $record) use ($reviewTypes, $escape): void {
-    echo '<form method="post" class="wf-review-status">';
+
+/** Tone class for the review select, so the current status reads at a glance. */
+$statusTone = static function (string $status): string {
+    if (in_array($status, ['completed', 'accepted', 'mitigated'], true)) {
+        return 'is-done';
+    }
+    if (in_array($status, ['in_progress', 'monitoring', 'planned'], true)) {
+        return 'is-active';
+    }
+    if (in_array($status, ['rejected', 'escalated'], true)) {
+        return 'is-warn';
+    }
+    return '';
+};
+
+$renderStatusControl = static function (string $type, array $record) use ($reviewTypes, $escape, $statusTone): void {
+    $current = (string) ($record['status'] ?? '');
+    $id = 'wf-status-' . $type . '-' . (int) $record['id'];
+    echo '<form method="post" class="wf-review">';
     echo CSRF::field();
     echo '<input type="hidden" name="action" value="update_status">';
     echo '<input type="hidden" name="record_type" value="' . $escape($type) . '">';
     echo '<input type="hidden" name="record_id" value="' . (int) $record['id'] . '">';
-    echo '<label class="visually-hidden" for="wf-status-' . $escape($type) . '-' . (int) $record['id'] . '">Review status</label>';
-    echo '<select id="wf-status-' . $escape($type) . '-' . (int) $record['id'] . '" name="status">';
+    echo '<label class="visually-hidden" for="' . $escape($id) . '">Review status</label>';
+    echo '<select id="' . $escape($id) . '" name="status" class="' . $escape($statusTone($current)) . '">';
     foreach ($reviewTypes[$type]['statuses'] as $status) {
-        $selected = $status === ($record['status'] ?? '') ? ' selected' : '';
+        $selected = $status === $current ? ' selected' : '';
         echo '<option value="' . $escape($status) . '"' . $selected . '>' . $escape(ucwords(str_replace('_', ' ', $status))) . '</option>';
     }
-    echo '</select><button type="submit" class="wf-review-save" title="Save review status" aria-label="Save review status"><i class="fas fa-check" aria-hidden="true"></i></button></form>';
+    echo '</select>';
+    echo '<button type="submit" class="wf-review-btn" title="Save review status" aria-label="Save review status"><i class="fas fa-check" aria-hidden="true"></i></button>';
+    echo '</form>';
+};
+
+/** Priority / risk level as a toned badge. */
+$levelBadge = static function ($level) use ($escape): string {
+    $key = strtolower(trim((string) $level));
+    if ($key === '') {
+        return '<span class="wf-muted">—</span>';
+    }
+    $tone = in_array($key, ['critical', 'escalated'], true) ? 'is-critical'
+        : (in_array($key, ['high', 'urgent'], true) ? 'is-high'
+        : (in_array($key, ['medium', 'moderate'], true) ? 'is-medium' : 'is-low'));
+    return '<span class="wf-badge ' . $tone . '">' . $escape(ucfirst($key)) . '</span>';
 };
 ?>
-<style>
-.wf-inbox-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
-.wf-inbox-heading h1{margin:0;font-size:1.45rem;color:var(--text)}
-.wf-inbox-heading p{margin:.35rem 0 0;color:var(--muted)}
-.wf-inbox-counts{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:.65rem;margin-bottom:1rem}
-.wf-inbox-count{padding:.8rem .9rem;border:1px solid var(--border);border-radius:8px;background:var(--surface)}
-.wf-inbox-count span{display:block;color:var(--muted);font-size:.74rem}
-.wf-inbox-count strong{display:block;margin-top:.2rem;font-size:1.35rem;color:var(--text)}
-.wf-inbox-table-wrap{overflow-x:auto}
-.wf-inbox-table{width:100%;border-collapse:collapse;font-size:.84rem;min-width:760px}
-.wf-inbox-table th,.wf-inbox-table td{padding:.72rem .65rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
-.wf-inbox-table th{color:var(--muted);font-size:.72rem;text-transform:uppercase}
-.wf-inbox-table td small{display:block;margin-top:.2rem;color:var(--muted);white-space:normal}
-.wf-review-status{display:flex;gap:.35rem;align-items:center;min-width:150px}
-.wf-review-status select{min-width:0;max-width:145px;padding:.42rem;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text)}
-.wf-review-save{width:34px;height:34px;flex:none;border:0;border-radius:6px;background:var(--primary);color:#fff;cursor:pointer}
-.wf-review-save:focus-visible,.wf-review-status select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.wf-inbox-notice{margin:0 0 1rem;padding:.7rem .9rem;border-left:3px solid var(--primary);background:var(--bg-subtle);color:var(--text)}
-.wf-inbox-notice.error{border-color:#b42318;color:#b42318}
-.wf-inbox-empty{padding:1.5rem;text-align:center;color:var(--muted)}
-@media(max-width:800px){.wf-inbox-counts{grid-template-columns:repeat(2,minmax(0,1fr))}.wf-inbox-count:last-child{grid-column:1/-1}}
-</style>
+<div class="module-content wf-page">
+    <div class="home-dashboard">
 
-<div class="module-content">
-    <div class="wf-inbox-heading">
-        <div><h1>Workforce Inbox</h1><p>Review incoming requirements, risk signals, engagement updates, and training actions.</p></div>
-    </div>
-    <?php if ($inboxMessage !== ''): ?><p class="wf-inbox-notice" role="status"><?= $escape($inboxMessage) ?></p><?php endif; ?>
-    <?php if ($inboxError !== ''): ?><p class="wf-inbox-notice error" role="alert"><?= $escape($inboxError) ?></p><?php endif; ?>
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1>Workforce Inbox</h1>
+                <p>Review incoming requirements, risk signals, engagement updates, and training actions.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-lightbulb" aria-hidden="true"></i> <b><?= (int) $counts['competency'] ?></b> competency needs</span>
+                    <span class="home-hero-chip"><i class="fas fa-chart-column" aria-hidden="true"></i> <b><?= (int) $counts['reporting'] ?></b> reporting</span>
+                    <span class="home-hero-chip"><i class="fas fa-users" aria-hidden="true"></i> <b><?= (int) $counts['engagement'] ?></b> engagement</span>
+                    <span class="home-hero-chip"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i> <b><?= (int) $counts['risk'] ?></b> risk</span>
+                    <span class="home-hero-chip"><i class="fas fa-graduation-cap" aria-hidden="true"></i> <b><?= (int) $counts['training_request'] ?></b> actions</span>
+                </div>
+            </div>
+        </section>
 
-    <div class="wf-inbox-counts" aria-label="Workforce record counts">
-        <div class="wf-inbox-count"><span>Competency needs</span><strong><?= $counts['competency'] ?></strong></div>
-        <div class="wf-inbox-count"><span>Reporting requirements</span><strong><?= $counts['reporting'] ?></strong></div>
-        <div class="wf-inbox-count"><span>Engagement records</span><strong><?= $counts['engagement'] ?></strong></div>
-        <div class="wf-inbox-count"><span>Risk assessments</span><strong><?= $counts['risk'] ?></strong></div>
-        <div class="wf-inbox-count"><span>Training actions</span><strong><?= $counts['training_request'] ?></strong></div>
-    </div>
+        <?php if ($inboxMessage !== ''): ?>
+            <p class="wf-notice" role="status"><i class="fas fa-circle-check" aria-hidden="true"></i><span><?= $escape($inboxMessage) ?></span></p>
+        <?php endif; ?>
+        <?php if ($inboxError !== ''): ?>
+            <p class="wf-notice is-error" role="alert"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><span><?= $escape($inboxError) ?></span></p>
+        <?php endif; ?>
 
-    <div class="tab-container">
-        <div class="tab-list" role="tablist" aria-label="Workforce records">
-            <button type="button" class="tab-item active" data-tab="wf-requirements">Requirements</button>
-            <button type="button" class="tab-item" data-tab="wf-signals">Risk &amp; engagement</button>
-            <button type="button" class="tab-item" data-tab="wf-actions">Training actions</button>
+        <div class="tab-container">
+            <div class="tab-list" role="tablist" aria-label="Workforce records">
+                <button type="button" class="tab-item active" data-tab="wf-requirements" role="tab" aria-selected="true">
+                    <i class="fas fa-clipboard-list" aria-hidden="true"></i> Requirements
+                    <span class="wf-tab-count"><?= (int) ($counts['competency'] + $counts['reporting']) ?></span>
+                </button>
+                <button type="button" class="tab-item" data-tab="wf-signals" role="tab" aria-selected="false">
+                    <i class="fas fa-shield-halved" aria-hidden="true"></i> Risk &amp; engagement
+                    <span class="wf-tab-count"><?= (int) ($counts['risk'] + $counts['engagement']) ?></span>
+                </button>
+                <button type="button" class="tab-item" data-tab="wf-actions" role="tab" aria-selected="false">
+                    <i class="fas fa-graduation-cap" aria-hidden="true"></i> Training actions
+                    <span class="wf-tab-count"><?= (int) $counts['training_request'] ?></span>
+                </button>
+            </div>
+
+            <section class="tab-content active" id="wf-requirements" data-tab="wf-requirements">
+                <div class="wf-card">
+                    <div class="wf-card-head">
+                        <h2 class="wf-card-title">
+                            <span class="wf-card-icon tone-violet"><i class="fas fa-lightbulb" aria-hidden="true"></i></span>
+                            Competency requirements
+                        </h2>
+                        <span class="wf-card-count"><?= (int) $counts['competency'] ?></span>
+                    </div>
+                    <?php if (!$records['competency']): ?>
+                        <div class="wf-empty"><i class="fas fa-inbox" aria-hidden="true"></i><p>No Workforce competency requirements have arrived.</p></div>
+                    <?php else: ?>
+                        <div class="wf-table-wrap">
+                            <table class="wf-table">
+                                <thead>
+                                    <tr><th>Need</th><th>Department</th><th>Priority</th><th>Learners</th><th>Expected output</th><th>Received</th><th>Review</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($records['competency'] as $record): ?>
+                                        <tr>
+                                            <td>
+                                                <span class="wf-cell-title"><?= $escape($record['skill_name']) ?></span>
+                                                <?php if ((string) $record['target_proficiency'] !== ''): ?><span class="wf-cell-sub"><?= $escape($record['target_proficiency']) ?></span><?php endif; ?>
+                                            </td>
+                                            <td><?= $escape($record['target_department']) ?></td>
+                                            <td><?= $levelBadge($record['priority_level']) ?></td>
+                                            <td class="wf-cell-strong"><?= (int) $record['employees_needing_training'] ?></td>
+                                            <td><?= $escape($record['expected_learning_output']) ?></td>
+                                            <td class="wf-cell-muted wf-cell-nowrap"><?= $escape($formatDate($record['created_at'])) ?></td>
+                                            <td><?php $renderStatusControl('competency', $record); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="wf-card">
+                    <div class="wf-card-head">
+                        <h2 class="wf-card-title">
+                            <span class="wf-card-icon tone-indigo"><i class="fas fa-chart-column" aria-hidden="true"></i></span>
+                            Reporting requirements
+                        </h2>
+                        <span class="wf-card-count"><?= (int) $counts['reporting'] ?></span>
+                    </div>
+                    <?php if (!$records['reporting']): ?>
+                        <div class="wf-empty"><i class="fas fa-inbox" aria-hidden="true"></i><p>No Workforce reporting requirements have arrived.</p></div>
+                    <?php else: ?>
+                        <div class="wf-table-wrap">
+                            <table class="wf-table">
+                                <thead>
+                                    <tr><th>Target</th><th>Period</th><th>Frequency</th><th>Goal</th><th>Expected output</th><th>Received</th><th>Review</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($records['reporting'] as $record): ?>
+                                        <tr>
+                                            <td>
+                                                <span class="wf-cell-title"><?= $escape($record['target_name']) ?></span>
+                                                <?php if ((string) $record['notes'] !== ''): ?><span class="wf-cell-sub"><?= $escape($record['notes']) ?></span><?php endif; ?>
+                                            </td>
+                                            <td class="wf-cell-muted wf-cell-nowrap"><?= $escape($formatDate($record['reporting_period_start'])) ?> &ndash; <?= $escape($formatDate($record['reporting_period_end'])) ?></td>
+                                            <td><?= $escape(ucfirst($record['reporting_frequency'])) ?></td>
+                                            <td class="wf-cell-strong"><?= $escape($record['completion_target']) ?>%</td>
+                                            <td><?= $escape($record['expected_output']) ?></td>
+                                            <td class="wf-cell-muted wf-cell-nowrap"><?= $escape($formatDate($record['created_at'])) ?></td>
+                                            <td><?php $renderStatusControl('reporting', $record); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <section class="tab-content" id="wf-signals" data-tab="wf-signals">
+                <div class="wf-card">
+                    <div class="wf-card-head">
+                        <h2 class="wf-card-title">
+                            <span class="wf-card-icon tone-rose"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
+                            Turnover risk assessments
+                        </h2>
+                        <span class="wf-card-count"><?= (int) $counts['risk'] ?></span>
+                    </div>
+                    <?php if (!$records['risk']): ?>
+                        <div class="wf-empty"><i class="fas fa-inbox" aria-hidden="true"></i><p>No Workforce risk assessments have arrived.</p></div>
+                    <?php else: ?>
+                        <div class="wf-table-wrap">
+                            <table class="wf-table">
+                                <thead>
+                                    <tr><th>Employee</th><th>Department / role</th><th>Risk</th><th>Factors</th><th>Recommended action</th><th>Assessed</th><th>Review</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($records['risk'] as $record): ?>
+                                        <tr>
+                                            <td><span class="wf-cell-title"><?= $escape($record['employee_name'] ?: ($record['employee_id'] ? 'Employee #' . $record['employee_id'] : 'Workforce group')) ?></span></td>
+                                            <td>
+                                                <span class="wf-cell-title"><?= $escape($record['department']) ?></span>
+                                                <?php if ((string) $record['position_name'] !== ''): ?><span class="wf-cell-sub"><?= $escape($record['position_name']) ?></span><?php endif; ?>
+                                            </td>
+                                            <td class="wf-cell-nowrap">
+                                                <?= $levelBadge($record['risk_level']) ?>
+                                                <?php if ($record['risk_score'] !== null): ?><span class="wf-cell-sub"><?= $escape($record['risk_score']) ?>%</span><?php endif; ?>
+                                            </td>
+                                            <td><?= $escape($record['risk_factors']) ?></td>
+                                            <td><?= $escape($record['recommended_action']) ?></td>
+                                            <td class="wf-cell-muted wf-cell-nowrap"><?= $escape($formatDate($record['assessment_date'] ?: $record['created_at'])) ?></td>
+                                            <td><?php $renderStatusControl('risk', $record); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="wf-card">
+                    <div class="wf-card-head">
+                        <h2 class="wf-card-title">
+                            <span class="wf-card-icon tone-amber"><i class="fas fa-users" aria-hidden="true"></i></span>
+                            Training engagement
+                        </h2>
+                        <span class="wf-card-count"><?= (int) $counts['engagement'] ?></span>
+                    </div>
+                    <?php if (!$records['engagement']): ?>
+                        <div class="wf-empty"><i class="fas fa-inbox" aria-hidden="true"></i><p>No Workforce engagement records have arrived.</p></div>
+                    <?php else: ?>
+                        <div class="wf-table-wrap">
+                            <table class="wf-table">
+                                <thead>
+                                    <tr><th>Learner / group</th><th>Department</th><th>Activity</th><th>Engagement</th><th>Recommended action</th><th>Received</th><th>Review</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($records['engagement'] as $record): ?>
+                                        <tr>
+                                            <td><span class="wf-cell-title"><?= $escape($record['learner_name'] ?: ($record['learner_id'] ? 'Employee #' . $record['learner_id'] : ucwords(str_replace('-', ' ', $record['learner_team_type'])))) ?></span></td>
+                                            <td><?= $escape($record['department']) ?></td>
+                                            <td><?= $escape(ucwords(str_replace('-', ' ', $record['training_activity']))) ?></td>
+                                            <td>
+                                                <span class="wf-cell-title"><?= $escape(ucwords(str_replace('-', ' ', $record['engagement_status']))) ?></span>
+                                                <?php if ((string) $record['engagement_data'] !== ''): ?><span class="wf-cell-sub"><?= $escape($record['engagement_data']) ?></span><?php endif; ?>
+                                            </td>
+                                            <td><?= $escape($record['recommended_action']) ?></td>
+                                            <td class="wf-cell-muted wf-cell-nowrap"><?= $escape($formatDate($record['created_at'])) ?></td>
+                                            <td><?php $renderStatusControl('engagement', $record); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <section class="tab-content" id="wf-actions" data-tab="wf-actions">
+                <div class="wf-card">
+                    <div class="wf-card-head">
+                        <h2 class="wf-card-title">
+                            <span class="wf-card-icon tone-emerald"><i class="fas fa-graduation-cap" aria-hidden="true"></i></span>
+                            Training actions
+                        </h2>
+                        <span class="wf-card-count"><?= (int) $counts['training_request'] ?></span>
+                    </div>
+                    <p class="wf-card-note">Requests currently associated with Workforce records. New training requests are not created automatically; staff review the source first.</p>
+                    <?php if (!$records['training_request']): ?>
+                        <div class="wf-empty"><i class="fas fa-inbox" aria-hidden="true"></i><p>No Workforce training actions have arrived.</p></div>
+                    <?php else: ?>
+                        <div class="wf-table-wrap">
+                            <table class="wf-table">
+                                <thead>
+                                    <tr><th>Request</th><th>Department</th><th>Priority</th><th>Source record</th><th>Request details</th><th>Received</th><th>Status</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($records['training_request'] as $record): ?>
+                                        <tr>
+                                            <td>
+                                                <span class="wf-cell-title"><?= $escape($record['skill_name']) ?></span>
+                                                <?php if ($record['learner_id']): ?><span class="wf-cell-sub">Employee #<?= (int) $record['learner_id'] ?></span><?php endif; ?>
+                                            </td>
+                                            <td><?= $escape($record['target_department']) ?></td>
+                                            <td><?= $levelBadge($record['priority_level']) ?></td>
+                                            <td class="wf-cell-muted"><?= $escape($record['external_reference_id'] ?: '—') ?></td>
+                                            <td><?= $escape($record['message']) ?></td>
+                                            <td class="wf-cell-muted wf-cell-nowrap"><?= $escape($formatDate($record['created_at'])) ?></td>
+                                            <td><?php $renderStatusControl('training_request', $record); ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </section>
         </div>
-
-        <section class="tab-content active" id="wf-requirements" data-tab="wf-requirements">
-            <div class="mode-card">
-                <h2>Competency requirements</h2>
-                <?php if (!$records['competency']): ?><p class="wf-inbox-empty">No Workforce competency requirements have arrived.</p><?php else: ?>
-                <div class="wf-inbox-table-wrap"><table class="wf-inbox-table"><thead><tr><th>Need</th><th>Department</th><th>Priority</th><th>Learners</th><th>Expected output</th><th>Received</th><th>Review</th></tr></thead><tbody>
-                    <?php foreach ($records['competency'] as $record): ?><tr>
-                        <td><strong><?= $escape($record['skill_name']) ?></strong><small><?= $escape($record['target_proficiency']) ?></small></td>
-                        <td><?= $escape($record['target_department']) ?></td><td><?= $escape(ucfirst($record['priority_level'])) ?></td>
-                        <td><?= (int) $record['employees_needing_training'] ?></td><td><?= $escape($record['expected_learning_output']) ?></td>
-                        <td><?= $escape($formatDate($record['created_at'])) ?></td><td><?php $renderStatusControl('competency', $record); ?></td>
-                    </tr><?php endforeach; ?>
-                </tbody></table></div><?php endif; ?>
-            </div>
-            <div class="mode-card" style="margin-top:1rem;">
-                <h2>Reporting requirements</h2>
-                <?php if (!$records['reporting']): ?><p class="wf-inbox-empty">No Workforce reporting requirements have arrived.</p><?php else: ?>
-                <div class="wf-inbox-table-wrap"><table class="wf-inbox-table"><thead><tr><th>Target</th><th>Period</th><th>Frequency</th><th>Goal</th><th>Expected output</th><th>Received</th><th>Review</th></tr></thead><tbody>
-                    <?php foreach ($records['reporting'] as $record): ?><tr>
-                        <td><strong><?= $escape($record['target_name']) ?></strong><small><?= $escape($record['notes']) ?></small></td>
-                        <td><?= $escape($formatDate($record['reporting_period_start'])) ?> to <?= $escape($formatDate($record['reporting_period_end'])) ?></td>
-                        <td><?= $escape(ucfirst($record['reporting_frequency'])) ?></td><td><?= $escape($record['completion_target']) ?>%</td>
-                        <td><?= $escape($record['expected_output']) ?></td><td><?= $escape($formatDate($record['created_at'])) ?></td>
-                        <td><?php $renderStatusControl('reporting', $record); ?></td>
-                    </tr><?php endforeach; ?>
-                </tbody></table></div><?php endif; ?>
-            </div>
-        </section>
-
-        <section class="tab-content" id="wf-signals" data-tab="wf-signals">
-            <div class="mode-card">
-                <h2>Turnover risk assessments</h2>
-                <?php if (!$records['risk']): ?><p class="wf-inbox-empty">No Workforce risk assessments have arrived.</p><?php else: ?>
-                <div class="wf-inbox-table-wrap"><table class="wf-inbox-table"><thead><tr><th>Employee</th><th>Department / role</th><th>Risk</th><th>Factors</th><th>Recommended action</th><th>Assessed</th><th>Review</th></tr></thead><tbody>
-                    <?php foreach ($records['risk'] as $record): ?><tr>
-                        <td><strong><?= $escape($record['employee_name'] ?: ($record['employee_id'] ? 'Employee #' . $record['employee_id'] : 'Workforce group')) ?></strong></td>
-                        <td><?= $escape($record['department']) ?><small><?= $escape($record['position_name']) ?></small></td>
-                        <td><?= $escape(ucfirst($record['risk_level'])) ?><?= $record['risk_score'] !== null ? ' · ' . $escape($record['risk_score']) . '%' : '' ?></td>
-                        <td><?= $escape($record['risk_factors']) ?></td><td><?= $escape($record['recommended_action']) ?></td>
-                        <td><?= $escape($formatDate($record['assessment_date'] ?: $record['created_at'])) ?></td><td><?php $renderStatusControl('risk', $record); ?></td>
-                    </tr><?php endforeach; ?>
-                </tbody></table></div><?php endif; ?>
-            </div>
-            <div class="mode-card" style="margin-top:1rem;">
-                <h2>Training engagement</h2>
-                <?php if (!$records['engagement']): ?><p class="wf-inbox-empty">No Workforce engagement records have arrived.</p><?php else: ?>
-                <div class="wf-inbox-table-wrap"><table class="wf-inbox-table"><thead><tr><th>Learner / group</th><th>Department</th><th>Activity</th><th>Engagement</th><th>Recommended action</th><th>Received</th><th>Review</th></tr></thead><tbody>
-                    <?php foreach ($records['engagement'] as $record): ?><tr>
-                        <td><strong><?= $escape($record['learner_name'] ?: ($record['learner_id'] ? 'Employee #' . $record['learner_id'] : ucwords(str_replace('-', ' ', $record['learner_team_type'])))) ?></strong></td>
-                        <td><?= $escape($record['department']) ?></td><td><?= $escape(ucwords(str_replace('-', ' ', $record['training_activity']))) ?></td>
-                        <td><?= $escape(ucwords(str_replace('-', ' ', $record['engagement_status']))) ?><small><?= $escape($record['engagement_data']) ?></small></td>
-                        <td><?= $escape($record['recommended_action']) ?></td><td><?= $escape($formatDate($record['created_at'])) ?></td>
-                        <td><?php $renderStatusControl('engagement', $record); ?></td>
-                    </tr><?php endforeach; ?>
-                </tbody></table></div><?php endif; ?>
-            </div>
-        </section>
-
-        <section class="tab-content" id="wf-actions" data-tab="wf-actions">
-            <div class="mode-card">
-                <h2>Training actions</h2>
-                <p>Requests currently associated with Workforce records. New training requests are not created automatically; staff review the source first.</p>
-                <?php if (!$records['training_request']): ?><p class="wf-inbox-empty">No Workforce training actions have arrived.</p><?php else: ?>
-                <div class="wf-inbox-table-wrap"><table class="wf-inbox-table"><thead><tr><th>Request</th><th>Department</th><th>Priority</th><th>Source record</th><th>Request details</th><th>Received</th><th>Status</th></tr></thead><tbody>
-                    <?php foreach ($records['training_request'] as $record): ?><tr>
-                        <td><strong><?= $escape($record['skill_name']) ?></strong><?php if ($record['learner_id']): ?><small>Employee #<?= (int) $record['learner_id'] ?></small><?php endif; ?></td>
-                        <td><?= $escape($record['target_department']) ?></td><td><?= $escape(ucfirst($record['priority_level'])) ?></td>
-                        <td><?= $escape($record['external_reference_id']) ?></td><td><?= $escape($record['message']) ?></td>
-                        <td><?= $escape($formatDate($record['created_at'])) ?></td><td><?php $renderStatusControl('training_request', $record); ?></td>
-                    </tr><?php endforeach; ?>
-                </tbody></table></div><?php endif; ?>
-            </div>
-        </section>
     </div>
 </div>

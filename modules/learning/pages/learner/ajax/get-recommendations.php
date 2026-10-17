@@ -120,6 +120,7 @@ try {
 
         $recommendations[] = [
             'id' => $courseId,
+            'type' => 'course',
             'title' => $course['title'],
             'description' => mb_substr(strip_tags($course['description'] ?? ''), 0, 120),
             'category' => $course['category'] ?? '',

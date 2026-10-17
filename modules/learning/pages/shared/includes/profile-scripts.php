@@ -44,6 +44,12 @@
 
         var track = document.querySelector('.pfl-completion-bar');
         if (track) track.setAttribute('aria-valuenow', String(pct));
+
+        // At 100% there is nothing left to prompt, so the card goes away. The
+        // partial also skips rendering it, which covers a fresh load; this covers
+        // the edit that completes the profile without one.
+        var card = document.getElementById('profile-completion-card');
+        if (card) card.style.display = pct >= 100 ? 'none' : '';
     }
 
     function setCriterion(key, isDone) {

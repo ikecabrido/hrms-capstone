@@ -1,0 +1,454 @@
+/* ==========================================================================
+   Learning module — Skill Gaps (instructor)
+
+   Page scoped styling for pages/instructor/instructor-skill-gap.php.
+
+   Builds on the dashboard components from home.css (.home-hero, .home-card,
+   .home-empty) and reuses the segmented control / card language from the other
+   restyled pages. Every rule is scoped under .skill-page so nothing else in the
+   module is affected; the .isg-* hooks the page's JavaScript relies on are kept.
+   ========================================================================== */
+
+/* ---- Toolbar ------------------------------------------------------------ */
+.skill-page .isg-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+}
+
+.skill-page .isg-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1 1 16rem;
+    min-width: 0;
+    max-width: 26rem;
+}
+
+.skill-page .isg-search > i {
+    position: absolute;
+    left: 0.8rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    pointer-events: none;
+}
+
+.skill-page .isg-search input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.62rem 0.8rem 0.62rem 2.2rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.86rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.skill-page .isg-search input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(32, 0, 130, 0.12);
+}
+
+.skill-page .isg-search input::placeholder { color: var(--muted); }
+
+.skill-page .isg-view-toggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+}
+
+.skill-page .isg-view-toggle button {
+    padding: 0.42rem 0.6rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.skill-page .isg-view-toggle button:hover:not(.active) {
+    background: rgba(32, 0, 130, 0.06);
+    color: var(--primary);
+}
+
+.skill-page .isg-view-toggle button.active {
+    background: var(--primary);
+    color: #fff;
+}
+
+.skill-page .isg-page-size {
+    padding: 0.58rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.skill-page .isg-export-btn,
+.skill-page .isg-print-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.95rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.skill-page .isg-export-btn {
+    background: rgba(32, 0, 130, 0.07);
+    color: var(--primary);
+}
+
+.skill-page .isg-export-btn:hover { background: rgba(32, 0, 130, 0.14); }
+
+.skill-page .isg-print-btn {
+    background: var(--primary);
+    color: #fff;
+}
+
+.skill-page .isg-print-btn:hover { background: var(--accent); }
+
+.skill-page .isg-count {
+    margin-left: auto;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ---- Filter tabs (segmented) ------------------------------------------- */
+.skill-page .isg-filter-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1.1rem;
+    padding: 4px;
+    background: rgba(32, 0, 130, 0.05);
+    border: 1px solid rgba(32, 0, 130, 0.06);
+    border-radius: 13px;
+}
+
+.skill-page .isg-filter-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.skill-page .isg-filter-tab:hover {
+    background: rgba(32, 0, 130, 0.06);
+    color: var(--primary);
+}
+
+.skill-page .isg-filter-tab.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 6px 14px rgba(32, 0, 130, 0.18);
+}
+
+.skill-page .isg-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 19px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(32, 0, 130, 0.08);
+    color: var(--primary);
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.skill-page .isg-filter-tab.active .isg-filter-count {
+    background: rgba(255, 255, 255, 0.24);
+    color: #fff;
+}
+
+/* ---- Section title ------------------------------------------------------ */
+.skill-page .isg-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.9rem;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+}
+
+/* ---- Skill bars -------------------------------------------------------- */
+.skill-page .isg-skill-bar {
+    padding: 1rem 1.15rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px rgba(32, 0, 130, 0.05);
+}
+
+.skill-page .isg-skill-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 0.55rem;
+}
+
+.skill-page .isg-skill-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.skill-page .isg-skill-rate { font-size: 0.82rem; font-weight: 800; white-space: nowrap; }
+.skill-page .isg-skill-rate.high { color: #b91c1c; }
+.skill-page .isg-skill-rate.medium { color: #b45309; }
+.skill-page .isg-skill-rate.low { color: #047857; }
+
+.skill-page .isg-bar-track {
+    height: 8px;
+    margin-bottom: 0.5rem;
+    border-radius: 999px;
+    background: rgba(32, 0, 130, 0.08);
+    overflow: hidden;
+}
+
+.skill-page .isg-bar-fill { height: 100%; border-radius: 999px; transition: width 0.5s ease; }
+.skill-page .isg-bar-fill.high { background: linear-gradient(90deg, #ef4444, #f87171); }
+.skill-page .isg-bar-fill.medium { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.skill-page .isg-bar-fill.low { background: linear-gradient(90deg, #10b981, #34d399); }
+
+.skill-page .isg-missing-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+}
+
+.skill-page .isg-missing-tag {
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(239, 68, 68, 0.09);
+    color: #b91c1c;
+}
+
+.skill-page .isg-missing-more {
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(32, 0, 130, 0.06);
+    color: var(--muted);
+}
+
+/* ---- Learner grid ------------------------------------------------------ */
+.skill-page .isg-learner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.skill-page .isg-learner-grid.list-view { grid-template-columns: 1fr; gap: 0.75rem; }
+
+.skill-page .isg-learner-card {
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 14px;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 20px rgba(32, 0, 130, 0.05);
+}
+
+.skill-page .isg-learner-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+}
+
+.skill-page .isg-learner-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.skill-page .isg-learner-pct { font-size: 0.85rem; font-weight: 800; white-space: nowrap; }
+
+.skill-page .isg-learner-bar {
+    height: 6px;
+    margin-bottom: 0.45rem;
+    border-radius: 999px;
+    background: rgba(32, 0, 130, 0.08);
+    overflow: hidden;
+}
+
+.skill-page .isg-learner-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--primary), #7c3aed);
+    transition: width 0.5s ease;
+}
+
+.skill-page .isg-learner-stats { font-size: 0.78rem; color: var(--muted); }
+
+/* ---- Empty & loading --------------------------------------------------- */
+.skill-page .isg-empty,
+.skill-page .isg-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 2.75rem 1.25rem;
+    text-align: center;
+    color: var(--muted);
+}
+
+.skill-page .isg-empty i { font-size: 2.4rem; color: rgba(32, 0, 130, 0.2); }
+.skill-page .isg-empty h4 { margin: 0; font-size: 1rem; font-weight: 800; color: var(--text); }
+.skill-page .isg-empty p,
+.skill-page .isg-loading p { margin: 0; font-size: 0.86rem; }
+
+.skill-page .isg-loading i {
+    font-size: 1.5rem;
+    color: var(--primary);
+    animation: sg-spin 1s linear infinite;
+}
+
+@keyframes sg-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ---- Pagination -------------------------------------------------------- */
+.skill-page .isg-pagination-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+.skill-page .isg-pagination-row .page-btn {
+    padding: 0.6rem 0.95rem;
+    border: 1px solid rgba(32, 0, 130, 0.2);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.skill-page .isg-pagination-row .page-btn:hover:not(:disabled) { background: rgba(32, 0, 130, 0.07); }
+.skill-page .isg-pagination-row .page-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.skill-page .isg-pagination-row .page-indicator {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* ---- Print ------------------------------------------------------------- */
+@media print {
+    .skill-page .isg-toolbar,
+    .skill-page .isg-filter-tabs,
+    .skill-page .isg-pagination-row,
+    .skill-page .home-hero { display: none !important; }
+    .skill-page .isg-skill-bar,
+    .skill-page .isg-learner-card { break-inside: avoid; box-shadow: none !important; }
+}
+
+/* ---- Responsive -------------------------------------------------------- */
+@media (max-width: 768px) {
+    .skill-page .isg-count { margin-left: 0; }
+    .skill-page .isg-learner-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- Dark mode --------------------------------------------------------- */
+[data-theme="dark"] .skill-page .isg-skill-bar,
+[data-theme="dark"] .skill-page .isg-learner-card {
+    background: rgba(30, 41, 59, 1);
+    border-color: rgba(51, 65, 85, 0.6);
+}
+
+[data-theme="dark"] .skill-page .isg-skill-name,
+[data-theme="dark"] .skill-page .isg-learner-name,
+[data-theme="dark"] .skill-page .isg-section-title,
+[data-theme="dark"] .skill-page .isg-empty h4 { color: var(--text); }
+
+[data-theme="dark"] .skill-page .isg-bar-track,
+[data-theme="dark"] .skill-page .isg-learner-bar { background: rgba(51, 65, 85, 0.7); }
+
+[data-theme="dark"] .skill-page .isg-missing-more { background: rgba(148, 163, 184, 0.14); color: #cbd5e1; }
+[data-theme="dark"] .skill-page .isg-missing-tag { background: rgba(244, 63, 94, 0.16); color: #fda4af; }
+
+[data-theme="dark"] .skill-page .isg-filter-tabs { background: rgba(51, 65, 85, 0.4); border-color: rgba(51, 65, 85, 0.7); }
+[data-theme="dark"] .skill-page .isg-filter-tab { color: var(--muted); }
+[data-theme="dark"] .skill-page .isg-filter-tab:hover { background: rgba(255, 255, 255, 0.07); color: var(--text); }
+[data-theme="dark"] .skill-page .isg-filter-tab.active { background: var(--primary); color: #fff; }
+[data-theme="dark"] .skill-page .isg-filter-count { background: rgba(255, 255, 255, 0.10); color: var(--text); }
+[data-theme="dark"] .skill-page .isg-filter-tab.active .isg-filter-count { background: rgba(255, 255, 255, 0.24); color: #fff; }
+
+[data-theme="dark"] .skill-page .isg-search input,
+[data-theme="dark"] .skill-page .isg-page-size,
+[data-theme="dark"] .skill-page .isg-view-toggle {
+    background: rgba(15, 23, 42, 0.7);
+    color: var(--text);
+    border-color: rgba(51, 65, 85, 0.8);
+}
+
+[data-theme="dark"] .skill-page .isg-view-toggle button { color: var(--muted); }
+[data-theme="dark"] .skill-page .isg-view-toggle button:hover:not(.active) { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+[data-theme="dark"] .skill-page .isg-view-toggle button.active { background: var(--primary); color: #fff; }
+
+[data-theme="dark"] .skill-page .isg-export-btn { background: rgba(99, 102, 241, 0.16); color: #c7d2fe; }
+[data-theme="dark"] .skill-page .isg-export-btn:hover { background: rgba(99, 102, 241, 0.26); }
+
+[data-theme="dark"] .skill-page .isg-pagination-row .page-btn { border-color: rgba(148, 163, 184, 0.4); color: #c7d2fe; }
+[data-theme="dark"] .skill-page .isg-pagination-row .page-btn:hover:not(:disabled) { background: rgba(99, 102, 241, 0.16); }
+
+[data-theme="dark"] .skill-page .isg-empty i { color: rgba(148, 163, 184, 0.45); }
+[data-theme="dark"] .skill-page .isg-skill-rate.high { color: #fda4af; }
+[data-theme="dark"] .skill-page .isg-skill-rate.medium { color: #fcd34d; }
+[data-theme="dark"] .skill-page .isg-skill-rate.low { color: #6ee7b7; }

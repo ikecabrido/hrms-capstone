@@ -97,361 +97,402 @@ $timeDisplay = $hours > 0 ? "{$hours}h {$minutes}m" : "{$minutes}m";
 $completionRate = $stats['my_enrollments'] > 0 ? round(($stats['completed'] / $stats['my_enrollments']) * 100) : 0;
 $lessonCompletionRate = $stats['total_modules'] > 0 ? round(($stats['modules_completed'] / $stats['total_modules']) * 100) : 0;
 ?>
-<div class="module-content analytics-dashboard">
-    <div class="toolbar">
-        
-    </div>
-
-    <!-- Learning Streak Banner -->
-    <div class="mode-card" style="background:linear-gradient(135deg, rgba(255,152,0,0.1), rgba(255,193,7,0.05)); border-left:4px solid var(--accent); margin-bottom:1.5rem; display:flex; align-items:center; gap:1.5rem; padding:1.5rem 2rem;">
-        <div style="font-size:3rem; color:var(--accent);">
-            <i class="fas fa-fire"></i>
-        </div>
-        <div>
-            <h2 style="margin:0; color:var(--accent); font-size:1.8rem;"><?= $streak ?> Day<?= $streak !== 1 ? 's' : '' ?> Streak!</h2>
-            <p style="margin:0.25rem 0 0 0; color:#666;">
-                <?= $streak > 0 ? "You've been learning for $streak consecutive day" . ($streak !== 1 ? 's' : '') . ". Keep it up!" : "Start learning today to build your streak!" ?>
-            </p>
-        </div>
-    </div>
-
-    <!-- Primary Stats -->
-    <div class="analytics-cards" style="margin-bottom:1.5rem;">
-        <div class="analytics-card" style="border-top:3px solid var(--primary);">
-            <h2><i class="fas fa-graduation-cap" style="margin-right:0.4rem;opacity:0.6;"></i> Enrolled</h2>
-            <p class="analytics-value"><?= $stats['my_enrollments'] ?></p>
-            <div style="font-size:0.85rem; color:#999;"><?= $stats['in_progress'] ?> active</div>
-        </div>
-        <div class="analytics-card" style="border-top:3px solid var(--primary);">
-            <h2><i class="fas fa-check-circle" style="margin-right:0.4rem;opacity:0.6;"></i> Completed</h2>
-            <p class="analytics-value"><?= $stats['completed'] ?></p>
-            <div style="font-size:0.85rem; color:#999;"><?= $completionRate ?>% completion</div>
-        </div>
-        <div class="analytics-card" style="border-top:3px solid var(--accent);">
-            <h2><i class="fas fa-star" style="margin-right:0.4rem;opacity:0.6;"></i> Avg Score</h2>
-            <p class="analytics-value"><?= $stats['avg_score'] ?>%</p>
-            <div style="font-size:0.85rem; color:#999;"><?= $stats['pass_rate'] ?>% pass rate</div>
-        </div>
-        <div class="analytics-card" style="border-top:3px solid var(--accent);">
-            <h2><i class="fas fa-trophy" style="margin-right:0.4rem;opacity:0.6;"></i> Certificates</h2>
-            <p class="analytics-value"><?= $stats['certificates'] ?></p>
-            <div style="font-size:0.85rem; color:#999;">earned</div>
-        </div>
-    </div>
-
-    <div class="tab-container">
-        <div class="tab-list">
-            <button type="button" class="tab-item active" data-tab="tab-overview">Overview</button>
-            <button type="button" class="tab-item" data-tab="tab-performance">Performance</button>
-            <button type="button" class="tab-item" data-tab="tab-activity">Activity</button>
-            <button type="button" class="tab-item" data-tab="tab-skills">Skills</button>
-        </div>
-
-        <!-- Overview Tab -->
-        <div class="tab-content active" data-tab="tab-overview">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
-                <!-- Course Completion Gauge -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-chart-pie" style="color:var(--primary); margin-right:0.5rem;"></i> Course Completion</h3>
-                    <div style="display:flex; align-items:center; gap:2rem; padding:1.5rem 0;">
-                        <div style="position:relative; width:120px; height:120px;">
-                            <svg width="120" height="120" viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" stroke-width="12"/>
-                                <circle cx="60" cy="60" r="50" fill="none" stroke="var(--primary)" stroke-width="12"
-                                    stroke-dasharray="<?= $completionRate * 3.14 ?> <?= 314 - ($completionRate * 3.14) ?>"
-                                    stroke-dashoffset="78.5" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dasharray 1s;"/>
-                            </svg>
-                            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:1.5rem; font-weight:700; color:var(--primary);"><?= $completionRate ?>%</div>
-                        </div>
-                        <div>
-                            <p style="margin:0; font-size:1.1rem;"><strong><?= $stats['completed'] ?></strong> courses completed</p>
-                            <p style="margin:0.25rem 0; color:#666;">out of <?= $stats['my_enrollments'] ?> enrolled</p>
-                            <p style="margin:0.25rem 0; color:#999; font-size:0.9rem;"><?= $stats['in_progress'] ?> currently in progress</p>
-                        </div>
-                    </div>
+<div class="module-content an-page">
+    <div class="home-dashboard">
+        <section class="home-hero" aria-labelledby="la-title">
+            <div class="home-hero-main">
+                <h1 id="la-title">Analytics</h1>
+                <p><?= $streak > 0 ? 'You have been learning for ' . $streak . ' consecutive day' . ($streak !== 1 ? 's' : '') . '. Keep it up!' : 'Your learning activity, scores and skills at a glance.' ?></p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-fire"></i> <?= (int) $streak ?> day<?= $streak === 1 ? '' : 's' ?> streak</span>
+                    <span class="home-hero-chip"><i class="fas fa-book-open"></i> <?= (int) $stats['my_enrollments'] ?> enrolled</span>
+                    <span class="home-hero-chip"><i class="fas fa-star"></i> <?= $stats['avg_score'] ?>% avg score</span>
                 </div>
+            </div>
+        </section>
 
-                <!-- Lesson Progress -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-tasks" style="color:var(--primary); margin-right:0.5rem;"></i> Lesson Progress</h3>
-                    <div style="padding:1.5rem 0;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
-                            <span>Lessons Completed</span>
-                            <strong style="color:var(--primary);"><?= $lessonCompletionRate ?>%</strong>
-                        </div>
-                        <div style="background:var(--border); height:12px; border-radius:6px; overflow:hidden; margin-bottom:1rem;">
-                            <div style="background:linear-gradient(90deg, var(--primary), var(--text)); height:100%; width:<?= $lessonCompletionRate ?>%; border-radius:6px;"></div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; color:#666; font-size:0.9rem;">
-                            <span><?= $stats['modules_completed'] ?> completed</span>
-                            <span><?= $stats['total_modules'] ?> total lessons</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Time Investment -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-clock" style="color:var(--primary); margin-right:0.5rem;"></i> Time Investment</h3>
-                    <div style="padding:1.5rem 0; text-align:center;">
-                        <div style="font-size:2.5rem; font-weight:700; color:var(--primary);"><?= $timeDisplay ?></div>
-                        <p style="color:#666; margin:0.5rem 0;">total learning time</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1rem; text-align:center;">
-                            <div style="padding:0.75rem; background:var(--bg-subtle); border-radius:8px;">
-                                <div style="font-size:1.2rem; font-weight:600;"><?= $stats['quizzes_taken'] ?></div>
-                                <div style="font-size:0.85rem; color:#999;">Quizzes Taken</div>
-                            </div>
-                            <div style="padding:0.75rem; background:var(--bg-subtle); border-radius:8px;">
-                                <div style="font-size:1.2rem; font-weight:600;"><?= $stats['pass_rate'] ?>%</div>
-                                <div style="font-size:0.85rem; color:#999;">Pass Rate</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Course Grades -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-chart-bar" style="color:var(--primary); margin-right:0.5rem;"></i> Course Scores</h3>
-                    <?php if (empty($courseGrades)): ?>
-                        <p style="color:#999; text-align:center; padding:2rem 0;">No grades recorded yet.</p>
-                    <?php else: ?>
-                        <div style="padding:1rem 0;">
-                            <?php foreach (array_slice($courseGrades, 0, 5) as $grade): ?>
-                                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
-                                    <span style="flex:1; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= htmlspecialchars(mb_substr($grade['title'], 0, 30)) ?></span>
-                                    <div style="width:120px; background:var(--border); height:8px; border-radius:4px; overflow:hidden; flex-shrink:0;">
-                                        <div style="background:<?= $grade['status'] === 'passed' ? 'var(--primary)' : 'var(--danger)' ?>; height:100%; width:<?= min(100, round($grade['final_score'])) ?>%;"></div>
-                                    </div>
-                                    <span style="font-weight:600; color:var(--primary); min-width:45px; text-align:right; font-size:0.9rem;"><?= round($grade['final_score'], 1) ?>%</span>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
+        <div class="home-stats">
+            <div class="home-stat is-link" title="Show the overview tab" onclick="document.querySelector('.tab-item[data-tab=tab-overview]').click()">
+                <span class="home-stat-icon tone-violet"><i class="fas fa-graduation-cap"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Enrolled</span>
+                    <span class="home-stat-value"><?= (int) $stats['my_enrollments'] ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['in_progress'] ?> active</span>
+                </span>
+            </div>
+            <div class="home-stat is-link" title="Show the overview tab" onclick="document.querySelector('.tab-item[data-tab=tab-overview]').click()">
+                <span class="home-stat-icon tone-emerald"><i class="fas fa-circle-check"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Completed</span>
+                    <span class="home-stat-value"><?= (int) $stats['completed'] ?></span>
+                    <span class="home-stat-sub"><?= $completionRate ?>% completion</span>
+                </span>
+            </div>
+            <div class="home-stat is-link" title="Show the performance tab" onclick="document.querySelector('.tab-item[data-tab=tab-performance]').click()">
+                <span class="home-stat-icon tone-indigo"><i class="fas fa-star"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Avg Score</span>
+                    <span class="home-stat-value"><?= $stats['avg_score'] ?>%</span>
+                    <span class="home-stat-sub"><?= $stats['pass_rate'] ?>% pass rate</span>
+                </span>
+            </div>
+            <div class="home-stat is-link" title="Show the performance tab" onclick="document.querySelector('.tab-item[data-tab=tab-performance]').click()">
+                <span class="home-stat-icon tone-amber"><i class="fas fa-trophy"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Certificates</span>
+                    <span class="home-stat-value"><?= (int) $stats['certificates'] ?></span>
+                    <span class="home-stat-sub">earned</span>
+                </span>
             </div>
         </div>
 
-        <!-- Performance Tab -->
-        <div class="tab-content" data-tab="tab-performance">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
-                <!-- Monthly Score Trend -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-chart-line" style="color:var(--primary); margin-right:0.5rem;"></i> Score Trend</h3>
-                    <?php if (empty($monthlyScores)): ?>
-                        <p style="color:#999; text-align:center; padding:2rem 0;">Not enough data yet. Complete courses to see trends.</p>
-                    <?php else: ?>
-                        <div style="padding:1.5rem 0;">
-                            <div style="display:flex; align-items:flex-end; gap:0.5rem; height:160px; padding:0 0.5rem;">
-                                <?php
-                                $maxScore = max(array_column($monthlyScores, 'avg_score'));
-                                $maxScore = max($maxScore, 100);
-                                foreach ($monthlyScores as $ms):
-                                    $height = round(($ms['avg_score'] / $maxScore) * 140);
-                                ?>
-                                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:0.25rem;">
-                                        <span style="font-size:0.75rem; font-weight:600; color:var(--primary);"><?= $ms['avg_score'] ?>%</span>
-                                        <div style="width:100%; max-width:50px; height:<?= $height ?>px; background:linear-gradient(180deg, var(--primary), var(--text)); border-radius:6px 6px 0 0; transition:height 0.5s;"></div>
-                                        <span style="font-size:0.7rem; color:#999;"><?= date('M', strtotime($ms['month'] . '-01')) ?></span>
-                                    </div>
-                                <?php endforeach; ?>
+        <div class="tab-container">
+            <div class="tab-list">
+                <button type="button" class="tab-item active" data-tab="tab-overview"><i class="fas fa-gauge-high"></i> Overview</button>
+                <button type="button" class="tab-item" data-tab="tab-performance"><i class="fas fa-chart-line"></i> Performance</button>
+                <button type="button" class="tab-item" data-tab="tab-activity"><i class="fas fa-calendar-check"></i> Activity</button>
+                <button type="button" class="tab-item" data-tab="tab-skills"><i class="fas fa-star"></i> Skills</button>
+            </div>
+
+            <!-- ==================== OVERVIEW ==================== -->
+            <div class="tab-content active" data-tab="tab-overview">
+                <div class="an-cols">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-chart-pie"></i> Course Completion</h3>
+                        <div class="an-summary">
+                            <div class="an-ring" style="--an-pct: <?= (int) $completionRate ?>;">
+                                <div class="an-ring-inner">
+                                    <span class="an-ring-value"><?= (int) $completionRate ?>%</span>
+                                    <span class="an-ring-label">Completed</span>
+                                </div>
+                            </div>
+                            <div class="an-kv-list">
+                                <div class="an-kv">
+                                    <span class="an-kv-label">Courses completed</span>
+                                    <span class="an-kv-value"><?= (int) $stats['completed'] ?></span>
+                                </div>
+                                <div class="an-kv">
+                                    <span class="an-kv-label">Courses enrolled</span>
+                                    <span class="an-kv-value"><?= (int) $stats['my_enrollments'] ?></span>
+                                </div>
+                                <div class="an-kv">
+                                    <span class="an-kv-label">In progress</span>
+                                    <span class="an-kv-value"><?= (int) $stats['in_progress'] ?></span>
+                                </div>
                             </div>
                         </div>
-                    <?php endif; ?>
-                </div>
+                    </div>
 
-                <!-- Grade Distribution -->
-                <div class="mode-card">
-                    <h3><i class="fas fa-chart-bar" style="color:var(--primary); margin-right:0.5rem;"></i> Grade Distribution</h3>
-                    <?php
-                    $distA = 0; $distB = 0; $distC = 0; $distF = 0;
-                    foreach ($courseGrades as $g) {
-                        $s = (float) $g['final_score'];
-                        if ($s >= 90) $distA++;
-                        elseif ($s >= 80) $distB++;
-                        elseif ($s >= 70) $distC++;
-                        else $distF++;
-                    }
-                    $totalGrades = count($courseGrades);
-                    ?>
-                    <div style="padding:1.5rem 0;">
-                        <?php
-                        $distributions = [
-                            ['label' => 'A (90-100%)', 'count' => $distA, 'color' => 'var(--primary)'],
-                            ['label' => 'B (80-89%)', 'count' => $distB, 'color' => 'var(--accent)'],
-                            ['label' => 'C (70-79%)', 'count' => $distC, 'color' => 'var(--accent)'],
-                            ['label' => 'F (<70%)', 'count' => $distF, 'color' => 'var(--danger)'],
-                        ];
-                        foreach ($distributions as $d):
-                            $pct = $totalGrades > 0 ? round(($d['count'] / $totalGrades) * 100) : 0;
-                        ?>
-                            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.75rem;">
-                                <span style="width:80px; font-size:0.85rem; color:#666;"><?= $d['label'] ?></span>
-                                <div style="flex:1; background:var(--border); height:12px; border-radius:6px; overflow:hidden;">
-                                    <div style="background:<?= $d['color'] ?>; height:100%; width:<?= $pct ?>%; border-radius:6px;"></div>
-                                </div>
-                                <span style="width:40px; font-weight:600; font-size:0.9rem; text-align:right;"><?= $d['count'] ?></span>
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-list-check"></i> Lesson Progress</h3>
+                        <div class="an-breakdown">
+                            <div class="an-bar-row">
+                                <span class="an-bar-label">Lessons</span>
+                                <span class="an-bar-track"><span class="an-bar-fill" style="width:<?= max(0, min(100, (int) $lessonCompletionRate)) ?>%;"></span></span>
+                                <span class="an-bar-value"><?= (int) $lessonCompletionRate ?>%</span>
                             </div>
-                        <?php endforeach; ?>
+                        </div>
+                        <div class="an-kv-list" style="margin-top:0.9rem;">
+                            <div class="an-kv">
+                                <span class="an-kv-label">Lessons completed</span>
+                                <span class="an-kv-value"><?= (int) $stats['modules_completed'] ?></span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Total lessons</span>
+                                <span class="an-kv-value"><?= (int) $stats['total_modules'] ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-clock"></i> Time Investment</h3>
+                        <div class="an-kv-list">
+                            <div class="an-kv">
+                                <span class="an-kv-label">Total learning time</span>
+                                <span class="an-kv-value"><?= $timeDisplay ?></span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Quizzes taken</span>
+                                <span class="an-kv-value"><?= (int) $stats['quizzes_taken'] ?></span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Pass rate</span>
+                                <span class="an-kv-value"><?= $stats['pass_rate'] ?>%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-chart-bar"></i> Course Scores</h3>
+                        <?php if (empty($courseGrades)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-chart-bar"></i>
+                            <strong>No grades recorded yet</strong>
+                            <span>Your course scores will be listed here.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-table-wrap">
+                            <table class="an-table">
+                                <thead>
+                                    <tr>
+                                        <th>Course</th>
+                                        <th class="an-th-num">Score</th>
+                                        <th class="an-th-num">Result</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach (array_slice($courseGrades, 0, 5) as $grade):
+                                        $gradePct = (int) round($grade['final_score']);
+                                    ?>
+                                    <tr>
+                                        <td>
+                                            <div class="an-course">
+                                                <span class="an-course-name" title="<?= htmlspecialchars($grade['title']) ?>"><?= htmlspecialchars($grade['title']) ?></span>
+                                            </div>
+                                        </td>
+                                        <td class="an-td-num">
+                                            <div class="an-completion">
+                                                <span class="an-mini-track"><span class="an-mini-fill" style="width:<?= max(0, min(100, $gradePct)) ?>%;"></span></span>
+                                                <span class="an-completion-val"><?= round($grade['final_score'], 1) ?>%</span>
+                                            </div>
+                                        </td>
+                                        <td class="an-td-num"><span class="an-pill <?= $grade['status'] === 'passed' ? 'is-good' : 'is-bad' ?>"><?= ucfirst($grade['status']) ?></span></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== PERFORMANCE ==================== -->
+            <div class="tab-content" data-tab="tab-performance">
+                <div class="an-cols">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-chart-line"></i> Score Trend</h3>
+                        <?php if (empty($monthlyScores)): ?>
+                        <div class="an-empty">
+                            <i class="fas fa-chart-line"></i>
+                            <strong>Not enough data yet</strong>
+                            <span>Complete courses to see your score trend.</span>
+                        </div>
+                        <?php else:
+                            $maxScore = max(100, max(array_column($monthlyScores, 'avg_score')));
+                        ?>
+                        <div class="an-chart">
+                            <?php foreach ($monthlyScores as $ms):
+                                $msH = round(($ms['avg_score'] / $maxScore) * 100);
+                            ?>
+                            <div class="an-chart-col">
+                                <span class="an-chart-value"><?= $ms['avg_score'] ?>%</span>
+                                <span class="an-chart-bar" style="height:<?= max(2, (int) $msH) ?>%;" title="<?= $ms['avg_score'] ?>% average"></span>
+                                <span class="an-chart-label"><?= date('M', strtotime($ms['month'] . '-01')) ?></span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-chart-bar"></i> Grade Distribution</h3>
+                        <?php
+                        $dist = ['a' => 0, 'b' => 0, 'c' => 0, 'd' => 0, 'f' => 0];
+                        foreach ($courseGrades as $cg) {
+                            $cgScore = (float) $cg['final_score'];
+                            if ($cgScore >= 90) { $dist['a']++; }
+                            elseif ($cgScore >= 80) { $dist['b']++; }
+                            elseif ($cgScore >= 70) { $dist['c']++; }
+                            elseif ($cgScore >= 60) { $dist['d']++; }
+                            else { $dist['f']++; }
+                        }
+                        $totalGrades = count($courseGrades);
+                        $gradeBands = [
+                            ['key' => 'a', 'label' => 'A', 'range' => '90-100'],
+                            ['key' => 'b', 'label' => 'B', 'range' => '80-89'],
+                            ['key' => 'c', 'label' => 'C', 'range' => '70-79'],
+                            ['key' => 'd', 'label' => 'D', 'range' => '60-69'],
+                            ['key' => 'f', 'label' => 'F', 'range' => 'Below 60'],
+                        ];
+                        $maxBand = max(1, max(array_values($dist)));
+                        ?>
                         <?php if ($totalGrades === 0): ?>
-                            <p style="color:#999; text-align:center;">No grades to display.</p>
+                        <div class="an-empty">
+                            <i class="fas fa-graduation-cap"></i>
+                            <strong>No grades to display</strong>
+                            <span>Your graded courses will be charted here.</span>
+                        </div>
+                        <?php else: ?>
+                        <div class="an-dist">
+                            <?php foreach ($gradeBands as $band):
+                                $bandCount = (int) $dist[$band['key']];
+                                $bandH = round(($bandCount / $maxBand) * 100);
+                                $bandPct = (int) round(($bandCount / $totalGrades) * 100);
+                            ?>
+                            <div class="an-dist-col">
+                                <span class="an-dist-count"><?= $bandCount ?></span>
+                                <span class="an-dist-pct"><?= $bandPct ?>%</span>
+                                <span class="an-dist-bar an-grade-<?= $band['key'] ?>" style="height:<?= max(2, (int) $bandH) ?>%;"></span>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="an-legend">
+                            <?php foreach ($gradeBands as $band): ?>
+                            <div class="an-legend-item">
+                                <div class="an-legend-swatch an-grade-<?= $band['key'] ?>"></div>
+                                <div class="an-legend-label"><?= $band['label'] ?></div>
+                                <div class="an-legend-sub"><?= $band['range'] ?></div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <p class="an-note"><i class="fas fa-info-circle"></i> Based on your <?= $totalGrades ?> most recent grade<?= $totalGrades === 1 ? '' : 's' ?>.</p>
                         <?php endif; ?>
                     </div>
                 </div>
 
-                <!-- Quiz Performance Summary -->
-                <div class="mode-card" style="grid-column: span 2;">
-                    <h3><i class="fas fa-clipboard-check" style="color:var(--primary); margin-right:0.5rem;"></i> Quiz Performance Summary</h3>
-                    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; padding:1.5rem 0;">
-                        <div style="text-align:center; padding:1rem; background:var(--bg-subtle); border-radius:10px;">
-                            <div style="font-size:1.8rem; font-weight:700; color:var(--primary);"><?= $stats['quizzes_taken'] ?></div>
-                            <div style="font-size:0.85rem; color:#999;">Total Attempts</div>
-                        </div>
-                        <div style="text-align:center; padding:1rem; background:var(--bg-subtle); border-radius:10px;">
-                            <div style="font-size:1.8rem; font-weight:700; color:var(--primary);"><?= $stats['pass_rate'] ?>%</div>
-                            <div style="font-size:0.85rem; color:#999;">Pass Rate</div>
-                        </div>
-                        <div style="text-align:center; padding:1rem; background:var(--bg-subtle); border-radius:10px;">
-                            <div style="font-size:1.8rem; font-weight:700; color:var(--accent);"><?= $stats['avg_score'] ?>%</div>
-                            <div style="font-size:0.85rem; color:#999;">Avg Quiz Score</div>
-                        </div>
-                        <div style="text-align:center; padding:1rem; background:var(--bg-subtle); border-radius:10px;">
-                            <div style="font-size:1.8rem; font-weight:700; color:var(--accent);"><?= $stats['certificates'] ?></div>
-                            <div style="font-size:0.85rem; color:#999;">Certificates</div>
+                <div class="an-stack">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-clipboard-check"></i> Quiz Performance</h3>
+                        <div class="an-kv-list">
+                            <div class="an-kv">
+                                <span class="an-kv-label">Total attempts</span>
+                                <span class="an-kv-value"><?= (int) $stats['quizzes_taken'] ?></span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Pass rate</span>
+                                <span class="an-kv-value"><?= $stats['pass_rate'] ?>%</span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Average quiz score</span>
+                                <span class="an-kv-value"><?= $stats['avg_score'] ?>%</span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Certificates earned</span>
+                                <span class="an-kv-value"><?= (int) $stats['certificates'] ?></span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Activity Tab -->
-        <div class="tab-content" data-tab="tab-activity">
-            <!-- Activity Heatmap -->
-            <div class="mode-card">
-                <h3><i class="fas fa-calendar-check" style="color:var(--primary); margin-right:0.5rem;"></i> Learning Activity (Last 4 Weeks)</h3>
-                <div style="padding:1.5rem 0;">
-                    <?php
-                    $heatMap = [];
-                    foreach ($weeklyActivity as $wa) {
-                        $heatMap[$wa['day']] = (int) $wa['courses_accessed'];
-                    }
-                    $dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                    // Build a 7x4 grid
-                    $startDate = new DateTime('-27 days');
-                    $startDate->modify('-' . $startDate->format('w') . ' days'); // Start on Sunday
-                    ?>
-                    <div style="display:grid; grid-template-columns:40px repeat(4, 1fr); gap:4px; max-width:500px;">
-                        <div></div>
-                        <?php for ($w = 0; $w < 4; $w++): ?>
-                            <div style="text-align:center; font-size:0.75rem; color:#999; font-weight:600;">W<?= $w + 1 ?></div>
-                        <?php endfor; ?>
-                        <?php for ($d = 0; $d < 7; $d++): ?>
-                            <div style="font-size:0.75rem; color:#999; display:flex; align-items:center; justify-content:flex-end; padding-right:4px;"><?= $dayNames[$d] ?></div>
-                            <?php for ($w = 0; $w < 4; $w++):
-                                $cellDate = clone $startDate;
-                                $cellDate->modify('+' . ($w * 7 + $d) . ' days');
-                                $dateStr = $cellDate->format('Y-m-d');
-                                $count = $heatMap[$dateStr] ?? 0;
-                                $isFuture = $cellDate > new DateTime();
-                                $bg = $isFuture ? 'var(--bg-subtle)' : ($count === 0 ? '#eee' : ($count >= 3 ? 'var(--primary)' : ($count >= 2 ? 'var(--primary)' : 'var(--primary)')));
-                            ?>
-                                <div style="aspect-ratio:1; background:<?= $bg ?>; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:<?= $count > 0 ? '#fff' : '#ccc' ?>; font-weight:600;"
-                                     title="<?= $dateStr ?>: <?= $count ?> course<?= $count !== 1 ? 's' : '' ?>">
-                                    <?= $cellDate->format('j') ?>
-                                </div>
+            <!-- ==================== ACTIVITY ==================== -->
+            <div class="tab-content" data-tab="tab-activity">
+                <div class="an-stack">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-calendar-check"></i> Learning Activity (Last 4 Weeks)</h3>
+                        <?php
+                        $heatMap = [];
+                        foreach ($weeklyActivity as $wa) {
+                            $heatMap[$wa['day']] = (int) $wa['courses_accessed'];
+                        }
+                        $dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                        $startDate = new DateTime('-27 days');
+                        $startDate->modify('-' . $startDate->format('w') . ' days');
+                        $today = new DateTime('today');
+                        ?>
+                        <div class="an-heatmap">
+                            <div></div>
+                            <?php for ($w = 0; $w < 4; $w++): ?>
+                            <div class="an-heatmap-head">W<?= $w + 1 ?></div>
                             <?php endfor; ?>
-                        <?php endfor; ?>
+                            <?php for ($d = 0; $d < 7; $d++): ?>
+                            <div class="an-heatmap-day"><?= $dayNames[$d] ?></div>
+                                <?php for ($w = 0; $w < 4; $w++):
+                                    $cellDate = clone $startDate;
+                                    $cellDate->modify('+' . ($w * 7 + $d) . ' days');
+                                    $dateStr = $cellDate->format('Y-m-d');
+                                    $count = $heatMap[$dateStr] ?? 0;
+                                    $isFuture = $cellDate > $today;
+                                    $level = $count >= 3 ? ' is-3' : ($count >= 2 ? ' is-2' : ($count >= 1 ? ' is-1' : ''));
+                                ?>
+                                <div class="an-heat-cell<?= $isFuture ? ' is-future' : $level ?>" title="<?= $dateStr ?>: <?= $count ?> course<?= $count === 1 ? '' : 's' ?>"><?= $isFuture ? '' : $cellDate->format('j') ?></div>
+                                <?php endfor; ?>
+                            <?php endfor; ?>
+                        </div>
+                        <div class="an-heatmap-legend">
+                            <span>Less</span>
+                            <span class="an-heat-swatch an-heat-cell"></span>
+                            <span class="an-heat-swatch an-heat-cell is-1"></span>
+                            <span class="an-heat-swatch an-heat-cell is-2"></span>
+                            <span class="an-heat-swatch an-heat-cell is-3"></span>
+                            <span>More</span>
+                        </div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:0.5rem; margin-top:1rem; font-size:0.8rem; color:#999;">
-                        <span>Less</span>
-                        <span style="width:14px; height:14px; background:#eee; border-radius:2px;"></span>
-                        <span style="width:14px; height:14px; background:var(--primary); border-radius:2px;"></span>
-                        <span style="width:14px; height:14px; background:var(--primary); border-radius:2px;"></span>
-                        <span style="width:14px; height:14px; background:var(--primary); border-radius:2px;"></span>
-                        <span>More</span>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Detailed Stats -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1.5rem;">
-                <div class="mode-card">
-                    <h3><i class="fas fa-stopwatch" style="color:var(--primary); margin-right:0.5rem;"></i> Time Breakdown</h3>
-                    <div style="padding:1rem 0;">
-                        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem; padding:0.75rem; background:var(--bg-subtle); border-radius:8px;">
-                            <div style="width:40px; height:40px; border-radius:10px; background:rgba(32,0,130,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center;"><i class="fas fa-hourglass-half"></i></div>
-                            <div><strong><?= $timeDisplay ?></strong><br><span style="color:#999; font-size:0.85rem;">Total Learning Time</span></div>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem; padding:0.75rem; background:var(--bg-subtle); border-radius:8px;">
-                            <div style="width:40px; height:40px; border-radius:10px; background:rgba(40,167,69,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center;"><i class="fas fa-graduation-cap"></i></div>
-                            <div><strong><?= $stats['completed'] ?> courses</strong><br><span style="color:#999; font-size:0.85rem;">Completed</span></div>
-                        </div>
-                        <div style="display:flex; align-items:center; gap:1rem; padding:0.75rem; background:var(--bg-subtle); border-radius:8px;">
-                            <div style="width:40px; height:40px; border-radius:10px; background:rgba(255,193,7,0.1); color:var(--accent); display:flex; align-items:center; justify-content:center;"><i class="fas fa-redo"></i></div>
-                            <div><strong><?= $stats['quizzes_taken'] ?> quizzes</strong><br><span style="color:#999; font-size:0.85rem;">Attempted</span></div>
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-stopwatch"></i> Time Breakdown</h3>
+                        <div class="an-kv-list">
+                            <div class="an-kv">
+                                <span class="an-kv-label">Total learning time</span>
+                                <span class="an-kv-value"><?= $timeDisplay ?></span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Courses completed</span>
+                                <span class="an-kv-value"><?= (int) $stats['completed'] ?></span>
+                            </div>
+                            <div class="an-kv">
+                                <span class="an-kv-label">Quizzes attempted</span>
+                                <span class="an-kv-value"><?= (int) $stats['quizzes_taken'] ?></span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="mode-card">
-                    <h3><i class="fas fa-trophy" style="color:var(--primary); margin-right:0.5rem;"></i> Achievements</h3>
-                    <div style="padding:1rem 0; display:grid; gap:0.75rem;">
+                    <div class="an-card">
+                        <h3 class="an-card-title"><i class="fas fa-trophy"></i> Achievements</h3>
                         <?php
                         $achievements = [];
-                        if ($streak >= 3) $achievements[] = ['icon' => 'fa-fire', 'label' => '3-Day Streak', 'color' => 'var(--accent)'];
-                        if ($streak >= 7) $achievements[] = ['icon' => 'fa-fire', 'label' => '7-Day Streak', 'color' => 'var(--danger)'];
-                        if ($stats['completed'] >= 1) $achievements[] = ['icon' => 'fa-graduation-cap', 'label' => 'First Course Completed', 'color' => 'var(--primary)'];
-                        if ($stats['completed'] >= 5) $achievements[] = ['icon' => 'fa-trophy', 'label' => '5 Courses Completed', 'color' => 'var(--accent)'];
-                        if ($stats['certificates'] >= 1) $achievements[] = ['icon' => 'fa-certificate', 'label' => 'First Certificate', 'color' => 'var(--accent)'];
-                        if ($stats['avg_score'] >= 90) $achievements[] = ['icon' => 'fa-star', 'label' => 'Score Master (90%+)', 'color' => 'var(--accent)'];
-                        if ($stats['quizzes_taken'] >= 10) $achievements[] = ['icon' => 'fa-clipboard-check', 'label' => 'Quiz Champion (10+)', 'color' => 'var(--accent)'];
+                        if ($streak >= 3) { $achievements[] = ['icon' => 'fa-fire', 'label' => '3-Day Streak']; }
+                        if ($streak >= 7) { $achievements[] = ['icon' => 'fa-fire', 'label' => '7-Day Streak']; }
+                        if ($stats['completed'] >= 1) { $achievements[] = ['icon' => 'fa-graduation-cap', 'label' => 'First Course Completed']; }
+                        if ($stats['completed'] >= 5) { $achievements[] = ['icon' => 'fa-trophy', 'label' => '5 Courses Completed']; }
+                        if ($stats['certificates'] >= 1) { $achievements[] = ['icon' => 'fa-certificate', 'label' => 'First Certificate']; }
+                        if ($stats['avg_score'] >= 90) { $achievements[] = ['icon' => 'fa-star', 'label' => 'Score Master (90%+)']; }
+                        if ($stats['quizzes_taken'] >= 10) { $achievements[] = ['icon' => 'fa-clipboard-check', 'label' => 'Quiz Champion (10+)']; }
                         ?>
                         <?php if (empty($achievements)): ?>
-                            <div style="text-align:center; padding:1rem; color:#999;">
-                                <i class="fas fa-medal" style="font-size:2rem; display:block; margin-bottom:0.5rem; color:#ddd;"></i>
-                                <p>Keep learning to unlock achievements!</p>
-                            </div>
+                        <div class="an-empty">
+                            <i class="fas fa-medal"></i>
+                            <strong>No achievements yet</strong>
+                            <span>Keep learning to unlock your first badge.</span>
+                        </div>
                         <?php else: ?>
+                        <div class="an-badges">
                             <?php foreach ($achievements as $ach): ?>
-                                <div style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem; background:var(--bg-subtle); border-radius:8px;">
-                                    <div style="width:36px; height:36px; border-radius:50%; background:<?= $ach['color'] ?>; color:#fff; display:flex; align-items:center; justify-content:center;">
-                                        <i class="fas <?= $ach['icon'] ?>"></i>
-                                    </div>
-                                    <span style="font-weight:500;"><?= $ach['label'] ?></span>
-                                </div>
+                            <span class="an-badge"><i class="fas <?= $ach['icon'] ?>"></i> <?= $ach['label'] ?></span>
                             <?php endforeach; ?>
+                        </div>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Skills Tab -->
-        <div class="tab-content" data-tab="tab-skills">
-            <div class="mode-card">
-                <h3><i class="fas fa-star" style="color:var(--primary); margin-right:0.5rem;"></i> Skill Breakdown</h3>
-                <?php if (empty($skillBreakdown)): ?>
-                    <div style="padding:3rem; text-align:center; background:var(--bg-subtle); border-radius:12px;">
-                        <i class="fas fa-award" style="font-size:3rem; color:#ccc; margin-bottom:1rem; display:block;"></i>
-                        <h3>No skills data yet</h3>
-                        <p style="color:#999;">Complete courses to build your skill profile.</p>
+            <!-- ==================== SKILLS ==================== -->
+            <div class="tab-content" data-tab="tab-skills">
+                <div class="an-card">
+                    <h3 class="an-card-title"><i class="fas fa-star"></i> Skill Breakdown</h3>
+                    <?php if (empty($skillBreakdown)): ?>
+                    <div class="an-empty">
+                        <i class="fas fa-award"></i>
+                        <strong>No skills data yet</strong>
+                        <span>Complete courses to build your skill profile.</span>
                     </div>
-                <?php else: ?>
-                    <div style="padding:1rem 0;">
+                    <?php else: ?>
+                    <div class="an-breakdown">
                         <?php foreach ($skillBreakdown as $skill):
-                            $pct = $skill['course_count'] > 0 ? round(($skill['completed'] / $skill['course_count']) * 100) : 0;
+                            $skillPct = $skill['course_count'] > 0 ? (int) round(($skill['completed'] / $skill['course_count']) * 100) : 0;
                         ?>
-                            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem;">
-                                <div style="width:140px; font-weight:500; font-size:0.95rem;"><?= htmlspecialchars($skill['name']) ?></div>
-                                <div style="flex:1; background:var(--border); height:10px; border-radius:5px; overflow:hidden;">
-                                    <div style="background:linear-gradient(90deg, var(--primary), var(--text)); height:100%; width:<?= $pct ?>%;"></div>
-                                </div>
-                                <div style="min-width:80px; text-align:right; font-size:0.85rem;">
-                                    <strong style="color:var(--primary);"><?= $skill['completed'] ?>/<?= $skill['course_count'] ?></strong>
-                                    <span style="color:#999;"> courses</span>
-                                </div>
-                            </div>
+                        <div class="an-bar-row">
+                            <span class="an-bar-label" title="<?= htmlspecialchars($skill['name']) ?>"><?= htmlspecialchars($skill['name']) ?></span>
+                            <span class="an-bar-track"><span class="an-bar-fill" style="width:<?= max(0, min(100, $skillPct)) ?>%;"></span></span>
+                            <span class="an-bar-value"><?= (int) $skill['completed'] ?>/<?= (int) $skill['course_count'] ?><span class="an-bar-pct"><?= $skillPct ?>%</span></span>
+                        </div>
                         <?php endforeach; ?>
                     </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>

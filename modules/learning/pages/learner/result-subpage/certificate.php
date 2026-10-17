@@ -39,114 +39,72 @@ $scheme = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !
 $scriptDir = rtrim(str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
 $verifyUrlBase = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $scriptDir
     . '/index.php?page=public/verify-certificate&code=';
-
-function certTimeAgo($dt) {
-    if (!$dt) return 'N/A';
-    $d = time() - strtotime($dt);
-    if ($d < 60) return 'just now';
-    if ($d < 3600) return floor($d / 60) . 'm ago';
-    if ($d < 86400) return floor($d / 3600) . 'h ago';
-    if ($d < 604800) return floor($d / 86400) . 'd ago';
-    return date('M j, Y', strtotime($dt));
-}
 ?>
-<div class="module-header">
-    <h1 class="module-header-title">My Certificates</h1>
-    <p class="module-header-subtitle">View and manage your earned course completion certificates.</p>
-</div>
-
-<div class="module-content">
-    <!-- Stats Row -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:2rem;">
-        <div style="padding:1.25rem; border-radius:14px; border:1.5px solid rgba(16,185,129,0.2); background:rgba(16,185,129,0.04);">
-            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#10b981; font-weight:700;">Certificates Earned</div>
-            <div style="font-size:2rem; font-weight:800; color:var(--text); margin-top:0.3rem;"><?= count($certificates) ?></div>
-        </div>
-        <div style="padding:1.25rem; border-radius:14px; border:1.5px solid rgba(59,130,246,0.2); background:rgba(59,130,246,0.04);">
-            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#3b82f6; font-weight:700;">Courses Completed</div>
-            <div style="font-size:2rem; font-weight:800; color:var(--text); margin-top:0.3rem;"><?= $completedCourses ?></div>
-        </div>
-        <div style="padding:1.25rem; border-radius:14px; border:1.5px solid rgba(245,158,11,0.2); background:rgba(245,158,11,0.04);">
-            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#f59e0b; font-weight:700;">In Progress</div>
-            <div style="font-size:2rem; font-weight:800; color:var(--text); margin-top:0.3rem;"><?= $totalCourses - $completedCourses ?></div>
-        </div>
-    </div>
-
-    <?php if (empty($certificates)): ?>
-        <div class="mode-card" style="text-align:center; padding:3rem;">
-            <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3; color:var(--primary);"><i class="fas fa-award"></i></div>
-            <h3 style="color:var(--text); margin:0 0 0.5rem;">No Certificates Yet</h3>
-            <p style="color:rgba(32,0,130,0.5); max-width:40ch; margin:0 auto;">
-                Complete all lessons and quizzes in your enrolled courses to earn certificates automatically.
-            </p>
-            <a href="?page=learner/catalog" style="display:inline-block; margin-top:1.5rem; padding:0.75rem 1.5rem; background:var(--primary); color:var(--surface); border-radius:999px; font-weight:700; text-decoration:none;">
-                Browse Courses
-            </a>
-        </div>
-    <?php else: ?>
-        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:1.25rem;">
-            <?php foreach ($certificates as $certItem):
-                $isExpired = $certItem['valid_until'] && strtotime($certItem['valid_until']) < time();
-                $statusColor = $isExpired ? '#ef4444' : '#10b981';
-                $statusLabel = $isExpired ? 'Expired' : 'Active';
-                $verifyUrl = $verifyUrlBase . urlencode($certItem['verification_code']);
-            ?>
-                <div class="mode-card" style="padding:0; overflow:hidden; border:2px solid rgba(32,0,130,0.08);">
-                    <!-- Certificate Header -->
-                    <div style="background:linear-gradient(135deg, #320082, #5b21b6); padding:1.5rem; text-align:center; color:#fff; position:relative; overflow:hidden;">
-                        <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; background:rgba(255,255,255,0.06); border-radius:50%;"></div>
-                        <div style="position:absolute; bottom:-25px; left:-15px; width:65px; height:65px; background:rgba(255,255,255,0.04); border-radius:50%;"></div>
-                        <div style="font-size:2.5rem; margin-bottom:0.5rem; position:relative;"><i class="fas fa-award"></i></div>
-                        <h3 style="margin:0; font-size:1.1rem; font-weight:800; position:relative;"><?= htmlspecialchars($certItem['course_title'] ?? 'Course') ?></h3>
-                        <p style="margin:0.3rem 0 0; opacity:0.8; font-size:0.85rem; position:relative;">Certificate of Completion</p>
-                    </div>
-
-                    <!-- Certificate Body -->
-                    <div style="padding:1.25rem;">
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:1rem;">
-                            <div>
-                                <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Issued</div>
-                                <div style="margin-top:0.2rem; color:var(--text); font-size:0.9rem;">
-                                    <?= $certItem['issued_at'] ? date('M j, Y', strtotime($certItem['issued_at'])) : 'N/A' ?>
-                                </div>
-                            </div>
-                            <div>
-                                <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Valid Until</div>
-                                <div style="margin-top:0.2rem; color:var(--text); font-size:0.9rem;">
-                                    <?= $certItem['valid_until'] ? date('M j, Y', strtotime($certItem['valid_until'])) : 'No expiry' ?>
-                                </div>
-                            </div>
-                            <div>
-                                <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Status</div>
-                                <div style="margin-top:0.2rem;">
-                                    <span style="padding:0.2rem 0.6rem; border-radius:999px; font-size:0.72rem; font-weight:700; background:<?= $statusColor ?>15; color:<?= $statusColor ?>;">
-                                        <?= $statusLabel ?>
-                                    </span>
-                                </div>
-                            </div>
-                            <div>
-                                <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Verification</div>
-                                <div style="margin-top:0.2rem; color:var(--text); font-size:0.75rem; font-family:monospace; word-break:break-all;">
-                                    <i class="fas fa-fingerprint" style="color:var(--primary); margin-right:0.2rem;"></i><?= htmlspecialchars($certItem['verification_code']) ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Actions -->
-                        <div style="display:flex; gap:0.5rem; flex-wrap:wrap; border-top:1px solid rgba(32,0,130,0.08); padding-top:1rem;">
-                            <a href="?page=learner/result-subpage/certificate-print&certificate_id=<?= (int)$certItem['id'] ?>" style="flex:1; padding:0.55rem 0.75rem; border:none; background:var(--primary); color:var(--surface); border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;"><i class="fas fa-external-link-alt"></i> View Certificate</a>
-                            <button type="button" onclick="copyVerifyCode('<?= htmlspecialchars($certItem['verification_code']) ?>')" style="padding:0.55rem 0.75rem; border:1px solid rgba(32,0,130,0.2); background:transparent; color:var(--primary); border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap;">
-                                <i class="fas fa-copy"></i>
-                            </button>
-                            <button type="button" onclick="shareCertificate('<?= htmlspecialchars($certItem['verification_code']) ?>', '<?= htmlspecialchars($certItem['course_title'] ?? '') ?>', '<?= htmlspecialchars($verifyUrl) ?>')" style="padding:0.55rem 0.75rem; border:1px solid rgba(32,0,130,0.2); background:transparent; color:var(--primary); border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap;">
-                                <i class="fas fa-share-alt"></i>
-                            </button>
-                        </div>
-                    </div>
+<div class="module-content cert-page">
+    <div class="home-dashboard">
+        <section class="home-hero" aria-labelledby="cert-title">
+            <div class="home-hero-main">
+                <h1 id="cert-title">My Certificates</h1>
+                <p>View, verify and share the certificates you have earned by completing courses.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-award"></i> <?= count($certificates) ?> earned</span>
+                    <span class="home-hero-chip"><i class="fas fa-circle-check"></i> <?= $completedCourses ?> completed</span>
+                    <span class="home-hero-chip"><i class="fas fa-hourglass-half"></i> <?= max(0, $totalCourses - $completedCourses) ?> in progress</span>
                 </div>
-            <?php endforeach; ?>
-        </div>
-    <?php endif; ?>
+            </div>
+        </section>
+
+        <?php if (empty($certificates)): ?>
+            <div class="cert-empty">
+                <i class="fas fa-award" aria-hidden="true"></i>
+                <strong>No certificates yet</strong>
+                <p>Complete all lessons and quizzes in your enrolled courses to earn certificates automatically.</p>
+                <a class="home-cta" href="?page=learner/catalog" style="margin-top:0.6rem;"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Browse Courses</a>
+            </div>
+        <?php else: ?>
+            <div class="cert-grid">
+                <?php foreach ($certificates as $certItem):
+                    $isExpired = $certItem['valid_until'] && strtotime($certItem['valid_until']) < time();
+                    $statusLabel = $isExpired ? 'Expired' : 'Active';
+                    $statusTone = $isExpired ? 'is-danger' : 'is-success';
+                    $verifyUrl = $verifyUrlBase . urlencode($certItem['verification_code']);
+                    $issuedText = $certItem['issued_at'] ? date('M j, Y', strtotime($certItem['issued_at'])) : 'N/A';
+                    $validText = $certItem['valid_until'] ? date('M j, Y', strtotime($certItem['valid_until'])) : 'No expiry';
+                ?>
+                <article class="cert-card-item is-static">
+                    <div class="cert-band">
+                        <i class="fas fa-award cert-band-icon" aria-hidden="true"></i>
+                        <div class="cert-band-title"><?= htmlspecialchars($certItem['course_title'] ?? 'Course') ?></div>
+                        <div class="cert-flags">
+                            <span class="cert-flag">Certificate of Completion</span>
+                            <span class="cert-flag <?= $statusTone ?>"><?= $statusLabel ?></span>
+                        </div>
+                    </div>
+                    <div class="cert-body">
+                        <div class="cert-meta">
+                            <div>
+                                <span class="cert-meta-label">Issued</span>
+                                <span class="cert-meta-value"><?= $issuedText ?></span>
+                            </div>
+                            <div>
+                                <span class="cert-meta-label">Valid Until</span>
+                                <span class="cert-meta-value"><?= $validText ?></span>
+                            </div>
+                        </div>
+                        <div class="cert-code"><i class="fas fa-fingerprint" aria-hidden="true"></i><span><?= htmlspecialchars($certItem['verification_code']) ?></span></div>
+                        <div class="cert-actions">
+                            <a class="cert-btn is-primary" href="?page=learner/result-subpage/certificate-print&amp;certificate_id=<?= (int)$certItem['id'] ?>"><i class="fas fa-external-link-alt" aria-hidden="true"></i> View Certificate</a>
+                            <button type="button" class="cert-btn is-icon is-outline" title="Copy verification code" aria-label="Copy verification code" onclick="copyVerifyCode(<?= htmlspecialchars(json_encode((string) $certItem['verification_code']), ENT_QUOTES) ?>)"><i class="fas fa-copy" aria-hidden="true"></i></button>
+                            <button type="button" class="cert-btn is-icon is-outline" title="Share certificate" aria-label="Share certificate" onclick="shareCertificate(<?= htmlspecialchars(json_encode((string) $certItem['verification_code']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode((string) ($certItem['course_title'] ?? '')), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($verifyUrl), ENT_QUOTES) ?>)"><i class="fas fa-share-alt" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                </article>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
 </div>
 
 <script>

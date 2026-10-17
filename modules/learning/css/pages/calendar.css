@@ -91,8 +91,11 @@
 /* ---- Two column layout ----------------------------------------------------- */
 /* The month grid takes the main column and the upcoming events list sits beside
    it. The hero keeps the full width. Below the breakpoint this falls back to the
-   plain stacked .home-dashboard flow, so nothing else needs to change. */
-@media (min-width: 1024px) {
+   plain stacked .home-dashboard flow, so nothing else needs to change.
+   1200px rather than 1024px: at 1024 the main column left the month cells too
+   narrow to read, so the side-by-side layout now only starts when there is
+   genuinely room for it. */
+@media (min-width: 1200px) {
     .home-dashboard.lc-dashboard {
         display: grid;
         /* The upcoming list takes about a third, but never less than 260px and

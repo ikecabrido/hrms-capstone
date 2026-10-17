@@ -118,6 +118,12 @@
     var recPrev = document.getElementById('rec-prev');
     var recNext = document.getElementById('rec-next');
 
+    // The recommendation rail only exists on the learner catalog. Pages that
+    // reuse the catalog card markup for instructors (e.g. the E-Learning page)
+    // have no rail and drive their own master/type tabs, search, view toggle and
+    // pagination from their inline scripts, so nothing below may bind there.
+    if (!recTrack || !recSection) return;
+
     function renderRecommendations() {
         if (currentMasterTab !== 'elearning') {
             recSection.style.display = 'none';
@@ -278,7 +284,6 @@
     var emCloseBtn = document.getElementById('cem-close-btn');
     var emOverviewGrid = document.getElementById('cem-overview-grid');
     var emDescription = document.getElementById('cem-description');
-    var emChildEntities = document.getElementById('cem-child-entities');
     var emStructureContent = document.getElementById('cem-structure-content');
     var emPerformanceContent = document.getElementById('cem-performance-content');
     var emEnrollBtn = document.getElementById('cem-enroll-btn');
@@ -288,11 +293,7 @@
     function syncEmTabs() {
         emOverlay.querySelectorAll('.entity-content-tab').forEach(function(btn) {
             var tabName = btn.dataset.contentTab || btn.dataset.cemTab;
-            var isActive = emState.activeTab === tabName;
-            btn.classList.toggle('active', isActive);
-            btn.style.background = isActive ? 'rgba(32,0,130,0.08)' : 'var(--surface)';
-            btn.style.border = isActive ? 'none' : '1px solid rgba(32,0,130,0.12)';
-            btn.style.color = isActive ? 'var(--primary)' : 'var(--text)';
+            btn.classList.toggle('active', emState.activeTab === tabName);
         });
         emOverlay.querySelectorAll('.entity-content-panel, .cem-panel').forEach(function(p) {
             var panelTab = p.id.replace('entity-content-', '').replace('cem-panel-', '');
@@ -321,6 +322,9 @@
         var supportsStructureAndPerformance = ['course', 'module', 'learning-path'].indexOf(itemType) !== -1;
         if (tabBtns[1]) tabBtns[1].style.display = supportsStructureAndPerformance ? '' : 'none';
         if (tabBtns[2]) tabBtns[2].style.display = supportsStructureAndPerformance ? '' : 'none';
+        // With a single visible tab the segmented bar adds nothing — hide it.
+        var emTabsBar = emOverlay.querySelector('.entity-content-tabs');
+        if (emTabsBar) emTabsBar.style.display = supportsStructureAndPerformance ? '' : 'none';
 
         syncEmTabs();
 
@@ -331,41 +335,24 @@
             var duration = card.dataset.duration || '';
             var platform = card.dataset.platform || '';
             var platformLabel = platform.replace('_', ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
-            var pColor = platform === 'zoom' ? '#2D8CFF' : (platform === 'google_meet' ? '#00897B' : '#6c757d');
             var scheduledDate = '';
             if (scheduled) {
                 var d = new Date(scheduled.replace(' ', 'T'));
                 scheduledDate = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) + ' at ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
             }
-            overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Type</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--text);"><i class="fas fa-video" style="color:var(--primary); margin-right:0.4rem;"></i>Online Training</p></div>';
-            overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Platform</label><p style="margin:0.55rem 0 0; font-size:1rem;"><span style="padding:0.2rem 0.6rem; border-radius:6px; background:var(--primary); color:#fff; font-weight:600; font-size:0.85rem;">' + platformLabel + '</span></p></div>';
-            if (scheduledDate) overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Scheduled</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--text);">' + scheduledDate + '</p></div>';
-            if (duration) overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Duration</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--text);">' + duration + ' minutes</p></div>';
-            if (instructorName) overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Host</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--text);"><i class="fas fa-user-tie" style="margin-right:0.4rem; color:var(--primary);"></i>' + instructorName + '</p></div>';
+            overviewHtml += '<div class="ec-field"><span class="ec-field-label">Type</span><p class="ec-field-value"><i class="fas fa-video" aria-hidden="true"></i>Online Training</p></div>';
+            if (platformLabel) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Platform</span><p class="ec-field-value"><span class="ec-pill is-primary">' + platformLabel + '</span></p></div>';
+            if (scheduledDate) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Scheduled</span><p class="ec-field-value">' + scheduledDate + '</p></div>';
+            if (duration) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Duration</span><p class="ec-field-value">' + duration + ' minutes</p></div>';
+            if (instructorName) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Host</span><p class="ec-field-value"><i class="fas fa-user-tie" aria-hidden="true"></i>' + instructorName + '</p></div>';
         } else {
-            overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Type</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--text);">' + label + '</p></div>';
-            overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Status</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--text);">' + (enrolled ? 'Enrolled' : 'Available') + '</p></div>';
-            overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Category</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--text);">' + cat + '</p></div>';
-            if (instructorName) overviewHtml += '<div><label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Instructor</label><p style="margin:0.55rem 0 0; font-size:1rem; color:var(--text);">' + instructorName + '</p></div>';
+            overviewHtml += '<div class="ec-field"><span class="ec-field-label">Type</span><p class="ec-field-value">' + label + '</p></div>';
+            overviewHtml += '<div class="ec-field"><span class="ec-field-label">Status</span><p class="ec-field-value"><span class="ec-pill ' + (enrolled ? 'is-success' : 'is-primary') + '">' + (enrolled ? 'Enrolled' : 'Available') + '</span></p></div>';
+            overviewHtml += '<div class="ec-field"><span class="ec-field-label">Category</span><p class="ec-field-value">' + cat + '</p></div>';
+            if (instructorName) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Instructor</span><p class="ec-field-value">' + instructorName + '</p></div>';
         }
         emOverviewGrid.innerHTML = overviewHtml;
         emDescription.textContent = desc;
-
-        // Child entities summary
-        var childHtml = '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:0.75rem;">';
-        childHtml += '<div style="padding:0.8rem; border-radius:10px; background:rgba(32,0,130,0.05); border:1px solid rgba(32,0,130,0.08);"><div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--primary); font-weight:700;">Type</div><div style="margin-top:0.5rem; color:var(--text); font-weight:600;">' + label + '</div></div>';
-        if (itemType === 'video-conference') {
-            var vcScheduled = card.dataset.scheduled || '';
-            var vcDuration = card.dataset.duration || '';
-            var vcPlatform = (card.dataset.platform || '').replace('_', ' ').replace(/\b\w/g, function(l) { return l.toUpperCase(); });
-            childHtml += '<div style="padding:0.8rem; border-radius:10px; background:rgba(32,0,130,0.05); border:1px solid rgba(32,0,130,0.08);"><div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--primary); font-weight:700;">Platform</div><div style="margin-top:0.5rem; color:var(--text); font-weight:600;">' + vcPlatform + '</div></div>';
-            childHtml += '<div style="padding:0.8rem; border-radius:10px; background:rgba(32,0,130,0.05); border:1px solid rgba(32,0,130,0.08);"><div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--primary); font-weight:700;">Duration</div><div style="margin-top:0.5rem; color:var(--text); font-weight:600;">' + (vcDuration || 'TBA') + ' min</div></div>';
-        } else {
-            childHtml += '<div style="padding:0.8rem; border-radius:10px; background:rgba(32,0,130,0.05); border:1px solid rgba(32,0,130,0.08);"><div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--primary); font-weight:700;">Status</div><div style="margin-top:0.5rem; color:var(--text); font-weight:600;">' + (enrolled ? 'Enrolled' : 'Available') + '</div></div>';
-            childHtml += '<div style="padding:0.8rem; border-radius:10px; background:rgba(32,0,130,0.05); border:1px solid rgba(32,0,130,0.08);"><div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--primary); font-weight:700;">Category</div><div style="margin-top:0.5rem; color:var(--text); font-weight:600;">' + cat + '</div></div>';
-        }
-        childHtml += '</div>';
-        emChildEntities.innerHTML = childHtml;
 
         // Enroll / Join button
         if (itemType === 'video-conference') {
@@ -373,23 +360,21 @@
             var vcScheduledTs = card.dataset.scheduled ? new Date(card.dataset.scheduled.replace(' ', 'T')).getTime() : 0;
             var isPast = vcScheduledTs > 0 && vcScheduledTs < Date.now();
             emEnrollBtn.style.display = '';
+            emEnrollBtn.classList.remove('is-success', 'is-info', 'is-warn', 'is-muted', 'enrolled');
             if (isPast) {
                 emEnrollBtn.textContent = 'Session Ended';
                 emEnrollBtn.disabled = true;
-                emEnrollBtn.style.background = '#9ca3af';
-                emEnrollBtn.style.color = '#fff';
+                emEnrollBtn.classList.add('is-muted');
                 emEnrollBtn.onclick = null;
             } else if (meetingLink) {
                 emEnrollBtn.textContent = 'Join Session';
                 emEnrollBtn.disabled = false;
-                emEnrollBtn.style.background = '#2D8CFF';
-                emEnrollBtn.style.color = '#fff';
+                emEnrollBtn.classList.add('is-info');
                 emEnrollBtn.onclick = function() { window.open(meetingLink, '_blank'); };
             } else {
                 emEnrollBtn.textContent = 'Link Not Available';
                 emEnrollBtn.disabled = true;
-                emEnrollBtn.style.background = '#f59e0b';
-                emEnrollBtn.style.color = '#fff';
+                emEnrollBtn.classList.add('is-warn');
                 emEnrollBtn.onclick = null;
             }
         } else if (itemType === 'course' && !enrolled) {
@@ -397,23 +382,23 @@
             emEnrollBtn.textContent = 'Enroll Now';
             emEnrollBtn.disabled = false;
             emEnrollBtn.dataset.courseId = id;
-            emEnrollBtn.style.background = '#10b981';
-            emEnrollBtn.style.color = '#fff';
+            emEnrollBtn.classList.remove('is-info', 'is-warn', 'is-muted', 'enrolled');
+            emEnrollBtn.classList.add('is-success');
             emEnrollBtn.onclick = function() { doEnroll(emEnrollBtn); };
         } else if (itemType === 'course' && enrolled) {
             emEnrollBtn.style.display = '';
             emEnrollBtn.textContent = 'Enrolled';
             emEnrollBtn.disabled = true;
-            emEnrollBtn.style.background = '#10b981';
-            emEnrollBtn.style.color = '#fff';
+            emEnrollBtn.classList.remove('is-info', 'is-warn', 'is-muted');
+            emEnrollBtn.classList.add('is-success', 'enrolled');
             emEnrollBtn.onclick = null;
         } else {
             emEnrollBtn.style.display = 'none';
         }
 
         // Load structure tab lazily
-        emStructureContent.innerHTML = '<p style="text-align:center; color:#999;">Loading structure...</p>';
-        emPerformanceContent.innerHTML = '<p style="text-align:center; color:#999;">Loading performance data...</p>';
+        emStructureContent.innerHTML = '<div class="ec-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading structure...</div>';
+        emPerformanceContent.innerHTML = '<div class="ec-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading performance data...</div>';
 
         emOverlay.style.display = 'flex';
     }
@@ -426,7 +411,7 @@
 
     function loadLearningPathDetails(view) {
         var target = view === 'structure' ? emStructureContent : emPerformanceContent;
-        target.innerHTML = '<p style="text-align:center;color:var(--muted);">Loading learning-path details...</p>';
+        target.innerHTML = '<div class="ec-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading learning-path details...</div>';
         fetch('pages/learner/ajax/get-learning-path-details.php?learning_path_id=' + emState.id, {
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -437,32 +422,39 @@
             var items = data.items || [];
             if (view === 'structure') {
                 if (!items.length) {
-                    target.innerHTML = '<p style="color:var(--muted);text-align:center;">This learning path has no active items.</p>';
+                    target.innerHTML = '<div class="ec-empty is-inline"><i class="fas fa-route" aria-hidden="true"></i>This learning path has no active items.</div>';
                     return;
                 }
-                target.innerHTML = '<div style="display:grid;gap:0.35rem;">' + items.map(function(item, index) {
+                target.innerHTML = '<div class="ec-list">' + items.map(function(item, index) {
                     var type = escapeModalText((item.item_type || 'item').replace('-', ' '));
                     var parent = item.course_id ? 'Course item' : 'Standalone item';
-                    return '<div style="display:grid;grid-template-columns:2rem minmax(0,1fr) auto;align-items:center;gap:0.75rem;padding:0.75rem 0;border-bottom:1px solid var(--border);">' +
-                        '<span style="color:var(--primary);font-size:0.78rem;font-weight:700;">' + String(index + 1).padStart(2, '0') + '</span>' +
-                        '<div style="min-width:0;"><div style="color:var(--text);font-weight:650;overflow-wrap:anywhere;">' + escapeModalText(item.title) + '</div><div style="margin-top:0.18rem;color:var(--muted);font-size:0.74rem;text-transform:capitalize;">' + type + ' · ' + parent + '</div></div>' +
-                        '<span style="color:var(--muted);font-size:0.74rem;">' + (item.study_status === 'completed' ? '<i class="fas fa-check" aria-label="Completed"></i>' : '') + '</span></div>';
+                    return '<div class="ec-row">' +
+                        '<span class="ec-row-num">' + String(index + 1).padStart(2, '0') + '</span>' +
+                        '<div class="ec-row-body"><div class="ec-row-title">' + escapeModalText(item.title) + '</div><div class="ec-row-meta">' + type + ' · ' + parent + '</div></div>' +
+                        (item.study_status === 'completed' ? '<span class="ec-pill is-success"><i class="fas fa-check" aria-hidden="true"></i>Completed</span>' : '') +
+                        '</div>';
                 }).join('') + '</div>';
                 return;
             }
 
             var summary = data.summary || { total_steps: 0, completed: 0, in_progress: 0, not_started: 0, progress_percent: 0 };
-            target.innerHTML = '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:0.4rem;"><strong style="color:var(--text);">Path completion</strong><strong style="color:var(--primary);font-size:1.1rem;">' + Number(summary.progress_percent || 0) + '%</strong></div>' +
-                '<div style="height:7px;background:var(--bg-subtle);border-radius:99px;overflow:hidden;margin-bottom:1rem;"><div style="height:100%;width:' + Number(summary.progress_percent || 0) + '%;background:var(--primary);"></div></div>' +
-                '<div style="display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;color:var(--text);font-size:0.82rem;">' +
-                '<span><strong>' + Number(summary.completed || 0) + '</strong> completed</span><span><strong>' + Number(summary.in_progress || 0) + '</strong> in progress</span><span><strong>' + Number(summary.not_started || 0) + '</strong> not started</span><span><strong>' + Number(summary.total_steps || 0) + '</strong> total steps</span></div>' +
-                (items.length ? '<div style="display:grid;gap:0.35rem;">' + items.map(function(item) {
+            target.innerHTML =
+                '<div class="ec-meter"><span class="ec-meter-label">Path completion</span><span class="ec-meter-value">' + Number(summary.progress_percent || 0) + '%</span></div>' +
+                '<div class="ec-bar"><div class="ec-bar-fill" style="width:' + Number(summary.progress_percent || 0) + '%;"></div></div>' +
+                '<div class="ec-stats">' +
+                '<span><strong>' + Number(summary.completed || 0) + '</strong> completed</span>' +
+                '<span><strong>' + Number(summary.in_progress || 0) + '</strong> in progress</span>' +
+                '<span><strong>' + Number(summary.not_started || 0) + '</strong> not started</span>' +
+                '<span><strong>' + Number(summary.total_steps || 0) + '</strong> total steps</span>' +
+                '</div>' +
+                (items.length ? '<div class="ec-list">' + items.map(function(item) {
+                    var status = item.study_status === 'completed' ? 'is-success' : item.study_status === 'in_progress' ? 'is-info' : 'is-muted';
                     var label = item.study_status === 'completed' ? 'Completed' : item.study_status === 'in_progress' ? 'In progress' : 'Not started';
-                    return '<div style="display:flex;justify-content:space-between;gap:1rem;padding:0.65rem 0;border-top:1px solid var(--border);"><span style="color:var(--text);">' + escapeModalText(item.title) + '</span><span style="color:var(--muted);font-size:0.78rem;white-space:nowrap;">' + label + '</span></div>';
-                }).join('') + '</div>' : '<p style="color:var(--muted);">No path items to measure yet.</p>');
+                    return '<div class="ec-row is-tight"><div class="ec-row-body"><div class="ec-row-title">' + escapeModalText(item.title) + '</div></div><span class="ec-pill ' + status + '">' + label + '</span></div>';
+                }).join('') + '</div>' : '<div class="ec-empty is-inline">No path items to measure yet.</div>');
         })
         .catch(function(error) {
-            target.innerHTML = '<p style="color:var(--muted);text-align:center;">' + escapeModalText(error.message || 'Unable to load learning-path details.') + '</p>';
+            target.innerHTML = '<div class="ec-empty is-inline is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>' + escapeModalText(error.message || 'Unable to load learning-path details.') + '</div>';
         });
     }
 
@@ -478,55 +470,58 @@
         if (itemType === 'course') endpoint = 'pages/learner/ajax/get-course-structure.php?course_id=' + id;
         else if (itemType === 'module' && emState.data.course_id) endpoint = 'pages/learner/ajax/get-course-structure.php?course_id=' + encodeURIComponent(emState.data.course_id);
         else {
-            emStructureContent.innerHTML = '<p style="color:#999; text-align:center;">No structure available for this item type.</p>';
+            emStructureContent.innerHTML = '<div class="ec-empty is-inline"><i class="fas fa-diagram-project" aria-hidden="true"></i>No structure available for this item type.</div>';
             return;
         }
         fetch(endpoint, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!data.success || !data.structure) {
-                    emStructureContent.innerHTML = '<p style="color:#999; text-align:center;">No structure data available.</p>';
+                    emStructureContent.innerHTML = '<div class="ec-empty is-inline"><i class="fas fa-diagram-project" aria-hidden="true"></i>No structure data available.</div>';
                     return;
                 }
-                var html = '<div style="font-size:0.9rem; line-height:1.8;">';
+                var html = '<div class="ec-tree">';
                 var structure = data.structure;
                 if (itemType === 'module') {
                     structure.modules = (structure.modules || []).filter(function(module) { return String(module.id) === String(id); });
                     if (!structure.modules.length) {
-                        emStructureContent.innerHTML = '<p style="color:#999;text-align:center;">No active structure found for this module.</p>';
+                        emStructureContent.innerHTML = '<div class="ec-empty is-inline"><i class="fas fa-diagram-project" aria-hidden="true"></i>No active structure found for this module.</div>';
                         return;
                     }
                 }
                 if (structure.modules) {
                     structure.modules.forEach(function(mod) {
-                        html += '<div style="margin-bottom:1rem; padding:1rem; border:1px solid rgba(32,0,130,0.12); border-radius:12px; background:rgba(32,0,130,0.03);">';
-                        html += '<div style="font-weight:700; color:var(--primary);"><i class="fas fa-folder" style="margin-right:0.5rem;"></i>' + (mod.title || 'Module') + '</div>';
+                        html += '<div class="ec-tree-group">';
+                        html += '<div class="ec-tree-head"><i class="fas fa-folder" aria-hidden="true"></i>' + (mod.title || 'Module') + '</div>';
                         if (mod.lessons && mod.lessons.length) {
+                            html += '<div class="ec-tree-items">';
                             mod.lessons.forEach(function(lesson) {
-                                html += '<div style="margin:0.4rem 0 0.4rem 1.5rem; color:var(--text);"><i class="fas fa-file-alt" style="margin-right:0.4rem; color:var(--primary); font-size:0.85rem;"></i>' + (lesson.title || 'Lesson');
+                                html += '<div class="ec-tree-item"><i class="fas fa-file-alt" aria-hidden="true"></i><span>' + (lesson.title || 'Lesson') + '</span></div>';
                                 if (lesson.quizzes && lesson.quizzes.length) {
                                     lesson.quizzes.forEach(function(quiz) {
-                                        html += '<div style="margin:0.3rem 0 0.3rem 2rem; color:var(--text); font-size:0.9rem;"><i class="fas fa-question-circle" style="margin-right:0.4rem; color:var(--primary); font-size:0.8rem;"></i>' + (quiz.title || 'Quiz') + '</div>';
+                                        html += '<div class="ec-tree-item is-2 is-quiz"><i class="fas fa-question-circle" aria-hidden="true"></i><span>' + (quiz.title || 'Quiz') + '</span></div>';
                                     });
                                 }
-                                html += '</div>';
                             });
+                            html += '</div>';
                         }
                         html += '</div>';
                     });
                 }
                 if (structure.evaluations && structure.evaluations.length) {
-                    html += '<div style="margin-top:0.5rem;">';
+                    html += '<div class="ec-tree-group">';
+                    html += '<div class="ec-tree-head"><i class="fas fa-clipboard-check" aria-hidden="true"></i>Evaluations<span class="ec-pill is-primary">' + structure.evaluations.length + '</span></div>';
+                    html += '<div class="ec-tree-items">';
                     structure.evaluations.forEach(function(ev) {
-                        html += '<div style="padding:0.6rem 1rem; border:1px solid rgba(16,185,129,0.15); border-radius:8px; margin-bottom:0.5rem; background:rgba(16,185,129,0.03);"><i class="fas fa-clipboard-check" style="margin-right:0.5rem; color:#10b981;"></i>' + (ev.title || 'Evaluation') + '</div>';
+                        html += '<div class="ec-tree-item is-eval"><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>' + (ev.title || 'Evaluation') + '</span></div>';
                     });
-                    html += '</div>';
+                    html += '</div></div>';
                 }
                 html += '</div>';
                 emStructureContent.innerHTML = html;
             })
             .catch(function() {
-                emStructureContent.innerHTML = '<p style="color:#999; text-align:center;">Unable to load structure.</p>';
+                emStructureContent.innerHTML = '<div class="ec-empty is-inline is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Unable to load structure.</div>';
             });
     }
 
@@ -543,19 +538,19 @@
         else if (itemType === 'module') endpoint = 'pages/learner/ajax/get-module-progress.php?module_id=' + id;
         else if (itemType === 'quiz') endpoint = 'pages/learner/ajax/get-quiz-result.php?quiz_id=' + id;
         else {
-            emPerformanceContent.innerHTML = '<p style="color:#999; text-align:center;">Performance data not available for this item type.</p>';
+            emPerformanceContent.innerHTML = '<div class="ec-empty is-inline"><i class="fas fa-chart-line" aria-hidden="true"></i>Performance data not available for this item type.</div>';
             return;
         }
         fetch(endpoint, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!data.success) {
-                    emPerformanceContent.innerHTML = '<p style="color:#999; text-align:center;">No performance data available yet.</p>';
+                    emPerformanceContent.innerHTML = '<div class="ec-empty is-inline"><i class="fas fa-chart-line" aria-hidden="true"></i>No performance data available yet.</div>';
                     return;
                 }
                 var rawItems = data.items || data.progress || [];
                 if (rawItems.length === 0) {
-                    emPerformanceContent.innerHTML = '<p style="color:#999; text-align:center;">No performance data available yet. Start the course to track your progress.</p>';
+                    emPerformanceContent.innerHTML = '<div class="ec-empty is-inline"><i class="fas fa-chart-line" aria-hidden="true"></i>No performance data available yet. Start the course to track your progress.</div>';
                     return;
                 }
 
@@ -575,25 +570,16 @@
                     scoreCount++;
                 });
                 var overallScore = scoreCount > 0 ? Math.round(totalScore / scoreCount) : 0;
-                var overallColor = overallScore >= 70 ? '#10b981' : overallScore >= 40 ? '#f59e0b' : '#ea580c';
+                var overallTone = overallScore >= 70 ? 'is-success' : 'is-warn';
 
                 // Build HTML
                 var html = '';
 
-                // Summary header card
-                html += '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:0.75rem; margin-bottom:1rem;">';
-                html += '<div style="padding:1rem; border-radius:10px; background:rgba(32,0,130,0.05); border:1px solid rgba(32,0,130,0.08); text-align:center;">';
-                html += '<div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--primary); font-weight:700;">Overall</div>';
-                html += '<div style="margin-top:0.4rem; font-size:1.5rem; font-weight:800; color:' + overallColor + ';">' + overallScore + '%</div>';
-                html += '</div>';
-                html += '<div style="padding:1rem; border-radius:10px; background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.08); text-align:center;">';
-                html += '<div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:#10b981; font-weight:700;">Modules</div>';
-                html += '<div style="margin-top:0.4rem; font-size:1.5rem; font-weight:800; color:var(--text);">' + completedModules + '<span style="font-size:0.85rem; color:#999;">/' + totalModules + '</span></div>';
-                html += '</div>';
-                html += '<div style="padding:1rem; border-radius:10px; background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.08); text-align:center;">';
-                html += '<div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:#3b82f6; font-weight:700;">Quizzes</div>';
-                html += '<div style="margin-top:0.4rem; font-size:1.5rem; font-weight:800; color:var(--text);">' + passedQuizzes + '<span style="font-size:0.85rem; color:#999;">/' + totalQuizzes + '</span></div>';
-                html += '</div>';
+                // Summary tiles
+                html += '<div class="ec-cards">';
+                html += '<div class="ec-card is-center ' + overallTone + '"><div class="ec-card-label">Overall</div><div class="ec-card-value">' + overallScore + '%</div></div>';
+                html += '<div class="ec-card is-center is-success"><div class="ec-card-label">Modules</div><div class="ec-card-value">' + completedModules + '<small>/' + totalModules + '</small></div></div>';
+                html += '<div class="ec-card is-center is-info"><div class="ec-card-label">Quizzes</div><div class="ec-card-value">' + passedQuizzes + '<small>/' + totalQuizzes + '</small></div></div>';
                 html += '</div>';
 
                 // Flatten modules with quizzes
@@ -618,35 +604,29 @@
                 html += '</div>';
 
                 // Item rows
-                html += '<div id="perf-items-grid" style="display:grid; gap:0.75rem;">';
+                html += '<div id="perf-items-grid" class="ec-list">';
                 items.forEach(function(item, idx) {
                     var score = item.score || 0;
                     var status = item.status || 'In progress';
                     var isQuiz = item.type === 'quiz';
                     var isModule = !isQuiz && item.type !== 'evaluation' && item.lessons_total !== undefined;
                     var refId = item.reference_id || 0;
-                    var statusColor, statusTextColor;
-                    if (status === 'Completed' || status === 'Passed') {
-                        statusColor = 'rgba(16,185,129,0.08)'; statusTextColor = '#10b981';
-                    } else if (status === 'In progress') {
-                        statusColor = 'rgba(59,130,246,0.08)'; statusTextColor = '#3b82f6';
-                    } else {
-                        statusColor = 'rgba(234,88,12,0.08)'; statusTextColor = '#ea580c';
-                    }
-                    var icon = item.type === 'evaluation' ? '<i class="fas fa-clipboard-check" style="color:#10b981;margin-right:0.5rem;font-size:0.85rem;"></i>' : isQuiz ? '<i class="fas fa-question-circle" style="color:#f59e0b;margin-right:0.5rem;font-size:0.85rem;"></i>' : '<i class="fas fa-book-open" style="color:#3b82f6;margin-right:0.5rem;font-size:0.85rem;"></i>';
+                    var statusTone = (status === 'Completed' || status === 'Passed') ? 'is-success' : status === 'In progress' ? 'is-info' : 'is-warn';
+                    var icon = item.type === 'evaluation'
+                        ? '<i class="fas fa-clipboard-check is-eval" aria-hidden="true"></i>'
+                        : isQuiz
+                            ? '<i class="fas fa-question-circle is-quiz" aria-hidden="true"></i>'
+                            : '<i class="fas fa-book-open is-module" aria-hidden="true"></i>';
                     var clickable = (isQuiz && refId > 0) || (isModule && refId > 0);
-                    var cursor = clickable ? 'cursor:pointer;' : '';
-                    var hoverAttr = clickable ? 'onmouseover="this.style.background=\'rgba(32,0,130,0.02)\'" onmouseout="this.style.background=\'var(--surface)\'"' : '';
-                    var gridCols = clickable ? '1.2fr 0.8fr 0.8fr 0.3fr' : '1.5fr 0.8fr 0.8fr';
 
                     var statusKey = status === 'Completed' || status === 'Passed' ? 'completed' : status === 'In progress' ? 'in_progress' : 'not_started';
-                    html += '<div class="perf-row"' + (clickable ? ' data-quiz-id="' + (isQuiz ? refId : '') + '" data-module-id="' + (isModule ? refId : '') + '" data-row-idx="' + idx + '"' : '') + ' data-status="' + statusKey + '" style="border:1px solid rgba(32,0,130,0.12); border-radius:12px; background:var(--surface); overflow:hidden;">';
-                    html += '<div class="perf-row-main" style="display:grid; grid-template-columns:' + gridCols + '; gap:0.75rem; align-items:center; padding:0.9rem 1rem; ' + cursor + '" ' + hoverAttr + '>';
-                    html += '<strong style="color:var(--text);">' + icon + (item.title || item.name || 'Item') + '</strong>';
-                    html += '<span style="color:var(--text);">' + score + '%</span>';
-                    html += '<span style="padding:0.45rem 0.65rem; border-radius:999px; background:' + statusColor + '; color:' + statusTextColor + '; font-weight:700; font-size:0.75rem; text-align:center;">' + status + '</span>';
+                    html += '<div class="perf-row' + (clickable ? ' is-clickable' : '') + '"' + (clickable ? ' data-quiz-id="' + (isQuiz ? refId : '') + '" data-module-id="' + (isModule ? refId : '') + '" data-row-idx="' + idx + '"' : '') + ' data-status="' + statusKey + '">';
+                    html += '<div class="perf-row-main">';
+                    html += '<span class="perf-row-title">' + icon + '<span>' + (item.title || item.name || 'Item') + '</span></span>';
+                    html += '<span class="perf-row-score">' + score + '%</span>';
+                    html += '<span class="ec-pill ' + statusTone + '">' + status + '</span>';
                     if (clickable) {
-                        html += '<div style="text-align:center; color:var(--primary); font-size:0.75rem;"><i class="fas fa-chevron-down" style="transition:transform 0.2s;"></i></div>';
+                        html += '<span class="perf-chevron"><i class="fas fa-chevron-down" aria-hidden="true"></i></span>';
                     }
                     html += '</div>';
 
@@ -655,21 +635,16 @@
                         var pct = item.lessons_completed || 0;
                         var total = item.lessons_total || 1;
                         var barPct = Math.round((pct / total) * 100);
-                        var barColor = barPct === 100 ? '#10b981' : barPct > 0 ? '#3b82f6' : '#e5e7eb';
-                        html += '<div style="padding:0 1rem 0.6rem 1rem;">';
-                        html += '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">';
-                        html += '<span style="font-size:0.72rem; color:#999;">' + pct + ' of ' + total + ' lessons</span>';
-                        html += '<span style="font-size:0.72rem; color:' + barColor + '; font-weight:700;">' + barPct + '%</span>';
-                        html += '</div>';
-                        html += '<div style="height:6px; background:#f0f0f0; border-radius:999px; overflow:hidden;">';
-                        html += '<div style="height:100%; width:' + barPct + '%; background:' + barColor + '; border-radius:999px; transition:width 0.4s ease;"></div>';
-                        html += '</div>';
+                        var barTone = barPct === 100 ? 'is-success' : barPct > 0 ? 'is-info' : '';
+                        html += '<div class="perf-bar-wrap">';
+                        html += '<div class="perf-bar-head"><span>' + pct + ' of ' + total + ' lessons</span><strong>' + barPct + '%</strong></div>';
+                        html += '<div class="perf-bar"><div class="perf-bar-fill ' + barTone + '" style="width:' + barPct + '%;"></div></div>';
                         html += '</div>';
                     }
 
                     // Expand panel
                     if (clickable) {
-                        html += '<div class="perf-expand" id="perf-expand-' + idx + '" style="display:none; padding:0 1rem 1rem 1rem; border-top:1px solid rgba(32,0,130,0.08);"></div>';
+                        html += '<div class="perf-expand" id="perf-expand-' + idx + '" style="display:none;"></div>';
                     }
                     html += '</div>';
                 });
@@ -730,17 +705,7 @@
                     perfFilterBtns.forEach(function(btn) {
                         var isActive = activeFilters.indexOf(btn.dataset.perfFilter) !== -1;
                         btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-                        if (isActive) {
-                            btn.style.background = 'var(--primary)';
-                            btn.style.color = '#fff';
-                            btn.style.border = 'none';
-                            btn.classList.add('active');
-                        } else {
-                            btn.style.background = 'var(--surface)';
-                            btn.style.color = 'var(--text)';
-                            btn.style.border = '1px solid rgba(32,0,130,0.15)';
-                            btn.classList.remove('active');
-                        }
+                        btn.classList.toggle('active', isActive);
                     });
                 }
 
@@ -755,7 +720,7 @@
                 applyPerfFilter();
             })
             .catch(function() {
-                emPerformanceContent.innerHTML = '<p style="color:#999; text-align:center;">Unable to load performance data.</p>';
+                emPerformanceContent.innerHTML = '<div class="ec-empty is-inline is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Unable to load performance data.</div>';
             });
     }
 
@@ -764,84 +729,81 @@
         rawItems.forEach(function(item) {
             if (item.reference_id && String(item.reference_id) === String(moduleId)) mod = item;
         });
-        if (!mod) { container.innerHTML = '<p style="color:#999; text-align:center; padding:0.5rem 0; font-size:0.85rem;">No lesson data.</p>'; return; }
-        var html = '<div style="padding-top:0.75rem;">';
+        if (!mod) { container.innerHTML = '<div class="ec-empty is-inline">No lesson data.</div>'; return; }
+        var html = '<div class="ec-tree-items">';
         // Lessons
         var lessons = mod.lesson_details || [];
         if (lessons.length > 0) {
             lessons.forEach(function(lesson) {
-                var checkColor = lesson.completed ? '#10b981' : '#d1d5db';
                 var icon = lesson.completed ? 'fa-check-circle' : 'fa-circle';
-                var textDeco = lesson.completed ? '' : 'color:#999;';
-                html += '<div style="display:flex; align-items:center; gap:0.6rem; padding:0.4rem 0; font-size:0.85rem;">';
-                html += '<i class="fas ' + icon + '" style="color:' + checkColor + '; font-size:0.9rem;"></i>';
-                html += '<span style="color:var(--text); ' + textDeco + '">' + (lesson.title || 'Lesson') + '</span>';
-                if (lesson.content_type) html += '<span style="font-size:0.7rem; padding:0.15rem 0.45rem; border-radius:999px; background:rgba(59,130,246,0.08); color:#3b82f6; font-weight:600;">' + lesson.content_type + '</span>';
+                html += '<div class="ec-tree-item' + (lesson.completed ? '' : ' is-pending') + '">';
+                html += '<i class="fas ' + icon + (lesson.completed ? ' is-done' : '') + '" aria-hidden="true"></i>';
+                html += '<span>' + (lesson.title || 'Lesson') + '</span>';
+                if (lesson.content_type) html += '<span class="ec-pill is-info">' + lesson.content_type + '</span>';
                 html += '</div>';
             });
         } else {
-            html += '<p style="color:#999; font-size:0.85rem; padding:0.5rem 0;">No lessons in this module.</p>';
+            html += '<div class="ec-tree-empty">No lessons in this module.</div>';
         }
+        html += '</div>';
         // Quizzes summary
         if (mod.quizzes && mod.quizzes.length > 0) {
-            html += '<div style="margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid rgba(32,0,130,0.06);">';
+            html += '<div class="ec-divider"></div><div class="ec-tree-items">';
             mod.quizzes.forEach(function(quiz) {
-                var qColor = quiz.status === 'Passed' ? '#10b981' : '#ea580c';
-                var qIcon = quiz.status === 'Passed' ? 'fa-check-circle' : 'fa-times-circle';
-                html += '<div style="display:flex; align-items:center; gap:0.6rem; padding:0.4rem 0; font-size:0.85rem;">';
-                html += '<i class="fas fa-question-circle" style="color:#f59e0b; font-size:0.85rem;"></i>';
-                html += '<span style="color:var(--text);">' + (quiz.title || 'Quiz') + '</span>';
-                html += '<span style="margin-left:auto; padding:0.2rem 0.5rem; border-radius:999px; background:rgba(' + (quiz.status === 'Passed' ? '16,185,129' : '234,88,12') + ',0.08); color:' + qColor + '; font-weight:700; font-size:0.7rem;">' + quiz.status + '</span>';
+                var passed = quiz.status === 'Passed';
+                html += '<div class="ec-tree-item is-quiz">';
+                html += '<i class="fas fa-question-circle" aria-hidden="true"></i>';
+                html += '<span>' + (quiz.title || 'Quiz') + '</span>';
+                html += '<span class="ec-pill ' + (passed ? 'is-success' : 'is-warn') + '">' + quiz.status + '</span>';
                 html += '</div>';
             });
             html += '</div>';
         }
-        html += '</div>';
         container.innerHTML = html;
     }
 
     function loadQuizAttempts(quizId, container) {
-        container.innerHTML = '<p style="text-align:center; color:#999; padding:0.5rem 0; font-size:0.85rem;">Loading attempts...</p>';
+        container.innerHTML = '<div class="ec-empty is-inline"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading attempts...</div>';
         fetch('pages/learner/ajax/get-quiz-result.php?quiz_id=' + quizId, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!data.success || !data.items || data.items.length === 0) {
-                    container.innerHTML = '<p style="color:#999; text-align:center; padding:0.5rem 0; font-size:0.85rem;">No attempts recorded yet.</p>';
+                    container.innerHTML = '<div class="ec-empty is-inline">No attempts recorded yet.</div>';
                     return;
                 }
                 var summary = data.summary || {};
                 var html = '';
                 if (summary.quiz_title) {
-                    html += '<div style="display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:0.75rem; padding-top:0.75rem;">';
-                    if (summary.best_score !== undefined) html += '<span style="font-size:0.78rem; color:var(--text);"><strong>Best:</strong> ' + summary.best_score + '%</span>';
-                    if (summary.total_attempts !== undefined) html += '<span style="font-size:0.78rem; color:var(--text);"><strong>Attempts:</strong> ' + summary.total_attempts + '</span>';
-                    if (summary.remaining_attempts !== undefined) html += '<span style="font-size:0.78rem; color:var(--text);"><strong>Remaining:</strong> ' + summary.remaining_attempts + '</span>';
-                    if (summary.passing_score !== undefined) html += '<span style="font-size:0.78rem; color:var(--text);"><strong>Pass:</strong> ' + summary.passing_score + '%</span>';
+                    html += '<div class="ec-stats">';
+                    if (summary.best_score !== undefined) html += '<span><strong>Best:</strong> ' + summary.best_score + '%</span>';
+                    if (summary.total_attempts !== undefined) html += '<span><strong>Attempts:</strong> ' + summary.total_attempts + '</span>';
+                    if (summary.remaining_attempts !== undefined) html += '<span><strong>Remaining:</strong> ' + summary.remaining_attempts + '</span>';
+                    if (summary.passing_score !== undefined) html += '<span><strong>Pass:</strong> ' + summary.passing_score + '%</span>';
                     html += '</div>';
                 }
-                html += '<div style="display:grid; gap:0.5rem;">';
+                html += '<div class="ec-list">';
                 data.items.forEach(function(attempt) {
                     var aScore = attempt.score || 0;
                     var aStatus = attempt.status || 'Unknown';
-                    var aColor = aStatus === 'Passed' ? '#10b981' : '#ef4444';
-                    var aBg = aStatus === 'Passed' ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)';
+                    var passed = aStatus === 'Passed';
                     var dateStr = '';
                     if (attempt.completed_at) {
                         var d = new Date(attempt.completed_at);
                         dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                     }
-                    html += '<div style="display:grid; grid-template-columns:1fr auto auto auto; gap:0.75rem; align-items:center; padding:0.6rem 0.8rem; border:1px solid rgba(32,0,130,0.08); border-radius:8px; background:' + aBg + ';">';
-                    html += '<span style="font-size:0.82rem; color:var(--text); font-weight:600;">' + (attempt.title || 'Attempt') + '</span>';
-                    html += '<span style="font-size:0.82rem; color:var(--text);">' + aScore + '%</span>';
-                    html += '<span style="padding:0.3rem 0.6rem; border-radius:999px; background:' + (aStatus === 'Passed' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)') + '; color:' + aColor + '; font-weight:700; font-size:0.7rem; text-align:center;">' + aStatus + '</span>';
-                    html += '<span style="font-size:0.72rem; color:#999;">' + dateStr + '</span>';
+                    html += '<div class="ec-row is-tight">';
+                    html += '<div class="ec-row-body"><div class="ec-row-title">' + (attempt.title || 'Attempt') + '</div>';
+                    if (dateStr) html += '<div class="ec-row-meta">' + dateStr + '</div>';
+                    html += '</div>';
+                    html += '<span class="perf-row-score">' + aScore + '%</span>';
+                    html += '<span class="ec-pill ' + (passed ? 'is-success' : 'is-warn') + '">' + aStatus + '</span>';
                     html += '</div>';
                 });
                 html += '</div>';
                 container.innerHTML = html;
             })
             .catch(function() {
-                container.innerHTML = '<p style="color:#999; text-align:center; padding:0.5rem 0; font-size:0.85rem;">Unable to load attempts.</p>';
+                container.innerHTML = '<div class="ec-empty is-inline is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Unable to load attempts.</div>';
             });
     }
 

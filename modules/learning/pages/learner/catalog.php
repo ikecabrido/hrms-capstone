@@ -826,12 +826,6 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
 [data-theme="dark"] .catalog-card:hover { border-color: rgba(99, 102, 241, 0.55); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45); }
 [data-theme="dark"] .cc-enroll-btn.enrolled { background: rgba(16, 185, 129, 0.16); color: #34d399; }
 [data-theme="dark"] .catalog-empty i { color: rgba(148, 163, 184, 0.4); }
-
-/* The modal tab bar is hard-coded light in modal-system.css — realign it here. */
-[data-theme="dark"] #catalog-entity-content .entity-content-tabs {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-}
 </style>
 
 <div class="module-content catalog-page">
@@ -1140,30 +1134,29 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
         <div class="entity-content-header ld-modal-header">
             <h2 id="cem-title"></h2>
             <div class="entity-content-actions">
-                <a id="cem-view-btn" href="#" style="padding:0.6rem 0.95rem; background:var(--primary); color:#fff; border:none; border-radius:999px; cursor:pointer; font-weight:700; text-decoration:none; box-shadow:0 4px 15px rgba(32,0,130,0.15);">View Course</a>
-                <button id="cem-enroll-btn" style="display:none; padding:0.6rem 0.95rem; background:#10b981; color:#fff; border:none; border-radius:999px; cursor:pointer; font-weight:700; box-shadow:0 4px 15px rgba(16,185,129,0.2);">Enroll Now</button>
-                <button id="cem-close-btn" style="padding:0.6rem 0.95rem; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; cursor:pointer; font-weight:700;">Close</button>
+                <a id="cem-view-btn" href="#" class="ec-btn is-primary">View Course</a>
+                <button type="button" id="cem-enroll-btn" class="ec-btn is-success" style="display:none;">Enroll Now</button>
+                <button type="button" id="cem-close-btn" class="ec-btn is-quiet">Close</button>
             </div>
         </div>
         <div class="entity-content-tabs">
-            <button type="button" class="entity-content-tab active" data-content-tab="overview" style="padding:0.7rem 1rem; border:none; background:rgba(32,0,130,0.08); color:var(--primary); border-radius:999px; font-weight:700; cursor:pointer;">Overview</button>
-            <button type="button" class="entity-content-tab" data-content-tab="structure" style="padding:0.7rem 1rem; border:1px solid rgba(32,0,130,0.12); background:var(--surface, #fff); color:var(--text); border-radius:999px; font-weight:700; cursor:pointer;">Structure</button>
-            <button type="button" class="entity-content-tab" data-content-tab="performance" style="padding:0.7rem 1rem; border:1px solid rgba(32,0,130,0.12); background:var(--surface, #fff); color:var(--text); border-radius:999px; font-weight:700; cursor:pointer;">Performance</button>
+            <button type="button" class="entity-content-tab active" data-content-tab="overview"><i class="fas fa-eye" aria-hidden="true"></i>Overview</button>
+            <button type="button" class="entity-content-tab" data-content-tab="structure"><i class="fas fa-sitemap" aria-hidden="true"></i>Structure</button>
+            <button type="button" class="entity-content-tab" data-content-tab="performance"><i class="fas fa-chart-line" aria-hidden="true"></i>Performance</button>
         </div>
         <div class="entity-content-body ld-modal-body">
             <div id="entity-content-overview" class="entity-content-panel" style="display:block;">
-                <div id="cem-overview-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;"></div>
-                <div>
-                    <label style="color:var(--primary); font-weight:700; font-size:0.74rem; letter-spacing:0.08em; text-transform:uppercase;">Description</label>
-                    <p id="cem-description" style="margin:0.75rem 0 0; font-size:1rem; line-height:1.7; color:var(--text);"></p>
+                <div id="cem-overview-grid" class="ec-fields"></div>
+                <div class="ec-section">
+                    <span class="ec-section-title">Description</span>
+                    <p id="cem-description" class="ec-section-text"></p>
                 </div>
-                <div id="cem-child-entities" style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid rgba(32,0,130,0.12);"></div>
             </div>
             <div id="entity-content-structure" class="entity-content-panel" style="display:none;">
-                <div id="cem-structure-content"><p style="text-align:center; color:#999;">Loading structure...</p></div>
+                <div id="cem-structure-content"><div class="ec-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading structure...</div></div>
             </div>
             <div id="entity-content-performance" class="entity-content-panel" style="display:none;">
-                <div id="cem-performance-content"><p style="text-align:center; color:#999;">Loading performance data...</p></div>
+                <div id="cem-performance-content"><div class="ec-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading performance data...</div></div>
             </div>
         </div>
     </div>

@@ -90,7 +90,6 @@ try {
         foreach ($enrollments as $enroll) {
             $lid = (int) $enroll['learner_id'];
             $cid = (int) $enroll['course_id'];
-            $key = $lid . '_' . $cid;
 
             // Get quizzes for this course
             $courseQuizzes = array_filter($allQuizzes, function ($q) use ($cid) {
@@ -195,26 +194,16 @@ try {
     $gradebook = [];
 }
 
-function letterGradeColor($grade) {
-    return match($grade) {
-        'A' => '#10b981',
-        'B' => '#3b82f6',
-        'C' => '#f59e0b',
-        'D' => '#f97316',
-        'F' => '#ef4444',
-        default => '#9ca3af',
-    };
+/** Maps a letter grade to its page-scoped modifier class (see css/pages/gradebook.css). */
+function instrLetterGradeClass($grade) {
+    return in_array($grade, ['A', 'B', 'C', 'D', 'F'], true) ? 'is-' . strtolower($grade) : 'is-none';
 }
 
-function letterGradeBg($grade) {
-    return match($grade) {
-        'A' => 'rgba(16,185,129,0.1)',
-        'B' => 'rgba(59,130,246,0.1)',
-        'C' => 'rgba(245,158,11,0.1)',
-        'D' => 'rgba(249,115,22,0.1)',
-        'F' => 'rgba(239,68,68,0.1)',
-        default => 'rgba(156,163,175,0.1)',
-    };
+/** Maps a quiz status to its pill modifier class. */
+function instrQuizStatusClass($status) {
+    if ($status === 'Passed') return 'is-passed';
+    if ($status === 'In Progress') return 'is-progress';
+    return 'is-none';
 }
 
 function instrGradeBookTimeAgo($datetime) {
@@ -229,416 +218,189 @@ function instrGradeBookTimeAgo($datetime) {
 }
 ?>
 
-<style>
-.gradebook-stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-.gradebook-stat-card {
-    padding: 1.25rem;
-    border-radius: 12px;
-    background: var(--surface, #fff);
-    border: 1px solid rgba(32,0,130,0.06);
-}
-.gradebook-stat-card .stat-label {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 0.35rem;
-}
-.gradebook-stat-card .stat-value {
-    font-size: 1.6rem;
-    font-weight: 800;
-    color: var(--text);
-    line-height: 1.2;
-}
-.gradebook-stat-card .stat-sub {
-    font-size: 0.78rem;
-    color: var(--muted);
-    margin-top: 0.25rem;
-}
-.gradebook-table-wrap {
-    background: var(--surface, #fff);
-    border-radius: 14px;
-    border: 1px solid rgba(32,0,130,0.08);
-    overflow-x: auto;
-}
-.gradebook-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-.gradebook-table thead th {
-    padding: 0.85rem 1rem;
-    text-align: left;
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--primary);
-    background: rgba(32,0,130,0.03);
-    border-bottom: 1px solid rgba(32,0,130,0.08);
-    white-space: nowrap;
-    cursor: pointer;
-    user-select: none;
-    transition: background 0.15s;
-}
-.gradebook-table thead th:hover {
-    background: rgba(32,0,130,0.06);
-}
-.gradebook-table thead th .sort-icon {
-    margin-left: 0.3rem;
-    font-size: 0.65rem;
-    opacity: 0.4;
-}
-.gradebook-table thead th.sorted .sort-icon {
-    opacity: 1;
-    color: var(--primary);
-}
-.gradebook-table tbody tr {
-    border-bottom: 1px solid rgba(32,0,130,0.04);
-    transition: background 0.15s;
-}
-.gradebook-table tbody tr:hover {
-    background: rgba(32,0,130,0.02);
-}
-.gradebook-table tbody tr:last-child {
-    border-bottom: none;
-}
-.gradebook-table td {
-    padding: 0.75rem 1rem;
-    font-size: 0.88rem;
-    color: var(--text);
-    vertical-align: middle;
-}
-.grade-student-name {
-    font-weight: 600;
-}
-.grade-student-id {
-    font-size: 0.75rem;
-    color: var(--muted);
-}
-.grade-course-tag {
-    display: inline-block;
-    padding: 0.2rem 0.6rem;
-    border-radius: 6px;
-    background: rgba(32,0,130,0.06);
-    color: var(--primary);
-    font-size: 0.78rem;
-    font-weight: 600;
-    max-width: 180px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.grade-score {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-.grade-letter {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    font-weight: 800;
-    font-size: 0.85rem;
-}
-.grade-status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.3rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 700;
-}
-.grade-expand-row {
-    background: rgba(32,0,130,0.01);
-}
-.grade-expand-content {
-    padding: 0.75rem 1rem 1rem 2rem;
-}
-.quiz-score-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid rgba(32,0,130,0.06);
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    background: var(--surface, #fff);
-}
-.quiz-score-bar .quiz-name {
-    flex: 1;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--text);
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.quiz-score-bar .quiz-module {
-    font-size: 0.72rem;
-    color: var(--muted);
-}
-.quiz-score-bar .quiz-score-val {
-    font-weight: 700;
-    font-size: 0.85rem;
-    min-width: 45px;
-    text-align: right;
-}
-.quiz-score-bar .quiz-pass-badge {
-    padding: 0.15rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-.quiz-score-bar .quiz-time {
-    font-size: 0.72rem;
-    color: var(--muted);
-    white-space: nowrap;
-}
-.gradebook-empty {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--muted);
-}
-.gradebook-empty i { font-size: 2.5rem; color: var(--border); margin-bottom: 1rem; display: block; }
-.gradebook-empty h4 { margin: 0 0 0.5rem; color: var(--text); }
-.gradebook-empty p { margin: 0; font-size: 0.9rem; }
-.gradebook-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
-    font-size: 0.8rem;
-    color: var(--muted);
-}
-@media (max-width: 900px) {
-    .gradebook-stats { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 768px) {
-    .gradebook-table { font-size: 0.8rem; }
-    .gradebook-table td, .gradebook-table th { padding: 0.5rem 0.6rem; }
-}
+<div class="module-content gb-page">
+    <div class="home-dashboard">
+        <section class="home-hero" aria-labelledby="gb-title">
+            <div class="home-hero-main">
+                <h1 id="gb-title">Grade Book</h1>
+                <p>Quiz scores, averages, and letter grades for the learners enrolled in the courses you teach.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-users"></i> <?= (int) $stats['totalStudents'] ?> student<?= (int) $stats['totalStudents'] === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-chart-line"></i> <?= $stats['avgScore'] ?>% average</span>
+                    <span class="home-hero-chip"><i class="fas fa-circle-check"></i> <?= (int) $stats['passRate'] ?>% pass rate</span>
+                </div>
+            </div>
+        </section>
 
-/* Catalog-style toolbar for gradebook */
+        <div class="home-stats">
+            <div class="home-stat">
+                <div class="home-stat-icon tone-violet"><i class="fas fa-user-graduate"></i></div>
+                <div class="home-stat-body">
+                    <span class="home-stat-label">Total Students</span>
+                    <span class="home-stat-value"><?= (int) $stats['totalStudents'] ?></span>
+                    <span class="home-stat-sub">across <?= count($courses) ?> course<?= count($courses) !== 1 ? 's' : '' ?></span>
+                </div>
+            </div>
+            <div class="home-stat">
+                <div class="home-stat-icon tone-indigo"><i class="fas fa-percent"></i></div>
+                <div class="home-stat-body">
+                    <span class="home-stat-label">Average Score</span>
+                    <span class="home-stat-value"><?= $stats['avgScore'] ?>%</span>
+                    <span class="home-stat-sub">overall average</span>
+                </div>
+            </div>
+            <div class="home-stat">
+                <div class="home-stat-icon tone-emerald"><i class="fas fa-circle-check"></i></div>
+                <div class="home-stat-body">
+                    <span class="home-stat-label">Pass Rate</span>
+                    <span class="home-stat-value"><?= (int) $stats['passRate'] ?>%</span>
+                    <span class="home-stat-sub">scoring 60% or more</span>
+                </div>
+            </div>
+            <div class="home-stat">
+                <div class="home-stat-icon tone-amber"><i class="fas fa-trophy"></i></div>
+                <div class="home-stat-body">
+                    <span class="home-stat-label">Top Performer</span>
+                    <span class="home-stat-value home-stat-value-sm" title="<?= htmlspecialchars($stats['topScorer']) ?>"><?= htmlspecialchars($stats['topScorer']) ?></span>
+                    <span class="home-stat-sub">highest average</span>
+                </div>
+            </div>
+        </div>
 
-.catalog-toolbar { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; background:var(--surface,#fff); border-radius:12px; border:1px solid rgba(32,0,130,0.08); margin-bottom:1rem; flex-wrap:wrap; }
-.catalog-search { flex:1; min-width:200px; position:relative; }
-.catalog-search input { width:100%; padding:0.6rem 1rem 0.6rem 2.5rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:10px; background:rgba(32,0,130,0.03); font-size:0.88rem; outline:none; transition:border-color 0.2s,box-shadow 0.2s; box-sizing:border-box; }
-.catalog-search input:focus { border-color:var(--primary,#320082); box-shadow:0 0 0 3px rgba(32,0,130,0.08); }
-.catalog-search i { position:absolute; left:0.85rem; top:50%; transform:translateY(-50%); color:var(--muted,#999); font-size:0.85rem; }
-.catalog-count { font-size:0.8rem; color:var(--muted,#999); white-space:nowrap; }
-.catalog-tab-select {
-    position: relative;
-    flex-shrink: 0;
-}
-.catalog-tab-select select {
-    appearance: none;
-    -webkit-appearance: none;
-    padding: 0.5rem 2rem 0.5rem 0.85rem;
-    border: 1.5px solid rgba(32,0,130,0.1);
-    border-radius: 10px;
-    background: rgba(32,0,130,0.03);
-    font-size: 0.85rem;
-    font-family: inherit;
-    color: var(--text, #1a1a2e);
-    cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    min-width: 150px;
-}
-.catalog-tab-select select:focus {
-    border-color: var(--primary, #320082);
-    box-shadow: 0 0 0 3px rgba(32,0,130,0.08);
-    outline: none;
-}
-.catalog-tab-select .select-icon {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.65rem;
-    color: var(--muted, #999);
-    pointer-events: none;
-}</style>
+        <div class="gb-toolbar">
+            <label class="gb-search">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search" id="gb-search" placeholder="Search students or courses..." aria-label="Search students" />
+            </label>
+            <label class="gb-select">
+                <select id="gb-course-filter" aria-label="Filter by course">
+                    <option value="all">All Courses</option>
+                    <?php foreach ($courses as $c): ?>
+                    <option value="<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['title']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </label>
+            <label class="gb-select">
+                <select id="gb-grade-filter" aria-label="Filter by grade">
+                    <option value="all">All Grades</option>
+                    <option value="A">A (90-100)</option>
+                    <option value="B">B (80-89)</option>
+                    <option value="C">C (70-79)</option>
+                    <option value="D">D (60-69)</option>
+                    <option value="F">F (Below 60)</option>
+                    <option value="none">No Score</option>
+                </select>
+                <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            </label>
+            <span class="gb-count" id="gb-count" aria-live="polite"></span>
+        </div>
 
-<div class="module-content">
-    <!-- Toolbar -->
-    <div class="catalog-toolbar" style="margin-bottom:1.25rem;">
-        <div class="catalog-search">
-            <i class="fas fa-search"></i>
-            <input type="search" id="gb-search" placeholder="Search students or courses..." aria-label="Search students" />
+        <?php if (empty($gradebook)): ?>
+        <div class="gb-empty">
+            <i class="fas fa-clipboard-list"></i>
+            <strong>No grade data yet</strong>
+            <span>Learners in your courses will appear here once they start taking quizzes.</span>
         </div>
-        <div class="catalog-tab-select">
-            <select id="gb-course-filter">
-                <option value="all">All Courses</option>
-                <?php foreach ($courses as $c): ?>
-                <option value="<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['title']) ?></option>
-                <?php endforeach; ?>
-            </select>
-            <i class="fas fa-chevron-down select-icon"></i>
-        </div>
-        <div class="catalog-tab-select">
-            <select id="gb-grade-filter">
-                <option value="all">All Grades</option>
-                <option value="A">A (90-100)</option>
-                <option value="B">B (80-89)</option>
-                <option value="C">C (70-79)</option>
-                <option value="D">D (60-69)</option>
-                <option value="F">F (Below 60)</option>
-                <option value="none">No Score</option>
-            </select>
-            <i class="fas fa-chevron-down select-icon"></i>
-        </div>
-        <span class="catalog-count" id="gb-count"></span>
-    </div>
-
-    <!-- Header -->
-    <div class="module-header">
-        <div>
-            <h1 class="module-header-title"><i class="fas fa-table" style="color:var(--primary);margin-right:0.5rem;"></i> Grade Book</h1>
-            <p class="module-header-subtitle">Student scores, averages, and letter grades across your courses.</p>
-        </div>
-    </div>
-
-    <!-- Summary Stats -->
-    <div class="gradebook-stats">
-        <div class="gradebook-stat-card">
-            <div class="stat-label">Total Students</div>
-            <div class="stat-value" style="color:var(--primary);"><?= $stats['totalStudents'] ?></div>
-            <div class="stat-sub">across <?= count($courses) ?> course<?= count($courses) !== 1 ? 's' : '' ?></div>
-        </div>
-        <div class="gradebook-stat-card">
-            <div class="stat-label">Average Score</div>
-            <div class="stat-value" style="color:var(--primary);"><?= $stats['avgScore'] ?>%</div>
-            <div class="stat-sub">overall average</div>
-        </div>
-        <div class="gradebook-stat-card">
-            <div class="stat-label">Pass Rate</div>
-            <div class="stat-value" style="color:#10b981;"><?= $stats['passRate'] ?>%</div>
-            <div class="stat-sub">scoring 60%+</div>
-        </div>
-        <div class="gradebook-stat-card">
-            <div class="stat-label">Top Performer</div>
-            <div class="stat-value" style="color:#3b82f6;font-size:1.1rem;"><?= htmlspecialchars($stats['topScorer']) ?></div>
-            <div class="stat-sub">highest average</div>
-        </div>
-    </div>
-
-
-    <!-- Grade Book Table -->
-    <?php if (empty($gradebook)): ?>
-    <div class="gradebook-empty">
-        <i class="fas fa-clipboard-list"></i>
-        <h4>No grade data yet</h4>
-        <p>Students will appear here once they start taking quizzes in your courses.</p>
-    </div>
-    <?php else: ?>
-    <div class="gradebook-table-wrap">
-        <table class="gradebook-table" id="gradebook-table">
-            <thead>
-                <tr>
-                    <th data-sort="name">Student <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
-                    <th data-sort="course">Course <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
-                    <th data-sort="quizzes">Quizzes <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
-                    <th data-sort="score">Avg Score <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
-                    <th data-sort="grade">Grade <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
-                    <th data-sort="status">Status <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
-                    <th data-sort="last">Last Active <span class="sort-icon"><i class="fas fa-sort"></i></span></th>
-                    <th style="width:50px;"></th>
-                </tr>
-            </thead>
-            <tbody id="gb-tbody">
-                <?php foreach ($gradebook as $idx => $row):
-                    $avg = $row['avg_score'];
-                    $letter = $row['letter_grade'];
-                    $lColor = letterGradeColor($letter);
-                    $lBg = letterGradeBg($letter);
-                    $status = $row['quiz_status'];
-                    $sColor = match($status) {
-                        'Passed' => '#10b981', 'In Progress' => '#3b82f6', default => '#9ca3af'
-                    };
-                    $sBg = match($status) {
-                        'Passed' => 'rgba(16,185,129,0.1)', 'In Progress' => 'rgba(59,130,246,0.1)', default => 'rgba(156,163,175,0.1)'
-                    };
-                ?>
-                <tr class="gb-row" data-idx="<?= $idx ?>"
-                    data-name="<?= htmlspecialchars(strtolower($row['learner_name'])) ?>"
-                    data-course="<?= (int)$row['course_id'] ?>"
-                    data-score="<?= $avg ?? -1 ?>"
-                    data-letter="<?= $letter ?>"
-                    data-status="<?= $status === 'Passed' ? 'pass' : ($status === 'In Progress' ? 'progress' : 'none') ?>">
-                    <td>
-                        <div class="grade-student-name"><?= htmlspecialchars($row['learner_name']) ?></div>
-                        <?php if ($row['employee_id']): ?>
-                        <div class="grade-student-id"><?= htmlspecialchars($row['employee_id']) ?></div>
-                        <?php endif; ?>
-                    </td>
-                    <td><span class="grade-course-tag" title="<?= htmlspecialchars($row['course_title']) ?>"><?= htmlspecialchars(mb_strimwidth($row['course_title'], 0, 25, '...')) ?></span></td>
-                    <td><?= $row['quizzes_attempted'] ?> / <?= $row['total_quizzes'] ?></td>
-                    <td class="grade-score" style="color:<?= $avg !== null ? ($avg >= 60 ? '#10b981' : '#ef4444') : '#9ca3af' ?>;">
-                        <?= $avg !== null ? $avg . '%' : '---' ?>
-                    </td>
-                    <td><span class="grade-letter" style="background:<?= $lBg ?>;color:<?= $lColor ?>;"><?= $letter ?></span></td>
-                    <td><span class="grade-status-pill" style="background:<?= $sBg ?>;color:<?= $sColor ?>;"><i class="fas fa-<?= $status === 'Passed' ? 'check-circle' : ($status === 'In Progress' ? 'spinner fa-spin' : 'clock') ?>"></i> <?= $status ?></span></td>
-                    <td style="font-size:0.78rem;color:var(--muted);white-space:nowrap;"><?= instrGradeBookTimeAgo($row['last_accessed']) ?></td>
-                    <td><button type="button" class="gb-expand-btn" data-idx="<?= $idx ?>" style="background:none;border:none;cursor:pointer;color:var(--primary);padding:0.3rem;border-radius:4px;" title="Show quiz details"><i class="fas fa-chevron-down"></i></button></td>
-                </tr>
-                <tr class="gb-expand" id="gb-expand-<?= $idx ?>" style="display:none;">
-                    <td colspan="8" class="grade-expand-row">
-                        <div class="grade-expand-content">
-                            <?php if (empty($row['quiz_scores'])): ?>
-                            <p style="color:var(--muted);font-size:0.85rem;margin:0;">No quiz attempts recorded yet.</p>
-                            <?php else: ?>
-                            <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin-bottom:0.5rem;">Quiz Scores</div>
-                            <?php foreach ($row['quiz_scores'] as $qs):
-                                $qsColor = $qs['score'] !== null ? ($qs['passed'] ? '#10b981' : '#ef4444') : '#d1d5db';
-                                $qsBg = $qs['score'] !== null ? ($qs['passed'] ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)') : 'rgba(243,244,246,0.5)';
-                                $qsBadgeBg = $qs['score'] !== null ? ($qs['passed'] ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)') : 'rgba(209,213,219,0.3)';
-                                $qsBadgeColor = $qs['score'] !== null ? ($qs['passed'] ? '#059669' : '#dc2626') : '#9ca3af';
-                                $qTime = $qs['attempted_at'] ? instrGradeBookTimeAgo($qs['attempted_at']) : '';
-                            ?>
-                            <div class="quiz-score-bar" style="border-left:3px solid <?= $qsColor ?>;">
-                                <div style="flex:1;min-width:0;">
-                                    <div class="quiz-name" title="<?= htmlspecialchars($qs['quiz_title']) ?>"><?= htmlspecialchars($qs['quiz_title']) ?></div>
-                                    <div class="quiz-module"><?= htmlspecialchars($qs['module_title']) ?></div>
-                                </div>
-                                <div class="quiz-score-val" style="color:<?= $qs['score'] !== null ? ($qs['passed'] ? '#10b981' : '#ef4444') : '#d1d5db' ?>;">
-                                    <?= $qs['score'] !== null ? $qs['score'] . '%' : '---' ?>
-                                </div>
-                                <span class="quiz-pass-badge" style="background:<?= $qsBadgeBg ?>;color:<?= $qsBadgeColor ?>;">
-                                    <?= $qs['score'] !== null ? ($qs['passed'] ? 'Pass' : 'Fail') : 'N/A' ?>
-                                </span>
-                                <?php if ($qs['score'] !== null): ?>
-                                <span style="font-size:0.7rem;color:var(--muted);min-width:60px;text-align:right;"><?= $qTime ?></span>
+        <?php else: ?>
+        <div class="gb-card">
+            <div class="gb-table-wrap">
+                <table class="gb-table" id="gradebook-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="name">Student <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="course">Course <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="quizzes">Quizzes <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="score">Avg Score <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="grade">Grade <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="status">Status <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="last">Last Active <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
+                            <th class="gb-th-action"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="gb-tbody">
+                        <?php foreach ($gradebook as $idx => $row):
+                            $avg = $row['avg_score'];
+                            $letter = $row['letter_grade'];
+                            $letterClass = instrLetterGradeClass($letter);
+                            $status = $row['quiz_status'];
+                            $statusClass = instrQuizStatusClass($status);
+                            $avgClass = $avg === null ? 'is-none' : ($avg >= 60 ? 'is-pass' : 'is-fail');
+                            $statusIcon = $status === 'Passed' ? 'fa-circle-check' : ($status === 'In Progress' ? 'fa-circle-half-stroke' : 'fa-clock');
+                        ?>
+                        <tr class="gb-row" data-idx="<?= $idx ?>"
+                            data-name="<?= htmlspecialchars(strtolower($row['learner_name'])) ?>"
+                            data-course="<?= (int)$row['course_id'] ?>"
+                            data-score="<?= $avg ?? -1 ?>"
+                            data-letter="<?= $letter ?>"
+                            data-status="<?= $status === 'Passed' ? 'pass' : ($status === 'In Progress' ? 'progress' : 'none') ?>">
+                            <td>
+                                <div class="gb-student-name"><?= htmlspecialchars($row['learner_name']) ?></div>
+                                <?php if ($row['employee_id']): ?>
+                                <div class="gb-student-id"><?= htmlspecialchars($row['employee_id']) ?></div>
                                 <?php endif; ?>
-                            </div>
-                            <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-        <div class="gradebook-footer">
-            <span id="gb-footer-count" class="gb-footer-count"></span>
-            <span id="gb-avg-display">Average: <?= $stats['avgScore'] ?>%</span>
+                            </td>
+                            <td><span class="gb-tag" title="<?= htmlspecialchars($row['course_title']) ?>"><?= htmlspecialchars($row['course_title']) ?></span></td>
+                            <td><span class="gb-quizzes"><?= (int) $row['quizzes_attempted'] ?> / <?= (int) $row['total_quizzes'] ?></span></td>
+                            <td><span class="gb-score <?= $avgClass ?>"><?= $avg !== null ? $avg . '%' : '---' ?></span></td>
+                            <td><span class="gb-letter <?= $letterClass ?>"><?= $letter ?></span></td>
+                            <td><span class="gb-pill <?= $statusClass ?>"><i class="fas <?= $statusIcon ?>"></i> <?= $status ?></span></td>
+                            <td><span class="gb-when"><?= instrGradeBookTimeAgo($row['last_accessed']) ?></span></td>
+                            <td>
+                                <button type="button" class="gb-expand-btn" data-idx="<?= $idx ?>" title="Show quiz details" aria-label="Show quiz details for <?= htmlspecialchars($row['learner_name']) ?>">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="gb-expand" id="gb-expand-<?= $idx ?>" style="display:none;">
+                            <td colspan="8">
+                                <div class="gb-detail">
+                                    <div class="gb-detail-title">Quiz Scores</div>
+                                    <?php if (empty($row['quiz_scores'])): ?>
+                                    <p class="gb-detail-empty">No quiz attempts recorded yet.</p>
+                                    <?php else: ?>
+                                    <div class="gb-quiz-list">
+                                        <?php foreach ($row['quiz_scores'] as $qs):
+                                            $qsState = $qs['score'] === null ? 'is-none' : ($qs['passed'] ? 'is-pass' : 'is-fail');
+                                            $qTime = $qs['attempted_at'] ? instrGradeBookTimeAgo($qs['attempted_at']) : '';
+                                        ?>
+                                        <div class="gb-quiz <?= $qsState ?>">
+                                            <div class="gb-quiz-main">
+                                                <div class="gb-quiz-name" title="<?= htmlspecialchars($qs['quiz_title']) ?>"><?= htmlspecialchars($qs['quiz_title']) ?></div>
+                                                <div class="gb-quiz-module"><?= htmlspecialchars($qs['module_title']) ?></div>
+                                            </div>
+                                            <div class="gb-quiz-score <?= $qsState ?>"><?= $qs['score'] !== null ? $qs['score'] . '%' : '---' ?></div>
+                                            <span class="gb-quiz-badge <?= $qsState ?>"><?= $qs['score'] !== null ? ($qs['passed'] ? 'Pass' : 'Fail') : 'N/A' ?></span>
+                                            <?php if ($qs['score'] !== null): ?>
+                                            <span class="gb-quiz-time"><?= $qTime ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <div class="gb-foot">
+                <div class="gb-foot-info">
+                    <span id="gb-count-foot"></span>
+                    <span class="gb-foot-avg" id="gb-avg-display">Average: <?= $stats['avgScore'] ?>%</span>
+                </div>
+                <div class="pagination-row" id="gb-pagination">
+                    <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
+                    <span class="page-indicator">Page 1 of 1</span>
+                    <button type="button" class="page-btn" data-action="next">Next</button>
+                </div>
+            </div>
         </div>
-        <div class="pagination-row" id="gb-pagination">
-            <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
-            <span class="page-indicator">Page 1 of 1</span>
-            <button type="button" class="page-btn" data-action="next">Next</button>
-        </div>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
 </div>
 
 <script>
@@ -652,37 +414,43 @@ function instrGradeBookTimeAgo($datetime) {
     var courseFilter = document.getElementById('gb-course-filter');
     var gradeFilter = document.getElementById('gb-grade-filter');
     var countEl = document.getElementById('gb-count');
+    var footCountEl = document.getElementById('gb-count-foot');
     var avgEl = document.getElementById('gb-avg-display');
     var paginationEl = document.getElementById('gb-pagination');
     var currentSort = { col: null, asc: true };
+
+    function hasActiveFilters() {
+        return (searchInput && searchInput.value.trim() !== '')
+            || (courseFilter && courseFilter.value !== 'all')
+            || (gradeFilter && gradeFilter.value !== 'all');
+    }
 
     function getVisibleRows() {
         var q = searchInput ? searchInput.value.trim().toLowerCase() : '';
         var courseVal = courseFilter ? courseFilter.value : 'all';
         var gradeVal = gradeFilter ? gradeFilter.value : 'all';
-        var visible = [];
-        var totalScore = 0;
-        var scoreCount = 0;
+        var visible = [], totalScore = 0, scoreCount = 0;
 
         rows.forEach(function(row) {
-            var nameMatch = !q || row.dataset.name.indexOf(q) !== -1;
-            var courseMatch = courseVal === 'all' || row.dataset.course === courseVal;
-            var gradeMatch = gradeVal === 'all' ||
-                (gradeVal === 'none' && row.dataset.letter === '-') ||
-                row.dataset.letter === gradeVal;
-
-            if (nameMatch && courseMatch && gradeMatch) {
+            var tag = row.querySelector('.gb-tag');
+            var courseText = tag ? tag.textContent.toLowerCase() : '';
+            var nameMatch = !q || row.dataset.name.indexOf(q) !== -1 || courseText.indexOf(q) !== -1;
+            var show = nameMatch
+                && (courseVal === 'all' || row.dataset.course === courseVal)
+                && (gradeVal === 'all' || (gradeVal === 'none' && row.dataset.letter === '-') || row.dataset.letter === gradeVal);
+            if (show) {
                 visible.push(row);
-                var score = parseFloat(row.dataset.score);
-                if (!isNaN(score) && score >= 0) {
-                    totalScore += score;
-                    scoreCount++;
-                }
+                var s = parseFloat(row.dataset.score);
+                if (!isNaN(s) && s >= 0) { totalScore += s; scoreCount++; }
             }
         });
-
         if (countEl) countEl.textContent = visible.length + ' student' + (visible.length !== 1 ? 's' : '');
-        if (avgEl) avgEl.textContent = 'Filtered avg: ' + (scoreCount > 0 ? (totalScore / scoreCount).toFixed(1) : '0') + '%';
+        if (avgEl) {
+            var avgLabel = hasActiveFilters() ? 'Filtered average: ' : 'Average: ';
+            avgEl.textContent = scoreCount > 0
+                ? avgLabel + (totalScore / scoreCount).toFixed(1) + '%'
+                : avgLabel + '\u2014';
+        }
         return visible;
     }
 
@@ -693,22 +461,22 @@ function instrGradeBookTimeAgo($datetime) {
         var start = (currentPage - 1) * PAGE_SIZE;
         var end = start + PAGE_SIZE;
 
-        // Hide all rows first
         rows.forEach(function(row) {
             row.style.display = 'none';
             var expandRow = document.getElementById('gb-expand-' + row.dataset.idx);
             if (expandRow) expandRow.style.display = 'none';
-            // Reset expand icon
             var btn = row.querySelector('.gb-expand-btn i');
             if (btn) { btn.classList.remove('fa-chevron-up'); btn.classList.add('fa-chevron-down'); }
         });
 
-        // Show only visible rows for current page
-        visible.slice(start, end).forEach(function(row) {
-            row.style.display = '';
-        });
+        visible.slice(start, end).forEach(function(row) { row.style.display = ''; });
 
-        // Update pagination
+        if (footCountEl) {
+            footCountEl.textContent = visible.length
+                ? 'Showing ' + (start + 1) + '\u2013' + Math.min(start + PAGE_SIZE, visible.length) + ' of ' + visible.length + ' students'
+                : 'No students to show';
+        }
+
         if (paginationEl) {
             var indicator = paginationEl.querySelector('.page-indicator');
             var prevBtn = paginationEl.querySelector('[data-action="prev"]');
@@ -720,12 +488,10 @@ function instrGradeBookTimeAgo($datetime) {
         }
     }
 
-    // Expand/collapse rows
     tbody.addEventListener('click', function(e) {
         var btn = e.target.closest('.gb-expand-btn');
         if (!btn) return;
-        var idx = btn.dataset.idx;
-        var expand = document.getElementById('gb-expand-' + idx);
+        var expand = document.getElementById('gb-expand-' + btn.dataset.idx);
         var icon = btn.querySelector('i');
         if (!expand) return;
         if (expand.style.display === 'none') {
@@ -737,28 +503,23 @@ function instrGradeBookTimeAgo($datetime) {
         }
     });
 
-    // Sorting
-    document.querySelectorAll('.gradebook-table thead th[data-sort]').forEach(function(th) {
+    document.querySelectorAll('.gb-table thead th[data-sort]').forEach(function(th) {
         th.addEventListener('click', function() {
             var col = th.dataset.sort;
             var asc = currentSort.col === col ? !currentSort.asc : true;
             currentSort = { col: col, asc: asc };
-
-            document.querySelectorAll('.gradebook-table thead th').forEach(function(t) { t.classList.remove('sorted'); });
+            document.querySelectorAll('.gb-table thead th').forEach(function(t) { t.classList.remove('sorted'); });
             th.classList.add('sorted');
-            var icon = th.querySelector('.sort-icon i');
-            if (icon) {
-                icon.className = asc ? 'fas fa-sort-up' : 'fas fa-sort-down';
-            }
-
+            var icon = th.querySelector('.gb-sort i');
+            if (icon) icon.className = asc ? 'fas fa-sort-up' : 'fas fa-sort-down';
             rows.sort(function(a, b) {
                 var va, vb;
                 switch (col) {
                     case 'name': va = a.dataset.name; vb = b.dataset.name; break;
                     case 'course': va = a.dataset.course; vb = b.dataset.course; break;
                     case 'score': va = parseFloat(a.dataset.score); vb = parseFloat(b.dataset.score); break;
-                    case 'grade': var gc = {'A':5,'B':4,'C':3,'D':2,'F':1,'-':0}; va = gc[a.dataset.letter]||0; vb = gc[b.dataset.letter]||0; break;
-                    case 'quizzes': var aq = a.querySelector('td:nth-child(3)'); var bq = b.querySelector('td:nth-child(3)'); va = aq ? parseInt(aq.textContent) : 0; vb = bq ? parseInt(bq.textContent) : 0; break;
+                    case 'grade': var gc = {A:5,B:4,C:3,D:2,F:1,'-':0}; va = gc[a.dataset.letter]||0; vb = gc[b.dataset.letter]||0; break;
+                    case 'quizzes': va = parseInt((a.querySelector('td:nth-child(3)')||{}).textContent)||0; vb = parseInt((b.querySelector('td:nth-child(3)')||{}).textContent)||0; break;
                     case 'status': va = a.dataset.status; vb = b.dataset.status; break;
                     default: va = a.dataset.name; vb = b.dataset.name;
                 }
@@ -766,11 +527,10 @@ function instrGradeBookTimeAgo($datetime) {
                 if (va > vb) return asc ? 1 : -1;
                 return 0;
             });
-
             rows.forEach(function(r) {
                 tbody.appendChild(r);
                 var exp = document.getElementById('gb-expand-' + r.dataset.idx);
-                if (exp) { tbody.appendChild(exp); }
+                if (exp) tbody.appendChild(exp);
             });
             applyFilters();
         });

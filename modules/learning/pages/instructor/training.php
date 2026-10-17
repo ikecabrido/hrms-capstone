@@ -51,19 +51,20 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         'Program' => '?page=instructor/training-subpage/program&id=',
         'Video Conference' => '?page=instructor/training-subpage/video-conference&id=',
     ];
-    $gradDefault = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-    $gradZoom = 'linear-gradient(135deg, #2D8CFF, #0066FF)';
-    $gradMeet = 'linear-gradient(135deg, #00897B, #004D40)';
-    $gradOtherVC = 'linear-gradient(135deg, #6366f1, #4f46e5)';
     foreach ($items as $item) {
         $id = (int) ($item['id'] ?? 0);
         $title = trim((string) ($item['title'] ?? 'Untitled'));
         $description = trim((string) ($item['description'] ?? ($item['platform'] ?? '')));
         $status = trim((string) ($item['status'] ?? 'active'));
-        $gradient = $gradDefault;
-        if ($label === 'Video Conference') {
-            $vp = $item['platform'] ?? 'other';
-            $gradient = $vp === 'zoom' ? $gradZoom : ($vp === 'google_meet' ? $gradMeet : $gradOtherVC);
+        // Card thumbnail tone: color encodes the training type, so the grid
+        // reads as one family instead of four unrelated gradients.
+        if ($label === 'Learning Path') {
+            $tone = 'learning-path';
+        } elseif ($label === 'Program') {
+            $tone = 'program';
+        } else {
+            $platform = $item['platform'] ?? '';
+            $tone = $platform === 'zoom' ? 'zoom' : ($platform === 'google_meet' ? 'meet' : 'video');
         }
         $typeLabel = $typeLabels[$label] ?? $label;
         $icon = $typeIcons[$label] ?? 'fa-layer-group';
@@ -78,9 +79,8 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         $isKT = ($item['type'] ?? 'standard') === 'knowledge_transfer';
         $isPublic = !empty($item['is_public']);
         echo '<article class="catalog-card" data-status="' . htmlspecialchars($status) . '" data-type="' . htmlspecialchars($label) . '" data-entity-id="' . $id . '"' . ($isKT ? ' data-kt="1" data-path-id="' . $id . '" data-is-public="' . ($isPublic ? '1' : '0') . '"' : '') . '>';
-        echo '<div class="catalog-card-thumb" style="background:' . $gradient . ';">';
+        echo '<div class="catalog-card-thumb" data-tone="' . $tone . '">';
         echo '<i class="fas ' . $icon . ' thumb-icon"></i>';
-        echo '<div class="thumb-overlay"></div>';
         $badgeText = $isKT ? 'Knowledge Transfer' : $typeLabel;
         echo '<span class="catalog-card-type-badge">' . htmlspecialchars($badgeText) . '</span>';
         echo '</div>';
@@ -90,317 +90,266 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         echo '</div>';
         if ($footerInfo) {
             echo '<div class="catalog-card-stats">';
-            echo '<span><i class="fas fa-info-circle"></i> ' . htmlspecialchars($footerInfo) . '</span>';
+            echo '<span><i class="fas fa-circle-info"></i> ' . htmlspecialchars($footerInfo) . '</span>';
             echo '</div>';
         }
         echo '<div class="catalog-card-footer">';
-        echo '<span class="cc-deadline" style="font-size:0.72rem;color:var(--muted);text-transform:capitalize;">' . htmlspecialchars($status) . '</span>';
-        echo '<div style="display:flex;align-items:center;gap:0.4rem;">';
+        echo '<span class="cc-deadline">' . htmlspecialchars($status) . '</span>';
+        echo '<div class="cat-card-actions">';
         if ($isKT) {
-            $pubColor = $isPublic ? '#059669' : '#666';
-            $pubBg = $isPublic ? 'rgba(5,150,105,0.1)' : 'rgba(100,100,100,0.1)';
-            echo '<button class="kt-toggle-public-btn" data-path-id="' . $id . '" style="padding:0.25rem 0.5rem;border-radius:999px;font-size:0.65rem;font-weight:700;background:' . $pubBg . ';color:' . $pubColor . ';border:1px solid ' . $pubColor . '22;cursor:pointer;">' . ($isPublic ? 'Public' : 'Private') . '</button>';
+            echo '<button type="button" class="kt-toggle-public-btn ' . ($isPublic ? 'is-public' : 'is-private') . '" data-path-id="' . $id . '" title="Toggle who can see this path">' . ($isPublic ? 'Public' : 'Private') . '</button>';
         }
-        echo '<button class="cc-enroll-btn enroll" style="background:rgba(32,0,130,0.08);color:var(--primary);"><i class="fas fa-eye"></i> View</button>';
+        echo '<button class="cc-enroll-btn enroll"><i class="fas fa-eye"></i> View</button>';
+        echo '</div>';
         echo '</div>';
         echo '</article>';
     }
 }
 ?>
 
-<div id="tr-entity-content" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="tr-modal-title" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10000; align-items:center; justify-content:center;">
-    <div id="tr-entity-content-panel" class="entity-content-box ld-modal-panel" data-size="standard" style="background:var(--surface, #fff); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.18); overflow:hidden; width:92vw; max-width:560px; max-height:88vh; display:flex; flex-direction:column;">
-        <div class="entity-content-header ld-modal-header" style="padding:1.25rem 1.5rem; border-bottom:1px solid rgba(32,0,130,0.08); display:flex; align-items:center; justify-content:space-between;">
-            <h2 id="tr-modal-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text);"></h2>
-            <div class="entity-content-actions" style="display:flex; gap:0.5rem;">
-                <button id="tr-modal-invite-btn" type="button" style="display:none; padding:0.5rem 0.85rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.18); border-radius:999px; cursor:pointer; font-weight:700; font-size:0.82rem;">Invite</button>
-                <button id="tr-modal-edit-btn" style="padding:0.5rem 0.85rem; background:var(--primary); color:var(--surface,#fff); border:none; border-radius:999px; cursor:pointer; font-weight:700; font-size:0.82rem;">Edit</button>
-                <button id="tr-modal-archive-btn" style="padding:0.5rem 0.85rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.18); border-radius:999px; cursor:pointer; font-weight:700; font-size:0.82rem;">Archive</button>
-                <button id="tr-modal-close-btn" style="padding:0.5rem 0.85rem; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; cursor:pointer; font-weight:700; font-size:0.82rem;">Close</button>
+<div class="module-content catalog-page catalog-manager">
+    <!-- Entity Detail Modal -->
+    <div id="tr-entity-content" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="tr-modal-title" style="display:none;">
+        <div id="tr-entity-content-panel" class="entity-content-box ld-modal-panel" data-size="standard">
+            <div class="entity-content-header ld-modal-header">
+                <h2 id="tr-modal-title"></h2>
+                <div class="entity-content-actions">
+                    <button id="tr-modal-invite-btn" type="button" class="ec-btn is-quiet" style="display:none;">Invite</button>
+                    <button id="tr-modal-edit-btn" class="ec-btn is-primary">Edit</button>
+                    <button id="tr-modal-archive-btn" class="ec-btn is-quiet">Archive</button>
+                    <button id="tr-modal-close-btn" class="ec-btn is-quiet">Close</button>
+                </div>
             </div>
-        </div>
-        <div class="entity-content-tabs" style="display:flex; gap:0.5rem; padding:0.75rem 1.5rem; border-bottom:1px solid rgba(32,0,130,0.06);">
-                <button type="button" class="entity-content-tab active" data-content-tab="overview" data-label="Overview" data-icon="<i class='fas fa-eye'></i>" style="padding:0.55rem 1rem; border:none; background:rgba(32,0,130,0.08); color:var(--primary); border-radius:999px; font-weight:700; cursor:pointer; font-size:0.82rem;"><i class="fas fa-eye" style="margin-right:0.35rem;"></i>Overview</button>
-                <button type="button" class="entity-content-tab" data-content-tab="structure" data-label="Structure" data-icon="<i class='fas fa-sitemap'></i>" style="padding:0.55rem 1rem; border:1px solid rgba(32,0,130,0.12); background:var(--surface, #fff); color:var(--text); border-radius:999px; font-weight:700; cursor:pointer; font-size:0.82rem;"><i class="fas fa-sitemap" style="margin-right:0.35rem;"></i>Structure</button>
-                <button type="button" class="entity-content-tab" data-content-tab="monitor" data-label="Monitor" data-icon="<i class='fas fa-chart-line'></i>" style="padding:0.55rem 1rem; border:1px solid rgba(32,0,130,0.12); background:var(--surface, #fff); color:var(--text); border-radius:999px; font-weight:700; cursor:pointer; font-size:0.82rem;"><i class="fas fa-chart-line" style="margin-right:0.35rem;"></i>Monitor</button>
+            <div class="entity-content-tabs">
+                <button type="button" class="entity-content-tab active" data-content-tab="overview" data-label="Overview" data-icon="<i class='fas fa-eye'></i>">Overview</button>
+                <button type="button" class="entity-content-tab" data-content-tab="structure" data-label="Structure" data-icon="<i class='fas fa-sitemap'></i>">Structure</button>
+                <button type="button" class="entity-content-tab" data-content-tab="monitor" data-label="Monitor" data-icon="<i class='fas fa-chart-line'></i>">Monitor</button>
             </div>
-        <div class="entity-content-body ld-modal-body" style="padding:1.25rem 1.5rem; overflow-y:auto; flex:1 1 auto; min-height:0;">
-            <div id="tr-entity-content-overview" class="entity-content-panel" style="display:none;">
-                <div id="tr-modal-content-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1.25rem; margin-bottom:1.5rem;">
-                    <div>
-                        <label style="display:block; color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">STATUS</label>
-                        <p id="tr-modal-overview-status" style="margin:0; font-size:0.95rem; color:var(--text); font-weight:600;">Active</p>
+            <div class="entity-content-body ld-modal-body">
+                <div id="tr-entity-content-overview" class="entity-content-panel" style="display:block;">
+                    <div id="tr-modal-content-grid" class="ec-fields">
+                        <div class="ec-field">
+                            <span class="ec-field-label">Status</span>
+                            <p id="tr-modal-overview-status" class="ec-field-value">Active</p>
+                        </div>
+                        <div class="ec-field">
+                            <span class="ec-field-label">Parent</span>
+                            <p id="tr-modal-overview-parent" class="ec-field-value">-</p>
+                        </div>
+                        <div class="ec-field">
+                            <span class="ec-field-label">Children</span>
+                            <p id="tr-modal-overview-children" class="ec-field-value">0</p>
+                        </div>
                     </div>
-                    <div>
-                        <label style="display:block; color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">PARENT</label>
-                        <p id="tr-modal-overview-parent" style="margin:0; font-size:0.95rem; color:var(--text);">-</p>
+                    <div class="ec-section">
+                        <span class="ec-section-title">Description</span>
+                        <p id="tr-modal-description" class="ec-section-text">No description</p>
                     </div>
-                    <div>
-                        <label style="display:block; color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">CHILDREN</label>
-                        <p id="tr-modal-overview-children" style="margin:0; font-size:0.95rem; color:var(--text);">0</p>
-                    </div>
-                    <div style="grid-column:1/-1;">
-                        <label style="display:block; color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">DESCRIPTION</label>
-                        <p id="tr-modal-description" style="margin:0; font-size:0.92rem; line-height:1.6; color:var(--text);">No description</p>
+                </div>
+                <div id="tr-entity-content-structure" class="entity-content-panel" style="display:none;">
+                    <div id="tr-entity-content-structure-content"></div>
+                </div>
+                <div id="tr-entity-content-monitor" class="entity-content-panel" style="display:none;">
+                    <div id="tr-entity-content-monitor-content">
+                        <div class="ec-empty"><i class="fas fa-chart-line" aria-hidden="true"></i>No monitoring data available yet.</div>
                     </div>
                 </div>
             </div>
-            <div id="tr-entity-content-structure" class="entity-content-panel" style="display:block;">
-                <div id="tr-entity-content-structure-content"></div>
+        </div>
+    </div>
+
+    <!-- Invite Employees Modal -->
+    <div id="training-invite-modal" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="training-invite-title" style="display:none;">
+        <div class="ld-modal-panel">
+            <div class="ld-modal-header">
+                <div>
+                    <h3 id="training-invite-title">Invite Employees</h3>
+                    <p>Select employees to invite to this learning path.</p>
+                </div>
+                <button id="training-invite-modal-close" type="button" class="cat-modal-close" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
-            <div id="tr-entity-content-monitor" class="entity-content-panel" style="display:none;">
-                <div id="tr-entity-content-monitor-content"></div>
+            <form id="training-invite-form" method="post" class="ld-modal-body cat-form" data-skip>
+                <input type="hidden" id="training-invite-path-id" name="id" value="" />
+                <label class="cat-field">
+                    <span class="cat-field-label">Invite employees</span>
+                    <select id="training-invitees" name="invitee_ids[]" multiple size="8" class="cat-invite-select">
+                        <option value="" disabled>Loading employees...</option>
+                    </select>
+                </label>
+                <div class="ld-modal-actions">
+                    <button type="button" id="training-invite-modal-cancel" class="cat-btn-quiet">Cancel</button>
+                    <button type="submit" class="cat-btn-primary">Send Invitations</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Archive Confirm Overlay -->
+    <div id="archive-confirm-overlay" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="training-archive-title" style="display:none;">
+        <div class="ld-modal-panel ld-modal-confirm">
+            <h3 id="training-archive-title" class="cat-modal-title">Confirm Archive</h3>
+            <p id="archive-confirm-message" class="cat-modal-text">Are you sure you want to archive this item?</p>
+            <div class="ld-modal-actions">
+                <button id="archive-confirm-cancel" class="cat-btn-quiet">Cancel</button>
+                <button id="archive-confirm-ok" class="cat-btn-danger">Archive</button>
             </div>
         </div>
     </div>
-</div>
 
-<div id="training-invite-modal" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="training-invite-title" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10001; align-items:center; justify-content:center;">
-    <div class="ld-modal-panel" style="background:var(--surface, #fff); border-radius:18px; width:90%; max-width:520px; max-height:88vh; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.25); display:flex; flex-direction:column;">
-        <div class="ld-modal-header" style="padding:1.25rem 1.5rem; border-bottom:1px solid rgba(32,0,130,0.08); display:flex; align-items:center; justify-content:space-between;">
-            <div>
-                <h3 id="training-invite-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text);">Invite Employees</h3>
-                <p style="margin:0.3rem 0 0; font-size:0.82rem; color:var(--muted);">Select employees to invite to this learning path.</p>
+    <div class="home-dashboard">
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1>Trainings</h1>
+                <p>Assemble learning paths, programs and live online sessions, and see which skills your training content builds.</p>
             </div>
-            <button id="training-invite-modal-close" type="button" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--muted);"><i class="fas fa-times"></i></button>
-        </div>
-        <form id="training-invite-form" method="post" class="ld-modal-body" style="padding:1.25rem 1.5rem; display:flex; flex-direction:column; gap:1rem;">
-            <input type="hidden" id="training-invite-path-id" name="id" value="" />
-            <label>
-                <span style="display:block; margin-bottom:0.35rem; font-size:0.8rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em;">Invite employees</span>
-                <select id="training-invitees" name="invitee_ids[]" multiple size="8" style="width:100%; padding:0.6rem; border-radius:10px; border:1px solid var(--border); box-sizing:border-box; min-height:160px;">
-                    <option value="" disabled>Loading employees...</option>
-                </select>
-            </label>
-            <div class="ld-modal-actions" style="display:flex; justify-content:flex-end; gap:0.6rem; margin-top:0.5rem;">
-                <button type="button" id="training-invite-modal-cancel" style="padding:0.55rem 1rem; background:transparent; color:var(--text); border:1.5px solid rgba(32,0,130,0.15); border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Cancel</button>
-                <button type="submit" style="padding:0.55rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Send Invitations</button>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-route" aria-hidden="true"></i> <?= count($learningPathRows) ?> learning path<?= count($learningPathRows) === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-briefcase" aria-hidden="true"></i> <?= count($programRows) ?> program<?= count($programRows) === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-video" aria-hidden="true"></i> <?= count($videoConferenceRows) ?> online training<?= count($videoConferenceRows) === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-star" aria-hidden="true"></i> <?= count($skillRows) ?> skill<?= count($skillRows) === 1 ? '' : 's' ?></span>
+                </div>
             </div>
-        </form>
-    </div>
-</div>
+        </section>
 
-<!-- Archive Confirm Overlay -->
-<div id="archive-confirm-overlay" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="training-archive-title" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10001; align-items:center; justify-content:center;">
-    <div class="ld-modal-panel ld-modal-body" style="background:var(--surface, #fff); border-radius:16px; width:90%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.25); padding:1.5rem;">
-        <h3 id="training-archive-title" style="margin:0 0 0.5rem; font-size:1.1rem; font-weight:800; color:var(--text);">Confirm Archive</h3>
-        <p id="archive-confirm-message" style="margin:0 0 1.25rem; font-size:0.92rem; color:rgba(32,0,130,0.55); line-height:1.5;">Are you sure you want to archive this item?</p>
-        <div class="ld-modal-actions" style="display:flex; gap:0.6rem; justify-content:flex-end;">
-            <button id="archive-confirm-cancel" style="padding:0.5rem 1rem; background:transparent; color:var(--text); border:1.5px solid var(--border); border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Cancel</button>
-            <button id="archive-confirm-ok" style="padding:0.5rem 1rem; background:#dc3545; color:#fff; border:none; border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Archive</button>
+        <div class="catalog-toolbar" id="browse-training">
+            <div class="catalog-search">
+                <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" id="tr-catalog-search-input" placeholder="Search programs, learning paths, sessions..." aria-label="Search training" />
+            </div>
+            <div class="catalog-view-toggle" role="group" aria-label="Result layout">
+                <button type="button" class="active" data-view="grid" title="Grid view" aria-label="Grid view"><i class="fas fa-th-large" aria-hidden="true"></i></button>
+                <button type="button" data-view="list" title="List view" aria-label="List view"><i class="fas fa-list" aria-hidden="true"></i></button>
+            </div>
+            <span class="catalog-count" id="tr-catalog-count"></span>
+            <select id="tr-catalog-page-size" class="cat-page-size" data-display-pref="page_size" aria-label="Items per page" title="Items per page">
+                <option value="12">12</option>
+                <option value="24">24</option>
+                <option value="36">36</option>
+            </select>
+            <div class="catalog-add-wrap" id="tr-catalog-add-wrap">
+                <button type="button" id="tr-catalog-add-btn" class="cat-add-btn">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                    <span class="catalog-add-tip" id="tr-catalog-add-tip">Add Learning Path</span>
+                </button>
+            </div>
         </div>
-    </div>
-</div>
 
-    <style>
-.catalog-tabs{display:flex;gap:6px;margin-bottom:1rem;overflow-x:auto;scrollbar-width:none;background:#e8e4f0;border-radius:12px;padding:4px;}
-.catalog-tabs::-webkit-scrollbar{display:none}
-.catalog-tab-btn{flex:1 1 0;min-width:0;padding:0.55rem 0.5rem;border:none;border-radius:8px;background:rgba(255,255,255,0.7);color:var(--text,#333);font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.35rem;}
-.catalog-tab-btn:hover{background:rgba(255,255,255,0.95)}
-.catalog-tab-btn.active{background:var(--primary,#320082);color:#fff;box-shadow:0 2px 8px rgba(32,0,130,0.3)}
-.catalog-tab-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:rgba(32,0,130,0.1);font-size:0.7rem;font-weight:700;color:var(--text,#333)}
-.catalog-tab-btn.active .catalog-tab-count{background:rgba(255,255,255,0.25);color:#fff}
-.catalog-toolbar{position:sticky;top:calc(var(--header-height,60px) + 0.75rem);z-index:100;display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:linear-gradient(135deg, rgba(32,0,130,0.08), rgba(81,70,183,0.06));border-radius:12px;border:1.5px solid rgba(32,0,130,0.15);margin-bottom:1rem;flex-wrap:wrap;box-shadow:0 4px 16px rgba(32,0,130,0.08);backdrop-filter:blur(10px);}
-.catalog-toolbar .catalog-search input,.catalog-toolbar select,.catalog-toolbar .catalog-view-toggle,.catalog-toolbar .catalog-request-btn{background:var(--surface,#fff)!important;border-color:rgba(32,0,130,0.15)!important;}
-.catalog-search{flex:1;min-width:200px;position:relative;}
-.catalog-search input{width:100%;padding:0.6rem 1rem 0.6rem 2.5rem;border:1.5px solid rgba(32,0,130,0.1);border-radius:10px;background:rgba(32,0,130,0.03);font-size:0.88rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;box-sizing:border-box;}
-.catalog-search input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,0,130,0.08);}
-.catalog-search i{position:absolute;left:0.85rem;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.85rem;}
-.catalog-view-toggle{display:flex;border:1.5px solid rgba(32,0,130,0.1);border-radius:8px;overflow:hidden;}
-.catalog-view-toggle button{padding:0.45rem 0.7rem;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:0.85rem;transition:all 0.15s;}
-.catalog-view-toggle button.active{background:var(--primary);color:#fff;}
-.catalog-request-btn{padding:0.5rem 1rem;background:var(--primary);color:#fff;border:none;border-radius:999px;font-weight:700;font-size:0.82rem;cursor:pointer;white-space:nowrap;transition:opacity 0.2s;}
-.catalog-request-btn:hover{opacity:0.85}
-.catalog-add-wrap{position:relative;display:inline-flex;flex-direction:column;align-items:center;}
-.catalog-add-btn{width:2.4rem;height:2.4rem;border:none;border-radius:50%;background:var(--primary);color:#fff;font-size:1.05rem;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(32,0,130,0.25);transition:transform 0.15s, opacity 0.15s;}
-.catalog-add-label{display:none;}
-.catalog-add-btn:hover{opacity:0.88;transform:scale(1.06);}
-.catalog-add-tip{position:absolute;top:calc(100% + 0.5rem);left:50%;transform:translateX(-50%) translateY(-4px);background:var(--primary);color:#fff;padding:0.35rem 0.8rem;border-radius:999px;font-size:0.75rem;font-weight:700;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.18s, transform 0.18s;z-index:50;box-shadow:0 4px 12px rgba(32,0,130,0.3);}
-.catalog-add-tip::before{content:'';position:absolute;top:-4px;left:50%;transform:translateX(-50%) rotate(45deg);width:8px;height:8px;background:var(--primary);border-radius:2px;}
-.catalog-add-wrap:hover .catalog-add-tip,.catalog-add-wrap:focus-within .catalog-add-tip{opacity:1;transform:translateX(-50%) translateY(0);}
-.catalog-count{font-size:0.8rem;color:var(--muted);white-space:nowrap;}
-.catalog-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:1.5rem;}
-.catalog-card{background:var(--surface,#fff);border-radius:14px;overflow:hidden;border:1px solid rgba(32,0,130,0.08);cursor:pointer;transition:transform 0.25s,box-shadow 0.25s,border-color 0.25s;position:relative;}
-.catalog-card:hover{transform:translateY(-4px);box-shadow:0 12px 35px rgba(32,0,130,0.12);border-color:rgba(32,0,130,0.2);}
-.catalog-card-thumb{height:140px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-.catalog-card-thumb .thumb-icon{font-size:2.5rem;color:rgba(255,255,255,0.9);z-index:1;}
-.catalog-card-thumb .thumb-overlay{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,0.3) 100%);}
-.catalog-card-type-badge{position:absolute;top:0.75rem;left:0.75rem;padding:0.2rem 0.6rem;border-radius:6px;background:rgba(255,255,255,0.9);color:var(--primary);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;z-index:2;backdrop-filter:blur(4px);}
-.catalog-card-body{padding:1rem 1.1rem 0.75rem;}
-.catalog-card-body h4{margin:0 0 0.35rem;font-size:1rem;font-weight:700;color:var(--text);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.catalog-card-body .cc-desc{font-size:0.82rem;color:var(--muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0 0 0.75rem;}
-.catalog-card-stats{display:flex;gap:0.75rem;padding:0.6rem 1.1rem;border-top:1px solid rgba(32,0,130,0.06);font-size:0.75rem;color:var(--muted);}
-.catalog-card-stats span{display:flex;align-items:center;gap:0.3rem;}
-.catalog-card-stats i{color:var(--primary);font-size:0.7rem;}
-.catalog-card-footer{display:flex;align-items:center;justify-content:space-between;padding:0.6rem 1.1rem;border-top:1px solid rgba(32,0,130,0.06);}
-.catalog-card-footer .cc-deadline{font-size:0.75rem;color:var(--muted);}
-.cc-enroll-btn{padding:0.45rem 1rem;border-radius:999px;border:none;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
-.cc-enroll-btn.enroll{background:var(--primary);color:#fff;}
-.cc-enroll-btn.enroll:hover{opacity:0.85;transform:scale(1.03);}
-.catalog-grid.list-view{grid-template-columns:1fr;gap:0.75rem;}
-.catalog-grid.list-view .catalog-card{display:flex;flex-direction:row;}
-.catalog-grid.list-view .catalog-card-thumb{width:180px;height:auto;min-height:120px;flex-shrink:0;}
-.catalog-grid.list-view .catalog-card-body,.catalog-grid.list-view .catalog-card-stats,.catalog-grid.list-view .catalog-card-footer{border-top:none;}
-.catalog-grid.list-view .catalog-card-body{flex:1;padding-top:1rem;}
-@media(max-width:1200px){.catalog-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:900px){.catalog-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:768px){.catalog-grid{grid-template-columns:repeat(2,1fr);gap:1rem}.catalog-toolbar{flex-wrap:nowrap}.catalog-search{min-width:0;flex:1}}
-@media(max-width:480px){
-    .catalog-grid{grid-template-columns:1fr}
-    .catalog-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"search search add" "view count size";align-items:center;gap:0.6rem;padding:0.75rem;}
-    .catalog-toolbar .catalog-search{grid-area:search;width:100%;min-width:0;}
-    .catalog-toolbar .catalog-view-toggle{grid-area:view;}
-    .catalog-toolbar .catalog-count{grid-area:count;justify-self:end;}
-    .catalog-toolbar select{grid-area:size;min-width:3.5rem;}
-    .catalog-add-wrap{grid-area:add;flex-direction:row;justify-self:end;}
-    .catalog-add-btn{width:auto;height:44px;min-width:44px;padding:0 0.75rem;border-radius:9px;gap:0.45rem;font-size:0.85rem;}
-    .catalog-add-label{display:inline;}
-    .catalog-add-tip{display:none;}
-    .catalog-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.5rem;overflow:visible;background:transparent;padding:0;}
-    .catalog-tab-btn{min-height:48px;min-width:0;padding:0.65rem 0.75rem;flex:none;justify-content:flex-start;gap:0.45rem;font-size:0.82rem;text-align:left;white-space:normal;}
-    .catalog-tab-count{margin-left:auto;flex-shrink:0;}
-}
-</style>
+        <div class="catalog-tabs" id="tr-catalog-tabs">
+            <button type="button" class="catalog-tab-btn active" data-tab="tab-learning-path">
+                <i class="fas fa-route" aria-hidden="true"></i> Learning Path
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-program">
+                <i class="fas fa-briefcase" aria-hidden="true"></i> Program
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-video-conference">
+                <i class="fas fa-video" aria-hidden="true"></i> Online Training
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-skills">
+                <i class="fas fa-star" aria-hidden="true"></i> Skills
+            </button>
+        </div>
 
-    <div class="catalog-toolbar" id="browse-training">
-        <div class="catalog-search">
-            <i class="fas fa-search"></i>
-            <input type="search" id="tr-catalog-search-input" placeholder="Search programs, learning paths, sessions..." aria-label="Search training" />
-        </div>
-        <div class="catalog-view-toggle">
-            <button type="button" class="active" data-view="grid" title="Grid view"><i class="fas fa-th"></i></button>
-            <button type="button" data-view="list" title="List view"><i class="fas fa-list"></i></button>
-        </div>
-        <span class="catalog-count" id="tr-catalog-count"></span>
-        <select id="tr-catalog-page-size" data-display-pref="page_size" style="border:1.5px solid rgba(32,0,130,0.2); background:var(--surface,#fff); color:var(--text,#333); border-radius:8px; padding:0.45rem 0.6rem; font-size:0.78rem; font-weight:600; cursor:pointer; outline:none;">
-            <option value="12">12</option>
-            <option value="24">24</option>
-            <option value="36">36</option>
-        </select>
-        <div class="catalog-add-wrap" id="tr-catalog-add-wrap">
-            <button type="button" id="tr-catalog-add-btn" class="catalog-add-btn" title="Add Learning Path" aria-label="Add Learning Path"><i class="fas fa-plus"></i><span class="catalog-add-label">Add Learning Path</span></button>
-            <span class="catalog-add-tip" id="tr-catalog-add-tip">Add Learning Path</span>
-        </div>
-    </div>
-
-    <div class="catalog-tabs" id="tr-catalog-tabs">
-        <button type="button" class="catalog-tab-btn active" data-tab="tab-learning-path">
-            <i class="fas fa-route"></i> Learning Path
-            <span class="catalog-tab-count"><?= count($learningPathRows) ?></span>
-        </button>
-        <button type="button" class="catalog-tab-btn" data-tab="tab-program">
-            <i class="fas fa-briefcase"></i> Program
-            <span class="catalog-tab-count"><?= count($programRows) ?></span>
-        </button>
-        <button type="button" class="catalog-tab-btn" data-tab="tab-video-conference">
-            <i class="fas fa-video"></i> Online Training
-            <span class="catalog-tab-count"><?= count($videoConferenceRows) ?></span>
-        </button>
-        <button type="button" class="catalog-tab-btn" data-tab="tab-skills">
-            <i class="fas fa-star"></i> Skills
-            <span class="catalog-tab-count"><?= count($skillRows) ?></span>
-        </button>
-    </div>
-<div class="tab-content active" data-tab="tab-learning-path">
-            <div class="mode-card">
-                <h2>Learning Path Management</h2>
+        <div class="tab-content active" data-tab="tab-learning-path">
+            <div class="cat-section-intro">
+                <h3>Learning Path Management</h3>
                 <p>Compose ordered learning paths from courses, quizzes, evaluations, and programs.</p>
-                <div class="catalog-grid">
+            </div>
+            <div class="catalog-grid">
                 <?php renderTrainingCards($learningPathRows, 'Learning Path', '?page=instructor/learning-path'); ?>
-                </div>
             </div>
         </div>
 
         <div class="tab-content" data-tab="tab-program">
-            <div class="mode-card">
-                <h2>Program Management</h2>
+            <div class="cat-section-intro">
+                <h3>Program Management</h3>
                 <p>Manage training programs, schedule sessions, and assign program-level learning objectives.</p>
-                <div class="catalog-grid">
+            </div>
+            <div class="catalog-grid">
                 <?php renderTrainingCards($programRows, 'Program', '?page=instructor/training-subpage/program'); ?>
-                </div>
             </div>
         </div>
 
         <div class="tab-content" data-tab="tab-video-conference">
-            <div class="mode-card">
-                <h2>Video Conference Management</h2>
+            <div class="cat-section-intro">
+                <h3>Online Training Management</h3>
                 <p>Set up online training sessions, host virtual training, and manage attendance links.</p>
-                <div class="catalog-grid">
+            </div>
+            <div class="catalog-grid">
                 <?php renderTrainingCards($videoConferenceRows, 'Video Conference', '?page=instructor/training-subpage/video-conference'); ?>
-                </div>
             </div>
         </div>
 
         <div class="tab-content" data-tab="tab-skills">
-            <div class="mode-card">
-                <h2>Skills</h2>
+            <div class="cat-section-intro">
+                <h3>Skills</h3>
                 <p>Explore skills linked to e-learning courses and training modules.</p>
-                <div id="tr-skills-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1rem; margin-top:1rem;">
-                    <?php
-                    $skillIcons = ['fas fa-tasks','fas fa-users','fas fa-comments','fas fa-pen','fas fa-chart-bar','fas fa-shield-alt','fas fa-code','fas fa-headset','fas fa-clock','fas fa-lightbulb','fas fa-dollar-sign','fas fa-handshake','fas fa-sync-alt','fas fa-check-double','fas fa-user-tie','fas fa-chess','fas fa-boxes','fas fa-gavel'];
-                    $skillColors = ['#320082','#5146b7','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#4f46e5','#0d9488','#7c2d12','#1d4ed8','#9333ea','#16a34a','#ca8a04','#e11d48','#0284c7','#7c3aed'];
-                    foreach ($skillRows as $idx => $skill):
-                        $icon = $skillIcons[$idx % count($skillIcons)];
-                        $color = $skillColors[$idx % count($skillColors)];
-                        $courseCount = count($skill['courses']);
-                        $moduleCount = count($skill['modules']);
-                        $totalItems = $courseCount + $moduleCount;
-                    ?>
-                        <div class="skill-card-item" onclick="openSkillModal(<?= (int)$skill['id'] ?>)" style="cursor:pointer; background:var(--surface, #fff); border:1px solid rgba(32,0,130,0.1); border-radius:14px; padding:1.25rem; transition:transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-                            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.85rem;">
-                                <div style="width:44px; height:44px; border-radius:12px; background:<?= $color ?>; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="fas <?= $icon ?>"></i></div>
-                                <div style="flex:1; min-width:0;">
-                                    <h3 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= htmlspecialchars($skill['name']) ?></h3>
-                                    <span style="font-size:0.72rem; color:rgba(32,0,130,0.45);"><?= $totalItems ?> linked item<?= $totalItems !== 1 ? 's' : '' ?></span>
-                                </div>
-                            </div>
-                            <p style="margin:0; font-size:0.8rem; color:rgba(32,0,130,0.55); line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;"><?= htmlspecialchars(mb_substr($skill['description'], 0, 120)) ?>...</p>
-                            <div style="display:flex; gap:0.4rem; margin-top:0.75rem; flex-wrap:wrap;">
-                                <?php if ($courseCount > 0): ?><span style="font-size:0.7rem; padding:0.2rem 0.5rem; background:rgba(32,0,130,0.08); border-radius:999px; color:var(--primary); font-weight:600;"><?= $courseCount ?> Course<?= $courseCount !== 1 ? 's' : '' ?></span><?php endif; ?>
-                                <?php if ($moduleCount > 0): ?><span style="font-size:0.7rem; padding:0.2rem 0.5rem; background:rgba(81,70,183,0.1); border-radius:999px; color:var(--primary); font-weight:600;"><?= $moduleCount ?> Module<?= $moduleCount !== 1 ? 's' : '' ?></span><?php endif; ?>
+            </div>
+            <div id="tr-skills-grid" class="catalog-grid">
+                <?php
+                $skillIcons = ['fas fa-tasks','fas fa-users','fas fa-comments','fas fa-pen','fas fa-chart-bar','fas fa-shield-alt','fas fa-code','fas fa-headset','fas fa-clock','fas fa-lightbulb','fas fa-dollar-sign','fas fa-handshake','fas fa-sync-alt','fas fa-check-double','fas fa-user-tie','fas fa-chess','fas fa-boxes','fas fa-gavel'];
+                $skillColors = ['#320082','#5146b7','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#4f46e5','#0d9488','#7c2d12','#1d4ed8','#9333ea','#16a34a','#ca8a04','#e11d48','#0284c7','#7c3aed'];
+                foreach ($skillRows as $idx => $skill):
+                    $icon = $skillIcons[$idx % count($skillIcons)];
+                    $color = $skillColors[$idx % count($skillColors)];
+                    $courseCount = count($skill['courses']);
+                    $moduleCount = count($skill['modules']);
+                    $totalItems = $courseCount + $moduleCount;
+                    $skillDesc = (string) ($skill['description'] ?? '');
+                ?>
+                    <div class="skill-card-item catalog-skill" onclick="openSkillModal(<?= (int) $skill['id'] ?>)">
+                        <div class="catalog-skill-head">
+                            <div class="catalog-skill-icon" style="background:<?= htmlspecialchars($color) ?>;"><i class="<?= htmlspecialchars($icon) ?>" aria-hidden="true"></i></div>
+                            <div style="flex:1; min-width:0;">
+                                <h3 class="catalog-skill-name"><?= htmlspecialchars($skill['name']) ?></h3>
+                                <span class="catalog-skill-meta"><?= $totalItems ?> linked item<?= $totalItems !== 1 ? 's' : '' ?></span>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="pagination-row" id="skills-pagination">
-                    <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
-                    <span class="page-indicator">Page 1 of 1</span>
-                    <button type="button" class="page-btn" data-action="next">Next</button>
-                </div>
+                        <p class="catalog-skill-desc"><?= htmlspecialchars(mb_substr($skillDesc, 0, 120)) ?><?= mb_strlen($skillDesc) > 120 ? '&hellip;' : '' ?></p>
+                        <div class="catalog-skill-tags">
+                            <?php if ($courseCount > 0): ?><span class="catalog-skill-tag"><?= $courseCount ?> Course<?= $courseCount !== 1 ? 's' : '' ?></span><?php endif; ?>
+                            <?php if ($moduleCount > 0): ?><span class="catalog-skill-tag"><?= $moduleCount ?> Module<?= $moduleCount !== 1 ? 's' : '' ?></span><?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
             </div>
+            <div class="pagination-row" id="skills-pagination">
+                <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
+                <span class="page-indicator">Page 1 of 1</span>
+                <button type="button" class="page-btn" data-action="next">Next</button>
+            </div>
+        </div>
+
+        <!-- Catalog Empty State -->
+        <div class="catalog-empty" id="tr-catalog-empty" style="display:none;">
+            <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+            <h4>No items found</h4>
+            <p>Try selecting a different tab or adjusting your search.</p>
+        </div>
+
+        <!-- Catalog Pagination -->
+        <div class="pagination-row" id="tr-catalog-pagination">
+            <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
+            <span class="page-indicator">Page 1 of 1</span>
+            <button type="button" class="page-btn" data-action="next">Next</button>
         </div>
     </div>
 
-    <!-- Catalog Empty State -->
-    <div class="catalog-empty" id="tr-catalog-empty" style="display:none;">
-        <i class="fas fa-search"></i>
-        <h4>No items found</h4>
-        <p>Try selecting a different tab or adjusting your search.</p>
-    </div>
-
-    <!-- Catalog Pagination -->
-    <div class="pagination-row" id="tr-catalog-pagination">
-        <button type="button" class="page-btn" data-action="prev" disabled>Prev</button>
-        <span class="page-indicator">Page 1 of 1</span>
-        <button type="button" class="page-btn" data-action="next">Next</button>
-    </div>
-
-<!-- Skill Detail Modal -->
-<div id="skill-modal-overlay" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="skill-modal-name" style="display:none; z-index:10000; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px);">
-    <div class="ld-modal-panel" style="background:var(--surface, #fff); border-radius:18px; width:90%; max-width:650px; max-height:82vh; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.25); display:flex; flex-direction:column;">
-        <div class="ld-modal-header" style="padding:1.5rem 1.5rem 1rem; border-bottom:1px solid rgba(32,0,130,0.08);">
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-                <div style="display:flex; align-items:center; gap:0.75rem;">
-                    <div id="skill-modal-icon" style="width:48px; height:48px; border-radius:14px; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.2rem;"></div>
-                    <div>
-                        <h2 id="skill-modal-name" style="margin:0; font-size:1.2rem; font-weight:800; color:var(--text);"></h2>
-                        <span id="skill-modal-count" style="font-size:0.78rem; color:rgba(32,0,130,0.45);"></span>
+    <!-- Skill Detail Modal -->
+    <div id="skill-modal-overlay" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="skill-modal-name" style="display:none;">
+        <div class="ld-modal-panel">
+            <div class="ld-modal-header">
+                <div style="display:flex; align-items:center; gap:0.75rem; min-width:0;">
+                    <div id="skill-modal-icon" class="catalog-skill-icon" style="background:var(--primary);"></div>
+                    <div style="min-width:0;">
+                        <h2 id="skill-modal-name"></h2>
+                        <span id="skill-modal-count" class="catalog-skill-meta"></span>
                     </div>
                 </div>
-                <button class="ld-modal-close" aria-label="Close skill details" onclick="document.getElementById('skill-modal-overlay').style.display='none'" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:rgba(32,0,130,0.4); padding:0.25rem;"><i class="fas fa-times"></i></button>
+                <button type="button" class="cat-modal-close" aria-label="Close skill details" onclick="document.getElementById('skill-modal-overlay').style.display='none'"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
+            <div id="skill-modal-body" class="ld-modal-body"></div>
         </div>
-        <div id="skill-modal-body" class="ld-modal-body" style="padding:1.25rem 1.5rem; overflow-y:auto; flex:1;"></div>
     </div>
 </div>
 
@@ -408,6 +357,11 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
 var _skillData = <?= json_encode($skillRows, JSON_HEX_APOS | JSON_HEX_TAG) ?>;
 var _skillIcons = ['fas fa-tasks','fas fa-users','fas fa-comments','fas fa-pen','fas fa-chart-bar','fas fa-shield-alt','fas fa-code','fas fa-headset','fas fa-clock','fas fa-lightbulb','fas fa-dollar-sign','fas fa-handshake','fas fa-sync-alt','fas fa-check-double','fas fa-user-tie','fas fa-chess','fas fa-boxes','fas fa-gavel'];
 var _skillColors = ['#320082','#5146b7','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#4f46e5','#0d9488','#7c2d12','#1d4ed8','#9333ea','#16a34a','#ca8a04','#e11d48','#0284c7','#7c3aed'];
+function escSkill(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+}
 function openSkillModal(skillId) {
     var skill = _skillData.find(function(s) { return s.id == skillId; });
     if (!skill) return;
@@ -420,34 +374,34 @@ function openSkillModal(skillId) {
     var courses = skill.courses || [];
     var modules = skill.modules || [];
     document.getElementById('skill-modal-count').textContent = (courses.length + modules.length) + ' linked item' + ((courses.length + modules.length) !== 1 ? 's' : '');
-    var body = '<div style="margin-bottom:1.25rem;">';
-    body += '<h3 style="margin:0 0 0.5rem; font-size:0.8rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em;">Description</h3>';
-    body += '<p style="margin:0; font-size:0.92rem; line-height:1.7; color:var(--text);">' + (skill.description || 'No description available.') + '</p>';
+    var body = '<div class="cat-block">';
+    body += '<h3 class="cat-mini-title">Description</h3>';
+    body += '<p style="margin:0; font-size:0.92rem; line-height:1.7; color:var(--text);">' + escSkill(skill.description || 'No description available.') + '</p>';
     body += '</div>';
     if (courses.length > 0) {
-        body += '<div style="margin-bottom:1.25rem;">';
-        body += '<h3 style="margin:0 0 0.6rem; font-size:0.8rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em;"><i class="fas fa-book" style="margin-right:0.4rem;"></i>Linked Courses (' + courses.length + ')</h3>';
-        body += '<div style="display:grid; gap:0.5rem;">';
+        body += '<div class="cat-block">';
+        body += '<h3 class="cat-mini-title"><i class="fas fa-book" aria-hidden="true"></i>Linked Courses (' + courses.length + ')</h3>';
+        body += '<div class="cat-list">';
         courses.forEach(function(c) {
-            body += '<div style="display:flex; align-items:center; gap:0.75rem; padding:0.8rem 1rem; background:rgba(32,0,130,0.04); border:1px solid rgba(32,0,130,0.08); border-radius:10px;">';
-            body += '<div style="width:36px; height:36px; border-radius:8px; background:rgba(32,0,130,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-book"></i></div>';
-            body += '<div style="flex:1; min-width:0;"><div style="font-weight:700; color:var(--text); font-size:0.9rem;">' + c.title + '</div><div style="font-size:0.75rem; color:rgba(32,0,130,0.45);">Course</div></div></div>';
+            body += '<div class="cat-list-item">';
+            body += '<div class="cat-list-icon"><i class="fas fa-book" aria-hidden="true"></i></div>';
+            body += '<div class="cat-list-body"><div class="cat-list-title">' + escSkill(c.title) + '</div><div class="cat-list-meta">Course</div></div></div>';
         });
         body += '</div></div>';
     }
     if (modules.length > 0) {
-        body += '<div>';
-        body += '<h3 style="margin:0 0 0.6rem; font-size:0.8rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em;"><i class="fas fa-cubes" style="margin-right:0.4rem;"></i>Linked Modules (' + modules.length + ')</h3>';
-        body += '<div style="display:grid; gap:0.5rem;">';
+        body += '<div class="cat-block">';
+        body += '<h3 class="cat-mini-title"><i class="fas fa-cubes" aria-hidden="true"></i>Linked Modules (' + modules.length + ')</h3>';
+        body += '<div class="cat-list">';
         modules.forEach(function(m) {
-            body += '<div style="display:flex; align-items:center; gap:0.75rem; padding:0.8rem 1rem; background:rgba(81,70,183,0.04); border:1px solid rgba(81,70,183,0.08); border-radius:10px;">';
-            body += '<div style="width:36px; height:36px; border-radius:8px; background:rgba(81,70,183,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;"><i class="fas fa-cubes"></i></div>';
-            body += '<div style="flex:1; min-width:0;"><div style="font-weight:700; color:var(--text); font-size:0.9rem;">' + m.title + '</div><div style="font-size:0.75rem; color:rgba(32,0,130,0.45);">' + (m.course_title || '') + '</div></div></div>';
+            body += '<div class="cat-list-item">';
+            body += '<div class="cat-list-icon"><i class="fas fa-cubes" aria-hidden="true"></i></div>';
+            body += '<div class="cat-list-body"><div class="cat-list-title">' + escSkill(m.title) + '</div><div class="cat-list-meta">' + escSkill(m.course_title || '') + '</div></div></div>';
         });
         body += '</div></div>';
     }
     if (courses.length === 0 && modules.length === 0) {
-        body += '<div style="text-align:center; padding:1.5rem; color:rgba(32,0,130,0.35);"><i class="fas fa-link" style="font-size:1.5rem; display:block; margin-bottom:0.5rem;"></i>No courses or modules linked to this skill yet.</div>';
+        body += '<div class="cat-empty-note"><i class="fas fa-link" aria-hidden="true"></i>No courses or modules linked to this skill yet.</div>';
     }
     document.getElementById('skill-modal-body').innerHTML = body;
     document.getElementById('skill-modal-overlay').style.display = 'flex';
@@ -560,10 +514,8 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             const isActive = state.activeTab === btn.dataset.contentTab;
             const label = btn.dataset.label || btn.textContent.trim();
             const icon = btn.dataset.icon || '';
-            btn.innerHTML = `${icon} ${label}`;
-            btn.style.background = isActive ? 'rgba(32,0,130,0.08)' : 'var(--surface, #fff)';
-            btn.style.border = isActive ? 'none' : '1px solid rgba(32,0,130,0.12)';
-            btn.style.color = isActive ? 'var(--primary)' : 'var(--text)';
+            btn.innerHTML = `${icon}${label}`;
+            btn.classList.toggle('active', isActive);
         });
         document.querySelectorAll('.entity-content-panel').forEach((panel) => {
             panel.style.display = panel.id === 'tr-entity-content-' + state.activeTab ? 'block' : 'none';
@@ -602,7 +554,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
 
     function loadTrainingTree(type, id, container) {
         if (!container) return;
-        container.innerHTML = '<p style="text-align:center; color:#999;">Loading training structure...</p>';
+        container.innerHTML = '<div class="ec-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i>Loading training structure...</div>';
 
         fetch(`pages/instructor/ajax/get-training-structure.php?type=${encodeURIComponent(type)}&id=${id}`, {
             credentials: 'same-origin',
@@ -618,40 +570,40 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             const parent = data.parent || { title: 'Parent item', type, id };
             const children = Array.isArray(data.children) ? data.children : [];
             const parentRow = `
-                <div style="padding:1rem 1.2rem; border:1px solid rgba(32,0,130,0.12); border-radius:12px; background:var(--surface, #fff);">
-                    <div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; font-weight:700; color:var(--primary);">PARENT</div>
-                    <div style="margin-top:0.7rem; display:flex; align-items:center; gap:0.75rem; padding:0.75rem 0.9rem; background:rgba(32,0,130,0.06); border-radius:8px; min-height:52px;">
-                        <div style="flex:1; color:var(--text); font-weight:700; font-size:1.02rem;">${parent.title || 'Untitled parent'}</div>
-                        <div style="display:flex; gap:0.35rem;">
-                            <button class="modal-view-child-btn" data-entity-type="${type}" data-entity-id="${id}" style="padding:0.35rem 0.7rem; font-size:0.72rem; background:rgba(32,0,130,0.12); color:var(--primary); border:1px solid rgba(32,0,130,0.2); border-radius:4px; cursor:pointer; font-weight:600;">View</button>
-                            <button class="modal-edit-child-btn" data-edit-url="${getEditUrl(type, id)}" style="padding:0.35rem 0.7rem; font-size:0.72rem; background:var(--primary); color:var(--surface); border:none; border-radius:4px; cursor:pointer; font-weight:600;">Edit</button>
+                <div class="cat-struct-panel">
+                    <div class="cat-mini-title">Parent</div>
+                    <div class="cat-struct-row is-parent">
+                        <div class="cat-struct-title">${parent.title || 'Untitled parent'}</div>
+                        <div class="cat-struct-actions">
+                            <button class="modal-view-child-btn cat-mini-btn" data-entity-type="${type}" data-entity-id="${id}">View</button>
+                            <button class="modal-edit-child-btn cat-mini-btn cat-mini-btn--primary" data-edit-url="${getEditUrl(type, id)}">Edit</button>
                         </div>
                     </div>
                 </div>
             `;
 
             const childRows = children.length > 0 ? children.map((node) => `
-                <div style="margin-bottom:0.4rem;">
-                    <div class="modal-toggle-item" data-toggle-target="training-${type}-${node.id}" style="display:flex; align-items:center; gap:0.75rem; padding:0.7rem 0.8rem; background:rgba(81,70,183,0.06); border-radius:8px; cursor:pointer; min-height:46px;">
-                        <span class="modal-toggle-arrow" style="font-weight:700; color:var(--text); min-width:1.1rem; font-size:1rem;">•</span>
-                        <span style="flex:1; font-weight:700; color:var(--text); font-size:1rem; display:flex; align-items:center; gap:0.5rem;">
-                            <i class="fas fa-clipboard-list" style="font-size:0.9rem;"></i>
+                <div>
+                    <div class="modal-toggle-item cat-struct-row is-child" data-toggle-target="training-${type}-${node.id}">
+                        <span class="modal-toggle-arrow cat-struct-arrow">•</span>
+                        <span class="cat-struct-title">
+                            <i class="fas fa-clipboard-list" aria-hidden="true"></i>
                             <span>${node.title || 'Untitled item'}</span>
                         </span>
-                        <div style="display:flex; gap:0.25rem;">
-                            <button class="modal-view-child-btn" data-entity-type="${node.type}" data-entity-id="${node.id}" style="padding:0.3rem 0.55rem; font-size:0.72rem; background:rgba(32,0,130,0.12); color:var(--primary); border:1px solid rgba(32,0,130,0.2); border-radius:4px; cursor:pointer; font-weight:600;">View</button>
-                            <button class="modal-edit-child-btn" data-edit-url="${getEditUrl(node.type, node.id)}" style="padding:0.3rem 0.55rem; font-size:0.72rem; background:var(--primary); color:var(--surface); border:none; border-radius:4px; cursor:pointer; font-weight:600;">Edit</button>
+                        <div class="cat-struct-actions">
+                            <button class="modal-view-child-btn cat-mini-btn" data-entity-type="${node.type}" data-entity-id="${node.id}">View</button>
+                            <button class="modal-edit-child-btn cat-mini-btn cat-mini-btn--primary" data-edit-url="${getEditUrl(node.type, node.id)}">Edit</button>
                         </div>
                     </div>
                 </div>
-            `).join('') : '<div style="color:#999; font-size:0.85rem;">No child items</div>';
+            `).join('') : '<div class="ec-empty is-inline">No child items</div>';
 
             container.innerHTML = `
-                <div style="display:grid; gap:1rem;">
+                <div class="cat-struct">
                     ${parentRow}
-                    <div style="padding:1rem 1.2rem; border:1px solid rgba(32,0,130,0.12); border-radius:12px; background:var(--surface, #fff);">
-                        <div style="font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; font-weight:700; color:var(--primary);">CHILDREN</div>
-                        <div style="margin-top:0.7rem; display:grid; gap:0.5rem; color:var(--text);">
+                    <div class="cat-struct-panel">
+                        <div class="cat-mini-title">Children</div>
+                        <div class="cat-struct-list">
                             ${childRows}
                         </div>
                     </div>
@@ -694,7 +646,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         })
         .catch((error) => {
             console.error('Error loading training structure:', error);
-            container.innerHTML = '<p style="color:#999; text-align:center;">Unable to load training structure</p>';
+            container.innerHTML = '<div class="ec-empty is-inline is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Unable to load training structure</div>';
         });
     }
 
@@ -902,6 +854,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     // Catalog navigation (tabs, search, view toggle, pagination)
     var catalogSearchInput = document.getElementById('tr-catalog-search-input');
     var catalogCountEl = document.getElementById('tr-catalog-count');
+    var catalogEmptyEl = document.getElementById('tr-catalog-empty');
     var catalogPaginationEl = document.getElementById('tr-catalog-pagination');
     var catalogActiveTab = 'tab-learning-path';
     var catalogPageSize = 12;
@@ -947,6 +900,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         cards.forEach(function(c) { c.style.display = 'none'; });
         visible.forEach(function(c, i) { c.style.display = (i >= start && i < start + catalogPageSize) ? '' : 'none'; });
         if (catalogCountEl) catalogCountEl.textContent = visible.length + ' items';
+        if (catalogEmptyEl) catalogEmptyEl.style.display = (catalogActiveTab !== 'tab-skills' && visible.length === 0) ? '' : 'none';
         if (catalogPaginationEl) {
             catalogPaginationEl.querySelector('.page-indicator').textContent = 'Page ' + catalogPage + ' of ' + totalPages;
             catalogPaginationEl.querySelector('[data-action="prev"]').disabled = catalogPage <= 1;
@@ -1009,7 +963,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         if (!btn) return;
         e.stopPropagation();
         btn.disabled = true;
-        fetch('../../modules/exit/pages/ajax/toggle-kt-path-public.php', {
+        fetch('pages/instructor/ajax/toggle-kt-path-public.php', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -1019,8 +973,8 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         .then(function(data) {
             if (data.success) {
                 btn.textContent = data.is_public ? 'Public' : 'Private';
-                btn.style.background = data.is_public ? 'rgba(5,150,105,0.1)' : 'rgba(100,100,100,0.1)';
-                btn.style.color = data.is_public ? '#059669' : '#666';
+                btn.classList.toggle('is-public', !!data.is_public);
+                btn.classList.toggle('is-private', !data.is_public);
             }
             btn.disabled = false;
         })

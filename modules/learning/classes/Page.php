@@ -240,7 +240,8 @@ class Page {
             echo '</div>';
             // The panel opens on arrival so the tools stay discoverable, then tucks
             // itself away so it stops covering the page content. Reaching for it
-            // cancels that. Small screens keep the old behaviour: closed until asked.
+            // (pointer or keyboard) cancels that. Small screens keep the old
+            // behaviour: closed until asked.
             echo '<script>(function () {
                 var drawer = document.getElementById("learner-tools-drawer");
                 if (!drawer) return;
@@ -256,10 +257,12 @@ class Page {
                 var autoHide = setTimeout(function () {
                     autoHide = null;
                     if (drawer.classList.contains("is-open")) hideTools();
-                }, 3000);
+                }, 6000);
                 function keepOpen() { if (autoHide) { clearTimeout(autoHide); autoHide = null; } }
                 drawer.addEventListener("pointerdown", keepOpen, true);
                 drawer.addEventListener("click", keepOpen, true);
+                drawer.addEventListener("pointerenter", keepOpen);
+                drawer.addEventListener("focusin", keepOpen);
             })();</script>';
             echo '<div class="learner-tools-content">' . $errorBanner . $pageOutput . '</div>';
         } else {

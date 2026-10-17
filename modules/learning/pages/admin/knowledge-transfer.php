@@ -68,137 +68,139 @@ function ktDate(?string $date): string {
 ?>
 <?php include __DIR__ . '/../../includes/admin-user-navigation.php'; ?>
 <div class="module-content kt-page">
-    <section class="home-hero">
-        <div class="home-hero-main">
-            <h1>Knowledge Transfer</h1>
-            <p>Handover plans between leaving employees and the successors taking over their work.</p>
-        </div>
-        <div class="home-hero-aside">
-            <div class="home-hero-chips">
-                <span class="home-hero-chip"><i class="fas fa-exchange-alt"></i> <?= (int) $stats['total'] ?> plan<?= $stats['total'] !== 1 ? 's' : '' ?></span>
-                <span class="home-hero-chip"><i class="fas fa-bolt"></i> <?= (int) $stats['active'] ?> active</span>
+    <div class="home-dashboard">
+        <section class="home-hero">
+            <div class="home-hero-main">
+                <h1>Knowledge Transfer</h1>
+                <p>Handover plans between leaving employees and the successors taking over their work.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-exchange-alt"></i> <?= (int) $stats['total'] ?> plan<?= $stats['total'] !== 1 ? 's' : '' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-bolt"></i> <?= (int) $stats['active'] ?> active</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="home-stats">
+            <div class="home-stat">
+                <span class="home-stat-icon tone-violet"><i class="fas fa-exchange-alt"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Total Plans</span>
+                    <span class="home-stat-value"><?= (int) $stats['total'] ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['cancelled'] ?> cancelled</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-emerald"><i class="fas fa-play-circle"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Active</span>
+                    <span class="home-stat-value"><?= (int) $stats['active'] ?></span>
+                    <span class="home-stat-sub">in progress</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-indigo"><i class="fas fa-check-circle"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Completed</span>
+                    <span class="home-stat-value"><?= (int) $stats['completed'] ?></span>
+                    <span class="home-stat-sub">handovers closed</span>
+                </span>
+            </div>
+            <div class="home-stat">
+                <span class="home-stat-icon tone-amber"><i class="fas fa-list-check"></i></span>
+                <span class="home-stat-body">
+                    <span class="home-stat-label">Transfer Items</span>
+                    <span class="home-stat-value"><?= (int) $stats['items_total'] ?></span>
+                    <span class="home-stat-sub"><?= (int) $stats['items_completed'] ?> completed</span>
+                </span>
             </div>
         </div>
-    </section>
 
-    <div class="home-stats">
-        <div class="home-stat">
-            <span class="home-stat-icon tone-violet"><i class="fas fa-exchange-alt"></i></span>
-            <span class="home-stat-body">
-                <span class="home-stat-label">Total Plans</span>
-                <span class="home-stat-value"><?= (int) $stats['total'] ?></span>
-                <span class="home-stat-sub"><?= (int) $stats['cancelled'] ?> cancelled</span>
-            </span>
+        <div class="kt-toolbar">
+            <label class="kt-search">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="search" id="kt-search" placeholder="Search by employee, successor, or status..." aria-label="Search knowledge transfer plans" />
+            </label>
+            <label class="kt-filter">
+                <select id="kt-status-filter" aria-label="Filter plans by status">
+                    <option value="">All Statuses</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </label>
+            <span id="kt-count" class="kt-count" aria-live="polite"><?= (int) $stats['total'] ?> plan<?= $stats['total'] !== 1 ? 's' : '' ?></span>
         </div>
-        <div class="home-stat">
-            <span class="home-stat-icon tone-emerald"><i class="fas fa-play-circle"></i></span>
-            <span class="home-stat-body">
-                <span class="home-stat-label">Active</span>
-                <span class="home-stat-value"><?= (int) $stats['active'] ?></span>
-                <span class="home-stat-sub">in progress</span>
-            </span>
-        </div>
-        <div class="home-stat">
-            <span class="home-stat-icon tone-indigo"><i class="fas fa-check-circle"></i></span>
-            <span class="home-stat-body">
-                <span class="home-stat-label">Completed</span>
-                <span class="home-stat-value"><?= (int) $stats['completed'] ?></span>
-                <span class="home-stat-sub">handovers closed</span>
-            </span>
-        </div>
-        <div class="home-stat">
-            <span class="home-stat-icon tone-amber"><i class="fas fa-list-check"></i></span>
-            <span class="home-stat-body">
-                <span class="home-stat-label">Transfer Items</span>
-                <span class="home-stat-value"><?= (int) $stats['items_total'] ?></span>
-                <span class="home-stat-sub"><?= (int) $stats['items_completed'] ?> completed</span>
-            </span>
-        </div>
-    </div>
 
-    <div class="kt-toolbar">
-        <label class="kt-search">
-            <i class="fas fa-search" aria-hidden="true"></i>
-            <input type="search" id="kt-search" placeholder="Search by employee, successor, or status..." aria-label="Search knowledge transfer plans" />
-        </label>
-        <label class="kt-filter">
-            <select id="kt-status-filter" aria-label="Filter plans by status">
-                <option value="">All Statuses</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-            </select>
-        </label>
-        <span id="kt-count" class="kt-count" aria-live="polite"><?= (int) $stats['total'] ?> plan<?= $stats['total'] !== 1 ? 's' : '' ?></span>
-    </div>
-
-    <div id="kt-plans-grid" class="kt-grid">
-        <?php if (empty($plans)): ?>
-            <div id="kt-empty" class="kt-empty">
-                <i class="fas fa-exchange-alt" aria-hidden="true"></i>
-                <strong>No knowledge transfer plans found</strong>
-                <span>Plans are created from the Exit Management module.</span>
-            </div>
-        <?php else: ?>
-            <?php foreach ($plans as $plan):
-                [$badgeClass, $badgeLabel] = ktStatusMeta((string) $plan['status']);
-                $itemCount = (int) $plan['item_count'];
-                $itemsDone = (int) $plan['items_done'];
-                $progress = $itemCount > 0 ? (int) round(($itemsDone / $itemCount) * 100) : 0;
-                $employee = $plan['employee_name'] !== '' && $plan['employee_name'] !== null ? $plan['employee_name'] : 'N/A';
-            ?>
-                <article class="kt-plan-card" data-id="<?= (int) $plan['id'] ?>"
-                         data-status="<?= htmlspecialchars((string) $plan['status'], ENT_QUOTES, 'UTF-8') ?>"
-                         data-search="<?= ktSearchKey($plan) ?>">
-                    <div class="kt-card-head">
-                        <span class="kt-card-avatar"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
-                        <div class="kt-card-ident">
-                            <h3 class="kt-card-name"><?= htmlspecialchars($employee) ?></h3>
-                            <span class="kt-card-id">Plan #<?= (int) $plan['id'] ?></span>
+        <div id="kt-plans-grid" class="kt-grid">
+            <?php if (empty($plans)): ?>
+                <div id="kt-empty" class="kt-empty">
+                    <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                    <strong>No knowledge transfer plans found</strong>
+                    <span>Plans are created from the Exit Management module.</span>
+                </div>
+            <?php else: ?>
+                <?php foreach ($plans as $plan):
+                    [$badgeClass, $badgeLabel] = ktStatusMeta((string) $plan['status']);
+                    $itemCount = (int) $plan['item_count'];
+                    $itemsDone = (int) $plan['items_done'];
+                    $progress = $itemCount > 0 ? (int) round(($itemsDone / $itemCount) * 100) : 0;
+                    $employee = $plan['employee_name'] !== '' && $plan['employee_name'] !== null ? $plan['employee_name'] : 'N/A';
+                ?>
+                    <article class="kt-plan-card" data-id="<?= (int) $plan['id'] ?>"
+                             data-status="<?= htmlspecialchars((string) $plan['status'], ENT_QUOTES, 'UTF-8') ?>"
+                             data-search="<?= ktSearchKey($plan) ?>">
+                        <div class="kt-card-head">
+                            <span class="kt-card-avatar"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
+                            <div class="kt-card-ident">
+                                <h3 class="kt-card-name"><?= htmlspecialchars($employee) ?></h3>
+                                <span class="kt-card-id">Plan #<?= (int) $plan['id'] ?></span>
+                            </div>
+                            <span class="kt-badge <?= $badgeClass ?>"><?= htmlspecialchars($badgeLabel) ?></span>
                         </div>
-                        <span class="kt-badge <?= $badgeClass ?>"><?= htmlspecialchars($badgeLabel) ?></span>
-                    </div>
 
-                    <div class="kt-card-meta">
-                        <div>
-                            <span class="kt-meta-label">Successor</span>
-                            <span class="kt-meta-value"><?= htmlspecialchars($plan['successor_name'] ?: '—') ?></span>
+                        <div class="kt-card-meta">
+                            <div>
+                                <span class="kt-meta-label">Successor</span>
+                                <span class="kt-meta-value"><?= htmlspecialchars($plan['successor_name'] ?: '—') ?></span>
+                            </div>
+                            <div>
+                                <span class="kt-meta-label">Duration</span>
+                                <span class="kt-meta-value"><?= ktDate($plan['start_date']) ?> &ndash; <?= ktDate($plan['end_date']) ?></span>
+                            </div>
                         </div>
-                        <div>
-                            <span class="kt-meta-label">Duration</span>
-                            <span class="kt-meta-value"><?= ktDate($plan['start_date']) ?> &ndash; <?= ktDate($plan['end_date']) ?></span>
-                        </div>
-                    </div>
 
-                    <?php if ($itemCount > 0): ?>
-                        <div class="kt-progress">
-                            <span class="kt-progress-label">Progress</span>
-                            <span class="kt-progress-track">
-                                <span class="kt-progress-fill" style="width:<?= $progress ?>%"></span>
+                        <?php if ($itemCount > 0): ?>
+                            <div class="kt-progress">
+                                <span class="kt-progress-label">Progress</span>
+                                <span class="kt-progress-track">
+                                    <span class="kt-progress-fill" style="width:<?= $progress ?>%"></span>
+                                </span>
+                                <span class="kt-progress-val"><?= $progress ?>%</span>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="kt-card-foot">
+                            <span class="kt-card-items">
+                                <i class="fas fa-list-check" aria-hidden="true"></i>
+                                <?= $itemCount ?> item<?= $itemCount !== 1 ? 's' : '' ?>
+                                <?php if ($itemCount > 0): ?>&middot; <?= $itemsDone ?>/<?= $itemCount ?> done<?php endif; ?>
                             </span>
-                            <span class="kt-progress-val"><?= $progress ?>%</span>
+                            <button type="button" class="kt-view-btn" data-id="<?= (int) $plan['id'] ?>">
+                                <i class="fas fa-eye" aria-hidden="true"></i> View
+                            </button>
                         </div>
-                    <?php endif; ?>
+                    </article>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
 
-                    <div class="kt-card-foot">
-                        <span class="kt-card-items">
-                            <i class="fas fa-list-check" aria-hidden="true"></i>
-                            <?= $itemCount ?> item<?= $itemCount !== 1 ? 's' : '' ?>
-                            <?php if ($itemCount > 0): ?>&middot; <?= $itemsDone ?>/<?= $itemCount ?> done<?php endif; ?>
-                        </span>
-                        <button type="button" class="kt-view-btn" data-id="<?= (int) $plan['id'] ?>">
-                            <i class="fas fa-eye" aria-hidden="true"></i> View
-                        </button>
-                    </div>
-                </article>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-
-    <div id="kt-no-results" class="kt-no-results" style="display:none;">
-        <i class="fas fa-search" aria-hidden="true"></i>
-        <strong>No matching plans found</strong>
-        <span>Try a different search term or status filter.</span>
+        <div id="kt-no-results" class="kt-no-results" style="display:none;">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <strong>No matching plans found</strong>
+            <span>Try a different search term or status filter.</span>
+        </div>
     </div>
 </div>
 
