@@ -21,9 +21,9 @@ $employeeClass = new Employee();
                     <ul class="notif-list">
                         <li class="notif-item">
                         </li>
-                    <div class="dropdown-footer">
-                        <a href="#">View all notifications</a>
-                    </div>
+                        <div class="dropdown-footer">
+                            <a href="#">View all notifications</a>
+                        </div>
                 </div>
             </div>
 
@@ -51,7 +51,7 @@ $employeeClass = new Employee();
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="/hrms-capstone-master/auth/logout.php" class="signout-link">
+                            <a href="/hrms-capstone/auth/logout.php" class="signout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                             </a>
                         </li>
