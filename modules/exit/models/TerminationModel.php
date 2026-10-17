@@ -1,6 +1,7 @@
 <?php
 
 require_once 'ExitManagementModel.php';
+require_once 'ExitInterviewModel.php';
 
 class TerminationModel extends ExitManagementModel
 {
@@ -580,7 +581,31 @@ class TerminationModel extends ExitManagementModel
                 SET status = ?, legal_approved_by = ?, legal_approved_at = NOW(), legal_approval_comments = ?, approved_by = ?, approved_at = NOW(), updated_at = NOW()
                 WHERE id = ?
             ");
-            return $stmt->execute([$status, $approverId, $comments, $approverId, $terminationId]);
+
+            try {
+                $this->db->beginTransaction();
+                $ok = $stmt->execute([$status, $approverId, $comments, $approverId, $terminationId]);
+                if (!$ok) {
+                    $this->db->rollBack();
+                    return false;
+                }
+
+                $this->db->commit();
+
+                $termStmt = $this->db->prepare("SELECT id, employee_id FROM exit_terminations WHERE id = ? AND status = 'approved'");
+                $termStmt->execute([$terminationId]);
+                $term = $termStmt->fetch(PDO::FETCH_ASSOC);
+                if ($term) {
+                    $this->createPendingInterviewForApprovedCase('termination', (int)$terminationId, (string)($term['employee_id'] ?? ''), 'Auto-created on termination approval');
+                }
+
+                return true;
+            } catch (Exception $e) {
+                if ($this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
+                throw $e;
+            }
         }
 
         if ($status === 'rejected_by_legal') {

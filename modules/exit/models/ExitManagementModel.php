@@ -144,6 +144,46 @@ class ExitManagementModel
         $this->ensureTableAutoIncrement('exit_knowledge_transfer_items');
     }
 
+    public function createPendingInterviewForApprovedCase(string $exitCaseType, int $exitCaseId, string $employeeId, ?string $notes = null): ?int
+    {
+        if (!in_array($exitCaseType, ['resignation', 'termination'], true) || $exitCaseId <= 0 || trim((string)$employeeId) === '') {
+            return null;
+        }
+
+        try {
+            if (!$this->tableExists('exit_interviews')) {
+                return null;
+            }
+
+            $existing = $this->db->prepare(
+                "SELECT id FROM exit_interviews WHERE exit_case_type = ? AND exit_case_id = ? AND status IN ('pending','scheduled','for_approval','completed') ORDER BY id DESC LIMIT 1"
+            );
+            $existing->execute([$exitCaseType, $exitCaseId]);
+            $existingId = (int)($existing->fetchColumn() ?: 0);
+            if ($existingId > 0) {
+                return $existingId;
+            }
+
+            $insert = $this->db->prepare("
+                INSERT INTO exit_interviews (employee_id, exit_case_type, exit_case_id, interviewer_id, scheduled_date,
+                    scheduled_time, location, notes, status, created_at)
+                VALUES (?, ?, ?, NULL, NULL, NULL, 'TBD', ?, 'pending', NOW())
+            ");
+
+            $ok = $insert->execute([
+                $employeeId,
+                $exitCaseType,
+                $exitCaseId,
+                $notes ?? 'Auto-created on approval'
+            ]);
+
+            return $ok ? (int)$this->db->lastInsertId() : null;
+        } catch (Throwable $e) {
+            error_log('createPendingInterviewForApprovedCase failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     /**
      * Ensure a table primary key uses AUTO_INCREMENT and repair any id=0 rows.
      */

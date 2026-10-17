@@ -50,10 +50,73 @@ if (isset($_SESSION['flash_message'])) {
 $recordsPerPage = max(5, min(50, (int)($_REQUEST['employee_page_size'] ?? 10)));
 $employeePage = max(1, (int)($_REQUEST['employee_page'] ?? 1));
 $leavePage = max(1, (int)($_REQUEST['leave_page'] ?? 1));
+$historyPage = max(1, (int)($_REQUEST['history_page'] ?? 1));
+$historyPageSize = max(5, min(50, (int)($_REQUEST['history_page_size'] ?? $recordsPerPage)));
 $employeeSearch = trim($_REQUEST['employee_search'] ?? '');
+
+$historyLeaveTypes = $leaveModel->getLeaveTypes();
+$historyLeaveTypeMap = [];
+foreach ($historyLeaveTypes as $leaveType) {
+    $historyLeaveTypeMap[(int)($leaveType['leave_type_id'] ?? 0)] = true;
+}
+
+$historyFromDate = trim((string)($_REQUEST['history_from_date'] ?? ''));
+$historyToDate = trim((string)($_REQUEST['history_to_date'] ?? ''));
+if ($historyFromDate !== '') {
+    $fromDateObj = DateTime::createFromFormat('Y-m-d', $historyFromDate);
+    if ($fromDateObj === false || $fromDateObj->format('Y-m-d') !== $historyFromDate) {
+        $historyFromDate = '';
+    }
+}
+if ($historyToDate !== '') {
+    $toDateObj = DateTime::createFromFormat('Y-m-d', $historyToDate);
+    if ($toDateObj === false || $toDateObj->format('Y-m-d') !== $historyToDate) {
+        $historyToDate = '';
+    }
+}
+if ($historyFromDate !== '' && $historyToDate !== '') {
+    $fromDateObj = new DateTimeImmutable($historyFromDate);
+    $toDateObj = new DateTimeImmutable($historyToDate);
+    if ($fromDateObj > $toDateObj) {
+        [$historyFromDate, $historyToDate] = [$historyToDate, $historyFromDate];
+    }
+}
+
+$historyStatusValue = trim((string)($_REQUEST['history_status'] ?? ''));
+if ($historyStatusValue !== '') {
+    $normalizedHistoryStatus = strtolower($historyStatusValue);
+    if (in_array($normalizedHistoryStatus, ['approved', 'rejected'], true)) {
+        $historyStatusValue = ucfirst($normalizedHistoryStatus);
+    } else {
+        $historyStatusValue = '';
+    }
+}
+
+$historyLeaveTypeId = (int)($_REQUEST['history_leave_type_id'] ?? 0);
+if ($historyLeaveTypeId > 0 && !isset($historyLeaveTypeMap[$historyLeaveTypeId])) {
+    $historyLeaveTypeId = 0;
+}
+
+$historySearchValue = trim((string)($_REQUEST['history_search'] ?? ''));
+$historyFilters = [
+    'from_date' => $historyFromDate,
+    'to_date' => $historyToDate,
+    'leave_type_id' => $historyLeaveTypeId,
+    'status' => $historyStatusValue,
+    'search' => $historySearchValue,
+];
+
+$historyHasAnyFilter = (
+    $historyFilters['from_date'] !== '' ||
+    $historyFilters['to_date'] !== '' ||
+    $historyFilters['leave_type_id'] > 0 ||
+    $historyFilters['status'] !== '' ||
+    $historyFilters['search'] !== ''
+);
 
 $employeeOffset = ($employeePage - 1) * $recordsPerPage;
 $leaveOffset = ($leavePage - 1) * $recordsPerPage;
+$historyOffset = ($historyPage - 1) * $historyPageSize;
 
 // Load employee list for the management table
 $employees = $employeeModel->getAll('Active', $recordsPerPage, $employeeOffset, $employeeSearch);
@@ -71,6 +134,15 @@ if ($role === 'DEPARTMENT_HEAD') {
 }
 
 $totalLeavePages = max(1, (int)ceil($totalLeaveRequests / $recordsPerPage));
+
+$totalHistoryRequests = $leaveModel->countHistory(null, $historyFilters);
+$totalHistoryPages = max(1, (int)ceil($totalHistoryRequests / $historyPageSize));
+$historyPage = min(max(1, $historyPage), $totalHistoryPages);
+$historyOffset = ($historyPage - 1) * $historyPageSize;
+$historyRequests = $leaveModel->getHistory(null, $historyPageSize, $historyOffset, $historyFilters);
+$historyRangeStart = $totalHistoryRequests > 0 ? ($historyOffset + 1) : 0;
+$historyRangeEnd = $totalHistoryRequests > 0 ? min($historyOffset + $historyPageSize, $totalHistoryRequests) : 0;
+$historyTabActive = $historyHasAnyFilter || isset($_REQUEST['history_page']);
 
 /**
  * Render numeric pagination with ellipses and jump-to-page form.
@@ -346,11 +418,11 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
 
             <div class="tab-container">
                 <div class="tab-list">
-                    <button class="tab-item active" data-tab="pending-requests">Pending</button>
-                    <button class="tab-item" data-tab="leave-history">History</button>
+                    <button class="tab-item <?php echo $historyTabActive ? '' : 'active'; ?>" data-tab="pending-requests">Pending</button>
+                    <button class="tab-item <?php echo $historyTabActive ? 'active' : ''; ?>" data-tab="leave-history">History</button>
                 </div>
 
-                <div class="tab-content active" data-tab="pending-requests">
+                <div class="tab-content <?php echo $historyTabActive ? '' : 'active'; ?>" data-tab="pending-requests">
                 <?php if (empty($pendingRequests)): ?>
                     <div class="alert alert-info mb-0">
                         No pending leave requests to review.
@@ -409,10 +481,44 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                 <?php endif; ?>
                 </div>
 
-                <div class="tab-content" data-tab="leave-history">
-                    <?php $historyRequests = $leaveModel->getHistory(null, $recordsPerPage, $leaveOffset); ?>
+                <div class="tab-content <?php echo $historyTabActive ? 'active' : ''; ?>" data-tab="leave-history">
+                    <form method="GET" class="toolbar-form mb-3" style="flex-wrap: wrap;">
+                        <input type="hidden" name="page" value="leave_approvals">
+                        <input type="hidden" name="employee_page" value="<?php echo $employeePage; ?>">
+                        <input type="hidden" name="leave_page" value="<?php echo $leavePage; ?>">
+                        <input type="hidden" name="employee_page_size" value="<?php echo $recordsPerPage; ?>">
+                        <input type="date" name="history_from_date" class="form-control" value="<?php echo htmlspecialchars($historyFilters['from_date']); ?>" aria-label="History from date">
+                        <input type="date" name="history_to_date" class="form-control" value="<?php echo htmlspecialchars($historyFilters['to_date']); ?>" aria-label="History to date">
+                        <select name="history_leave_type_id" class="form-control">
+                            <option value="">All leave types</option>
+                            <?php foreach ($historyLeaveTypes as $leaveType): ?>
+                                <option value="<?php echo (int)$leaveType['leave_type_id']; ?>" <?php echo ($historyFilters['leave_type_id'] === (int)$leaveType['leave_type_id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($leaveType['leave_type_name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <select name="history_status" class="form-control">
+                            <option value="">All statuses</option>
+                            <option value="Approved" <?php echo ($historyFilters['status'] === 'Approved') ? 'selected' : ''; ?>>Approved</option>
+                            <option value="Rejected" <?php echo ($historyFilters['status'] === 'Rejected') ? 'selected' : ''; ?>>Rejected</option>
+                        </select>
+                        <input type="text" name="history_search" class="form-control" placeholder="Search employee or reason" value="<?php echo htmlspecialchars($historyFilters['search']); ?>" aria-label="Search history records">
+                        <button type="submit" class="action-btn btn-approve">Apply</button>
+                        <a href="?page=leave_approvals&employee_page=<?php echo $employeePage; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>" class="action-btn action-btn--light">Clear</a>
+                    </form>
+
+                    <div class="quick-range-links mb-3">
+                        <a href="?page=leave_approvals&employee_page=<?php echo $employeePage; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&history_from_date=<?php echo date('Y-m-01'); ?>&history_to_date=<?php echo date('Y-m-t'); ?>" class="action-btn action-btn--light">This month</a>
+                        <a href="?page=leave_approvals&employee_page=<?php echo $employeePage; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&history_from_date=<?php echo date('Y-m-01', strtotime('first day of previous month')); ?>&history_to_date=<?php echo date('Y-m-t', strtotime('last day of previous month')); ?>" class="action-btn action-btn--light">Last month</a>
+                        <a href="?page=leave_approvals&employee_page=<?php echo $employeePage; ?>&leave_page=<?php echo $leavePage; ?>&employee_page_size=<?php echo $recordsPerPage; ?>&history_from_date=<?php echo date('Y-01-01'); ?>&history_to_date=<?php echo date('Y-12-31'); ?>" class="action-btn action-btn--light">This year</a>
+                    </div>
+
+                    <?php if ($totalHistoryRequests > 0): ?>
+                        <div class="history-summary mb-2">Showing <?php echo $historyRangeStart; ?>–<?php echo $historyRangeEnd; ?> of <?php echo $totalHistoryRequests; ?> records</div>
+                    <?php endif; ?>
+
                     <?php if (empty($historyRequests)): ?>
-                        <div class="alert alert-info mb-0">No history records found.</div>
+                        <div class="alert alert-info mb-0"><?php echo $historyHasAnyFilter ? 'No history records match your filters.' : 'No history records found.'; ?></div>
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="approvals-table" id="leaveHistoryTable">
@@ -440,6 +546,18 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                                 </tbody>
                             </table>
                         </div>
+                        <?php render_pagination('history_page', $historyPage, $totalHistoryPages, [
+                            'employee_page' => $employeePage,
+                            'leave_page' => $leavePage,
+                            'employee_page_size' => $recordsPerPage,
+                            'employee_search' => $employeeSearch,
+                            'history_from_date' => $historyFilters['from_date'],
+                            'history_to_date' => $historyFilters['to_date'],
+                            'history_leave_type_id' => $historyFilters['leave_type_id'],
+                            'history_status' => $historyFilters['status'],
+                            'history_search' => $historyFilters['search'],
+                            'history_page_size' => $historyPageSize,
+                        ]); ?>
                     <?php endif; ?>
                 </div>
             </div>

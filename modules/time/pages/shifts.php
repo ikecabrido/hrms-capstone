@@ -66,7 +66,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
 ?>
 <link rel="stylesheet" href="assets/css/dashboard.css">
 <link rel="stylesheet" href="assets/css/hr-template.css">
-<link rel="stylesheet" href="assets/css/shifts.css">
+<link rel="stylesheet" href="assets/css/shifts.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/shifts.css'); ?>">
 <script src="assets/js/mobile-responsive.js" defer></script>
 
     <div class="module-header">
@@ -488,7 +488,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                 <button class="modal-close" onclick="closeModal('generateFixedModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group" style="margin-bottom: 0;">
+                <div class="form-group gf-employee-group" style="margin-bottom: 0;">
                     <label for="gf_employee_search"><i class="fas fa-user"></i> Employee</label>
                         <div style="position: relative;">
                             <input 

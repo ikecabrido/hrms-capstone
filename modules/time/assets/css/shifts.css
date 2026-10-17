@@ -854,6 +854,10 @@
             position: relative;
         }
 
+        #generateFixedModal .form-group.gf-employee-group {
+            z-index: 50;
+        }
+
         #generateFixedModal .modal-body {
             overflow-y: auto;
             overflow-x: hidden;
@@ -866,10 +870,14 @@
             left: 0;
             right: 0;
             z-index: 2000;
+            background: #fff;
+            border: 1px solid #d9dfe8;
+            border-radius: 8px;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
+            max-height: 220px;
             overflow-y: auto;
             overflow-x: hidden;
-            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
-            max-height: 220px;
+            display: none;
         }
 
         body.modal-open {

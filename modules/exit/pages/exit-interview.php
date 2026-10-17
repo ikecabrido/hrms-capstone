@@ -51,7 +51,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
 
     <div class="module-content">
         <div id="interviews-section" class="section">
-            <?php $alertId = 'interview-action-alert'; $alertIcon = 'fas fa-user-check'; $alertMessage = 'Approved cases are waiting for an exit interview'; $alertCount = 0; $alertViewAction = 'scheduled'; include __DIR__ . '/../includes/action-alert.php'; ?>
+            <?php $alertId = 'interview-action-alert'; $alertIcon = 'fas fa-user-check'; $alertMessage = 'Approved cases waiting to be scheduled (pending)'; $alertCount = 0; $alertViewAction = 'scheduled'; include __DIR__ . '/../includes/action-alert.php'; ?>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">
@@ -63,17 +63,15 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         </div>
                         <select id="interview-status-filter" class="form-control form-control-sm" onchange="onInterviewStatusFilterChange()" style="flex: 1; white-space: nowrap;">
                             <option value="all">All</option>
-                            <option value="scheduled">Scheduled</option>
-                            <option value="completed">Completed</option>
                             <option value="pending">Pending</option>
+                            <option value="scheduled">Scheduled</option>
+                            <option value="for_approval">For Approval</option>
+                            <option value="completed">Approved</option>
                         </select>
                     </div>
                     <div class="card-tools d-flex align-items-center">
                         <button type="button" id="viewArchivedInterviewsButton" class="btn btn-warning btn-sm mr-2" onclick="openArchiveModal()">
                             <i class="fas fa-box-open"></i> Archived <span id="archive-notif-count" class="badge badge-danger ml-1" style="display:none;">0</span>
-                        </button>
-                        <button type="button" class="btn btn-success btn-sm" onclick="showInterviewModal()">
-                            <i class="fas fa-plus"></i> Add
                         </button>
                     </div>
                 </div>
@@ -89,8 +87,9 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             <thead>
                                 <tr>
                                     <th>Employee</th>
-                                    <th>Interviewer</th>
+                                    <th>Case</th>
                                     <th>Scheduled Date</th>
+                                    <th>Questions Answered</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -133,7 +132,6 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                     <input type="hidden" id="interviewExitCaseType" name="exit_case_type" />
                                     <input type="hidden" id="interviewExitCaseId" name="exit_case_id" />
                                     <input type="hidden" id="interviewEmployeeId" name="employee_id" />
-                                    <input type="hidden" id="interviewerId" name="interviewer_id" value="<?php echo htmlspecialchars((string)($_SESSION['employee_id'] ?? ''), ENT_QUOTES); ?>">
                                 </div>
                             </div>
                         </div>
@@ -201,6 +199,16 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <div class="form-group interview-notes-group">
                             <label for="interviewNotes">Notes</label>
                             <textarea class="form-control" id="interviewNotes" name="notes" rows="2"></textarea>
+                        </div>
+
+                        <div id="interviewQuestionsSection" class="mt-3" style="display:none;">
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Interview Questions</h6>
+                                <span id="interviewQuestionsAnsweredBadge" class="badge badge-secondary">0 / 0 answered</span>
+                            </div>
+                            <div id="interviewQuestionsHint" class="small text-muted mb-2">Questions will appear here once the interview is loaded.</div>
+                            <div id="interviewQuestionsContainer"></div>
                         </div>
 
                         <!-- Feedback section (for completed interviews) -->
@@ -384,7 +392,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                 <textarea class="form-control" id="hrFollowUpActions" name="hr_follow_up_actions" rows="2"></textarea>
                             </div>
                             <div class="form-row">
-                                <div class="form-group col-md-4">
+                                <div class="form-group col-md-6">
                                     <label for="hrRehireEligibility">Rehire Eligibility</label>
                                     <select class="form-control" id="hrRehireEligibility" name="hr_rehire_eligibility">
                                         <option value="">Select</option>
@@ -393,10 +401,6 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                         <option value="conditional">Conditional</option>
                                     </select>
                                 </div>
-                                <div class="form-group col-md-4">
-                                    <label for="hrKnowledgeTransfer">Knowledge Transfer Required</label>
-                                    <div class="form-control-plaintext"><input type="checkbox" id="hrKnowledgeTransfer" name="hr_knowledge_transfer"> Yes</div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -404,7 +408,8 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-info" id="editInterviewBtn" style="display:none;">Edit Interview</button>
                         <button type="button" class="btn btn-primary" id="saveHrAssessmentBtn" style="display:none;">Save HR Assessment</button>
-                        <button type="submit" class="btn btn-success" id="interviewSubmitBtn">Schedule Interview</button>
+                        <button type="button" class="btn btn-success" id="approveInterviewBtn" style="display:none;">Approve &amp; Send to Knowledge Transfer</button>
+                        <button type="submit" class="btn btn-success" id="interviewSubmitBtn">Save Schedule &amp; Answers</button>
                     </div>
                 </form>
             </div>
@@ -427,7 +432,6 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             <thead>
                                 <tr>
                                     <th>Employee</th>
-                                    <th>Interviewer</th>
                                     <th>Scheduled Date</th>
                                     <th>Status</th>
                                     <th>Archived At</th>
@@ -437,7 +441,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             </thead>
                             <tbody id="archived-interviews-tbody">
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">Loading archived interviews...</td>
+                                    <td colspan="6" class="text-center text-muted">Loading archived interviews...</td>
                                 </tr>
                             </tbody>
                         </table>

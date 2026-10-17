@@ -138,6 +138,10 @@ class KnowledgeTransferController extends ExitManagementController
             return ['success' => false, 'message' => 'Successor ID is invalid'];
         }
 
+        if ((int)$data['employee_id'] === (int)$data['successor_id']) {
+            return ['success' => false, 'message' => 'The successor must be different from the employee leaving.'];
+        }
+
         return ['success' => true];
     }
 
@@ -292,9 +296,9 @@ class KnowledgeTransferController extends ExitManagementController
             return ['error' => 'Transfer plan not found'];
         }
 
-        // Get transfer items
         $items = $this->transferModel->getTransferItems($planId);
         $plan['items'] = $items;
+        $plan['ld_status'] = $this->transferModel->getLearningPathRequestStatus($planId);
 
         return $plan;
     }
@@ -438,8 +442,14 @@ class KnowledgeTransferController extends ExitManagementController
             return ['success' => false, 'message' => 'L&D integration is not available on this server'];
         }
 
-        $courses = $this->transferModel->getResigneeCoursesForKnowledgeTransfer($employeeId);
-        return ['success' => true, 'data' => $courses, 'selected_course_ids' => array_values(array_map(static fn ($course) => (int)($course['id'] ?? 0), array_filter($courses, static fn ($course) => !empty($course['is_default_selected']))))];
+        $courseSummary = $this->transferModel->getResigneeCoursesForKnowledgeTransfer($employeeId);
+        $courses = $courseSummary['courses'] ?? [];
+        return [
+            'success' => true,
+            'data' => $courses,
+            'skipped_inactive_count' => (int)($courseSummary['skipped_inactive_count'] ?? 0),
+            'selected_course_ids' => array_values(array_map(static fn ($course) => (int)($course['id'] ?? 0), array_filter($courses, static fn ($course) => !empty($course['is_default_selected']))))
+        ];
     }
 
     /**

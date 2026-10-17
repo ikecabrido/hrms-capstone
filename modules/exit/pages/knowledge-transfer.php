@@ -60,6 +60,7 @@ try {
                                     <th>Start Date</th>
                                     <th>End Date</th>
                                     <th>Status</th>
+                                    <th>L&D Request Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -174,7 +175,7 @@ try {
                         <div class="card border-info mt-3 mb-0">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                 <strong>Learning Path</strong>
-                                <button type="button" class="btn btn-sm btn-primary" id="generateTransferLearningPathBtn">Generate Learning Path</button>
+                                <button type="button" class="btn btn-sm btn-primary" id="generateTransferLearningPathBtn">Request Learning Path from L&D</button>
                             </div>
                             <div class="card-body">
                                 <div id="ldLearningPathMessage" class="alert alert-light border mb-3">

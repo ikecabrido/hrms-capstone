@@ -243,6 +243,7 @@ function setInterviewModalMode(viewOnly = false) {
     if (viewOnly) {
         $('#interviewSubmitBtn').hide();
         $('#saveHrAssessmentBtn').hide();
+        $('#approveInterviewBtn').hide();
         $('#editInterviewBtn').show();
         $('#interviewForm').find('.form-control').addClass('disabled');
         $('#interviewForm').find('input:not([type=hidden]), textarea, select').prop('disabled', true);
@@ -256,11 +257,7 @@ function setInterviewModalMode(viewOnly = false) {
         $('#interviewCaseSelect').show();
         $('#interviewCaseDisplay').hide();
 
-        if ($('#interviewId').val()) {
-            $('#interviewSubmitBtn').text('Save Changes');
-        } else {
-            $('#interviewSubmitBtn').text('Schedule Interview');
-        }
+        $('#interviewSubmitBtn').text('Save Schedule & Answers');
 
         if (canManageHrAssessment()) {
             $('#saveHrAssessmentBtn').show();
@@ -268,6 +265,7 @@ function setInterviewModalMode(viewOnly = false) {
             $('#saveHrAssessmentBtn').hide();
         }
 
+        $('#approveInterviewBtn').hide();
         updateInterviewSubmitState();
     }
 }
@@ -1096,12 +1094,11 @@ function loadEmployees(callback) {
                 }).join('');
 
             console.log('[LOAD EMPLOYEES] Generated options HTML:', employeeOptions.substring(0, 200));
-            $('#employeeSelect, #terminationEmployeeSelect, #interviewEmployeeSelect').html(employeeOptions);
+            $('#employeeSelect, #interviewEmployeeSelect').html(employeeOptions);
             console.log('[LOAD EMPLOYEES] Dropdown populated successfully');
         } else {
             console.warn('[LOAD EMPLOYEES] No employees returned or not an array:', response);
-            // Set empty state message
-            $('#employeeSelect, #terminationEmployeeSelect, #interviewEmployeeSelect').html('<option value="">No employees available</option>');
+            $('#employeeSelect, #interviewEmployeeSelect').html('<option value="">No employees available</option>');
         }
 
         if (typeof callback === 'function') {
@@ -1112,9 +1109,61 @@ function loadEmployees(callback) {
         console.error('[LOAD EMPLOYEES] Status:', err.status);
         console.error('[LOAD EMPLOYEES] Status Text:', err.statusText);
         console.error('[LOAD EMPLOYEES] Response Text:', err.responseText);
-        $('#employeeSelect').html('<option value="">Error loading employees</option>');
+        $('#employeeSelect, #interviewEmployeeSelect').html('<option value="">Error loading employees</option>');
         if (typeof callback === 'function') {
             callback();
+        }
+    });
+}
+
+function loadTerminationEmployees(callback) {
+    $.ajax({
+        url: '../time/app/api/attendance/get_employees_required_for_termination.php',
+        method: 'GET',
+        dataType: 'json',
+        timeout: 15000,
+        success: function(response) {
+            const $select = $('#terminationEmployeeSelect');
+            if (!$select.length) {
+                if (typeof callback === 'function') {
+                    callback([]);
+                }
+                return;
+            }
+
+            const employees = response && response.success && Array.isArray(response.data) ? response.data : [];
+
+            if (employees.length > 0) {
+                const employeeOptions = '<option value="">Select Employee</option>' + employees.map(item => {
+                    const employeeId = item.employee_id ?? '';
+                    const employeeName = escapeHtml(item.employee_name || 'Employee');
+                    const employeeCode = escapeHtml(item.employee_code || 'N/A');
+                    const absenceCount = Number(item.absence_count ?? 0);
+                    const threshold = Number(item.threshold ?? 0);
+                    const lastMissedShift = item.last_missed_shift ? escapeHtml(item.last_missed_shift) : 'N/A';
+
+                    return `<option value="${employeeId}" data-absence_count="${absenceCount}" data-threshold="${threshold}" data-last_missed_shift="${lastMissedShift}">${employeeName} (${employeeCode}) - ${absenceCount} absence(s)</option>`;
+                }).join('');
+
+                $select.html(employeeOptions).prop('disabled', false);
+                $('#terminationSubmitBtn').prop('disabled', false);
+            } else {
+                $select.html('<option value="">No employees currently required for termination</option>').prop('disabled', true);
+                $('#terminationSubmitBtn').prop('disabled', true);
+            }
+
+            if (typeof callback === 'function') {
+                callback(employees);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading termination-required employees:', status, error, xhr.responseText);
+            $('#terminationEmployeeSelect').html('<option value="">Error loading employees</option>').prop('disabled', true);
+            $('#terminationSubmitBtn').prop('disabled', true);
+            showToast('error', 'Unable to load employees required for termination.');
+            if (typeof callback === 'function') {
+                callback([]);
+            }
         }
     });
 }
@@ -1520,16 +1569,14 @@ function showInterviewModal(interviewId = null, viewOnly = false) {
         $('#interviewEmployeeId').val('');
         setInterviewModalMode(viewOnly);
         loadApprovedExitCases(function() {
-            loadInterviewers(function() {
-                loadInterviewData(interviewId, viewOnly);
-                if (typeof $.fn.modal === 'function') {
-                    $modal.modal({ backdrop: true, keyboard: true, show: true });
-                } else {
-                    $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
-                    $('body').addClass('modal-open');
-                    $('<div class="modal-backdrop fade show modal-backdrop--active"></div>').appendTo('body').css('z-index', 1040);
-                }
-            });
+            loadInterviewData(interviewId, viewOnly);
+            if (typeof $.fn.modal === 'function') {
+                $modal.modal({ backdrop: true, keyboard: true, show: true });
+            } else {
+                $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+                $('body').addClass('modal-open');
+                $('<div class="modal-backdrop fade show modal-backdrop--active"></div>').appendTo('body').css('z-index', 1040);
+            }
         });
     } else {
         $('#interviewModalTitle').text('Schedule Exit Interview');
@@ -1539,18 +1586,16 @@ function showInterviewModal(interviewId = null, viewOnly = false) {
         $('#interviewExitCaseType').val('');
         $('#interviewExitCaseId').val('');
         $('#interviewEmployeeId').val('');
-        // hide read-only and HR sections for new schedules
         $('#employeeInfoSection').hide();
         $('#exitCaseInfoSection').hide();
         $('#engagementSection').hide();
         $('#hrAssessmentSection').hide();
+        $('#interviewQuestionsSection').hide();
         $('#saveHrAssessmentBtn').hide();
-        $('#interviewSubmitBtn').prop('disabled', true).text('Schedule Interview');
+        $('#approveInterviewBtn').hide();
+        $('#interviewSubmitBtn').prop('disabled', true).text('Save Schedule & Answers');
         setInterviewModalMode(false);
         loadApprovedExitCases();
-        if (!$('#interviewerId').val()) {
-            $('#interviewerId').val($('#interviewerId').attr('value') || '');
-        }
         if (typeof $.fn.modal === 'function') {
             $modal.modal({ backdrop: true, keyboard: true, show: true });
         } else {
@@ -1590,6 +1635,7 @@ function showTransferModal(planId = null) {
         loadEmployeesNeedingKnowledgeTransfer(function() {
             loadSuccessors(function() {
                 loadTransferData(transferPlanId, true, function() {
+                    refreshTransferLearningPathState(transferPlanId);
                     console.log('Showing transfer modal after load for planId:', transferPlanId);
                     if (typeof $.fn.modal === 'function') {
                         $modal.modal({ backdrop: true, keyboard: true, show: true });
@@ -2347,18 +2393,20 @@ function submitInterviewForm() {
 
     const formData = new FormData($('#interviewForm')[0]);
     const interviewId = $('#interviewId').val();
-    const assignedInterviewerId = $('#interviewerId').val() || $('#currentUserId').val() || '';
-
-    if (assignedInterviewerId) {
-        formData.set('interviewer_id', assignedInterviewerId);
-        $('#interviewerId').val(assignedInterviewerId);
-    }
-
     const interviewTime = buildInterviewTimeValue();
+    const questionAnswers = {};
+
+    $('#interviewQuestionsContainer .iq-answer').each(function() {
+        const questionId = $(this).data('question-id');
+        if (questionId !== undefined && questionId !== null && questionId !== '') {
+            questionAnswers[questionId] = $(this).val() || '';
+        }
+    });
+
     if (interviewTime) {
         formData.set('scheduled_time', interviewTime);
     }
-    
+
     if (interviewId && canManageHrAssessment()) {
         const assessment = {
             summary: $('#hrSummary').val(),
@@ -2366,12 +2414,19 @@ function submitInterviewForm() {
             hr_recommendations: $('#hrRecommendations').val(),
             follow_up_actions: $('#hrFollowUpActions').val(),
             rehire_eligibility: $('#hrRehireEligibility').val(),
-            knowledge_transfer_required: $('#hrKnowledgeTransfer').is(':checked') ? 1 : 0
+            knowledge_transfer_required: 1
         };
 
         formData.append('assessment', JSON.stringify(assessment));
     }
 
+    if (!$.isEmptyObject(questionAnswers)) {
+        const answerData = JSON.stringify(questionAnswers);
+        formData.append('answers', answerData);
+        formData.append('answer_data', answerData);
+    }
+
+    formData.append('knowledge_transfer_required', 1);
     formData.append('ajax_action', interviewId ? 'update_interview' : 'submit_interview');
     formData.append('controller', 'interview');
 
@@ -2397,7 +2452,7 @@ function submitInterviewForm() {
             showToast('error', 'An error occurred while saving the interview.');
         },
         complete: function() {
-            $('#interviewSubmitBtn').prop('disabled', false).html('Schedule Interview');
+            $('#interviewSubmitBtn').prop('disabled', false).html('Save Schedule & Answers');
         }
     });
 }
@@ -2410,7 +2465,7 @@ function saveHrAssessment(interviewId) {
         hr_recommendations: $('#hrRecommendations').val(),
         follow_up_actions: $('#hrFollowUpActions').val(),
         rehire_eligibility: $('#hrRehireEligibility').val(),
-        knowledge_transfer_required: $('#hrKnowledgeTransfer').is(':checked') ? 1 : 0
+        knowledge_transfer_required: 1
     };
 
     $('#saveHrAssessmentBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
@@ -2474,13 +2529,15 @@ function submitTransferForm() {
     });
 }
 
-function renderLdCourseChecklist(courses) {
+function renderLdCourseChecklist(courses, skippedInactiveCount = 0) {
     const $container = $('#ldCourseChecklist');
     if (!Array.isArray(courses) || courses.length === 0) {
-        $container.html('<div class="text-muted">No completed or in-progress L&D courses found for this resignee.</div>');
+        const skippedHtml = skippedInactiveCount > 0 ? `<div class="small text-warning mb-2">${skippedInactiveCount} course(s) skipped (inactive).</div>` : '';
+        $container.html(`${skippedHtml}<div class="text-muted">No completed or in-progress L&D courses found for this resignee.</div>`);
         return;
     }
 
+    const skippedHtml = skippedInactiveCount > 0 ? `<div class="small text-warning mb-2">${skippedInactiveCount} course(s) skipped (inactive).</div>` : '';
     const html = courses.map((course) => {
         const courseId = course.id || course.course_id || '';
         const isChecked = course.is_default_selected ? 'checked' : '';
@@ -2492,7 +2549,7 @@ function renderLdCourseChecklist(courses) {
         `;
     }).join('');
 
-    $container.html(html);
+    $container.html(`${skippedHtml}${html}`);
 }
 
 function refreshTransferLearningPathState(planId) {
@@ -2512,28 +2569,45 @@ function refreshTransferLearningPathState(planId) {
         }
 
         const path = response.path || null;
-        if (!path) {
+        const summary = (path && path.status_summary) ? path.status_summary : null;
+        const statusLabel = summary && summary.status === 'path_created' ? 'Path created' : 'Not requested';
+
+        if (!path || !summary || summary.status !== 'path_created') {
             $('#ldLearningPathGeneratedState').addClass('d-none');
-            $('#ldLearningPathMessage').text('No learning path has been generated yet for this transfer plan.');
+            $('#ldLearningPathMessage').text('Not requested');
+            $('#ldLearningPathTitle').text('Learning path status');
+            $('#ldLearningPathItemsList').html('<div class="list-group-item text-muted">No L&D learning path has been requested for this plan yet.</div>');
             return;
         }
 
         const items = Array.isArray(response.items) ? response.items : [];
+        const percent = Number(summary.completion_percent || 0);
         $('#ldLearningPathTitle').text(path.title || 'Generated learning path');
-        $('#ldLearningPathPublicToggle').prop('checked', Number(path.is_public || 0) === 1);
+        $('#ldLearningPathPublicToggle').prop('checked', Number(summary.is_public || path.is_public || 0) === 1);
         $('#ldLearningPathGeneratedState').removeClass('d-none');
-        $('#ldLearningPathMessage').text('Learning path is already generated for this plan.');
+        $('#ldLearningPathMessage').html(`
+            <strong>${statusLabel}</strong><br>
+            <span class="text-muted">Path #${escapeHtml(String(summary.path_id || path.id || ''))} · ${escapeHtml(summary.successor_name || path.successor_name || 'Successor')} · ${escapeHtml(String(summary.course_count || items.length || 0))} course(s)</span>
+        `);
 
-        const listHtml = items.length ? items.map((item) => `
-            <div class="list-group-item">
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>${escapeHtml(item.item_type || 'course')}</span>
-                    <span class="badge badge-light">#${escapeHtml(String(item.reference_id || ''))}</span>
+        const listHtml = items.length ? items.map((item) => {
+            const currentStatus = (item.successor_status || 'enrolled').toLowerCase();
+            const badgeClass = currentStatus === 'completed' ? 'badge-success' : currentStatus === 'in_progress' ? 'badge-warning' : 'badge-secondary';
+            return `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="font-weight-bold">${escapeHtml(item.course_title || 'Untitled course')}</div>
+                        <small class="text-muted">Course #${escapeHtml(String(item.reference_id || ''))}</small>
+                    </div>
+                    <span class="badge ${badgeClass}">${escapeHtml(currentStatus)}</span>
                 </div>
-            </div>
-        `).join('') : '<div class="list-group-item text-muted">No items available for this generated path.</div>';
+            `;
+        }).join('') : '<div class="list-group-item text-muted">No items available for this generated path.</div>';
 
-        $('#ldLearningPathItemsList').html(listHtml);
+        $('#ldLearningPathItemsList').html(`
+            <div class="mb-2 small text-muted">Overall completion: <strong>${percent}%</strong></div>
+            ${listHtml}
+        `);
     });
 }
 
@@ -2554,14 +2628,16 @@ function loadResigneeCoursesForTransfer() {
         employee_id: employeeId
     }, 'json').done(function(response) {
         const courses = response && response.data ? response.data : [];
-        renderLdCourseChecklist(courses);
+        const skippedInactiveCount = Number(response && response.skipped_inactive_count ? response.skipped_inactive_count : 0);
+        renderLdCourseChecklist(courses, skippedInactiveCount);
 
         if (!courses.length) {
-            $('#ldLearningPathMessage').text('No completed or in-progress L&D courses were found for this employee.');
+            $('#ldLearningPathMessage').text(skippedInactiveCount > 0 ? `${skippedInactiveCount} course(s) skipped (inactive). No completed or in-progress L&D courses were found for this employee.` : 'No completed or in-progress L&D courses were found for this employee.');
             return;
         }
 
-        $('#ldLearningPathMessage').text('Choose which tasks should be included in the successor learning path, then generate it.');
+        const messageBase = skippedInactiveCount > 0 ? `${skippedInactiveCount} course(s) skipped (inactive). ` : '';
+        $('#ldLearningPathMessage').text(messageBase + 'Choose which courses should be included in the successor learning path, then request it from L&D.');
 
         if (planId) {
             refreshTransferLearningPathState(planId);
@@ -2573,27 +2649,38 @@ function loadResigneeCoursesForTransfer() {
 
 function generateTransferLearningPath() {
     const employeeId = $('#transferEmployeeSelect').val();
+    const successorId = $('#successorSelect').val();
     const planId = $('#transferPlanId').val();
     const selectedCourseIds = $('.ld-course-checkbox:checked').map(function() {
         return this.value;
     }).get();
 
     if (!employeeId) {
-        showToast('warning', 'Select a leaving employee before generating a learning path.');
+        showToast('warning', 'Select a leaving employee before requesting a learning path.');
+        return;
+    }
+
+    if (!successorId) {
+        showToast('warning', 'A successor is required before requesting a learning path from L&D.');
+        return;
+    }
+
+    if (String(successorId) === String(employeeId)) {
+        showToast('warning', 'The successor cannot be the same employee as the resignee.');
         return;
     }
 
     if (!planId) {
-        showToast('warning', 'Save the transfer plan before generating the learning path.');
+        showToast('warning', 'Save the transfer plan before requesting the learning path.');
         return;
     }
 
     if (!selectedCourseIds.length) {
-        showToast('warning', 'Choose at least one eligible course to generate the learning path.');
+        showToast('warning', 'Choose at least one eligible course to request a learning path.');
         return;
     }
 
-    $('#generateTransferLearningPathBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Generating...');
+    $('#generateTransferLearningPathBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Requesting...');
 
     $.post('exit_management.php', {
         ajax_action: 'generate_kt_learning_path',
@@ -2602,15 +2689,15 @@ function generateTransferLearningPath() {
         course_ids: selectedCourseIds
     }, 'json').done(function(response) {
         if (response && response.success) {
-            showToast('success', response.message || 'Learning path generated.');
+            showToast('success', response.message || 'Learning path requested from L&D.');
             refreshTransferLearningPathState(planId);
         } else {
-            showToast('error', response && response.message ? response.message : 'Unable to generate the learning path.');
+            showToast('error', response && response.message ? response.message : 'Unable to request the learning path.');
         }
     }).fail(function() {
-        showToast('error', 'Unable to generate the learning path right now.');
+        showToast('error', 'Unable to request the learning path right now.');
     }).always(function() {
-        $('#generateTransferLearningPathBtn').prop('disabled', false).html('Generate Learning Path');
+        $('#generateTransferLearningPathBtn').prop('disabled', false).html('Request Learning Path from L&D');
     });
 }
 
@@ -3637,20 +3724,40 @@ function loadInterviewData(id, viewOnly = false) {
                 $('#hrRecommendations').val(hr.hr_recommendations || '');
                 $('#hrFollowUpActions').val(hr.follow_up_actions || '');
                 $('#hrRehireEligibility').val(hr.rehire_eligibility || '');
-                $('#hrKnowledgeTransfer').prop('checked', hr.knowledge_transfer_required == 1 || hr.knowledge_transfer_required === '1');
             } else {
                 $('#hrSummary').val('');
                 $('#hrKeyFindings').val('');
                 $('#hrRecommendations').val('');
                 $('#hrFollowUpActions').val('');
                 $('#hrRehireEligibility').val('');
-                $('#hrKnowledgeTransfer').prop('checked', false);
+            }
+
+            const questions = Array.isArray(response.questions) ? response.questions : [];
+            const answeredCount = questions.filter((question) => String(question.answer_text || '').trim() !== '').length;
+            $('#interviewQuestionsAnsweredBadge').text(`${answeredCount} / ${questions.length} answered`);
+            $('#interviewQuestionsHint').text(questions.length ? `${answeredCount} answered so far.` : 'No interview questions are assigned yet.');
+            $('#interviewQuestionsContainer').html(
+                questions.length
+                    ? questions.map((question, index) => `
+                        <div class="form-group">
+                            <label for="iq-${question.id}">${index + 1}. ${escapeHtml(question.question_text || 'Question')}</label>
+                            <textarea class="form-control iq-answer" id="iq-${question.id}" data-question-id="${question.id}" rows="3" ${viewOnly ? 'readonly' : ''}>${escapeHtml(question.answer_text || '')}</textarea>
+                        </div>
+                    `).join('')
+                    : '<p class="text-muted mb-0">No interview questions available.</p>'
+            );
+            $('#interviewQuestionsSection').show();
+
+            if ((response.status || '').toLowerCase() === 'for_approval' && !viewOnly) {
+                $('#approveInterviewBtn').show();
+            } else {
+                $('#approveInterviewBtn').hide();
             }
 
             $('#hrAssessmentSection').show();
             setInterviewModalMode(viewOnly);
             if (!viewOnly && $('#interviewId').val()) {
-                $('#interviewSubmitBtn').text('Save Changes');
+                $('#interviewSubmitBtn').text('Save Schedule & Answers');
             }
         } else {
             console.error('Error loading interview:', response);
@@ -4245,7 +4352,12 @@ function showTerminationModal(terminationId = null) {
         }, function(response) {
                 if (response.success) {
                     $('#terminationId').val(response.data.id);
-                    $('#terminationEmployeeSelect').val(response.data.employee_id);
+                    const selectedEmployeeId = String(response.data.employee_id || '');
+                    const $terminationSelect = $('#terminationEmployeeSelect');
+                    if (selectedEmployeeId && !$terminationSelect.find(`option[value="${selectedEmployeeId}"]`).length) {
+                        $terminationSelect.append(`<option value="${selectedEmployeeId}">${escapeHtml(response.data.employee_name || 'Employee')} (existing record)</option>`);
+                    }
+                    $terminationSelect.val(selectedEmployeeId);
                     $('#terminationEmployeeDisplay').text(response.data.employee_name || ('Employee #' + response.data.employee_id));
                     $('#terminationEffectiveDate').val(response.data.effective_date);
                     $('#terminationReason').val(response.data.termination_reason);
@@ -4264,6 +4376,14 @@ function showTerminationModal(terminationId = null) {
         });
     } else {
         $('#terminationModalTitle').text('Initiate Termination');
+        if (typeof loadTerminationEmployees === 'function') {
+            loadTerminationEmployees(function() {
+                updateTerminationLetterPreview();
+                $('#terminationLetterSection').show();
+                openTerminationModal();
+            });
+            return;
+        }
         updateTerminationLetterPreview();
         $('#terminationLetterSection').show();
         openTerminationModal();
@@ -4639,7 +4759,7 @@ function isInterviewCompletable(scheduledDate) {
 
 function loadInterviewsTable(status = 'all', page = 1, searchTerm = '') {
     const tbody = $('#interviews-tbody');
-    showTableLoading(tbody, 5);
+    showTableLoading(tbody, 6);
 
     $.post('exit_management.php', {
         ajax_action: 'get_interviews',
@@ -4654,58 +4774,51 @@ function loadInterviewsTable(status = 'all', page = 1, searchTerm = '') {
         if (response && response.data && response.data.length > 0) {
             response.data.forEach(function(interview) {
                 const statusBadge = getStatusBadge(interview.status);
-                const canComplete = isInterviewCompletable(interview.scheduled_date);
-                const hasHrAssessment = interview.has_hr_assessment === 1 || interview.has_hr_assessment === '1' || interview.has_hr_assessment === true;
-                let completeButton;
-
-                if (!canComplete) {
-                    completeButton = `<button class="btn btn-sm btn-secondary" disabled title="Interview date is in the future">
-                        <i class="fas fa-check"></i>
-                    </button>`;
-                } else if (!hasHrAssessment) {
-                    completeButton = `<button class="btn btn-sm btn-secondary" disabled title="HR assessment required before approval">
-                        <i class="fas fa-check"></i>
-                    </button>`;
-                } else {
-                    completeButton = `<button class="btn btn-sm btn-success" onclick="completeInterview(${interview.id})" title="Complete Interview">
-                        <i class="fas fa-check"></i>
-                    </button>`;
-                }
+                const canApprove = (interview.status || '').toLowerCase() === 'for_approval';
+                const questionAnswered = Number(interview.question_answered || 0);
+                const questionTotal = Number(interview.question_total || 0);
+                const questionSummary = `${questionAnswered} / ${questionTotal}`;
+                const caseLabel = interview.case_label || interview.exit_case_type || 'Exit case';
 
                 const actions = `
-                    <button class="btn btn-sm btn-info" onclick="viewInterviewWithLoading(this, ${interview.id})" title="View Interview">
+                    <button class="btn btn-sm btn-info" onclick="viewInterviewWithLoading(this, ${interview.id})" title="View interview">
                         <i class="fas fa-eye"></i>
                     </button>
-                    ${completeButton}
-                    <button class="btn btn-sm btn-warning" onclick="archiveInterview(${interview.id})" title="Archive Interview">
+                    <button class="btn btn-sm btn-primary" onclick="showInterviewModal(${interview.id}, false)" title="Manage interview">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    ${canApprove ? `<button class="btn btn-sm btn-success" onclick="approveInterview(${interview.id})" title="Approve interview">
+                        <i class="fas fa-check"></i>
+                    </button>` : `<button class="btn btn-sm btn-secondary" disabled title="Awaiting approval">
+                        <i class="fas fa-check"></i>
+                    </button>`}
+                    <button class="btn btn-sm btn-warning" onclick="archiveInterview(${interview.id})" title="Archive interview">
                         <i class="fas fa-archive"></i>
                     </button>
                 `;
 
-                const interviewerDisplay = (interview.interviewer_name && interview.interviewer_name !== 'null') ? interview.interviewer_name : 'Not yet assigned';
-
                 tbody.append(`
                     <tr data-id="${interview.id}" data-status="${interview.status || ''}">
-                        <td>${interview.employee_name}</td>
-                        <td>${interviewerDisplay}</td>
-                        <td>${interview.scheduled_date || '—'}</td>
+                        <td>${escapeHtml(interview.employee_name || 'Unknown')}</td>
+                        <td>${escapeHtml(caseLabel)}</td>
+                        <td>${escapeHtml(interview.scheduled_date || 'Not yet scheduled')}</td>
+                        <td>${escapeHtml(questionSummary)}</td>
                         <td>${statusBadge}</td>
                         <td>${actions}</td>
                     </tr>
                 `);
             });
 
-            // Add pagination controls
             renderInterviewsPagination('interviews-pagination', response, status, page, searchTerm);
         } else {
-            tbody.append('<tr><td colspan="5" class="text-center">No interviews found</td></tr>');
+            tbody.append('<tr><td colspan="6" class="text-center">No interviews found</td></tr>');
             $('#interviews-pagination').empty();
         }
 
         loadArchivedInterviewSummary();
     }).fail(function(xhr, status, error) {
         console.error('Error loading interviews:', status, error, xhr.responseText);
-        tbody.html('<tr><td colspan="5" class="text-center text-danger">Error loading interviews</td></tr>');
+        tbody.html('<tr><td colspan="6" class="text-center text-danger">Error loading interviews</td></tr>');
         $('#interviews-pagination').empty();
         $('#archive-notif-count').hide();
     });
@@ -4748,7 +4861,7 @@ function loadInterviewReadyAlert() {
                     const exitTypeRaw = (item.exit_case_type || 'case');
                     const exitType = exitTypeRaw.charAt(0).toUpperCase() + exitTypeRaw.slice(1);
                     const exitDate = item.exit_date || item.last_working_date || item.effective_date || 'N/A';
-                    return `<div class="interview-ready-row"><i class="fas fa-info-circle text-primary" aria-hidden="true"></i><span><strong>${employeeName}</strong> — auto-scheduled after ${exitType.toLowerCase()} approval (${exitDate}).</span></div>`;
+                    return `<div class="interview-ready-row"><i class="fas fa-info-circle text-primary" aria-hidden="true"></i><span><strong>${employeeName}</strong> — approved case waiting to be scheduled (pending) for ${exitType.toLowerCase()} (${exitDate}).</span></div>`;
                 });
 
                 if (extraCount > 0) {
@@ -4808,7 +4921,7 @@ function loadArchivedInterviewSummary() {
 
 function loadArchivedInterviewsTable(page = 1) {
     const tbody = $('#archived-interviews-tbody');
-    tbody.html('<tr><td colspan="7" class="text-center text-muted">Loading...</td></tr>');
+    tbody.html('<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>');
 
     $.post('exit_management.php', {
         ajax_action: 'get_archived_interviews',
@@ -4826,12 +4939,12 @@ function loadArchivedInterviewsTable(page = 1) {
 
         archivedInterviewsData = [];
         archivedInterviewTotal = 0;
-        tbody.html('<tr><td colspan="7" class="text-center text-muted">No archived interviews yet</td></tr>');
+        tbody.html('<tr><td colspan="6" class="text-center text-muted">No archived interviews yet</td></tr>');
         $('#archived-interviews-pagination').empty();
     }, 'json').fail(function() {
         archivedInterviewsData = [];
         archivedInterviewTotal = 0;
-        tbody.html('<tr><td colspan="7" class="text-center text-danger">Unable to load archived interviews</td></tr>');
+        tbody.html('<tr><td colspan="6" class="text-center text-danger">Unable to load archived interviews</td></tr>');
         $('#archived-interviews-pagination').empty();
     });
 }
@@ -4841,7 +4954,7 @@ function renderArchivedInterviewsPage() {
     tbody.empty();
 
     if (!archivedInterviewsData.length) {
-        tbody.html('<tr><td colspan="7" class="text-center text-muted">No archived interviews yet</td></tr>');
+        tbody.html('<tr><td colspan="6" class="text-center text-muted">No archived interviews yet</td></tr>');
         $('#archived-interviews-pagination').empty();
         return;
     }
@@ -4850,7 +4963,6 @@ function renderArchivedInterviewsPage() {
         tbody.append(`
             <tr>
                 <td>${interview.employee_name || 'Unknown'}</td>
-                <td>${interview.interviewer_name || 'Unknown'}</td>
                 <td>${interview.scheduled_date || ''}</td>
                 <td class="status-column">${escapeHtml(formatStatus(interview.status || ''))}</td>
                 <td>${interview.archived_at || ''}</td>
@@ -4904,7 +5016,7 @@ function openArchiveModal() {
 
 function loadTransfersTable(status = 'all', page = 1, limit = 10, searchTerm = '') {
     const tbody = $('#transfers-tbody');
-    showTableLoading(tbody, 6);
+    showTableLoading(tbody, 7);
 
     $.post('exit_management.php', {
         ajax_action: 'get_transfer_plans',
@@ -4921,6 +5033,11 @@ function loadTransfersTable(status = 'all', page = 1, limit = 10, searchTerm = '
             response.data.forEach(function(plan) {
                 const statusBadge = getStatusBadge(plan.status);
                 const planId = plan.id ?? plan.plan_id ?? plan.planId ?? null;
+                const ldStatusLabel = plan.ld_status_label === 'Path created' ? 'Path created' : 'Not requested';
+                const ldStatusHtml = plan.ld_path_id ? `
+                    <div><strong>${ldStatusLabel}</strong></div>
+                    <small class="text-muted">#${escapeHtml(String(plan.ld_path_id))} · ${escapeHtml(plan.ld_path_title || 'Learning path')}</small>
+                ` : '<span class="text-muted">Not requested</span>';
                 if (planId === null || planId === undefined || planId === '') {
                     console.warn('Transfer plan missing id, row data:', plan);
                 }
@@ -4938,17 +5055,18 @@ function loadTransfersTable(status = 'all', page = 1, limit = 10, searchTerm = '
 
                 tbody.append(`
                     <tr>
-                        <td>${plan.employee_name}</td>
-                        <td>${plan.successor_name || 'Not assigned'}</td>
-                        <td>${plan.start_date}</td>
-                        <td>${plan.end_date}</td>
+                        <td>${escapeHtml(plan.employee_name || '')}</td>
+                        <td>${escapeHtml(plan.successor_name || 'Not assigned')}</td>
+                        <td>${escapeHtml(plan.start_date || '')}</td>
+                        <td>${escapeHtml(plan.end_date || '')}</td>
                         <td>${statusBadge}</td>
+                        <td>${ldStatusHtml}</td>
                         <td>${actions}</td>
                     </tr>
                 `);
             });
         } else {
-            tbody.append('<tr><td colspan="6" class="text-center">No transfer plans found</td></tr>');
+            tbody.append('<tr><td colspan="7" class="text-center">No transfer plans found</td></tr>');
         }
 
         // Render pagination
@@ -6240,10 +6358,10 @@ $(document).ready(function() {
     });
 });
 
-function completeInterview(id) {
-    showConfirmation('Mark this interview as completed?', function() {
+function approveInterview(id) {
+    showConfirmation('Approve this interview and send it to knowledge transfer?', function() {
         $.post('exit_management.php', {
-            ajax_action: 'complete_interview',
+            ajax_action: 'approve_interview',
             controller: 'interview',
             interview_id: id
         }, function(response) {
@@ -6254,11 +6372,17 @@ function completeInterview(id) {
             } else {
                 showToast('error', response.message);
             }
+        }, 'json').fail(function() {
+            showToast('error', 'An error occurred while approving the interview.');
         });
     }, {
-        confirmButtonText: 'Complete',
+        confirmButtonText: 'Approve',
         confirmButtonClass: 'btn-success'
     });
+}
+
+function completeInterview(id) {
+    approveInterview(id);
 }
 
 function deleteTransferPlan(id) {

@@ -351,19 +351,61 @@ class Leave
     }
 
     /**
-     * Get leave history (Approved + Rejected). If $employee_id is null, return global history.
+     * Get leave history including optional filters. If $employee_id is null, return global history.
      */
-    public function getHistory($employee_id = null, $limit = 50, $offset = 0)
+    public function getHistory($employee_id = null, $limit = 50, $offset = 0, array $filters = [])
     {
         $query = "SELECT lr.id, lr.employee_id, lr.leave_type_id, lr.start_date, lr.end_date, lr.details, lr.status, lr.updated_at,
-                         lt.leave_type_name, CONCAT(COALESCE(e.first_name,''),' ',COALESCE(e.last_name,'')) AS full_name
+                         lt.leave_type_name, CONCAT(COALESCE(e.first_name,''),' ',COALESCE(e.last_name,'')) AS full_name,
+                         DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days
                   FROM ta_leave_requests lr
                   INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
                   LEFT JOIN em_employees e ON lr.employee_id = e.employee_id
-                  WHERE lr.status IN ('Approved','REJECTED','Rejected')";
+                  WHERE 1 = 1";
 
         if ($employee_id) {
             $query .= " AND lr.employee_id = :employee_id";
+        }
+
+        $fromDate = trim((string)($filters['from_date'] ?? $filters['start_date'] ?? ''));
+        $toDate = trim((string)($filters['to_date'] ?? $filters['end_date'] ?? ''));
+        $leaveTypeId = isset($filters['leave_type_id']) ? (int)$filters['leave_type_id'] : 0;
+        $statusFilter = trim((string)($filters['status'] ?? ''));
+        $searchTerm = trim((string)($filters['search'] ?? ''));
+
+        $statusValue = '';
+        if ($statusFilter !== '') {
+            $normalizedStatus = strtolower($statusFilter);
+            if (in_array($normalizedStatus, ['approved', 'rejected'], true)) {
+                $statusValue = ucfirst($normalizedStatus);
+            }
+        }
+
+        if ($fromDate !== '' || $toDate !== '') {
+            if ($fromDate !== '') {
+                $query .= " AND lr.end_date >= :from_date";
+            }
+            if ($toDate !== '') {
+                $query .= " AND lr.start_date <= :to_date";
+            }
+        }
+
+        if ($leaveTypeId > 0) {
+            $query .= " AND lr.leave_type_id = :leave_type_id";
+        }
+        if ($statusValue !== '') {
+            $query .= " AND lr.status = :status";
+        } else {
+            $query .= " AND lr.status IN ('Approved', 'Rejected')";
+        }
+        if ($searchTerm !== '') {
+            $escapedSearch = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm);
+            $query .= " AND (
+                CONCAT(COALESCE(e.first_name,''), ' ', COALESCE(e.last_name,'')) LIKE :search ESCAPE '\\\\'
+                OR lt.leave_type_name LIKE :search ESCAPE '\\\\'
+                OR lr.details LIKE :search ESCAPE '\\\\'
+                OR lr.employee_id LIKE :search ESCAPE '\\\\'
+            )";
         }
 
         $query .= " ORDER BY lr.updated_at DESC LIMIT :limit OFFSET :offset";
@@ -372,11 +414,110 @@ class Leave
         if ($employee_id) {
             $stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_INT);
         }
+        if ($fromDate !== '') {
+            $stmt->bindParam(':from_date', $fromDate);
+        }
+        if ($toDate !== '') {
+            $stmt->bindParam(':to_date', $toDate);
+        }
+        if ($leaveTypeId > 0) {
+            $stmt->bindParam(':leave_type_id', $leaveTypeId, PDO::PARAM_INT);
+        }
+        if ($statusValue !== '') {
+            $stmt->bindParam(':status', $statusValue);
+        }
+        if ($searchTerm !== '') {
+            $searchTerm = '%' . $escapedSearch . '%';
+            $stmt->bindParam(':search', $searchTerm);
+        }
+
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Count leave history rows using the same filters as getHistory.
+     */
+    public function countHistory($employee_id = null, array $filters = [])
+    {
+        $query = "SELECT COUNT(*) AS total
+                  FROM ta_leave_requests lr
+                  INNER JOIN ta_leave_types lt ON lr.leave_type_id = lt.leave_type_id
+                  LEFT JOIN em_employees e ON lr.employee_id = e.employee_id
+                  WHERE 1 = 1";
+
+        if ($employee_id) {
+            $query .= " AND lr.employee_id = :employee_id";
+        }
+
+        $fromDate = trim((string)($filters['from_date'] ?? $filters['start_date'] ?? ''));
+        $toDate = trim((string)($filters['to_date'] ?? $filters['end_date'] ?? ''));
+        $leaveTypeId = isset($filters['leave_type_id']) ? (int)$filters['leave_type_id'] : 0;
+        $statusFilter = trim((string)($filters['status'] ?? ''));
+        $searchTerm = trim((string)($filters['search'] ?? ''));
+
+        $statusValue = '';
+        if ($statusFilter !== '') {
+            $normalizedStatus = strtolower($statusFilter);
+            if (in_array($normalizedStatus, ['approved', 'rejected'], true)) {
+                $statusValue = ucfirst($normalizedStatus);
+            }
+        }
+
+        if ($fromDate !== '' || $toDate !== '') {
+            if ($fromDate !== '') {
+                $query .= " AND lr.end_date >= :from_date";
+            }
+            if ($toDate !== '') {
+                $query .= " AND lr.start_date <= :to_date";
+            }
+        }
+
+        if ($leaveTypeId > 0) {
+            $query .= " AND lr.leave_type_id = :leave_type_id";
+        }
+        if ($statusValue !== '') {
+            $query .= " AND lr.status = :status";
+        } else {
+            $query .= " AND lr.status IN ('Approved', 'Rejected')";
+        }
+        if ($searchTerm !== '') {
+            $escapedSearch = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchTerm);
+            $query .= " AND (
+                CONCAT(COALESCE(e.first_name,''), ' ', COALESCE(e.last_name,'')) LIKE :search ESCAPE '\\\\'
+                OR lt.leave_type_name LIKE :search ESCAPE '\\\\'
+                OR lr.details LIKE :search ESCAPE '\\\\'
+                OR lr.employee_id LIKE :search ESCAPE '\\\\'
+            )";
+        }
+
+        $stmt = $this->conn->prepare($query);
+        if ($employee_id) {
+            $stmt->bindParam(':employee_id', $employee_id, PDO::PARAM_INT);
+        }
+        if ($fromDate !== '') {
+            $stmt->bindParam(':from_date', $fromDate);
+        }
+        if ($toDate !== '') {
+            $stmt->bindParam(':to_date', $toDate);
+        }
+        if ($leaveTypeId > 0) {
+            $stmt->bindParam(':leave_type_id', $leaveTypeId, PDO::PARAM_INT);
+        }
+        if ($statusValue !== '') {
+            $stmt->bindParam(':status', $statusValue);
+        }
+        if ($searchTerm !== '') {
+            $searchTerm = '%' . $escapedSearch . '%';
+            $stmt->bindParam(':search', $searchTerm);
+        }
+
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['total'] ?? 0);
     }
 
     /**

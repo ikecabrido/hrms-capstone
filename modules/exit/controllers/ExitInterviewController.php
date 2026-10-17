@@ -18,19 +18,23 @@ class ExitInterviewController extends ExitManagementController
     public function scheduleInterview(array $data): array
     {
         try {
-            $assignedInterviewerId = (int)($data['interviewer_id'] ?? $_SESSION['employee_id'] ?? 0);
-            if ($assignedInterviewerId <= 0) {
-                return ['success' => false, 'message' => 'Exit HR staff is required to schedule the interview'];
+            $assignedInterviewerId = isset($data['interviewer_id']) && $data['interviewer_id'] !== '' ? (int)$data['interviewer_id'] : null;
+            if ($assignedInterviewerId !== null && $assignedInterviewerId > 0) {
+                $data['interviewer_id'] = $assignedInterviewerId;
+            } else {
+                $data['interviewer_id'] = null;
             }
 
-            $required = ['exit_case_type', 'exit_case_id', 'employee_id', 'scheduled_date', 'scheduled_time'];
+            $required = ['exit_case_type', 'exit_case_id', 'employee_id'];
             foreach ($required as $field) {
                 if (empty($data[$field])) {
                     return ['success' => false, 'message' => "Field '$field' is required"];
                 }
             }
 
-            $data['interviewer_id'] = $assignedInterviewerId;
+            if (($data['status'] ?? 'scheduled') === 'scheduled' && (empty($data['scheduled_date']) || empty($data['scheduled_time']))) {
+                return ['success' => false, 'message' => 'Interview date and time are required when scheduling the interview'];
+            }
 
             $exitCaseType = $data['exit_case_type'];
             $exitCaseId = (int)$data['exit_case_id'];
@@ -106,6 +110,9 @@ class ExitInterviewController extends ExitManagementController
         if (!isset($interview['hr_assessment'])) {
             $interview['hr_assessment'] = $this->interviewModel->getHrAssessmentByInterview($interviewId);
         }
+
+        $interview['questions'] = $this->interviewModel->getInterviewQuestions($interviewId);
+        $interview['answered_questions'] = count(array_filter($interview['questions'], static fn ($question) => !empty($question['is_answered'])));
 
         // Attach exit case details and engagement data
         if (!empty($interview['exit_case_type']) && !empty($interview['exit_case_id'])) {
@@ -265,31 +272,42 @@ class ExitInterviewController extends ExitManagementController
     }
 
     /**
-     * Complete interview
+     * Approve an interview after the HR assessment is completed.
+     * Keep complete_interview as the backward-compatible alias for the same workflow.
      */
-    public function completeInterview(int $interviewId): array
+    public function approveInterview(int $interviewId): array
     {
         try {
+            $roleId = (int)($_SESSION['role_id'] ?? 0);
+            $allowedRoles = [1, 10, 15, 18, 22];
+            if (!in_array($roleId, $allowedRoles, true)) {
+                return ['success' => false, 'message' => 'Permission denied'];
+            }
+
             $interview = $this->interviewModel->getInterviewById($interviewId);
             if (!$interview) {
                 return ['success' => false, 'message' => 'Interview not found'];
             }
 
+            if (($interview['status'] ?? '') !== 'for_approval') {
+                return ['success' => false, 'message' => 'Interview must be in For Approval status before it can be approved'];
+            }
+
             $scheduledDate = $interview['scheduled_date'] ?? null;
             $today = date('Y-m-d');
-            $canComplete = !$scheduledDate || $scheduledDate <= $today;
+            $canApprove = !$scheduledDate || $scheduledDate <= $today;
 
-            if (!$canComplete) {
+            if (!$canApprove) {
                 return [
                     'success' => false,
-                    'message' => 'This interview cannot be completed yet because its scheduled date is still in the future.'
+                    'message' => 'This interview cannot be approved yet because its scheduled date is still in the future.'
                 ];
             }
 
             if (!$this->interviewModel->hasHrAssessmentContent($interviewId)) {
                 return [
                     'success' => false,
-                    'message' => 'HR assessment must have content before this interview can be completed.'
+                    'message' => 'HR assessment must have content before this interview can be approved.'
                 ];
             }
 
@@ -298,14 +316,19 @@ class ExitInterviewController extends ExitManagementController
             if ($success) {
                 return [
                     'success' => true,
-                    'message' => 'Interview marked as completed'
+                    'message' => 'Interview approved successfully'
                 ];
-            } else {
-                return ['success' => false, 'message' => 'Failed to update interview status'];
             }
+
+            return ['success' => false, 'message' => 'Failed to update interview status'];
         } catch (Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    public function completeInterview(int $interviewId): array
+    {
+        return $this->approveInterview($interviewId);
     }
 
     /**
@@ -323,19 +346,23 @@ class ExitInterviewController extends ExitManagementController
                     return ['success' => false, 'message' => 'Interview ID is required for update'];
                 }
 
-                $assignedInterviewerId = (int)($data['interviewer_id'] ?? $_SESSION['employee_id'] ?? 0);
-                if ($assignedInterviewerId <= 0) {
-                    return ['success' => false, 'message' => 'Exit HR staff is required to update the interview'];
+                $assignedInterviewerId = isset($data['interviewer_id']) && $data['interviewer_id'] !== '' ? (int)$data['interviewer_id'] : null;
+                if ($assignedInterviewerId !== null && $assignedInterviewerId > 0) {
+                    $data['interviewer_id'] = $assignedInterviewerId;
+                } else {
+                    $data['interviewer_id'] = null;
                 }
 
-                $required = ['exit_case_type', 'exit_case_id', 'employee_id', 'scheduled_date', 'scheduled_time'];
+                $required = ['exit_case_type', 'exit_case_id', 'employee_id'];
                 foreach ($required as $field) {
                     if (empty($data[$field])) {
                         return ['success' => false, 'message' => "Field '$field' is required for update"];
                     }
                 }
 
-                $data['interviewer_id'] = $assignedInterviewerId;
+                if (($data['status'] ?? 'scheduled') === 'scheduled' && (empty($data['scheduled_date']) || empty($data['scheduled_time']))) {
+                    return ['success' => false, 'message' => 'Interview date and time are required when scheduling the interview'];
+                }
 
                 $exitCaseType = $data['exit_case_type'];
                 $exitCaseId = (int)$data['exit_case_id'];
@@ -405,8 +432,23 @@ class ExitInterviewController extends ExitManagementController
                 $search = $data['search'] ?? '';
                 return $this->getInterviews($status, $page, $limit, $search);
 
+            case 'save_interview_answers':
+                $interviewId = (int)($data['interview_id'] ?? 0);
+                if ($interviewId <= 0) {
+                    return ['success' => false, 'message' => 'Interview ID is required'];
+                }
+                $answers = [];
+                if (isset($data['answers']) && is_array($data['answers'])) {
+                    $answers = $data['answers'];
+                } elseif (isset($data['answer_data']) && is_array($data['answer_data'])) {
+                    $answers = $data['answer_data'];
+                }
+                $result = $this->interviewModel->saveInterviewAnswers($interviewId, $answers);
+                return $result ? ['success' => true, 'message' => 'Interview answers saved successfully'] : ['success' => false, 'message' => 'Unable to save interview answers'];
+
+            case 'approve_interview':
             case 'complete_interview':
-                return $this->completeInterview($data['interview_id'] ?? 0);
+                return $this->approveInterview($data['interview_id'] ?? 0);
 
             case 'archive_interview':
                 return $this->archiveInterview($data['interview_id'] ?? 0);

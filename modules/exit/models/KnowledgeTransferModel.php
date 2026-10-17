@@ -25,9 +25,10 @@ class KnowledgeTransferModel extends ExitManagementModel
         }
 
         $checks = [
-            'ld_learning_path' => ['kt_plan_id', 'is_public', 'type'],
-            'ld_enrollment' => ['enrolled_at', 'created_at'],
-            'ld_learning_path_item' => ['order_index', 'status'],
+            'ld_course' => ['id', 'title', 'status'],
+            'ld_enrollment' => ['learner_id', 'course_id', 'status', 'enrolled_at'],
+            'ld_learning_path' => ['id', 'instructor_id', 'title', 'description', 'assigned_to', 'status', 'type', 'kt_plan_id', 'is_public', 'created_at', 'updated_at'],
+            'ld_learning_path_item' => ['learning_path_id', 'item_type', 'reference_id', 'order_index', 'status'],
         ];
 
         foreach ($checks as $tableName => $columns) {
@@ -291,20 +292,31 @@ class KnowledgeTransferModel extends ExitManagementModel
     public function getResigneeCoursesForKnowledgeTransfer(int $employeeId): array
     {
         if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
-            return [];
+            return ['courses' => [], 'skipped_inactive_count' => 0];
         }
 
-        $stmt = $this->db->prepare(
+        $activeStmt = $this->db->prepare(
             "SELECT DISTINCT e.course_id, c.title AS course_title, c.status AS course_status, e.status AS enrollment_status
              FROM ld_enrollment e
              INNER JOIN ld_course c ON c.id = e.course_id
              WHERE e.learner_id = :employee_id
                AND e.status IN ('completed', 'in_progress')
+               AND c.status = 'active'
              ORDER BY c.title ASC"
         );
-        $stmt->execute([':employee_id' => $employeeId]);
+        $activeStmt->execute([':employee_id' => $employeeId]);
+        $courses = $activeStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $inactiveStmt = $this->db->prepare(
+            "SELECT COUNT(DISTINCT e.course_id) AS skipped_inactive_count
+             FROM ld_enrollment e
+             INNER JOIN ld_course c ON c.id = e.course_id
+             WHERE e.learner_id = :employee_id
+               AND e.status IN ('completed', 'in_progress')
+               AND c.status <> 'active'"
+        );
+        $inactiveStmt->execute([':employee_id' => $employeeId]);
+        $inactiveCount = (int)($inactiveStmt->fetch(PDO::FETCH_ASSOC)['skipped_inactive_count'] ?? 0);
 
         foreach ($courses as &$course) {
             $course['id'] = (int)($course['course_id'] ?? 0);
@@ -313,7 +325,88 @@ class KnowledgeTransferModel extends ExitManagementModel
         }
         unset($course);
 
-        return $courses;
+        return ['courses' => $courses, 'skipped_inactive_count' => $inactiveCount];
+    }
+
+    public function getLearningPathRequestStatus(int $planId): array
+    {
+        if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
+            return [
+                'status' => 'not_requested',
+                'path_id' => null,
+                'title' => null,
+                'successor_name' => null,
+                'course_count' => 0,
+                'is_public' => 0,
+                'completion_percent' => 0,
+                'courses' => [],
+            ];
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT lp.id,
+                    lp.title,
+                    lp.assigned_to,
+                    lp.is_public,
+                    lp.type,
+                    CONCAT(s.first_name, ' ', s.last_name) AS successor_name
+             FROM ld_learning_path lp
+             LEFT JOIN em_employees s ON s.employee_id = lp.assigned_to
+             WHERE lp.kt_plan_id = :plan_id
+               AND lp.type = 'knowledge_transfer'
+             ORDER BY lp.id DESC
+             LIMIT 1"
+        );
+        $stmt->execute([':plan_id' => $planId]);
+        $path = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$path) {
+            return [
+                'status' => 'not_requested',
+                'path_id' => null,
+                'title' => null,
+                'successor_name' => null,
+                'course_count' => 0,
+                'is_public' => 0,
+                'completion_percent' => 0,
+                'courses' => [],
+            ];
+        }
+
+        $itemStmt = $this->db->prepare(
+            "SELECT lpi.reference_id,
+                    c.title AS course_title,
+                    COALESCE(en.status, 'enrolled') AS successor_status
+             FROM ld_learning_path_item lpi
+             LEFT JOIN ld_course c ON c.id = lpi.reference_id
+             LEFT JOIN ld_enrollment en ON en.course_id = lpi.reference_id AND en.learner_id = :assigned_to
+             WHERE lpi.learning_path_id = :path_id
+             ORDER BY lpi.order_index ASC, lpi.id ASC"
+        );
+        $itemStmt->execute([
+            ':assigned_to' => (int)($path['assigned_to'] ?? 0),
+            ':path_id' => (int)($path['id'] ?? 0),
+        ]);
+        $courses = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $courseCount = count($courses);
+        $completedCount = 0;
+        foreach ($courses as $course) {
+            if (strtolower((string)($course['successor_status'] ?? 'enrolled')) === 'completed') {
+                $completedCount++;
+            }
+        }
+
+        return [
+            'status' => 'path_created',
+            'path_id' => (int)($path['id'] ?? 0),
+            'title' => $path['title'] ?? 'Knowledge Transfer Path',
+            'successor_name' => $path['successor_name'] ?? 'Successor',
+            'course_count' => $courseCount,
+            'is_public' => (int)($path['is_public'] ?? 0),
+            'completion_percent' => $courseCount > 0 ? (int)round(($completedCount / $courseCount) * 100) : 0,
+            'courses' => $courses,
+        ];
     }
 
     /**
@@ -359,14 +452,20 @@ class KnowledgeTransferModel extends ExitManagementModel
                     lpi.order_index,
                     lpi.status,
                     c.title AS course_title,
-                    c.status AS course_status
+                    c.status AS course_status,
+                    COALESCE(en.status, 'enrolled') AS successor_status
              FROM ld_learning_path_item lpi
              LEFT JOIN ld_course c ON c.id = lpi.reference_id
+             LEFT JOIN ld_enrollment en ON en.course_id = lpi.reference_id AND en.learner_id = :assigned_to
              WHERE lpi.learning_path_id = :path_id
              ORDER BY lpi.order_index ASC, lpi.id ASC"
         );
-        $itemStmt->execute([':path_id' => (int)($path['id'] ?? 0)]);
+        $itemStmt->execute([
+            ':assigned_to' => (int)($path['assigned_to'] ?? 0),
+            ':path_id' => (int)($path['id'] ?? 0),
+        ]);
         $path['items'] = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
+        $path['status_summary'] = $this->getLearningPathRequestStatus($planId);
 
         return $path;
     }
@@ -464,9 +563,30 @@ class KnowledgeTransferModel extends ExitManagementModel
                  LIMIT 1"
             );
             $duplicateCheckStmt->execute([':plan_id' => $planId]);
-            if ($duplicateCheckStmt->fetch(PDO::FETCH_ASSOC)) {
+            $existingPath = $duplicateCheckStmt->fetch(PDO::FETCH_ASSOC);
+            if ($existingPath) {
                 $this->db->rollBack();
-                return ['success' => false, 'message' => 'already generated or in progress'];
+                return ['success' => false, 'message' => 'A learning path already exists for KT plan #' . (int)($planId) . ' and cannot be generated again.'];
+            }
+
+            $employeePathCheckStmt = $this->db->prepare(
+                "SELECT ktp.id
+                 FROM exit_knowledge_transfer_plans ktp
+                 INNER JOIN ld_learning_path lp ON lp.kt_plan_id = ktp.id AND lp.type = 'knowledge_transfer'
+                 WHERE ktp.employee_id = :employee_id
+                   AND ktp.status <> 'cancelled'
+                   AND ktp.id <> :plan_id
+                 ORDER BY ktp.id DESC
+                 LIMIT 1"
+            );
+            $employeePathCheckStmt->execute([
+                ':employee_id' => $planEmployeeId,
+                ':plan_id' => $planId,
+            ]);
+            $employeeExistingPlan = $employeePathCheckStmt->fetch(PDO::FETCH_ASSOC);
+            if ($employeeExistingPlan) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'This employee already has a learning path on KT plan #' . (int)($employeeExistingPlan['id'] ?? 0) . '.'];
             }
 
             $employeeName->execute([':employee_id' => $planEmployeeId]);
@@ -475,8 +595,8 @@ class KnowledgeTransferModel extends ExitManagementModel
             $successorName->execute([':successor_id' => $planSuccessorId]);
             $successorNameText = trim((string)$successorName->fetchColumn());
 
-            $pathTitle = 'Knowledge Transfer - ' . ($employeeNameText ?: 'Employee') . ' → ' . ($successorNameText ?: 'Successor');
-            $pathDescription = 'Generated automatically from Exit Knowledge Transfer plan #' . $planId . ' for successor handoff.';
+            $pathTitle = "Knowledge Transfer \u{2014} " . ($employeeNameText ?: 'Employee');
+            $pathDescription = 'Generated automatically from Exit Knowledge Transfer plan #' . $planId . ' for successor handoff to ' . ($successorNameText ?: 'Successor') . '.';
 
             $pathInsertSql = "
                 INSERT INTO ld_learning_path (instructor_id, title, description, assigned_to, status, type, kt_plan_id, is_public, created_at, updated_at)
@@ -631,7 +751,12 @@ class KnowledgeTransferModel extends ExitManagementModel
                 ktp.created_at,
                 ktp.updated_at,
                 CONCAT(e.first_name, ' ', e.last_name) as employee_name,
-                CONCAT(s.first_name, ' ', s.last_name) as successor_name
+                CONCAT(s.first_name, ' ', s.last_name) as successor_name,
+                (SELECT lp.id FROM ld_learning_path lp WHERE lp.kt_plan_id = ktp.id AND lp.type = 'knowledge_transfer' ORDER BY lp.id DESC LIMIT 1) AS ld_path_id,
+                (SELECT lp.title FROM ld_learning_path lp WHERE lp.kt_plan_id = ktp.id AND lp.type = 'knowledge_transfer' ORDER BY lp.id DESC LIMIT 1) AS ld_path_title,
+                (SELECT CASE WHEN EXISTS (SELECT 1 FROM ld_learning_path lp WHERE lp.kt_plan_id = ktp.id AND lp.type = 'knowledge_transfer') THEN 'Path created' ELSE 'Not requested' END) AS ld_status_label,
+                (SELECT lp.is_public FROM ld_learning_path lp WHERE lp.kt_plan_id = ktp.id AND lp.type = 'knowledge_transfer' ORDER BY lp.id DESC LIMIT 1) AS ld_is_public,
+                (SELECT COUNT(*) FROM ld_learning_path_item lpi WHERE lpi.learning_path_id = (SELECT lp2.id FROM ld_learning_path lp2 WHERE lp2.kt_plan_id = ktp.id AND lp2.type = 'knowledge_transfer' ORDER BY lp2.id DESC LIMIT 1)) AS ld_course_count
             FROM exit_knowledge_transfer_plans ktp
             JOIN em_employees e ON ktp.employee_id = e.employee_id
             LEFT JOIN em_employees s ON ktp.successor_id = s.employee_id

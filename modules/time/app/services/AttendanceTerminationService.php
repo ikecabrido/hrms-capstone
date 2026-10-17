@@ -56,10 +56,17 @@ class AttendanceTerminationService
     public function isTerminationActionRequired($employeeId, $daysBack = 7)
     {
         $query = "SELECT COUNT(attendance_id) AS missed_shift_days, MAX(attendance_date) AS last_missed_shift
-                  FROM {$this->attendance_table}
-                  WHERE employee_id = :employee_id
-                    AND status = 'ABSENT'
-                    AND attendance_date >= DATE_SUB(CURDATE(), INTERVAL :days_back DAY)";
+                  FROM {$this->attendance_table} a
+                  WHERE a.employee_id = :employee_id
+                    AND a.status = 'ABSENT'
+                    AND a.attendance_date >= DATE_SUB(CURDATE(), INTERVAL :days_back DAY)
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM ta_leave_requests lr
+                        WHERE lr.employee_id = a.employee_id
+                          AND lr.status = 'Approved'
+                          AND a.attendance_date BETWEEN lr.start_date AND lr.end_date
+                    )";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':employee_id', $employeeId, \PDO::PARAM_INT);
@@ -88,11 +95,18 @@ class AttendanceTerminationService
 
         // list recent absence details
         $listQ = "SELECT attendance_id, attendance_date, status
-                  FROM {$this->attendance_table}
-                  WHERE employee_id = :employee_id
-                    AND status = 'ABSENT'
-                    AND attendance_date >= DATE_SUB(CURDATE(), INTERVAL :days_back DAY)
-                  ORDER BY attendance_date DESC";
+                  FROM {$this->attendance_table} a
+                  WHERE a.employee_id = :employee_id
+                    AND a.status = 'ABSENT'
+                    AND a.attendance_date >= DATE_SUB(CURDATE(), INTERVAL :days_back DAY)
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM ta_leave_requests lr
+                        WHERE lr.employee_id = a.employee_id
+                          AND lr.status = 'Approved'
+                          AND a.attendance_date BETWEEN lr.start_date AND lr.end_date
+                    )
+                  ORDER BY a.attendance_date DESC";
 
         $ls = $this->conn->prepare($listQ);
         $ls->bindParam(':employee_id', $employeeId, \PDO::PARAM_INT);
@@ -141,6 +155,13 @@ class AttendanceTerminationService
                   LEFT JOIN {$this->attendance_table} a ON a.employee_id = e.employee_id
                     AND a.status = 'ABSENT'
                     AND a.attendance_date >= DATE_SUB(CURDATE(), INTERVAL :days_back DAY)
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM ta_leave_requests lr
+                        WHERE lr.employee_id = e.employee_id
+                          AND lr.status = 'Approved'
+                          AND a.attendance_date BETWEEN lr.start_date AND lr.end_date
+                    )
                   WHERE LOWER(e.employment_status) = 'active'
                   GROUP BY e.employee_id, e.first_name, e.last_name, d.department_name, p.position_name
                   HAVING COUNT(a.attendance_id) >= :threshold

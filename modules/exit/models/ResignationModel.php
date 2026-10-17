@@ -1,6 +1,7 @@
 <?php
 
 require_once 'ExitManagementModel.php';
+require_once 'ExitInterviewModel.php';
 require_once 'SettlementModel.php';
 
 class ResignationModel extends ExitManagementModel
@@ -519,38 +520,24 @@ class ResignationModel extends ExitManagementModel
                     SET status = ?, legal_approved_by = ?, legal_approved_at = NOW(), legal_approval_comments = ?, approved_by = ?, approved_at = NOW(), updated_at = NOW()
                     WHERE id = ?
                 ");
-                // Wrap update and downstream insert in a transaction to avoid partial state
                 try {
                     $this->db->beginTransaction();
 
                     $ok = $stmt->execute([$status, $approverId, $comments, $approverId, $resignationId]);
-
                     if (!$ok) {
                         $this->db->rollBack();
                         return false;
                     }
 
-                    // Fetch the resignation to get employee_id and ensure approved
+                    $this->db->commit();
+
                     $resStmt = $this->db->prepare("SELECT id, employee_id FROM exit_resignations WHERE id = ? AND status = 'approved'");
                     $resStmt->execute([$resignationId]);
                     $res = $resStmt->fetch(PDO::FETCH_ASSOC);
-
                     if ($res) {
-                        $employeeId = $res['employee_id'];
-
-                        // Check for existing scheduled interview for this exit case
-                        $chk = $this->db->prepare("SELECT COUNT(*) as c FROM exit_interviews WHERE exit_case_type = 'resignation' AND exit_case_id = ? AND status = 'scheduled'");
-                        $chk->execute([$resignationId]);
-                        $count = (int)($chk->fetch(PDO::FETCH_ASSOC)['c'] ?? 0);
-
-                        if ($count === 0) {
-                            // Insert a minimal scheduled interview record so HR sees it in the next tab
-                            $ins = $this->db->prepare("INSERT INTO exit_interviews (employee_id, exit_case_type, exit_case_id, interviewer_id, scheduled_date, scheduled_time, location, notes, status, created_at) VALUES (?, 'resignation', ?, NULL, CURDATE(), CURTIME(), 'TBD', ?, 'scheduled', NOW())");
-                            $ins->execute([$employeeId, $resignationId, 'Auto-created on resignation approval']);
-                        }
+                        $this->createPendingInterviewForApprovedCase('resignation', (int)$resignationId, (string)($res['employee_id'] ?? ''), 'Auto-created on resignation approval');
                     }
 
-                    $this->db->commit();
                     return true;
                 } catch (Exception $e) {
                     if ($this->db->inTransaction()) {

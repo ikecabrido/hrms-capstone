@@ -39,8 +39,8 @@ class ExitManagementController
             }
             $approved = $approvedResignations + $approvedTerminations;
 
-            // Interviews (unique cases that have scheduled or completed interviews)
-            $stmt = $db->query("SELECT COUNT(DISTINCT CONCAT(IFNULL(exit_case_type,''), '-', IFNULL(exit_case_id,''))) AS count FROM exit_interviews WHERE status IN ('scheduled','completed','pending')");
+            // Interviews (unique cases that are pending, scheduled, or awaiting approval)
+            $stmt = $db->query("SELECT COUNT(DISTINCT CONCAT(IFNULL(exit_case_type,''), '-', IFNULL(exit_case_id,''))) AS count FROM exit_interviews WHERE status IN ('pending','scheduled','for_approval','completed')");
             $interview = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
 
             // Knowledge transfer needed (use model helper)
@@ -690,8 +690,8 @@ class ExitManagementController
             $stmt = $db->query("SELECT COUNT(*) as count FROM exit_resignations WHERE status = 'pending'");
             $pendingResignations = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
 
-            // Count scheduled interviews
-            $stmt = $db->query("SELECT COUNT(*) as count FROM exit_interviews WHERE status = 'scheduled'");
+            // Count active interviews (pending, scheduled, or awaiting approval)
+            $stmt = $db->query("SELECT COUNT(*) as count FROM exit_interviews WHERE status IN ('pending', 'scheduled', 'for_approval')");
             $scheduledInterviews = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
 
             // Count active transfers

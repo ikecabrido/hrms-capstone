@@ -300,6 +300,9 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
     if (typeof loadTerminationStatusAlert === 'function') {
         loadTerminationStatusAlert();
     }
+    if (typeof loadTerminationEmployees === 'function') {
+        loadTerminationEmployees();
+    }
     if (typeof loadEmployees === 'function') {
         loadEmployees();
     }

@@ -29,15 +29,21 @@ class TerminationController extends ExitManagementController
                 return ['success' => false, 'message' => $eligibility['reason']];
             }
 
-            // Prevent automated/add-from-service submissions when attendance-based termination
-            // threshold is reached. Require explicit manual confirmation via 'confirm_manual'.
             try {
                 $svc = new \App\Services\AttendanceTerminationService();
-                $termInfo = $svc->isTerminationActionRequired($data['employee_id']);
+                $termInfo = $svc->isTerminationActionRequired((int)$data['employee_id']);
+                if ($termInfo === null) {
+                    return [
+                        'success' => false,
+                        'message' => 'Employee does not currently meet the attendance termination requirement.'
+                    ];
+                }
             } catch (Exception $e) {
                 $termInfo = null;
             }
 
+            // Prevent automated/add-from-service submissions when attendance-based termination
+            // threshold is reached. Require explicit manual confirmation via 'confirm_manual'.
             if ($termInfo && empty($data['confirm_manual'])) {
                 return [
                     'success' => false,

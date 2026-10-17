@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>getStatus test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    table { border-collapse: collapse; width: 100%; max-width: 900px; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+    .pass { color: green; font-weight: bold; }
+    .fail { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>getStatus fallback test</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Case</th>
+        <th>Result</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody id="results"></tbody>
+  </table>
+
+  <script>
+    function getStatus(record, isHolidayToday) {
+      if (isHolidayToday) {
+        return 'HOLIDAY';
+      }
+
+      if (record.time_in) {
+        if (record.status && String(record.status).trim()) {
+          return String(record.status).trim().toUpperCase();
+        }
+
+        const shiftStart = record.shift_start ? String(record.shift_start).trim() : '';
+        if (!shiftStart) {
+          return 'PRESENT';
+        }
+
+        const timeInValue = String(record.time_in).trim();
+        const timeInDateTime = timeInValue.includes('T') ? timeInValue.split('T')[1] : timeInValue.split(' ')[1] || timeInValue;
+        const timeInTime = timeInDateTime || '00:00:00';
+        const timeInParts = timeInTime.split(':');
+        const shiftParts = shiftStart.split(':');
+
+        if (timeInParts.length < 2 || shiftParts.length < 2) {
+          return 'PRESENT';
+        }
+
+        const toMinutes = (timeValue) => {
+          const parts = timeValue.split(':').map(part => Number(part));
+          if (parts.length < 2 || parts.some(part => !Number.isFinite(part))) {
+            return null;
+          }
+          const [hours, minutes, seconds = 0] = parts;
+          return (hours * 60) + minutes + (seconds / 60);
+        };
+
+        const timeInMinutes = toMinutes(timeInTime);
+        const shiftStartMinutes = toMinutes(shiftStart);
+
+        if (timeInMinutes === null || shiftStartMinutes === null) {
+          return 'PRESENT';
+        }
+
+        return (timeInMinutes - shiftStartMinutes) > 30 ? 'LATE' : 'PRESENT';
+      }
+
+      if (record.status && String(record.status).toUpperCase() === 'ABSENT') {
+        return 'ABSENT';
+      }
+
+      if (record.has_shift_today || record.employee_id) {
+        return 'WAITING FOR TIME IN';
+      }
+
+      if (record.status) {
+        return record.status;
+      }
+
+      return 'ABSENT';
+    }
+
+    const cases = [
+      { label: "1. status 'PRESENT', time_in '2026-10-16 10:05:00', shift_start '10:00:00'", record: { status: 'PRESENT', time_in: '2026-10-16 10:05:00', shift_start: '10:00:00' }, expected: 'PRESENT', holiday: false },
+      { label: "2. status 'PRESENT', time_in '2026-10-16 13:02:00', shift_start '13:00:00'", record: { status: 'PRESENT', time_in: '2026-10-16 13:02:00', shift_start: '13:00:00' }, expected: 'PRESENT', holiday: false },
+      { label: "3. status 'LATE', time_in '2026-10-16 08:45:00', shift_start '08:00:00'", record: { status: 'LATE', time_in: '2026-10-16 08:45:00', shift_start: '08:00:00' }, expected: 'LATE', holiday: false },
+      { label: "4. status '', time_in '2026-10-16 08:20:00', shift_start '08:00:00'", record: { status: '', time_in: '2026-10-16 08:20:00', shift_start: '08:00:00' }, expected: 'PRESENT', holiday: false },
+      { label: "5. status '', time_in '2026-10-16 08:45:00', shift_start '08:00:00'", record: { status: '', time_in: '2026-10-16 08:45:00', shift_start: '08:00:00' }, expected: 'LATE', holiday: false },
+      { label: "6. status '', time_in '2026-10-16T08:30:00', shift_start '08:00'", record: { status: '', time_in: '2026-10-16T08:30:00', shift_start: '08:00' }, expected: 'PRESENT', holiday: false },
+      { label: "7. status '', time_in '2026-10-16 08:31:00', shift_start '08:00:00'", record: { status: '', time_in: '2026-10-16 08:31:00', shift_start: '08:00:00' }, expected: 'LATE', holiday: false },
+      { label: "8. status '', time_in '2026-10-16 09:00:00', shift_start ''", record: { status: '', time_in: '2026-10-16 09:00:00', shift_start: '' }, expected: 'PRESENT', holiday: false },
+      { label: "9. holiday today", record: { status: '', time_in: '2026-10-16 09:00:00', shift_start: '08:00:00' }, expected: 'HOLIDAY', holiday: true }
+    ];
+
+    const tableBody = document.getElementById('results');
+    cases.forEach((testCase, index) => {
+      const actual = getStatus(testCase.record, testCase.holiday);
+      const passed = actual === testCase.expected;
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${testCase.label}</td>
+        <td class="${passed ? 'pass' : 'fail'}">${passed ? 'PASS' : 'FAIL'}</td>
+        <td>${actual}</td>
+      `;
+      tableBody.appendChild(row);
+    });
+  </script>
+</body>
+</html>

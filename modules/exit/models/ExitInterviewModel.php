@@ -9,6 +9,7 @@ class ExitInterviewModel extends ExitManagementModel
         parent::__construct();
         $this->ensureExitInterviewSchema();
         $this->ensureHrAssessmentTable();
+        $this->ensureQuestionBankTables();
     }
 
     /**
@@ -34,6 +35,213 @@ class ExitInterviewModel extends ExitManagementModel
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
+    protected function ensureQuestionBankTables(): void
+    {
+        $this->db->exec("CREATE TABLE IF NOT EXISTS exit_interview_question_bank (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            category VARCHAR(100) NOT NULL DEFAULT 'general',
+            question_text TEXT NOT NULL,
+            question_type VARCHAR(50) NOT NULL DEFAULT 'textarea',
+            is_required TINYINT(1) NOT NULL DEFAULT 0,
+            status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+            created_by INT DEFAULT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NULL DEFAULT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->exec("CREATE TABLE IF NOT EXISTS exit_interview_case_questions (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            interview_id INT NOT NULL,
+            exit_case_type ENUM('resignation','termination') NOT NULL DEFAULT 'resignation',
+            exit_case_id INT NOT NULL DEFAULT 0,
+            question_id INT NOT NULL,
+            question_text TEXT DEFAULT NULL,
+            display_order INT NOT NULL DEFAULT 0,
+            answer_text TEXT DEFAULT NULL,
+            answer_json JSON DEFAULT NULL,
+            is_answered TINYINT(1) NOT NULL DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NULL DEFAULT NULL,
+            UNIQUE KEY uq_case_question (interview_id, display_order),
+            INDEX idx_case_question_lookup (interview_id, question_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->seedDefaultQuestionBank();
+
+        $columns = $this->db->query("SHOW COLUMNS FROM exit_interview_case_questions")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('interview_id', $columns, true)) {
+            $this->db->exec("ALTER TABLE exit_interview_case_questions ADD COLUMN interview_id INT NOT NULL DEFAULT 0 AFTER id");
+        }
+        if (!in_array('question_text', $columns, true)) {
+            $this->db->exec("ALTER TABLE exit_interview_case_questions ADD COLUMN question_text TEXT DEFAULT NULL AFTER question_id");
+        }
+        if (!in_array('display_order', $columns, true)) {
+            $this->db->exec("ALTER TABLE exit_interview_case_questions ADD COLUMN display_order INT NOT NULL DEFAULT 0 AFTER question_id");
+        }
+
+        $indexes = $this->db->query("SHOW INDEX FROM exit_interview_case_questions")->fetchAll(PDO::FETCH_ASSOC);
+        $hasInterviewOrderIndex = false;
+        foreach ($indexes as $index) {
+            if (($index['Key_name'] ?? '') === 'uq_case_question' || ($index['Key_name'] ?? '') === 'uq_case_question_interview_order') {
+                $hasInterviewOrderIndex = true;
+                break;
+            }
+        }
+        if (!$hasInterviewOrderIndex) {
+            try {
+                $this->db->exec("CREATE UNIQUE INDEX uq_case_question_interview_order ON exit_interview_case_questions (interview_id, display_order)");
+            } catch (Exception $e) {
+                // Ignore if the legacy unique index already exists or the table is in a partial state.
+            }
+        }
+    }
+
+    protected function seedDefaultQuestionBank(): void
+    {
+        $count = (int)$this->db->query("SELECT COUNT(*) FROM exit_interview_question_bank")->fetchColumn();
+        if ($count > 0) {
+            return;
+        }
+
+        $questions = [
+            'What prompted your decision to leave the company?',
+            'How would you describe your overall experience with the organization?',
+            'What aspects of your role were most satisfying?',
+            'What aspects of your role were most challenging?',
+            'Did your manager provide clear support and communication?',
+            'Did you feel your workload was manageable?',
+            'How would you rate the clarity of your responsibilities?',
+            'What feedback would you give about the work environment?',
+            'How did you feel about the company culture?',
+            'What could the company improve to retain employees?',
+            'Did you feel recognized and valued in your role?',
+            'How effective were the company policies and procedures?',
+            'Would you recommend this organization to others?',
+            'What was your experience with team collaboration?',
+            'How would you assess the quality of leadership?',
+            'Did you have opportunities for growth and development?',
+            'How would you rate the onboarding and training process?',
+            'What did you appreciate most about your employment?',
+            'What concerns, if any, affected your decision to leave?',
+            'How would you describe communication across departments?',
+            'Did you understand your performance expectations?',
+            'How would you describe the balance between work and personal life?',
+            'What improvements would make the workplace more engaging?',
+            'Did you feel safe and supported in your daily work?',
+            'What additional comments would you like the company to know?',
+            'Is there anything else you would like to share before exit?'
+        ];
+
+        $stmt = $this->db->prepare("INSERT INTO exit_interview_question_bank (category, question_text, question_type, is_required, status) VALUES (?, ?, 'textarea', 1, 'active')");
+        foreach ($questions as $question) {
+            $stmt->execute(['general', $question]);
+        }
+    }
+
+    public function ensureInterviewCaseQuestions(int $interviewId): void
+    {
+        if ((int)$interviewId <= 0) {
+            return;
+        }
+
+        $countStmt = $this->db->prepare("SELECT COUNT(*) FROM exit_interview_case_questions WHERE interview_id = ?");
+        $countStmt->execute([(int)$interviewId]);
+        $count = (int)$countStmt->fetchColumn();
+        if ($count > 0) {
+            return;
+        }
+
+        $interview = $this->getInterviewById((int)$interviewId);
+        if (!$interview) {
+            return;
+        }
+
+        $questions = $this->db->prepare("SELECT id, question_text FROM exit_interview_question_bank WHERE status = 'active' ORDER BY RAND() LIMIT 10");
+        $questions->execute();
+        $questionRows = $questions->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($questionRows)) {
+            $this->seedDefaultQuestionBank();
+            $questions->execute();
+            $questionRows = $questions->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        if (empty($questionRows)) {
+            return;
+        }
+
+        $insert = $this->db->prepare("INSERT INTO exit_interview_case_questions (interview_id, exit_case_type, exit_case_id, question_id, question_text, display_order, answer_text, is_answered, created_at) VALUES (?, ?, ?, ?, ?, ?, NULL, 0, NOW())");
+        $order = 1;
+        foreach ($questionRows as $questionRow) {
+            $insert->execute([
+                (int)$interviewId,
+                $interview['exit_case_type'] ?? 'resignation',
+                (int)($interview['exit_case_id'] ?? 0),
+                (int)($questionRow['id'] ?? 0),
+                $questionRow['question_text'] ?? '',
+                $order++
+            ]);
+        }
+    }
+
+    public function getInterviewQuestions(int $interviewId): array
+    {
+        $this->ensureInterviewCaseQuestions((int)$interviewId);
+
+        $stmt = $this->db->prepare("
+            SELECT cq.id, cq.interview_id, cq.question_id, COALESCE(cq.question_text, qb.question_text) AS question_text, cq.answer_text, cq.answer_json, cq.is_answered, cq.display_order
+            FROM exit_interview_case_questions cq
+            LEFT JOIN exit_interview_question_bank qb ON qb.id = cq.question_id
+            WHERE cq.interview_id = ?
+            ORDER BY cq.display_order ASC
+        ");
+        $stmt->execute([(int)$interviewId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function saveInterviewAnswers(int $interviewId, array $answers): bool
+    {
+        $this->ensureInterviewCaseQuestions((int)$interviewId);
+
+        $current = $this->getInterviewById((int)$interviewId);
+        if (!$current || (($current['status'] ?? '') === 'completed')) {
+            return false;
+        }
+
+        $rows = $this->getInterviewQuestions((int)$interviewId);
+        if (empty($rows)) {
+            return false;
+        }
+
+        $answeredCount = 0;
+        foreach ($rows as $row) {
+            $questionId = (int)($row['question_id'] ?? 0);
+            $answerText = $answers[$questionId] ?? ($answers['answers'][$questionId] ?? null);
+            if (is_array($answerText)) {
+                $answerText = $answerText['answer'] ?? null;
+            }
+
+            $normalized = is_string($answerText) ? trim($answerText) : '';
+            $isAnswered = $normalized !== '' ? 1 : 0;
+            if ($isAnswered) {
+                $answeredCount++;
+            }
+
+            $stmt = $this->db->prepare("UPDATE exit_interview_case_questions SET answer_text = ?, answer_json = ?, is_answered = ?, updated_at = NOW() WHERE id = ?");
+            try {
+                $jsonValue = json_encode(['answer' => $normalized], JSON_UNESCAPED_SLASHES);
+            } catch (Throwable $e) {
+                $jsonValue = null;
+            }
+            $stmt->execute([$normalized, $jsonValue, $isAnswered, (int)($row['id'] ?? 0)]);
+        }
+
+        $nextStatus = ($answeredCount >= count($rows)) ? 'for_approval' : 'scheduled';
+        $this->updateInterviewStatus((int)$interviewId, $nextStatus);
+
+        return true;
+    }
+
     protected function ensureExitInterviewSchema(): void
     {
         if (!$this->tableExists('exit_interviews')) {
@@ -43,7 +251,12 @@ class ExitInterviewModel extends ExitManagementModel
         $requiredColumns = [
             'exit_case_type' => "ENUM('resignation','termination') DEFAULT NULL",
             'exit_case_id' => 'INT(11) DEFAULT NULL',
-            'completed_at' => 'TIMESTAMP NULL DEFAULT NULL'
+            'completed_at' => 'TIMESTAMP NULL DEFAULT NULL',
+            'location' => 'VARCHAR(255) DEFAULT NULL',
+            'notes' => 'TEXT DEFAULT NULL',
+            'status' => "ENUM('pending','scheduled','for_approval','completed','cancelled') NOT NULL DEFAULT 'pending'",
+            'approved_by' => 'INT(11) DEFAULT NULL',
+            'approved_at' => 'TIMESTAMP NULL DEFAULT NULL'
         ];
 
         foreach ($requiredColumns as $column => $definition) {
@@ -54,7 +267,48 @@ class ExitInterviewModel extends ExitManagementModel
             }
         }
 
+        $statusStmt = $this->db->prepare("SHOW COLUMNS FROM exit_interviews LIKE 'status'");
+        $statusStmt->execute();
+        $statusColumn = $statusStmt->fetch(PDO::FETCH_ASSOC);
+        if ($statusColumn && stripos($statusColumn['Type'] ?? '', 'pending') !== false && stripos($statusColumn['Type'] ?? '', 'cancelled') === false) {
+            $this->db->exec("ALTER TABLE exit_interviews MODIFY status ENUM('pending','scheduled','for_approval','completed','cancelled') NOT NULL DEFAULT 'pending'");
+        }
+
         $this->ensureTableAutoIncrement('exit_interviews');
+    }
+
+    /**
+     * Create a pending interview record for an approved exit case when the approval flow completes.
+     */
+    public function createPendingInterviewForApprovedCase(string $exitCaseType, int $exitCaseId, string $employeeId, ?string $notes = null): ?int
+    {
+        if (!in_array($exitCaseType, ['resignation', 'termination'], true) || $exitCaseId <= 0 || trim((string)$employeeId) === '') {
+            return null;
+        }
+
+        $checkStmt = $this->db->prepare(
+            "SELECT id FROM exit_interviews WHERE exit_case_type = ? AND exit_case_id = ? AND status IN ('pending','scheduled','for_approval','completed') ORDER BY id DESC LIMIT 1"
+        );
+        $checkStmt->execute([$exitCaseType, $exitCaseId]);
+        $existingId = (int)($checkStmt->fetchColumn() ?? 0);
+        if ($existingId > 0) {
+            return $existingId;
+        }
+
+        $insertStmt = $this->db->prepare("
+            INSERT INTO exit_interviews (employee_id, exit_case_type, exit_case_id, interviewer_id, scheduled_date,
+                                        scheduled_time, location, notes, status, created_at)
+            VALUES (?, ?, ?, NULL, NULL, NULL, 'TBD', ?, 'pending', NOW())
+        ");
+
+        $ok = $insertStmt->execute([
+            $employeeId,
+            $exitCaseType,
+            $exitCaseId,
+            $notes ?? 'Auto-created on approval'
+        ]);
+
+        return $ok ? (int)$this->db->lastInsertId() : null;
     }
 
     /**
@@ -87,25 +341,34 @@ class ExitInterviewModel extends ExitManagementModel
      */
     public function scheduleInterview(array $data): int
     {
-        if ($this->hasExistingActiveInterview($data['exit_case_type'], (int)$data['exit_case_id'])) {
+        $caseType = $data['exit_case_type'] ?? '';
+        $caseId = (int)($data['exit_case_id'] ?? 0);
+        $employeeId = (string)($data['employee_id'] ?? '');
+        $status = isset($data['status']) && in_array($data['status'], ['pending', 'scheduled', 'for_approval', 'completed', 'cancelled'], true)
+            ? $data['status']
+            : 'pending';
+        $interviewerId = isset($data['interviewer_id']) && $data['interviewer_id'] !== '' ? (int)$data['interviewer_id'] : null;
+
+        if ($this->hasExistingActiveInterview($caseType, $caseId)) {
             throw new Exception('An active exit interview already exists for the selected exit case');
         }
 
         $stmt = $this->db->prepare("
             INSERT INTO exit_interviews (employee_id, exit_case_type, exit_case_id, interviewer_id, scheduled_date,
                                        scheduled_time, location, notes, status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ");
 
         $stmt->execute([
-            $data['employee_id'],
-            $data['exit_case_type'],
-            $data['exit_case_id'],
-            $data['interviewer_id'],
-            $data['scheduled_date'],
-            $data['scheduled_time'],
+            $employeeId,
+            $caseType,
+            $caseId,
+            $interviewerId,
+            $data['scheduled_date'] ?? null,
+            $data['scheduled_time'] ?? null,
             $data['location'] ?? 'Virtual',
-            $data['notes'] ?? null
+            $data['notes'] ?? null,
+            $status
         ]);
 
         return (int)$this->db->lastInsertId();
@@ -116,7 +379,11 @@ class ExitInterviewModel extends ExitManagementModel
      */
     public function updateInterview(int $interviewId, array $data): bool
     {
-        if ($this->hasExistingActiveInterview($data['exit_case_type'], (int)$data['exit_case_id'], $interviewId)) {
+        $caseType = $data['exit_case_type'] ?? '';
+        $caseId = (int)($data['exit_case_id'] ?? 0);
+        $interviewerId = isset($data['interviewer_id']) && $data['interviewer_id'] !== '' ? (int)$data['interviewer_id'] : null;
+
+        if ($this->hasExistingActiveInterview($caseType, $caseId, $interviewId)) {
             throw new Exception('Another active exit interview already exists for the selected exit case');
         }
 
@@ -129,11 +396,11 @@ class ExitInterviewModel extends ExitManagementModel
 
         return $stmt->execute([
             $data['employee_id'],
-            $data['exit_case_type'],
-            $data['exit_case_id'],
-            $data['interviewer_id'],
-            $data['scheduled_date'],
-            $data['scheduled_time'],
+            $caseType,
+            $caseId,
+            $interviewerId,
+            $data['scheduled_date'] ?? null,
+            $data['scheduled_time'] ?? null,
             $data['location'] ?? 'Virtual',
             $data['notes'] ?? null,
             $interviewId
@@ -145,7 +412,7 @@ class ExitInterviewModel extends ExitManagementModel
      */
     public function hasExistingActiveInterview(string $exitCaseType, int $exitCaseId, int $excludeInterviewId = 0): bool
     {
-        $query = "SELECT COUNT(*) FROM exit_interviews WHERE exit_case_type = ? AND exit_case_id = ? AND status = 'scheduled'";
+        $query = "SELECT COUNT(*) FROM exit_interviews WHERE exit_case_type = ? AND exit_case_id = ? AND status IN ('pending','scheduled','for_approval')";
         if ($excludeInterviewId > 0) {
             $query .= " AND id != ?";
         }
@@ -292,6 +559,8 @@ class ExitInterviewModel extends ExitManagementModel
                 ei.updated_at,
                 CONCAT(e.first_name, ' ', e.last_name) as employee_name,
                 CONCAT(u.first_name, ' ', u.last_name) as interviewer_name,
+                (SELECT COUNT(*) FROM exit_interview_case_questions cq WHERE cq.interview_id = ei.id) AS question_total,
+                (SELECT COUNT(*) FROM exit_interview_case_questions cq WHERE cq.interview_id = ei.id AND (cq.is_answered = 1 OR TRIM(COALESCE(cq.answer_text, '')) <> '')) AS question_answered,
                 CASE WHEN h.id IS NOT NULL THEN 1 ELSE 0 END AS has_hr_assessment
             FROM exit_interviews ei
             JOIN em_employees e ON ei.employee_id = e.employee_id
@@ -432,8 +701,8 @@ class ExitInterviewModel extends ExitManagementModel
             FROM exit_interviews ei
             JOIN em_employees e ON ei.employee_id = e.employee_id
             LEFT JOIN em_employees u ON ei.interviewer_id = u.employee_id
-            WHERE ei.status = 'scheduled'
-            ORDER BY ei.scheduled_date ASC
+            WHERE ei.status IN ('pending','scheduled','for_approval')
+            ORDER BY COALESCE(ei.scheduled_date, '9999-12-31') ASC, ei.created_at DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -443,19 +712,25 @@ class ExitInterviewModel extends ExitManagementModel
      */
     public function updateInterviewStatus(int $interviewId, string $status): bool
     {
+        $allowedStatuses = ['pending', 'scheduled', 'for_approval', 'completed', 'cancelled'];
+        if (!in_array($status, $allowedStatuses, true)) {
+            return false;
+        }
+
         if ($status === 'completed') {
             $stmt = $this->db->prepare("
                 UPDATE exit_interviews
-                SET status = ?, completed_at = NOW(), updated_at = NOW()
+                SET status = ?, completed_at = NOW(), approved_by = COALESCE(approved_by, ?), approved_at = COALESCE(approved_at, NOW()), updated_at = NOW()
                 WHERE id = ?
             ");
-        } else {
-            $stmt = $this->db->prepare("
-                UPDATE exit_interviews
-                SET status = ?, updated_at = NOW()
-                WHERE id = ?
-            ");
+            return $stmt->execute([$status, $_SESSION['employee_id'] ?? null, $interviewId]);
         }
+
+        $stmt = $this->db->prepare("
+            UPDATE exit_interviews
+            SET status = ?, updated_at = NOW()
+            WHERE id = ?
+        ");
         return $stmt->execute([$status, $interviewId]);
     }
 
