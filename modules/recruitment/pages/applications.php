@@ -150,56 +150,37 @@
                          * We use the stored relative path directly.
                          */
 
+
+
                         $resumeUrl = null;
 
                         if (!empty($row['resume'])) {
-
-                            $storedResumePath = trim($row['resume']);
-
-                            /*
-                             * Normalize Windows backslashes to URL slashes.
-                             */
                             $storedResumePath = str_replace(
                                 '\\',
                                 '/',
-                                $storedResumePath
+                                trim($row['resume'])
                             );
 
-                            /*
-                             * Remove accidental leading slash.
-                             */
-                            $storedResumePath = ltrim(
-                                $storedResumePath,
-                                '/'
-                            );
+                            $storedResumePath = ltrim($storedResumePath, '/');
 
-                            /*
-                             * The stored database path should normally be:
-                             *
-                             * uploads/{applicationId}/resume/file.pdf
-                             *
-                             * Since this page is:
-                             *
-                             * modules/recruitment/pages/applications.php
-                             *
-                             * and index.php is:
-                             *
-                             * modules/recruitment/index.php
-                             *
-                             * the correct browser-relative path is:
-                             *
-                             * uploads/...
-                             *
-                             * when the browser is currently on index.php.
-                             */
-
-                            $resumeUrl =
-                                htmlspecialchars(
-                                    $storedResumePath,
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                );
+                            // Allow only paths inside uploads/.
+                            if (
+                                strpos($storedResumePath, 'uploads/') === 0 &&
+                                !in_array('..', explode('/', $storedResumePath), true)
+                            ) {
+                                // Files are physically stored inside JobPortal/uploads/.
+                                $resumeUrl = '/modules/recruitment/JobPortal/' .
+                                    implode(
+                                        '/',
+                                        array_map(
+                                            'rawurlencode',
+                                            explode('/', $storedResumePath)
+                                        )
+                                    );
+                            }
                         }
+
+
                         ?>
 
                         <tr

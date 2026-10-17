@@ -8,23 +8,22 @@ class Page
 
     private $labels = [
         'dashboard-overview' => 'Dashboard Overview',
-        'account-creation'   => 'Account Creation',
         'job-list'           => 'Job Lists',
         'applications'       => 'Applications',
         'parsed-resume'      => 'Parsed Resumes',
         'schedule-tracker'   => 'Schedule Tracker',
         'interview-results'  => 'Interview Results',
         'offered-list'       => 'Offered Lists',
-        'hired-applicants'   => 'Hired Applicants',
         'onboarding'         => 'Onboarding',
+        'hired-applicants'   => 'Hired Applicants',
+
     ];
 
     private $sections = [
         'top'             => ['dashboard-overview'],
-        'user-management' => ['account-creation'],
         'recruitment'     => ['job-list', 'applications', 'parsed-resume'],
         'interviews'      => ['schedule-tracker', 'interview-results'],
-        'hiring'          => ['offered-list', 'hired-applicants', 'onboarding'],
+        'hiring'          => ['offered-list', 'onboarding', 'hired-applicants'],
     ];
 
     /*
@@ -281,7 +280,6 @@ class Page
         }
 
         $sectionOrder = [
-            'user-management',
             'recruitment',
             'interviews',
             'hiring'

@@ -70,12 +70,37 @@ $applications = $applications ?? [];
                         <option
                             value="<?= (int) $candidate['id'] ?>"
                             <?= $disabled ?>
-                            data-job="<?= htmlspecialchars($candidate['job_title'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                            data-position="<?= htmlspecialchars($candidate['position'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                            data-department="<?= htmlspecialchars($candidate['department'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                            data-minimum-salary="<?= htmlspecialchars($candidate['minimum_salary'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                            data-midpoint-salary="<?= htmlspecialchars($candidate['midpoint_salary'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
-                            data-maximum-salary="<?= htmlspecialchars($candidate['maximum_salary'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                            data-job="<?= htmlspecialchars(
+                                            $candidate['job_title'] ?? '',
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                            data-position="<?= htmlspecialchars(
+                                                $candidate['position'] ?? '',
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>"
+                            data-department="<?= htmlspecialchars(
+                                                    $candidate['department'] ?? '',
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>"
+                            data-minimum-salary="<?= htmlspecialchars(
+                                                        $candidate['minimum_salary'] ?? '',
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
+                            data-midpoint-salary="<?= htmlspecialchars(
+                                                        $candidate['midpoint_salary'] ?? '',
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
+                            data-maximum-salary="<?= htmlspecialchars(
+                                                        $candidate['maximum_salary'] ?? '',
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>">
+
                             <?= htmlspecialchars(
                                 ($candidate['first_name'] ?? '') . ' ' .
                                     ($candidate['last_name'] ?? '') .
@@ -83,6 +108,7 @@ $applications = $applications ?? [];
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
+
                         </option>
 
                     <?php endforeach; ?>
@@ -91,8 +117,8 @@ $applications = $applications ?? [];
             </div>
 
 
-
             <!-- Auto-filled Information -->
+
             <div style="
                 display:grid;
                 grid-template-columns:1fr 1fr;
@@ -100,6 +126,7 @@ $applications = $applications ?? [];
             ">
 
                 <!-- Base Job -->
+
                 <div>
                     <label style="display:block; margin-bottom:8px; font-weight:600;">
                         Base Job Title
@@ -118,7 +145,9 @@ $applications = $applications ?? [];
                         id="jobTitle">
                 </div>
 
+
                 <!-- Department -->
+
                 <div>
                     <label style="display:block; margin-bottom:8px; font-weight:600;">
                         Department
@@ -134,7 +163,9 @@ $applications = $applications ?? [];
                         border:1px solid #cbd5e1; border-radius:5px;">
                 </div>
 
+
                 <!-- Position -->
+
                 <div>
                     <label style="display:block; margin-bottom:8px; font-weight:600;">
                         Specific Position / Role
@@ -149,9 +180,7 @@ $applications = $applications ?? [];
                         style="width:100%; padding:10px; background:#f1f5f9;
                         border:1px solid #cbd5e1; border-radius:5px;">
                 </div>
-
-                <!-- Salary -->
-
+                <!-- Monthly Salary Offer -->
 
                 <div>
                     <label style="display:block; margin-bottom:8px; font-weight:600;">
@@ -163,32 +192,41 @@ $applications = $applications ?? [];
                         id="salaryOffer"
                         required
                         style="
-            width:100%;
-            padding:10px;
-            background:#f1f5f9;
-            border:1px solid #cbd5e1;
-            border-radius:5px;
-        ">
+                            width:100%;
+                            padding:10px;
+                            background:#f1f5f9;
+                            border:1px solid #cbd5e1;
+                            border-radius:5px;
+                        ">
+
                         <option value="">
                             -- Select Salary Offer --
                         </option>
 
-                        <option value="" id="minimumSalaryOption">
+                        <option
+                            value=""
+                            id="minimumSalaryOption">
                             Minimum
                         </option>
 
-                        <option value="" id="midpointSalaryOption">
+                        <option
+                            value=""
+                            id="midpointSalaryOption">
                             Midpoint
                         </option>
 
-                        <option value="" id="maximumSalaryOption">
+                        <option
+                            value=""
+                            id="maximumSalaryOption">
                             Maximum
                         </option>
+
                     </select>
                 </div>
 
 
                 <!-- Benefit Package -->
+
                 <div style="margin-top:20px;">
                     <label style="display:block; margin-bottom:8px; font-weight:600;">
                         Benefit Package
@@ -198,11 +236,17 @@ $applications = $applications ?? [];
                         name="benefit_package"
                         rows="3"
                         placeholder="List health insurance, bonuses, etc."
-                        style="width:100%; padding:10px; border:1px solid #cbd5e1;
-                    border-radius:5px;"></textarea>
+                        style="
+                            width:100%;
+                            padding:10px;
+                            border:1px solid #cbd5e1;
+                            border-radius:5px;
+                        "></textarea>
                 </div>
 
+
                 <!-- Additional Notes -->
+
                 <div style="margin-top:20px;">
                     <label style="display:block; margin-bottom:8px; font-weight:600;">
                         Additional Notes
@@ -212,11 +256,17 @@ $applications = $applications ?? [];
                         name="additional_note"
                         rows="3"
                         placeholder="Onboarding instructions or special conditions..."
-                        style="width:100%; padding:10px; border:1px solid #cbd5e1;
-                    border-radius:5px;"></textarea>
+                        style="
+                            width:100%;
+                            padding:10px;
+                            border:1px solid #cbd5e1;
+                            border-radius:5px;
+                        "></textarea>
                 </div>
 
+
                 <!-- Submit -->
+
                 <div style="margin-top:20px; text-align:right;">
                     <button
                         type="submit"
@@ -225,9 +275,14 @@ $applications = $applications ?? [];
 
                         <i class="fas fa-paper-plane"></i>
                         Dispatch Offer Letter
+
                     </button>
                 </div>
 
+            </div>
+
         </form>
+
     </div>
+
 </div>

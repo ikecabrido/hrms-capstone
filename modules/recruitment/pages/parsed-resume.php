@@ -94,14 +94,38 @@ try {
                                     </span>
                                 </td>
 
+
                                 <td>
-                                    <?php if (!empty($resume['resume'])): ?>
-                                        <a href="<?= htmlspecialchars($resume['resume']) ?>"
+                                    <?php
+                                    $resumePath = trim($resume['resume'] ?? '');
+
+                                    if (!empty($resumePath)):
+                                        // Preserve full URLs; convert relative paths to browser URLs.
+                                        if (preg_match('~^https?://~i', $resumePath)) {
+                                            $resumeUrl = $resumePath;
+                                        } elseif (str_starts_with($resumePath, '/modules/')) {
+                                            $resumeUrl = $resumePath;
+                                        } else {
+                                            $resumePath = str_replace('\\', '/', $resumePath);
+
+                                            // Convert a stored server filesystem path into a URL.
+                                            $marker = '/modules/recruitment/JobPortal/uploads/';
+                                            $position = strpos($resumePath, $marker);
+
+                                            if ($position !== false) {
+                                                $resumeUrl = substr($resumePath, $position);
+                                            } else {
+                                                $resumeUrl = '/modules/recruitment/JobPortal/' .
+                                                    ltrim($resumePath, '/');
+                                            }
+                                        }
+                                    ?>
+                                        <a href="<?= htmlspecialchars($resumeUrl, ENT_QUOTES, 'UTF-8') ?>"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            class="btn-view-resume">
+                                            class="btn-view-resume"
+                                            title="View Resume">
                                             <i class="fas fa-file-pdf"></i>
-
                                         </a>
                                     <?php else: ?>
                                         <span class="text-muted small">
@@ -109,6 +133,7 @@ try {
                                         </span>
                                     <?php endif; ?>
                                 </td>
+
 
                                 <!-- Next Steps Column -->
                                 <td>

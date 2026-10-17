@@ -4,8 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!modal) return;
 
   const endpoint =
-    "/hrms-capstone/modules/recruitment/controllers/OnboardingChecklistController.php";
-
+    "/modules/recruitment/controllers/OnboardingChecklistController.php";
   const title = document.getElementById("onboardingModalTitle");
   const position = document.getElementById("onboardingEmployeePosition");
   const message = document.getElementById("onboardingMessage");
@@ -115,24 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     updateProgress();
-  }
-
-  // ---------------------------------------------------------
-  // LOAD CHECKLIST
-  // ---------------------------------------------------------
-  async function loadChecklist(id, version) {
-    const result = await request("load", {
-      method: "GET",
-      cache: "no-store",
-      // The controller reads onboarding_id from GET.
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    // The ID is sent separately below using the query string.
-    // This function is replaced by the ID-aware request immediately
-    // after declaration in the request helper usage.
   }
 
   // ID-aware GET request for loading an employee checklist.
