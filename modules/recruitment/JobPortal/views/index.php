@@ -304,7 +304,8 @@
                         <div class="pulled-item full">
                             <div class="l">Address</div>
                             <div class="v small">
-                                Bestlink College of the Philippines,
+                                Bestlink College of the Philippines IPO Road,
+                                Barangay MinuyanProper, City of San Jose del Monte,
                                 Bulacan
                             </div>
                         </div>
