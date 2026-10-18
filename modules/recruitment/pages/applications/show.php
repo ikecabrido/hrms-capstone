@@ -15,7 +15,7 @@ $isProcessed = in_array($status, ['approved', 'rejected'], true);
 ?>
 
 <div class="application-detail">
-    <div class="detail-header">
+    <div class="module-header">
         <a href="index.php?page=applications" class="application-back-link">
             <i class="fas fa-arrow-left"></i> Back to Applications
         </a>
@@ -28,16 +28,18 @@ $isProcessed = in_array($status, ['approved', 'rejected'], true);
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
 
                 <?php if (!$isProcessed): ?>
-                    <a href="index.php?page=approve-application&id=<?= (int)($application['id'] ?? 0); ?>"
-                        class="btn btn-success"
-                        onclick="return confirm('Are you sure you want to approve this applicant?');">
-                        <i class="fas fa-check"></i> Approve
-                    </a>
-                    <a href="index.php?page=reject-application&id=<?= (int)($application['id'] ?? 0); ?>"
-                        class="btn btn-danger"
-                        onclick="return confirm('Are you sure you want to reject this applicant?');">
-                        <i class="fas fa-times"></i> Reject
-                    </a>
+                    <div style="display: flex; gap: 8px;">
+                        <a href="index.php?page=approve-application&id=<?= (int)($application['id'] ?? 0); ?>"
+                            class="btn-create-primary"
+                            onclick="return confirm('Are you sure you want to approve this applicant?');">
+                            <i class="fas fa-check"></i> Approve
+                        </a>
+                        <a href="index.php?page=reject-application&id=<?= (int)($application['id'] ?? 0); ?>"
+                            class="btn-create-secondary"
+                            onclick="return confirm('Are you sure you want to reject this applicant?');">
+                            <i class="fas fa-times"></i> Reject
+                        </a>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>

@@ -1,0 +1,11 @@
+/* Restore Action Button */
+.btn-restore {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+}
+
+.btn-restore:hover {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
