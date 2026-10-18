@@ -1,0 +1,38 @@
+/* Custom Action Buttons for Detail View */
+.btn-approve-lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #dcfce7;
+  color: #166534;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.btn-approve-lg:hover {
+  background: #bbf7d0;
+  color: #14532d;
+}
+
+.btn-reject-lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fee2e2;
+  color: #991b1b;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.btn-reject-lg:hover {
+  background: #fecaca;
+  color: #7f1d1d;
+}

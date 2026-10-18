@@ -305,7 +305,7 @@
                             <div class="l">Address</div>
                             <div class="v small">
                                 Bestlink College of the Philippines,
-                                Novaliches, Quezon City
+                                Bulacan
                             </div>
                         </div>
                     </div>

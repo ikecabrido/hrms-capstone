@@ -1770,7 +1770,7 @@ class ApplicationController
         }
 
         require __DIR__ .
-            '/../pages/Applications/archived.php';
+            '/../pages/archived.php';
     }
 
     /**

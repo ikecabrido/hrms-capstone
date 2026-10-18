@@ -448,15 +448,20 @@ class Application
     /**
      * Restore archived application
      */
+    /**
+     * Restore archived application
+     */
     public function restore($id)
     {
         $stmt = $this->db->prepare("
-            UPDATE rao_applications
-            SET 
-                is_archived = 0,
-                archived_at = NULL
-            WHERE id = ?
-        ");
+        UPDATE rao_applications
+        SET
+            is_archived = 0,
+            archived_at = NULL,
+            status = 'pending'
+        WHERE id = ?
+        AND is_archived = 1
+    ");
 
         return $stmt->execute([$id]);
     }
