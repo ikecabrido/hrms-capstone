@@ -98,146 +98,39 @@ try {
                                 <td>
                                     <?php
                                     $resumePath = trim($resume['resume'] ?? '');
-                                    $resumeUrl = '';
 
-                                    if (!empty($resumePath)) {
-
-                                        /*
-         * =====================================================
-         * BUILD RESUME URL
-         * =====================================================
-         *
-         * Current upload structure:
-         *
-         * /modules/recruitment/uploads/{application_id}/filename
-         *
-         * Examples:
-         *
-         * /modules/recruitment/uploads/4/GROUP_6.docx
-         * /modules/recruitment/uploads/5/sample_resume.pdf
-         */
-
-                                        // 1. If the database already contains a complete URL
+                                    if (!empty($resumePath)):
+                                        // Preserve full URLs; convert relative paths to browser URLs.
                                         if (preg_match('~^https?://~i', $resumePath)) {
-
+                                            $resumeUrl = $resumePath;
+                                        } elseif (str_starts_with($resumePath, '/modules/')) {
                                             $resumeUrl = $resumePath;
                                         } else {
-
-                                            // Normalize Windows backslashes
                                             $resumePath = str_replace('\\', '/', $resumePath);
 
-                                            /*
-             * Remove any leading slash so we can safely
-             * construct the website URL.
-             */
-                                            $resumePath = ltrim($resumePath, '/');
+                                            // Convert a stored server filesystem path into a URL.
+                                            $marker = '/modules/recruitment/JobPortal/uploads/';
+                                            $position = strpos($resumePath, $marker);
 
-                                            /*
-             * If the stored path already contains the
-             * correct recruitment upload directory,
-             * use it directly.
-             */
-                                            if (str_starts_with($resumePath, 'modules/recruitment/uploads/')) {
-
-                                                $resumeUrl = '/' . $resumePath;
-
-                                                /*
-             * Handle stored paths such as:
-             *
-             * uploads/4/GROUP_6.docx
-             */
-                                            } elseif (str_starts_with($resumePath, 'uploads/')) {
-
-                                                $resumeUrl = '/modules/recruitment/' . $resumePath;
-
-                                                /*
-             * Handle old stored paths:
-             *
-             * modules/recruitment/JobPortal/uploads/4/file.docx
-             *
-             * Convert them to the NEW location.
-             */
-                                            } elseif (
-                                                str_contains(
-                                                    $resumePath,
-                                                    'modules/recruitment/JobPortal/uploads/'
-                                                )
-                                            ) {
-
-                                                $resumePath = substr(
-                                                    $resumePath,
-                                                    strpos(
-                                                        $resumePath,
-                                                        'modules/recruitment/JobPortal/uploads/'
-                                                    ) + strlen(
-                                                        'modules/recruitment/JobPortal/'
-                                                    )
-                                                );
-
-                                                $resumeUrl = '/modules/recruitment/' . $resumePath;
-
-                                                /*
-             * Handle old filesystem paths such as:
-             *
-             * /home/recruitment.bcp-hrms.com/public_html/
-             * modules/recruitment/JobPortal/uploads/4/file.docx
-             */
-                                            } elseif (
-                                                str_contains(
-                                                    $resumePath,
-                                                    '/modules/recruitment/JobPortal/uploads/'
-                                                )
-                                            ) {
-
-                                                $position = strpos(
-                                                    $resumePath,
-                                                    '/modules/recruitment/JobPortal/uploads/'
-                                                );
-
-                                                $relativePath = substr(
-                                                    $resumePath,
-                                                    $position + strlen(
-                                                        '/modules/recruitment/JobPortal/'
-                                                    )
-                                                );
-
-                                                $resumeUrl = '/modules/recruitment/' . $relativePath;
-
-                                                /*
-             * Handle a plain filename/path as a fallback.
-             */
+                                            if ($position !== false) {
+                                                $resumeUrl = substr($resumePath, $position);
                                             } else {
-
-                                                $resumeUrl = '/modules/recruitment/uploads/' .
+                                                $resumeUrl = '/modules/recruitment/JobPortal/' .
                                                     ltrim($resumePath, '/');
                                             }
                                         }
-                                    }
                                     ?>
-
-                                    <?php if (!empty($resumeUrl)): ?>
-
-                                        <a href="<?= htmlspecialchars(
-                                                        $resumeUrl,
-                                                        ENT_QUOTES,
-                                                        'UTF-8'
-                                                    ) ?>"
+                                        <a href="<?= htmlspecialchars($resumeUrl, ENT_QUOTES, 'UTF-8') ?>"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             class="btn-view-resume"
                                             title="View Resume">
-
                                             <i class="fas fa-file-pdf"></i>
-
                                         </a>
-
                                     <?php else: ?>
-
                                         <span class="text-muted small">
-                                            <i class="fas fa-file-excel"></i>
-                                            No Resume
+                                            <i class="fas fa-file-excel"></i> No Resume
                                         </span>
-
                                     <?php endif; ?>
                                 </td>
 
