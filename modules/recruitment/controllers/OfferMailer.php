@@ -126,7 +126,7 @@ class OfferMailer
 <div class='wrapper'>
 <div class='main'>
     <div class='header-top'>
-        <img src='https://bcp.edu.ph/images/logo300.png' alt='BCP Logo' width='60' class='logo-placeholder'>
+        <img src='https://share.google/QwzOoM1tVCepKJOho' alt='BCP Logo' width='60' class='logo-placeholder'>
         <div class='header-text'>
             <div class='college-name'>Bestlink College of the Philippines</div>
             <div class='dept-name'>Human Resources Department · OPM</div>
