@@ -1,4 +1,3 @@
-
 <?php
 
 require_once __DIR__ . '/../helpers/format.php';
@@ -23,9 +22,8 @@ try {
     <div>
         <a
             href="index.php?page=offer"
-            class="btn-create"
-            style="background:#6366f1; text-decoration:none;"
-        >
+            class="btn-create-primary"
+            style="background:#6366f1; text-decoration:none;">
             <i class="fas fa-file-signature"></i>
             Offer
         </a>
@@ -72,11 +70,11 @@ try {
                             /*
                              * All three interviews must be passed
                              */
-                          $isPassed = (
-    ($initial ?? '') === 'passed' &&
-    ($technical ?? '') === 'passed' &&
-    ($final ?? '') === 'passed'
-);
+                            $isPassed = (
+                                ($initial ?? '') === 'passed' &&
+                                ($technical ?? '') === 'passed' &&
+                                ($final ?? '') === 'passed'
+                            );
 
                             /*
                              * Candidate failed if ANY interview failed
@@ -91,15 +89,14 @@ try {
                             <tr
                                 class="interview-result-row"
                                 tabindex="0"
-                                data-result-url="index.php?page=interview-result&id=<?= urlencode($row['application_id']) ?>"
-                            >
+                                data-result-url="index.php?page=interview-result&id=<?= urlencode($row['application_id']) ?>">
 
                                 <!-- Applicant Name -->
                                 <td style="font-weight:600; color:#1e293b;">
                                     <?= htmlspecialchars(
                                         trim(
                                             ($row['first_name'] ?? '') . ' ' .
-                                            ($row['last_name'] ?? '')
+                                                ($row['last_name'] ?? '')
                                         ),
                                         ENT_QUOTES,
                                         'UTF-8'
@@ -132,16 +129,14 @@ try {
                                                 align-items:center;
                                                 gap:10px;
                                                 flex-wrap:wrap;
-                                            "
-                                        >
+                                            ">
 
                                             <span
                                                 class="badge"
                                                 style="
                                                     background:#dcfce7;
                                                     color:#166534;
-                                                "
-                                            >
+                                                ">
                                                 <i class="fas fa-check-double"></i>
                                                 All Interviews Passed
                                             </span>
@@ -150,20 +145,18 @@ try {
                                                 method="POST"
                                                 action="index.php?page=mark-ready-for-offer"
                                                 style="margin:0;"
-                                                onclick="event.stopPropagation();"
-                                            >
+                                                onclick="event.stopPropagation();">
 
                                                 <input
                                                     type="hidden"
                                                     name="application_id"
                                                     value="<?= htmlspecialchars(
-                                                        $row['application_id'] ?? '',
-                                                        ENT_QUOTES,
-                                                        'UTF-8'
-                                                    ) ?>"
-                                                >
+                                                                $row['application_id'] ?? '',
+                                                                ENT_QUOTES,
+                                                                'UTF-8'
+                                                            ) ?>">
 
-                            
+
 
                                         </div>
 
@@ -174,8 +167,7 @@ try {
                                             style="
                                                 background:#fee2e2;
                                                 color:#991b1b;
-                                            "
-                                        >
+                                            ">
                                             <i class="fas fa-user-slash"></i>
                                             Rejected
                                         </span>
@@ -190,8 +182,7 @@ try {
                                             style="
                                                 background:#e0f2fe;
                                                 color:#0369a1;
-                                            "
-                                        >
+                                            ">
                                             <i class="fas fa-forward"></i>
                                             Ready for Technical
                                         </span>
@@ -206,8 +197,7 @@ try {
                                             style="
                                                 background:#f3e8ff;
                                                 color:#6b21a8;
-                                            "
-                                        >
+                                            ">
                                             <i class="fas fa-forward"></i>
                                             Ready for Final
                                         </span>
@@ -219,8 +209,7 @@ try {
                                             style="
                                                 background:#fef9c3;
                                                 color:#854d0e;
-                                            "
-                                        >
+                                            ">
                                             <i class="fas fa-spinner fa-spin"></i>
                                             In Progress
                                         </span>
@@ -242,8 +231,7 @@ try {
                                     text-align:center;
                                     padding:40px;
                                     color:#64748b;
-                                "
-                            >
+                                ">
 
                                 <?php if (!empty($error)): ?>
 
@@ -276,4 +264,3 @@ try {
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script type="module" src="/js/main.js"></script>
-
