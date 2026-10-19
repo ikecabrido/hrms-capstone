@@ -16,8 +16,8 @@ $isProcessed = in_array($status, ['approved', 'rejected'], true);
 
 <div class="application-detail">
     <div class="module-header">
-        <a href="index.php?page=applications" class="application-back-link">
-            <i class="fas fa-arrow-left"></i> Back to Applications
+        <a href="index.php?page=applications" class="application-back-link" style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background-color: #f3f4f6; color: #374151; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 0.9rem; border: 1px solid #e5e7eb; transition: all 0.2s ease-in-out; margin-bottom: 12px;">
+            <i class="fas fa-arrow-left"></i> <span>Back to Applications</span>
         </a>
         <div class="detail-heading">
             <div>
