@@ -7,9 +7,11 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
     <h1 style="margin:0; color:#1e293b;">New Hire Onboarding</h1>
     <p class="date-text">Track onboarding progress for all new employees</p>
 
-    <a href="index.php?page=onboarding-selection" class="btn-create">
-        <i class="fas fa-user-plus"></i> Start Onboarding
-    </a>
+    <div style="display: inline-block;">
+        <a href="index.php?page=onboarding-selection" class="btn-create">
+            <i class="fas fa-user-plus"></i> Start Onboarding
+        </a>
+    </div>
 </div>
 
 <div class="module-content">
