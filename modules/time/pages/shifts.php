@@ -91,7 +91,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
         <?php endif; ?>
         <!-- Action Button for Assign Shift -->
         <div class="shift-action-buttons">
-            <button class="btn btn-primary" onclick="openModal('generateFixedModal');">
+            <button class="btn btn-primary" onclick="openGenerateFixedModalForNew()">
                 <i class="fas fa-calendar-plus"></i>
                 Assign Shift
             </button>

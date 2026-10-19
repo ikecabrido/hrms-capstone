@@ -215,7 +215,8 @@ body.dark-mode .metric-value {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    z-index: 9999;
+    z-index: 200000;
+    pointer-events: none;
     animation: toastSlideIn 0.3s ease;
     max-width: 400px;
 }

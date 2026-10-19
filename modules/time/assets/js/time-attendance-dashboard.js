@@ -18,8 +18,43 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function initTimeDashboardPage() {
-  if (initTimeDashboardPage._inited) return;
-  initTimeDashboardPage._inited = true;
   console.log('[TA INIT] Time Dashboard initialized');
-  try { if (typeof filterAndSort === 'function') filterAndSort(); } catch (e) { console.error('initTimeDashboardPage error', e); }
+  const runtime = window.__taDashboardRuntime || (window.__taDashboardRuntime = {});
+
+  if (typeof runtime.cleanup === 'function') {
+    try { runtime.cleanup(); } catch (e) { console.warn('Dashboard cleanup failed', e); }
+  }
+
+  runtime.cleanup = function () {
+    if (runtime.clockTimer) {
+      clearInterval(runtime.clockTimer);
+      runtime.clockTimer = null;
+    }
+    if (runtime.pollTimer) {
+      clearInterval(runtime.pollTimer);
+      runtime.pollTimer = null;
+    }
+    if (runtime.documentKeyHandler) {
+      document.removeEventListener('keydown', runtime.documentKeyHandler);
+      runtime.documentKeyHandler = null;
+    }
+    if (runtime.documentClickHandler) {
+      document.removeEventListener('click', runtime.documentClickHandler);
+      runtime.documentClickHandler = null;
+    }
+  };
+
+  if (typeof window.registerPageCleanup === 'function') {
+    window.registerPageCleanup(runtime.cleanup);
+  }
+
+  try {
+    if (typeof window.initDashboardOverviewPage === 'function') {
+      window.initDashboardOverviewPage();
+    } else if (typeof filterAndSort === 'function') {
+      filterAndSort();
+    }
+  } catch (e) {
+    console.error('initTimeDashboardPage error', e);
+  }
 }

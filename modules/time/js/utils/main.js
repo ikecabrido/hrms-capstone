@@ -8,11 +8,11 @@
     // Execute scripts injected via innerHTML and wait for external scripts to load.
     function executeInjectedScripts(container) {
         return new Promise((resolve) => {
+            const originalAddEventListener = document.addEventListener;
+
             try {
                 const scripts = Array.from(container.querySelectorAll('script'));
                 if (!scripts.length) return resolve();
-
-                const originalAddEventListener = document.addEventListener;
 
                 // Intercept DOMContentLoaded listener attachments and invoke them immediately.
                 document.addEventListener = function (type, listener, options) {
@@ -22,51 +22,65 @@
                     return originalAddEventListener.call(this, type, listener, options);
                 };
 
-                const loadPromises = scripts.map(s => {
-                    return new Promise((res) => {
-                        const srcAttr = s.getAttribute && s.getAttribute('src');
-                        if (srcAttr) {
-                            // Resolve to absolute URL for dedupe checks
-                            const abs = new URL(srcAttr, location).href;
-                            const existing = Array.from(document.querySelectorAll('script'))
-                                .find(el => el.src && el.src === abs && el.getAttribute('data-injected'));
-                            if (existing) {
-                                // Remove placeholder in container and treat as already loaded
-                                s.parentNode && s.parentNode.removeChild(s);
-                                return res();
-                            }
+                const runNextScript = function (index) {
+                    if (index >= scripts.length) {
+                        document.addEventListener = originalAddEventListener;
+                        return resolve();
+                    }
 
-                            const newScript = document.createElement('script');
-                            if (s.type) newScript.type = s.type;
-                            newScript.src = abs;
-                            newScript.async = false;
-                            newScript.setAttribute('data-injected', '1');
-                            newScript.addEventListener('load', function () { res(); });
-                            newScript.addEventListener('error', function () { console.error('Failed to load', abs); res(); });
-                            document.body.appendChild(newScript);
+                    const s = scripts[index];
+                    const srcAttr = s.getAttribute && s.getAttribute('src');
+
+                    if (srcAttr) {
+                        // Resolve to absolute URL for dedupe checks
+                        const abs = new URL(srcAttr, location).href;
+                        const existing = Array.from(document.querySelectorAll('script'))
+                            .find(el => el.src && el.src === abs && el.getAttribute('data-injected'));
+                        if (existing) {
+                            // Remove placeholder in container and treat as already loaded
                             s.parentNode && s.parentNode.removeChild(s);
-                        } else {
-                            // Inline script: execute immediately
-                            const newScript = document.createElement('script');
-                            if (s.type) newScript.type = s.type;
-                            newScript.textContent = s.textContent || s.innerText || '';
-                            document.body.appendChild(newScript);
-                            s.parentNode && s.parentNode.removeChild(s);
-                            // Inline executed synchronously
-                            return res();
+                            return runNextScript(index + 1);
                         }
-                    });
-                });
 
-                Promise.all(loadPromises).then(() => {
-                    // restore original addEventListener
-                    document.addEventListener = originalAddEventListener;
-                    resolve();
-                }).catch((err) => {
-                    document.addEventListener = originalAddEventListener;
-                    console.error('executeInjectedScripts promise error', err);
-                    resolve();
-                });
+                        const newScript = document.createElement('script');
+                        if (s.type) newScript.type = s.type;
+                        newScript.src = abs;
+                        newScript.async = false;
+                        newScript.setAttribute('data-injected', '1');
+
+                        let settled = false;
+                        const complete = function () {
+                            if (settled) return;
+                            settled = true;
+                            clearTimeout(timeoutId);
+                            runNextScript(index + 1);
+                        };
+
+                        const timeoutId = setTimeout(function () {
+                            console.warn('Script load timeout, continuing:', abs);
+                            complete();
+                        }, 10000);
+
+                        newScript.addEventListener('load', function () { complete(); });
+                        newScript.addEventListener('error', function () {
+                            console.error('Failed to load', abs);
+                            complete();
+                        });
+
+                        document.body.appendChild(newScript);
+                        s.parentNode && s.parentNode.removeChild(s);
+                        return;
+                    }
+
+                    const newScript = document.createElement('script');
+                    if (s.type) newScript.type = s.type;
+                    newScript.textContent = s.textContent || s.innerText || '';
+                    document.body.appendChild(newScript);
+                    s.parentNode && s.parentNode.removeChild(s);
+                    return runNextScript(index + 1);
+                };
+
+                runNextScript(0);
             } catch (err) {
                 console.error('executeInjectedScripts error', err);
                 try { document.addEventListener = originalAddEventListener; } catch (e) {}

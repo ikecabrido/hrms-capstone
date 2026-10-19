@@ -1,11 +1,37 @@
 // Data from PHP
 (function(){
-    const dashboardConfig = window.__TA_CONFIG || {};
-        const isHolidayToday = Boolean(dashboardConfig.isHolidayToday);
-        const holidayInfo = dashboardConfig.holidayInfo || null;
-        const attendanceData = Array.isArray(dashboardConfig.attendanceData) ? dashboardConfig.attendanceData : [];
-        // Ensure each record has a `duration` string. Prefer `total_hours_worked` then compute from time_in/time_out.
-        function formatHoursToHm(hours) {
+    let dashboardConfig = window.__TA_CONFIG || {};
+    let isHolidayToday = Boolean(dashboardConfig.isHolidayToday);
+    let holidayInfo = dashboardConfig.holidayInfo || null;
+    let attendanceData = Array.isArray(dashboardConfig.attendanceData) ? dashboardConfig.attendanceData : [];
+    let employees = Array.isArray(dashboardConfig.employees) ? dashboardConfig.employees : [];
+
+    function normalizeAttendanceData() {
+        attendanceData = Array.isArray(dashboardConfig.attendanceData) ? dashboardConfig.attendanceData : [];
+        for (let i = 0; i < attendanceData.length; i++) {
+            const rec = attendanceData[i];
+            if (rec.duration && String(rec.duration).trim() !== '') continue;
+
+            if (rec.total_hours_worked !== undefined && rec.total_hours_worked !== null && rec.total_hours_worked !== '') {
+                const formatted = formatHoursToHm(rec.total_hours_worked);
+                if (formatted) { rec.duration = formatted; continue; }
+            }
+
+            if (rec.time_in && rec.time_out) {
+                const tin = Date.parse(rec.time_in);
+                const tout = Date.parse(rec.time_out);
+                if (!isNaN(tin) && !isNaN(tout) && tout > tin) {
+                    rec.duration = formatMsToHm(tout - tin);
+                    continue;
+                }
+            }
+
+            rec.duration = 'N/A';
+        }
+    }
+
+    // Ensure each record has a `duration` string. Prefer `total_hours_worked` then compute from time_in/time_out.
+    function formatHoursToHm(hours) {
             if (hours === null || hours === undefined || hours === '') return null;
             const hFloat = parseFloat(hours);
             if (isNaN(hFloat)) return null;
@@ -23,32 +49,7 @@
             return `${h}h ${m}m`;
         }
 
-        // Normalize attendanceData to include `duration`
-        for (let i = 0; i < attendanceData.length; i++) {
-            const rec = attendanceData[i];
-            // prefer existing duration
-            if (rec.duration && String(rec.duration).trim() !== '') continue;
-
-            // try total_hours_worked (decimal hours)
-            if (rec.total_hours_worked !== undefined && rec.total_hours_worked !== null && rec.total_hours_worked !== '') {
-                const formatted = formatHoursToHm(rec.total_hours_worked);
-                if (formatted) { rec.duration = formatted; continue; }
-            }
-
-            // fallback: compute from time_in/time_out
-            if (rec.time_in && rec.time_out) {
-                const tin = Date.parse(rec.time_in);
-                const tout = Date.parse(rec.time_out);
-                if (!isNaN(tin) && !isNaN(tout) && tout > tin) {
-                    rec.duration = formatMsToHm(tout - tin);
-                    continue;
-                }
-            }
-
-            // still missing
-            rec.duration = 'N/A';
-        }
-        const employees = Array.isArray(dashboardConfig.employees) ? dashboardConfig.employees : [];
+        normalizeAttendanceData();
         const jq = window.jQuery || window.$;
 
         if (!jq) {
@@ -67,7 +68,8 @@
                 select.appendChild(opt);
             });
 
-            // When selection changes, auto-generate QR
+            if (select.dataset.taBound !== '1') {
+                select.dataset.taBound = '1';
                 select.addEventListener('change', function() {
                     const id = this.value;
                     if (!id) return; // ignore placeholder/no-selection
@@ -76,12 +78,13 @@
                         viewQR(emp.employee_id, emp.full_name, emp.department || 'N/A', emp.position || 'N/A');
                     }
                 });
+            }
 
-                // add placeholder option; do not auto-open modal on page load
-                const placeholder = document.createElement('option');
-                placeholder.value = '';
-                placeholder.text = '-- Select Employee --';
-                select.insertBefore(placeholder, select.firstChild);
+            // add placeholder option; do not auto-open modal on page load
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.text = '-- Select Employee --';
+            select.insertBefore(placeholder, select.firstChild);
         }
 
         let currentQRInstance = null;
@@ -466,36 +469,64 @@
             return text? String(text).replace(/[&<>"']/g, m => map[m]) : '';
         }
 
-        const prevButton = document.getElementById('attendancePrev');
-        const nextButton = document.getElementById('attendanceNext');
-        const attendanceSearchInput = document.getElementById('attendanceSearch');
-        const attendanceSortSelect = document.getElementById('attendanceSort');
+        function bindDashboardTableHandlers() {
+            const prevButton = document.getElementById('attendancePrev');
+            const nextButton = document.getElementById('attendanceNext');
+            const attendanceSearchInput = document.getElementById('attendanceSearch');
+            const attendanceSortSelect = document.getElementById('attendanceSort');
 
-        if (prevButton) {
-            prevButton.addEventListener('click', function() {
-                if (attendanceCurrentPage > 1) {
-                    attendanceCurrentPage -= 1;
+            if (prevButton && prevButton.dataset.taBound !== '1') {
+                prevButton.dataset.taBound = '1';
+                prevButton.addEventListener('click', function() {
+                    if (attendanceCurrentPage > 1) {
+                        attendanceCurrentPage -= 1;
+                        filterAndSort();
+                    }
+                });
+            }
+
+            if (nextButton && nextButton.dataset.taBound !== '1') {
+                nextButton.dataset.taBound = '1';
+                nextButton.addEventListener('click', function() {
+                    attendanceCurrentPage += 1;
                     filterAndSort();
-                }
-            });
+                });
+            }
+
+            if (attendanceSearchInput && attendanceSearchInput.dataset.taBound !== '1') {
+                attendanceSearchInput.dataset.taBound = '1';
+                attendanceSearchInput.addEventListener('keyup', function() {
+                    attendanceCurrentPage = 1;
+                    filterAndSort();
+                });
+            }
+
+            if (attendanceSortSelect && attendanceSortSelect.dataset.taBound !== '1') {
+                attendanceSortSelect.dataset.taBound = '1';
+                attendanceSortSelect.addEventListener('change', function() {
+                    attendanceCurrentPage = 1;
+                    filterAndSort();
+                });
+            }
         }
 
-        if (nextButton) {
-            nextButton.addEventListener('click', function() {
-                attendanceCurrentPage += 1;
-                filterAndSort();
-            });
-        }
+        function initDashboardOverviewPage() {
+            dashboardConfig = window.__TA_CONFIG || {};
+            isHolidayToday = Boolean(dashboardConfig.isHolidayToday);
+            holidayInfo = dashboardConfig.holidayInfo || null;
+            attendanceData = Array.isArray(dashboardConfig.attendanceData) ? dashboardConfig.attendanceData : [];
+            employees = Array.isArray(dashboardConfig.employees) ? dashboardConfig.employees : [];
 
-        if (jq) {
-            jq(document).ready(function() {
-                hideAttendanceInfoModal();
-                renderQRDirectory();
-                filterAndSort();
-                if (attendanceSearchInput) jq(attendanceSearchInput).on('keyup', filterAndSort);
-                if (attendanceSortSelect) jq(attendanceSortSelect).on('change', filterAndSort);
-            });
-        } else {
+            normalizeAttendanceData();
+            attendanceCurrentPage = 1;
+            attendanceFilteredRecords = [];
+
+            const searchField = document.getElementById('attendanceSearch');
+            if (searchField) {
+                searchField.value = '';
+            }
+
+            bindDashboardTableHandlers();
             hideAttendanceInfoModal();
             renderQRDirectory();
             filterAndSort();
@@ -510,7 +541,10 @@
                 clockElement.textContent = now.toLocaleTimeString();
             }
         }
-        setInterval(updateClock, 1000);
+
+        if (!window.__taDashClockTimer) {
+            window.__taDashClockTimer = window.setInterval(updateClock, 1000);
+        }
 
         // Export commonly used functions to the global scope so other scripts and inline handlers continue to work
         try {
@@ -521,8 +555,17 @@
             window.openAttendanceInfoModal = openAttendanceInfoModal;
             window.filterAndSort = filterAndSort;
             window.updateClock = updateClock;
+            window.initDashboardOverviewPage = initDashboardOverviewPage;
         } catch (e) {
             // noop
+        }
+
+        if (jq) {
+            jq(document).ready(function() {
+                initDashboardOverviewPage();
+            });
+        } else {
+            initDashboardOverviewPage();
         }
 })();
     

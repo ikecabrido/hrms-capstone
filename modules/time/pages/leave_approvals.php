@@ -358,7 +358,7 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                 <p>Click an employee to view their remaining leave balances.</p>
             </div>
             <div class="toolbar-panel mb-4">
-                <form method="GET" class="toolbar-form">
+                <form method="GET" class="toolbar-form" data-skip="true">
                     <input type="hidden" name="page" value="leave_approvals">
                     <input type="hidden" name="leave_page" value="<?php echo $leavePage; ?>">
                     <input type="hidden" name="employee_page_size" value="<?php echo $recordsPerPage; ?>">
@@ -482,7 +482,7 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                 </div>
 
                 <div class="tab-content <?php echo $historyTabActive ? 'active' : ''; ?>" data-tab="leave-history">
-                    <form method="GET" class="toolbar-form mb-3" style="flex-wrap: wrap;">
+                    <form method="GET" class="toolbar-form mb-3" style="flex-wrap: wrap;" data-skip="true">
                         <input type="hidden" name="page" value="leave_approvals">
                         <input type="hidden" name="employee_page" value="<?php echo $employeePage; ?>">
                         <input type="hidden" name="leave_page" value="<?php echo $leavePage; ?>">

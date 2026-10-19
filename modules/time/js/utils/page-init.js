@@ -109,6 +109,11 @@
     const forms = document.querySelectorAll('form:not([data-skip]):not(#approval-upload-form)');
 
     forms.forEach(function (form) {
+        const method = (form.getAttribute('method') || 'GET').toUpperCase();
+        if (method === 'GET') {
+            return;
+        }
+
         const fresh = form.cloneNode(true);
         form.parentNode.replaceChild(fresh, form);
 

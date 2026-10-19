@@ -57,13 +57,99 @@
                         if (searchFilterContainer) searchFilterContainer.style.display = '';
                         if (selectedDisplay) selectedDisplay.style.display = 'none';
                     }
+                    if (modalId === 'generateFixedModal') {
+                        resetGenerateFixedModal();
+                    }
                 } catch (e) {
                     console.error('closeModal error:', e);
                 }
             }
 
+            function resetGenerateFixedModal() {
+                const employeeIdField = document.getElementById('gf_employee_id');
+                const searchInput = document.getElementById('gf_employee_search');
+                const display = document.getElementById('gf_selected_employee_display');
+                const startInput = document.getElementById('gf_start_date');
+                const endInput = document.getElementById('gf_end_date');
+                const suggestions = document.getElementById('gf_employee_dropdown');
+
+                if (employeeIdField) employeeIdField.value = '';
+                if (searchInput) searchInput.value = '';
+                if (display) display.textContent = 'Select an employee';
+                if (startInput) startInput.value = '';
+                if (endInput) endInput.value = '';
+                if (suggestions) {
+                    suggestions.innerHTML = '';
+                    suggestions.style.display = 'none';
+                }
+
+                for (let i = 1; i <= 6; i++) {
+                    const checkbox = document.getElementById('gf_day_' + i + '_enabled');
+                    const controls = document.getElementById('gf_day_' + i + '_controls');
+                    const startField = document.getElementById('gf_day_' + i + '_start');
+                    const endField = document.getElementById('gf_day_' + i + '_end');
+                    const breakStartField = document.getElementById('gf_day_' + i + '_break_start');
+                    const breakEndField = document.getElementById('gf_day_' + i + '_break_end');
+
+                    if (checkbox) checkbox.checked = false;
+                    if (controls) controls.style.display = 'none';
+                    if (startField) startField.value = '';
+                    if (endField) endField.value = '';
+                    if (breakStartField) breakStartField.value = '';
+                    if (breakEndField) breakEndField.value = '';
+                }
+
+                if (typeof selectedEmployeeIdForEdit !== 'undefined') {
+                    selectedEmployeeIdForEdit = null;
+                }
+                if (typeof window !== 'undefined') {
+                    window.selectedEmployeeIdForEdit = null;
+                }
+            }
+
+            function openGenerateFixedModalForNew() {
+                resetGenerateFixedModal();
+                openModal('generateFixedModal');
+            }
+
             window.openModal = openModal;
             window.closeModal = closeModal;
+            window.resetGenerateFixedModal = resetGenerateFixedModal;
+            window.openGenerateFixedModalForNew = openGenerateFixedModalForNew;
+
+            window.__taShiftPageRuntime = window.__taShiftPageRuntime || {};
+            if (!window.__taShiftPageRuntime.globalModalBindings) {
+                window.__taShiftPageRuntime.globalModalBindings = true;
+                document.addEventListener('click', function (event) {
+                    const closeTrigger = event.target.closest('.modal-close, [data-close-modal], [onclick*="closeModal("]');
+                    if (closeTrigger) {
+                        event.preventDefault();
+                        let modalId = closeTrigger.getAttribute('data-close-modal');
+                        if (!modalId) {
+                            const onclick = closeTrigger.getAttribute('onclick') || '';
+                            const match = onclick.match(/closeModal\(['\"]([^'\"]+)['\"]\)/);
+                            modalId = match ? match[1] : closeTrigger.closest('.modal')?.id;
+                        }
+                        if (modalId) closeModal(modalId);
+                        return;
+                    }
+
+                    if (event.target.classList.contains('modal')) {
+                        closeModal(event.target.id);
+                    }
+                });
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') {
+                        const visibleModals = Array.from(document.querySelectorAll('.modal')).filter(function (modal) {
+                            return modal.style.display !== 'none' && getComputedStyle(modal).display !== 'none';
+                        });
+                        const modal = visibleModals[visibleModals.length - 1];
+                        if (modal && modal.id) {
+                            closeModal(modal.id);
+                        }
+                    }
+                });
+            }
 
             function findNearestCheckedDay(prefix, day) {
                 const candidates = [];
@@ -166,38 +252,6 @@
             window.prefillWeekdayTimesFromNearestCheckedDay = prefillWeekdayTimesFromNearestCheckedDay;
             window.validateWeekdayTemplate = validateWeekdayTemplate;
 
-            if (!window.__shiftModalHandlersBound) {
-                window.__shiftModalHandlersBound = true;
-                document.addEventListener('click', function (event) {
-                    const closeTrigger = event.target.closest('.modal-close, [data-close-modal], [onclick*="closeModal("]');
-                    if (closeTrigger) {
-                        event.preventDefault();
-                        let modalId = closeTrigger.getAttribute('data-close-modal');
-                        if (!modalId) {
-                            const onclick = closeTrigger.getAttribute('onclick') || '';
-                            const match = onclick.match(/closeModal\(['"]([^'"]+)['"]\)/);
-                            modalId = match ? match[1] : closeTrigger.closest('.modal')?.id;
-                        }
-                        if (modalId) closeModal(modalId);
-                        return;
-                    }
-
-                    if (event.target.classList.contains('modal')) {
-                        closeModal(event.target.id);
-                    }
-                });
-                document.addEventListener('keydown', function (event) {
-                    if (event.key === 'Escape') {
-                        const visibleModals = Array.from(document.querySelectorAll('.modal')).filter(function (modal) {
-                            return modal.style.display !== 'none' && getComputedStyle(modal).display !== 'none';
-                        });
-                        const modal = visibleModals[visibleModals.length - 1];
-                        if (modal && modal.id) {
-                            closeModal(modal.id);
-                        }
-                    }
-                });
-            }
 
             let fixedScheduleEmployees = [];
             let filteredFixedScheduleEmployees = [];
@@ -207,7 +261,7 @@
                 const toast = document.createElement('div');
                 toast.className = 'ta-toast ta-toast-' + (type === 'error' ? 'error' : 'success');
                 toast.textContent = message;
-                toast.style.cssText = 'position:fixed; right:24px; bottom:24px; z-index:10000; min-width:280px; max-width:420px; padding:14px 18px; border-radius:8px; color:#fff; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.2); background:' + (type === 'error' ? '#c0392b' : '#218739') + ';';
+                toast.style.cssText = 'position:fixed; right:24px; bottom:24px; z-index:200000; pointer-events:none; min-width:280px; max-width:420px; padding:14px 18px; border-radius:8px; color:#fff; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,.2); background:' + (type === 'error' ? '#c0392b' : '#218739') + ';';
                 document.body.appendChild(toast);
                 setTimeout(function() {
                     toast.style.opacity = '0';
@@ -217,6 +271,9 @@
             }
 
             function cleanupShiftPageState() {
+                if (window.__taShiftPageRuntime) {
+                    window.__taShiftPageRuntime.shiftManagementInited = false;
+                }
                 const searchInput = document.getElementById('gf_employee_search');
                 if (searchInput) {
                     searchInput.oninput = null;
@@ -243,7 +300,12 @@
             }
 
             function initShiftManagement() {
-                            console.log('[TA INIT] initShiftManagement');
+                            console.log('[TA INIT] Shift management initialized');
+                if (window.__taShiftPageRuntime && window.__taShiftPageRuntime.shiftManagementInited) {
+                    return;
+                }
+                window.__taShiftPageRuntime = window.__taShiftPageRuntime || {};
+                window.__taShiftPageRuntime.shiftManagementInited = true;
 
                 setupEmployeeSearch();
                 loadFixedScheduleEmployees();
@@ -261,19 +323,33 @@
                 }
             }
 
-            document.addEventListener('DOMContentLoaded', function () {
-                initShiftManagement();
-            });
+            if (!window.__taShiftPageRuntime) {
+                window.__taShiftPageRuntime = {};
+            }
+            if (!window.__taShiftPageRuntime.domLoadedBound) {
+                window.__taShiftPageRuntime.domLoadedBound = true;
+                document.addEventListener('DOMContentLoaded', function () {
+                    if (window.__taShiftPageRuntime && window.__taShiftPageRuntime.shiftManagementInited) {
+                        return;
+                    }
+                    initShiftManagement();
+                });
+            }
 
-// Reinitialize on each visit to the shifts page because the DOM is replaced by AJAX navigation.
-function initShiftsPage() {
-    console.log('[TA INIT] Shifts initialized');
-    try { initShiftManagement(); } catch (e) { console.error('initShiftsPage error', e); }
-}
+            function initShiftsPage() {
+                console.log('[TA INIT] Shifts initialized');
+                try {
+                    initShiftManagement();
+                } catch (e) {
+                    console.error('initShiftsPage error', e);
+                }
+            }
+
+            window.initShiftsPage = initShiftsPage;
 
             function submitGenerateFixed() {
                 const employeeId = document.getElementById('gf_employee_id').value;
-                if (!employeeId) { showToast('No employee shift was selected for editing.', 'error'); return; }
+                if (!employeeId) { showToast('Please select an employee first.', 'error'); return; }
                 const startDate = document.getElementById('gf_start_date').value;
                 const endDate = document.getElementById('gf_end_date').value;
 
@@ -435,6 +511,7 @@ function initShiftsPage() {
                     return;
                 }
 
+                resetGenerateFixedModal();
                 selectedEmployeeIdForEdit = id;
                 try { window.selectedEmployeeIdForEdit = id; } catch (e) { /* ignore */ }
 
@@ -469,25 +546,10 @@ function initShiftsPage() {
                     endDate.value = '';
                 }
 
-                for (let i = 1; i <= 6; i++) {
-                    const cb = document.getElementById('gf_day_' + i + '_enabled');
-                    const startEl = document.getElementById('gf_day_' + i + '_start');
-                    const endEl = document.getElementById('gf_day_' + i + '_end');
-                    const breakStartEl = document.getElementById('gf_day_' + i + '_break_start');
-                    const breakEndEl = document.getElementById('gf_day_' + i + '_break_end');
-                    if (cb) {
-                        cb.checked = false;
-                        toggleGfDayRow(i);
-                    }
-                    if (startEl) startEl.value = '';
-                    if (endEl) endEl.value = '';
-                    if (breakStartEl) breakStartEl.value = '';
-                    if (breakEndEl) breakEndEl.value = '';
-                }
-
                 const weekRange = getCurrentWeekRange();
+                const requestEndDate = addDaysToIso(weekRange.end, 1);
                 const scheduleApi = (window.__TA_API_ROOT || (window.__TA_ROOT ? window.__TA_ROOT + '/app/api' : './app/api')) + '/schedules/get_employee_schedule.php';
-                fetch(`${scheduleApi}?employee_id=${encodeURIComponent(id)}&start_date=${encodeURIComponent(weekRange.start)}&end_date=${encodeURIComponent(weekRange.end)}`)
+                fetch(`${scheduleApi}?employee_id=${encodeURIComponent(id)}&start_date=${encodeURIComponent(weekRange.start)}&end_date=${encodeURIComponent(requestEndDate)}`)
                     .then(r => r.text())
                     .then(text => {
                         let data;
@@ -507,9 +569,12 @@ function initShiftsPage() {
                         if (endDate) endDate.value = weekRange.end;
 
                         schedule.forEach(day => {
-                            const dayDate = day.date ? new Date(day.date) : null;
-                            if (!dayDate) return;
-                            const dow = dayDate.getDay();
+                            const rawDate = day && day.date ? String(day.date) : '';
+                            if (!rawDate) return;
+                            const parts = parseIsoDate(rawDate);
+                            if (!parts) return;
+                            const dateObj = new Date(parts.year, parts.month - 1, parts.day);
+                            const dow = dateObj.getDay();
                             if (dow === 0) return;
                             const idx = dow;
                             const cb = document.getElementById('gf_day_' + idx + '_enabled');
@@ -564,69 +629,6 @@ function initShiftsPage() {
             }
         
 
-
-        function openModal(modalId) {
-            try {
-                const modal = document.getElementById(modalId);
-                    if (!modal) return;
-
-                    if (modal.parentElement !== document.body) {
-                        try { document.body.appendChild(modal); } catch (e) { /* ignore */ }
-                    }
-
-                    modal.style.display = 'flex';
-                    modal.style.position = 'fixed';
-                    modal.style.inset = '0';
-                    modal.style.zIndex = '99999';
-                    document.body.classList.add('modal-open');
-                    if (modal.__overlayHandler) {
-                        window.removeEventListener('resize', modal.__overlayHandler);
-                        window.removeEventListener('scroll', modal.__overlayHandler, true);
-                    }
-                    modal.__overlayHandler = null;
-                } catch (err) {
-                    console.error('openModal error:', err);
-                }
-            }
-
-            function closeModal(modalId) {
-                try {
-                    const modal = document.getElementById(modalId);
-                    if (!modal) return;
-                document.body.classList.remove('modal-open');
-
-                if (modal.__overlayHandler) {
-                    window.removeEventListener('resize', modal.__overlayHandler);
-                    window.removeEventListener('scroll', modal.__overlayHandler, true);
-                    delete modal.__overlayHandler;
-                }
-
-                const forms = modal.querySelectorAll('form');
-                forms.forEach(form => form.reset());
-
-                modal.style.position = 'fixed';
-                modal.style.inset = '0';
-                modal.style.zIndex = '99999';
-                if (modalId === 'assignmentModal') {
-                    assignmentMode = 'create';
-                    selectedEmployeeForEdit = null;
-                    const actionBtn = document.getElementById('assignmentModalActionButton');
-                    const headerTitle = document.querySelector('#assignmentModal .modal-header h2');
-                    const container = document.getElementById('employeeListContainer');
-                    if (headerTitle) headerTitle.innerHTML = '<i class="fas fa-user-check"></i> Assign Shift to Employees';
-                    if (actionBtn) { actionBtn.innerHTML = '<i class="fas fa-check"></i> Assign to Selected'; actionBtn.dataset.action = 'assign'; }
-                    if (container) container.style.display = 'none';
-                    const searchFilterContainer = document.getElementById('employeeSearchFilterContainer');
-                    const selectedDisplay = document.getElementById('selectedEmployeeDisplay');
-                    if (searchFilterContainer) searchFilterContainer.style.display = '';
-                    if (selectedDisplay) selectedDisplay.style.display = 'none';
-                }
-
-                modal.style.display = 'none';
-            } catch (err) {
-                console.error('closeModal error:', err);
-            }
-        }
 
         // ============ MULTI-SELECT EMPLOYEE FUNCTIONS ============
         let allEmployees = [];
@@ -795,7 +797,13 @@ function initShiftsPage() {
                 let data;
                 try { data = JSON.parse(text); } catch (err) { console.error('assign_shift_multiple returned non-JSON:', text); throw err; }
                 if (data.success) {
-                    alert('Shifts assigned successfully to ' + selectedEmployees.size + ' employee(s)');
+                    const sd = data.skipped_days || {};
+                    const noTemplate = Number(sd.saturday_no_template || 0);
+                    const excluded = Number(sd.saturday_excluded || data.saturday_excluded || 0);
+                    let message = 'Shifts assigned successfully to ' + selectedEmployees.size + ' employee(s)';
+                    if (noTemplate > 0) message += '\n' + noTemplate + ' Saturday date(s) were skipped because this shift has no Saturday time. Edit the shift, enable Saturday, then assign again.';
+                    if (excluded > 0) message += '\n' + excluded + ' Saturday date(s) were skipped because "No Saturday?" was ticked.';
+                    alert(message);
                     closeModal('assignmentModal');
                     location.reload();
                 } else {
@@ -894,6 +902,7 @@ function initShiftsPage() {
                 const searchInput = document.getElementById('employeeSearchInput');
                 const multiLabel = document.getElementById('employeeMultiLabel');
                 const selectedSummaryEl = document.getElementById('selectedSummary');
+                const excludeSaturdayCheckbox = document.getElementById('exclude_saturday');
                 if (assignmentMode === 'create') {
                     selectedEmployees.clear();
                     const selectedCountEl = document.getElementById('selectedCount');
@@ -906,6 +915,7 @@ function initShiftsPage() {
                     if (selectedSummaryEl) selectedSummaryEl.innerHTML = '<strong>Selected:</strong> <span id="selectedCount">0</span> employee(s)';
                     if (headerTitle) headerTitle.innerHTML = '<i class="fas fa-user-check"></i> Assign Shift to Employees';
                     if (actionBtn) { actionBtn.innerHTML = '<i class="fas fa-check"></i> Assign to Selected'; actionBtn.dataset.action = 'assign'; }
+                    if (excludeSaturdayCheckbox) excludeSaturdayCheckbox.checked = false;
                 } else if (assignmentMode === 'edit') {
                     // preselect single employee and hide the multi-select list
                     selectedEmployees = new Set([selectedEmployeeForEdit]);
@@ -1078,12 +1088,16 @@ function initShiftsPage() {
 
         // Flexible schedule edit functions removed from this view.
 
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        });
+        // Close modal when clicking outside - guard against duplicate page reinitializations.
+        if (!window.__taShiftPageRuntime || !window.__taShiftPageRuntime.outsideClickBound) {
+            window.__taShiftPageRuntime = window.__taShiftPageRuntime || {};
+            window.__taShiftPageRuntime.outsideClickBound = true;
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            });
+        }
 
         function switchTab(tabName) {
             // Hide all tabs
@@ -1224,6 +1238,21 @@ function initShiftsPage() {
 
         function formatDateISO(date) {
             return `${date.getFullYear()}-${padDateSegment(date.getMonth() + 1)}-${padDateSegment(date.getDate())}`;
+        }
+
+        function parseIsoDate(dateString) {
+            if (!dateString || typeof dateString !== 'string') return null;
+            const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(dateString.trim());
+            if (!match) return null;
+            return { year: Number(match[1]), month: Number(match[2]), day: Number(match[3]) };
+        }
+
+        function addDaysToIso(dateString, dayOffset) {
+            const parts = parseIsoDate(dateString);
+            if (!parts) return '';
+            const date = new Date(parts.year, parts.month - 1, parts.day);
+            date.setDate(date.getDate() + Number(dayOffset || 0));
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
 
         function getCurrentWeekRange(referenceDate = new Date()) {
@@ -2162,9 +2191,13 @@ function initShiftsPage() {
                 return div.innerHTML;
             }
 
-            document.addEventListener('DOMContentLoaded', function () {
-                setupEmployeeSearch();
-            });
+            if (!window.__taShiftPageRuntime || !window.__taShiftPageRuntime.employeeSearchBound) {
+                window.__taShiftPageRuntime = window.__taShiftPageRuntime || {};
+                window.__taShiftPageRuntime.employeeSearchBound = true;
+                document.addEventListener('DOMContentLoaded', function () {
+                    setupEmployeeSearch();
+                });
+            }
 
         function openMultipleAssignForTemplate(shiftId) {
             // preselect the shift in assignment modal and show only unassigned employees

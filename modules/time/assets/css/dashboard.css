@@ -350,13 +350,12 @@ body.dark-mode [style*="background: #ffffff"] {
 /* KPI card classes (replaces inline gradients in template) */
 .kpi-cards { display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px; }
 .kpi-card {
-    flex:1;min-width:200px;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(16,24,40,0.06);color:#fff;
+    flex:1 1 240px;min-width:200px;border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 18px rgba(16,24,40,0.06);color:#fff;
 }
 .kpi-card .kpi-icon { width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px; }
 .kpi-total { background: linear-gradient(90deg,#0b5cab,#0b7bd6); }
 .kpi-present { background: linear-gradient(90deg,#0b79d0,#1e90ff); }
 .kpi-absent { background: linear-gradient(90deg,#08306b,#2b6cb0); }
-.kpi-pending { background: linear-gradient(90deg,#026aa7,#0585d6); }
 
 /* Today's attendance panel */
 .attendance-panel { background:#f6fbff;border:1px solid #e6f0ff;padding:16px;border-radius:10px;margin-top:6px; }

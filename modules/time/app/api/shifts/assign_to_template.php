@@ -22,7 +22,11 @@ try {
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
 
-    // fetch weekday template for this shift
+    $shiftRowStmt = $conn->prepare("SELECT include_saturday FROM ta_shifts WHERE shift_id = ? LIMIT 1");
+    $shiftRowStmt->execute([$shift_id]);
+    $shiftMeta = $shiftRowStmt->fetch(PDO::FETCH_ASSOC);
+    $includeSaturday = (int)($shiftMeta['include_saturday'] ?? 0);
+
     $wstmt = $conn->prepare("SELECT weekday, start_time, end_time, break_start, break_end, is_active FROM ta_shift_weekday_times WHERE shift_id = ? AND is_active = 1");
     $wstmt->execute([$shift_id]);
     $weekdays = [];
@@ -42,25 +46,56 @@ try {
     $period = new DatePeriod($sd, $interval, $ed->modify('+1 day'));
 
     $deactStmt = $conn->prepare("UPDATE ta_employee_shifts SET is_active = 0 WHERE employee_id = ? AND is_active = 1 AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?)");
-    $checkEmpShift = $conn->prepare("SELECT employee_shift_id FROM ta_employee_shifts WHERE employee_id = ? AND shift_id = ? AND effective_from = ? LIMIT 1");
+    $checkEmpShift = $conn->prepare("SELECT employee_shift_id, is_active FROM ta_employee_shifts WHERE employee_id = ? AND shift_id = ? AND effective_from = ? LIMIT 1");
+    $reactivateStmt = $conn->prepare("UPDATE ta_employee_shifts SET is_active = 1, updated_at = NOW() WHERE employee_shift_id = ? LIMIT 1");
     $insEmpShift = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())");
 
+    $skippedDays = [
+        'sunday' => 0,
+        'saturday_excluded' => 0,
+        'saturday_no_template' => 0,
+        'no_weekday_template' => 0,
+        'duplicate' => 0,
+    ];
     $inserted = 0;
     foreach ($employees as $emp) {
         $empId = (int)$emp;
         foreach ($period as $date) {
             $dstr = $date->format('Y-m-d');
             $w = (int)$date->format('w');
-            if ($w === 0) continue; // skip Sunday
-            if (empty($weekdays[$w])) continue;
 
-            // deactivate overlaps
-            $deactStmt->execute([$empId, $dstr, $dstr]);
+            if ($w === 0) {
+                $skippedDays['sunday']++;
+                continue;
+            }
 
-            // avoid duplicates
+            if ($w === 6) {
+                if (!$includeSaturday) {
+                    $skippedDays['saturday_excluded']++;
+                    continue;
+                }
+                if (empty($weekdays[$w])) {
+                    $skippedDays['saturday_no_template']++;
+                    continue;
+                }
+            }
+
+            if (empty($weekdays[$w])) {
+                $skippedDays['no_weekday_template']++;
+                continue;
+            }
+
             $checkEmpShift->execute([$empId, $shift_id, $dstr]);
-            if ($checkEmpShift->fetch(PDO::FETCH_ASSOC)) continue;
+            $existingRow = $checkEmpShift->fetch(PDO::FETCH_ASSOC);
+            if ($existingRow) {
+                if ((int)($existingRow['is_active'] ?? 0) === 0) {
+                    $reactivateStmt->execute([(int)$existingRow['employee_shift_id']]);
+                }
+                $skippedDays['duplicate']++;
+                continue;
+            }
 
+            $deactStmt->execute([$empId, $dstr, $dstr]);
             $insEmpShift->execute([$empId, $shift_id, $dstr, $dstr]);
             $inserted++;
         }
@@ -68,7 +103,12 @@ try {
 
     $conn->commit();
 
-    echo json_encode(['success' => true, 'assigned_rows' => $inserted]);
+    echo json_encode([
+        'success' => true,
+        'assigned_rows' => $inserted,
+        'skipped_days' => $skippedDays,
+        'saturday_excluded' => $skippedDays['saturday_excluded'],
+    ]);
 
 } catch (Exception $e) {
     if (isset($conn) && $conn->inTransaction()) $conn->rollBack();

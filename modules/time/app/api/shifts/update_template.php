@@ -23,23 +23,38 @@ try {
 
     $conn->beginTransaction();
 
-    // Update main shift record if values provided
-    if ($shift_name !== null || $rep_start !== null || $rep_end !== null) {
-        $parts = [];
-        $params = [];
-        if ($shift_name !== null) { $parts[] = 'shift_name = ?'; $params[] = $shift_name; }
-        if ($rep_start !== null) { $parts[] = 'start_time = ?'; $params[] = date('H:i:s', strtotime($rep_start)); }
-        if ($rep_end !== null) { $parts[] = 'end_time = ?'; $params[] = date('H:i:s', strtotime($rep_end)); }
-        if ($break_duration !== null) { $parts[] = 'break_duration = ?'; $params[] = $break_duration; }
-        if ($description !== null) { $parts[] = 'description = ?'; $params[] = $description; }
-        if ($is_active !== null) { $parts[] = 'is_active = ?'; $params[] = $is_active; }
-        if ($include_saturday !== null) { $parts[] = 'include_saturday = ?'; $params[] = $include_saturday; }
-        if (count($parts) > 0) {
-            $params[] = $shift_id;
-            $sql = "UPDATE ta_shifts SET " . implode(', ', $parts) . ", updated_at = NOW() WHERE shift_id = ?";
-            $stmt = $conn->prepare($sql);
-            $stmt->execute($params);
+    $shiftUpdateFields = [];
+    $shiftUpdateValues = [];
+    if ($shift_name !== null) { $shiftUpdateFields[] = 'shift_name = ?'; $shiftUpdateValues[] = $shift_name; }
+    if ($rep_start !== null) { $shiftUpdateFields[] = 'start_time = ?'; $shiftUpdateValues[] = date('H:i:s', strtotime($rep_start)); }
+    if ($rep_end !== null) { $shiftUpdateFields[] = 'end_time = ?'; $shiftUpdateValues[] = date('H:i:s', strtotime($rep_end)); }
+    if ($break_duration !== null) { $shiftUpdateFields[] = 'break_duration = ?'; $shiftUpdateValues[] = $break_duration; }
+    if ($description !== null) { $shiftUpdateFields[] = 'description = ?'; $shiftUpdateValues[] = $description; }
+    if ($is_active !== null) { $shiftUpdateFields[] = 'is_active = ?'; $shiftUpdateValues[] = $is_active; }
+    if ($include_saturday !== null) { $shiftUpdateFields[] = 'include_saturday = ?'; $shiftUpdateValues[] = $include_saturday; }
+
+    if (!empty($shiftUpdateFields)) {
+        $shiftUpdateValues[] = $shift_id;
+        $sql = "UPDATE ta_shifts SET " . implode(', ', $shiftUpdateFields) . ", updated_at = NOW() WHERE shift_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($shiftUpdateValues);
+    }
+
+    $hasSaturdayAssignment = false;
+    foreach ($weekdays as $w => $cfg) {
+        if ((int)$w === 6 && !empty($cfg['assigned'])) {
+            $hasSaturdayAssignment = true;
+            break;
         }
+    }
+
+    $saturdayInPayload = array_key_exists(6, $weekdays);
+    if ($include_saturday !== null) { $saturdayValue = (int)$include_saturday; }
+    elseif ($saturdayInPayload) { $saturdayValue = $hasSaturdayAssignment ? 1 : 0; }
+    else { $saturdayValue = null; }
+    if ($saturdayValue !== null) {
+        $syncSaturday = $conn->prepare("UPDATE ta_shifts SET include_saturday = ?, updated_at = NOW() WHERE shift_id = ?");
+        $syncSaturday->execute([$saturdayValue, $shift_id]);
     }
 
     // Upsert weekday configs

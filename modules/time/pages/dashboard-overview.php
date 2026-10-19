@@ -269,8 +269,8 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
 
                 <!-- Middle column: KPI cards on top, then Today's Attendance -->
                 <div>
-                    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-                        <div class="kpi-card kpi-total">
+                    <div class="kpi-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                        <div class="kpi-card kpi-total" style="flex:1 1 240px;min-width:200px;">
                             <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">
                                 <i class="fas fa-users"></i>
                             </div>
@@ -281,7 +281,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         </div>
 
-                        <div class="kpi-card kpi-present">
+                        <div class="kpi-card kpi-present" style="flex:1 1 240px;min-width:200px;">
                             <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">
                                 <i class="fas fa-user-check"></i>
                             </div>
@@ -292,7 +292,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         </div>
 
-                        <div class="kpi-card kpi-absent">
+                        <div class="kpi-card kpi-absent" style="flex:1 1 240px;min-width:200px;">
                             <div style="width:56px;height:56px;border-radius:10px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">
                                 <i class="fas fa-user-times"></i>
                             </div>
@@ -302,7 +302,6 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                                 <div style="font-size:12px;opacity:0.95;margin-top:4px;">Need follow-up</div>
                             </div>
                         </div>
-
                     </div>
 
                     <!-- Middle column: Today's Attendance panel (full width of middle column) -->

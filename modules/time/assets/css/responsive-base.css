@@ -1,0 +1,267 @@
+@media (max-width: 1024px) {
+    body {
+        min-width: 0;
+    }
+
+    .container,
+    .container-fluid,
+    .main-content,
+    .module-content,
+    .content-wrapper,
+    .page-shell {
+        width: 100%;
+        max-width: none;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+        box-sizing: border-box;
+    }
+
+    .summary-grid,
+    .info-grid,
+    .stats-grid,
+    .card-grid,
+    .dashboard-grid,
+    .employee-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .table-responsive,
+    .time-table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-responsive table,
+    .time-table-scroll table {
+        min-width: 640px;
+    }
+
+    .modal-dialog {
+        width: min(92vw, 700px);
+        margin: 1rem auto;
+    }
+
+    .form-row,
+    .row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        min-width: 320px;
+    }
+
+    header {
+        left: 0 !important;
+        width: 100% !important;
+    }
+
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-105%);
+        width: min(82vw, 280px);
+        z-index: 1100;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        display: none;
+        opacity: 0;
+        background: rgba(15, 23, 42, 0.45);
+        z-index: 1090;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .sidebar-overlay.active {
+        display: block;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .main-content,
+    .module-content,
+    .content-wrapper,
+    .page-shell,
+    .content-shell,
+    .page-container {
+        width: 100%;
+        max-width: none;
+        padding: 1rem;
+        margin-left: 0;
+        margin-right: 0;
+        box-sizing: border-box;
+    }
+
+    .summary-grid,
+    .info-grid,
+    .stats-grid,
+    .card-grid,
+    .dashboard-grid,
+    .employee-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .toolbar-panel,
+    .toolbar-form,
+    .toolbar-actions,
+    .page-header,
+    .section-header,
+    .filter-row {
+        display: block;
+    }
+
+    .button-group,
+    .action-row,
+    .form-buttons {
+        flex-wrap: wrap;
+    }
+
+    .form-row,
+    .row {
+        grid-template-columns: 1fr;
+    }
+
+    .modal {
+        padding: 0.75rem;
+    }
+
+    .modal-dialog {
+        width: min(94vw, 560px);
+        margin: 0.75rem auto;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .icon-dropdown {
+        width: min(90vw, 300px);
+        right: 12px !important;
+        left: auto !important;
+    }
+
+    .dropdown-user-info,
+    .user-menu li a {
+        min-height: 44px;
+    }
+
+    .btn,
+    button,
+    input,
+    select,
+    textarea {
+        min-height: 42px;
+    }
+
+    .table-responsive,
+    .time-table-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-responsive table,
+    .time-table-scroll table {
+        min-width: 540px;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        height: 52px;
+    }
+
+    .hamburger {
+        margin-left: 0.5rem;
+        padding: 0.4rem;
+    }
+
+    .realtime {
+        margin-right: 0.5rem;
+        font-size: 0.8rem;
+        padding: 0.35rem 0.55rem;
+    }
+
+    .sidebar {
+        width: min(82vw, 280px);
+    }
+
+    .main-content,
+    .module-content,
+    .content-wrapper,
+    .page-shell,
+    .content-shell,
+    .page-container {
+        padding: 0.75rem;
+    }
+
+    .module-header,
+    .page-header,
+    .section-header {
+        padding: 0.75rem;
+    }
+
+    .table-responsive table,
+    .time-table-scroll table {
+        min-width: 500px;
+    }
+
+    .icon-dropdown {
+        width: min(92vw, 260px);
+        right: 8px !important;
+        left: auto !important;
+    }
+
+    .notif-item {
+        padding: 10px 12px;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .form-control,
+    .form-select,
+    .btn {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .sidebar {
+        width: 100%;
+    }
+
+    .main-content,
+    .module-content,
+    .content-wrapper,
+    .page-shell,
+    .content-shell,
+    .page-container {
+        padding: 0.5rem;
+    }
+
+    .table-responsive table,
+    .time-table-scroll table {
+        min-width: 460px;
+    }
+
+    .icon-dropdown {
+        width: min(94vw, 240px);
+        right: 6px !important;
+    }
+}
