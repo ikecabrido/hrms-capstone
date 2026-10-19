@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const endpoint =
     "/modules/recruitment/controllers/OnboardingChecklistController.php";
+
   const title = document.getElementById("onboardingModalTitle");
   const position = document.getElementById("onboardingEmployeePosition");
   const message = document.getElementById("onboardingMessage");
@@ -83,14 +84,101 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ---------------------------------------------------------
-  // PROGRESS
+  // MODAL PROGRESS
   // ---------------------------------------------------------
+  function getCompletedCount() {
+    return checkboxes.filter((box) => box.checked).length;
+  }
+
+  function getProgressPercentage() {
+    const total = checkboxes.length;
+
+    if (total === 0) {
+      return 0;
+    }
+
+    return Math.round((getCompletedCount() / total) * 100);
+  }
+
   function updateProgress() {
     if (!progress) return;
 
-    const completed = checkboxes.filter((box) => box.checked).length;
+    const completed = getCompletedCount();
+    const total = checkboxes.length;
 
-    progress.textContent = `${completed} of ${checkboxes.length} completed`;
+    progress.textContent = `${completed} of ${total} completed`;
+  }
+
+  // ---------------------------------------------------------
+  // UPDATE TRACKING TABLE
+  // ---------------------------------------------------------
+  function updateTrackingRow(id, percentage) {
+    const button = document.querySelector(
+      `.manage-onboarding[data-id="${CSS.escape(String(id))}"]`,
+    );
+
+    if (!button) {
+      console.warn("Tracking row not found for onboarding ID:", id);
+      return;
+    }
+
+    const row = button.closest("tr");
+
+    if (!row) {
+      return;
+    }
+
+    /*
+     * Table structure:
+     *
+     * 0 = ID
+     * 1 = Employee Name
+     * 2 = Position & Dept.
+     * 3 = Onboarding Progress
+     * 4 = Status
+     * 5 = Actions
+     */
+
+    const progressCell = row.children[3];
+    const statusCell = row.children[4];
+
+    if (progressCell) {
+      const progressFill = progressCell.querySelector(".progress-fill");
+      const progressText = progressCell.querySelector("small");
+
+      if (progressFill) {
+        progressFill.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
+      }
+
+      if (progressText) {
+        progressText.textContent = `${percentage}%`;
+      }
+    }
+
+    if (statusCell) {
+      if (percentage >= 100) {
+        statusCell.innerHTML = `
+          <span class="badge"
+                style="background:#dcfce7;color:#166534;">
+            Completed
+          </span>
+        `;
+      } else if (percentage > 0) {
+        statusCell.innerHTML = `
+          <span class="badge"
+                style="background:#dbeafe;color:#1e40af;">
+            In Progress
+          </span>
+        `;
+      } else {
+        statusCell.innerHTML = `
+          <span class="badge"
+                style="background:#fef9c3;color:#854d0e;">
+            Pending
+          </span>
+        `;
+      }
+    }
   }
 
   // ---------------------------------------------------------
@@ -116,7 +204,9 @@ document.addEventListener("DOMContentLoaded", () => {
     updateProgress();
   }
 
-  // ID-aware GET request for loading an employee checklist.
+  // ---------------------------------------------------------
+  // LOAD CHECKLIST
+  // ---------------------------------------------------------
   async function fetchChecklist(id) {
     const url = new URL(endpoint, window.location.origin);
 
@@ -160,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadEmployeeChecklist(id, version) {
     const result = await fetchChecklist(id);
 
-    // Ignore a response if another employee was opened or the modal closed.
+    // Ignore stale responses.
     if (version !== requestVersion || String(currentId) !== String(id)) {
       return;
     }
@@ -194,6 +284,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     updateProgress();
+
+    /*
+     * Also synchronize the tracking table with the actual
+     * checklist returned by the database.
+     */
+    const loadedPercentage = getProgressPercentage();
+
+    updateTrackingRow(id, loadedPercentage);
   }
 
   // ---------------------------------------------------------
@@ -212,7 +310,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const version = ++requestVersion;
 
       if (title) {
-        title.textContent = `Onboarding Checklist — ${button.dataset.name || "Employee"}`;
+        title.textContent = `Onboarding Checklist — ${
+          button.dataset.name || "Employee"
+        }`;
       }
 
       if (position) {
@@ -260,6 +360,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // ---------------------------------------------------------
+  // CHECKBOX CHANGE
+  // ---------------------------------------------------------
   checkboxes.forEach((box) => {
     box.addEventListener("change", async () => {
       if (!currentId) return;
@@ -282,15 +385,35 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        showMessage("Checklist saved successfully.");
+        /*
+         * Update modal progress.
+         */
         updateProgress();
+
+        /*
+         * Calculate the current percentage from all six
+         * checklist items.
+         */
+        const percentage = getProgressPercentage();
+
+        /*
+         * Immediately update the tracking table.
+         */
+        updateTrackingRow(idAtStart, percentage);
+
+        showMessage("Checklist saved successfully.");
       } catch (error) {
         if (
           versionAtStart === requestVersion &&
           String(currentId) === String(idAtStart)
         ) {
           box.checked = previousValue;
+
+          updateProgress();
+
           showMessage(error.message, true);
+
+          console.error("Could not save onboarding checklist:", error);
         }
       } finally {
         box.disabled = false;
@@ -325,6 +448,10 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
+        const percentage = getProgressPercentage();
+
+        updateTrackingRow(idAtStart, percentage);
+
         showMessage("BDO account number saved successfully.");
       } catch (error) {
         if (
@@ -332,6 +459,8 @@ document.addEventListener("DOMContentLoaded", () => {
           String(currentId) === String(idAtStart)
         ) {
           showMessage(error.message, true);
+
+          console.error("Could not save BDO account number:", error);
         }
       }
     });
@@ -366,24 +495,28 @@ document.addEventListener("DOMContentLoaded", () => {
       const key = input.dataset.upload;
       const file = input.files[0];
 
-      // Match the controller's 10 MB limit.
+      // 10 MB limit
       if (file.size > 10 * 1024 * 1024) {
         showMessage("Maximum file size is 10 MB.", true);
+
         input.value = "";
         return;
       }
 
       const allowedExtensions = ["pdf", "jpg", "jpeg", "png"];
+
       const extension = file.name.split(".").pop().toLowerCase();
 
       if (!allowedExtensions.includes(extension)) {
         showMessage("Only PDF, JPG, and PNG files are allowed.", true);
+
         input.value = "";
         return;
       }
 
       if (!["medical", "contract"].includes(key)) {
         showMessage("Uploads are not allowed for this checklist item.", true);
+
         input.value = "";
         return;
       }
@@ -391,7 +524,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = new FormData();
 
       data.append("onboarding_id", idAtStart);
+
       data.append("item_key", key);
+
       data.append("document", file);
 
       input.disabled = true;
@@ -428,6 +563,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         updateProgress();
+
+        const percentage = getProgressPercentage();
+
+        updateTrackingRow(idAtStart, percentage);
+
         showMessage("File uploaded and saved successfully.");
       } catch (error) {
         if (
@@ -435,6 +575,7 @@ document.addEventListener("DOMContentLoaded", () => {
           String(currentId) === String(idAtStart)
         ) {
           showMessage(error.message, true);
+
           console.error("Document upload failed:", error);
         }
       } finally {
@@ -457,6 +598,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     currentId = null;
     requestVersion++;
+
     clearMessage();
   }
 
