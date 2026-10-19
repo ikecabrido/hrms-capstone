@@ -131,7 +131,7 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
                     <label class="checklist-row">
                         <span>
                             <input type="checkbox" data-item="biometric">
-                            Enrolment in biometric
+                            Enrollment in biometric
                         </span>
                     </label>
 
@@ -145,7 +145,7 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
                     <div class="checklist-row">
                         <label>
                             <input type="checkbox" data-item="bdo_cash_card">
-                            Enrolment to BDO cash card
+                            Enrollment to BDO cash card
                         </label>
                         <input type="text" id="bdoAccountNumber"
                             placeholder="BDO account number"
