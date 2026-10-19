@@ -1,35 +1,33 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Mozilla+Headline:wght@200..700&display=swap");
 
-/* 1. Base CSS */
-@import url("./base/variables.css");
-@import url("./base/reset.css");
-@import url("./base/global.css");
+/*Components CSS*/
+@import url("components/dropdown.css");
 
-/* 2. Components CSS */
-@import url("./components/dropdown.css");
+/*Layout CSS*/
+@import url("layout/sidebar.css");
+@import url("layout/footer.css");
+@import url("layout/header.css");
+@import url("layout/module-container.css");
 
-/* 3. Layout CSS */
-@import url("./layout/sidebar.css");
-@import url("./layout/footer.css");
-@import url("./layout/header.css");
-@import url("./layout/module-container.css");
+/*Pages CSS*/
+@import url("pages/user-management.css");
+@import url("pages/job-list.css");
+@import url("pages/job-posting.css");
+@import url("pages/application.css");
+@import url("pages/parsed-resume.css");
+@import url("pages/create-new-applicant.css");
+@import url("pages/schedule-interview.css");
+@import url("pages/schedule-tracker.css");
+@import url("pages/onboarding-selection.css");
+@import url("pages/onboarding-tracking.css");
+@import url("pages/offered-list.css");
+@import url("pages/show.css");
+@import url("pages/archived.css");
 
-/* 4. Pages CSS */
-@import url("./pages/user-management.css");
-@import url("./pages/job-list.css");
-@import url("./pages/job-posting.css");
-@import url("./pages/application.css");
-@import url("./pages/parsed-resume.css");
-@import url("./pages/create-new-applicant.css");
-@import url("./pages/schedule-interview.css");
-@import url("./pages/schedule-tracker.css");
-@import url("./pages/onboarding-selection.css");
-@import url("./pages/onboarding-tracking.css");
-@import url("./pages/offered-list.css");
-@import url("./pages/show.css");
-@import url("./pages/archived.css");
-
-/* Standalone classes */
+/*Base CSS*/
+@import url("base/variables.css");
+@import url("base/reset.css");
+@import url("base/global.css");
 .ready-offer-btn {
   border: none;
   background: #2563eb;
