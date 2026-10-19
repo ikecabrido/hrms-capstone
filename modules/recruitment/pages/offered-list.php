@@ -16,9 +16,11 @@ try {
 
     <h1 style="margin:0; color:#1e293b;">Offered Applicants</h1>
     <p class="date-text">Monitor candidate progression and finalize hiring decisions.</p>
-    <a href="index.php?page=offer" class="btn-create-primary">
-        <i class="fas fa-plus"></i> Create New Offer
-    </a>
+    <div style="display: inline-block;">
+        <a href="index.php?page=offer" class="btn-create-primary">
+            <i class="fas fa-plus"></i> Create New Offer
+        </a>
+    </div>
 </div>
 
 <div class="module-content">
