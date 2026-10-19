@@ -1,15 +1,20 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Mozilla+Headline:wght@200..700&display=swap");
 
-/*Components CSS*/
+/* 1. Base CSS MUST come first so variables and resets are loaded */
+@import url("base/variables.css");
+@import url("base/reset.css");
+@import url("base/global.css");
+
+/* 2. Components CSS */
 @import url("components/dropdown.css");
 
-/*Layout CSS*/
+/* 3. Layout CSS */
 @import url("layout/sidebar.css");
 @import url("layout/footer.css");
 @import url("layout/header.css");
 @import url("layout/module-container.css");
 
-/*Pages CSS*/
+/* 4. Pages CSS */
 @import url("pages/user-management.css");
 @import url("pages/job-list.css");
 @import url("pages/job-posting.css");
@@ -24,10 +29,7 @@
 @import url("pages/show.css");
 @import url("pages/archived.css");
 
-/*Base CSS*/
-@import url("base/variables.css");
-@import url("base/reset.css");
-@import url("base/global.css");
+/* Standalone classes */
 .ready-offer-btn {
   border: none;
   background: #2563eb;
