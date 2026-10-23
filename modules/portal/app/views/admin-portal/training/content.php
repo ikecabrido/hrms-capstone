@@ -233,7 +233,7 @@
                         $thumbnail = $course['thumbnail_path'] ?? '';
 
                         if (!empty($thumbnail)) {
-                            $thumbnailUrl = '/hrms-capstone/modules/portal/public/' . ltrim($thumbnail, '/');
+                            $thumbnailUrl = asset(ltrim($thumbnail, '/'));
                         } else {
                             $thumbnailUrl = '';
                         }

@@ -2,7 +2,7 @@
 
     <div class="modal-dialog modal-dialog-centered modal-sm">
 
-        <form method="POST" action="index.php?url=online-meeting-update-status">
+<form method="POST" action="<?= htmlspecialchars(appUrl('index.php?url=online-meeting-update-status'), ENT_QUOTES, 'UTF-8') ?>">
 
             <div class="modal-content border-0 shadow-sm">
 

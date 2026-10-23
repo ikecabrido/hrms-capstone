@@ -4,7 +4,8 @@
 
         <div class="modal-content border-0 rounded-3xl shadow-lg">
 
-            <form action="index.php?url=benefit-upload" method="POST" enctype="multipart/form-data">
+            <form action="<?= htmlspecialchars(appUrl('index.php?url=benefit-upload'), ENT_QUOTES, 'UTF-8') ?>"
+                method="POST" enctype="multipart/form-data">
 
                 <div class="modal-header border-0 px-4 pt-4">
 

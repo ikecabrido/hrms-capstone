@@ -24,7 +24,8 @@
         </div>
 
         <!-- MODAL BODY -->
-        <form id="rejectLeaveForm" action="index.php?url=leave-reject" method="POST">
+        <form id="rejectLeaveForm"
+            action="<?= htmlspecialchars(appUrl('index.php?url=leave-reject'), ENT_QUOTES, 'UTF-8') ?>" method="POST">
 
             <input type="hidden" name="leave_request_id" id="rejectLeaveId">
 

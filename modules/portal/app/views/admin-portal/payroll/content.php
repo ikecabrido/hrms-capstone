@@ -430,4 +430,4 @@
 </div>
 <?php require __DIR__ . '/upload-approve.php'; ?>
 <?php require __DIR__ . '/reject.php'; ?>
-<script src="<?= asset('js/function/contentPayrollAdmin.js') ?>"></script>
+<script src="<?= htmlspecialchars(asset('js/function/contentPayrollAdmin.js'), ENT_QUOTES, 'UTF-8') ?>"></script>

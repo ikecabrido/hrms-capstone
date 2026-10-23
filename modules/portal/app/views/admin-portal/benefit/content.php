@@ -556,7 +556,7 @@
 </div>
 <?php require __DIR__ . '/add-benefit.php'; ?>
 <?php require __DIR__ . '/upload-file.php'; ?>
-<script src="<?= asset('js/function/contentBenefitsAdmin.js') ?>"></script>
+<script src="<?= htmlspecialchars(asset('js/function/contentBenefitsAdmin.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
 <script>
     document.querySelectorAll('.modal').forEach(modal => {
         document.body.appendChild(modal);

@@ -1,112 +1,116 @@
-    function openBenefitUploadModal(id, employee, type) {
-        document.getElementById('uploadBenefitId').value = id;
-        document.getElementById('uploadEmployeeName').value = employee;
-        document.getElementById('uploadRecordType').value = type;
 
-        new bootstrap.Modal(
-            document.getElementById('benefitUploadModal')
-        ).show();
+window.openBenefitUploadModal = function (id, employee, type) {
+    document.getElementById('uploadBenefitId').value = id;
+    document.getElementById('uploadEmployeeName').value = employee;
+    document.getElementById('uploadRecordType').value = type;
+
+    const modalElement = document.getElementById('benefitUploadModal');
+
+    if (!modalElement) {
+        console.error('Benefit upload modal was not found.');
+        return;
     }
-    document.addEventListener('DOMContentLoaded', function () {
 
-        const table = document.getElementById('benefitTable');
-        const rows = Array.from(table.querySelectorAll('.benefit-row'));
-        const pagination = document.getElementById('benefitPagination');
-        const info = document.getElementById('benefitPaginationInfo');
+    if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+        console.error('Bootstrap Modal is not loaded.');
+        return;
+    }
 
-        const rowsPerPage = 5;
-        let currentPage = 1;
+    bootstrap.Modal.getOrCreateInstance(modalElement).show();
+};
 
-        function renderPagination() {
+document.addEventListener('DOMContentLoaded', function () {
+    const table = document.getElementById('benefitTable');
+    const pagination = document.getElementById('benefitPagination');
+    const info = document.getElementById('benefitPaginationInfo');
 
-            const totalRows = rows.length;
-            const totalPages = Math.ceil(totalRows / rowsPerPage);
+    if (!table || !pagination || !info) {
+        return;
+    }
 
-            if (!totalRows) {
-                info.textContent = 'No records found';
-                pagination.innerHTML = '';
-                return;
-            }
+    const rows = Array.from(table.querySelectorAll('.benefit-row'));
+    const rowsPerPage = 5;
+    let currentPage = 1;
 
-            if (currentPage > totalPages) {
-                currentPage = totalPages;
-            }
+    function renderPagination() {
+        const totalRows = rows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
 
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-
-            rows.forEach((row, index) => {
-                row.style.display =
-                    index >= start && index < end ? '' : 'none';
-            });
-
-            info.textContent =
-                `Showing ${start + 1}-${Math.min(end, totalRows)} of ${totalRows} records`;
-
+        if (!totalRows) {
+            info.textContent = 'No records found';
             pagination.innerHTML = '';
+            return;
+        }
 
-            // Previous
-            const previous = document.createElement('button');
+        currentPage = Math.min(currentPage, totalPages);
 
-            previous.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
 
-            previous.className =
-                'w-7 h-7 rounded-lg border border-slate-200 text-[10px] text-slate-500 hover:bg-slate-100 disabled:opacity-40';
+        rows.forEach((row, index) => {
+            row.style.display = index >= start && index < end ? '' : 'none';
+        });
 
-            previous.disabled = currentPage === 1;
+        info.textContent =
+            `Showing ${start + 1}-${Math.min(end, totalRows)} of ${totalRows} records`;
 
-            previous.onclick = function () {
+        pagination.innerHTML = '';
+
+        function createButton(label, className, disabled, onClick) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.innerHTML = label;
+            button.className = className;
+            button.disabled = disabled;
+            button.addEventListener('click', onClick);
+            pagination.appendChild(button);
+        }
+
+        const baseClass =
+            'w-7 h-7 rounded-lg border border-slate-200 text-[10px] text-slate-500 hover:bg-slate-100 disabled:opacity-40';
+
+        createButton(
+            '<i class="fas fa-chevron-left"></i>',
+            baseClass,
+            currentPage === 1,
+            () => {
                 if (currentPage > 1) {
                     currentPage--;
                     renderPagination();
                 }
-            };
-
-            pagination.appendChild(previous);
-
-
-            // Pages
-            for (let i = 1; i <= totalPages; i++) {
-
-                const button = document.createElement('button');
-
-                button.textContent = i;
-
-                button.className =
-                    'w-7 h-7 rounded-lg border text-[10px] font-semibold transition ' +
-                    (i === currentPage
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'border-slate-200 text-slate-500 hover:bg-slate-100');
-
-                button.onclick = function () {
-                    currentPage = i;
-                    renderPagination();
-                };
-
-                pagination.appendChild(button);
             }
+        );
 
+        for (let i = 1; i <= totalPages; i++) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = i;
+            button.className =
+                'w-7 h-7 rounded-lg border text-[10px] font-semibold transition ' +
+                (i === currentPage
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'border-slate-200 text-slate-500 hover:bg-slate-100');
 
-            // Next
-            const next = document.createElement('button');
+            button.addEventListener('click', () => {
+                currentPage = i;
+                renderPagination();
+            });
 
-            next.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            pagination.appendChild(button);
+        }
 
-            next.className =
-                'w-7 h-7 rounded-lg border border-slate-200 text-[10px] text-slate-500 hover:bg-slate-100 disabled:opacity-40';
-
-            next.disabled = currentPage === totalPages;
-
-            next.onclick = function () {
+        createButton(
+            '<i class="fas fa-chevron-right"></i>',
+            baseClass,
+            currentPage === totalPages,
+            () => {
                 if (currentPage < totalPages) {
                     currentPage++;
                     renderPagination();
                 }
-            };
+            }
+        );
+    }
 
-            pagination.appendChild(next);
-        }
-
-        renderPagination();
-
-    });
+    renderPagination();
+});

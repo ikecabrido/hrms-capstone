@@ -511,4 +511,4 @@
     <!-- REJECT MODAL -->
     <?php require __DIR__ . '/reject.php'; ?>
 </div>
-<script src="/hrms-capstone/modules/portal/public/js/function/contentLeaveAdmin.js"></script>
+<script src="<?= htmlspecialchars(asset('js/function/contentLeaveAdmin.js'), ENT_QUOTES, 'UTF-8') ?>"></script>

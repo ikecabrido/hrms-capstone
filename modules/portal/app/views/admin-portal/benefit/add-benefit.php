@@ -24,7 +24,8 @@
             </div>
 
             <!-- FORM -->
-            <form action="index.php?url=benefits-store" method="POST" enctype="multipart/form-data">
+            <form action="<?= htmlspecialchars(appUrl('index.php?url=benefits-store'), ENT_QUOTES, 'UTF-8') ?>"
+                method="POST" enctype="multipart/form-data">
 
                 <div class="modal-body p-4">
 
