@@ -8,6 +8,7 @@
          a change to it always reaches browsers and the CDN. Loads before
          styles.css, which is where the @import used to place it. -->
     <link rel="stylesheet" href="css/layout/sidebar.css?v=<?= (int) filemtime(__DIR__ . '/../css/layout/sidebar.css') ?>">
+    <link rel="stylesheet" href="css/layout/footer.css?v=<?= (int) filemtime(__DIR__ . '/../css/layout/footer.css') ?>">
     <link rel="stylesheet" href="css/styles.css?v=<?= (int) filemtime(__DIR__ . '/../css/styles.css') ?>">
     <link rel="stylesheet" href="css/base/enhancements.css?v=<?= (int) filemtime(__DIR__ . '/../css/base/enhancements.css') ?>">
     <link rel="stylesheet" href="css/pages/home.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/home.css') ?>">
@@ -26,8 +27,11 @@
     <link rel="stylesheet" href="css/pages/skill-gaps.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/skill-gaps.css') ?>">
     <link rel="stylesheet" href="css/pages/certificate-verify.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/certificate-verify.css') ?>">
     <link rel="stylesheet" href="css/pages/workforce-integration.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/workforce-integration.css') ?>">
+    <link rel="stylesheet" href="css/pages/legal.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/legal.css') ?>">
     <link rel="stylesheet" href="css/components/modal-system.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/components/modal-system.css') ?>">
     <link rel="stylesheet" href="css/components/dropzone.css">
+    <!-- Shared mobile overrides, loaded last so they win over page styles. -->
+    <link rel="stylesheet" href="css/base/responsive.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/base/responsive.css') ?>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="js/components/dropzone.js" defer></script>

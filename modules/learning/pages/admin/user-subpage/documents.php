@@ -73,7 +73,7 @@ function formatFileSize($bytes) {
             </div>
         </div>
     <?php else: ?>
-        <div style="display:grid; grid-template-columns:300px 1fr; gap:1.5rem; margin-bottom:2rem;">
+        <div class="profile-hero" style="display:grid; grid-template-columns:300px 1fr; gap:1.5rem; margin-bottom:2rem;">
             <div class="mode-card" style="text-align:center; padding:2rem;">
                 <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, rgba(32,0,130,0.9), rgba(91,85,255,0.75)); color:var(--surface); display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:800; margin:0 auto 1rem;">
                     <?= strtoupper(substr($employee['first_name'], 0, 1) . substr($employee['last_name'], 0, 1)) ?>

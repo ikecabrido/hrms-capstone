@@ -39,18 +39,11 @@ try {
 }
 ?>
 <div class="module-content">
-    <div class="toolbar">
-        <div class="toolbar-actions" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-            
-            <h2 style="margin:0; font-size:1.2rem; color:var(--text);"> Learner Timeline</h2>
-        </div>
-    </div>
-
     <!-- Filters -->
-    <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center;">
-        <div style="flex:1; min-width:200px;">
-            <label style="font-size:0.8rem; color:#666; display:block; margin-bottom:0.25rem;">Select Learner</label>
-            <select id="learner-select" style="width:100%; padding:0.6rem 0.8rem; border:1px solid #ddd; border-radius:8px; font-size:0.9rem;">
+    <div class="timeline-filters">
+        <div class="timeline-filter-field">
+            <label for="learner-select"><i class="fas fa-user-graduate" aria-hidden="true"></i> Learner</label>
+            <select id="learner-select">
                 <option value="">— Choose a learner —</option>
                 <?php foreach ($learners as $l): ?>
                     <option value="<?= $l['learner_id'] ?>" data-email="<?= htmlspecialchars($l['email']) ?>">
@@ -59,18 +52,18 @@ try {
                 <?php endforeach; ?>
             </select>
         </div>
-        <div style="flex:1; min-width:200px;">
-            <label style="font-size:0.8rem; color:#666; display:block; margin-bottom:0.25rem;">Filter by Course</label>
-            <select id="course-filter" style="width:100%; padding:0.6rem 0.8rem; border:1px solid #ddd; border-radius:8px; font-size:0.9rem;">
+        <div class="timeline-filter-field">
+            <label for="timeline-course-filter"><i class="fas fa-book-open" aria-hidden="true"></i> Course</label>
+            <select id="timeline-course-filter">
                 <option value="0">All Courses</option>
                 <?php foreach ($courses as $c): ?>
                     <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['title']) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
-        <div style="display:flex; gap:0.5rem; align-items:end;">
-            <button onclick="loadTimeline()" style="padding:0.6rem 1.5rem; background:var(--text); color:white; border:none; border-radius:8px; cursor:pointer; font-size:0.9rem; font-weight:600;">Load Timeline</button>
-        </div>
+        <button type="button" class="timeline-load-btn" onclick="loadTimeline()" title="Load timeline" aria-label="Load timeline">
+            <i class="fas fa-clock-rotate-left" aria-hidden="true"></i><span class="timeline-btn-label">Load Timeline</span>
+        </button>
     </div>
 
     <!-- Stats Row -->
@@ -89,6 +82,97 @@ try {
 </div>
 
 <style>
+.timeline-filters {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) auto;
+    gap: 0.9rem;
+    align-items: end;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 14px;
+    background: var(--surface, #fff);
+    box-shadow: 0 2px 10px rgba(32, 0, 130, 0.04);
+}
+.timeline-filter-field {
+    min-width: 0;
+}
+.timeline-filter-field label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+    color: rgba(32, 0, 130, 0.55);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.timeline-filter-field label i {
+    color: var(--primary);
+    font-size: 0.72rem;
+}
+.timeline-filter-field select {
+    width: 100%;
+    padding: 0.68rem 0.8rem;
+    border: 1px solid rgba(32, 0, 130, 0.16);
+    border-radius: 10px;
+    background: var(--surface, #fff);
+    color: var(--text);
+    font-size: 0.88rem;
+}
+.timeline-filter-field select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(32, 0, 130, 0.10);
+}
+.timeline-load-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.72rem 1.25rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(32, 0, 130, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.timeline-load-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(32, 0, 130, 0.24);
+}
+@media (max-width: 1024px) {
+    .timeline-filters {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .timeline-load-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+}
+@media (max-width: 768px) {
+    .timeline-load-btn {
+        justify-self: end;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+    }
+    .timeline-btn-label {
+        display: none;
+    }
+}
+@media (max-width: 720px) {
+    .timeline-filters {
+        grid-template-columns: 1fr;
+    }
+}
+
 .tl-event {
     display: flex;
     gap: 1rem;
@@ -210,7 +294,7 @@ try {
 </style>
 
 <script>
-const LEARNER_TIMELINE_AJAX_BASE = 'pages/instructor/ajax/';
+var LEARNER_TIMELINE_AJAX_BASE = 'pages/instructor/ajax/';
 
 function formatDate(dateStr) {
     if (!dateStr) return '';
@@ -236,7 +320,7 @@ function getDateKey(dateStr) {
 
 async function loadTimeline() {
     const learnerId = document.getElementById('learner-select').value;
-    const courseId = document.getElementById('course-filter').value;
+    const courseId = document.getElementById('timeline-course-filter').value;
 
     if (!learnerId) {
         document.getElementById('timeline-empty').style.display = 'block';
@@ -259,14 +343,14 @@ async function loadTimeline() {
             return;
         }
 
-        renderStats(data);
+        renderTimelineStats(data);
         renderTimeline(data.timeline);
     } catch (err) {
         document.getElementById('timeline-events').innerHTML = '<div style="text-align:center; padding:2rem; color:var(--danger);">❌ Failed to load: ' + err.message + '</div>';
     }
 }
 
-function renderStats(data) {
+function renderTimelineStats(data) {
     const tl = data.timeline || [];
     const statsEl = document.getElementById('timeline-stats');
 
@@ -357,7 +441,7 @@ function escHtml(s) {
 
 // Auto-load on learner selection
 document.getElementById('learner-select').addEventListener('change', loadTimeline);
-document.getElementById('course-filter').addEventListener('change', function () {
+document.getElementById('timeline-course-filter').addEventListener('change', function () {
     if (document.getElementById('learner-select').value) loadTimeline();
 });
 </script>

@@ -11,12 +11,27 @@ $stats = ['pending' => 0, 'accepted' => 0, 'rejected' => 0, 'completed' => 0, 't
 try {
     $pdo = (new Database())->getConnection();
 
+    // Left joins on purpose: Workforce pushes department-level needs that have no
+    // learner row at all, so an inner join here would silently hide every integrated
+    // request. The linked course/path and the assigned instructor come along so the
+    // page shows what answers the request and who owns it. The WHERE keeps the older
+    // learner-request behaviour: a learner request whose employee no longer exists is
+    // still dropped, exactly as the inner join used to drop it.
     $stmt = $pdo->prepare("
         SELECT tr.*,
-               CONCAT(emp.first_name, ' ', emp.last_name) AS learner_name,
-               emp.employee_code AS employee_id
+               CONCAT_WS(' ', emp.first_name, emp.last_name) AS learner_name,
+               emp.employee_code AS learner_code,
+               CONCAT_WS(' ', inst.first_name, inst.last_name) AS instructor_name,
+               course.title AS course_title,
+               course.status AS course_status,
+               path.title AS path_title,
+               path.status AS path_status
         FROM ld_training_requests tr
-        JOIN em_employees emp ON emp.employee_id = tr.learner_id
+        LEFT JOIN em_employees emp ON emp.employee_id = tr.learner_id
+        LEFT JOIN em_employees inst ON inst.employee_id = tr.instructor_id
+        LEFT JOIN ld_course course ON course.id = tr.course_id
+        LEFT JOIN ld_learning_path path ON path.id = tr.learning_path_id
+        WHERE tr.source_module = 'workforce' OR emp.employee_id IS NOT NULL
         ORDER BY
             CASE tr.status
                 WHEN 'pending' THEN 0
@@ -90,6 +105,34 @@ function trTimeAgo($dt) {
     background:rgba(99,102,241,0.08); color:#6366f1;
     font-size:0.82rem; font-weight:600; margin-bottom:0.5rem;
 }
+
+/* What answers the request and who owns it, surfaced from the Workforce Inbox */
+.tr-assign-row { display:flex; flex-wrap:wrap; align-items:center; gap:0.45rem; margin-bottom:0.75rem; }
+.tr-chip {
+    display:inline-flex; align-items:center; gap:0.35rem; max-width:100%;
+    padding:0.3rem 0.7rem; border-radius:999px; border:1px solid transparent;
+    font-size:0.78rem; font-weight:600; text-decoration:none;
+}
+.tr-chip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tr-chip em {
+    flex-shrink:0; padding:0.05rem 0.35rem; border-radius:999px;
+    font-style:normal; font-size:0.6rem; font-weight:800;
+    letter-spacing:0.04em; text-transform:uppercase;
+}
+.tr-chip.is-course { background:rgba(99,102,241,0.10); border-color:rgba(99,102,241,0.30); color:#4338ca; }
+.tr-chip.is-course em { background:rgba(99,102,241,0.16); }
+.tr-chip.is-path { background:rgba(16,185,129,0.10); border-color:rgba(16,185,129,0.30); color:#047857; }
+.tr-chip.is-path em { background:rgba(16,185,129,0.16); }
+.tr-chip.is-instructor { background:rgba(32,0,130,0.06); border-color:rgba(32,0,130,0.14); color:var(--primary,#320082); }
+.tr-chip.is-empty { background:rgba(148,163,184,0.10); border-color:rgba(148,163,184,0.25); color:var(--muted,#999); font-weight:500; }
+.tr-chip.is-course:hover, .tr-chip.is-path:hover { box-shadow:0 0 0 2px rgba(32,0,130,0.10); }
+
+.tr-badge-workforce {
+    display:inline-block; margin-left:0.4rem; padding:0.1rem 0.45rem; border-radius:999px;
+    background:rgba(32,0,130,0.06); color:var(--muted,#999);
+    font-size:0.62rem; font-weight:800; letter-spacing:0.06em;
+    text-transform:uppercase; vertical-align:middle;
+}
 .tr-card-message {
     padding:0.75rem; border-radius:8px;
     background:rgba(32,0,130,0.03); font-size:0.85rem;
@@ -156,7 +199,7 @@ function trTimeAgo($dt) {
     <div class="module-header">
         <div>
             <h1 class="module-header-title"><i class="fas fa-hand-paper" style="color:var(--primary);margin-right:0.5rem;"></i> Training Requests</h1>
-            <p class="module-header-subtitle">Review and respond to learner requests for new training materials.</p>
+            <p class="module-header-subtitle">Learner requests and Workforce training needs, with the course or path that answers each one and the instructor who owns it.</p>
         </div>
     </div>
 
@@ -196,14 +239,14 @@ function trTimeAgo($dt) {
             </select>
             <i class="fas fa-chevron-down select-icon"></i>
         </div>
-        <span class="catalog-count" id="tr-count"></span>
+        <span class="catalog-count" id="tr-count"><?= count($requests) ?> request<?= count($requests) === 1 ? '' : 's' ?></span>
     </div>
 
     <?php if (empty($requests)): ?>
     <div class="tr-empty">
         <i class="fas fa-inbox"></i>
         <h4>No Training Requests</h4>
-        <p>When learners request training for gap skills, they'll appear here.</p>
+        <p>When learners request training for gap skills, or Workforce sends a training need, it appears here.</p>
     </div>
     <?php else: ?>
     <div class="tr-list" id="tr-list">
@@ -211,22 +254,72 @@ function trTimeAgo($dt) {
             $status = $req['status'];
             $avatarColors = ['pending'=>'#f59e0b','accepted'=>'#10b981','rejected'=>'#ef4444','completed'=>'#3b82f6'];
             $avatarColor = $avatarColors[$status] ?? '#6366f1';
-            $initials = strtoupper(substr($req['learner_name'], 0, 1));
+
+            $isWorkforce = ($req['source_module'] ?? '') === 'workforce';
+            $learnerName = trim((string) ($req['learner_name'] ?? ''));
+            $displayName = $learnerName !== '' ? $learnerName : ($isWorkforce ? 'Workforce training need' : 'Unknown learner');
+            $initials = strtoupper(substr($displayName, 0, 1));
+
+            $department = trim((string) ($req['target_department'] ?? ''));
+            $instructorName = trim((string) ($req['instructor_name'] ?? ''));
+            $courseId = (int) ($req['course_id'] ?? 0);
+            $courseTitle = trim((string) ($req['course_title'] ?? ''));
+            $pathId = (int) ($req['learning_path_id'] ?? 0);
+            $pathTitle = trim((string) ($req['path_title'] ?? ''));
+
+            // "turnover_risk:1" reads as "Turnover risk #1".
+            $reference = trim((string) ($req['external_reference_id'] ?? ''));
+            if ($reference !== '' && str_contains($reference, ':')) {
+                [$kind, $refId] = explode(':', $reference, 2);
+                $reference = ucfirst(str_replace('_', ' ', $kind)) . ' #' . $refId;
+            }
+
+            $metaParts = [];
+            if ($department !== '') {
+                $metaParts[] = $department;
+            }
+            if (trim((string) ($req['learner_code'] ?? '')) !== '') {
+                $metaParts[] = trim((string) $req['learner_code']);
+            }
+            if ($reference !== '') {
+                $metaParts[] = 'From ' . $reference;
+            }
+            $metaParts[] = 'Requested ' . trTimeAgo($req['created_at']);
         ?>
         <div class="tr-card <?= $status ?>"
              data-status="<?= $status ?>"
-             data-search="<?= htmlspecialchars(strtolower($req['learner_name'] . ' ' . $req['skill_name'])) ?>"
+             data-search="<?= htmlspecialchars(strtolower($displayName . ' ' . $req['skill_name'] . ' ' . $department . ' ' . $instructorName)) ?>"
              data-id="<?= (int)$req['id'] ?>">
             <div class="tr-card-header">
-                <div class="tr-card-avatar" style="background:<?= $avatarColor ?>;"><?= $initials ?></div>
+                <div class="tr-card-avatar" style="background:<?= $avatarColor ?>;"><?= htmlspecialchars($initials) ?></div>
                 <div class="tr-card-info">
-                    <div class="tr-card-name"><?= htmlspecialchars($req['learner_name']) ?></div>
-                    <div class="tr-card-meta"><?= htmlspecialchars($req['employee_id'] ?? '') ?> · Requested <?= trTimeAgo($req['created_at']) ?></div>
+                    <div class="tr-card-name"><?= htmlspecialchars($displayName) ?><?php if ($isWorkforce): ?> <span class="tr-badge-workforce">Workforce</span><?php endif; ?></div>
+                    <div class="tr-card-meta"><?= htmlspecialchars(implode(' · ', $metaParts)) ?></div>
                 </div>
                 <span class="tr-card-status <?= $status ?>"><?= ucfirst($status) ?></span>
             </div>
 
             <div class="tr-skill-tag"><i class="fas fa-puzzle-piece"></i> <?= htmlspecialchars($req['skill_name']) ?></div>
+
+            <div class="tr-assign-row">
+                <?php if ($courseId > 0 && $courseTitle !== ''): ?>
+                <a class="tr-chip is-course" href="?page=instructor/elearning-subpage/course-structure&amp;course_id=<?= $courseId ?>" title="<?= htmlspecialchars($courseTitle) ?> — open in the course builder">
+                    <i class="fas fa-book"></i><span><?= htmlspecialchars($courseTitle) ?></span><em>Course</em>
+                </a>
+                <?php elseif ($pathId > 0 && $pathTitle !== ''): ?>
+                <a class="tr-chip is-path" href="?page=instructor/learning-path" title="<?= htmlspecialchars($pathTitle) ?> — open the learning path builder">
+                    <i class="fas fa-route"></i><span><?= htmlspecialchars($pathTitle) ?></span><em>Path</em>
+                </a>
+                <?php else: ?>
+                <span class="tr-chip is-empty"><i class="fas fa-link-slash"></i> No learning linked yet</span>
+                <?php endif; ?>
+
+                <?php if ($instructorName !== ''): ?>
+                <span class="tr-chip is-instructor" data-role="instructor"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($instructorName) ?></span>
+                <?php else: ?>
+                <span class="tr-chip is-empty" data-role="instructor"><i class="fas fa-user-slash"></i> Unassigned</span>
+                <?php endif; ?>
+            </div>
 
             <?php if (!empty($req['message'])): ?>
             <div class="tr-card-message">"<?= htmlspecialchars($req['message']) ?>"</div>
@@ -304,13 +397,26 @@ function trTimeAgo($dt) {
     rejectCancel.addEventListener('click', closeRejectModal);
     rejectOverlay.addEventListener('click', function(e) { if (e.target === rejectOverlay) closeRejectModal(); });
 
-    function updateCard(id, newStatus, note) {
+    function updateCard(id, newStatus, note, instructorName) {
         var card = list.querySelector('.tr-card[data-id="' + id + '"]');
         if (!card) return;
         card.dataset.status = newStatus;
         card.className = 'tr-card ' + newStatus;
         var statusEl = card.querySelector('.tr-card-status');
         if (statusEl) { statusEl.className = 'tr-card-status ' + newStatus; statusEl.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1); }
+        // Acting on a request makes the acting instructor its owner, so the chip has
+        // to catch up without a reload.
+        if (instructorName) {
+            var chip = card.querySelector('[data-role="instructor"]');
+            if (chip) {
+                chip.className = 'tr-chip is-instructor';
+                chip.textContent = '';
+                var icon = document.createElement('i');
+                icon.className = 'fas fa-user-tie';
+                chip.appendChild(icon);
+                chip.appendChild(document.createTextNode(' ' + instructorName));
+            }
+        }
         var actionsEl = card.querySelector('.tr-card-actions');
         if (actionsEl) {
             if (newStatus === 'accepted') {
@@ -351,7 +457,7 @@ function trTimeAgo($dt) {
         .then(function(r) { return r.json(); })
         .then(function(res) {
             if (res.success) {
-                updateCard(id, res.new_status || action, null);
+                updateCard(id, res.new_status || action, null, res.instructor_name);
                 applyFilters();
             } else {
                 btn.disabled = false;
@@ -375,7 +481,7 @@ function trTimeAgo($dt) {
             rejectConfirm.disabled = false;
             if (res.success) {
                 closeRejectModal();
-                updateCard(rejectId, 'rejected', res.note || null);
+                updateCard(rejectId, 'rejected', res.note || null, res.instructor_name);
                 applyFilters();
             } else {
                 alert(res.message || 'Failed.');

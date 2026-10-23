@@ -210,7 +210,7 @@ if (!function_exists('ntfPreferencesButton')) {
      */
     function ntfPreferencesButton(): void
     {
-        echo '<button type="button" id="ntf-prefs-toggle" class="ntf-btn ghost" aria-expanded="false" aria-controls="ntf-prefs">'
+        echo '<button type="button" id="ntf-prefs-toggle" class="ntf-btn ghost" aria-expanded="false" aria-controls="ntf-prefs" aria-label="Preferences" title="Preferences">'
             . '<i class="fas fa-sliders-h" aria-hidden="true"></i> Preferences</button>';
     }
 }

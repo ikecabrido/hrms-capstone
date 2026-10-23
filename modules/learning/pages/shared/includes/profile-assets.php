@@ -1,13 +1,85 @@
 <?php /* Shared styles for every role profile page. */ ?>
 <style>
 /* ─── Profile header ─────────────────────────────────────────────────────── */
-.pfl-header { background: linear-gradient(135deg, var(--primary), var(--text)); color: #fff; padding: 2.5rem; border-radius: 16px; margin-bottom: 1.5rem; }
-.pfl-header-inner { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
-.pfl-avatar-wrap { position: relative; flex-shrink: 0; }
-.pfl-avatar { width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 700; border: 3px solid rgba(255,255,255,0.4); overflow: hidden; }
+.pfl-header {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    background: linear-gradient(115deg, #22005a 0%, #320082 26%, #4c1d95 52%, #6d28d9 74%, #4c1d95 100%);
+    background-size: 220% 220%;
+    animation: pfl-gradient-drift 20s ease-in-out infinite;
+    color: #fff;
+    padding: 2.5rem;
+    border-radius: 18px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 18px 38px rgba(32, 0, 130, 0.18);
+}
+.pfl-header::before,
+.pfl-header::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    border-radius: 50%;
+    pointer-events: none;
+}
+.pfl-header::before {
+    width: 340px;
+    height: 340px;
+    top: -220px;
+    right: -70px;
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.3), transparent 70%);
+}
+.pfl-header::after {
+    width: 230px;
+    height: 230px;
+    right: 130px;
+    bottom: -170px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+@keyframes pfl-gradient-drift {
+    0%,
+    100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+.pfl-header-inner { position: relative; z-index: 2; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.pfl-avatar-wrap {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 126px;
+    height: 126px;
+    flex-shrink: 0;
+}
+.pfl-avatar { position: relative; z-index: 2; width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 700; border: 3px solid rgba(255,255,255,0.4); overflow: hidden; }
 .pfl-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.pfl-avatar-btn { position: absolute; bottom: 0; right: 0; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.pfl-avatar-btn { position: absolute; z-index: 3; bottom: 18px; right: 18px; width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.8rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .pfl-avatar-btn:hover { filter: brightness(1.1); }
+.pfl-seal {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 126px;
+    height: 126px;
+    pointer-events: none;
+}
+.pfl-seal-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 0 12px rgba(196, 181, 253, 0.22));
+}
+.pfl-seal-ring {
+    fill: rgba(255, 255, 255, 0.035);
+    stroke: rgba(255, 255, 255, 0.26);
+    stroke-width: 1;
+}
+.pfl-seal-ring-inner {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+}
 .pfl-header-meta { flex: 1; min-width: 200px; }
 .pfl-header-meta h1 { margin: 0; font-size: 1.8rem; }
 .pfl-header-role { margin: 0.25rem 0 0; opacity: 0.85; font-weight: 600; }
@@ -149,6 +221,14 @@ textarea.pfl-input { resize: vertical; min-height: 84px; }
     .pfl-grid { grid-template-columns: 1fr; }
     .pfl-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .profile-gb-panels { grid-template-columns: 1fr; }
+    .pfl-header { padding: 2rem; }
+    .pfl-header-inner { gap: 1rem; }
+    .pfl-header-meta h1 { font-size: 1.55rem; }
+}
+@media (max-width: 880px) {
+    .pfl-avatar-wrap { width: 90px; height: 90px; }
+    .pfl-avatar-btn { bottom: 0; right: 0; }
+    .pfl-seal { display: none; }
 }
 @media (max-width: 640px) {
     .pfl-header { padding: 1.75rem; }
@@ -157,6 +237,12 @@ textarea.pfl-input { resize: vertical; min-height: 84px; }
     .pfl-row { flex-direction: column; gap: 0.15rem; }
     .pfl-row-value { text-align: left; }
     .pfl-pref { flex-direction: column; align-items: flex-start; gap: 0.6rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .pfl-header {
+        animation: none;
+        background-position: 50% 50%;
+    }
 }
 
 /* ─── Dark mode ──────────────────────────────────────────────────────────── */

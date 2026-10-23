@@ -30,6 +30,33 @@
         height: auto;
     }
 
+    /* Mobile-only close control: when the sidebar is open it covers the
+       header (z-index 1000 > 999), so the hamburger is unreachable — and at
+       widths <= 360px the sidebar covers the overlay as well. */
+    .sidebar-close {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.32);
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 55%, #6d5ce7 100%);
+        color: var(--surface);
+        font-size: 1.1rem;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(13, 0, 60, 0.35);
+        transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .sidebar-close:hover,
+    .sidebar-close:focus-visible {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 40%, #7c6ce8 100%);
+        box-shadow: 0 6px 16px rgba(13, 0, 60, 0.45);
+        transform: translateY(-1px);
+    }
+
     .sidebar-icons {
         display: flex;
         gap: 0.5rem;
@@ -302,14 +329,21 @@
             --sidebar-width: 0px;
         }
         
-        /* Hide sidebar by default on mobile */
+        /* Hide sidebar by default on mobile, but give the drawer an explicit
+           width: --sidebar-width is reset to 0 above so the content can use
+           the full viewport. */
         .sidebar {
+            width: 280px;
             transform: translateX(-100%);
         }
         
         /* Show sidebar when active */
         .sidebar.active {
             transform: translateX(0);
+        }
+
+        .sidebar-close {
+            display: inline-flex;
         }
 
         .learner-tools-layout {

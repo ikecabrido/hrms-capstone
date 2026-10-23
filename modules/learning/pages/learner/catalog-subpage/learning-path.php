@@ -117,7 +117,7 @@ $lessonCount = count(array_filter($items, fn($i) => $i['item_type'] === 'lesson'
             <div style="width:80px; height:80px; border-radius:14px; background:linear-gradient(135deg, rgba(180,83,9,0.85), rgba(245,158,11,0.7)); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                 <i class="fas fa-route" style="color:#fff; font-size:2rem;"></i>
             </div>
-            <div style="flex:1; min-width:300px;">
+            <div style="flex:1 1 300px; min-width:0;">
                 <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem; flex-wrap:wrap;">
                     <span class="pill" style="background:linear-gradient(135deg, rgba(180,83,9,0.85), rgba(245,158,11,0.7)); color:#fff;">Learning Path</span>
                     <span class="pill" style="background:#d4edda; color:#155724;">Active</span>
@@ -197,7 +197,7 @@ $lessonCount = count(array_filter($items, fn($i) => $i['item_type'] === 'lesson'
                         <div style="background:#f9f9f9; border:1px solid #e8e8e8; border-radius:10px; padding:1rem 1.25rem; margin-left:0.5rem;">
                             <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
                                 <i class="fas <?= htmlspecialchars($item['icon']) ?>" style="color:var(--primary); font-size:1.1rem;"></i>
-                                <div style="flex:1; min-width:200px;">
+                                <div style="flex:1 1 200px; min-width:0;">
                                     <h3 style="margin:0 0 0.2rem 0; font-size:0.95rem; color:#222;"><?= htmlspecialchars($item['title']) ?></h3>
                                     <span style="font-size:0.8rem; color:#888;"><?= htmlspecialchars($item['label']) ?></span>
                                 </div>

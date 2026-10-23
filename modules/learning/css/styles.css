@@ -10,7 +10,7 @@
    (max-age=604800) and browsers kept serving a week-old copy. That is what let an
    uploaded profile photo escape the avatar circle — the stale sheet had no
    clipping rule — and it affects every other file imported below. */
-@import url('layout/footer.css');
+/* layout/footer.css is linked from includes/header.php for the same reason. */
 @import url('layout/header.css');
 @import url('layout/module-container.css');
 

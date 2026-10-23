@@ -4,7 +4,9 @@
  * Clean, tabular layout for browser printing.
  * Access: ?page=learner/result-subpage/transcript-print
  */
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $learnerId = isset($_SESSION['employee_id']) ? (int)$_SESSION['employee_id'] : 0;
 if ($learnerId <= 0) {
     require_once dirname(__DIR__, 5) . '/includes/app-base.php';
@@ -88,6 +90,19 @@ try {
         .status-in_progress { color: #d97706; font-weight: 600; }
         .status-enrolled { color: #2563eb; font-weight: 600; }
         .transcript-footer { margin-top: 1.5rem; font-size: 0.75rem; color: #999; text-align: center; }
+        @media (max-width: 1024px) {
+            /* The seven-column record table can be wider than the card at
+               tablet width; scroll it inside the card instead of the page. */
+            table { display: block; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+        }
+        @media (max-width: 640px) {
+            body { padding: 0.75rem; }
+            .transcript { padding: 1rem; border-radius: 12px; }
+            .transcript-header h1 { font-size: 1.2rem; }
+            .learner-info { grid-template-columns: 1fr; gap: 0.35rem; }
+            .stats { gap: 0.5rem; flex-wrap: wrap; }
+            .stat { flex: 1 1 30%; }
+        }
         @media print {
             body { background: none; padding: 0; }
             .transcript { box-shadow: none; padding: 1rem; }

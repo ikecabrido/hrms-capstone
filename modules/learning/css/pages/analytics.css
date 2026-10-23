@@ -9,8 +9,9 @@
    ========================================================================== */
 
 /* ---- Tabs ---------------------------------------------------------------- */
-/* Three tabs only, so they behave like the Settings page: auto width pills that
-   wrap instead of the shared full-width segmented control. */
+/* The instructor analytics page also hosts the Roster and Progress dashboards,
+   so the pills use the Settings layout and wrap instead of the shared
+   full-width segmented control. */
 .an-page .tab-container {
     margin-top: 0;
     padding: 1.1rem 1.25rem 1.25rem;
@@ -41,10 +42,32 @@
     opacity: 0.85;
 }
 
-@media (max-width: 640px) {
+/* On phones the labels collapse so all six tabs fit in a single icon row.
+   aria-label/title on each button keeps the controls accessible. */
+@media (max-width: 768px) {
     .an-page .tab-item {
-        flex: 1 1 100%;
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 44px;
+        padding: 0.6rem 0.3rem;
     }
+
+    .an-page .tab-item i {
+        font-size: 0.95rem;
+        opacity: 1;
+    }
+
+    .an-page .tab-label {
+        display: none;
+    }
+}
+
+/* The Roster and Progress dashboards are full page partials and bring their own
+   .module-content wrapper; neutralise it inside the tab. */
+.an-page .tab-content > .module-content {
+    min-height: 0;
+    margin: 0;
+    padding: 0;
 }
 
 /* ---- Panels -------------------------------------------------------------- */

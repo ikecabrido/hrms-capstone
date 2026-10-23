@@ -50,7 +50,7 @@ function instrTimeAgo($dt) {
     return floor($d / 86400) . 'd ago';
 }
 ?>
-<div class="module-content">
+<div class="module-content home-module">
     <div class="home-dashboard">
 
         <!-- Hero -->

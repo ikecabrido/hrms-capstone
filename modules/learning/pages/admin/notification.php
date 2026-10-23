@@ -179,7 +179,7 @@ function renderAdminAnnouncements(array $items): void
             </div>
             <div class="ntf-actions-bar">
                 <?php ntfPreferencesButton(); ?>
-                <button type="button" id="ntf-mark-all-read" class="ntf-btn">
+                <button type="button" id="ntf-mark-all-read" class="ntf-btn" aria-label="Mark all read" title="Mark all read">
                     <i class="fas fa-check-double" aria-hidden="true"></i> Mark all read
                 </button>
                 <?php include dirname(__DIR__, 2) . '/includes/announcement-composer-trigger.php'; ?>

@@ -861,7 +861,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
             <option value="newest">Sort: Newest First</option>
         </select>
         <span class="catalog-count" id="catalog-count"></span>
-        <button type="button" class="catalog-request-btn" id="request-course-btn">
+        <button type="button" class="catalog-request-btn" id="request-course-btn" aria-label="Request course" title="Request course">
             <i class="fas fa-plus"></i> Request Course
         </button>
     </div>
@@ -918,16 +918,16 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
         </button>
     </div>
     <div class="catalog-tabs" data-subtab-group="elearning" role="tablist" aria-label="E-Learning types">
-        <button type="button" class="catalog-tab-btn active" data-tab="course">Courses <span class="catalog-tab-count"><?= $typeCounts['course'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="module">Modules <span class="catalog-tab-count"><?= $typeCounts['module'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="lesson">Lessons <span class="catalog-tab-count"><?= $typeCounts['lesson'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="quiz">Quizzes <span class="catalog-tab-count"><?= $typeCounts['quiz'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="enrolled"><i class="fas fa-check-circle"></i> Enrolled <span class="catalog-tab-count"><?= $enrolledCatalogCount ?></span></button>
+        <button type="button" class="catalog-tab-btn active" data-tab="course" aria-label="Courses" title="Courses"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Courses <span class="catalog-tab-count"><?= $typeCounts['course'] ?? 0 ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="module" aria-label="Modules" title="Modules"><i class="fas fa-cube" aria-hidden="true"></i> Modules <span class="catalog-tab-count"><?= $typeCounts['module'] ?? 0 ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="lesson" aria-label="Lessons" title="Lessons"><i class="fas fa-book-open" aria-hidden="true"></i> Lessons <span class="catalog-tab-count"><?= $typeCounts['lesson'] ?? 0 ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="quiz" aria-label="Quizzes" title="Quizzes"><i class="fas fa-circle-question" aria-hidden="true"></i> Quizzes <span class="catalog-tab-count"><?= $typeCounts['quiz'] ?? 0 ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="enrolled" aria-label="Enrolled" title="Enrolled"><i class="fas fa-check-circle" aria-hidden="true"></i> Enrolled <span class="catalog-tab-count"><?= $enrolledCatalogCount ?></span></button>
     </div>
     <div class="catalog-tabs" data-subtab-group="trainings" role="tablist" aria-label="Training types" style="display:none;">
-        <button type="button" class="catalog-tab-btn" data-tab="learning-path">Learning Paths <span class="catalog-tab-count"><?= $typeCounts['learning-path'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="program">Programs <span class="catalog-tab-count"><?= $typeCounts['program'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="video-conference">Online Training <span class="catalog-tab-count"><?= $typeCounts['video-conference'] ?? 0 ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="learning-path" aria-label="Learning paths" title="Learning paths"><i class="fas fa-route" aria-hidden="true"></i> Learning Paths <span class="catalog-tab-count"><?= $typeCounts['learning-path'] ?? 0 ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="program" aria-label="Programs" title="Programs"><i class="fas fa-briefcase" aria-hidden="true"></i> Programs <span class="catalog-tab-count"><?= $typeCounts['program'] ?? 0 ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="video-conference" aria-label="Online training" title="Online training"><i class="fas fa-video" aria-hidden="true"></i> Online Training <span class="catalog-tab-count"><?= $typeCounts['video-conference'] ?? 0 ?></span></button>
     </div>
 
     <!-- Recommendations (filtered by selected tab) -->

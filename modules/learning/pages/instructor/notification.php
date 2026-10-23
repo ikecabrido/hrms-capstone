@@ -181,9 +181,6 @@ function renderInstructorMessages(array $items): void
             </div>
             <div class="ntf-actions-bar">
                 <?php ntfPreferencesButton(); ?>
-                <a class="ntf-btn ghost" href="?page=instructor/certificate">
-                    <i class="fas fa-certificate" aria-hidden="true"></i> Certificates
-                </a>
                 <?php include dirname(__DIR__, 2) . '/includes/announcement-composer-trigger.php'; ?>
             </div>
         </div>

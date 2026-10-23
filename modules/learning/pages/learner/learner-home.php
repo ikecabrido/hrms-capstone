@@ -239,7 +239,7 @@ function homeDaysLeft($date) {
 $heatmap = [];
 foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_accessed']; }
 ?>
-<div class="module-content">
+<div class="module-content home-module">
     <div class="home-dashboard">
 
         <!-- Hero -->

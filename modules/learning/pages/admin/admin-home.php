@@ -72,7 +72,7 @@ function adminTimeAgo($dt) {
 $completionRate = ($stats['active_enrollments'] + $stats['completed']) > 0
     ? round(($stats['completed'] / max(1, $stats['active_enrollments'] + $stats['completed'])) * 100) : 0;
 ?>
-<div class="module-content">
+<div class="module-content home-module">
     <div class="home-dashboard">
 
         <!-- Hero -->

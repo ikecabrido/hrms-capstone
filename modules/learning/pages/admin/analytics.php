@@ -110,9 +110,9 @@ $gradeBands = [
 
         <div class="tab-container">
             <div class="tab-list">
-                <button type="button" class="tab-item active" data-tab="tab-overview"><i class="fas fa-gauge-high"></i> Overview</button>
-                <button type="button" class="tab-item" data-tab="tab-courses"><i class="fas fa-trophy"></i> Courses</button>
-                <button type="button" class="tab-item" data-tab="tab-trends"><i class="fas fa-chart-line"></i> Trends</button>
+                <button type="button" class="tab-item active" data-tab="tab-overview" aria-label="Overview" title="Overview"><i class="fas fa-gauge-high" aria-hidden="true"></i><span class="tab-label">Overview</span></button>
+                <button type="button" class="tab-item" data-tab="tab-courses" aria-label="Courses" title="Courses"><i class="fas fa-trophy" aria-hidden="true"></i><span class="tab-label">Courses</span></button>
+                <button type="button" class="tab-item" data-tab="tab-trends" aria-label="Trends" title="Trends"><i class="fas fa-chart-line" aria-hidden="true"></i><span class="tab-label">Trends</span></button>
             </div>
 
             <!-- Overview -->

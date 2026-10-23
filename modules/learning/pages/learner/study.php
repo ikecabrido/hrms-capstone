@@ -356,10 +356,10 @@ function getStudyGradient($category, $gradients) {
             <!-- Browse bar -->
             <div class="study-bar">
                 <div class="study-tabs" id="study-tabs">
-                    <button type="button" class="study-tab<?= $currentTab === 'all' ? ' active' : '' ?>" data-tab="all">All <span class="study-tab-count"><?= $tabCounts['all'] ?></span></button>
-                    <button type="button" class="study-tab<?= $currentTab === 'in_progress' ? ' active' : '' ?>" data-tab="in_progress">In Progress <span class="study-tab-count"><?= $tabCounts['in_progress'] ?></span></button>
-                    <button type="button" class="study-tab<?= $currentTab === 'completed' ? ' active' : '' ?>" data-tab="completed">Completed <span class="study-tab-count"><?= $tabCounts['completed'] ?></span></button>
-                    <button type="button" class="study-tab<?= $currentTab === 'invited' ? ' active' : '' ?>" data-tab="invited">Invitations <span class="study-tab-count"><?= $tabCounts['invited'] ?></span></button>
+                    <button type="button" class="study-tab<?= $currentTab === 'all' ? ' active' : '' ?>" data-tab="all" aria-label="All courses" title="All courses"><i class="fas fa-layer-group" aria-hidden="true"></i> All <span class="study-tab-count"><?= $tabCounts['all'] ?></span></button>
+                    <button type="button" class="study-tab<?= $currentTab === 'in_progress' ? ' active' : '' ?>" data-tab="in_progress" aria-label="In progress" title="In progress"><i class="fas fa-spinner" aria-hidden="true"></i> In Progress <span class="study-tab-count"><?= $tabCounts['in_progress'] ?></span></button>
+                    <button type="button" class="study-tab<?= $currentTab === 'completed' ? ' active' : '' ?>" data-tab="completed" aria-label="Completed" title="Completed"><i class="fas fa-circle-check" aria-hidden="true"></i> Completed <span class="study-tab-count"><?= $tabCounts['completed'] ?></span></button>
+                    <button type="button" class="study-tab<?= $currentTab === 'invited' ? ' active' : '' ?>" data-tab="invited" aria-label="Invitations" title="Invitations"><i class="fas fa-envelope-open-text" aria-hidden="true"></i> Invitations <span class="study-tab-count"><?= $tabCounts['invited'] ?></span></button>
                 </div>
                 <div class="study-filters">
                     <div class="study-search"><i class="fas fa-search"></i><input type="search" id="study-search-input" value="<?= htmlspecialchars($searchQuery) ?>" placeholder="Search your courses..." /></div>

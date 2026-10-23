@@ -231,10 +231,12 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
 
         <div class="tab-container">
             <div class="tab-list">
-                <button type="button" class="tab-item active" data-tab="tab-overview"><i class="fas fa-gauge-high"></i> Overview</button>
-                <button type="button" class="tab-item" data-tab="tab-students"><i class="fas fa-users"></i> Students</button>
-                <button type="button" class="tab-item" data-tab="tab-courses"><i class="fas fa-book-open"></i> Courses</button>
-                <button type="button" class="tab-item" data-tab="tab-grades"><i class="fas fa-chart-bar"></i> Grades</button>
+                <button type="button" class="tab-item active" data-tab="tab-overview" aria-label="Overview" title="Overview"><i class="fas fa-gauge-high" aria-hidden="true"></i><span class="tab-label">Overview</span></button>
+                <button type="button" class="tab-item" data-tab="tab-students" aria-label="Students" title="Students"><i class="fas fa-users" aria-hidden="true"></i><span class="tab-label">Students</span></button>
+                <button type="button" class="tab-item" data-tab="tab-courses" aria-label="Courses" title="Courses"><i class="fas fa-book-open" aria-hidden="true"></i><span class="tab-label">Courses</span></button>
+                <button type="button" class="tab-item" data-tab="tab-grades" aria-label="Grades" title="Grades"><i class="fas fa-chart-bar" aria-hidden="true"></i><span class="tab-label">Grades</span></button>
+                <button type="button" class="tab-item" data-tab="tab-roster" aria-label="Roster" title="Roster"><i class="fas fa-clipboard-list" aria-hidden="true"></i><span class="tab-label">Roster</span></button>
+                <button type="button" class="tab-item" data-tab="tab-progress" aria-label="Progress" title="Progress"><i class="fas fa-chart-simple" aria-hidden="true"></i><span class="tab-label">Progress</span></button>
             </div>
 
             <!-- ==================== OVERVIEW ==================== -->
@@ -701,6 +703,16 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                         <?php endif; ?>
                     </div>
                 </div>
+            </div>
+
+            <!-- ==================== ROSTER ==================== -->
+            <div class="tab-content" data-tab="tab-roster">
+                <?php include __DIR__ . '/manage-learners.php'; ?>
+            </div>
+
+            <!-- ==================== PROGRESS ==================== -->
+            <div class="tab-content" data-tab="tab-progress">
+                <?php include __DIR__ . '/progress-dashboard.php'; ?>
             </div>
         </div>
     </div>

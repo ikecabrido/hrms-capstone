@@ -96,7 +96,7 @@ try {
 }
 ?>
 <div class="module-content">
-    <div class="toolbar">
+    <div class="toolbar progress-toolbar">
         <div class="toolbar-actions" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
             
             <select id="course-filter" style="padding:0.6rem 1rem; border-radius:8px; border:1px solid var(--border); font-size:0.9rem;">
@@ -105,8 +105,8 @@ try {
                 <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['title']) ?></option>
                 <?php endforeach; ?>
             </select>
-            <button onclick="exportCSV()" style="padding:0.6rem 1.2rem; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Export CSV</button>
-            <button onclick="window.print()" style="padding:0.6rem 1.2rem; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Print Report</button>
+            <button type="button" onclick="exportProgressCSV()" title="Export CSV" aria-label="Export CSV" style="padding:0.6rem 1.2rem; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;"><i class="fas fa-file-csv" aria-hidden="true"></i><span class="toolbar-btn-label">Export CSV</span></button>
+            <button type="button" onclick="window.print()" title="Print report" aria-label="Print report" style="padding:0.6rem 1.2rem; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;"><i class="fas fa-print" aria-hidden="true"></i><span class="toolbar-btn-label">Print Report</span></button>
         </div>
     </div>
 
@@ -140,7 +140,7 @@ try {
     </div>
 
     <!-- Charts Row -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.5rem;">
+    <div class="progress-charts-row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1.5rem;">
         <!-- Grade Distribution -->
         <div style="padding:1.25rem; background:var(--surface, #fff); border:1px solid rgba(32,0,130,0.1); border-radius:12px;">
             <h3 style="margin:0 0 1rem; font-size:1rem; color:var(--text);"><i class="fas fa-chart-bar" style="margin-right:0.4rem; opacity:0.6;"></i> Grade Distribution</h3>
@@ -218,7 +218,7 @@ try {
         <?php if (empty($courseProgress)): ?>
         <p style="color:#999; text-align:center; padding:2rem;">No courses found.</p>
         <?php else: ?>
-        <div style="display:grid; gap:0.75rem;">
+        <div class="progress-course-list" style="display:grid; gap:0.75rem;">
             <?php foreach ($courseProgress as $cp): ?>
             <div class="progress-course-row" data-course-id="<?= $cp['id'] ?>" style="display:grid; grid-template-columns:1fr 100px 80px 80px 80px 60px; gap:0.75rem; align-items:center; padding:0.75rem; border:1px solid rgba(32,0,130,0.06); border-radius:8px; background:#fafbff;">
                 <div>
@@ -247,14 +247,14 @@ try {
         <?php if (empty($recentActivity)): ?>
         <p style="color:#999; text-align:center; padding:2rem;">No recent activity.</p>
         <?php else: ?>
-        <div style="display:grid; gap:0.5rem;">
+        <div class="progress-activity-list" style="display:grid; gap:0.5rem;">
             <?php foreach ($recentActivity as $act):
                 $statusColors = ['completed' => 'var(--primary)', 'in_progress' => 'var(--accent)', 'enrolled' => 'var(--accent)', 'withdrawn' => 'var(--danger)'];
                 $color = $statusColors[$act['status']] ?? '#666';
                 $time = $act['completed_at'] ?? $act['last_accessed_at'] ?? '';
                 $timeAgo = $time ? date('M j, g:i A', strtotime($time)) : 'Unknown';
             ?>
-            <div style="display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid rgba(32,0,130,0.05);">
+            <div class="progress-activity-row" style="display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid rgba(32,0,130,0.05);">
                 <div style="width:8px; height:8px; border-radius:50%; background:<?= $color ?>; flex-shrink:0;"></div>
                 <div style="flex:1; min-width:0;">
                     <span style="font-weight:600; color:var(--text); font-size:0.85rem;"><?= htmlspecialchars($act['name']) ?></span>
@@ -269,8 +269,53 @@ try {
     </div>
 </div>
 
+<style>
+.toolbar.progress-toolbar {
+    position: static;
+    top: auto;
+    z-index: auto;
+    justify-content: flex-end;
+    padding: 0.8rem 0.9rem;
+    background: var(--surface, #fff);
+    border: 1px solid rgba(32, 0, 130, 0.12);
+    box-shadow: 0 2px 8px rgba(32, 0, 130, 0.04);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+.toolbar.progress-toolbar .toolbar-actions {
+    width: 100%;
+    justify-content: flex-end;
+}
+.toolbar.progress-toolbar button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+@media (max-width: 768px) {
+    .toolbar.progress-toolbar .toolbar-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.45rem;
+    }
+    .toolbar.progress-toolbar select {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+    .toolbar.progress-toolbar button {
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        padding: 0 !important;
+    }
+    .toolbar.progress-toolbar .toolbar-btn-label {
+        display: none;
+    }
+}
+</style>
+
 <script>
-function exportCSV() {
+function exportProgressCSV() {
     var courseId = document.getElementById('course-filter').value;
     var url = 'pages/instructor/ajax/export-progress-report.php?format=csv';
     if (courseId !== 'all') url += '&course_id=' + courseId;

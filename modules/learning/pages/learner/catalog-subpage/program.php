@@ -63,7 +63,7 @@ if (!$program) {
             <div style="width:80px; height:80px; border-radius:14px; background:linear-gradient(135deg, rgba(16,120,40,0.85), rgba(46,184,92,0.7)); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                 <i class="fas fa-layer-group" style="color:#fff; font-size:2rem;"></i>
             </div>
-            <div style="flex:1; min-width:300px;">
+            <div style="flex:1 1 300px; min-width:0;">
                 <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem; flex-wrap:wrap;">
                     <span class="pill" style="background:linear-gradient(135deg, rgba(16,120,40,0.85), rgba(46,184,92,0.7)); color:#fff;">Program</span>
                     <span class="pill" style="background:#d4edda; color:#155724;">Active</span>

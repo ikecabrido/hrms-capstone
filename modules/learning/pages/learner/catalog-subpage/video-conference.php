@@ -74,7 +74,7 @@ $platformColor = match($conference['platform']) {
             <div style="width:80px; height:80px; border-radius:14px; background:linear-gradient(135deg, rgba(185,28,28,0.85), rgba(239,68,68,0.7)); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                 <i class="fas fa-video" style="color:#fff; font-size:2rem;"></i>
             </div>
-            <div style="flex:1; min-width:300px;">
+            <div style="flex:1 1 300px; min-width:0;">
                 <div style="display:flex; gap:0.5rem; margin-bottom:0.75rem; flex-wrap:wrap;">
                     <span class="pill" style="background:linear-gradient(135deg, rgba(185,28,28,0.85), rgba(239,68,68,0.7)); color:#fff;">Online Training</span>
                     <span class="pill" style="background:<?= $platformColor ?>; color:#fff;"><?= htmlspecialchars($platformDisplay) ?></span>

@@ -7,6 +7,40 @@ footer {
     transition: margin-left 0.3s ease;
 }
 
+footer p {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem 0.6rem;
+    margin: 0;
+    font-size: 0.83rem;
+    line-height: 1.7;
+}
+
+footer .footer-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+}
+
+footer .footer-sep {
+    color: var(--muted);
+    opacity: 0.7;
+}
+
+footer a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
 @media (max-width: 768px) {
     footer {
         margin-left: 0;

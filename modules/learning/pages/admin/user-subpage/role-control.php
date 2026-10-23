@@ -1,4 +1,11 @@
 <?php
+// This is a partial included by the learner/instructor profile pages. Guard
+// direct routing through Page::render(), which does not define $pdo or
+// $employeeId and would otherwise raise warnings and a fatal TypeError.
+if (!isset($pdo, $employeeId, $profile) || !($pdo instanceof PDO)) {
+    return;
+}
+
 $profileLearningRole = LearningRole::forEmployee($pdo, $employeeId);
 $roleControlActorId = (int) ($_SESSION['employee_id'] ?? 0);
 $roleControlCanManage = $roleControlActorId > 0

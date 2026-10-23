@@ -59,12 +59,16 @@ try {
     ]);
 
     // Notify the learner
+    $instructorLabel = '';
     try {
         $instrName = 'An instructor';
         $empStmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) AS name FROM em_employees WHERE employee_id = :eid");
         $empStmt->execute([':eid' => $instructorId]);
         $empRow = $empStmt->fetch(PDO::FETCH_ASSOC);
-        if ($empRow) $instrName = $empRow['name'];
+        if ($empRow) {
+            $instrName = $empRow['name'];
+            $instructorLabel = trim((string) $empRow['name']);
+        }
 
         $statusMessages = [
             'accepted' => $instrName . ' accepted your training request for "' . $req['skill_name'] . '". A new course will be created.',
@@ -73,8 +77,9 @@ try {
         ];
 
         // Skipped when the learner has switched this type off; the request itself
-        // is still updated, only the notification is withheld.
-        if (NotificationPreference::allows($pdo, (int) $req['learner_id'], 'training_request')) {
+        // is still updated, only the notification is withheld. Workforce requests are
+        // department-level, so they usually have no learner to notify at all.
+        if (!empty($req['learner_id']) && NotificationPreference::allows($pdo, (int) $req['learner_id'], 'training_request')) {
             $notifStmt = $pdo->prepare("
                 INSERT INTO ld_notification_inbox (user_id, type, title, message, is_read, created_at)
                 VALUES (:uid, 'training_request', :title, :msg, 0, NOW())
@@ -91,6 +96,9 @@ try {
         'success' => true,
         'new_status' => $newStatus,
         'note' => $note ?: null,
+        // Acting on a request also records the acting instructor as its owner, so the
+        // page can show the new owner without a reload.
+        'instructor_name' => $instructorLabel,
     ]);
 
 } catch (Throwable $e) {

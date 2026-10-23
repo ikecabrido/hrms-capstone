@@ -150,10 +150,10 @@ $lessonCompletionRate = $stats['total_modules'] > 0 ? round(($stats['modules_com
 
         <div class="tab-container">
             <div class="tab-list">
-                <button type="button" class="tab-item active" data-tab="tab-overview"><i class="fas fa-gauge-high"></i> Overview</button>
-                <button type="button" class="tab-item" data-tab="tab-performance"><i class="fas fa-chart-line"></i> Performance</button>
-                <button type="button" class="tab-item" data-tab="tab-activity"><i class="fas fa-calendar-check"></i> Activity</button>
-                <button type="button" class="tab-item" data-tab="tab-skills"><i class="fas fa-star"></i> Skills</button>
+                <button type="button" class="tab-item active" data-tab="tab-overview" aria-label="Overview" title="Overview"><i class="fas fa-gauge-high" aria-hidden="true"></i><span class="tab-label">Overview</span></button>
+                <button type="button" class="tab-item" data-tab="tab-performance" aria-label="Performance" title="Performance"><i class="fas fa-chart-line" aria-hidden="true"></i><span class="tab-label">Performance</span></button>
+                <button type="button" class="tab-item" data-tab="tab-activity" aria-label="Activity" title="Activity"><i class="fas fa-calendar-check" aria-hidden="true"></i><span class="tab-label">Activity</span></button>
+                <button type="button" class="tab-item" data-tab="tab-skills" aria-label="Skills" title="Skills"><i class="fas fa-star" aria-hidden="true"></i><span class="tab-label">Skills</span></button>
             </div>
 
             <!-- ==================== OVERVIEW ==================== -->

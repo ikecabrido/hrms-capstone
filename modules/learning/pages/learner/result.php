@@ -221,17 +221,17 @@ function resultStatusClass($status)
         <!-- Tabs -->
         <div class="tab-container">
             <div class="tab-list" role="tablist" aria-label="Grade book sections">
-                <button type="button" class="tab-item active" data-tab="tab-grades" role="tab" aria-selected="true">
-                    Grades <span class="gb-tab-count"><?= $gradedCount ?></span>
+                <button type="button" class="tab-item active" data-tab="tab-grades" role="tab" aria-selected="true" aria-label="Grades" title="Grades">
+                    <i class="fas fa-chart-bar" aria-hidden="true"></i> Grades <span class="gb-tab-count"><?= $gradedCount ?></span>
                 </button>
-                <button type="button" class="tab-item" data-tab="tab-completed" role="tab" aria-selected="false">
-                    Completed Courses <span class="gb-tab-count"><?= count($completedCourses) ?></span>
+                <button type="button" class="tab-item" data-tab="tab-completed" role="tab" aria-selected="false" aria-label="Completed courses" title="Completed courses">
+                    <i class="fas fa-circle-check" aria-hidden="true"></i> Completed Courses <span class="gb-tab-count"><?= count($completedCourses) ?></span>
                 </button>
-                <button type="button" class="tab-item" data-tab="tab-certificates" role="tab" aria-selected="false">
-                    Certificates <span class="gb-tab-count"><?= count($certificates) ?></span>
+                <button type="button" class="tab-item" data-tab="tab-certificates" role="tab" aria-selected="false" aria-label="Certificates" title="Certificates">
+                    <i class="fas fa-award" aria-hidden="true"></i> Certificates <span class="gb-tab-count"><?= count($certificates) ?></span>
                 </button>
-                <button type="button" class="tab-item" data-tab="tab-progress" role="tab" aria-selected="false">
-                    Progress Details
+                <button type="button" class="tab-item" data-tab="tab-progress" role="tab" aria-selected="false" aria-label="Progress details" title="Progress details">
+                    <i class="fas fa-chart-simple" aria-hidden="true"></i> Progress Details
                 </button>
             </div>
 

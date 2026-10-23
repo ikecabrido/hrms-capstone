@@ -1,0 +1,433 @@
+/* ==========================================================================
+   Learning module — shared mobile responsiveness
+   Loaded last from includes/header.php so these rules win over page styles.
+   Every rule is inside a max-width media query: the desktop layout is
+   untouched.
+   ========================================================================== */
+
+/* ---- Mobile controls: icon-only tabs and toolbar actions ---------------- */
+/* On phones the shared tab list and toolbar actions collapse to their icons.
+   The visible label is removed with font-size: 0; the text stays in the DOM
+   for assistive technology and for the desktop layout. */
+@media (max-width: 768px) {
+    .tab-list {
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+    }
+
+    .tab-list .tab-item {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 1 1 0 !important;
+        width: auto !important;
+        min-width: 0 !important;
+        min-height: 44px;
+        gap: 0 !important;
+        padding-left: 0.3rem !important;
+        padding-right: 0.3rem !important;
+        font-size: 0 !important;
+        text-align: center !important;
+    }
+
+    .tab-list .tab-item i {
+        margin: 0 !important;
+        font-size: 0.95rem !important;
+    }
+
+    /* Page-specific count pills set their own font-size, so hide them too. */
+    .tab-list .tab-item .cert-tab-count,
+    .tab-list .tab-item .wf-tab-count,
+    .tab-list .tab-item .gb-tab-count {
+        display: none !important;
+    }
+
+    /* Toolbars use several page-specific wrappers; target any of them. Only
+       actions that already have an icon are collapsed, so nothing becomes an
+       unlabeled blank button. */
+    [class*="toolbar"] button:has(i),
+    [class*="toolbar"] a:has(i) {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        font-size: 0 !important;
+        text-align: center !important;
+    }
+
+    [class*="toolbar"] button:has(i) i,
+    [class*="toolbar"] a:has(i) i {
+        margin: 0 !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* The catalog add button puts its label in a tooltip span. */
+    [class*="toolbar"] .catalog-add-tip {
+        display: none !important;
+    }
+
+    /* Page-specific tab controls (catalog, study, skill gaps, roster, legal)
+       follow the same icon-only rule as the shared .tab-list. */
+    .catalog-tab-btn,
+    .catalog-master-tab,
+    .isg-filter-tab,
+    .ml-tab,
+    .study-tab,
+    .legal-tabs a,
+    .entity-content-tabs .entity-content-tab {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0 !important;
+        min-height: 44px;
+        font-size: 0 !important;
+        text-align: center !important;
+    }
+
+    .catalog-tab-btn i,
+    .catalog-master-tab i,
+    .isg-filter-tab i,
+    .ml-tab i,
+    .study-tab i,
+    .legal-tabs a i,
+    .entity-content-tabs .entity-content-tab i {
+        margin: 0 !important;
+        font-size: 0.9rem !important;
+    }
+
+    .catalog-tab-count,
+    .study-tab-count,
+    .isg-filter-count {
+        display: none !important;
+    }
+
+    /* The instructor/training catalog swaps to a two-column grid on phones.
+       With labels hidden, keep the icons in one compact strip instead. */
+    .catalog-page.catalog-manager .catalog-tabs {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 4px;
+        overflow-x: auto;
+    }
+
+    .catalog-page.catalog-manager .catalog-tab-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        padding-left: 0.3rem;
+        padding-right: 0.3rem;
+    }
+}
+
+/* ---- Mobile page gutters ------------------------------------------------ */
+/* The layout stacks three horizontal gutters (main-content, container and
+   module-content), which leaves roughly 44px of dead space on each side of a
+   phone screen. Collapse them into one small page gutter so the dashboard
+   cards use the viewport width, while keeping rounded corners off the edge. */
+@media (max-width: 768px) {
+    .main-content {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .container,
+    .page-content,
+    .module-content {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+}
+
+/* ---- Layout rails ------------------------------------------------------- */
+@media (max-width: 768px) {
+    /* variables.css is imported after sidebar.css, so its 252px default
+       otherwise wins over the mobile reset and leaves the fixed utility
+       rails offset by the desktop sidebar width. */
+    :root {
+        --sidebar-width: 0px;
+    }
+
+    /* Utility rails that are pinned to the old sidebar edge. */
+    .learner-tools-shell,
+    .user-admin-sidebar,
+    .user-admin-sidebar-expand,
+    .admin-data-sidebar,
+    .admin-data-sidebar-expand,
+    .study-page-sidebar {
+        left: 0;
+    }
+
+    /* Toolbars and their controls must be able to shrink. A <select> keeps
+       its widest option as its intrinsic minimum width unless min-width is
+       cleared, which is what pushed the progress-dashboard filter off-screen. */
+    .toolbar-actions {
+        min-width: 0;
+    }
+
+    .toolbar-actions > select,
+    .toolbar-actions select,
+    .toolbar > select {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+    }
+
+    input,
+    select,
+    textarea {
+        max-width: 100%;
+    }
+
+    /* Profile detail sections use inline auto/min-content grids, so constrain
+       the tracks and let the rows wrap instead of forcing the page wider. */
+    .profile-enrollments,
+    .profile-course-list {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .profile-enrollments > div,
+    .profile-course-list > div {
+        min-width: 0;
+    }
+
+    .profile-enrollment > div:first-child {
+        flex-wrap: wrap;
+        row-gap: 0.35rem;
+    }
+
+    .profile-enrollment > div:first-child > div {
+        min-width: 0;
+    }
+
+    .profile-course-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.55rem 0.75rem !important;
+    }
+
+    .profile-course-row > div:first-child,
+    .profile-course-row > div:last-child {
+        grid-column: 1 / -1;
+    }
+
+    .profile-course-row > div:last-child {
+        justify-self: start;
+    }
+
+    .profile-learner-grid,
+    .profile-cert-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    /* Quiz attempts are a compact data table; keep it intact and scroll it
+       inside the card rather than crushing five columns. */
+    .profile-quiz-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .profile-kt-head,
+    .profile-kt-row {
+        flex-wrap: wrap;
+        row-gap: 0.45rem;
+    }
+
+    .profile-kt-row > div:nth-child(2) {
+        flex: 1 1 calc(100% - 3rem);
+    }
+}
+
+/* ---- Shared profile pages ---------------------------------------------- */
+@media (max-width: 1024px) {
+    /* The profile partial already stacks these cards at 1024px, but a plain
+       1fr track still uses the widest row as its minimum and can push the
+       page out on phones. Force the track's minimum to zero. */
+    .pfl-grid {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    /* Admin user profiles use a fixed 300px avatar column on desktop. The
+       details column is too narrow for its two-column info grid while the
+       desktop sidebar is still present, so stack the hero at tablet width. */
+    .profile-hero {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .pfl-section-title {
+        flex-wrap: wrap;
+        row-gap: 0.35rem;
+    }
+
+    .pfl-section-title .pfl-count {
+        margin-left: 0;
+    }
+}
+
+/* ---- Calendar: upcoming event rows ------------------------------------- */
+@media (max-width: 560px) {
+    .lc-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        row-gap: 0.2rem;
+    }
+
+    .lc-row .home-row-body {
+        flex: 1 1 calc(100% - 3.2rem);
+        min-width: 0;
+    }
+
+    /* Let the title and metadata wrap instead of turning every event into a
+       truncated "New Hire ..." line. */
+    .lc-row .home-row-title {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .lc-row .home-row-meta {
+        white-space: normal;
+    }
+
+    /* The type badge gets its own line, giving the title the full width. */
+    .lc-row .home-row-trail {
+        flex: 0 0 100%;
+        justify-content: flex-start;
+        margin-left: 0;
+    }
+}
+
+/* ---- Grade book: section tabs ------------------------------------------ */
+@media (max-width: 640px) {
+    .gradebook-page .tab-list {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+    }
+
+    .gradebook-page .tab-item {
+        width: 100%;
+        white-space: normal !important;
+    }
+}
+
+/* ---- Learner Tools: skill-gap course links ----------------------------- */
+@media (max-width: 560px) {
+    .lt-page .home-row.lt-row-top {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .lt-page .home-row.lt-row-top > .home-row-body {
+        flex: 1 1 calc(100% - 2.8rem);
+        min-width: 0;
+    }
+
+    /* Move the "1 available" badge / Request button below the body so the
+       course chips are not squeezed into a narrow column. */
+    .lt-page .home-row.lt-row-top > .home-row-trail {
+        flex: 0 0 100%;
+        justify-content: flex-start;
+        margin-left: 0;
+        margin-top: 0.15rem;
+    }
+
+    .lt-gap-course {
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+
+    .lt-gap-course .lt-gap-cat {
+        white-space: normal;
+    }
+}
+
+/* ---- Fixed-minimum card grids ------------------------------------------ */
+@media (max-width: 560px) {
+    .cert-page .cert-grid,
+    .cert-page .cert-template-grid,
+    .kt-page .kt-grid,
+    .skill-page .isg-learner-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ---- Learner catalog: master tabs -------------------------------------- */
+@media (max-width: 480px) {
+    .catalog-master-tabs {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+
+    .catalog-master-tab {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        font-size: 0.8rem !important;
+        gap: 0.3rem;
+    }
+}
+
+/* ---- Instructor progress dashboard ------------------------------------ */
+@media (max-width: 960px) {
+    .progress-course-row {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        row-gap: 0.55rem !important;
+    }
+
+    .progress-course-row > div {
+        min-width: 0;
+    }
+
+    /* Title, progress bar and the "View" link each take the full row; the
+       three counts sit side by side underneath. */
+    .progress-course-row > div:nth-child(1),
+    .progress-course-row > div:nth-child(2),
+    .progress-course-row > div:nth-child(6) {
+        grid-column: 1 / -1;
+    }
+
+    .progress-course-row > div:nth-child(6) {
+        text-align: right !important;
+    }
+
+    /* The grids default to an auto track, which lets a long recent-activity
+       line push the whole card past the viewport. */
+    .progress-course-list,
+    .progress-activity-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .progress-activity-row {
+        flex-wrap: wrap;
+        row-gap: 0.25rem;
+    }
+
+    .progress-activity-row > div:nth-child(2) {
+        flex: 1 1 calc(100% - 1.5rem) !important;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Grade distribution and weekly trend side by side get too narrow to fit
+       their labels on small phones. */
+    .progress-charts-row {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
+
+/* ---- Workforce tables --------------------------------------------------- */
+@media (max-width: 768px) {
+    /* The table already scrolls inside its wrapper. Give the first column
+       enough room to stay readable instead of wrapping every word. */
+    .wf-page .wf-table th:first-child,
+    .wf-page .wf-table td:first-child {
+        min-width: 150px;
+    }
+}

@@ -208,9 +208,11 @@
     white-space: nowrap;
 }
 
-/* Every table ends with the review control. */
+/* Every table ends with the review action cell. 244px lets the two-button rows
+   (including "Plan training" + "Complete") stay on one line; the three-button
+   rows wrap to two. */
 .wf-page .wf-table thead th:last-child {
-    min-width: 185px;
+    min-width: 244px;
 }
 
 .wf-page .wf-table tbody tr {
@@ -285,71 +287,300 @@
 .wf-page .wf-badge.is-high { background: rgba(249, 115, 22, 0.15); color: #c2410c; }
 .wf-page .wf-badge.is-critical { background: rgba(220, 38, 38, 0.13); color: #b91c1c; }
 
-/* ---- Review control ----------------------------------------------------- */
+/* ---- Review actions -----------------------------------------------------
+   Each row shows the status it is in now, then a button per other status.
+   The buttons are the point of the page, so they carry a tone rather than
+   hiding behind a select. */
 .wf-page .wf-review {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 0.4rem;
     margin: 0;
 }
 
-.wf-page .wf-review select {
-    flex: 1 1 auto;
-    width: 100%;
-    min-width: 0;
-    max-width: 9rem;
-    padding: 0.4rem 0.5rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--surface);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
+.wf-page .wf-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.55rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: rgba(100, 116, 139, 0.12);
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
-.wf-page .wf-review select:focus-visible,
-.wf-page .wf-review-btn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+.wf-page .wf-state i {
+    font-size: 0.4rem;
 }
 
-/* Status tone on the select itself, so the current state reads at a glance. */
-.wf-page .wf-review select.is-active {
+.wf-page .wf-state.is-active {
     border-color: rgba(59, 130, 246, 0.35);
     background: rgba(59, 130, 246, 0.10);
     color: #1d4ed8;
 }
 
-.wf-page .wf-review select.is-done {
+.wf-page .wf-state.is-done {
     border-color: rgba(16, 185, 129, 0.35);
     background: rgba(16, 185, 129, 0.10);
     color: #047857;
 }
 
-.wf-page .wf-review select.is-warn {
+.wf-page .wf-state.is-warn {
     border-color: rgba(220, 38, 38, 0.30);
     background: rgba(220, 38, 38, 0.08);
     color: #b91c1c;
 }
 
-.wf-page .wf-review-btn {
-    flex: none;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: 0;
-    border-radius: 8px;
-    background: var(--primary);
-    color: #fff;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: background 0.15s ease;
+.wf-page .wf-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
 }
 
-.wf-page .wf-review-btn:hover {
-    background: var(--accent);
+.wf-page .wf-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.32rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.wf-page .wf-action i {
+    font-size: 0.72rem;
+    opacity: 0.9;
+}
+
+.wf-page .wf-action:hover {
+    border-color: var(--primary);
+    background: rgba(32, 0, 130, 0.06);
+    color: var(--primary);
+}
+
+.wf-page .wf-action.is-active {
+    border-color: rgba(59, 130, 246, 0.35);
+    background: rgba(59, 130, 246, 0.10);
+    color: #1d4ed8;
+}
+
+.wf-page .wf-action.is-active:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(59, 130, 246, 0.18);
+    color: #1d4ed8;
+}
+
+.wf-page .wf-action.is-done {
+    border-color: rgba(16, 185, 129, 0.35);
+    background: rgba(16, 185, 129, 0.10);
+    color: #047857;
+}
+
+.wf-page .wf-action.is-done:hover {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.18);
+    color: #047857;
+}
+
+.wf-page .wf-action.is-warn {
+    border-color: rgba(220, 38, 38, 0.30);
+    background: rgba(220, 38, 38, 0.08);
+    color: #b91c1c;
+}
+
+.wf-page .wf-action.is-warn:hover {
+    border-color: rgba(220, 38, 38, 0.45);
+    background: rgba(220, 38, 38, 0.16);
+    color: #b91c1c;
+}
+
+.wf-page .wf-action:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ---- Learning link ------------------------------------------------------
+   A training action can carry the course or learning path that answers it.
+   The chip is what is attached; the form under it links a different one,
+   creates a draft course from the request, or clears the link. */
+.wf-page .wf-table thead th.wf-col-learning {
+    min-width: 208px;
+}
+
+/* The training-actions table also carries the link control, so it trades a little
+   cell padding for the width that keeps every column — and the action buttons —
+   on screen inside the ~1018px module content column. */
+.wf-page .wf-table.wf-table-actions td,
+.wf-page .wf-table.wf-table-actions th {
+    padding-left: 0.68rem;
+    padding-right: 0.68rem;
+}
+
+.wf-page .wf-table td.wf-col-learning {
+    vertical-align: top;
+}
+
+.wf-page .wf-link-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    padding: 0.22rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.wf-page .wf-link-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.wf-page .wf-link-chip em {
+    flex-shrink: 0;
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    font-size: 0.58rem;
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.wf-page .wf-link-chip.is-course {
+    border-color: rgba(99, 102, 241, 0.30);
+    background: rgba(99, 102, 241, 0.10);
+    color: #4338ca;
+}
+
+.wf-page .wf-link-chip.is-course em {
+    background: rgba(99, 102, 241, 0.16);
+}
+
+.wf-page .wf-link-chip.is-path {
+    border-color: rgba(16, 185, 129, 0.30);
+    background: rgba(16, 185, 129, 0.10);
+    color: #047857;
+}
+
+.wf-page .wf-link-chip.is-path em {
+    background: rgba(16, 185, 129, 0.16);
+}
+
+.wf-page .wf-link-chip:hover {
+    box-shadow: 0 0 0 2px rgba(32, 0, 130, 0.10);
+}
+
+.wf-page .wf-link-chip:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.wf-page .wf-link-none {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+}
+
+.wf-page .wf-link-none i {
+    font-size: 0.68rem;
+    opacity: 0.8;
+}
+
+.wf-page .wf-link {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    margin: 0.45rem 0 0;
+}
+
+.wf-page .wf-link-select {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.3rem 0.45rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.74rem;
+    line-height: 1.3;
+}
+
+/* Keep the longest attached title from stretching the column; the full text stays
+   readable in the link's tooltip and in the open option list. */
+.wf-page .wf-table-actions .wf-link-chip,
+.wf-page .wf-table-actions .wf-link-select {
+    max-width: 260px;
+}
+
+.wf-page .wf-link-select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.wf-page .wf-link-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+/* ---- Instructor assignment ----------------------------------------------
+   Sits below the status actions in the same cell, so routing a request costs
+   no extra column width. Its form reuses the stacked .wf-link styling. */
+.wf-page .wf-assign {
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--border);
+}
+
+.wf-page .wf-assign-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.wf-page .wf-assign-name {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.wf-page .wf-assign-name.is-empty {
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.wf-page .wf-assign .wf-link,
+.wf-page .wf-assign .wf-link-none {
+    margin-top: 0.35rem;
 }
 
 /* ---- Empty state -------------------------------------------------------- */
@@ -371,21 +602,6 @@
 .wf-page .wf-empty p {
     margin: 0;
     font-size: 0.86rem;
-}
-
-/* ---- Screen-reader-only label ------------------------------------------
-   The module ships no .visually-hidden utility, so the form labels were
-   rendering as visible text inside the Review column. */
-.wf-page .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
 }
 
 /* ---- Responsive --------------------------------------------------------- */
@@ -488,28 +704,99 @@
 [data-theme="dark"] .wf-page .wf-badge.is-high { background: rgba(249, 115, 22, 0.20); color: #fdba74; }
 [data-theme="dark"] .wf-page .wf-badge.is-critical { background: rgba(244, 63, 94, 0.18); color: #fda4af; }
 
-[data-theme="dark"] .wf-page .wf-review select {
+[data-theme="dark"] .wf-page .wf-state {
+    background: rgba(148, 163, 184, 0.16);
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .wf-page .wf-link-chip.is-course {
+    border-color: rgba(129, 140, 248, 0.40);
+    background: rgba(129, 140, 248, 0.16);
+    color: #c7d2fe;
+}
+
+[data-theme="dark"] .wf-page .wf-link-chip.is-course em {
+    background: rgba(129, 140, 248, 0.24);
+}
+
+[data-theme="dark"] .wf-page .wf-link-chip.is-path {
+    border-color: rgba(16, 185, 129, 0.40);
+    background: rgba(16, 185, 129, 0.16);
+    color: #6ee7b7;
+}
+
+[data-theme="dark"] .wf-page .wf-link-chip.is-path em {
+    background: rgba(16, 185, 129, 0.24);
+}
+
+[data-theme="dark"] .wf-page .wf-link-chip:hover {
+    box-shadow: 0 0 0 2px rgba(165, 180, 252, 0.24);
+}
+
+[data-theme="dark"] .wf-page .wf-link-select {
     border-color: rgba(148, 163, 184, 0.28);
     background: var(--surface);
     color: var(--text);
 }
 
-[data-theme="dark"] .wf-page .wf-review select.is-active {
+[data-theme="dark"] .wf-page .wf-state.is-active {
     border-color: rgba(59, 130, 246, 0.4);
     background: rgba(59, 130, 246, 0.18);
     color: #93c5fd;
 }
 
-[data-theme="dark"] .wf-page .wf-review select.is-done {
+[data-theme="dark"] .wf-page .wf-state.is-done {
     border-color: rgba(16, 185, 129, 0.4);
     background: rgba(16, 185, 129, 0.18);
     color: #6ee7b7;
 }
 
-[data-theme="dark"] .wf-page .wf-review select.is-warn {
+[data-theme="dark"] .wf-page .wf-state.is-warn {
     border-color: rgba(244, 63, 94, 0.4);
     background: rgba(244, 63, 94, 0.18);
     color: #fda4af;
+}
+
+[data-theme="dark"] .wf-page .wf-action {
+    border-color: rgba(148, 163, 184, 0.28);
+    background: var(--surface);
+    color: var(--text);
+}
+
+[data-theme="dark"] .wf-page .wf-action:hover {
+    border-color: #a5b4fc;
+    background: rgba(165, 180, 252, 0.14);
+    color: #c7d2fe;
+}
+
+[data-theme="dark"] .wf-page .wf-action.is-active {
+    border-color: rgba(59, 130, 246, 0.4);
+    background: rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .wf-page .wf-action.is-active:hover {
+    background: rgba(59, 130, 246, 0.28);
+}
+
+[data-theme="dark"] .wf-page .wf-action.is-done {
+    border-color: rgba(16, 185, 129, 0.4);
+    background: rgba(16, 185, 129, 0.18);
+    color: #6ee7b7;
+}
+
+[data-theme="dark"] .wf-page .wf-action.is-done:hover {
+    background: rgba(16, 185, 129, 0.28);
+}
+
+[data-theme="dark"] .wf-page .wf-action.is-warn {
+    border-color: rgba(244, 63, 94, 0.4);
+    background: rgba(244, 63, 94, 0.18);
+    color: #fda4af;
+}
+
+[data-theme="dark"] .wf-page .wf-action.is-warn:hover {
+    background: rgba(244, 63, 94, 0.28);
 }
 
 [data-theme="dark"] .wf-page .wf-empty i {

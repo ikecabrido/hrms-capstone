@@ -158,10 +158,10 @@ function userEmailCell(array $row): string {
 
     <div class="tab-container">
         <div class="tab-list">
-            <button type="button" class="tab-item active" data-tab="tab-all-users">All Users (<?= count($allUsers) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-admins">Admins (<?= count($admins) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-instructors">Instructors (<?= count($instructors) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-learners">Learners (<?= count($learners) ?>)</button>
+            <button type="button" class="tab-item active" data-tab="tab-all-users" aria-label="All users" title="All users"><i class="fas fa-users" aria-hidden="true"></i> All Users (<?= count($allUsers) ?>)</button>
+            <button type="button" class="tab-item" data-tab="tab-admins" aria-label="Admins" title="Admins"><i class="fas fa-user-shield" aria-hidden="true"></i> Admins (<?= count($admins) ?>)</button>
+            <button type="button" class="tab-item" data-tab="tab-instructors" aria-label="Instructors" title="Instructors"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Instructors (<?= count($instructors) ?>)</button>
+            <button type="button" class="tab-item" data-tab="tab-learners" aria-label="Learners" title="Learners"><i class="fas fa-user-graduate" aria-hidden="true"></i> Learners (<?= count($learners) ?>)</button>
         </div>
 
         <!-- All users -->

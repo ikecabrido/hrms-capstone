@@ -12,6 +12,12 @@ if ($positionLabel === '') {
 <div class="pfl-header">
     <div class="pfl-header-inner">
         <div class="pfl-avatar-wrap">
+            <div class="pfl-seal" aria-hidden="true">
+                <svg class="pfl-seal-svg" viewBox="0 0 126 126" role="presentation" focusable="false">
+                    <circle class="pfl-seal-ring" cx="63" cy="63" r="61.5" />
+                    <circle class="pfl-seal-ring-inner" cx="63" cy="63" r="49.5" />
+                </svg>
+            </div>
             <div id="profile-avatar" class="pfl-avatar" data-initials="<?= htmlspecialchars($profileData['initials'], ENT_QUOTES, 'UTF-8') ?>">
                 <?php if ($profileData['photo_url']): ?>
                     <img id="profile-avatar-img" src="<?= htmlspecialchars($profileData['photo_url'], ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($profileData['full_name'], ENT_QUOTES, 'UTF-8') ?>">

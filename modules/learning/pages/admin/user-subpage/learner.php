@@ -155,7 +155,7 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
         </div>
     <?php else: ?>
         <!-- Profile Card -->
-        <div style="display:grid; grid-template-columns:300px 1fr; gap:1.5rem; margin-bottom:2rem;">
+        <div class="profile-hero" style="display:grid; grid-template-columns:300px 1fr; gap:1.5rem; margin-bottom:2rem;">
             <div class="mode-card" style="text-align:center; padding:2rem;">
                 <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, rgba(16,185,129,0.9), rgba(52,211,153,0.75)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:2.2rem; font-weight:800; margin:0 auto 1rem;"><?= $initials ?></div>
                 <h2 style="margin:0 0 0.25rem; color:var(--text);"><?= $fullName ?></h2>
@@ -216,13 +216,13 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
             <?php if (empty($enrollments)): ?>
                 <p style="color:rgba(32,0,130,0.5);">No course enrollments yet.</p>
             <?php else: ?>
-                <div style="display:grid; gap:0.75rem;">
+                <div class="profile-enrollments" style="display:grid; gap:0.75rem;">
                     <?php foreach ($enrollments as $en):
                         $progress = $en['total_items'] > 0 ? round(($en['completed_items'] / $en['total_items']) * 100) : 0;
                         $statusColor = $en['status'] === 'completed' ? '#10b981' : ($en['status'] === 'in_progress' ? '#3b82f6' : '#f59e0b');
                         $instName = $en['inst_first'] ? htmlspecialchars($en['inst_first'] . ' ' . $en['inst_last']) : 'N/A';
                     ?>
-                        <div style="padding:1.25rem; border:1px solid rgba(32,0,130,0.1); border-radius:12px; background:var(--surface, #fff);">
+                        <div class="profile-enrollment" style="padding:1.25rem; border:1px solid rgba(32,0,130,0.1); border-radius:12px; background:var(--surface, #fff);">
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.75rem;">
                                 <div>
                                     <div style="font-weight:700; color:var(--text); font-size:1rem;"><?= htmlspecialchars($en['course_title']) ?></div>
@@ -263,7 +263,7 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
             <?php if (empty($quizAttempts)): ?>
                 <p style="color:rgba(32,0,130,0.5);">No quiz attempts recorded yet.</p>
             <?php else: ?>
-                <div style="display:grid; gap:0.5rem;">
+                <div class="profile-quiz-scroll" style="display:grid; gap:0.5rem;">
                     <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr; gap:0.75rem; padding:0.6rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; border-bottom:2px solid rgba(32,0,130,0.1);">
                         <span>Quiz</span>
                         <span>Score</span>
@@ -299,7 +299,7 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
             <?php if (empty($certificates)): ?>
                 <p style="color:rgba(32,0,130,0.5);">No certificates earned yet.</p>
             <?php else: ?>
-                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1rem;">
+                <div class="profile-cert-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1rem;">
                     <?php foreach ($certificates as $cert): ?>
                         <div style="padding:1.25rem; border:2px solid rgba(16,185,129,0.3); border-radius:12px; background:rgba(16,185,129,0.03); text-align:center;">
                             <div style="font-size:2rem; margin-bottom:0.5rem; color:#10b981;"><i class="fas fa-award"></i></div>
@@ -314,7 +314,7 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
 
         <!-- Knowledge Transfer Section -->
         <div class="mode-card" style="margin-top:1.5rem;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+            <div class="profile-kt-head" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                 <h3 style="margin:0; color:var(--text);"><i class="fas fa-exchange-alt" style="color:var(--primary); margin-right:0.4rem;"></i>Knowledge Transfer</h3>
                 <button id="kt-create-btn" style="padding:0.45rem 0.9rem; background:var(--primary); color:#fff; border:none; border-radius:999px; font-size:0.8rem; font-weight:700; cursor:pointer;">
                     <i class="fas fa-plus" style="margin-right:0.3rem;"></i>Create KT Plan
@@ -338,7 +338,7 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
                         $ktItemsDone = (int) ($ktp['items_done'] ?? 0);
                         $ktItemsTotal = (int) ($ktp['item_count'] ?? 0);
                     ?>
-                        <div style="display:flex; align-items:center; gap:1rem; padding:1rem; background:rgba(32,0,130,0.03); border:1px solid rgba(32,0,130,0.08); border-radius:10px;">
+                        <div class="profile-kt-row" style="display:flex; align-items:center; gap:1rem; padding:1rem; background:rgba(32,0,130,0.03); border:1px solid rgba(32,0,130,0.08); border-radius:10px;">
                             <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, rgba(32,0,130,0.8), rgba(91,85,255,0.6)); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                                 <i class="fas fa-exchange-alt" style="font-size:1rem;"></i>
                             </div>

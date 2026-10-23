@@ -16,13 +16,6 @@ try {
 }
 ?>
 <div class="module-content">
-    <div class="toolbar">
-        <div class="toolbar-actions" style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
-            
-            <h2 style="margin:0; font-size:1.2rem; color:var(--text);"> Manage Learners</h2>
-        </div>
-    </div>
-
     <!-- Course Selector -->
     <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:end;">
         <div style="flex:1; min-width:200px;">
@@ -34,19 +27,19 @@ try {
                 <?php endforeach; ?>
             </select>
         </div>
-        <div style="display:flex; gap:0.5rem;">
-            <button onclick="loadRoster()" style="padding:0.6rem 1.2rem; background:var(--text); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;"> Refresh</button>
-            <button onclick="exportCSV()" id="btn-export" style="padding:0.6rem 1.2rem; background:#10b981; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem; display:none;"> Export CSV</button>
+        <div class="ml-course-actions" style="display:flex; gap:0.5rem;">
+            <button type="button" onclick="loadRoster()" title="Refresh roster" aria-label="Refresh roster" style="padding:0.6rem 1.2rem; background:var(--text); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;"><i class="fas fa-rotate" aria-hidden="true"></i><span class="btn-label">Refresh</span></button>
+            <button type="button" onclick="exportCSV()" id="btn-export" title="Export CSV" aria-label="Export CSV" style="padding:0.6rem 1.2rem; background:#10b981; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem; display:none;"><i class="fas fa-file-csv" aria-hidden="true"></i><span class="btn-label">Export CSV</span></button>
         </div>
     </div>
 
     <!-- Stats Row -->
-    <div id="ml-stats" style="display:none; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:0.75rem; margin-bottom:1.5rem;"></div>
+    <div id="ml-stats" class="ml-stats"></div>
 
     <!-- Tab Switcher -->
     <div id="ml-tabs" style="display:none; gap:0; margin-bottom:0; border-bottom:2px solid #eee;">
-        <button class="ml-tab active" onclick="switchTab('import')"> Import Learners</button>
-        <button class="ml-tab" onclick="switchTab('roster')"> Course Roster</button>
+        <button class="ml-tab active" onclick="switchTab('import')" aria-label="Import learners" title="Import learners"><i class="fas fa-file-import" aria-hidden="true"></i> Import Learners</button>
+        <button class="ml-tab" onclick="switchTab('roster')" aria-label="Course roster" title="Course roster"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Course Roster</button>
     </div>
 
     <!-- Import Tab -->
@@ -93,6 +86,30 @@ try {
 </div>
 
 <style>
+.ml-course-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+@media (max-width: 768px) {
+    .ml-course-actions {
+        gap: 0.45rem !important;
+    }
+
+    .ml-course-actions button {
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        padding: 0 !important;
+    }
+
+    .ml-course-actions .btn-label {
+        display: none;
+    }
+}
+
 .ml-tab {
     padding: 0.7rem 1.25rem;
     border: none;
@@ -173,32 +190,66 @@ try {
     transition: width 0.3s;
 }
 
-.stat-card-mini {
-    background:var(--surface, #fff);
-    border-radius: 12px;
-    padding: 0.75rem;
-    text-align: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-    border: 1px solid rgba(0,0,0,0.05);
+.ml-stats {
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
 }
-.stat-card-mini .stat-label {
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.15rem;
+.ml-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 0.85rem 0.95rem;
+    border: 1px solid rgba(32, 0, 130, 0.10);
+    border-radius: 14px;
+    background: var(--surface, #fff);
+    box-shadow: 0 2px 8px rgba(32, 0, 130, 0.04);
 }
-.stat-card-mini .stat-value {
-    font-size: 1.3rem;
+.ml-stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 11px;
+    font-size: 0.9rem;
+}
+.ml-stat-icon.tone-violet { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
+.ml-stat-icon.tone-blue { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.ml-stat-icon.tone-amber { background: rgba(245, 158, 11, 0.14); color: #d97706; }
+.ml-stat-icon.tone-emerald { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.ml-stat-icon.tone-purple { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+.ml-stat-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    min-width: 0;
+}
+.ml-stat-label {
+    overflow: hidden;
+    color: rgba(32, 0, 130, 0.52);
+    font-size: 0.63rem;
     font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.ml-stat-value {
     color: var(--text);
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.1;
 }
 </style>
 
 <script>
-const MANAGE_LEARNERS_AJAX_BASE = 'pages/instructor/ajax/';
-let parsedLearners = [];
-let rosterData = [];
+var MANAGE_LEARNERS_AJAX_BASE = 'pages/instructor/ajax/';
+var parsedLearners = [];
+var rosterData = [];
 
 // Initialize CSV dropzone
 var csvDrop = document.getElementById('ml-csv-dropzone');
@@ -231,7 +282,7 @@ document.getElementById('ml-course-select').addEventListener('change', function 
     if (cid) {
         document.getElementById('ml-stats').style.display = 'grid';
         document.getElementById('ml-tabs').style.display = 'flex';
-        document.getElementById('btn-export').style.display = 'inline-block';
+        document.getElementById('btn-export').style.display = 'inline-flex';
         loadRoster();
     } else {
         document.getElementById('ml-stats').style.display = 'none';
@@ -377,28 +428,22 @@ async function loadRoster() {
 
 function renderStats(stats) {
     const el = document.getElementById('ml-stats');
-    el.innerHTML = `
-        <div class="stat-card-mini">
-            <div class="stat-label" style="color:#6366f1;">Total</div>
-            <div class="stat-value">${stats.total || 0}</div>
-        </div>
-        <div class="stat-card-mini">
-            <div class="stat-label" style="color:#3b82f6;">Enrolled</div>
-            <div class="stat-value" style="color:#3b82f6;">${stats.enrolled || 0}</div>
-        </div>
-        <div class="stat-card-mini">
-            <div class="stat-label" style="color:#f59e0b;">In Progress</div>
-            <div class="stat-value" style="color:#f59e0b;">${stats.in_progress || 0}</div>
-        </div>
-        <div class="stat-card-mini">
-            <div class="stat-label" style="color:#10b981;">Completed</div>
-            <div class="stat-value" style="color:#10b981;">${stats.completed || 0}</div>
-        </div>
-        <div class="stat-card-mini">
-            <div class="stat-label" style="color:#8b5cf6;">Invited</div>
-            <div class="stat-value" style="color:#8b5cf6;">${stats.invited || 0}</div>
-        </div>
-    `;
+    const cards = [
+        { label: 'Total', key: 'total', icon: 'fa-users', tone: 'tone-violet' },
+        { label: 'Enrolled', key: 'enrolled', icon: 'fa-user-check', tone: 'tone-blue' },
+        { label: 'In Progress', key: 'in_progress', icon: 'fa-spinner', tone: 'tone-amber' },
+        { label: 'Completed', key: 'completed', icon: 'fa-circle-check', tone: 'tone-emerald' },
+        { label: 'Invited', key: 'invited', icon: 'fa-envelope', tone: 'tone-purple' }
+    ];
+    el.innerHTML = cards.map(function (card) {
+        return '<div class="ml-stat-card">' +
+            '<span class="ml-stat-icon ' + card.tone + '"><i class="fas ' + card.icon + '" aria-hidden="true"></i></span>' +
+            '<span class="ml-stat-body">' +
+                '<span class="ml-stat-label">' + card.label + '</span>' +
+                '<span class="ml-stat-value">' + Number(stats[card.key] || 0) + '</span>' +
+            '</span>' +
+        '</div>';
+    }).join('');
 }
 
 function renderRoster() {

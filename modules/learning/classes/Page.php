@@ -41,6 +41,7 @@ class Page {
             ['label' => 'User', 'page' => 'admin/user'],
             ['label' => 'Grade Book', 'page' => 'admin/gradebook'],
             ['label' => 'Analytics', 'page' => 'admin/analytics'],
+            ['label' => 'Instructor Analytics', 'page' => 'instructor/analytics'],
             ['label' => 'Workforce Inbox', 'page' => 'admin/workforce-integration'],
             ['label' => 'Calendar', 'page' => 'admin/calendar'],
             ['label' => 'Moderation', 'page' => 'admin/moderation'],
@@ -50,12 +51,9 @@ class Page {
         'instructor' => [
             ['label' => 'Home', 'page' => 'instructor/instructor-home'],
             ['label' => 'E-Learning', 'page' => 'instructor/elearning'],
-            ['label' => 'Progress', 'page' => 'instructor/progress-dashboard'],
-            ['label' => 'Learners', 'page' => 'instructor/manage-learners'],
             ['label' => 'Analytics', 'page' => 'instructor/analytics'],
             ['label' => 'Grade Book', 'page' => 'instructor/gradebook'],
             ['label' => 'Calendar', 'page' => 'instructor/calendar'],
-            ['label' => 'Timeline', 'page' => 'instructor/learner-timeline'],
             ['label' => 'Trainings', 'page' => 'instructor/training'],
             ['label' => 'Training Requests', 'page' => 'instructor/training-requests'],
             ['label' => 'Certificates', 'page' => 'instructor/certificate'],
@@ -92,6 +90,14 @@ class Page {
             }
             $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($this->pagesDir) + 1));
             $relative = substr($relative, 0, -4);
+
+            // AJAX endpoints and shared partials are not pages. Keeping them out
+            // of the routed page list prevents them from being included on their
+            // own with missing request data or missing parent-page variables.
+            if (strpos($relative, '/ajax/') !== false || $relative === 'admin/user-subpage/role-control') {
+                continue;
+            }
+
             $this->allowed[] = $relative;
         }
     }

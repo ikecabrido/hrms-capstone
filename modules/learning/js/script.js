@@ -1,4 +1,6 @@
-import './layout/hamburger.js';
+// v=2 adds the mobile drawer's close button; version the module so browsers
+// that cached the previous copy pick up the new handler.
+import './layout/hamburger.js?v=2';
 // Loaded before tab-content.js: it restores the employee's rows-per-page and
 // grid/list preference, and the pagination that follows must see the result.
 import './display-preference.js';

@@ -332,7 +332,7 @@ try {
 
             <!-- Section 6: Modules (Optional) -->
             <div style="margin-top:1rem; padding-bottom:1rem; border-bottom:1px solid rgba(32,0,130,0.08);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
                     <h3 style="margin:0; font-size:0.9rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; gap:0.5rem;">
                         <i class="fas fa-cubes"></i> Modules & Content <span style="font-size:0.75rem; font-weight:400; color:var(--muted); text-transform:none; letter-spacing:0;">(optional)</span>
                     </h3>

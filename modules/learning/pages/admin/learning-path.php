@@ -55,7 +55,7 @@ function userBadge($name, $empId) {
 <div class="module-content">
     <div class="toolbar" style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
         <div style="flex:1;"></div>
-        <a href="?page=instructor/learning-path" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.45rem 0.9rem; background:var(--primary); color:#fff; border-radius:999px; text-decoration:none; font-size:0.8rem; font-weight:700;">
+        <a href="?page=instructor/learning-path" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.45rem 0.9rem; background:var(--primary); color:#fff; border-radius:999px; text-decoration:none; font-size:0.8rem; font-weight:700;" aria-label="New learning path" title="New learning path">
             <i class="fas fa-plus"></i> New Learning Path
         </a>
     </div>

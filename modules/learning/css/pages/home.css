@@ -67,6 +67,9 @@
     flex-direction: column;
     align-items: flex-end;
     gap: 0.75rem;
+    /* Keep a wrapped chip row pinned to the right edge of the hero instead of
+       dropping back to the left edge. */
+    margin-left: auto;
 }
 
 .home-hero-chips {
@@ -577,10 +580,14 @@ a.home-row:hover .home-row-title {
     .home-hero-aside {
         align-items: flex-start;
         width: 100%;
+        margin-left: 0;
     }
 
+    /* Distribute each wrapped chip row across the available width while
+       keeping the shared 0.5rem gutter as a minimum between chips. */
     .home-hero-chips {
-        justify-content: flex-start;
+        width: 100%;
+        justify-content: space-evenly;
     }
 
     .home-stat {
@@ -667,3 +674,70 @@ a.home-row:hover .home-row-title {
 }
 
 [data-theme="dark"] .home-score.is-fail { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+
+/* ---- Role home pages: narrow-screen layout ------------------------------ */
+/* Scoped to .home-module, added only to the admin / instructor / learner home
+   dashboards. Other screens reuse .home-dashboard and .home-row (notifications,
+   moderation, calendar, study …), so keeping these rules behind .home-module
+   means none of them change. */
+
+@media (max-width: 768px) {
+    /* .module-content contributes its own gutter on smaller screens, on top of
+       the .main-content and .container padding. The dashboard cards already
+       carry their own spacing, so reclaim the wasted width on phones. */
+    .home-module {
+        padding: 0;
+    }
+}
+
+@media (max-width: 560px) {
+    /* Keep the leading icon + text on the first line and let trailing pieces
+       (progress bar, timestamp) move onto their own line instead of crushing
+       the heading to zero width. */
+    .home-module .home-row {
+        flex-wrap: wrap;
+        align-items: flex-start;
+        row-gap: 0.1rem;
+    }
+
+    .home-module .home-row > .home-progress {
+        flex: 1 1 100%;
+        max-width: 100%;
+        margin-top: 0.35rem;
+    }
+
+    /* The "2d ago" timestamps that trail enrollment rows get their own line. */
+    .home-module .home-row > .home-row-meta {
+        flex: 0 0 100%;
+        margin: 0;
+        text-align: right;
+    }
+
+    .home-module .home-row-trail {
+        margin-left: auto;
+    }
+
+    /* Wrap long titles rather than truncating them to an unreadable "…". */
+    .home-module .home-row-title {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    /* Titles and "view all" links may share a line when they fit, otherwise
+       the link drops below the title. */
+    .home-module .home-card-head {
+        flex-wrap: wrap;
+        row-gap: 0.35rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .home-module .home-card {
+        padding: 0.9rem;
+    }
+
+    .home-module .home-hero {
+        padding: 1.1rem;
+    }
+}

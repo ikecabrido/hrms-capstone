@@ -92,6 +92,21 @@ try {
         .cert-btn-pdf { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(32,0,130,0.3); }
         .cert-btn-pdf:hover { background: #250066; }
 
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            .cert-toolbar { padding: 0.5rem 0.75rem; }
+            .cert-toolbar-left a,
+            .cert-btn {
+                min-width: 44px; min-height: 44px;
+                justify-content: center; gap: 0 !important;
+                padding: 0.4rem 0.6rem;
+                font-size: 0 !important;
+            }
+            .cert-toolbar-left a i,
+            .cert-btn i { margin: 0 !important; font-size: 0.95rem !important; }
+            .cert-actions { flex: 1; justify-content: flex-end; }
+        }
+
         .cert-print-wrapper {
             max-width: 680px; margin: 0 auto; border-radius: 16px;
             overflow: hidden; box-shadow: 0 4px 20px rgba(32,0,130,0.1);
@@ -112,13 +127,13 @@ try {
     <!-- Toolbar -->
     <div class="cert-toolbar">
         <div class="cert-toolbar-left">
-            <?= BackLink::anchor('learner/result-subpage/certificate') ?>
+            <?= BackLink::anchor('learner/result-subpage/certificate', 'title="Back to certificates" aria-label="Back to certificates"') ?>
         </div>
         <div class="cert-actions">
-            <button type="button" class="cert-btn cert-btn-print" onclick="window.print();">
+            <button type="button" class="cert-btn cert-btn-print" onclick="window.print();" aria-label="Print certificate" title="Print certificate">
                 <i class="fas fa-print"></i> Print
             </button>
-            <button type="button" class="cert-btn cert-btn-pdf" id="downloadPdfBtn" onclick="downloadPdf();">
+            <button type="button" class="cert-btn cert-btn-pdf" id="downloadPdfBtn" onclick="downloadPdf();" aria-label="Download PDF" title="Download PDF">
                 <i class="fas fa-download"></i> Download PDF
             </button>
         </div>

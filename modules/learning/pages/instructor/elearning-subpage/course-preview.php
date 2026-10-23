@@ -44,7 +44,7 @@ if ($courseId > 0) {
 <div class="module-content">
     <div class="toolbar">
         <div class="toolbar-actions" style="display:flex; gap:0.5rem; align-items:center;">
-            <a href="?page=instructor/elearning-subpage/course-structure&course_id=<?= $courseId ?>" class="toolbar-add-btn" title="Back to Structure Builder" style="font-size:0.85em;">❮ Back to Builder</a>
+            <a href="?page=instructor/elearning-subpage/course-structure&course_id=<?= $courseId ?>" class="toolbar-add-btn" title="Back to Structure Builder" aria-label="Back to Structure Builder" style="font-size:0.85em;"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Builder</a>
             <?php if ($course && $course['status'] === 'draft'): ?>
             <span style="padding:0.4rem 0.8rem; background:rgba(245,158,11,0.1); color:#d97706; border-radius:999px; font-size:0.8rem; font-weight:700;">DRAFT — Not visible to learners</span>
             <?php elseif ($course && $course['status'] === 'active'): ?>
@@ -154,13 +154,13 @@ if ($courseId > 0) {
         <!-- Evaluation -->
         <?php if ($evaluation): ?>
         <div style="margin-top:1rem; border:2px solid rgba(16,185,129,0.2); border-radius:12px; padding:1.25rem; background:rgba(16,185,129,0.02);">
-            <div style="display:flex; align-items:center; gap:0.6rem;">
+            <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
                 <span style="font-size:1.2rem;">✅</span>
                 <div style="flex:1;">
                     <h3 style="margin:0; color:var(--text); font-size:1rem;"><?= htmlspecialchars($evaluation['title']) ?></h3>
                     <p style="margin:0.2rem 0 0; color:#666; font-size:0.85rem;">Final course evaluation — taken after completing all content.</p>
                 </div>
-                <div style="display:flex; gap:0.5rem; font-size:0.75rem; color:#999;">
+                <div style="display:flex; gap:0.5rem; flex-wrap:wrap; font-size:0.75rem; color:#999;">
                     <?php if ($evaluation['duration_seconds']): ?><span>⏱ <?= round($evaluation['duration_seconds'] / 60) ?>m</span><?php endif; ?>
                     <?php if ($evaluation['passing_score']): ?><span>Pass: <?= $evaluation['passing_score'] ?>%</span><?php endif; ?>
                     <?php if ($evaluation['max_attempts']): ?><span>Max <?= $evaluation['max_attempts'] ?> attempts</span><?php endif; ?>

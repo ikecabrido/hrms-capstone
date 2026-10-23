@@ -130,7 +130,7 @@ $fullName = $profile ? htmlspecialchars($profile['first_name'] . ' ' . ($profile
         </div>
     <?php else: ?>
         <!-- Profile Card -->
-        <div style="display:grid; grid-template-columns:300px 1fr; gap:1.5rem; margin-bottom:2rem;">
+        <div class="profile-hero" style="display:grid; grid-template-columns:300px 1fr; gap:1.5rem; margin-bottom:2rem;">
             <div class="mode-card" style="text-align:center; padding:2rem;">
                 <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, rgba(32,0,130,0.9), rgba(91,85,255,0.75)); color:var(--surface); display:flex; align-items:center; justify-content:center; font-size:2.2rem; font-weight:800; margin:0 auto 1rem;"><?= $initials ?></div>
                 <h2 style="margin:0 0 0.25rem; color:var(--text);"><?= $fullName ?></h2>
@@ -187,9 +187,9 @@ $fullName = $profile ? htmlspecialchars($profile['first_name'] . ' ' . ($profile
             <?php if (empty($courses)): ?>
                 <p style="color:rgba(32,0,130,0.5);">No courses assigned yet.</p>
             <?php else: ?>
-                <div style="display:grid; gap:0.75rem;">
+                <div class="profile-course-list" style="display:grid; gap:0.75rem;">
                     <?php foreach ($courses as $c): ?>
-                        <div style="display:grid; grid-template-columns:1fr auto auto auto; gap:1rem; align-items:center; padding:1rem 1.25rem; border:1px solid rgba(32,0,130,0.1); border-radius:12px; background:rgba(32,0,130,0.02);">
+                        <div class="profile-course-row" style="display:grid; grid-template-columns:1fr auto auto auto; gap:1rem; align-items:center; padding:1rem 1.25rem; border:1px solid rgba(32,0,130,0.1); border-radius:12px; background:rgba(32,0,130,0.02);">
                             <div>
                                 <div style="font-weight:700; color:var(--text);"><?= htmlspecialchars($c['title']) ?></div>
                                 <div style="font-size:0.85rem; color:rgba(32,0,130,0.6);"><?= htmlspecialchars($c['category'] ?? 'Uncategorized') ?></div>
@@ -219,7 +219,7 @@ $fullName = $profile ? htmlspecialchars($profile['first_name'] . ' ' . ($profile
             <?php if (empty($learners)): ?>
                 <p style="color:rgba(32,0,130,0.5);">No learners enrolled in your courses yet.</p>
             <?php else: ?>
-                <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1rem;">
+                <div class="profile-learner-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1rem;">
                     <?php foreach ($learners as $lrn):
                         $lInitials = strtoupper(substr($lrn['first_name'], 0, 1) . substr($lrn['last_name'], 0, 1));
                         $lName = htmlspecialchars($lrn['first_name'] . ' ' . $lrn['last_name']);

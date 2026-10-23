@@ -228,7 +228,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
                 <option value="36">36</option>
             </select>
             <div class="catalog-add-wrap" id="tr-catalog-add-wrap">
-                <button type="button" id="tr-catalog-add-btn" class="cat-add-btn">
+                <button type="button" id="tr-catalog-add-btn" class="cat-add-btn" aria-label="Add learning path" title="Add learning path">
                     <i class="fas fa-plus" aria-hidden="true"></i>
                     <span class="catalog-add-tip" id="tr-catalog-add-tip">Add Learning Path</span>
                 </button>

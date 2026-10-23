@@ -36,6 +36,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isMobile()) {
             sidebar.classList.remove('hidden');
             if (overlay) overlay.classList.toggle('active', sidebar.classList.contains('active'));
+            if (hamburger) {
+                hamburger.setAttribute(
+                    'aria-expanded',
+                    sidebar.classList.contains('active') ? 'true' : 'false'
+                );
+            }
             return;
         }
 
@@ -52,6 +58,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (mobile) {
             sidebar.classList.toggle('active');
             if (overlay) overlay.classList.toggle('active');
+            if (hamburger) {
+                hamburger.setAttribute(
+                    'aria-expanded',
+                    sidebar.classList.contains('active') ? 'true' : 'false'
+                );
+            }
             return;
         }
 
@@ -59,18 +71,27 @@ document.addEventListener('DOMContentLoaded', function() {
         syncSidebarState();
     }
 
+    function closeSidebar() {
+        if (!sidebar) return;
+
+        sidebar.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
+        if (hamburger) {
+            hamburger.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+        }
+    }
+
     // Toggle sidebar
     hamburger?.addEventListener('click', toggleSidebar);
 
+    // The sidebar covers the header on mobile, so it needs its own close button.
+    const closeButton = document.querySelector('.sidebar-close');
+    closeButton?.addEventListener('click', closeSidebar);
 
-    
     // Close sidebar when clicking overlay (mobile only)
     overlay?.addEventListener('click', function() {
-        if (isMobile()) {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-            hamburger.classList.remove('active');
-        }
+        if (isMobile()) closeSidebar();
     });
 
     syncSidebarState();
@@ -79,12 +100,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const menuLinks = document.querySelectorAll('.sidebar .menu-link');
     menuLinks.forEach(link => {
         link.addEventListener('click', function() {
-            if (isMobile()) {
-                sidebar.classList.remove('active');
-                overlay.classList.remove('active');
-                hamburger.classList.remove('active');
-            }
+            if (isMobile()) closeSidebar();
         });
+    });
+
+    // Escape closes the mobile sidebar as well.
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && isMobile()) closeSidebar();
     });
     
     // Handle window resize
