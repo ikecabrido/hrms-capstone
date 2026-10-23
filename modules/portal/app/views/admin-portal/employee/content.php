@@ -178,12 +178,13 @@
 
                                                 <?php if (!empty($employee['profile_image'])): ?>
 
-                                                    <img src="/hrms-capstone/modules/portal/public/assets/uploads/profile/<?= htmlspecialchars($employee['profile_image']) ?>"
-                                                        alt="<?= htmlspecialchars($fullName) ?>" class="h-full w-full object-cover">
+                                                    <img src="<?= htmlspecialchars(asset('assets/uploads/profile/' . $employee['profile_image']), ENT_QUOTES, 'UTF-8') ?>"
+                                                        alt="<?= htmlspecialchars($fullName, ENT_QUOTES, 'UTF-8') ?>"
+                                                        class="h-full w-full object-cover">
 
                                                 <?php else: ?>
 
-                                                    <?= htmlspecialchars($initials) ?>
+                                                    <?= htmlspecialchars($initials, ENT_QUOTES, 'UTF-8') ?>
 
                                                 <?php endif; ?>
 
@@ -385,7 +386,7 @@
     </section>
 </div>
 
-<script src="/hrms-capstone/modules/portal/public/js/function/viewAllEmployees.js"></script>
+<script src="<?= asset('js/function/viewAllEmployees.js') ?>"></script>
 <?php require __DIR__ . '/view.php'; ?>
 <script>
     document.querySelectorAll('.modal').forEach(modal => {

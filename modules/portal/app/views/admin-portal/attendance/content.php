@@ -361,5 +361,4 @@
 
     </section>
 </div>
-
-<script src="/hrms-capstone/modules/portal/public/js/function/contentEmployeeAttendance.js"></script>
+<script src="<?= asset('js/function/contentEmployeeAttendance.js') ?>"></script>

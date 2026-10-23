@@ -925,4 +925,4 @@
     </section>
 </div>
 
-<script src="/hrms-capstone/modules/portal/public/js/function/contentUserCreation.js"></script>
+<script src="<?= asset('js/function/contentUserCreation.js')?>"></script>
