@@ -1,6 +1,7 @@
 <div class="school-logo">
 
-    <img style="margin-left: 50px;" src="/hrms-capstone/modules/portal/public/assets/images/bcp-logo.png" alt="School Logo">
+    <img style="margin-left: 50px;"
+        src="<?= htmlspecialchars(asset('assets/images/bcp-logo.png'), ENT_QUOTES, 'UTF-8') ?>" alt="School Logo">
 
     <div class="sidebar-icons">
 
