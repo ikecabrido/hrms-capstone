@@ -38,14 +38,14 @@
 ">
 
             <!-- VIEW TRAINING REQUEST -->
-            <a href="index.php?url=view-training-request" class="btn btn-primary d-inline-flex align-items-center gap-2"
-                style="
-            height:44px;
-            padding:0 18px;
-            border-radius:11px;
-            font-size:14px;
-            font-weight:600;
-        ">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=view-training-request'), ENT_QUOTES, 'UTF-8') ?>"
+                class="btn btn-primary d-inline-flex align-items-center gap-2" style="
+        height:44px;
+        padding:0 18px;
+        border-radius:11px;
+        font-size:14px;
+        font-weight:600;
+    ">
 
                 <i class="fa-solid fa-plus"></i>
                 View Training Request

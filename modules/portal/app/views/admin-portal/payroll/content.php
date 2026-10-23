@@ -207,13 +207,13 @@
 
                                 $statusStyle = match ($status) {
                                     'approved' =>
-                                    'bg-emerald-50 text-emerald-700 border-emerald-200',
+                                        'bg-emerald-50 text-emerald-700 border-emerald-200',
 
                                     'rejected' =>
-                                    'bg-red-50 text-red-700 border-red-200',
+                                        'bg-red-50 text-red-700 border-red-200',
 
                                     default =>
-                                    'bg-amber-50 text-amber-700 border-amber-200'
+                                        'bg-amber-50 text-amber-700 border-amber-200'
                                 };
 
                                 $startDate = !empty($request['payroll_period_start'])
@@ -362,9 +362,8 @@
                                                     $documentUrl = '/hrms-capstone/modules/portal/public/' . $request['document_path'];
                                                     ?>
 
-                                                    <a href="<?= htmlspecialchars($documentUrl) ?>" target="_blank"
-                                                        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 text-[10px] font-bold transition">
-                                                        <i class="fas fa-file-alt"></i>
+                                                    <a href="<?= htmlspecialchars($documentUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank"
+                                                        rel="noopener noreferrer">
                                                         View
                                                     </a>
 
@@ -431,4 +430,4 @@
 </div>
 <?php require __DIR__ . '/upload-approve.php'; ?>
 <?php require __DIR__ . '/reject.php'; ?>
-<script src="/hrms-capstone/modules/portal/public/js/function/contentPayrollAdmin.js"></script>
+<script src="<?= asset('js/function/contentPayrollAdmin.js') ?>"></script>

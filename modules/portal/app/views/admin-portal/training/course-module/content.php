@@ -49,7 +49,8 @@
                         </p>
                     </div>
                 </div>
-                <a href="index.php?url=admin-learning-index" style="text-decoration: none;"
+                <a href="<?= htmlspecialchars(appUrl('index.php?url=admin-learning-index'), ENT_QUOTES, 'UTF-8') ?>"
+                    style="text-decoration: none;"
                     class="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
                     Back to Course
                 </a>
@@ -708,7 +709,7 @@
 
 
                                                                                         <!-- Open File -->
-                                                                                        <a href="<?= htmlspecialchars($fileUrl) ?>"
+                                                                                        <a href="<?= htmlspecialchars(asset(ltrim($fileUrl, '/')), ENT_QUOTES, 'UTF-8') ?>"
                                                                                             target="_blank" rel="noopener noreferrer"
                                                                                             class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-blue-50 hover:text-blue-600"
                                                                                             title="Open File">

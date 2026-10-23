@@ -129,19 +129,19 @@
 
                                     $statusClass = match ($status) {
                                         'scheduled' =>
-                                        'bg-blue-50 text-blue-700 border-blue-200',
+                                            'bg-blue-50 text-blue-700 border-blue-200',
 
                                         'ongoing' =>
-                                        'bg-green-50 text-green-700 border-green-200',
+                                            'bg-green-50 text-green-700 border-green-200',
 
                                         'completed' =>
-                                        'bg-slate-50 text-slate-600 border-slate-200',
+                                            'bg-slate-50 text-slate-600 border-slate-200',
 
                                         'cancelled' =>
-                                        'bg-red-50 text-red-700 border-red-200',
+                                            'bg-red-50 text-red-700 border-red-200',
 
                                         default =>
-                                        'bg-slate-50 text-slate-600 border-slate-200'
+                                            'bg-slate-50 text-slate-600 border-slate-200'
                                     };
 
                                     $statusLabel = match ($status) {
@@ -218,24 +218,22 @@
 
                                             <?php if ($meetingLink): ?>
 
-                                                <a href="<?= htmlspecialchars($meetingLink) ?>" target="_blank"
+                                                <a href="<?= htmlspecialchars($meetingLink, ENT_QUOTES, 'UTF-8') ?>" target="_blank"
                                                     rel="noopener noreferrer" title="Open meeting">
 
                                                     <div class="inline-flex items-center gap-2">
 
                                                         <span
-                                                            class="w-8 h-8 rounded-lg <?= $platformClass ?> flex items-center justify-center hover:scale-105 transition">
-
-                                                            <i class="fas <?= $platformIcon ?> text-xs"></i>
-
+                                                            class="w-8 h-8 rounded-lg <?= htmlspecialchars($platformClass, ENT_QUOTES, 'UTF-8') ?> flex items-center justify-center hover:scale-105 transition">
+                                                            <i
+                                                                class="fas <?= htmlspecialchars($platformIcon, ENT_QUOTES, 'UTF-8') ?> text-xs"></i>
                                                         </span>
 
                                                         <span class="text-xs font-medium text-slate-600">
-                                                            <?= htmlspecialchars($platform) ?>
+                                                            <?= htmlspecialchars($platform, ENT_QUOTES, 'UTF-8') ?>
                                                         </span>
 
                                                     </div>
-
                                                 </a>
 
                                             <?php else: ?>
@@ -437,7 +435,7 @@
 </div>
 <?php require __DIR__ . '/create.php'; ?>
 <?php require __DIR__ . '/edit.php'; ?>
-<script src="/hrms-capstone/modules/portal/public/js/function/contentOnlineMeeting.js"></script>
+<script src="<?= asset('js/function/contentOnlineMeeting.js') ?>"></script>
 <script>
     document.querySelectorAll('.modal').forEach(modal => {
         document.body.appendChild(modal);

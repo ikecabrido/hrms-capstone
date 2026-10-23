@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 26, 2026 at 09:19 AM
+-- Generation Time: Oct 23, 2026 at 12:36 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -178,7 +178,7 @@ INSERT INTO `em_employees` (`employee_id`, `employee_code`, `user_id`, `first_na
 (8, 'EMP-000008', NULL, 'Diana', 'G.', 'Bautista', NULL, NULL, '1995-11-11', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '', '', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', '', NULL, 'None', '', '', '', NULL, '2026-08-13 11:07:39', '2026-08-13 15:17:40', 0, NULL, NULL),
 (30, 'EMP-000030', NULL, 'Russel', 'Gohetia', 'Cabrido', NULL, 'Male', '1995-02-20', NULL, 'Single', 'Filipino', NULL, 'russel.cabrido@bcp.edu.ph', '09170000002', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 32000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
 (31, 'EMP-000031', NULL, 'Jose Mari Rich', NULL, 'Malana', NULL, 'Male', '1995-03-10', NULL, 'Single', 'Filipino', NULL, 'jose.malana@bcp.edu.ph', '09170000003', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
-(32, 'EMP-000032', NULL, 'Russell', NULL, 'Placer', NULL, 'Male', '1995-04-15', NULL, 'Single', 'Filipino', NULL, 'russell.placer@bcp.edu.ph', '09170000004', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
+(32, 'EMP-000032', 3, 'Russell', '', 'Placer', '', 'Male', '1995-04-15', NULL, 'Single', 'Filipino', NULL, 'russell.placer@bcp.edu.ph', '09170000004', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-10-23 10:34:18', 0, NULL, NULL),
 (33, 'EMP-000033', NULL, 'Cheska', NULL, 'Baustita', NULL, 'Female', '1996-05-20', NULL, 'Single', 'Filipino', NULL, 'cheska.baustita@bcp.edu.ph', '09170000005', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
 (34, 'EMP-000034', NULL, 'Jayson', NULL, 'Paigma', NULL, 'Male', '1995-06-15', NULL, 'Single', 'Filipino', NULL, 'jayson.paigma@bcp.edu.ph', '09170000006', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
 (35, 'EMP-000035', NULL, 'Rainiel', NULL, 'Quebada', NULL, 'Male', '1996-07-10', NULL, 'Single', 'Filipino', NULL, 'rainiel.quebada@bcp.edu.ph', '09170000007', NULL, 'Bulacan', NULL, 1, 4, '2026-08-14', NULL, 'Active', 'Full-time', NULL, 'Masteral', NULL, NULL, NULL, 30000.00, '2026-08-14 08:33:41', '2026-08-14 08:33:41', 0, NULL, NULL),
@@ -495,7 +495,7 @@ CREATE TABLE `ep_users` (
 
 INSERT INTO `ep_users` (`id`, `username`, `password`, `email`, `is_admin`, `role`, `is_active`, `theme`, `profile_image`, `created_at`, `password_reset_token`, `password_reset_expires`) VALUES
 (1, 'Employee 1', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'monstreborvinsmoke025@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-01-28 07:21:13', NULL, NULL),
-(2, 'Employee 2', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', NULL, 0, 'employee', 1, 'light', NULL, '2026-03-24 18:06:12', NULL, NULL),
+(2, 'Super Admin 2', '$2y$10$h2fzXPO1/co0hCUn/wwOnuLB4I/26hMz3hGJIqbRmujA2R1UxHIvy', 'admin2@gmail.com', 1, 'super_admin', 1, 'light', NULL, '2026-03-24 18:06:12', NULL, NULL),
 (3, 'Admin Employee Portal', '$2y$10$h2fzXPO1/co0hCUn/wwOnuLB4I/26hMz3hGJIqbRmujA2R1UxHIvy', 'admin@gmail.com', 1, 'super_admin', 1, 'light', 'profile_3_1789730868.jpg', '2026-01-28 07:21:13', NULL, NULL),
 (4, 'Employee 3', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'sample@gmail.com', 0, 'employee', 1, 'light', 'profile_4_1787671041.png', '2026-01-28 07:21:13', NULL, NULL),
 (5, 'sample', '$2y$10$ANYHjnnkV4h9JOoOrAH/3eGWZSpAbe5xCxuoJtqWJGRbZpiKsPIzu', 'camposrobertjanssent.pdm@gmail.com', 0, 'employee', 1, 'light', NULL, '2026-08-16 13:35:55', NULL, NULL),

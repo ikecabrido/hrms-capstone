@@ -416,7 +416,7 @@
 <?php require __DIR__ . '/approve.php'; ?>
 <?php require __DIR__ . '/reject.php'; ?>
 
-<script src="/hrms-capstone/modules/portal/public/js/function/contentResignationAdmin.js"></script>
+<script src="<?= asset('js/function/contentResignationAdmin.js') ?>"></script>
 
 <script>
     document.querySelectorAll('.modal').forEach(modal => {

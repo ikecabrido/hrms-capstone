@@ -17,7 +17,8 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <form method="POST" action="index.php?url=online-meeting-store">
+            <form method="POST"
+                action="<?= htmlspecialchars(appUrl('index.php?url=online-meeting-store'), ENT_QUOTES, 'UTF-8') ?>">
 
                 <div class="modal-body p-4">
 

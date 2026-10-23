@@ -10,7 +10,7 @@
                 box-shadow:0 20px 45px rgba(15,23,42,.14),0 4px 12px rgba(15,23,42,.06);
             ">
 
-            <form action="index.php?url=admin-user-store" method="POST">
+            <form action="<?= htmlspecialchars(appUrl('index.php?url=admin-user-store'), ENT_QUOTES, 'UTF-8') ?>" method="POST">
 
                 <!-- HEADER -->
                 <div class="modal-header border-0" style="padding:20px 22px 14px;">

@@ -103,7 +103,7 @@
             </a>
 
             <!-- SIGN OUT -->
-            <a href="/hrms-capstone/modules/portal/index.php?url=<?= !empty($_SESSION['is_admin']) ? 'admin-logout' : 'auth-logout' ?>"
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=' . (!empty($_SESSION['is_admin']) ? 'admin-logout' : 'auth-logout')), ENT_QUOTES, 'UTF-8') ?>"
                 style="
     display:flex;
     align-items:center;

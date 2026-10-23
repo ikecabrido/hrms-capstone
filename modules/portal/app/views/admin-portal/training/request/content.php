@@ -63,8 +63,10 @@
                     </div>
                 </div>
 
-                <a href="index.php?url=admin-learning-index" style="text-decoration: none;"
+                <a href="<?= htmlspecialchars(appUrl('index.php?url=admin-learning-index'), ENT_QUOTES, 'UTF-8') ?>"
+                    style="text-decoration: none;"
                     class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 no-underline shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow">
+
                     <i class="fa-solid fa-arrow-left text-xs"></i>
                     <span>Back to Courses</span>
                 </a>

@@ -85,12 +85,13 @@
 
                     <?php if ($unreadCount > 0): ?>
 
-                        <a href="index.php?url=notification-mark-all-read" style="
-                        color:#2563eb;
-                        text-decoration:none;
-                        font-size:10px;
-                        font-weight:600;
-                    ">
+                        <a href="<?= htmlspecialchars(appUrl('index.php?url=notification-mark-all-read'), ENT_QUOTES, 'UTF-8') ?>"
+                            style="
+        color:#2563eb;
+        text-decoration:none;
+        font-size:10px;
+        font-weight:600;
+    ">
                             Mark all as read
                         </a>
 
@@ -139,23 +140,17 @@
                             ?>
 
 
-                            <a href="index.php?url=notification" class="dropdown-item" style="
-                            display:flex;
-                            align-items:flex-start;
-                            gap:10px;
-
-                            padding:12px 14px;
-
-                            white-space:normal;
-
-                            border-bottom:1px solid #f1f5f9;
-
-                            background:<?= $isUnread
-                                ? '#f8fbff'
-                                : '#fff' ?>;
-
-                            text-decoration:none;
-                        ">
+                            <a href="<?= htmlspecialchars(appUrl('index.php?url=notification'), ENT_QUOTES, 'UTF-8') ?>"
+                                class="dropdown-item" style="
+        display:flex;
+        align-items:flex-start;
+        gap:10px;
+        padding:12px 14px;
+        white-space:normal;
+        border-bottom:1px solid #f1f5f9;
+        background:<?= $isUnread ? '#f8fbff' : '#fff' ?>;
+        text-decoration:none;
+    ">
 
                                 <!-- ICON -->
                                 <div style="
@@ -326,12 +321,12 @@
                 border-top:1px solid #e5e7eb;
             ">
 
-                    <a href="index.php?url=notification" style="
-                    color:#2563eb;
-                    text-decoration:none;
-                    font-size:10px;
-                    font-weight:600;
-                ">
+                    <a href="<?= htmlspecialchars(appUrl('index.php?url=notification'), ENT_QUOTES, 'UTF-8') ?>" style="
+        color:#2563eb;
+        text-decoration:none;
+        font-size:10px;
+        font-weight:600;
+    ">
                         View all notifications
                         <i class="fas fa-arrow-right ms-1"></i>
                     </a>
@@ -398,12 +393,14 @@
                 <div class="dropdown-divider m-0"></div>
 
                 <!-- Menu -->
-                <a href="index.php?url=admin-profile" class="dropdown-item">
+                <a href="<?= htmlspecialchars(appUrl('index.php?url=admin-profile'), ENT_QUOTES, 'UTF-8') ?>"
+                    class="dropdown-item">
                     <i class="fa-regular fa-user me-2"></i>
                     Profile Settings
                 </a>
 
-                <a href="index.php?url=user-profile&modal=change-password" class="dropdown-item">
+                <a href="<?= htmlspecialchars(appUrl('index.php?url=user-profile&modal=change-password'), ENT_QUOTES, 'UTF-8') ?>"
+                    class="dropdown-item">
                     <i class="fa-solid fa-lock me-2"></i>
                     Change Password
                 </a>
@@ -411,7 +408,7 @@
                 <div class="dropdown-divider m-0"></div>
 
                 <!-- Sign Out -->
-                <a href="/hrms-capstone/modules/portal/index.php?url=<?= !empty($_SESSION['is_admin']) ? 'admin-logout' : 'auth-logout' ?>"
+                <a href="<?= htmlspecialchars(appUrl('index.php?url=' . (!empty($_SESSION['is_admin']) ? 'admin-logout' : 'auth-logout')), ENT_QUOTES, 'UTF-8') ?>"
                     class="dropdown-item text-danger">
                     <i class="fa-solid fa-right-from-bracket me-2"></i>
                     Sign Out

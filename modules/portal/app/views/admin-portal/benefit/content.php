@@ -473,14 +473,14 @@
 
                                         <div class="flex items-center justify-end gap-1.5">
 
-                                            <?php if ($filePath): ?>
+                                            <?php if (!empty($filePath)): ?>
 
                                                 <?php
-                                                $fileUrl = '/hrms-capstone/modules/portal/public/' .
-                                                    ltrim(str_replace('\\', '/', $filePath), '/');
+                                                $fileUrl = asset(str_replace('\\', '/', ltrim($filePath, '/')));
                                                 ?>
 
-                                                <a href="<?= htmlspecialchars($fileUrl) ?>" target="_blank"
+                                                <a href="<?= htmlspecialchars($fileUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank"
+                                                    rel="noopener noreferrer"
                                                     class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition shadow-sm whitespace-nowrap">
 
                                                     <i class="fas fa-file-alt"></i>
@@ -556,7 +556,7 @@
 </div>
 <?php require __DIR__ . '/add-benefit.php'; ?>
 <?php require __DIR__ . '/upload-file.php'; ?>
-<script src="/hrms-capstone/modules/portal/public/js/function/contentBenefitsAdmin.js"></script>
+<script src="<?= asset('js/function/contentBenefitsAdmin.js') ?>"></script>
 <script>
     document.querySelectorAll('.modal').forEach(modal => {
         document.body.appendChild(modal);

@@ -365,10 +365,13 @@
                                         <?php if ($document): ?>
 
                                             <a href="<?= htmlspecialchars(
-                                                'assets/uploads/leave/' . $document
-                                            ) ?>" target="_blank"
+                                                asset('assets/uploads/leave/' . $document),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>" target="_blank" rel="noopener noreferrer"
                                                 class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                                                 title="View supporting document">
+
                                                 <i class="fas fa-file-alt text-xs"></i>
                                             </a>
 
@@ -492,13 +495,14 @@
                 </table>
 
             </div>
-<div class="px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div
+                class="px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
 
-    <p id="paginationInfo" class="text-[10px] text-slate-400"></p>
+                <p id="paginationInfo" class="text-[10px] text-slate-400"></p>
 
-    <div id="pagination" class="flex items-center gap-1"></div>
+                <div id="pagination" class="flex items-center gap-1"></div>
 
-</div>
+            </div>
         </div>
 
     </section>
