@@ -73,9 +73,17 @@ try {
                 // Fetch quizzes with attempt info
                 $qStmt = $pdo->prepare("
                     SELECT q.id, q.title,
-                        (SELECT qa.score FROM ld_quiz_attempt qa WHERE qa.learner_id = :lid AND qa.quiz_id = q.id ORDER BY qa.id DESC LIMIT 1) AS last_score,
-                        (SELECT qa.passed FROM ld_quiz_attempt qa WHERE qa.learner_id = :lid AND qa.quiz_id = q.id ORDER BY qa.id DESC LIMIT 1) AS last_passed,
-                        (SELECT COUNT(*) FROM ld_quiz_attempt qa WHERE qa.learner_id = :lid AND qa.quiz_id = q.id) AS attempt_count
+                        (SELECT s.score FROM ld_quiz_session s
+                         WHERE s.learner_id = :lid AND s.item_type = 'quiz' AND s.reference_id = q.id
+                           AND s.status IN ('submitted','expired')
+                         ORDER BY s.submitted_at DESC, s.id DESC LIMIT 1) AS last_score,
+                        (SELECT s.passed FROM ld_quiz_session s
+                         WHERE s.learner_id = :lid AND s.item_type = 'quiz' AND s.reference_id = q.id
+                           AND s.status IN ('submitted','expired')
+                         ORDER BY s.submitted_at DESC, s.id DESC LIMIT 1) AS last_passed,
+                        (SELECT COUNT(*) FROM ld_quiz_session s
+                         WHERE s.learner_id = :lid AND s.item_type = 'quiz' AND s.reference_id = q.id
+                           AND s.status IN ('submitted','expired')) AS attempt_count
                     FROM ld_quiz q WHERE q.module_id = :mid AND q.status = 'active' ORDER BY q.id ASC
                 ");
                 $qStmt->execute([':mid' => $mod['id'], ':lid' => $learnerId]);

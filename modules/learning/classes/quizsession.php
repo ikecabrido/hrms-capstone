@@ -389,6 +389,10 @@ public function saveAnswer(
         }
 
         if ($session['status'] !== 'in_progress') {
+            if (in_array($session['status'], ['submitted', 'expired'], true)) {
+                return $this->getFinalizedResult($session);
+            }
+
             return ['success' => false, 'message' => 'This attempt has already been submitted.'];
         }
 
@@ -407,7 +411,15 @@ public function saveAnswer(
     {
         $session = $this->getOwnedSession($sessionId, $learnerId);
 
-        if (!$session || $session['status'] !== 'in_progress') {
+        if (!$session) {
+            return ['success' => false, 'message' => 'Session not found or already finalized.'];
+        }
+
+        if ($session['status'] !== 'in_progress') {
+            if (in_array($session['status'], ['submitted', 'expired'], true)) {
+                return $this->getFinalizedResult($session);
+            }
+
             return ['success' => false, 'message' => 'Session not found or already finalized.'];
         }
 
@@ -553,7 +565,85 @@ public function saveAnswer(
         // ld_quiz_attempt is a quiz-only summary (quiz_id is NOT NULL and every
         // reader joins it back to ld_quiz), so evaluations are tracked through
         // their ld_quiz_session row instead of being written here with a null id.
+        $summarySaved = true;
         if ($session['item_type'] === 'quiz') {
+            $summarySaved = $this->recordQuizAttempt($session, $score, $total, $passed);
+        }
+
+        $result = [
+            'success' => true,
+            'message' => $expired ? 'Time expired — attempt auto-submitted.' : 'Attempt submitted.',
+            'score' => $score,
+            'passed' => $passed,
+            'total_items' => $total,
+            'correct_items' => $correct,
+        ];
+
+        if ($session['item_type'] === 'quiz' && !$summarySaved) {
+            $result['warning'] = 'The quiz was submitted, but its reporting summary could not be saved.';
+        }
+
+        return $result;
+    }
+
+    private function getFinalizedResult(array $session): array
+    {
+        $answerStmt = $this->conn->prepare(
+            'SELECT sa.selected_option_id, o.is_correct
+             FROM ld_quiz_session_answer sa
+             LEFT JOIN ld_quiz_question_option o ON o.id = sa.selected_option_id
+             WHERE sa.quiz_session_id = :session_id'
+        );
+        $answerStmt->execute([':session_id' => (int) $session['id']]);
+        $answers = $answerStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $total = count($answers);
+        $correct = 0;
+        foreach ($answers as $answer) {
+            if (!empty($answer['is_correct'])) {
+                $correct++;
+            }
+        }
+
+        $summarySaved = true;
+        if ($session['item_type'] === 'quiz') {
+            $summarySaved = $this->recordQuizAttempt(
+                $session,
+                (float) ($session['score'] ?? 0),
+                $total,
+                $session['passed'] !== null ? (bool) $session['passed'] : null
+            );
+        }
+
+        $result = [
+            'success' => true,
+            'message' => 'Attempt submitted.',
+            'score' => $session['score'] !== null ? (float) $session['score'] : 0.0,
+            'passed' => $session['passed'] !== null ? (bool) $session['passed'] : null,
+            'total_items' => $total,
+            'correct_items' => $correct,
+        ];
+
+        if ($session['item_type'] === 'quiz' && !$summarySaved) {
+            $result['warning'] = 'The quiz was submitted, but its reporting summary could not be saved.';
+        }
+
+        return $result;
+    }
+
+    private function recordQuizAttempt(array $session, float $score, int $total, ?bool $passed): bool
+    {
+        $sessionId = (int) $session['id'];
+
+        try {
+            $existing = $this->conn->prepare(
+                'SELECT id FROM ld_quiz_attempt WHERE quiz_session_id = :session_id LIMIT 1'
+            );
+            $existing->execute([':session_id' => $sessionId]);
+            if ($existing->fetchColumn()) {
+                return true;
+            }
+
             $attempt = $this->conn->prepare(
                 'INSERT INTO ld_quiz_attempt (learner_id, quiz_id, quiz_session_id, score, total_items, passed)
                  VALUES (:learner_id, :quiz_id, :quiz_session_id, :score, :total_items, :passed)'
@@ -566,16 +656,13 @@ public function saveAnswer(
                 ':total_items' => $total,
                 ':passed' => $passed ?? false,
             ]);
-        }
 
-        return [
-            'success' => true,
-            'message' => $expired ? 'Time expired — attempt auto-submitted.' : 'Attempt submitted.',
-            'score' => $score,
-            'passed' => $passed,
-            'total_items' => $total,
-            'correct_items' => $correct,
-        ];
+            return true;
+        } catch (PDOException $e) {
+            error_log('[learning] Quiz attempt summary could not be saved for session ' . $sessionId . ': ' . $e->getMessage());
+
+            return false;
+        }
     }
 
     private function getParentItem(string $itemType, int $referenceId): ?array

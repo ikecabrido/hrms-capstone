@@ -46,15 +46,34 @@ try {
         $enrollmentObj = new Enrollment($pdo);
         $enrollment = $enrollmentObj->getByLearnerAndCourse($learnerId, $courseId);
 
-        $attemptsStmt = $pdo->prepare("SELECT COUNT(*) FROM ld_quiz_attempt WHERE learner_id = :lid AND quiz_id = :qid");
+        $attemptsStmt = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM ld_quiz_session
+            WHERE learner_id = :lid AND item_type = 'quiz' AND reference_id = :qid
+              AND status IN ('submitted', 'expired')
+        ");
         $attemptsStmt->execute([':lid' => $learnerId, ':qid' => $quizId]);
         $attemptCount = (int) $attemptsStmt->fetchColumn();
 
-        $bestStmt = $pdo->prepare("SELECT id, score, passed, attempted_at AS submitted_at FROM ld_quiz_attempt WHERE learner_id = :lid AND quiz_id = :qid ORDER BY score DESC LIMIT 1");
+        $bestStmt = $pdo->prepare("
+            SELECT id, score, passed, submitted_at
+            FROM ld_quiz_session
+            WHERE learner_id = :lid AND item_type = 'quiz' AND reference_id = :qid
+              AND status IN ('submitted', 'expired')
+            ORDER BY score DESC, submitted_at DESC, id DESC
+            LIMIT 1
+        ");
         $bestStmt->execute([':lid' => $learnerId, ':qid' => $quizId]);
         $bestAttempt = $bestStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
-        $recentStmt = $pdo->prepare("SELECT id, score, passed, attempted_at AS submitted_at FROM ld_quiz_attempt WHERE learner_id = :lid AND quiz_id = :qid ORDER BY id DESC LIMIT 1");
+        $recentStmt = $pdo->prepare("
+            SELECT id, score, passed, submitted_at
+            FROM ld_quiz_session
+            WHERE learner_id = :lid AND item_type = 'quiz' AND reference_id = :qid
+              AND status IN ('submitted', 'expired')
+            ORDER BY submitted_at DESC, id DESC
+            LIMIT 1
+        ");
         $recentStmt->execute([':lid' => $learnerId, ':qid' => $quizId]);
         $recentAttempt = $recentStmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }

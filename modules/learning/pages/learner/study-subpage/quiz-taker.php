@@ -445,6 +445,9 @@ try {
                 if (!data.success) {
                     throw new Error(data.message || 'Unable to submit quiz.');
                 }
+                if (data.warning) {
+                    alert(data.warning);
+                }
                 window.location.href = '?page=learner/study-subpage/quiz-review&session_id=' + sessionId + '&course_id=' + courseId;
             })
             .catch(function(error) {

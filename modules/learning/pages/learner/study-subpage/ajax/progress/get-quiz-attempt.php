@@ -329,24 +329,26 @@ try {
      * Latest completed attempt
      * ---------------------------------------------------------
      *
-     * ld_quiz_attempt is created by QuizSession::finalizeSession()
-     * after a quiz is submitted or auto-submitted.
+     * ld_quiz_session is the canonical attempt record. The legacy summary
+     * table may be unavailable on some installations.
      */
     $latestStmt = $pdo->prepare(
-        'SELECT
-            id,
-            learner_id,
-            quiz_id,
-            quiz_session_id,
-            score,
-            total_items,
-            passed,
-            attempted_at
-         FROM ld_quiz_attempt
-         WHERE learner_id = :learner_id
-           AND quiz_id = :quiz_id
-         ORDER BY attempted_at DESC, id DESC
-         LIMIT 1'
+        "SELECT
+            s.id,
+            s.learner_id,
+            s.reference_id AS quiz_id,
+            s.id AS quiz_session_id,
+            s.score,
+            (SELECT COUNT(*) FROM ld_quiz_session_answer sa WHERE sa.quiz_session_id = s.id) AS total_items,
+            s.passed,
+            s.submitted_at AS attempted_at
+         FROM ld_quiz_session s
+         WHERE s.learner_id = :learner_id
+           AND s.item_type = 'quiz'
+           AND s.reference_id = :quiz_id
+           AND s.status IN ('submitted', 'expired')
+         ORDER BY s.submitted_at DESC, s.id DESC
+         LIMIT 1"
     );
 
     $latestStmt->execute([
@@ -360,10 +362,7 @@ try {
         $latestAttempt['id'] = (int) $latestAttempt['id'];
         $latestAttempt['learner_id'] = (int) $latestAttempt['learner_id'];
         $latestAttempt['quiz_id'] = (int) $latestAttempt['quiz_id'];
-        $latestAttempt['quiz_session_id'] =
-            $latestAttempt['quiz_session_id'] !== null
-                ? (int) $latestAttempt['quiz_session_id']
-                : null;
+        $latestAttempt['quiz_session_id'] = (int) $latestAttempt['quiz_session_id'];
         $latestAttempt['score'] = (float) $latestAttempt['score'];
         $latestAttempt['total_items'] = (int) $latestAttempt['total_items'];
         $latestAttempt['passed'] = (bool) $latestAttempt['passed'];
