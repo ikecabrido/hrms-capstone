@@ -318,10 +318,17 @@ try {
 
     http_response_code(500);
 
-    echo json_encode([
+    $errorResponse = [
         'success' => false,
         'message' => 'Failed to submit quiz.'
-    ]);
+    ];
+
+    if (in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1'], true)) {
+        $errorResponse['debug_error'] = $e->getMessage();
+        $errorResponse['debug_location'] = $e->getFile() . ':' . $e->getLine();
+    }
+
+    echo json_encode($errorResponse);
 }
 
 exit;

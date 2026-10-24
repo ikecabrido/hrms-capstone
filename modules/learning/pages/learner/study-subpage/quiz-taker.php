@@ -440,17 +440,47 @@ try {
             : 'pages/learner/study-subpage/ajax/progress/submit-quiz-answer.php';
 
         fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body })
-            .then(function(r) { return r.json(); })
+            .then(function(response) {
+                return response.text().then(function(text) {
+                    var data = null;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (parseError) {
+                        data = null;
+                    }
+
+                    if (!response.ok || !data || !data.success) {
+                        var submitError = new Error(
+                            data && data.message
+                                ? data.message
+                                : 'Quiz submission returned an invalid response.'
+                        );
+                        submitError.response = {
+                            status: response.status,
+                            statusText: response.statusText,
+                            body: data || text
+                        };
+                        throw submitError;
+                    }
+
+                    return data;
+                });
+            })
             .then(function(data) {
-                if (!data.success) {
-                    throw new Error(data.message || 'Unable to submit quiz.');
-                }
                 if (data.warning) {
                     alert(data.warning);
                 }
                 window.location.href = '?page=learner/study-subpage/quiz-review&session_id=' + sessionId + '&course_id=' + courseId;
             })
             .catch(function(error) {
+                console.error('[learning] Quiz submission request failed', {
+                    sessionId: sessionId,
+                    endpoint: url,
+                    message: error.message,
+                    response: error.response || null,
+                    error: error
+                });
+
                 fetch('pages/learner/study-subpage/ajax/progress/get-quiz-status.php?session_id=' + encodeURIComponent(sessionId))
                     .then(function(r) { return r.json(); })
                     .then(function(status) {
