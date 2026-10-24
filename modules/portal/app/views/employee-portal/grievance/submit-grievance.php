@@ -44,7 +44,7 @@
 
 
             <!-- BODY -->
-            <form method="POST" action="index.php?url=grievance-store" enctype="multipart/form-data">
+<form method="POST" action="<?= htmlspecialchars(appUrl('index.php?url=grievance-store'), ENT_QUOTES, 'UTF-8') ?>" enctype="multipart/form-data">
 
                 <div class="modal-body" style="
                     padding:24px;

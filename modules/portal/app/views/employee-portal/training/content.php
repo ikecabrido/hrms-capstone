@@ -303,9 +303,9 @@
 
                                 <?php if (!empty($thumbnailUrl)): ?>
 
-                                    <img src="<?= htmlspecialchars($thumbnailUrl) ?>" alt="<?= htmlspecialchars($title) ?>" class="w-full h-full object-cover
-                                       group-hover:scale-105
-                                       transition-transform duration-500">
+                                    <img src="<?= htmlspecialchars($thumbnailUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                        alt="<?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?>"
+                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
 
                                 <?php else: ?>
 
@@ -606,7 +606,8 @@
 
                                     <?php if ($status === 'active'): ?>
 
-                                        <form method="POST" action="index.php?url=enroll-course">
+                                        <form method="POST"
+                                            action="<?= htmlspecialchars(appUrl('index.php?url=enroll-course'), ENT_QUOTES, 'UTF-8') ?>">
                                             <input type="hidden" name="course_id" value="<?= htmlspecialchars($course['id']) ?>">
 
                                             <button type="submit" class="w-full mb-4 h-11

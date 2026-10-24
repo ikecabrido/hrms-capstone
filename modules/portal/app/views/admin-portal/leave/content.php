@@ -362,7 +362,7 @@
                                     <!-- DOCUMENT -->
                                     <td class="px-4 py-3 text-center">
 
-                                        <?php if ($document): ?>
+                                        <?php if (!empty($document)): ?>
 
                                             <a href="<?= htmlspecialchars(
                                                 asset('assets/uploads/leave/' . $document),

@@ -387,13 +387,13 @@
                                 Attachment
                             </div>
 
-                            <a href="<?= htmlspecialchars('/hrms-capstone/modules/portal/public/assets/' . $grievance['attachment_path']) ?>"
+                            <a href="<?= htmlspecialchars(asset('assets/' . ltrim($grievance['attachment_path'], '/')), ENT_QUOTES, 'UTF-8') ?>"
                                 target="_blank" rel="noopener noreferrer" style="
-       color:#2563eb;
-       font-size:10px;
-       font-weight:600;
-       text-decoration:none;
-   ">
+        color:#2563eb;
+        font-size:10px;
+        font-weight:600;
+        text-decoration:none;
+    ">
                                 <i class="fas fa-paperclip"></i>
                                 View Attachment
                             </a>

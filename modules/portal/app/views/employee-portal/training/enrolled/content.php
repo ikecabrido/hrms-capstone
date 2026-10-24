@@ -82,11 +82,11 @@
                                 You can enroll in another training program.
                             </p>
 
-                            <a href="index.php?url=training"
-                                class="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                <i class="fa-solid fa-plus text-[10px]"></i>
-                                Enroll New Training
-                            </a>
+<a href="<?= htmlspecialchars(appUrl('index.php?url=training'), ENT_QUOTES, 'UTF-8') ?>"
+    class="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+    <i class="fa-solid fa-plus text-[10px]"></i>
+    Enroll New Training
+</a>
 
                         </div>
 
@@ -185,12 +185,12 @@
 
                                         <summary class="cursor-pointer list-none select-none">
 <?php if (!$isCompleted): ?>
-    <form
-        method="POST"
-        action="index.php?url=complete-module"
-        class="shrink-0"
-        onclick="event.stopPropagation();"
-        onsubmit="event.stopPropagation();">
+<form
+    method="POST"
+    action="<?= htmlspecialchars(appUrl('index.php?url=complete-module'), ENT_QUOTES, 'UTF-8') ?>"
+    class="shrink-0"
+    onclick="event.stopPropagation();"
+    onsubmit="event.stopPropagation();">
 
         <input
             type="hidden"
@@ -508,10 +508,10 @@
                                                                                     class="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
                                                                                     Video Lesson
                                                                                 </p>
-
-                                                                                <a href="<?= htmlspecialchars($lesson['video_url']) ?>"
-                                                                                    target="_blank" rel="noopener noreferrer"
-                                                                                    class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-indigo-200 hover:bg-indigo-50">
+<a href="<?= htmlspecialchars($lesson['video_url'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-indigo-200 hover:bg-indigo-50">
 
                                                                                     <span
                                                                                         class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
@@ -667,10 +667,10 @@
                                                                                             );
                                                                                         ?>
 
-                                                                                        <a href="<?= htmlspecialchars($filePath, ENT_QUOTES, 'UTF-8') ?>"
-                                                                                            target="_blank" rel="noopener noreferrer"
-                                                                                            class="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-indigo-200 hover:bg-indigo-50">
-
+<a href="<?= htmlspecialchars(asset(ltrim($filePath, '/')), ENT_QUOTES, 'UTF-8') ?>"
+    target="_blank"
+    rel="noopener noreferrer"
+    class="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition hover:border-indigo-200 hover:bg-indigo-50">
                                                                                             <!-- File Icon -->
 
                                                                                             <div
@@ -899,16 +899,14 @@
 
                                 <?php if (!empty($activeLesson['url'])): ?>
 
-                                    <a href="<?= htmlspecialchars(
-                                        $activeLesson['url']
-                                    ) ?>"
-                                        class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700">
+<a href="<?= htmlspecialchars(appUrl($activeLesson['url']), ENT_QUOTES, 'UTF-8') ?>"
+    class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700">
 
-                                        <i class="fa-solid fa-play text-[10px]"></i>
+    <i class="fa-solid fa-play text-[10px]"></i>
 
-                                        Continue Lesson
+    Continue Lesson
 
-                                    </a>
+</a>
 
                                 <?php endif; ?>
 

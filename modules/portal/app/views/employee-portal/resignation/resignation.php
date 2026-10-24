@@ -52,12 +52,14 @@
             </div>
 
             <!-- FORM -->
-            <form action="index.php?url=employee-resignation-store" method="POST" enctype="multipart/form-data">
+            <form
+                action="<?= htmlspecialchars(appUrl('index.php?url=employee-resignation-store'), ENT_QUOTES, 'UTF-8') ?>"
+                method="POST" enctype="multipart/form-data">
 
                 <div class="modal-body" style="
-                    padding:24px;
-                    background:#fff;
-                ">
+        padding:24px;
+        background:#fff;
+    ">
 
                     <div style="
     display:flex;

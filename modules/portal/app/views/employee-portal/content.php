@@ -45,19 +45,19 @@
                 <h2>Latest Announcements</h2>
             </div>
 
-            <a href="index.php?url=announcement" style="
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            padding:7px 11px;
-            border:1px solid #e5e7eb;
-            border-radius:8px;
-            background:#fff;
-            color:#374151;
-            text-decoration:none;
-            font-size:11px;
-            font-weight:600;
-        ">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=announcement'), ENT_QUOTES, 'UTF-8') ?>" style="
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:7px 11px;
+    border:1px solid #e5e7eb;
+    border-radius:8px;
+    background:#fff;
+    color:#374151;
+    text-decoration:none;
+    font-size:11px;
+    font-weight:600;
+">
                 View All
                 <i class="fas fa-arrow-right"></i>
             </a>
@@ -74,25 +74,26 @@
 
                 <?php foreach (array_slice($announcements, 0, 5) as $announcement): ?>
 
-                    <a href="index.php?url=announcement-view&id=<?= (int) $announcement['eer_announcements_id'] ?>" style="
-                        display:flex;
-                        align-items:center;
-                        gap:13px;
-                        width:100%;
-                        padding:14px 15px;
-                        box-sizing:border-box;
-                        border:1px solid #e5e7eb;
-                        border-radius:11px;
-                        background:#fff;
-                        text-decoration:none;
-                        transition:.2s ease;
-                    " onmouseover="
-                        this.style.background='#f8fafc';
-                        this.style.borderColor='#bfdbfe';
-                    " onmouseout="
-                        this.style.background='#fff';
-                        this.style.borderColor='#e5e7eb';
-                    ">
+                    <a href="<?= htmlspecialchars(appUrl('index.php?url=announcement-view&id=' . (int) $announcement['eer_announcements_id']), ENT_QUOTES, 'UTF-8') ?>"
+                        style="
+    display:flex;
+    align-items:center;
+    gap:13px;
+    width:100%;
+    padding:14px 15px;
+    box-sizing:border-box;
+    border:1px solid #e5e7eb;
+    border-radius:11px;
+    background:#fff;
+    text-decoration:none;
+    transition:.2s ease;
+" onmouseover="
+    this.style.background='#f8fafc';
+    this.style.borderColor='#bfdbfe';
+" onmouseout="
+    this.style.background='#fff';
+    this.style.borderColor='#e5e7eb';
+">
 
                         <!-- ICON -->
                         <div style="
@@ -754,7 +755,8 @@
 
                     <?php if ($latestEvaluation): ?>
 
-                        <a href="index.php?url=performance" type="button" class="performance-view-btn">
+                        <a href="<?= htmlspecialchars(appUrl('index.php?url=performance'), ENT_QUOTES, 'UTF-8') ?>"
+                            class="performance-view-btn">
 
                             View Details
 
@@ -1172,7 +1174,8 @@
         <div class="quick-access-grid">
 
             <!-- Attendance -->
-            <a href="index.php?url=attendance" class="dashboard-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=attendance'), ENT_QUOTES, 'UTF-8') ?>"
+                class="dashboard-card">
 
                 <div class="dashboard-card-icon attendance">
                     <i class="fas fa-clock"></i>
@@ -1189,7 +1192,8 @@
 
 
             <!-- Leave -->
-            <a href="index.php?url=employee-leave-request" class="dashboard-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=employee-leave-request'), ENT_QUOTES, 'UTF-8') ?>"
+                class="dashboard-card">
 
                 <div class="dashboard-card-icon leave">
                     <i class="fas fa-calendar-alt"></i>
@@ -1206,7 +1210,8 @@
 
 
             <!-- Payroll -->
-            <a href="index.php?url=payroll" class="dashboard-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=payroll'), ENT_QUOTES, 'UTF-8') ?>"
+                class="dashboard-card">
 
                 <div class="dashboard-card-icon payroll">
                     <i class="fas fa-file-invoice-dollar"></i>
@@ -1223,7 +1228,8 @@
 
 
             <!-- Benefits -->
-            <a href="index.php?url=benefits-and-government-contribution" class="dashboard-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=benefits-and-government-contribution'), ENT_QUOTES, 'UTF-8') ?>"
+                class="dashboard-card">
 
                 <div class="dashboard-card-icon benefits">
                     <i class="fas fa-hand-holding-heart"></i>
@@ -1240,7 +1246,8 @@
 
 
             <!-- Performance -->
-            <a href="index.php?url=performance" class="dashboard-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=performance'), ENT_QUOTES, 'UTF-8') ?>"
+                class="dashboard-card">
 
                 <div class="dashboard-card-icon performance">
                     <i class="fas fa-chart-line"></i>
@@ -1257,7 +1264,8 @@
 
 
             <!-- Training -->
-            <a href="index.php?url=training" class="dashboard-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=training'), ENT_QUOTES, 'UTF-8') ?>"
+                class="dashboard-card">
 
                 <div class="dashboard-card-icon training">
                     <i class="fas fa-graduation-cap"></i>
@@ -1288,7 +1296,8 @@
 
         <div class="request-grid">
 
-            <a href="index.php?url=complaint" class="request-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=complaint'), ENT_QUOTES, 'UTF-8') ?>"
+                class="request-card">
 
                 <i class="fas fa-comment-alt"></i>
 
@@ -1300,7 +1309,8 @@
             </a>
 
 
-            <a href="index.php?url=grievance" class="request-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=grievance'), ENT_QUOTES, 'UTF-8') ?>"
+                class="request-card">
 
                 <i class="fas fa-scale-balanced"></i>
 
@@ -1312,7 +1322,8 @@
             </a>
 
 
-            <a href="index.php?url=resignation" class="request-card">
+            <a href="<?= htmlspecialchars(appUrl('index.php?url=resignation'), ENT_QUOTES, 'UTF-8') ?>"
+                class="request-card">
 
                 <i class="fas fa-user-minus"></i>
 
@@ -1330,7 +1341,9 @@
 
 
 <!-- DESIGN INTERACTIVE -->
-<link rel="stylesheet" href="<?= asset('css/employee-portal-dashboard.css') ?>">
+<link rel="stylesheet" href="<?= htmlspecialchars(asset('css/employee-portal-dashboard.css'), ENT_QUOTES, 'UTF-8') ?>">
+
 <!-- Anime.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.2/anime.min.js"></script>
-<script src="<?= asset('js/function/employeePortalDashboard.js') ?>"></script>
+
+<script src="<?= htmlspecialchars(asset('js/function/employeePortalDashboard.js'), ENT_QUOTES, 'UTF-8') ?>"></script>

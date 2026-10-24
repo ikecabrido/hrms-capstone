@@ -3,7 +3,7 @@
         <div class="modal-content"
             style="border:0;border-radius:16px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.2);">
 
-            <form action="index.php?url=update-user-profile" method="POST">
+            <form action="<?= htmlspecialchars(appUrl('index.php?url=update-user-profile'), ENT_QUOTES, 'UTF-8') ?>" method="POST">
 
                 <div
                     style="display:flex;justify-content:space-between;padding:20px 22px;background:linear-gradient(135deg,#eff6ff,#fff);border-bottom:1px solid #e5e7eb;">

@@ -408,26 +408,27 @@
                     <!-- ATTACHMENT -->
                     <?php if (!empty($resignation['attachment'])): ?>
 
-                        <a href="/hrms-capstone/modules/portal/public/assets/<?= htmlspecialchars($resignation['attachment']) ?>" target="_blank" style="
-            margin-top:14px;
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            gap:12px;
-            padding:13px 14px;
-            border:1px solid #e5e7eb;
-            border-radius:9px;
-            background:#fff;
-            text-decoration:none;
-            cursor:pointer;
-            transition:.2s ease;
-        " onmouseover="
-            this.style.borderColor='#bfdbfe';
-            this.style.background='#f8fbff';
-        " onmouseout="
-            this.style.borderColor='#e5e7eb';
-            this.style.background='#fff';
-        ">
+                        <a href="<?= htmlspecialchars(asset('assets/' . ltrim($resignation['attachment'], '/')), ENT_QUOTES, 'UTF-8') ?>"
+                            target="_blank" rel="noopener noreferrer" style="
+        margin-top:14px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        padding:13px 14px;
+        border:1px solid #e5e7eb;
+        border-radius:9px;
+        background:#fff;
+        text-decoration:none;
+        cursor:pointer;
+        transition:.2s ease;
+    " onmouseover="
+        this.style.borderColor='#bfdbfe';
+        this.style.background='#f8fbff';
+    " onmouseout="
+        this.style.borderColor='#e5e7eb';
+        this.style.background='#fff';
+    ">
 
                             <div style="
             display:flex;

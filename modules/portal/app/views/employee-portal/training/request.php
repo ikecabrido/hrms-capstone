@@ -82,7 +82,7 @@
 
 
             <!-- MODAL BODY -->
-            <form action="index.php?url=store-training-request" method="POST">
+<form action="<?= htmlspecialchars(appUrl('index.php?url=store-training-request'), ENT_QUOTES, 'UTF-8') ?>" method="POST">
                 <div style="padding:22px 24px;background:#fff;">
 
                     <!-- DESCRIPTION -->

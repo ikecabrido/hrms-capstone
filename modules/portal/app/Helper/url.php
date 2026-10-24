@@ -32,7 +32,5 @@ function appUrl(string $path = ''): string
     return $baseUrl . ($path !== '' ? '/' . ltrim($path, '/') : '');
 }
 
-$documentUrl = asset('assets/uploads/leave/' . $document);
-?>
 
 
