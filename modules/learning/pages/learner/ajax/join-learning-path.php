@@ -4,10 +4,20 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 header('Content-Type: application/json; charset=utf-8');
-require_once dirname(__FILE__, 3) . '/classes/CSRF.php';
-require_once dirname(__FILE__, 3) . '/classes/LearningPathAccess.php';
-require_once dirname(__FILE__, 3) . '/classes/enrollment.php';
-require_once dirname(__FILE__, 5) . '/database/db.php';
+
+register_shutdown_function(static function (): void {
+    $error = error_get_last();
+    if (!$error || !in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+        return;
+    }
+
+    error_log('Fatal learning path enrollment error: ' . $error['message'] . ' in ' . $error['file'] . ':' . $error['line']);
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode(['success' => false, 'message' => 'A server error occurred while adding this learning path.']);
+});
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -15,23 +25,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-CSRF::requireValid();
-$learnerId = (int) ($_SESSION['employee_id'] ?? 0);
-$input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-$pathId = (int) ($input['learning_path_id'] ?? 0);
-
-if ($learnerId <= 0) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Sign in required.']);
-    exit;
-}
-if ($pathId <= 0) {
-    http_response_code(422);
-    echo json_encode(['success' => false, 'message' => 'Learning path is required.']);
-    exit;
-}
-
 try {
+    require_once dirname(__FILE__, 4) . '/classes/CSRF.php';
+    require_once dirname(__FILE__, 4) . '/classes/LearningPathAccess.php';
+    require_once dirname(__FILE__, 4) . '/classes/enrollment.php';
+    require_once dirname(__FILE__, 6) . '/database/db.php';
+
+    CSRF::requireValid();
+    $learnerId = (int) ($_SESSION['employee_id'] ?? 0);
+    $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+    $pathId = (int) ($input['learning_path_id'] ?? 0);
+
+    if ($learnerId <= 0) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => 'Sign in required.']);
+        exit;
+    }
+    if ($pathId <= 0) {
+        http_response_code(422);
+        echo json_encode(['success' => false, 'message' => 'Learning path is required.']);
+        exit;
+    }
+
     $pdo = (new Database())->getConnection();
     $pdo->beginTransaction();
     $pathStmt = $pdo->prepare('SELECT id, status, is_public, assigned_to FROM ld_learning_path WHERE id = :id LIMIT 1');
