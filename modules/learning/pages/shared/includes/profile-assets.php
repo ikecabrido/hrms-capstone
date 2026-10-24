@@ -210,6 +210,41 @@ textarea.pfl-input { resize: vertical; min-height: 84px; }
 .pfl-admin-back:hover { text-decoration: underline; }
 .pfl-admin-role-wrap { min-width: 0; }
 
+.learner-profile-page {
+    font-size: 0.94rem;
+    line-height: 1.55;
+}
+.learner-profile-page .pfl-header-meta h1 {
+    font-size: clamp(1.55rem, 3vw, 2rem);
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+}
+.learner-profile-page .pfl-section-title {
+    font-size: 1.02rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+.learner-profile-page .pfl-row-label,
+.learner-profile-page .pfl-stat-label,
+.learner-profile-page .pfl-table th {
+    letter-spacing: 0.045em;
+}
+.learner-profile-page .pfl-list-title,
+.learner-profile-page .pfl-row-value {
+    line-height: 1.45;
+}
+.learner-profile-page a,
+.learner-profile-page a:hover,
+.learner-profile-page a:focus {
+    text-decoration: none;
+}
+.learner-profile-page .pfl-record-grid {
+    align-items: start;
+}
+.learner-profile-page .pfl-load-warning {
+    margin-bottom: 0.75rem;
+}
+
 /* ─── Shared data cards (enrolments, quizzes, certificates, KT) ──────────── */
 .pfl-card-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .pfl-card-head h3 { margin: 0; }

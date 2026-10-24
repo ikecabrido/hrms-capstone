@@ -187,6 +187,7 @@ $profileData = [
         'mobile_no'       => (string) ($employee['mobile_no'] ?? ''),
         'phone_no'        => (string) ($employee['phone_no'] ?? ''),
         'current_address' => (string) ($employee['current_address'] ?? ''),
+        'permanent_address' => (string) ($employee['permanent_address'] ?? ''),
     ],
     'completion'  => [
         'percent' => $completionPercent,

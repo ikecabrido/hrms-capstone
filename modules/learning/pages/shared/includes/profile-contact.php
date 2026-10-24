@@ -23,6 +23,12 @@ $profileReadOnly = !empty($profileReadOnly);
                 <span class="pfl-row-label">Current address</span>
                 <span class="pfl-row-value"><?= htmlspecialchars($contact['current_address'] !== '' ? $contact['current_address'] : '—') ?></span>
             </div>
+            <?php if ($contact['permanent_address'] !== ''): ?>
+                <div class="pfl-row">
+                    <span class="pfl-row-label">Permanent address</span>
+                    <span class="pfl-row-value"><?= htmlspecialchars($contact['permanent_address'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+            <?php endif; ?>
         </div>
         <small class="pfl-hint">Contact details are maintained by the employee in their profile.</small>
     <?php else: ?>
@@ -51,5 +57,13 @@ $profileReadOnly = !empty($profileReadOnly);
             </div>
             <small class="pfl-hint">Email, position and department are maintained by HR and can't be edited here.</small>
         </form>
+        <?php if ($contact['permanent_address'] !== ''): ?>
+            <div class="pfl-rows pfl-permanent-address">
+                <div class="pfl-row">
+                    <span class="pfl-row-label">Permanent address</span>
+                    <span class="pfl-row-value"><?= htmlspecialchars($contact['permanent_address'], ENT_QUOTES, 'UTF-8') ?></span>
+                </div>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 </div>
