@@ -2,12 +2,7 @@
 
     <?php if (!empty($record['file_path'])): ?>
 
-        <div
-            class="modal fade"
-            id="viewBenefitFile<?= (int) $record['benefit_id'] ?>"
-            tabindex="-1"
-            aria-hidden="true"
-        >
+        <div class="modal fade" id="viewBenefitFile<?= (int) $record['benefit_id'] ?>" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-xl">
 
                 <div class="modal-content" style="
@@ -42,11 +37,7 @@
                             </div>
                         </div>
 
-                        <button
-                            type="button"
-                            class="btn-close"
-                            data-bs-dismiss="modal"
-                        ></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 
                     </div>
 
@@ -66,14 +57,11 @@
 
                         <?php if ($extension === 'pdf'): ?>
 
-                            <iframe
-                                src="<?= htmlspecialchars($fileUrl) ?>"
-                                style="
+                            <iframe src="<?= htmlspecialchars($fileUrl) ?>" style="
                                     width:100%;
                                     height:100%;
                                     border:0;
-                                "
-                            ></iframe>
+                                "></iframe>
 
                         <?php elseif (in_array($extension, ['jpg', 'jpeg', 'png'], true)): ?>
 
@@ -85,15 +73,11 @@
                                 justify-content:center;
                                 padding:20px;
                             ">
-                                <img
-                                    src="<?= htmlspecialchars($fileUrl) ?>"
-                                    alt="Document"
-                                    style="
+                                <img src="<?= htmlspecialchars($fileUrl) ?>" alt="Document" style="
                                         max-width:100%;
                                         max-height:100%;
                                         object-fit:contain;
-                                    "
-                                >
+                                    ">
                             </div>
 
                         <?php else: ?>
@@ -108,34 +92,29 @@
                                 font-size:12px;
                                 gap:10px;
                             ">
-                                <i
-                                    class="fas fa-file"
-                                    style="
+                                <i class="fas fa-file" style="
                                         font-size:35px;
                                         color:#2563eb;
-                                    "
-                                ></i>
+                                    "></i>
 
                                 <div>
                                     Preview is not available for this file type.
                                 </div>
 
-                                <a
-                                    href="<?= htmlspecialchars($fileUrl) ?>"
-                                    download="<?= htmlspecialchars($record['file_name'] ?: 'document') ?>"
+                                <a href="<?= htmlspecialchars(asset($fileUrl), ENT_QUOTES, 'UTF-8') ?>"
+                                    download="<?= htmlspecialchars($record['file_name'] ?: 'document', ENT_QUOTES, 'UTF-8') ?>"
                                     style="
-                                        display:inline-flex;
-                                        align-items:center;
-                                        gap:6px;
-                                        padding:7px 12px;
-                                        border-radius:7px;
-                                        background:#2563eb;
-                                        color:#fff;
-                                        text-decoration:none;
-                                        font-size:11px;
-                                        font-weight:600;
-                                    "
-                                >
+        display:inline-flex;
+        align-items:center;
+        gap:6px;
+        padding:7px 12px;
+        border-radius:7px;
+        background:#2563eb;
+        color:#fff;
+        text-decoration:none;
+        font-size:11px;
+        font-weight:600;
+    ">
                                     <i class="fas fa-download"></i>
                                     Download File
                                 </a>
@@ -150,10 +129,7 @@
                         border-top:1px solid #e5e7eb;
                     ">
 
-                        <button
-                            type="button"
-                            data-bs-dismiss="modal"
-                            style="
+                        <button type="button" data-bs-dismiss="modal" style="
                                 padding:7px 12px;
                                 border:1px solid #d1d5db;
                                 border-radius:7px;
@@ -161,8 +137,7 @@
                                 color:#374151;
                                 font-size:11px;
                                 font-weight:600;
-                            "
-                        >
+                            ">
                             Close
                         </button>
 

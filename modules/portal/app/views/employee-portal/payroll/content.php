@@ -450,16 +450,21 @@
                                 <!-- Files -->
                                 <td style="padding:14px 16px; text-align:center;">
                                     <?php if (!empty($request['document_path'])): ?>
-                                        <a href="/hrms-capstone/modules/portal/public/<?= htmlspecialchars(
-                                            ltrim(
-                                                str_replace(
-                                                    'D:\\xampp\\htdocs\\hrms-capstone\\modules\\portal\\public\\',
-                                                    '',
-                                                    $request['document_path']
-                                                ),
-                                                '/\\'
-                                            )
-                                        ) ?>" target="_blank" title="View File" style="color:#2563eb; font-size:14px;">
+                                        <?php
+                                        $documentPath = str_replace('\\', '/', $request['document_path']);
+
+                                        // Remove the local or server filesystem path up to the public directory.
+                                        $publicPosition = strpos($documentPath, '/public/');
+
+                                        if ($publicPosition !== false) {
+                                            $documentPath = substr($documentPath, $publicPosition + strlen('/public/'));
+                                        } else {
+                                            $documentPath = ltrim($documentPath, '/');
+                                        }
+                                        ?>
+
+                                        <a href="<?= htmlspecialchars(asset($documentPath), ENT_QUOTES, 'UTF-8') ?>" target="_blank"
+                                            rel="noopener noreferrer" title="View File" style="color:#2563eb; font-size:14px;">
                                             <i class="fas fa-file"></i>
                                         </a>
                                     <?php else: ?>
@@ -500,7 +505,7 @@
                     </tbody>
 
                 </table>
-<?php require __DIR__ . '/view-payroll-request.php'; ?>
+                <?php require __DIR__ . '/view-payroll-request.php'; ?>
             </div>
 
 

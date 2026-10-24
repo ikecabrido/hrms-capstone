@@ -1,18 +1,9 @@
-<div
-    class="modal fade"
-    id="changePasswordModal"
-    tabindex="-1"
-    aria-labelledby="changePasswordModalLabel"
-    aria-hidden="true"
-    style="z-index: 99999;">
+<div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel"
+    aria-hidden="true" style="z-index: 99999;">
 
-    <div
-        class="modal-dialog modal-dialog-centered"
-        style="z-index: 100000;">
+    <div class="modal-dialog modal-dialog-centered" style="z-index: 100000;">
 
-        <div
-            class="modal-content password-modal"
-            style="
+        <div class="modal-content password-modal" style="
                 position: relative;
                 z-index: 100001;
                 border: 0;
@@ -22,9 +13,7 @@
             ">
 
             <!-- Header -->
-            <div
-                class="password-modal-header"
-                style="
+            <div class="password-modal-header" style="
                     position: relative;
                     display: flex;
                     align-items: center;
@@ -34,9 +23,7 @@
                     border-bottom: 1px solid #e5e7eb;
                 ">
 
-                <div
-                    class="password-icon"
-                    style="
+                <div class="password-icon" style="
                         width: 48px;
                         height: 48px;
                         min-width: 48px;
@@ -53,8 +40,7 @@
                 </div>
 
                 <div>
-                    <span
-                        style="
+                    <span style="
                             display: block;
                             margin-bottom: 2px;
                             color: #2563eb;
@@ -65,9 +51,7 @@
                         ACCOUNT SECURITY
                     </span>
 
-                    <h5
-                        id="changePasswordModalLabel"
-                        style="
+                    <h5 id="changePasswordModalLabel" style="
                             margin: 0;
                             color: #111827;
                             font-size: 20px;
@@ -76,8 +60,7 @@
                         Change Password
                     </h5>
 
-                    <p
-                        style="
+                    <p style="
                             margin: 3px 0 0;
                             color: #6b7280;
                             font-size: 12px;
@@ -86,12 +69,7 @@
                     </p>
                 </div>
 
-                <button
-                    type="button"
-                    class="btn-close password-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                    style="
+                <button type="button" class="btn-close password-close" data-bs-dismiss="modal" aria-label="Close" style="
                         position: absolute;
                         top: 20px;
                         right: 20px;
@@ -103,21 +81,18 @@
 
 
             <!-- Form -->
-            <form action="index.php?url=update-password" method="POST" onsubmit="return validatePassword();">
+            <form action="<?= htmlspecialchars(appUrl('index.php?url=update-password'), ENT_QUOTES, 'UTF-8') ?>"
+                method="POST" onsubmit="return validatePassword();">
 
                 <!-- Body -->
                 <div class="password-modal-body" style="
                         padding: 26px;
                         background: #ffffff;">
-                    <input type="hidden" name="user_id" value="<?=  $_SESSION['user_id'] ?? 'null' ?>">
+                    <input type="hidden" name="user_id" value="<?= $_SESSION['user_id'] ?? 'null' ?>">
                     <!-- New Password -->
-                    <div
-                        class="password-field"
-                        style="margin-bottom: 20px;">
+                    <div class="password-field" style="margin-bottom: 20px;">
 
-                        <label
-                            for="newPassword"
-                            style="
+                        <label for="newPassword" style="
                                 display: block;
                                 margin-bottom: 8px;
                                 color: #374151;
@@ -127,17 +102,13 @@
                             New Password
                         </label>
 
-                        <div
-                            class="password-input-wrapper"
-                            style="
+                        <div class="password-input-wrapper" style="
                                 position: relative;
                                 display: flex;
                                 align-items: center;
                             ">
 
-                            <i
-                                class="fas fa-key"
-                                style="
+                            <i class="fas fa-key" style="
                                     position: absolute;
                                     left: 14px;
                                     z-index: 2;
@@ -146,15 +117,8 @@
                                 ">
                             </i>
 
-                            <input
-                                type="password"
-                                id="newPassword"
-                                name="password"
-                                class="form-control"
-                                placeholder="Enter your new password"
-                                autocomplete="new-password"
-                                required
-                                style="
+                            <input type="password" id="newPassword" name="password" class="form-control"
+                                placeholder="Enter your new password" autocomplete="new-password" required style="
                                     height: 46px;
                                     padding-left: 40px;
                                     padding-right: 45px;
@@ -164,12 +128,8 @@
                                     box-shadow: none;
                                 ">
 
-                            <button
-                                type="button"
-                                class="password-toggle"
-                                onclick="togglePassword('newPassword', this)"
-                                aria-label="Show password"
-                                style="
+                            <button type="button" class="password-toggle" onclick="togglePassword('newPassword', this)"
+                                aria-label="Show password" style="
                                     position: absolute;
                                     right: 10px;
                                     border: 0;
@@ -189,13 +149,9 @@
 
 
                     <!-- Confirm Password -->
-                    <div
-                        class="password-field"
-                        style="margin-bottom: 20px;">
+                    <div class="password-field" style="margin-bottom: 20px;">
 
-                        <label
-                            for="confirmPassword"
-                            style="
+                        <label for="confirmPassword" style="
                                 display: block;
                                 margin-bottom: 8px;
                                 color: #374151;
@@ -205,17 +161,13 @@
                             Confirm Password
                         </label>
 
-                        <div
-                            class="password-input-wrapper"
-                            style="
+                        <div class="password-input-wrapper" style="
                                 position: relative;
                                 display: flex;
                                 align-items: center;
                             ">
 
-                            <i
-                                class="fas fa-shield-alt"
-                                style="
+                            <i class="fas fa-shield-alt" style="
                                     position: absolute;
                                     left: 14px;
                                     z-index: 2;
@@ -224,14 +176,8 @@
                                 ">
                             </i>
 
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                class="form-control"
-                                placeholder="Confirm your new password"
-                                autocomplete="new-password"
-                                required
-                                style="
+                            <input type="password" id="confirmPassword" class="form-control"
+                                placeholder="Confirm your new password" autocomplete="new-password" required style="
                                     height: 46px;
                                     padding-left: 40px;
                                     padding-right: 45px;
@@ -241,12 +187,8 @@
                                     box-shadow: none;
                                 ">
 
-                            <button
-                                type="button"
-                                class="password-toggle"
-                                onclick="togglePassword('confirmPassword', this)"
-                                aria-label="Show password"
-                                style="
+                            <button type="button" class="password-toggle"
+                                onclick="togglePassword('confirmPassword', this)" aria-label="Show password" style="
                                     position: absolute;
                                     right: 10px;
                                     border: 0;
@@ -266,9 +208,7 @@
 
 
                     <!-- Requirements -->
-                    <div
-                        class="password-requirements"
-                        style="
+                    <div class="password-requirements" style="
                             padding: 14px 16px;
                             margin-top: 4px;
                             background: #f8fafc;
@@ -276,18 +216,14 @@
                             border-radius: 12px;
                         ">
 
-                        <div
-                            class="requirements-title"
-                            style="
+                        <div class="requirements-title" style="
                                 margin-bottom: 8px;
                                 color: #374151;
                                 font-size: 12px;
                                 font-weight: 700;
                             ">
 
-                            <i
-                                class="fas fa-circle-info"
-                                style="
+                            <i class="fas fa-circle-info" style="
                                     margin-right: 5px;
                                     color: #2563eb;
                                 ">
@@ -297,9 +233,7 @@
 
                         </div>
 
-                        <div
-                            class="requirement-item"
-                            style="
+                        <div class="requirement-item" style="
                                 display: flex;
                                 align-items: center;
                                 gap: 7px;
@@ -308,9 +242,7 @@
                                 font-size: 11px;
                             ">
 
-                            <i
-                                class="fas fa-check"
-                                style="
+                            <i class="fas fa-check" style="
                                     color: #22c55e;
                                     font-size: 9px;
                                 ">
@@ -320,9 +252,7 @@
 
                         </div>
 
-                        <div
-                            class="requirement-item"
-                            style="
+                        <div class="requirement-item" style="
                                 display: flex;
                                 align-items: center;
                                 gap: 7px;
@@ -331,9 +261,7 @@
                                 font-size: 11px;
                             ">
 
-                            <i
-                                class="fas fa-check"
-                                style="
+                            <i class="fas fa-check" style="
                                     color: #22c55e;
                                     font-size: 9px;
                                 ">
@@ -347,10 +275,7 @@
 
 
                     <!-- Error -->
-                    <div
-                        id="passwordError"
-                        class="password-error"
-                        style="
+                    <div id="passwordError" class="password-error" style="
                             display: none;
                             align-items: center;
                             gap: 8px;
@@ -373,9 +298,7 @@
 
 
                 <!-- Footer -->
-                <div
-                    class="password-modal-footer"
-                    style="
+                <div class="password-modal-footer" style="
                         display: flex;
                         justify-content: flex-end;
                         gap: 10px;
@@ -384,11 +307,7 @@
                         border-top: 1px solid #e5e7eb;
                     ">
 
-                    <button
-                        type="button"
-                        class="btn btn-light password-cancel"
-                        data-bs-dismiss="modal"
-                        style="
+                    <button type="button" class="btn btn-light password-cancel" data-bs-dismiss="modal" style="
                             border: 1px solid #d1d5db;
                             border-radius: 9px;
                             padding: 9px 18px;
@@ -397,10 +316,7 @@
                         Cancel
                     </button>
 
-                    <button
-                        type="submit"
-                        class="btn btn-primary password-submit"
-                        style="
+                    <button type="submit" class="btn btn-primary password-submit" style="
                             border-radius: 9px;
                             padding: 9px 18px;
                             font-size: 13px;
@@ -422,65 +338,65 @@
 
 
 <script>
-function togglePassword(inputId, button) {
+    function togglePassword(inputId, button) {
 
-    const input = document.getElementById(inputId);
-    const icon = button.querySelector('i');
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
 
-    if (input.type === 'password') {
+        if (input.type === 'password') {
 
-        input.type = 'text';
+            input.type = 'text';
 
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
 
-    } else {
+        } else {
 
-        input.type = 'password';
+            input.type = 'password';
 
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
 
-    }
-}
-
-
-function validatePassword() {
-
-    const password =
-        document.getElementById('newPassword').value;
-
-    const confirmPassword =
-        document.getElementById('confirmPassword').value;
-
-    const error =
-        document.getElementById('passwordError');
-
-    const errorText =
-        error.querySelector('span');
-
-    error.style.display = 'none';
-
-    if (password.length < 6) {
-
-        errorText.textContent =
-            'Password must be at least 6 characters.';
-
-        error.style.display = 'flex';
-
-        return false;
+        }
     }
 
-    if (password !== confirmPassword) {
 
-        errorText.textContent =
-            'Passwords do not match.';
+    function validatePassword() {
 
-        error.style.display = 'flex';
+        const password =
+            document.getElementById('newPassword').value;
 
-        return false;
+        const confirmPassword =
+            document.getElementById('confirmPassword').value;
+
+        const error =
+            document.getElementById('passwordError');
+
+        const errorText =
+            error.querySelector('span');
+
+        error.style.display = 'none';
+
+        if (password.length < 6) {
+
+            errorText.textContent =
+                'Password must be at least 6 characters.';
+
+            error.style.display = 'flex';
+
+            return false;
+        }
+
+        if (password !== confirmPassword) {
+
+            errorText.textContent =
+                'Passwords do not match.';
+
+            error.style.display = 'flex';
+
+            return false;
+        }
+
+        return true;
     }
-
-    return true;
-}
 </script>

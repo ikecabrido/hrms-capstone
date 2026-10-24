@@ -89,7 +89,7 @@
 
 
             <!-- FORM -->
-            <form action="index.php?url=payroll-request-store" method="POST">
+            <form action="<?= htmlspecialchars(appUrl('index.php?url=payroll-request-store'), ENT_QUOTES, 'UTF-8') ?>" method="POST">
 
                 <!-- BODY -->
                 <div style="

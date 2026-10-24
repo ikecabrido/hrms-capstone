@@ -712,7 +712,7 @@
 
                             <?php if ($status === 'PENDING'): ?>
 
-                                <form action="index.php?url=leave-cancel" method="POST" style="display:inline;">
+                              <form action="<?= htmlspecialchars(appUrl('index.php?url=leave-cancel'), ENT_QUOTES, 'UTF-8') ?>" method="POST" style="display:inline;">
                                     <input type="hidden" name="leave_request_id" value="<?= htmlspecialchars($requestId) ?>">
 
                                     <button type="submit" style="
@@ -1349,7 +1349,7 @@
 
                                     <?php if (!empty($leave['supporting_document'])): ?>
 
-                                        <a href="/hrms-capstone/modules/portal/public/assets/uploads/leave/<?= rawurlencode($leave['supporting_document']) ?>"
+                                    <a href="<?= htmlspecialchars(asset('assets/uploads/leave/' . $leave['supporting_document']), ENT_QUOTES, 'UTF-8') ?>"
                                             target="_blank" rel="noopener noreferrer" style="
                 display:inline-flex;
                 align-items:center;

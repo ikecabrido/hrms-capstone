@@ -90,7 +90,7 @@
 
 
             <!-- MODAL BODY -->
-            <form action="index.php?url=leave-store" method="POST" enctype="multipart/form-data">
+            <form action="<?= htmlspecialchars(appUrl('index.php?url=leave-store'), ENT_QUOTES, 'UTF-8') ?>" method="POST" enctype="multipart/form-data">
 
                 <div style="padding:22px 24px;background:#fff;">
 

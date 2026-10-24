@@ -1,10 +1,5 @@
-<div
-    class="modal fade"
-    id="submitBenefitModal"
-    tabindex="-1"
-    aria-labelledby="submitBenefitModalLabel"
-    aria-hidden="true"
->
+<div class="modal fade" id="submitBenefitModal" tabindex="-1" aria-labelledby="submitBenefitModalLabel"
+    aria-hidden="true">
 
     <div class="modal-dialog modal-dialog-centered modal-lg">
 
@@ -48,15 +43,12 @@
                     <!-- TITLE -->
                     <div>
 
-                        <h5
-                            id="submitBenefitModalLabel"
-                            style="
+                        <h5 id="submitBenefitModalLabel" style="
                                 margin:0;
                                 color:#111827;
                                 font-size:16px;
                                 font-weight:700;
-                            "
-                        >
+                            ">
                             Submit Benefit Document
                         </h5>
 
@@ -73,22 +65,14 @@
                 </div>
 
 
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                ></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 
             </div>
 
 
             <!-- FORM -->
-            <form
-                action="index.php?url=employee-benefits-store"
-                method="POST"
-                enctype="multipart/form-data"
-            >
+            <form action="<?= htmlspecialchars(appUrl('index.php?url=employee-benefits-store'), ENT_QUOTES, 'UTF-8') ?>"
+                method="POST" enctype="multipart/form-data">
 
                 <!-- BODY -->
                 <div class="modal-body" style="
@@ -102,32 +86,23 @@
                         <!-- RECORD TYPE -->
                         <div class="col-md-6">
 
-                            <label
-                                for="benefit_record_type"
-                                style="
+                            <label for="benefit_record_type" style="
                                     display:block;
                                     margin-bottom:6px;
                                     color:#374151;
                                     font-size:11px;
                                     font-weight:700;
-                                "
-                            >
+                                ">
                                 Record Type
                                 <span style="color:#dc2626;">*</span>
                             </label>
 
-                            <select
-                                name="record_type"
-                                id="benefit_record_type"
-                                class="form-select"
-                                required
-                                style="
+                            <select name="record_type" id="benefit_record_type" class="form-select" required style="
                                     height:40px;
                                     border:1px solid #d1d5db;
                                     border-radius:8px;
                                     font-size:12px;
-                                "
-                            >
+                                ">
 
                                 <option value="">
                                     Select record type
@@ -161,33 +136,23 @@
                         <!-- PERIOD -->
                         <div class="col-md-6">
 
-                            <label
-                                for="benefit_period"
-                                style="
+                            <label for="benefit_period" style="
                                     display:block;
                                     margin-bottom:6px;
                                     color:#374151;
                                     font-size:11px;
                                     font-weight:700;
-                                "
-                            >
+                                ">
                                 Period
                                 <span style="color:#dc2626;">*</span>
                             </label>
 
-                            <input
-                                type="month"
-                                name="period"
-                                id="benefit_period"
-                                class="form-control"
-                                required
-                                style="
+                            <input type="month" name="period" id="benefit_period" class="form-control" required style="
                                     height:40px;
                                     border:1px solid #d1d5db;
                                     border-radius:8px;
                                     font-size:12px;
-                                "
-                            >
+                                ">
 
                         </div>
 
@@ -195,32 +160,23 @@
                         <!-- DESCRIPTION -->
                         <div class="col-12">
 
-                            <label
-                                for="benefit_description"
-                                style="
+                            <label for="benefit_description" style="
                                     display:block;
                                     margin-bottom:6px;
                                     color:#374151;
                                     font-size:11px;
                                     font-weight:700;
-                                "
-                            >
+                                ">
                                 Description
                             </label>
 
-                            <textarea
-                                name="description"
-                                id="benefit_description"
-                                rows="3"
-                                class="form-control"
-                                placeholder="Enter a description or additional information..."
-                                style="
+                            <textarea name="description" id="benefit_description" rows="3" class="form-control"
+                                placeholder="Enter a description or additional information..." style="
                                     border:1px solid #d1d5db;
                                     border-radius:8px;
                                     font-size:12px;
                                     resize:vertical;
-                                "
-                            ></textarea>
+                                "></textarea>
 
                         </div>
 
@@ -228,16 +184,13 @@
                         <!-- DOCUMENT UPLOAD -->
                         <div class="col-12">
 
-                            <label
-                                for="benefit_file"
-                                style="
+                            <label for="benefit_file" style="
                                     display:block;
                                     margin-bottom:6px;
                                     color:#374151;
                                     font-size:11px;
                                     font-weight:700;
-                                "
-                            >
+                                ">
                                 Supporting Document
                                 <span style="color:#dc2626;">*</span>
                             </label>
@@ -250,18 +203,12 @@
                                 background:#f8fbff;
                             ">
 
-                                <input
-                                    type="file"
-                                    name="document"
-                                    class="form-control"
-                                    accept=".pdf,.jpg,.jpeg,.png,.docx"
-                                    required
-                                    style="
+                                <input type="file" name="document" class="form-control"
+                                    accept=".pdf,.jpg,.jpeg,.png,.docx" required style="
                                         border:1px solid #d1d5db;
                                         border-radius:8px;
                                         font-size:12px;
-                                    "
-                                >
+                                    ">
 
 
                                 <div style="
@@ -300,13 +247,10 @@
                                 color:#1e40af;
                             ">
 
-                                <i
-                                    class="fas fa-circle-info"
-                                    style="
+                                <i class="fas fa-circle-info" style="
                                         margin-top:2px;
                                         font-size:12px;
-                                    "
-                                ></i>
+                                    "></i>
 
                                 <div style="
                                     font-size:10px;
@@ -334,10 +278,7 @@
                 ">
 
                     <!-- CANCEL -->
-                    <button
-                        type="button"
-                        data-bs-dismiss="modal"
-                        style="
+                    <button type="button" data-bs-dismiss="modal" style="
                             display:inline-flex;
                             align-items:center;
                             justify-content:center;
@@ -348,16 +289,13 @@
                             color:#374151;
                             font-size:11px;
                             font-weight:600;
-                        "
-                    >
+                        ">
                         Cancel
                     </button>
 
 
                     <!-- SUBMIT -->
-                    <button
-                        type="submit"
-                        style="
+                    <button type="submit" style="
                             display:inline-flex;
                             align-items:center;
                             gap:6px;
@@ -369,8 +307,7 @@
                             color:#fff;
                             font-size:11px;
                             font-weight:600;
-                        "
-                    >
+                        ">
                         <i class="fas fa-paper-plane"></i>
                         Submit for Review
                     </button>
