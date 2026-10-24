@@ -38,7 +38,10 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         </select>
                     </div>
                     <div class="card-tools d-flex align-items-center">
-                        <button id="open-archived-resignations" type="button" class="btn btn-warning btn-sm mr-2" onclick="openArchivedResignationsModal()">
+                        <button id="new-resignation-btn" type="button" class="btn btn-success btn-sm mr-2" onclick="showResignationModal()">
+                            <i class="fas fa-plus"></i> New Resignation
+                        </button>
+                        <button id="open-archived-resignations" type="button" class="btn btn-warning btn-sm" onclick="openArchivedResignationsModal()">
                             <i class="fas fa-archive"></i> Archive
                         </button>
                     </div>
@@ -181,63 +184,101 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     <div class="modal-body">
                         <input type="hidden" id="resignationId" name="resignation_id">
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="employeeSelect">Employee *</label>
-                                        <select class="form-control" id="employeeSelect" name="employee_id" required>
-                                            <option value="">Select Employee</option>
-                                        </select>
-                                        <div id="employeeDisplay" class="form-control-plaintext" style="display:none; font-weight:600;"></div>
-                                    <div id="eligibilityMessage" class="mt-2" style="display: none;"></div>
+                        <div class="resignation-section">
+                            <div class="resignation-section-header">Employee Information</div>
+
+                            <div class="resignation-grid resignation-grid--two">
+                                <div class="resignation-field">
+                                    <label for="employeeSelect">Employee <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="employeeSelect" name="employee_id" required>
+                                        <option value="">Select Employee</option>
+                                    </select>
+                                    <div id="employeeDisplay" class="form-control-plaintext resignation-value-box d-none"></div>
+                                    <div id="eligibilityMessage" class="resignation-helper d-none"></div>
+                                    <div class="resignation-field-helper">Last attendance: Not available</div>
+                                </div>
+
+                                <div class="resignation-field d-none" id="resignationTypeGroup">
+                                    <label for="resignationType">Resignation Type</label>
+                                    <select class="form-control" id="resignationType" name="resignation_type">
+                                        <option value="">Select Type</option>
+                                        <option value="With Notice">With Notice</option>
+                                        <option value="Immediate">Immediate</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="resignation-grid resignation-grid--two">
+                                <div class="resignation-field">
+                                    <label for="employeeDepartment">Department</label>
+                                    <input type="text" class="form-control resignation-readonly" id="employeeDepartment" name="employee_department" readonly>
+                                </div>
+                                <div class="resignation-field">
+                                    <label for="employeePosition">Position</label>
+                                    <input type="text" class="form-control resignation-readonly" id="employeePosition" name="employee_position" readonly>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="reason">Reason *</label>
-                            <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
-                            <div id="reasonDisplay" class="form-control-plaintext" style="display:none; white-space:pre-wrap; padding:.375rem .75rem; border-radius:.25rem; background:#f8f9fa;">
-                            </div>
-                        </div>
+                        <div class="resignation-section">
+                            <div class="resignation-section-header">Resignation Details</div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="noticeDate">Notice Date *</label>
+                            <div class="resignation-field">
+                                <label for="reason">Reason for Separation <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                                <div id="reasonDisplay" class="form-control-plaintext resignation-value-box d-none"></div>
+                            </div>
+
+                            <div class="resignation-grid resignation-grid--two">
+                                <div class="resignation-field">
+                                    <label for="noticeDate">Date of Submission <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="noticeDate" name="notice_date" required>
-                                    <div id="noticeDateDisplay" class="form-control-plaintext" style="display:none; padding:.375rem .75rem; background:#f8f9fa; border-radius:.25rem;"></div>
+                                    <div id="noticeDateDisplay" class="form-control-plaintext resignation-value-box d-none"></div>
+                                </div>
+                                <div class="resignation-field">
+                                    <label for="lastWorkingDate">Intended Last Working Day <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="lastWorkingDate" name="last_working_date" required>
+                                    <div id="lastWorkingDateDisplay" class="form-control-plaintext resignation-value-box d-none"></div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="lastWorkingDate">Last Working Date *</label>
-                                    <input type="date" class="form-control" id="lastWorkingDate" name="last_working_date" required>
-                                    <div id="lastWorkingDateDisplay" class="form-control-plaintext" style="display:none; padding:.375rem .75rem; background:#f8f9fa; border-radius:.25rem;"></div>
+
+                            <div class="resignation-field">
+                                <label for="comments">Additional Comments</label>
+                                <textarea class="form-control" id="comments" name="comments" rows="2"></textarea>
+                                <div id="commentsDisplay" class="form-control-plaintext resignation-value-box d-none"></div>
+                            </div>
+                        </div>
+
+                        <div class="resignation-section">
+                            <div class="resignation-section-header">Attachment</div>
+
+                            <div class="resignation-field">
+                                <label for="resignationLetterFile">Resignation Letter Attachment</label>
+                                <div class="resignation-file-picker">
+                                    <input type="file" id="resignationLetterFile" name="resignation_letter" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg">
+                                    <div class="resignation-file-hint">PDF, JPG, PNG, DOC, DOCX - max 5 MB</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label for="comments">Additional Comments</label>
-                            <textarea class="form-control" id="comments" name="comments" rows="2"></textarea>
-                            <div id="commentsDisplay" class="form-control-plaintext" style="display:none; white-space:pre-wrap; padding:.375rem .75rem; background:#f8f9fa; border-radius:.25rem;"></div>
+                            <label>Resignation Letter Preview</label>
+                            <div id="resignationLetterPreview" class="border rounded bg-light p-3" style="min-height: 220px; background: #fff; overflow: auto;"></div>
                         </div>
 
-                        <div class="form-group" id="resignationLetterSection" style="display: none;">
-                            <label>Resignation Letter</label>
-                            <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
-                                <a id="resignationLetterLink" href="#" target="_blank" rel="noopener" style="display: none;">
+                        <div class="resignation-section d-none" id="resignationLetterSection">
+                            <div class="resignation-section-header">Generated Resignation Letter</div>
+                            <div class="form-control-plaintext resignation-value-box">
+                                <a id="resignationLetterLink" href="#" target="_blank" rel="noopener" class="d-none">
                                     <i class="fas fa-file-alt mr-1"></i><span id="resignationLetterName">View resignation letter</span>
                                 </a>
-                                <span id="resignationLetterMissing" class="text-danger" style="display: none;">No resignation letter attached.</span>
+                                <span id="resignationLetterMissing" class="text-danger d-none">No resignation letter attached.</span>
                             </div>
                         </div>
 
-                        <div id="approvalSection" style="display: none;">
-                            <hr>
-                            <h6>Approval</h6>
-                            <div class="form-group">
+                        <div id="approvalSection" class="resignation-approval d-none">
+                            <div class="resignation-approval-title">Approval</div>
+                            <div class="form-group mb-3">
                                 <label for="approvalStatus">Status</label>
                                 <select class="form-control" id="approvalStatus" name="status">
                                     <option value="pending_legal_review">Approve HR review (send to Legal)</option>
@@ -246,7 +287,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                                     <option value="rejected_by_legal">Reject by Legal</option>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group mb-0">
                                 <label for="approvalComments">Approval Comments</label>
                                 <textarea class="form-control" id="approvalComments" name="approval_comments" rows="2"></textarea>
                             </div>
@@ -254,7 +295,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary" id="resignationSubmitBtn">Save Decision</button>
+                        <button type="submit" class="btn btn-primary" id="resignationSubmitBtn">Submit Resignation</button>
                     </div>
                 </form>
             </div>

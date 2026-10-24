@@ -282,7 +282,7 @@
             tbody.innerHTML = '';
 
             if (records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: #999;">No records found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="attendance-empty-state" style="text-align: center; color: #999;">No records found</td></tr>';
                 if (pageInfo) pageInfo.textContent = 'Showing 0 of 0 records';
                 if (prevBtn) prevBtn.disabled = true;
                 if (nextBtn) nextBtn.disabled = true;
@@ -304,17 +304,34 @@
                         )
                     )
                 );
+                const employeeId = record.employee_no || record.employee_id || 'N/A';
+                const initials = (() => {
+                    const name = (record.full_name || '').trim();
+                    const parts = name.split(/\s+/).filter(Boolean);
+                    if (!parts.length) return 'N/A';
+                    const first = parts[0].charAt(0).toUpperCase();
+                    const second = parts[1] ? parts[1].charAt(0).toUpperCase() : parts[0].charAt(1)?.toUpperCase() || '';
+                    return `${first}${second}`;
+                })();
+                const timeInDisplay = record.time_in ? new Date(record.time_in).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true}) : '—';
+                const timeOutDisplay = record.time_out ? new Date(record.time_out).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true}) : '—';
 
                 row.innerHTML = `
-                    <td><strong>${escapeHtml(record.employee_no || record.employee_id || 'N/A')}</strong></td>
-                    <td>${escapeHtml(record.full_name)}</td>
-                    <td>${formatTimeValue(record.shift_start)}</td>
-                    <td>${formatTimeValue(record.shift_end)}</td>
-                    <td>${record.time_in? new Date(record.time_in).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true}) : '<span style="color: #e74c3c;">Not recorded</span>'}</td>
-                    <td>${record.time_out? new Date(record.time_out).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true}) : '<span style="color: #f39c12;">Pending</span>'}</td>
-                    <td>${record.duration || 'N/A'}</td>
-                    <td><span class="badge ${statusClass}">${status}</span></td>
-                    <td>
+                    <td class="attendance-qr" data-label="QR / ID"><strong>${escapeHtml(employeeId)}</strong></td>
+                    <td class="attendance-employee" data-label="Employee">
+                        <span class="att-avatar" aria-hidden="true">${escapeHtml(initials)}</span>
+                        <span class="att-text">
+                            <span class="att-name">${escapeHtml(record.full_name || 'N/A')}</span>
+                            <span class="att-sub">${escapeHtml(`${employeeId} · In ${timeInDisplay} · Out ${timeOutDisplay}`)}</span>
+                        </span>
+                    </td>
+                    <td class="attendance-shift-start" data-label="Shift start">${formatTimeValue(record.shift_start)}</td>
+                    <td class="attendance-shift-end" data-label="Shift end">${formatTimeValue(record.shift_end)}</td>
+                    <td class="attendance-time-in" data-label="Time in">${record.time_in? new Date(record.time_in).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true}) : '<span style="color: #e74c3c;">Not recorded</span>'}</td>
+                    <td class="attendance-time-out" data-label="Time out">${record.time_out? new Date(record.time_out).toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true}) : '<span style="color: #f39c12;">Pending</span>'}</td>
+                    <td class="attendance-duration" data-label="Duration">${record.duration || 'N/A'}</td>
+                    <td class="attendance-status" data-label="Status"><span class="badge ${statusClass}">${status}</span></td>
+                    <td class="attendance-action" data-label="Action">
                         <button
                             type="button"
                             class="btn btn-sm btn-info attendance-view-btn"
@@ -332,8 +349,49 @@
                         >View Info</button>
                     </td>
                 `;
+
+                if (window.matchMedia('(max-width: 768px)').matches) {
+                    row.setAttribute('role', 'button');
+                    row.setAttribute('tabindex', '0');
+                    row.style.cursor = 'pointer';
+                    row.addEventListener('keydown', function(event) {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            const actionButton = this.querySelector('.attendance-view-btn');
+                            if (actionButton) {
+                                actionButton.click();
+                            }
+                        }
+                    });
+                }
+
                 tbody.appendChild(row);
             });
+
+            const attendanceBody = document.getElementById('attendanceBody');
+            if (attendanceBody && attendanceBody.dataset.mobileRowHandlerBound !== '1') {
+                attendanceBody.dataset.mobileRowHandlerBound = '1';
+                attendanceBody.addEventListener('click', function(event) {
+                    if (!window.matchMedia('(max-width: 768px)').matches) {
+                        return;
+                    }
+
+                    const clickedElement = event.target;
+                    if (clickedElement.closest('button, a, input, textarea, select')) {
+                        return;
+                    }
+
+                    const row = clickedElement.closest('tr');
+                    if (!row) {
+                        return;
+                    }
+
+                    const actionButton = row.querySelector('.attendance-view-btn');
+                    if (actionButton) {
+                        actionButton.click();
+                    }
+                });
+            }
 
             document.querySelectorAll('.attendance-view-btn').forEach(button => {
                 button.addEventListener('click', function() {

@@ -4,6 +4,17 @@ require_once __DIR__ . '/../models/ResignationModel.php';
 
 class ResignationController extends ExitManagementController
 {
+    private const REASON_CATEGORIES = [
+        'career_growth',
+        'personal',
+        'health',
+        'relocation',
+        'compensation',
+        'work_environment',
+        'retirement',
+        'other'
+    ];
+
     private ResignationModel $resignationModel;
 
     public function __construct()
@@ -18,23 +29,47 @@ class ResignationController extends ExitManagementController
     public function submitResignation(array $data): array
     {
         try {
-            // Validate required fields
-            $required = ['employee_id', 'resignation_type', 'reason', 'notice_date', 'last_working_date'];
+            $normalizedData = [];
+            foreach ($data as $key => $value) {
+                if (is_string($value)) {
+                    $normalizedData[$key] = trim($value);
+                } else {
+                    $normalizedData[$key] = $value;
+                }
+            }
+            $data = $normalizedData;
+
+            $required = ['employee_id', 'reason', 'notice_date', 'last_working_date'];
             foreach ($required as $field) {
                 if (empty($data[$field])) {
                     return ['success' => false, 'message' => "Field '$field' is required"];
                 }
             }
 
-            // Check employee eligibility
+            foreach (['notice_date', 'last_working_date'] as $dateField) {
+                if (!empty($data[$dateField]) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $data[$dateField])) {
+                    return ['success' => false, 'message' => "Field '$dateField' must be a valid date in YYYY-MM-DD format."];
+                }
+            }
+
+            if (!empty($data['last_working_date']) && !empty($data['notice_date']) && strtotime($data['last_working_date']) < strtotime($data['notice_date'])) {
+                return ['success' => false, 'message' => 'Intended last working day cannot be earlier than the date of submission.'];
+            }
+
+            if (!empty($data['resignation_type']) && !in_array(strtolower((string)$data['resignation_type']), ['with notice', 'immediate'], true)) {
+                return ['success' => false, 'message' => 'Invalid resignation type selected.'];
+            }
+
+            if (!empty($data['reason_category']) && !in_array(strtolower((string)$data['reason_category']), array_map('strtolower', self::REASON_CATEGORIES), true)) {
+                return ['success' => false, 'message' => 'Invalid resignation reason category selected.'];
+            }
+
             $eligibility = $this->resignationModel->checkEmployeeEligibility($data['employee_id']);
             if (!$eligibility['eligible']) {
                 return ['success' => false, 'message' => $eligibility['reason']];
             }
 
-            // Add submitted_by from session
             $data['submitted_by'] = $_SESSION['employee_id'] ?? 0;
-
             $resignationId = $this->resignationModel->submitResignation($data);
 
             return [
@@ -42,6 +77,24 @@ class ResignationController extends ExitManagementController
                 'message' => 'Resignation submitted successfully.',
                 'resignation_id' => $resignationId
             ];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function getEmployeeExitProfile(string $employeeId): array
+    {
+        try {
+            if (empty($employeeId)) {
+                return ['success' => false, 'message' => 'Employee ID is required'];
+            }
+
+            $profile = $this->resignationModel->getEmployeeExitProfile($employeeId);
+            if (!$profile) {
+                return ['success' => false, 'message' => 'Employee profile not found'];
+            }
+
+            return ['success' => true, 'data' => $profile];
         } catch (Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -284,7 +337,7 @@ class ResignationController extends ExitManagementController
     {
         switch ($action) {
             case 'submit_resignation':
-                return ['success' => false, 'message' => 'Resignation creation is managed through the Employee Portal.'];
+                return $this->submitResignation($data);
             case 'update_resignation':
                 return $this->processResignation(
                     $data['resignation_id'] ?? 0,
@@ -344,6 +397,9 @@ class ResignationController extends ExitManagementController
 
             case 'check_eligibility':
                 return $this->checkEmployeeEligibility($data['employee_id'] ?? '');
+
+            case 'get_employee_exit_profile':
+                return $this->getEmployeeExitProfile($data['employee_id'] ?? '');
 
             case 'get_employee_last_attendance_date':
                 return $this->getEmployeeLastAttendanceDate($data['employee_id'] ?? '');

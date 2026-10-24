@@ -1,0 +1,559 @@
+:root {
+    --m-card-bg: #ffffff;
+    --m-border: #e5e7eb;
+    --m-text: #0f172a;
+    --m-muted: #64748b;
+    --m-radius: 12px;
+    --m-total-start: #0b5cab;
+    --m-total-end: #0b7bd6;
+    --m-present-start: #0b79d0;
+    --m-present-end: #1e90ff;
+    --m-absent-start: #08306b;
+    --m-absent-end: #2b6cb0;
+    --m-late-start: #c76f00;
+    --m-late-end: #f59e0b;
+    --m-leave-start: #0a7f8a;
+    --m-leave-end: #12aab6;
+    --m-shadow: 0 6px 18px rgba(16, 24, 40, 0.12);
+}
+
+.att-avatar,
+.att-sub {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    body,
+    main.main-content,
+    .container,
+    .module-container,
+    .dashboard-grid,
+    .dashboard-grid *,
+    .attendance-table-wrap,
+    #attendanceHistoryPanel,
+    .right-stat,
+    .right-stat * {
+        box-sizing: border-box;
+    }
+
+    body {
+        min-width: 0;
+    }
+
+    main.main-content {
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding: 12px !important;
+    }
+
+    body.sidebar-collapse main.main-content {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    .container {
+        width: 100% !important;
+        padding: 12px !important;
+    }
+
+    .module-container {
+        width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .dashboard-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 0 16px;
+    }
+
+    .dashboard-grid > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .dashboard-grid > div:nth-child(1) {
+        order: 4;
+    }
+
+    .dashboard-grid > div:nth-child(2) {
+        order: 2;
+    }
+
+    .dashboard-grid > div:nth-child(3) {
+        order: 5;
+    }
+
+    #attendanceHistoryPanel {
+        order: 3;
+    }
+
+    .attendance-table-wrap {
+        order: 1;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 12px 10px 6px;
+    }
+
+    .attendance-table-wrap .time-table-scroll {
+        overflow: visible;
+    }
+
+    #attendanceHistoryPanel .time-table-scroll,
+    #attendanceHistoryPanel {
+        overflow-x: auto;
+        max-width: 100%;
+    }
+
+    #historyTable {
+        min-width: 640px;
+    }
+
+    .kpi-cards,
+    .dashboard-grid > div:nth-child(2) > div:first-child,
+    .dashboard-grid > div:nth-child(2) > div:nth-child(2) {
+        display: none !important;
+    }
+
+    .mobile-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin: 0 0 14px;
+    }
+
+    .mobile-stat {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 12px;
+        padding: 12px 14px;
+        min-height: 72px;
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-shadow: var(--m-shadow);
+    }
+
+    .mobile-stat.total {
+        grid-column: 1 / -1;
+        min-height: 84px;
+    }
+
+    .mobile-stat.present {
+        background: linear-gradient(90deg, var(--m-present-start), var(--m-present-end));
+    }
+
+    .mobile-stat.late {
+        background: linear-gradient(90deg, var(--m-late-start), var(--m-late-end));
+    }
+
+    .mobile-stat.absent {
+        background: linear-gradient(90deg, var(--m-absent-start), var(--m-absent-end));
+    }
+
+    .mobile-stat.leave {
+        background: linear-gradient(90deg, var(--m-leave-start), var(--m-leave-end));
+    }
+
+    .mobile-stat.total {
+        background: linear-gradient(90deg, var(--m-total-start), var(--m-total-end));
+    }
+
+    .mobile-stat .stat-icon {
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.12);
+        flex-shrink: 0;
+        font-size: 18px;
+        color: #ffffff;
+    }
+
+    .mobile-stat.total .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+    }
+
+    .mobile-stat .stat-copy {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        line-height: 1.2;
+    }
+
+    .mobile-stat .stat-label,
+    .mobile-stat .stat-sub {
+        color: rgba(255, 255, 255, 0.88);
+        display: block;
+    }
+
+    .mobile-stat .stat-label {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .mobile-stat .stat-copy strong {
+        color: #ffffff;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1.15;
+        margin-top: 2px;
+    }
+
+    .mobile-stat .stat-sub {
+        font-size: 11px;
+        line-height: 1.35;
+        opacity: 0.96;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mobile-stat.total .stat-copy strong {
+        font-size: 24px;
+    }
+
+    .filter-controls {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    #attendanceSearch {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 42px;
+        max-height: 48px;
+        font-size: 14px;
+    }
+
+    #attendanceSort {
+        width: 100% !important;
+        max-width: none !important;
+        min-height: 42px;
+        font-size: 14px;
+    }
+
+    #attendanceTable,
+    #attendanceTable thead,
+    #attendanceTable tbody,
+    #attendanceTable tr,
+    #attendanceTable td {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+
+    #attendanceTable {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    #attendanceTable thead {
+        display: none;
+    }
+
+    #attendanceTable tbody {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin: 0;
+    }
+
+    #attendanceTable tr {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 12px 28px 12px 4px;
+        border: 0;
+        border-bottom: 1px solid var(--m-border);
+        background: transparent;
+        border-radius: 0;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    #attendanceTable tr::after {
+        content: '›';
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 20px;
+        color: #94a3b8;
+        line-height: 1;
+    }
+
+    #attendanceTable td {
+        display: none;
+        padding: 0;
+        border: none;
+        min-height: 0;
+    }
+
+    #attendanceTable td.attendance-employee,
+    #attendanceTable td.attendance-status {
+        display: flex;
+        align-items: center;
+        padding: 0;
+    }
+
+    #attendanceTable td.attendance-employee {
+        flex: 1 1 auto;
+        min-width: 0;
+        align-items: center;
+        gap: 12px;
+    }
+
+    #attendanceTable td.attendance-status {
+        flex: 0 0 auto;
+        justify-content: flex-end;
+        margin-left: auto;
+    }
+
+    #attendanceTable td.attendance-status .badge {
+        margin-left: 0;
+    }
+
+    #attendanceTable td::before {
+        content: none !important;
+        display: none !important;
+    }
+
+    .att-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e2e8f0;
+        color: #0f172a;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        flex-shrink: 0;
+    }
+
+    .att-text {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .att-name {
+        display: block;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.25;
+        color: var(--m-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .att-sub {
+        display: block;
+        font-size: 12.5px;
+        line-height: 1.35;
+        color: var(--m-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #attendanceBody td[colspan="9"] {
+        display: block;
+        text-align: center;
+        padding: 18px 12px;
+        color: var(--m-muted);
+        font-weight: 600;
+        background: rgba(148, 163, 184, 0.04);
+        border-radius: 10px;
+    }
+
+    .attendance-view-btn {
+        display: none !important;
+    }
+
+    #attendanceInfoModal {
+        width: 94vw;
+        max-width: 94vw;
+        margin: 12px auto;
+    }
+
+    #attendanceInfoModal .modal-dialog {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    #attendanceInfoModal .modal-content {
+        max-height: 80vh;
+        overflow-y: auto;
+        border-radius: 12px;
+    }
+
+    #attendanceInfoModal .modal-header {
+        padding: 12px 14px;
+    }
+
+    #attendanceInfoModal .modal-body {
+        padding: 12px 14px;
+    }
+
+    #attendanceInfoModal .close {
+        font-size: 22px;
+        line-height: 1;
+        padding: 4px 8px;
+    }
+
+    .dashboard-grid > div:nth-child(1) {
+        width: 100%;
+    }
+
+    .dashboard-grid > div:nth-child(1) > div:first-child {
+        width: 100%;
+    }
+
+    .dashboard-grid > div:nth-child(3) > div {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .right-stat,
+    .trend-card {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .right-stat {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 82px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        color: #ffffff;
+        box-shadow: var(--m-shadow);
+        background: linear-gradient(90deg, var(--m-total-start), var(--m-total-end));
+    }
+
+    .right-stat.avg,
+    .right-stat.below {
+        background: linear-gradient(90deg, var(--m-present-start), var(--m-present-end));
+    }
+
+    .right-stat > div:first-child {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .right-stat > div:last-child {
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .right-stat canvas {
+        width: 56px !important;
+        height: 56px !important;
+        max-width: 56px !important;
+        max-height: 56px !important;
+    }
+
+    .trend-card {
+        display: block;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: #ffffff;
+        border: 1px solid var(--m-border);
+        box-shadow: var(--m-shadow);
+    }
+
+    canvas#attendanceTrend {
+        max-width: 100% !important;
+        width: 100% !important;
+        height: 180px !important;
+    }
+
+    /* ===== Mobile overrides (final) ===== */
+    .mobile-stat.late {
+        background: linear-gradient(90deg, #026aa7, #0585d6) !important;
+    }
+
+    .mobile-stat.leave {
+        background: linear-gradient(90deg, #1d4f91, #3b82c4) !important;
+    }
+
+    .right-stat.avg {
+        background: linear-gradient(90deg, #1976d2, #4f83cc) !important;
+    }
+
+    .right-stat.below {
+        background: linear-gradient(90deg, #08306b, #1659a1) !important;
+    }
+
+    .dashboard-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .dashboard-grid > div:nth-child(1) {
+        order: 4 !important;
+    }
+
+    .dashboard-grid > div:nth-child(2) {
+        display: none !important;
+    }
+
+    .dashboard-grid > div:nth-child(3),
+    .dashboard-grid > div:nth-child(3) > div {
+        display: contents !important;
+    }
+
+    .dashboard-grid .right-stat.avg,
+    .dashboard-grid .right-stat.below {
+        order: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+    }
+
+    .dashboard-grid > .attendance-table-wrap {
+        order: 1 !important;
+    }
+
+    .dashboard-grid .trend-card {
+        order: 2 !important;
+    }
+
+    #attendanceHistoryPanel {
+        order: 3 !important;
+    }
+}

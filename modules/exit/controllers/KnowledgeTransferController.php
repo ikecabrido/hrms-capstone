@@ -105,7 +105,28 @@ class KnowledgeTransferController extends ExitManagementController
         return ['success' => true, 'items' => $validated];
     }
 
-    private function validateTransferPlanData(array $data): array
+    private function getSuccessorCandidatesForEmployee(int $employeeId, ?int $currentSuccessorId = null): array
+    {
+        return $this->transferModel->getSuccessorCandidates(
+            $employeeId > 0 ? $employeeId : 0,
+            $currentSuccessorId > 0 ? $currentSuccessorId : null
+        );
+    }
+
+    private function isValidSuccessorCandidate(int $successorId, int $employeeId, ?int $currentSuccessorId = null): bool
+    {
+        $candidates = $this->getSuccessorCandidatesForEmployee($employeeId, $currentSuccessorId);
+
+        foreach ($candidates as $candidate) {
+            if ((int)($candidate['id'] ?? 0) === (int)$successorId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function validateTransferPlanData(array $data, ?int $currentSuccessorId = null): array
     {
         $required = ['employee_id', 'successor_id', 'start_date', 'end_date'];
         foreach ($required as $field) {
@@ -140,6 +161,11 @@ class KnowledgeTransferController extends ExitManagementController
 
         if ((int)$data['employee_id'] === (int)$data['successor_id']) {
             return ['success' => false, 'message' => 'The successor must be different from the employee leaving.'];
+        }
+
+        $unchangedSuccessor = $currentSuccessorId !== null && $currentSuccessorId > 0 && (int)$data['successor_id'] === (int)$currentSuccessorId;
+        if (!$unchangedSuccessor && !$this->isValidSuccessorCandidate((int)$data['successor_id'], (int)$data['employee_id'], $currentSuccessorId)) {
+            return ['success' => false, 'message' => 'The successor must be an employee with no position.'];
         }
 
         return ['success' => true];
@@ -191,7 +217,10 @@ class KnowledgeTransferController extends ExitManagementController
                 return ['success' => false, 'message' => 'Invalid transfer plan ID'];
             }
 
-            $validation = $this->validateTransferPlanData($data);
+            $existingPlan = $this->transferModel->getTransferPlanById($planId);
+            $currentSuccessorId = $existingPlan && isset($existingPlan['successor_id']) ? (int)$existingPlan['successor_id'] : null;
+
+            $validation = $this->validateTransferPlanData($data, $currentSuccessorId);
             if (!$validation['success']) {
                 return $validation;
             }
@@ -573,20 +602,41 @@ class KnowledgeTransferController extends ExitManagementController
             case 'get_resignee_courses':
                 return $this->getResigneeCourses((int)($data['employee_id'] ?? 0));
 
-            case 'generate_kt_learning_path':
-                return $this->generateLearningPath(
-                    (int)($data['plan_id'] ?? 0),
-                    isset($data['course_ids']) && is_array($data['course_ids']) ? $data['course_ids'] : []
+            case 'get_successor_candidates':
+                return $this->getSuccessorCandidatesForEmployee(
+                    (int)($data['employee_id'] ?? 0),
+                    isset($data['current_successor_id']) && $data['current_successor_id'] !== '' ? (int)$data['current_successor_id'] : null
                 );
 
-            case 'toggle_kt_path_public':
-                return $this->toggleLearningPathPublic(
+            case 'request_ld_processing':
+                return $this->transferModel->requestLdProcessing(
                     (int)($data['plan_id'] ?? 0),
-                    !empty($data['is_public'])
+                    [
+                        'course_ids' => isset($data['course_ids']) && is_array($data['course_ids']) ? $data['course_ids'] : [],
+                        'requested_by' => $data['requested_by'] ?? ($_SESSION['employee_id'] ?? 0),
+                        'notes' => $data['notes'] ?? 'Learning path request created by Exit staff.',
+                    ]
                 );
 
-            case 'get_kt_learning_path':
-                return $this->getLearningPathForPlan((int)($data['plan_id'] ?? 0));
+            case 'get_ld_progress':
+                return $this->transferModel->getLdProgress((int)($data['plan_id'] ?? 0));
+
+            case 'sync_ld_progress_all':
+                return $this->transferModel->syncAllPendingLdProgress();
+
+            case 'approve_kt_plan':
+                return $this->transferModel->approveKtPlan(
+                    (int)($data['plan_id'] ?? 0),
+                    (int)($data['actor_id'] ?? ($_SESSION['employee_id'] ?? 0)),
+                    (string)($data['notes'] ?? '')
+                );
+
+            case 'return_kt_to_ld':
+                return $this->transferModel->returnKtToLd(
+                    (int)($data['plan_id'] ?? 0),
+                    (int)($data['actor_id'] ?? ($_SESSION['employee_id'] ?? 0)),
+                    (string)($data['notes'] ?? '')
+                );
 
             case 'archive_transfer_plan':
                 return $this->archiveTransferPlan(

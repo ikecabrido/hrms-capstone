@@ -232,13 +232,29 @@ class SettlementController extends ExitManagementController
             $earnings = [];
             $deductions = [];
             $payrollSettlementId = $settlement['payroll_settlement_id'] ?? null;
+            $effectiveStatus = strtolower((string)($settlement['status'] ?? 'requested'));
 
-            if (!empty($payrollSettlementId) && $this->settlementModel->tableExists('pr_final_settlements')) {
-                $stmt = $this->settlementModel->getConnection()->prepare(
-                    "SELECT * FROM pr_final_settlements WHERE settlement_id = ? LIMIT 1"
-                );
-                $stmt->execute([$payrollSettlementId]);
-                $payrollSettlement = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            if ($this->settlementModel->tableExists('pr_final_settlements')) {
+                $payrollStmt = null;
+                if (!empty($payrollSettlementId)) {
+                    $payrollStmt = $this->settlementModel->getConnection()->prepare(
+                        "SELECT * FROM pr_final_settlements WHERE settlement_id = ? LIMIT 1"
+                    );
+                    $payrollStmt->execute([$payrollSettlementId]);
+                } elseif (!empty($settlement['settlement_id'])) {
+                    $payrollStmt = $this->settlementModel->getConnection()->prepare(
+                        "SELECT * FROM pr_final_settlements WHERE exit_settlement_id = ? ORDER BY settlement_id DESC LIMIT 1"
+                    );
+                    $payrollStmt->execute([(int)$settlement['settlement_id']]);
+                }
+
+                if ($payrollStmt) {
+                    $payrollSettlement = $payrollStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+                    if ($payrollSettlement) {
+                        $payrollSettlementId = $payrollSettlement['settlement_id'] ?? $payrollSettlementId;
+                        $effectiveStatus = strtolower((string)($payrollSettlement['status'] ?? $effectiveStatus));
+                    }
+                }
 
                 if ($payrollSettlement && $this->settlementModel->tableExists('pr_final_settlement_items')) {
                     $itemStmt = $this->settlementModel->getConnection()->prepare(
@@ -270,6 +286,7 @@ class SettlementController extends ExitManagementController
                     'last_working_date' => $settlement['last_working_date'] ?? null,
                     'requested_at' => $settlement['requested_at'] ?? null,
                     'status' => $settlement['status'] ?? 'requested',
+                    'effective_status' => $effectiveStatus,
                     'payroll_settlement_id' => $payrollSettlementId,
                     'created_at' => $settlement['created_at'] ?? null,
                     'updated_at' => $settlement['updated_at'] ?? null,

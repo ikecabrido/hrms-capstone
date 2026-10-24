@@ -55,8 +55,39 @@
     }
 
     header {
+        position: fixed !important;
+        top: 0 !important;
         left: 0 !important;
+        right: 0 !important;
         width: 100% !important;
+        height: 52px !important;
+        display: flex !important;
+        align-items: center !important;
+        z-index: 1000 !important;
+        background: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    .realtime {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-left: auto !important;
+        margin-right: 0.5rem !important;
+        color: #0f172a !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+        padding: 0.35rem 0.55rem !important;
+    }
+
+    .main-content,
+    .module-content,
+    .content-wrapper,
+    .page-shell,
+    .content-shell,
+    .page-container {
+        margin-top: 52px !important;
     }
 
     .sidebar {
@@ -176,7 +207,6 @@
         min-width: 540px;
     }
 }
-
 @media (max-width: 480px) {
     header {
         height: 52px;
@@ -263,5 +293,42 @@
     .icon-dropdown {
         width: min(94vw, 240px);
         right: 6px !important;
+    }
+}
+
+/* ===== Mobile overrides (final) ===== */
+@media (max-width: 768px) {
+    header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        padding: 0 12px !important;
+        box-sizing: border-box !important;
+        z-index: 999 !important;
+    }
+
+    header .hamburger {
+        flex: 0 0 auto !important;
+        margin: 0 !important;
+    }
+
+    header .realtime,
+    #realtimeClock {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: static !important;
+        transform: none !important;
+        flex: 0 0 auto !important;
+        margin: 0 0 0 auto !important;
+        padding: 0 !important;
+        color: #111 !important;
+        font-size: 0.9rem !important;
+        white-space: nowrap !important;
     }
 }

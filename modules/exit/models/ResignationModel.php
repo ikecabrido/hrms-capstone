@@ -79,7 +79,7 @@ class ResignationModel extends ExitManagementModel
             $placeholders = ['?'];
             $values = [$data['employee_id']];
 
-            if ($this->columnExists('exit_resignations', 'resignation_type')) {
+            if ($this->columnExists('exit_resignations', 'resignation_type') && !empty($data['resignation_type'])) {
                 $columns[] = 'resignation_type';
                 $placeholders[] = '?';
                 $values[] = $data['resignation_type'];
@@ -131,39 +131,43 @@ class ResignationModel extends ExitManagementModel
         }
     }
 
+    private function pdfText(string $text): string
+    {
+        $converted = @iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $text);
+        return $converted !== false ? $converted : $text;
+    }
+
     protected function saveResignationLetter(int $resignationId, array $data): void
     {
         $employeeId = $data['employee_id'] ?? '';
         $employeeName = '';
+        $department = '';
+        $position = '';
         try {
-            $stmt = $this->db->prepare("SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM em_employees WHERE employee_id = ? LIMIT 1");
+            $stmt = $this->db->prepare("SELECT CONCAT(first_name, ' ', last_name) AS full_name, COALESCE(d.department_name, '') AS department_name, COALESCE(p.position_name, '') AS position_name FROM em_employees e LEFT JOIN em_departments d ON d.department_id = e.department_id LEFT JOIN em_positions p ON p.position_id = e.position_id WHERE e.employee_id = ? LIMIT 1");
             $stmt->execute([$employeeId]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($row) {
                 $employeeName = $row['full_name'];
+                $department = $row['department_name'];
+                $position = $row['position_name'];
             }
         } catch (Exception $e) {
             // ignore
         }
 
         $noticeDate = $data['notice_date'] ?? '';
+        $noticeDateForPdf = '';
+        if (!empty($noticeDate) && strtotime($noticeDate) !== false) {
+            $noticeDateForPdf = date('F j, Y', strtotime($noticeDate));
+        }
+        if ($noticeDateForPdf === '') {
+            $noticeDateForPdf = date('F j, Y');
+        }
+
         $lastWorkingDate = $data['last_working_date'] ?? '';
         $reason = $data['reason'] ?? '';
         $comments = $data['comments'] ?? '';
-
-        $html = '<!doctype html><html><head><meta charset="utf-8"><title>Resignation Letter</title>' .
-            '<style>body{font-family:Arial,sans-serif;margin:24px;color:#172b4d;} .school-header{display:flex;align-items:center;border-bottom:2px solid #1f5fbf;padding-bottom:14px;margin-bottom:20px;} .school-header img{width:86px;height:86px;object-fit:contain;margin-right:18px;} .school-name{font-size:20px;font-weight:700;color:#174a8b;} .school-details{font-size:12px;line-height:1.6;color:#333;margin-top:4px;} .content{font-size:14px;line-height:1.7;color:#1f2937;}</style>' .
-            '</head><body>' .
-            '<div class="school-header"><img src="/capstone_hr_management_system2/assets/pics/bcpLogo.png" alt="BCP logo"><div><div class="school-name">Bestlink College of the Philippines - Bulacan Campus</div><div class="school-details">Lot 1 Ipo Road Brgy. Minuyan Proper, City of San Jose Del Monte, Bulacan.<br>Tel. No.: (044)792-1992</div></div></div>' .
-            '<h2>Resignation Letter</h2>' .
-            '<div class="content">' .
-            '<p>This letter serves as formal notice that <strong>' . htmlspecialchars($employeeName, ENT_QUOTES) . '</strong> (Employee ID: ' . htmlspecialchars($employeeId, ENT_QUOTES) . ') is resigning from employment.</p>' .
-            '<p><strong>Notice date:</strong> ' . htmlspecialchars($noticeDate, ENT_QUOTES) . '</p>' .
-            '<p><strong>Last working date:</strong> ' . htmlspecialchars($lastWorkingDate, ENT_QUOTES) . '</p>' .
-            '<p><strong>Reason for resignation:</strong> ' . nl2br(htmlspecialchars($reason, ENT_QUOTES)) . '</p>' .
-            ($comments ? '<p><strong>Additional notes:</strong> ' . nl2br(htmlspecialchars($comments, ENT_QUOTES)) . '</p>' : '') .
-            '<p>Issued by HR Management</p>' .
-            '</div></body></html>';
 
         $uploadDir = __DIR__ . '/../uploads/documents/';
         if (!is_dir($uploadDir)) {
@@ -174,7 +178,74 @@ class ResignationModel extends ExitManagementModel
         $filePathRelative = 'uploads/documents/' . $fileName;
         $fullPath = __DIR__ . '/../' . $filePathRelative;
 
-        $pdfGenerated = $this->buildPdfFromText($fullPath, 'Resignation Letter', $html);
+        if (file_exists(__DIR__ . '/../vendor/fpdf/fpdf.php')) {
+            require_once __DIR__ . '/../vendor/fpdf/fpdf.php';
+
+            $pdf = new \FPDF();
+            $pdf->AddPage();
+            $logoPath = realpath(__DIR__ . '/../../time/assets/pics/bcpLogo.png');
+            if ($logoPath && file_exists($logoPath)) {
+                $pdf->Image($logoPath, 10, 10, 25);
+            }
+
+            $pdf->SetTextColor(23, 74, 139);
+            $pdf->SetFont('Arial', 'B', 14);
+            $pdf->SetXY(40, 12);
+            $pdf->Cell(0, 6, 'Bestlink College of the Philippines - Bulacan Campus', 0, 1, 'L');
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('Arial', '', 10);
+            $pdf->SetX(40);
+            $pdf->MultiCell(0, 5, 'Lot 1 Ipo Road Brgy. Minuyan Proper, City of San Jose Del Monte, Bulacan. Tel. No.: (044)792-1992', 0, 'L');
+            $pdf->SetDrawColor(31, 95, 191);
+            $pdf->SetLineWidth(0.8);
+            $pdf->Line(10, $pdf->GetY() + 4, $pdf->GetPageWidth() - 10, $pdf->GetY() + 4);
+            $pdf->Ln(10);
+
+            $pdf->SetTextColor(15, 42, 74);
+            $pdf->SetFont('Arial', 'B', 16);
+            $pdf->Cell(0, 8, 'RESIGNATION LETTER', 0, 1, 'C');
+            $pdf->Ln(6);
+
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(0, 6, $this->pdfText($noticeDateForPdf), 0, 1, 'R');
+            $pdf->Ln(6);
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, 'To: Human Resources Office', 0, 1, 'L');
+            $pdf->Ln(4);
+
+            $pdf->SetFont('Arial', '', 11);
+            $bodyText = "This is to formally inform the Human Resources Office that I, {$employeeName}, am resigning from my position as " . ($position ?: 'Employee') . " in the " . ($department ?: 'Department') . " department. My intended last working day is {$lastWorkingDate}, and this notice was submitted on {$noticeDateForPdf}.";
+            $pdf->MultiCell(0, 7, $this->pdfText($bodyText));
+            $pdf->Ln(4);
+
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, 'Reason for resignation:', 0, 1, 'L');
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->MultiCell(0, 7, $this->pdfText($reason ?: 'Not specified.'));
+            if (!empty($comments)) {
+                $pdf->Ln(2);
+                $pdf->SetFont('Arial', 'B', 11);
+                $pdf->Cell(0, 6, 'Additional Comments:', 0, 1, 'L');
+                $pdf->SetFont('Arial', '', 11);
+                $pdf->MultiCell(0, 7, $this->pdfText($comments));
+            }
+            $pdf->Ln(4);
+            $pdf->MultiCell(0, 7, $this->pdfText("I am grateful for the opportunity to serve in this institution and appreciate the support extended to me during my employment. I will cooperate in the transition process and ensure the continuity of my responsibilities before my final day."));
+            $pdf->Ln(10);
+            $pdf->SetFont('Arial', '', 11);
+            $pdf->Cell(0, 6, 'Sincerely,', 0, 1, 'L');
+            $pdf->Ln(12);
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 6, $this->pdfText($employeeName), 0, 1, 'L');
+            $pdf->Cell(0, 6, $this->pdfText($position ?: 'Employee'), 0, 1, 'L');
+            $pdf->Output('F', $fullPath);
+            $pdfGenerated = file_exists($fullPath);
+        } else {
+            $html = '<!doctype html><html><head><meta charset="utf-8"><title>Resignation Letter</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#172b4d;} .school-header{display:flex;align-items:center;border-bottom:2px solid #1f5fbf;padding-bottom:14px;margin-bottom:20px;} .school-header img{width:86px;height:86px;object-fit:contain;margin-right:18px;} .school-name{font-size:20px;font-weight:700;color:#174a8b;} .school-details{font-size:12px;line-height:1.6;color:#333;margin-top:4px;} .content{font-size:14px;line-height:1.7;color:#1f2937;}</style></head><body><div class="school-header"><img src="/capstone_hr_management_system2/assets/pics/bcpLogo.png" alt="BCP logo"><div><div class="school-name">Bestlink College of the Philippines - Bulacan Campus</div><div class="school-details">Lot 1 Ipo Road Brgy. Minuyan Proper, City of San Jose Del Monte, Bulacan.<br>Tel. No.: (044)792-1992</div></div></div><h2>RESIGNATION LETTER</h2><div class="content"><p><strong>To: Human Resources Office</strong></p><p>This is to formally inform the Human Resources Office that I, <strong>' . htmlspecialchars($employeeName, ENT_QUOTES) . '</strong>, am resigning from my position as <strong>' . htmlspecialchars($position ?: 'Employee', ENT_QUOTES) . '</strong> in the <strong>' . htmlspecialchars($department ?: 'Department', ENT_QUOTES) . '</strong> department. My intended last working day is <strong>' . htmlspecialchars($lastWorkingDate, ENT_QUOTES) . '</strong>, and this notice was submitted on <strong>' . htmlspecialchars($noticeDate, ENT_QUOTES) . '</strong>.</p><p><strong>Reason for resignation:</strong> ' . nl2br(htmlspecialchars($reason ?: 'Not specified.', ENT_QUOTES)) . '</p>' . ($comments ? '<p><strong>Additional Comments:</strong> ' . nl2br(htmlspecialchars($comments, ENT_QUOTES)) . '</p>' : '') . '<p>I am grateful for the opportunity to serve in this institution and appreciate the support extended to me during my employment. I will cooperate in the transition process and ensure the continuity of my responsibilities before my final day.</p><p><strong>Sincerely,</strong><br>' . htmlspecialchars($employeeName, ENT_QUOTES) . '<br>' . htmlspecialchars($position ?: 'Employee', ENT_QUOTES) . '</p></div></body></html>';
+            $pdfGenerated = $this->buildPdfFromText($fullPath, 'Resignation Letter', $html);
+        }
+
         if (!$pdfGenerated) {
             throw new Exception('Unable to generate resignation letter PDF');
         }
@@ -208,6 +279,15 @@ class ResignationModel extends ExitManagementModel
         $stmt->execute([$settlementId, $requestedBy, $comments]);
 
         return (int)$this->db->lastInsertId();
+    }
+
+    public function getEmployeeExitProfile(string $employeeId): ?array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT e.employee_id, CONCAT(e.first_name, ' ', e.last_name) AS employee_name, e.email,\n                    COALESCE(d.department_name, '') AS department_name,\n                    COALESCE(pos.position_name, '') AS position_name,\n                    e.hire_date, e.employment_status AS status\n             FROM em_employees e\n             LEFT JOIN em_departments d ON d.department_id = e.department_id\n             LEFT JOIN em_positions pos ON pos.position_id = e.position_id\n             WHERE e.employee_id = ?\n             LIMIT 1"
+        );
+        $stmt->execute([$employeeId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
     /**
@@ -607,14 +687,25 @@ class ResignationModel extends ExitManagementModel
         }
 
         // Check for existing pending resignation
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM exit_resignations WHERE employee_id = ? AND status IN ('pending_review','pending_legal_review')");
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM exit_resignations WHERE employee_id = ? AND status IN ('pending_review','pending_legal_review','approved')");
         $stmt->execute([$employeeId]);
         $pendingCount = (int)$stmt->fetchColumn();
 
         if ($pendingCount > 0) {
             return [
                 'eligible' => false,
-                'reason' => 'Employee already has an active resignation request in review.'
+                'reason' => 'Employee already has an active resignation request in review or an approved resignation on file.'
+            ];
+        }
+
+        $stmt = $this->db->prepare("SELECT COUNT(*) FROM exit_terminations WHERE employee_id = ? AND status IN ('pending_review', 'pending_legal_review', 'approved')");
+        $stmt->execute([$employeeId]);
+        $terminationCount = (int)$stmt->fetchColumn();
+
+        if ($terminationCount > 0) {
+            return [
+                'eligible' => false,
+                'reason' => 'Employee has an active termination case in progress.'
             ];
         }
 

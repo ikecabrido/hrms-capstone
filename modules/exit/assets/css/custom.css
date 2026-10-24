@@ -75,6 +75,336 @@
   padding: 0; /* keep existing modal content spacing intact; adjust in content if needed */
 }
 
+#resignationModal .modal-dialog {
+  max-width: 820px;
+  margin: 1.75rem auto;
+}
+
+#resignationModal .modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+#resignationModal .modal-body {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding: 22px 24px 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+#resignationModal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+}
+
+#resignationModal .modal-footer .btn {
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 0.72rem 1.4rem;
+  min-width: 138px;
+}
+
+#resignationModal .modal-footer .btn-secondary {
+  background: #fff;
+  border-color: #d8e5f5;
+  color: #334155;
+}
+
+#resignationModal #resignationSubmitBtn {
+  background: linear-gradient(135deg, #1a88ff 0%, #0d5ecb 100%);
+  border: none;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(29, 108, 214, 0.22);
+}
+
+#resignationModal #resignationSubmitBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+#resignationModal .resignation-section {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e9eef7;
+}
+
+#resignationModal .resignation-section:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+#resignationModal .resignation-section-header {
+  margin: 0 0 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #1d3557;
+}
+
+#resignationModal .resignation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+#resignationModal .resignation-field,
+#resignationModal .form-group {
+  margin-bottom: 18px;
+}
+
+#resignationModal .form-group label,
+#resignationModal .resignation-field label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1d3557;
+}
+
+#resignationModal .text-danger {
+  color: #dc3545 !important;
+}
+
+#resignationModal .form-control,
+#resignationModal .resignation-readonly,
+#resignationModal .form-control-plaintext,
+#resignationModal .resignation-value-box {
+  width: 100%;
+  border: 1px solid #d8e5f5;
+  border-radius: 6px;
+  min-height: 46px;
+  padding: 0.8rem 0.9rem;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1f2937;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+#resignationModal .form-control:focus,
+#resignationModal .resignation-readonly:focus {
+  border-color: #30a2ff;
+  box-shadow: 0 0 0 3px rgba(48, 162, 255, 0.15);
+  outline: none;
+}
+
+#resignationModal .resignation-readonly {
+  background: #f3f5f7;
+  color: #475569;
+  cursor: default;
+  box-shadow: none;
+}
+
+#resignationModal .form-control-plaintext,
+#resignationModal .resignation-value-box {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  color: #1f2937;
+  white-space: pre-wrap;
+}
+
+#resignationModal textarea.form-control {
+  min-height: 110px;
+}
+
+#resignationModal textarea#comments.form-control {
+  min-height: 90px;
+}
+
+#resignationModal .resignation-helper {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #dfeaf7;
+  background: #eef5ff;
+  color: #1d4f91;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+#resignationModal .resignation-helper.alert-danger {
+  background: #fdecec;
+  border-color: #f3b5b5;
+  color: #8a1f1f;
+}
+
+#resignationModal .resignation-helper.alert-success {
+  background: #dff7e8;
+  border-color: #9fe4b6;
+  color: #1e6b42;
+}
+
+#resignationModal .resignation-field-helper {
+  margin-top: 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid #eaf1f9;
+  background: #f7fafc;
+  color: #52657f;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+#resignationModal .resignation-file-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px dashed #bfd4ef;
+  border-radius: 10px;
+  background: #f9fbff;
+}
+
+#resignationModal .resignation-file-picker input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  color: #334155;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+#resignationModal .resignation-file-picker input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #cfe0f6;
+  border-radius: 4px;
+  background: #eaf3ff;
+  color: #1d4f91;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#resignationModal .resignation-file-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  letter-spacing: 0.02em;
+}
+
+#resignationModal .resignation-approval {
+  margin-top: 12px;
+  padding: 18px 18px 4px;
+  border-radius: 12px;
+  border: 1px solid #e6eef7;
+  background: #f8fbff;
+}
+
+#resignationModal .resignation-approval-title {
+  margin: 0 0 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #1d3557;
+}
+
+#resignationModal #resignationLetterPreview {
+  min-height: 220px;
+  background: #fff;
+  overflow: auto;
+  border-radius: 10px;
+  border: 1px solid #d8e5f5;
+}
+
+#resignationModal #resignationLetterSection .form-control-plaintext {
+  min-height: 52px;
+}
+
+@media (max-width: 768px) {
+  #resignationModal .modal-dialog {
+    max-width: 100%;
+    margin: 0.75rem auto;
+  }
+
+  #resignationModal .resignation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #resignationModal .modal-body {
+    padding: 18px 16px 8px;
+  }
+
+  #resignationModal .modal-footer {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: 14px 16px 18px;
+  }
+}
+
+body.dark-mode #resignationModal .modal-content {
+  background: #0f172a;
+  border-color: #2a3d50;
+  color: #e2e8f0;
+}
+
+body.dark-mode #resignationModal .modal-header,
+body.dark-mode #resignationModal .modal-footer {
+  background: #111827;
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.dark-mode #resignationModal .resignation-section,
+body.dark-mode #resignationModal .resignation-approval {
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+body.dark-mode #resignationModal .resignation-section-header,
+body.dark-mode #resignationModal .form-group label,
+body.dark-mode #resignationModal .resignation-field label,
+body.dark-mode #resignationModal .resignation-approval-title {
+  color: #dfe7f4;
+}
+
+body.dark-mode #resignationModal .form-control,
+body.dark-mode #resignationModal .resignation-readonly,
+body.dark-mode #resignationModal .form-control-plaintext,
+body.dark-mode #resignationModal .resignation-value-box,
+body.dark-mode #resignationModal .resignation-file-picker {
+  background: #111827;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+body.dark-mode #resignationModal .resignation-readonly,
+body.dark-mode #resignationModal .resignation-field-helper,
+body.dark-mode #resignationModal .resignation-file-hint {
+  color: #cbd5e1;
+}
+
+body.dark-mode #resignationModal .resignation-file-picker {
+  background: rgba(15, 23, 42, 0.65);
+}
+
+body.dark-mode #resignationModal .resignation-helper {
+  background: rgba(37, 99, 235, 0.15);
+  color: #dbeafe;
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+body.dark-mode #resignationModal .resignation-helper.alert-danger {
+  background: rgba(127, 29, 29, 0.2);
+  color: #fecaca;
+}
+
+body.dark-mode #resignationModal .resignation-helper.alert-success {
+  background: rgba(21, 128, 61, 0.18);
+  color: #bbf7d0;
+}
+
 /* Archive Resignation modal spacing and label consistency */
 #archiveResignationModal .alert {
   margin-bottom: 16px;
@@ -233,6 +563,19 @@
 
 .settlement-step.pending .step-label {
   color: #64748b;
+}
+
+.step-time {
+  display: block;
+  min-height: 1.1rem;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  color: #64748b;
+}
+
+.settlement-step.active .step-time {
+  color: #1d4ed8;
+  font-weight: 600;
 }
 
 .settlement-view-info-grid {
@@ -4148,4 +4491,107 @@ body.dark-mode #document-status-filter option,
 body.dark-mode #survey-status-filter option {
   color: #e0e0e0;
   background-color: #3a3f47;
+}
+
+.survey-rating-control {
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+  background: #fff;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.survey-rating-control .survey-rating-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.survey-rating-control .survey-rating-header strong {
+  font-size: 0.96rem;
+  color: #212529;
+}
+
+.survey-rating-control .survey-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e9f7ef;
+  color: #1f7a45;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.survey-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.survey-star {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #d4d7dc;
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.survey-star:hover,
+.survey-star.preview {
+  color: #f4b400;
+  transform: scale(1.08);
+}
+
+.survey-star.selected {
+  color: #f4b400;
+}
+
+.survey-rating-label {
+  margin-left: 10px;
+  font-size: 0.86rem;
+  color: #495057;
+  font-weight: 600;
+}
+
+.survey-rating-radios {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.survey-rating-control.readonly .survey-star,
+.survey-rating-control.readonly .survey-star:hover {
+  cursor: default;
+  opacity: 0.9;
+}
+
+body.dark-mode .survey-rating-control {
+  border-color: #495057;
+  background: #2f343a;
+}
+
+body.dark-mode .survey-rating-control .survey-rating-header strong,
+body.dark-mode .survey-rating-label {
+  color: #f8f9fa;
+}
+
+body.dark-mode .survey-rating-control .survey-rating-badge {
+  background: rgba(40, 167, 69, 0.18);
+  color: #9fe7b0;
 }

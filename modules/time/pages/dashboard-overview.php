@@ -200,6 +200,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
 ?>
 <link rel="stylesheet" href="assets/css/dashboard-template.css">
 <link rel="stylesheet" href="assets/css/dashboard.css">
+<link rel="stylesheet" href="assets/css/dashboard-mobile.css?v=<?= @filemtime(__DIR__ . '/../assets/css/dashboard-mobile.css') ?: time() ?>">
 <link rel="stylesheet" href="assets/css/realtime-dashboard.css">
 <link rel="stylesheet" href="assets/css/upcoming-holidays-widget.css">
 
@@ -226,6 +227,47 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                 </div>
             </div>
             <?php endif; ?>
+
+            <div class="mobile-stats">
+                <div class="mobile-stat total">
+                    <span class="stat-icon"><i class="fas fa-users"></i></span>
+                    <div class="stat-copy">
+                        <span class="stat-label">TOTAL EMPLOYEES</span>
+                        <strong><?php echo $allEmployees; ?></strong>
+                        <span class="stat-sub">Active employees</span>
+                    </div>
+                </div>
+                <div class="mobile-stat present">
+                    <span class="stat-icon"><i class="fas fa-user-check"></i></span>
+                    <div class="stat-copy">
+                        <span class="stat-label">Present</span>
+                        <strong><?php echo (int)($todayStatusCounts['PRESENT'] ?? 0); ?></strong>
+                        <span class="stat-sub"><?php echo $attendancePercentage; ?>% attendance</span>
+                    </div>
+                </div>
+                <div class="mobile-stat late">
+                    <span class="stat-icon"><i class="fas fa-clock"></i></span>
+                    <div class="stat-copy">
+                        <span class="stat-label">Late</span>
+                        <strong><?php echo (int)($todayStatusCounts['LATE'] ?? 0); ?></strong>
+                    </div>
+                </div>
+                <div class="mobile-stat absent">
+                    <span class="stat-icon"><i class="fas fa-user-times"></i></span>
+                    <div class="stat-copy">
+                        <span class="stat-label">Absent</span>
+                        <strong><?php echo (int)($todayStatusCounts['ABSENT'] ?? 0); ?></strong>
+                        <span class="stat-sub">Need follow-up</span>
+                    </div>
+                </div>
+                <div class="mobile-stat leave">
+                    <span class="stat-icon"><i class="fas fa-umbrella-beach"></i></span>
+                    <div class="stat-copy">
+                        <span class="stat-label">On Leave</span>
+                        <strong><?php echo (int)($todayStatusCounts['ON_LEAVE'] ?? 0); ?></strong>
+                    </div>
+                </div>
+            </div>
 
             <!-- Dashboard grid: left = Top Employees, middle = KPIs + Today's Attendance, right = Avg & Trend -->
             <div class="dashboard-grid" style="display:grid;grid-template-columns:280px 1fr 360px;gap:16px;align-items:start;margin-bottom:12px;">
@@ -352,7 +394,7 @@ $current_role = $_SESSION['role'] ?? $_SESSION['user']['role'] ?? 'time';
                             </div>
                         </div>
 
-                        <div style="background:#fff;border:1px solid #e9eef6;padding:12px;border-radius:8px;min-height:160px;">
+                        <div class="trend-card" style="background:#fff;border:1px solid #e9eef6;padding:12px;border-radius:8px;min-height:160px;">
                             <div style="display:flex;align-items:center;justify-content:space-between;">
                                 <strong>Attendance Trend (7 days)</strong>
                                 <small style="color:#667085;">Expected baseline: <?php echo $expectedPresentBaseline; ?></small>

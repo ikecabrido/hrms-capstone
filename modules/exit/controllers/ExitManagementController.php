@@ -312,7 +312,7 @@ class ExitManagementController
                 LEFT JOIN em_employees e ON e.employee_id = s.employee_id
                 LEFT JOIN exit_resignations r ON s.exit_case_type = 'resignation' AND s.exit_case_id = r.id
                 LEFT JOIN exit_terminations t ON s.exit_case_type = 'termination' AND s.exit_case_id = t.id
-                WHERE s.approval_status IN ('draft', 'scheduled')
+                WHERE s.approval_status IN ('pending', 'draft', 'scheduled')
                   AND s.scheduled_date IS NOT NULL
                   AND s.scheduled_date BETWEEN ? AND ?
                   AND (
@@ -1057,6 +1057,11 @@ class ExitManagementController
             $countStmt = $db->query("SELECT COUNT(*) AS count FROM payroll_clearances WHERE status = 'approved' AND approved_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)");
             $notificationCount = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['count'];
 
+            $hasExitNetPayableColumn = $this->model->columnExists('exit_employee_settlements', 'net_payable');
+            $netPayableSql = $this->model->tableExists('pr_final_settlements')
+                ? "CASE WHEN ps.status IN ('calculated', 'for_approval', 'approved', 'paid') THEN ps.net_settlement WHEN " . ($hasExitNetPayableColumn ? 's.net_payable' : 'NULL') . " IS NOT NULL THEN " . ($hasExitNetPayableColumn ? 's.net_payable' : 'NULL') . " ELSE NULL END"
+                : ($hasExitNetPayableColumn ? 's.net_payable' : 'NULL');
+
             $detailsStmt = $db->prepare(
                 "SELECT pc.id,
                         pc.settlement_id,
@@ -1064,9 +1069,10 @@ class ExitManagementController
                         pc.comments,
                         CONCAT(e.first_name, ' ', e.last_name) AS full_name,
                         COALESCE(s.settlement_date, s.requested_at, s.completed_at) AS settlement_date,
-                        s.net_payable
+                        {$netPayableSql} AS net_payable
                  FROM payroll_clearances pc
-                 LEFT JOIN exit_employee_settlements s ON pc.settlement_id = s.id
+                 LEFT JOIN exit_employee_settlements s ON pc.settlement_id = s.settlement_id
+                 LEFT JOIN pr_final_settlements ps ON ps.settlement_id = s.payroll_settlement_id
                  LEFT JOIN em_employees e ON s.employee_id = e.employee_id
                  WHERE pc.status = 'approved'
                    AND pc.approved_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)

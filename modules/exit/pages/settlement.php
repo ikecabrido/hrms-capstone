@@ -15,13 +15,6 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
     <div class="module-content">
         <div id="settlements-section" class="section">
             <?php $alertId = 'settlement-action-alert'; $alertIcon = 'fas fa-wallet'; $alertMessage = 'Settlement requests are pending action'; $alertCount = 0; $alertViewAction = 'requested'; include __DIR__ . '/../includes/action-alert.php'; ?>
-            <div class="settlement-progress-steps mb-3">
-                <div class="step completed"><span>Exit Management</span></div>
-                <div class="step active"><span>Settlement Request</span></div>
-                <div class="step"><span>Processing &amp; Calculation</span></div>
-                <div class="step"><span>Approval</span></div>
-                <div class="step"><span>Release / Paid</span></div>
-            </div>
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center gap-2" style="flex: 1;">

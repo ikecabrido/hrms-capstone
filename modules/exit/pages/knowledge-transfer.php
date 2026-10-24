@@ -174,27 +174,46 @@ try {
                         <?php if ($ldIntegrationAvailable): ?>
                         <div class="card border-info mt-3 mb-0">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <strong>Learning Path</strong>
-                                <button type="button" class="btn btn-sm btn-primary" id="generateTransferLearningPathBtn">Request Learning Path from L&D</button>
+                                <strong>L&D Processing</strong>
+                                <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-primary" id="requestLdProcessingBtn">Request Learning Path</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshLdProgressBtn">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body">
+                                <div id="ldProcessingNotes" class="small text-muted mb-2">No L&D processing request has been sent yet.</div>
                                 <div id="ldLearningPathMessage" class="alert alert-light border mb-3">
                                     Select the leaving employee to review the resignee's completed or in-progress courses.
                                 </div>
-                                <div id="ldCourseChecklist" class="mb-3"></div>
-                                <div id="ldLearningPathGeneratedState" class="d-none">
+
+                                <div class="mb-3">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <div>
-                                            <strong id="ldLearningPathTitle">Generated learning path</strong>
-                                            <div class="small text-muted">Successor handoff</div>
-                                        </div>
-                                        <div class="custom-control custom-switch mt-1">
-                                            <input type="checkbox" class="custom-control-input" id="ldLearningPathPublicToggle">
-                                            <label class="custom-control-label" for="ldLearningPathPublicToggle">Public</label>
-                                        </div>
+                                        <strong id="ldLearningPathTitle">Learning Path</strong>
+                                        <span id="ldLearningPathProgress" class="badge badge-secondary">0%</span>
                                     </div>
-                                    <div id="ldLearningPathItemsList" class="list-group"></div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div id="ldLearningPathProgressBar" class="progress-bar bg-secondary" role="progressbar" style="width: 0%;"></div>
+                                    </div>
                                 </div>
+
+                                <div id="ldCourseChecklist" class="mb-3"></div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small id="ldLearningPathLastUpdated" class="text-muted">Not requested</small>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-success" id="approveKtPlanBtn" style="display:none;">Approve</button>
+                                        <button type="button" class="btn btn-sm btn-warning" id="returnKtToLdBtn" style="display:none;">Return to L&D</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-0">
+                                    <label for="ktApprovalComments">Review Notes</label>
+                                    <textarea id="ktApprovalComments" class="form-control" rows="2" placeholder="Add approval or return notes..."></textarea>
+                                </div>
+
+                                <div id="ldLearningPathItemsList" class="list-group mt-3"></div>
                             </div>
                         </div>
                         <?php else: ?>

@@ -12,13 +12,35 @@ class SurveyModel extends ExitManagementModel
 
     protected function ensureSurveyScheduleColumns(): void
     {
+        if (!$this->tableExists('exit_surveys')) {
+            $this->db->exec("CREATE TABLE IF NOT EXISTS exit_surveys (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NULL,
+                description TEXT NULL,
+                target_audience VARCHAR(50) NULL,
+                employee_id VARCHAR(50) NULL,
+                exit_case_type ENUM('resignation','termination') NULL,
+                exit_case_id INT NULL,
+                start_date DATE NULL,
+                end_date DATE NULL,
+                scheduled_date DATE NULL,
+                scheduled_time TIME NULL,
+                status VARCHAR(50) NULL DEFAULT 'active',
+                created_by INT NULL,
+                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                approval_status ENUM('pending','draft','scheduled','approved','completed','archived') NOT NULL DEFAULT 'pending',
+                employee_status_updated TINYINT(1) NOT NULL DEFAULT 0
+            )");
+        }
+
         $schemaChecks = [
             ['employee_id', 'varchar(50) NULL'],
             ['exit_case_type', "enum('resignation','termination') NULL"],
             ['exit_case_id', 'int(11) NULL'],
             ['scheduled_date', 'date NULL'],
             ['scheduled_time', 'time NULL'],
-            ['approval_status', "enum('draft','scheduled','approved','archived') NOT NULL DEFAULT 'scheduled'"],
+            ['approval_status', "enum('pending','draft','scheduled','approved','completed','archived') NOT NULL DEFAULT 'pending'"],
             ['employee_status_updated', 'tinyint(1) NOT NULL DEFAULT 0']
         ];
 
@@ -27,6 +49,155 @@ class SurveyModel extends ExitManagementModel
                 $this->db->exec("ALTER TABLE exit_surveys ADD COLUMN {$columnName} {$definition}");
             }
         }
+
+        if ($this->columnExists('exit_surveys', 'approval_status')) {
+            $this->db->exec("ALTER TABLE exit_surveys MODIFY COLUMN approval_status ENUM('pending','draft','scheduled','approved','completed','archived') NOT NULL DEFAULT 'pending'");
+        }
+
+        if ($this->columnExists('exit_surveys', 'start_date')) {
+            $this->db->exec('ALTER TABLE exit_surveys MODIFY COLUMN start_date DATE NULL');
+        }
+
+        if ($this->columnExists('exit_surveys', 'end_date')) {
+            $this->db->exec('ALTER TABLE exit_surveys MODIFY COLUMN end_date DATE NULL');
+        }
+
+        if (!$this->tableExists('exit_survey_questions')) {
+            $this->db->exec("CREATE TABLE IF NOT EXISTS exit_survey_questions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                survey_id INT NOT NULL,
+                question_text TEXT NOT NULL,
+                question_type VARCHAR(50) NOT NULL,
+                options JSON NULL,
+                required TINYINT(1) NOT NULL DEFAULT 0,
+                order_num INT NOT NULL DEFAULT 0,
+                rating TINYINT NULL,
+                rated_at TIMESTAMP NULL,
+                rated_by INT NULL,
+                created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_exit_survey_questions_survey_id (survey_id),
+                KEY idx_exit_survey_questions_order (survey_id, order_num)
+            )");
+        } else {
+            foreach (['rating', 'rated_at', 'rated_by'] as $columnName) {
+                if (!$this->columnExists('exit_survey_questions', $columnName)) {
+                    $definition = $columnName === 'rating' ? 'TINYINT NULL' : ($columnName === 'rated_at' ? 'TIMESTAMP NULL' : 'INT NULL');
+                    $this->db->exec("ALTER TABLE exit_survey_questions ADD COLUMN {$columnName} {$definition}");
+                }
+            }
+        }
+
+        if (!$this->tableExists('exit_post_survey_question_bank')) {
+            $this->db->exec("CREATE TABLE IF NOT EXISTS exit_post_survey_question_bank (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                question_text TEXT NOT NULL,
+                category VARCHAR(100) NULL,
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                sort_order INT NOT NULL DEFAULT 0,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )");
+        }
+
+        $this->ensurePostSurveyQuestionBankSeed();
+    }
+
+    protected function ensurePostSurveyQuestionBankSeed(): void
+    {
+        if (!$this->tableExists('exit_post_survey_question_bank')) {
+            return;
+        }
+
+        $countStmt = $this->db->query('SELECT COUNT(*) FROM exit_post_survey_question_bank');
+        if ((int)$countStmt->fetchColumn() > 0) {
+            return;
+        }
+
+        $rows = [
+            ['How would you rate your overall satisfaction with the company?', 'overall', 1],
+            ['How would you rate how well the role matched your expectations?', 'role', 2],
+            ['How would you rate the support you received from your supervisor?', 'supervisor', 3],
+            ['How would you rate the communication from management during your exit?', 'management', 4],
+            ['How would you rate the fairness of how you were treated?', 'fairness', 5],
+            ['How would you rate the teamwork and collaboration in your role?', 'teamwork', 6],
+            ['How would you rate your satisfaction with your pay?', 'pay', 7],
+            ['How would you rate your satisfaction with your benefits?', 'benefits', 8],
+            ['How would you rate your opportunities for career growth?', 'career_growth', 9],
+            ['How would you rate the training and development provided to you?', 'training', 10],
+            ['How would you rate the recognition of your performance?', 'recognition', 11],
+            ['How would you rate your work-life balance?', 'work_life_balance', 12],
+            ['How would you rate your working conditions and tools?', 'working_conditions', 13],
+            ['How would you rate the company culture?', 'culture', 14],
+            ['How would you rate the clarity of company policies?', 'policies', 15],
+            ['How would you rate how the exit process was handled?', 'exit_process', 16],
+            ['How would you rate the final settlement process?', 'settlement', 17],
+            ['How would you rate the likelihood of recommending the company?', 'recommendation', 18],
+        ];
+
+        $stmt = $this->db->prepare('INSERT INTO exit_post_survey_question_bank (question_text, category, is_active, sort_order) VALUES (?, ?, 1, ?)');
+        foreach ($rows as $row) {
+            $stmt->execute([$row[0], $row[1], $row[2]]);
+        }
+    }
+
+    public function syncPendingSurveys(): int
+    {
+        $this->ensureSurveyScheduleColumns();
+
+        $eligibleCases = [];
+
+        if ($this->tableExists('exit_resignations')) {
+            $resignationStmt = $this->db->query("SELECT id AS exit_case_id, employee_id, 'resignation' AS exit_case_type FROM exit_resignations WHERE status = 'approved'");
+            while ($row = $resignationStmt->fetch(PDO::FETCH_ASSOC)) {
+                $eligibleCases[] = $row;
+            }
+        }
+
+        if ($this->tableExists('exit_terminations')) {
+            $terminationStmt = $this->db->query("SELECT id AS exit_case_id, employee_id, 'termination' AS exit_case_type FROM exit_terminations WHERE status = 'approved'");
+            while ($row = $terminationStmt->fetch(PDO::FETCH_ASSOC)) {
+                $eligibleCases[] = $row;
+            }
+        }
+
+        if (empty($eligibleCases)) {
+            return 0;
+        }
+
+        $created = 0;
+        foreach ($eligibleCases as $case) {
+            $caseType = (string)($case['exit_case_type'] ?? '');
+            $caseId = (int)($case['exit_case_id'] ?? 0);
+            $employeeId = (int)($case['employee_id'] ?? 0);
+
+            if ($caseType === '' || $caseId <= 0) {
+                continue;
+            }
+
+            if (!$this->isExitCaseEligibleForPostExitFeedback($caseType, $caseId, $employeeId)) {
+                continue;
+            }
+
+            $existsStmt = $this->db->prepare("SELECT COUNT(*) FROM exit_surveys WHERE exit_case_type = ? AND exit_case_id = ? AND approval_status <> 'archived'");
+            $existsStmt->execute([$caseType, $caseId]);
+            if ((int)$existsStmt->fetchColumn() > 0) {
+                continue;
+            }
+
+            $insertStmt = $this->db->prepare("INSERT INTO exit_surveys (title, description, target_audience, employee_id, exit_case_type, exit_case_id, start_date, end_date, scheduled_date, scheduled_time, status, created_by, created_at, approval_status, employee_status_updated) VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, 'active', ?, NOW(), 'pending', 0)");
+            $insertStmt->execute([
+                'Post-Exit Survey',
+                'Post-exit feedback survey for the completed exit case.',
+                'all',
+                $employeeId ?: null,
+                $caseType,
+                $caseId,
+                $_SESSION['employee_id'] ?? null,
+            ]);
+
+            $created++;
+        }
+
+        return $created;
     }
 
     public function getDefaultPostExitQuestions(): array
@@ -424,6 +595,49 @@ class SurveyModel extends ExitManagementModel
      */
     public function getSurveyResponses(int $surveyId): array
     {
+        if ($this->columnExists('exit_survey_responses', 'responses')) {
+            $responseStmt = $this->db->prepare("SELECT sr.id, sr.survey_id, sr.employee_id, sr.responses, sr.submitted_at, sr.exit_case_type, sr.exit_case_id, sr.survey_type, sr.scheduled_date, sr.scheduled_time, COALESCE(CONCAT(emp.first_name, ' ', emp.last_name), sr.employee_id) AS respondent_name FROM exit_survey_responses sr LEFT JOIN em_employees emp ON sr.employee_id = emp.employee_id WHERE sr.survey_id = ? ORDER BY sr.submitted_at DESC");
+            $responseStmt->execute([$surveyId]);
+            $responses = $responseStmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = [];
+
+            foreach ($responses as $response) {
+                $payload = json_decode((string)($response['responses'] ?? '[]'), true);
+                if (!is_array($payload)) {
+                    $payload = [];
+                }
+
+                foreach ($payload as $questionId => $rating) {
+                    $questionStmt = $this->db->prepare('SELECT question_text, question_type, order_num FROM exit_survey_questions WHERE id = ? AND survey_id = ? LIMIT 1');
+                    $questionStmt->execute([$questionId, $surveyId]);
+                    $question = $questionStmt->fetch(PDO::FETCH_ASSOC);
+                    $rows[] = [
+                        'id' => $response['id'],
+                        'response_id' => $response['id'],
+                        'question_id' => (int)$questionId,
+                        'question_text' => $question['question_text'] ?? null,
+                        'question_type' => $question['question_type'] ?? 'rating',
+                        'answer_value' => $rating,
+                        'answer_text' => (string)$rating,
+                        'submitted_at' => $response['submitted_at'],
+                        'employee_id' => $response['employee_id'],
+                        'respondent_name' => $response['respondent_name'],
+                        'exit_case_type' => $response['exit_case_type'] ?? null,
+                        'exit_case_id' => $response['exit_case_id'] ?? null,
+                        'survey_type' => $response['survey_type'] ?? null,
+                        'scheduled_date' => $response['scheduled_date'] ?? null,
+                        'scheduled_time' => $response['scheduled_time'] ?? null,
+                        'order_num' => $question['order_num'] ?? 0,
+                    ];
+                }
+            }
+
+            if (!empty($rows)) {
+                usort($rows, static fn ($a, $b) => [$a['submitted_at'] ?? '', $a['order_num'] ?? 0] <=> [$b['submitted_at'] ?? '', $b['order_num'] ?? 0]);
+                return $rows;
+            }
+        }
+
         $selectFields = 'sa.*, sq.question_text, sr.submitted_at, sr.employee_id';
         if ($this->hasResponseCaseColumns()) {
             $selectFields .= ', sr.exit_case_type, sr.exit_case_id, CONCAT(UPPER(LEFT(sr.exit_case_type, 1)), SUBSTRING(sr.exit_case_type, 2), " #", sr.exit_case_id) AS exit_case_label';
@@ -451,7 +665,35 @@ class SurveyModel extends ExitManagementModel
      */
     public function getSurveyResponseDetails(int $responseId): array
     {
-        // Get response info
+        $responseStmt = $this->db->prepare("SELECT sr.*, s.title as survey_title, COALESCE(CONCAT(emp.first_name, ' ', emp.last_name), sr.employee_id) AS full_name FROM exit_survey_responses sr JOIN exit_surveys s ON sr.survey_id = s.id LEFT JOIN em_employees emp ON sr.employee_id = emp.employee_id WHERE sr.id = ?");
+        $responseStmt->execute([$responseId]);
+        $response = $responseStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$response) return [];
+
+        $payload = json_decode((string)($response['responses'] ?? '[]'), true);
+        if (is_array($payload) && !empty($payload)) {
+            $answers = [];
+            foreach ($payload as $questionId => $rating) {
+                $questionStmt = $this->db->prepare('SELECT question_text, question_type, order_num FROM exit_survey_questions WHERE id = ? AND survey_id = ? LIMIT 1');
+                $questionStmt->execute([$questionId, $response['survey_id']]);
+                $question = $questionStmt->fetch(PDO::FETCH_ASSOC);
+                $answers[] = [
+                    'response_id' => $responseId,
+                    'question_id' => (int)$questionId,
+                    'question_text' => $question['question_text'] ?? null,
+                    'question_type' => $question['question_type'] ?? 'rating',
+                    'answer_value' => $rating,
+                    'answer_text' => (string)$rating,
+                    'order_num' => $question['order_num'] ?? 0,
+                ];
+            }
+            return [
+                'response' => $response,
+                'answers' => $answers,
+            ];
+        }
+
         $selectFields = "sr.*, s.title as survey_title, COALESCE(CONCAT(emp.first_name, ' ', emp.last_name), sr.employee_id) AS full_name";
         if ($this->hasResponseCaseColumns()) {
             $selectFields .= ', sr.exit_case_type, sr.exit_case_id';
@@ -473,7 +715,6 @@ class SurveyModel extends ExitManagementModel
 
         if (!$response) return [];
 
-        // Get answers
         $stmt = $this->db->prepare("
             SELECT sa.*, sq.question_text, sq.question_type
             FROM exit_survey_answers sa
@@ -484,7 +725,6 @@ class SurveyModel extends ExitManagementModel
         $stmt->execute([$responseId]);
         $answers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Decode answer arrays
         foreach ($answers as &$answer) {
             if ($answer['question_type'] === 'checkbox' && $answer['answer_text']) {
                 $answer['answer_array'] = json_decode($answer['answer_text'], true);
@@ -520,6 +760,9 @@ class SurveyModel extends ExitManagementModel
      */
     public function getAllSurveys(?string $status = null, int $page = 1, int $limit = 10, string $search = ''): array
     {
+        $this->syncPendingSurveys();
+        $this->finalizeEmployeeSeparation();
+
         $offset = ($page - 1) * $limit;
 
         $sql = "
@@ -537,7 +780,9 @@ class SurveyModel extends ExitManagementModel
                 s.created_at,
                 s.updated_at,
                 CONCAT(e.first_name, ' ', e.last_name) AS employee_name,
-                CONCAT(COALESCE(UPPER(LEFT(s.exit_case_type, 1)), ''), SUBSTRING(COALESCE(s.exit_case_type, ''), 2)) AS exit_case_label
+                CONCAT(COALESCE(UPPER(LEFT(s.exit_case_type, 1)), ''), SUBSTRING(COALESCE(s.exit_case_type, ''), 2)) AS exit_case_label,
+                (SELECT COUNT(*) FROM exit_survey_questions q WHERE q.survey_id = s.id) AS question_count,
+                (SELECT COUNT(*) FROM exit_survey_questions q WHERE q.survey_id = s.id AND q.rating IS NOT NULL AND q.rating BETWEEN 1 AND 5) AS rated_count
             FROM exit_surveys s
             LEFT JOIN em_employees e ON e.employee_id = s.employee_id
         ";
@@ -586,6 +831,147 @@ class SurveyModel extends ExitManagementModel
         ];
     }
 
+    public function scheduleSurvey(int $surveyId, string $scheduledDate, string $scheduledTime): bool
+    {
+        $this->ensureSurveyScheduleColumns();
+
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $scheduledDate) || !preg_match('/^\d{2}:\d{2}(?::\d{2})?$/', $scheduledTime)) {
+            return false;
+        }
+
+        $survey = $this->getSurveyById($surveyId);
+        if (!$survey) {
+            return false;
+        }
+
+        $status = (string)($survey['approval_status'] ?? '');
+        if (!in_array($status, ['pending', 'scheduled'], true)) {
+            return false;
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $questionCount = (int)$this->db->query("SELECT COUNT(*) FROM exit_survey_questions WHERE survey_id = {$surveyId}")->fetchColumn();
+            if ((int)$questionCount === 0) {
+                $bankRows = $this->db->prepare('SELECT question_text FROM exit_post_survey_question_bank WHERE is_active = 1 ORDER BY sort_order ASC, id ASC');
+                $bankRows->execute();
+                $insertQuestion = $this->db->prepare('INSERT INTO exit_survey_questions (survey_id, question_text, question_type, required, order_num, created_at) VALUES (?, ?, "rating", 1, ?, NOW())');
+                $orderIndex = 1;
+                while ($bankRow = $bankRows->fetch(PDO::FETCH_ASSOC)) {
+                    $insertQuestion->execute([$surveyId, $bankRow['question_text'], $orderIndex]);
+                    $orderIndex++;
+                }
+            }
+
+            $stmt = $this->db->prepare("UPDATE exit_surveys SET approval_status = 'scheduled', scheduled_date = ?, scheduled_time = ?, status = 'active' WHERE id = ?");
+            $stmt->execute([$scheduledDate, $scheduledTime, $surveyId]);
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log('Survey schedule error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function saveSurveyRatings(int $surveyId, array $ratings): array
+    {
+        $survey = $this->getSurveyById($surveyId);
+        if (!$survey) {
+            return ['success' => false, 'message' => 'Survey not found'];
+        }
+
+        if (($survey['approval_status'] ?? '') !== 'scheduled') {
+            return ['success' => false, 'message' => 'Ratings can only be saved while the survey is scheduled.'];
+        }
+
+        $questionMap = [];
+        foreach ($this->getSurveyQuestions($surveyId) as $question) {
+            $questionMap[(int)$question['id']] = $question;
+        }
+
+        $rated = 0;
+        $this->db->beginTransaction();
+        try {
+            foreach ($ratings as $entry) {
+                $questionId = (int)($entry['question_id'] ?? 0);
+                if ($questionId <= 0 || !isset($questionMap[$questionId])) {
+                    continue;
+                }
+
+                $rawRating = $entry['rating'] ?? '';
+                if ($rawRating === '' || $rawRating === null) {
+                    $rating = null;
+                } else {
+                    if (!preg_match('/^-?\d+$/', (string)$rawRating)) {
+                        throw new Exception('Survey rating must be an integer between 1 and 5.');
+                    }
+                    $rating = (int)$rawRating;
+                    if ($rating < 1 || $rating > 5) {
+                        throw new Exception('Survey rating must be between 1 and 5.');
+                    }
+                }
+
+                $stmt = $this->db->prepare('UPDATE exit_survey_questions SET rating = ?, rated_at = ?, rated_by = ? WHERE id = ? AND survey_id = ?');
+                $stmt->execute([$rating, $rating === null ? null : date('Y-m-d H:i:s'), $_SESSION['employee_id'] ?? $survey['employee_id'] ?? null, $questionId, $surveyId]);
+                if ($rating !== null) {
+                    $rated++;
+                }
+            }
+
+            $this->db->commit();
+            return ['success' => true, 'rated' => $rated, 'total' => count($questionMap), 'message' => 'Ratings saved successfully'];
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function completeSurvey(int $surveyId): array
+    {
+        $survey = $this->getSurveyById($surveyId);
+        if (!$survey) {
+            return ['success' => false, 'message' => 'Survey not found'];
+        }
+
+        if (($survey['approval_status'] ?? '') !== 'scheduled') {
+            return ['success' => false, 'message' => 'Only scheduled surveys can be completed.'];
+        }
+
+        $questions = $this->getSurveyQuestions($surveyId);
+        $missing = [];
+        foreach ($questions as $question) {
+            $rating = isset($question['rating']) && $question['rating'] !== null && $question['rating'] !== '' ? (int)$question['rating'] : null;
+            if ($rating === null || $rating < 1 || $rating > 5) {
+                $missing[] = (int)$question['id'];
+            }
+        }
+
+        if (!empty($missing)) {
+            return ['success' => false, 'message' => 'All questions must be rated before completion.', 'missing' => $missing];
+        }
+
+        $ratings = [];
+        foreach ($questions as $question) {
+            $ratings[(string)$question['id']] = (int)$question['rating'];
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $responseStmt = $this->db->prepare('INSERT INTO exit_survey_responses (survey_id, employee_id, responses, submitted_at) VALUES (?, ?, ?, NOW())');
+            $responseStmt->execute([$surveyId, $survey['employee_id'] ?? null, json_encode($ratings, JSON_UNESCAPED_SLASHES)]);
+
+            $updateStmt = $this->db->prepare("UPDATE exit_surveys SET approval_status = 'completed', status = 'completed' WHERE id = ?");
+            $updateStmt->execute([$surveyId]);
+            $this->db->commit();
+            return ['success' => true, 'message' => 'Survey marked as completed'];
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            error_log('Survey complete error: ' . $e->getMessage());
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
     /**
      * Generate survey report
      */
@@ -609,22 +995,80 @@ class SurveyModel extends ExitManagementModel
                 'responses' => []
             ];
 
-            // Get answers for this question
-            $stmt = $this->db->prepare("
-                SELECT answer_value, COUNT(*) as count
-                FROM exit_survey_answers sa
-                JOIN exit_survey_responses sr ON sa.response_id = sr.id
-                WHERE sa.question_id = ? AND sr.survey_id = ?
-                GROUP BY answer_value
-                ORDER BY count DESC
-            ");
-            $stmt->execute([$question['id'], $surveyId]);
-            $questionReport['responses'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $grouped = [];
+            foreach ($responses as $response) {
+                if ((int)($response['question_id'] ?? 0) === (int)$question['id']) {
+                    $answerValue = (string)($response['answer_value'] ?? '');
+                    $grouped[$answerValue] = ($grouped[$answerValue] ?? 0) + 1;
+                }
+            }
+
+            foreach ($grouped as $answerValue => $count) {
+                $questionReport['responses'][] = ['answer_value' => $answerValue, 'count' => $count];
+            }
 
             $report['questions'][] = $questionReport;
         }
 
         return $report;
+    }
+
+    public function finalizeEmployeeSeparation(): int
+    {
+        if (!$this->tableExists('exit_surveys')) {
+            return 0;
+        }
+
+        $stmt = $this->db->query("SELECT id, employee_id, exit_case_type, exit_case_id FROM exit_surveys WHERE employee_status_updated = 0 AND employee_id IS NOT NULL");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $updated = 0;
+
+        foreach ($rows as $row) {
+            $employeeId = (int)($row['employee_id'] ?? 0);
+            $caseType = (string)($row['exit_case_type'] ?? '');
+            $caseId = (int)($row['exit_case_id'] ?? 0);
+
+            if ($employeeId <= 0 || !in_array($caseType, ['resignation', 'termination'], true) || $caseId <= 0) {
+                continue;
+            }
+
+            $settlementStmt = $this->db->prepare("SELECT settlement_id, status FROM exit_employee_settlements WHERE exit_case_type = ? AND exit_case_id = ? AND status = 'paid' ORDER BY settlement_id DESC LIMIT 1");
+            $settlementStmt->execute([$caseType, $caseId]);
+            $settlement = $settlementStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$settlement) {
+                continue;
+            }
+
+            $dateQuery = $caseType === 'resignation'
+                ? "SELECT last_working_date FROM exit_resignations WHERE id = ? AND last_working_date IS NOT NULL LIMIT 1"
+                : "SELECT effective_date AS last_working_date FROM exit_terminations WHERE id = ? AND effective_date IS NOT NULL LIMIT 1";
+            $dateStmt = $this->db->prepare($dateQuery);
+            $dateStmt->execute([$caseId]);
+            $dateValue = $dateStmt->fetchColumn();
+            if (empty($dateValue)) {
+                continue;
+            }
+
+            if (strtotime((string)$dateValue) > time()) {
+                continue;
+            }
+
+            $employeeStmt = $this->db->prepare('SELECT employment_status FROM em_employees WHERE employee_id = ? LIMIT 1');
+            $employeeStmt->execute([$employeeId]);
+            $employmentStatus = (string)($employeeStmt->fetchColumn() ?? '');
+            if (!in_array($employmentStatus, ['Active', 'Probationary'], true)) {
+                continue;
+            }
+
+            $targetStatus = $caseType === 'resignation' ? 'Resigned' : 'Terminated';
+            $this->updateEmployeeStatus($employeeId, $targetStatus);
+
+            $markStmt = $this->db->prepare('UPDATE exit_surveys SET employee_status_updated = 1 WHERE id = ?');
+            $markStmt->execute([$row['id']]);
+            $updated++;
+        }
+
+        return $updated;
     }
 
     /**

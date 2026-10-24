@@ -142,6 +142,44 @@ class ExitManagementModel
         $this->ensureTableAutoIncrement('exit_archive');
         $this->ensureTableAutoIncrement('exit_knowledge_transfer_plans');
         $this->ensureTableAutoIncrement('exit_knowledge_transfer_items');
+
+        if ($this->tableExists('exit_interviews')) {
+            $this->ensureInterviewCaseLinkageColumns();
+        }
+    }
+
+    protected function ensureInterviewCaseLinkageColumns(): void
+    {
+        if (!$this->tableExists('exit_interviews')) {
+            return;
+        }
+
+        $requiredColumns = [
+            'exit_case_type' => "ENUM('resignation','termination') DEFAULT NULL",
+            'exit_case_id' => 'INT(11) DEFAULT NULL',
+            'completed_at' => 'TIMESTAMP NULL DEFAULT NULL',
+            'location' => 'VARCHAR(255) DEFAULT NULL',
+            'notes' => 'TEXT DEFAULT NULL',
+            'status' => "ENUM('pending','scheduled','for_approval','completed','cancelled') NOT NULL DEFAULT 'pending'",
+            'scheduled_date' => 'DATE DEFAULT NULL',
+            'scheduled_time' => 'TIME DEFAULT NULL',
+            'interviewer_id' => 'INT(11) DEFAULT NULL'
+        ];
+
+        foreach ($requiredColumns as $columnName => $definition) {
+            if (!$this->columnExists('exit_interviews', $columnName)) {
+                $this->db->exec("ALTER TABLE exit_interviews ADD COLUMN {$columnName} {$definition}");
+            }
+        }
+
+        $statusStmt = $this->db->prepare("SHOW COLUMNS FROM exit_interviews LIKE 'status'");
+        $statusStmt->execute();
+        $statusColumn = $statusStmt->fetch(PDO::FETCH_ASSOC);
+        if ($statusColumn && stripos($statusColumn['Type'] ?? '', 'pending') !== false && stripos($statusColumn['Type'] ?? '', 'cancelled') === false) {
+            $this->db->exec("ALTER TABLE exit_interviews MODIFY status ENUM('pending','scheduled','for_approval','completed','cancelled') NOT NULL DEFAULT 'pending'");
+        }
+
+        $this->ensureTableAutoIncrement('exit_interviews');
     }
 
     public function createPendingInterviewForApprovedCase(string $exitCaseType, int $exitCaseId, string $employeeId, ?string $notes = null): ?int
@@ -154,6 +192,8 @@ class ExitManagementModel
             if (!$this->tableExists('exit_interviews')) {
                 return null;
             }
+
+            $this->ensureInterviewCaseLinkageColumns();
 
             $existing = $this->db->prepare(
                 "SELECT id FROM exit_interviews WHERE exit_case_type = ? AND exit_case_id = ? AND status IN ('pending','scheduled','for_approval','completed') ORDER BY id DESC LIMIT 1"
@@ -421,8 +461,8 @@ class ExitManagementModel
         }
 
         if ($this->tableExists('exit_employee_settlements') && $this->columnExists('exit_employee_settlements', 'exit_case_type')) {
-            $settOrder = $this->columnExists('exit_employee_settlements', 'updated_at') ? 'updated_at' : ($this->columnExists('exit_employee_settlements', 'created_at') ? 'created_at' : 'id');
-            $settlementSql = "SELECT id, status FROM exit_employee_settlements WHERE exit_case_type = ? AND exit_case_id = ? AND status IN ('approved', 'paid') ORDER BY {$settOrder} DESC LIMIT 1";
+            $settOrder = $this->columnExists('exit_employee_settlements', 'updated_at') ? 'updated_at' : ($this->columnExists('exit_employee_settlements', 'created_at') ? 'created_at' : 'settlement_id');
+            $settlementSql = "SELECT settlement_id, status FROM exit_employee_settlements WHERE exit_case_type = ? AND exit_case_id = ? AND status IN ('approved', 'paid') ORDER BY {$settOrder} DESC LIMIT 1";
             $settlementStmt = $this->db->prepare($settlementSql);
             $settlementStmt->execute([$exitCaseType, $exitCaseId]);
             $settlement = $settlementStmt->fetch(PDO::FETCH_ASSOC);

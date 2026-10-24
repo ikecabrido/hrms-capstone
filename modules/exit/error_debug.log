@@ -1,0 +1,50 @@
+[2026-10-19 05:29:26] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(802): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-19 05:30:13] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(802): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-24 18:05:05] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(802): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-24 18:56:27] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(802): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-24 18:56:46] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(802): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-24 18:57:35] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(802): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-24 19:47:28] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(971): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-24 19:47:56] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(971): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-24 19:50:34] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'lp.kt_plan_id' in 'where clause'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\KnowledgeTransferModel.php(971): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\KnowledgeTransferController.php(557): KnowledgeTransferModel->getAllTransferPlans('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(108): KnowledgeTransferController->handleAjaxRequest('get_transfer_pl...', Array)
+#3 {main}
+[2026-10-24 21:29:44] AJAX exception: SQLSTATE[42S22]: Column not found: 1054 Unknown column 's.net_payable' in 'field list'
+#0 C:\xampp\htdocs\hrms-capstone\modules\exit\models\SettlementModel.php(464): PDOStatement->execute()
+#1 C:\xampp\htdocs\hrms-capstone\modules\exit\controllers\SettlementController.php(516): SettlementModel->getAllSettlements('all', 1, 10, '')
+#2 C:\xampp\htdocs\hrms-capstone\modules\exit\exit_management.php(112): SettlementController->handleAjaxRequest('get_settlements', Array)
+#3 {main}

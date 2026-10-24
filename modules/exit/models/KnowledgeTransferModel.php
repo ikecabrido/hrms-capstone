@@ -6,6 +6,170 @@ class KnowledgeTransferModel extends ExitManagementModel
 {
     private ?bool $ldIntegrationAvailable = null;
 
+    public function __construct()
+    {
+        parent::__construct();
+        $this->ensureKnowledgeTransferWorkflowSchema();
+    }
+
+    private function ensureKnowledgeTransferWorkflowSchema(): void
+    {
+        try {
+            if ($this->tableExists('exit_knowledge_transfer_plans')) {
+                $requiredColumns = [
+                    'ld_status' => 'VARCHAR(50) NOT NULL DEFAULT "not_requested"',
+                    'ld_requested_at' => 'DATETIME NULL DEFAULT NULL',
+                    'ld_requested_by' => 'INT(11) NULL DEFAULT NULL',
+                    'ld_last_synced_at' => 'DATETIME NULL DEFAULT NULL',
+                    'ld_progress_percent' => 'INT(11) NOT NULL DEFAULT 0',
+                    'ld_approved_by' => 'INT(11) NULL DEFAULT NULL',
+                    'ld_approved_at' => 'DATETIME NULL DEFAULT NULL',
+                    'ld_last_sync_notes' => 'TEXT NULL DEFAULT NULL',
+                    'ld_path_id' => 'INT(11) NULL DEFAULT NULL',
+                    'ld_path_title' => 'VARCHAR(255) NULL DEFAULT NULL',
+                    'ld_path_external_ref' => 'VARCHAR(255) NULL DEFAULT NULL',
+                ];
+
+                foreach ($requiredColumns as $column => $definition) {
+                    if (!$this->columnExists('exit_knowledge_transfer_plans', $column)) {
+                        $this->db->exec("ALTER TABLE exit_knowledge_transfer_plans ADD COLUMN {$column} {$definition}");
+                    }
+                }
+            }
+
+            $this->db->exec("CREATE TABLE IF NOT EXISTS exit_kt_ld_requests (
+                id INT(11) NOT NULL AUTO_INCREMENT,
+                plan_id INT(11) NOT NULL,
+                requested_by INT(11) DEFAULT NULL,
+                status VARCHAR(50) NOT NULL DEFAULT 'requested',
+                progress_percent INT(11) NOT NULL DEFAULT 0,
+                requested_at DATETIME DEFAULT NULL,
+                last_synced_at DATETIME DEFAULT NULL,
+                completed_at DATETIME DEFAULT NULL,
+                external_path_id INT(11) DEFAULT NULL,
+                external_path_title VARCHAR(255) DEFAULT NULL,
+                external_path_ref VARCHAR(255) DEFAULT NULL,
+                notes TEXT DEFAULT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY idx_exit_kt_ld_requests_plan (plan_id),
+                KEY idx_exit_kt_ld_requests_status (status)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+            $this->db->exec("CREATE TABLE IF NOT EXISTS exit_kt_ld_status_log (
+                id INT(11) NOT NULL AUTO_INCREMENT,
+                plan_id INT(11) NOT NULL,
+                request_id INT(11) DEFAULT NULL,
+                old_status VARCHAR(50) DEFAULT NULL,
+                new_status VARCHAR(50) DEFAULT NULL,
+                changed_by INT(11) DEFAULT NULL,
+                reason TEXT DEFAULT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY idx_exit_kt_ld_status_log_plan (plan_id),
+                KEY idx_exit_kt_ld_status_log_request (request_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+            $this->ensureTableAutoIncrement('exit_kt_ld_requests');
+            $this->ensureTableAutoIncrement('exit_kt_ld_status_log');
+        } catch (Throwable $e) {
+            error_log('KnowledgeTransferModel schema ensure failed: ' . $e->getMessage());
+        }
+    }
+
+    private function getLdGateway(): ?object
+    {
+        if (!file_exists(__DIR__ . '/../classes/LdKnowledgeTransferGateway.php')) {
+            return null;
+        }
+
+        require_once __DIR__ . '/../classes/LdKnowledgeTransferGateway.php';
+
+        if (!class_exists('LdKnowledgeTransferGateway')) {
+            return null;
+        }
+
+        return new LdKnowledgeTransferGateway($this->db);
+    }
+
+    private function resolveLdStatusFromProgress(int $progressPercent, ?string $gatewayStatus = null): string
+    {
+        $gatewayStatus = strtolower(trim((string)($gatewayStatus ?? '')));
+        if ($gatewayStatus === 'completed' || $progressPercent >= 100) {
+            return 'completed';
+        }
+        if ($gatewayStatus === 'in_progress' || $progressPercent > 0) {
+            return 'in_progress';
+        }
+        if ($gatewayStatus === 'requested') {
+            return 'requested';
+        }
+        return 'not_requested';
+    }
+
+    private function setLdWorkflowState(int $planId, string $newStatus, ?string $reason = null, ?int $actorId = null): bool
+    {
+        if ($planId <= 0) {
+            return false;
+        }
+
+        $plan = $this->db->prepare("SELECT ld_status, ld_requested_at, ld_last_synced_at, ld_progress_percent FROM exit_knowledge_transfer_plans WHERE id = ? LIMIT 1");
+        $plan->execute([$planId]);
+        $existing = $plan->fetch(PDO::FETCH_ASSOC);
+
+        if (!$existing) {
+            return false;
+        }
+
+        $oldStatus = strtolower(trim((string)($existing['ld_status'] ?? 'not_requested')));
+        $newStatus = strtolower(trim($newStatus));
+
+        if ($oldStatus === $newStatus && empty($reason)) {
+            return true;
+        }
+
+        $sql = "UPDATE exit_knowledge_transfer_plans
+                SET ld_status = ?,
+                    ld_progress_percent = COALESCE(ld_progress_percent, 0),
+                    ld_last_synced_at = COALESCE(ld_last_synced_at, NOW()),
+                    ld_approved_by = CASE WHEN ? = 'approved' THEN COALESCE(ld_approved_by, ?) ELSE ld_approved_by END,
+                    ld_approved_at = CASE WHEN ? = 'approved' THEN COALESCE(ld_approved_at, NOW()) ELSE ld_approved_at END,
+                    updated_at = NOW()
+                WHERE id = ?";
+
+        $stmt = $this->db->prepare($sql);
+        $updated = $stmt->execute([
+            $newStatus,
+            $newStatus,
+            $actorId ?? 0,
+            $newStatus,
+            $planId,
+        ]);
+
+        if (!$updated) {
+            return false;
+        }
+
+        $latestRequest = $this->db->prepare("SELECT id FROM exit_kt_ld_requests WHERE plan_id = ? ORDER BY created_at DESC LIMIT 1");
+        $latestRequest->execute([$planId]);
+        $requestId = (int)($latestRequest->fetchColumn() ?: 0);
+
+        if ($oldStatus !== $newStatus) {
+            $logStmt = $this->db->prepare("INSERT INTO exit_kt_ld_status_log (plan_id, request_id, old_status, new_status, changed_by, reason, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+            $logStmt->execute([
+                $planId,
+                $requestId > 0 ? $requestId : null,
+                $oldStatus,
+                $newStatus,
+                $actorId ?? 0,
+                $reason,
+            ]);
+        }
+
+        return true;
+    }
+
     /**
      * Check whether the required L&D tables and schema columns are available on this server.
      * This is a read-only feature check and never attempts schema changes.
@@ -37,7 +201,7 @@ class KnowledgeTransferModel extends ExitManagementModel
                 "SELECT COUNT(*)
                  FROM information_schema.COLUMNS
                  WHERE TABLE_SCHEMA = DATABASE()
-                   AND TABLE_NAME = :table_name
+                   AND TABLE_NAME = ?
                    AND COLUMN_NAME IN ($placeholders)"
             );
             $params = [$tableName];
@@ -69,6 +233,38 @@ class KnowledgeTransferModel extends ExitManagementModel
 
         $this->ldIntegrationAvailable = ((int)$uniqueEnrollmentIndexStmt->fetchColumn()) > 0;
         return $this->ldIntegrationAvailable;
+    }
+
+    public function getSuccessorCandidates(?int $excludeEmployeeId = null, ?int $includeEmployeeId = null): array
+    {
+        $excludeEmployeeId = $excludeEmployeeId ?? 0;
+
+        $sql = "
+            SELECT
+                e.employee_id AS id,
+                CONCAT(e.first_name, ' ', e.last_name) AS full_name,
+                e.employee_code AS username,
+                e.email,
+                COALESCE(d.department_name, 'Unknown') AS department
+            FROM em_employees e
+            LEFT JOIN em_departments d ON e.department_id = d.department_id
+            LEFT JOIN em_positions p ON e.position_id = p.position_id
+            WHERE LOWER(TRIM(e.employment_status)) = 'active'
+              AND (
+                    (e.employee_id <> ? AND (e.position_id IS NULL OR e.position_id = 0 OR p.position_id IS NULL))
+                    OR (? IS NOT NULL AND e.employee_id = ?)
+              )
+            ORDER BY e.first_name, e.last_name ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            $excludeEmployeeId,
+            $includeEmployeeId,
+            $includeEmployeeId,
+        ]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -328,87 +524,6 @@ class KnowledgeTransferModel extends ExitManagementModel
         return ['courses' => $courses, 'skipped_inactive_count' => $inactiveCount];
     }
 
-    public function getLearningPathRequestStatus(int $planId): array
-    {
-        if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
-            return [
-                'status' => 'not_requested',
-                'path_id' => null,
-                'title' => null,
-                'successor_name' => null,
-                'course_count' => 0,
-                'is_public' => 0,
-                'completion_percent' => 0,
-                'courses' => [],
-            ];
-        }
-
-        $stmt = $this->db->prepare(
-            "SELECT lp.id,
-                    lp.title,
-                    lp.assigned_to,
-                    lp.is_public,
-                    lp.type,
-                    CONCAT(s.first_name, ' ', s.last_name) AS successor_name
-             FROM ld_learning_path lp
-             LEFT JOIN em_employees s ON s.employee_id = lp.assigned_to
-             WHERE lp.kt_plan_id = :plan_id
-               AND lp.type = 'knowledge_transfer'
-             ORDER BY lp.id DESC
-             LIMIT 1"
-        );
-        $stmt->execute([':plan_id' => $planId]);
-        $path = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$path) {
-            return [
-                'status' => 'not_requested',
-                'path_id' => null,
-                'title' => null,
-                'successor_name' => null,
-                'course_count' => 0,
-                'is_public' => 0,
-                'completion_percent' => 0,
-                'courses' => [],
-            ];
-        }
-
-        $itemStmt = $this->db->prepare(
-            "SELECT lpi.reference_id,
-                    c.title AS course_title,
-                    COALESCE(en.status, 'enrolled') AS successor_status
-             FROM ld_learning_path_item lpi
-             LEFT JOIN ld_course c ON c.id = lpi.reference_id
-             LEFT JOIN ld_enrollment en ON en.course_id = lpi.reference_id AND en.learner_id = :assigned_to
-             WHERE lpi.learning_path_id = :path_id
-             ORDER BY lpi.order_index ASC, lpi.id ASC"
-        );
-        $itemStmt->execute([
-            ':assigned_to' => (int)($path['assigned_to'] ?? 0),
-            ':path_id' => (int)($path['id'] ?? 0),
-        ]);
-        $courses = $itemStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $courseCount = count($courses);
-        $completedCount = 0;
-        foreach ($courses as $course) {
-            if (strtolower((string)($course['successor_status'] ?? 'enrolled')) === 'completed') {
-                $completedCount++;
-            }
-        }
-
-        return [
-            'status' => 'path_created',
-            'path_id' => (int)($path['id'] ?? 0),
-            'title' => $path['title'] ?? 'Knowledge Transfer Path',
-            'successor_name' => $path['successor_name'] ?? 'Successor',
-            'course_count' => $courseCount,
-            'is_public' => (int)($path['is_public'] ?? 0),
-            'completion_percent' => $courseCount > 0 ? (int)round(($completedCount / $courseCount) * 100) : 0,
-            'courses' => $courses,
-        ];
-    }
-
     /**
      * Get any generated L&D learning path linked to a KT plan.
      */
@@ -475,236 +590,322 @@ class KnowledgeTransferModel extends ExitManagementModel
      */
     public function generateLearningPathForPlan(int $planId, array $selectedCourseIds): array
     {
-        if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
-            return ['success' => false, 'message' => 'L&D integration is not available on this server'];
-        }
-
-        $courseIds = array_values(array_filter(array_values(array_unique(array_map('intval', $selectedCourseIds))), static fn ($id) => $id > 0));
-
-        if (empty($courseIds)) {
-            return ['success' => false, 'message' => 'Select at least one eligible course to generate the learning path.'];
-        }
-
-        $createdBy = (int)($_SESSION['employee_id'] ?? 0);
-        if ($createdBy <= 0) {
-            return ['success' => false, 'message' => 'Unable to identify the current user for the learning path.'];
-        }
-
-        try {
-            $this->db->beginTransaction();
-
-            $employeeName = $this->db->prepare("SELECT CONCAT(first_name, ' ', last_name) FROM em_employees WHERE employee_id = :employee_id LIMIT 1");
-            $successorName = $this->db->prepare("SELECT CONCAT(first_name, ' ', last_name) FROM em_employees WHERE employee_id = :successor_id LIMIT 1");
-
-            $planLockStmt = $this->db->prepare(
-                "SELECT id
-                 FROM exit_knowledge_transfer_plans
-                 WHERE id = :plan_id
-                 FOR UPDATE"
-            );
-            $planLockStmt->execute([':plan_id' => $planId]);
-            $lockedPlan = $planLockStmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$lockedPlan) {
-                $this->db->rollBack();
-                return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
-            }
-
-            $planStmt = $this->db->prepare(
-                "SELECT employee_id, successor_id, status
-                 FROM exit_knowledge_transfer_plans
-                 WHERE id = :plan_id
-                 LIMIT 1"
-            );
-            $planStmt->execute([':plan_id' => $planId]);
-            $plan = $planStmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$plan) {
-                $this->db->rollBack();
-                return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
-            }
-
-            $planEmployeeId = (int)($plan['employee_id'] ?? 0);
-            $planSuccessorId = (int)($plan['successor_id'] ?? 0);
-            $planStatus = strtolower(trim((string)($plan['status'] ?? '')));
-
-            if ($planEmployeeId <= 0 || $planSuccessorId <= 0) {
-                $this->db->rollBack();
-                return ['success' => false, 'message' => 'The plan must have both a resignee and successor to generate a learning path.'];
-            }
-
-            if (in_array($planStatus, ['archived', 'cancelled', 'completed'], true) || $planSuccessorId === $planEmployeeId) {
-                $this->db->rollBack();
-                return ['success' => false, 'message' => 'This knowledge transfer plan is not eligible for generation.'];
-            }
-
-            $eligibleCoursesStmt = $this->db->prepare(
-                "SELECT DISTINCT e.course_id
-                 FROM ld_enrollment e
-                 INNER JOIN ld_course c ON c.id = e.course_id AND c.status = 'active'
-                 WHERE e.learner_id = :employee_id
-                   AND e.status IN ('completed', 'in_progress')
-                   AND e.course_id IN (" . implode(',', array_fill(0, count($courseIds), '?')) . ")"
-            );
-            $eligibleCoursesStmt->execute(array_merge([$planEmployeeId], $courseIds));
-            $eligibleCourseIds = array_map('intval', array_column($eligibleCoursesStmt->fetchAll(PDO::FETCH_ASSOC), 'course_id'));
-
-            if (count($eligibleCourseIds) !== count($courseIds)) {
-                $this->db->rollBack();
-                return ['success' => false, 'message' => 'One or more selected courses are not eligible for the resignee.'];
-            }
-
-            $duplicateCheckStmt = $this->db->prepare(
-                "SELECT id
-                 FROM ld_learning_path
-                 WHERE kt_plan_id = :plan_id
-                   AND type = 'knowledge_transfer'
-                 ORDER BY id DESC
-                 LIMIT 1"
-            );
-            $duplicateCheckStmt->execute([':plan_id' => $planId]);
-            $existingPath = $duplicateCheckStmt->fetch(PDO::FETCH_ASSOC);
-            if ($existingPath) {
-                $this->db->rollBack();
-                return ['success' => false, 'message' => 'A learning path already exists for KT plan #' . (int)($planId) . ' and cannot be generated again.'];
-            }
-
-            $employeePathCheckStmt = $this->db->prepare(
-                "SELECT ktp.id
-                 FROM exit_knowledge_transfer_plans ktp
-                 INNER JOIN ld_learning_path lp ON lp.kt_plan_id = ktp.id AND lp.type = 'knowledge_transfer'
-                 WHERE ktp.employee_id = :employee_id
-                   AND ktp.status <> 'cancelled'
-                   AND ktp.id <> :plan_id
-                 ORDER BY ktp.id DESC
-                 LIMIT 1"
-            );
-            $employeePathCheckStmt->execute([
-                ':employee_id' => $planEmployeeId,
-                ':plan_id' => $planId,
-            ]);
-            $employeeExistingPlan = $employeePathCheckStmt->fetch(PDO::FETCH_ASSOC);
-            if ($employeeExistingPlan) {
-                $this->db->rollBack();
-                return ['success' => false, 'message' => 'This employee already has a learning path on KT plan #' . (int)($employeeExistingPlan['id'] ?? 0) . '.'];
-            }
-
-            $employeeName->execute([':employee_id' => $planEmployeeId]);
-            $employeeNameText = trim((string)$employeeName->fetchColumn());
-
-            $successorName->execute([':successor_id' => $planSuccessorId]);
-            $successorNameText = trim((string)$successorName->fetchColumn());
-
-            $pathTitle = "Knowledge Transfer \u{2014} " . ($employeeNameText ?: 'Employee');
-            $pathDescription = 'Generated automatically from Exit Knowledge Transfer plan #' . $planId . ' for successor handoff to ' . ($successorNameText ?: 'Successor') . '.';
-
-            $pathInsertSql = "
-                INSERT INTO ld_learning_path (instructor_id, title, description, assigned_to, status, type, kt_plan_id, is_public, created_at, updated_at)
-                VALUES (:instructor_id, :title, :description, :assigned_to, 'active', 'knowledge_transfer', :kt_plan_id, 0, NOW(), NOW())
-            ";
-            $pathStmt = $this->db->prepare($pathInsertSql);
-            $pathStmt->execute([
-                ':instructor_id' => $createdBy,
-                ':title' => $pathTitle,
-                ':description' => $pathDescription,
-                ':assigned_to' => $planSuccessorId,
-                ':kt_plan_id' => $planId,
-            ]);
-
-            $pathId = (int)$this->db->lastInsertId();
-
-            $itemStmt = $this->db->prepare(
-                "INSERT INTO ld_learning_path_item (learning_path_id, item_type, reference_id, order_index, status)
-                 VALUES (:learning_path_id, 'course', :reference_id, :order_index, 'active')"
-            );
-
-            foreach ($courseIds as $index => $courseId) {
-                $itemStmt->execute([
-                    ':learning_path_id' => $pathId,
-                    ':reference_id' => $courseId,
-                    ':order_index' => $index + 1,
-                ]);
-            }
-
-            $enrollmentInsertStmt = $this->db->prepare(
-                "INSERT INTO ld_enrollment (learner_id, course_id, status, enrolled_at, created_at)
-                 VALUES (:learner_id, :course_id, 'enrolled', NOW(), NOW())
-                 ON DUPLICATE KEY UPDATE id = id"
-            );
-
-            foreach ($courseIds as $courseId) {
-                $enrollmentInsertStmt->execute([
-                    ':learner_id' => $planSuccessorId,
-                    ':course_id' => $courseId,
-                ]);
-            }
-
-            $this->db->commit();
-
-            return ['success' => true, 'message' => 'Knowledge transfer learning path generated successfully.', 'path_id' => $pathId, 'course_count' => count($courseIds)];
-        } catch (PDOException $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-
-            error_log('generateLearningPathForPlan PDOException: ' . $e->getMessage());
-
-            switch ((int)($e->errorInfo[1] ?? 0)) {
-                case 1062:
-                    return ['success' => false, 'message' => 'already generated or in progress'];
-                case 1213:
-                case 1205:
-                    return ['success' => false, 'message' => 'Another request is processing this plan, please retry'];
-                case 1452:
-                    return ['success' => false, 'message' => 'A referenced employee or course no longer exists'];
-                default:
-                    return ['success' => false, 'message' => 'Failed to generate the learning path.'];
-            }
-        } catch (Throwable $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            error_log('generateLearningPathForPlan failure: ' . $e->getMessage());
-            return ['success' => false, 'message' => 'Failed to generate the learning path.'];
-        }
+        return $this->requestLdProcessing($planId, [
+            'course_ids' => $selectedCourseIds,
+            'requested_by' => (int)($_SESSION['employee_id'] ?? 0),
+            'notes' => 'Legacy L&D generation request stored as Exit-owned workflow.',
+        ]);
     }
 
     /**
      * Toggle the public/private visibility of the generated L&D path for a KT plan.
+     * This workflow is now handled via the Exit-owned KT/L&D status log instead of writing directly to L&D tables.
      */
     public function toggleLearningPathPublic(int $planId, bool $public): array
     {
-        if (!$this->ldKnowledgeTransferIntegrationAvailable()) {
-            return ['success' => false, 'message' => 'L&D integration is not available on this server'];
+        $plan = $this->db->prepare("SELECT id, ld_status FROM exit_knowledge_transfer_plans WHERE id = ? LIMIT 1");
+        $plan->execute([$planId]);
+        $existing = $plan->fetch(PDO::FETCH_ASSOC);
+
+        if (!$existing) {
+            return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
         }
 
-        $lookupStmt = $this->db->prepare(
-            "SELECT id
-             FROM ld_learning_path
-             WHERE kt_plan_id = :plan_id
-               AND type = 'knowledge_transfer'
-             ORDER BY id DESC
-             LIMIT 1"
-        );
-        $lookupStmt->execute([':plan_id' => $planId]);
+        $status = $public ? 'approved' : 'requested';
+        $updated = $this->setLdWorkflowState($planId, $status, $public ? 'Learning path visibility approved in Exit workflow.' : 'Learning path visibility reset to requested status.', (int)($_SESSION['employee_id'] ?? 0));
 
-        if (!$lookupStmt->fetch(PDO::FETCH_ASSOC)) {
-            return ['success' => false, 'message' => 'No knowledge-transfer learning path was found for this plan.'];
+        return [
+            'success' => $updated,
+            'message' => $public ? 'Learning path visibility updated in Exit workflow.' : 'Learning path visibility reset in Exit workflow.',
+            'is_public' => $public ? 1 : 0,
+        ];
+    }
+
+    public function requestLdProcessing(int $planId, array $requestData = []): array
+    {
+        if ($planId <= 0) {
+            return ['success' => false, 'message' => 'Invalid knowledge transfer plan ID.'];
         }
 
-        $stmt = $this->db->prepare(
-            "UPDATE ld_learning_path
-             SET is_public = :is_public, updated_at = NOW()
-             WHERE kt_plan_id = :plan_id
-               AND type = 'knowledge_transfer'"
-        );
+        $planStmt = $this->db->prepare("SELECT * FROM exit_knowledge_transfer_plans WHERE id = ? LIMIT 1");
+        $planStmt->execute([$planId]);
+        $plan = $planStmt->fetch(PDO::FETCH_ASSOC);
 
+        if (!$plan) {
+            return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
+        }
+
+        $actorId = (int)($requestData['requested_by'] ?? $_SESSION['employee_id'] ?? 0);
+        $notes = trim((string)($requestData['notes'] ?? ''));
+        $courseIds = array_values(array_filter(array_values(array_unique(array_map('intval', (array)($requestData['course_ids'] ?? [])))), static fn ($id) => $id > 0));
+
+        $this->db->beginTransaction();
+        try {
+            $requestStmt = $this->db->prepare("INSERT INTO exit_kt_ld_requests (plan_id, requested_by, status, progress_percent, requested_at, external_path_id, external_path_title, external_path_ref, notes, created_at, updated_at)
+                VALUES (?, ?, 'requested', 0, NOW(), NULL, NULL, NULL, ?, NOW(), NOW())");
+            $requestOk = $requestStmt->execute([
+                $planId,
+                $actorId > 0 ? $actorId : null,
+                $notes !== '' ? $notes : 'Requested from Exit workflow.',
+            ]);
+
+            if (!$requestOk) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Failed to log the L&D request.'];
+            }
+
+            $requestId = (int)$this->db->lastInsertId();
+            $oldStatus = strtolower(trim((string)($plan['ld_status'] ?? 'not_requested')));
+            $newStatus = 'requested';
+
+            $planUpdateStmt = $this->db->prepare("UPDATE exit_knowledge_transfer_plans
+                SET ld_status = ?, ld_requested_at = NOW(), ld_requested_by = ?, ld_last_synced_at = NOW(), ld_progress_percent = 0, ld_last_sync_notes = ?, updated_at = NOW()
+                WHERE id = ?");
+            $planUpdateStmt->execute([
+                $newStatus,
+                $actorId > 0 ? $actorId : null,
+                $notes !== '' ? $notes : 'Requested from Exit workflow.',
+                $planId,
+            ]);
+
+            if ($oldStatus !== $newStatus) {
+                $logStmt = $this->db->prepare("INSERT INTO exit_kt_ld_status_log (plan_id, request_id, old_status, new_status, changed_by, reason, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
+                $logStmt->execute([$planId, $requestId, $oldStatus, $newStatus, $actorId > 0 ? $actorId : null, 'Request sent to L&D']);
+            }
+
+            $this->db->commit();
+
+            return [
+                'success' => true,
+                'message' => 'L&D request created successfully.',
+                'plan_id' => $planId,
+                'request_id' => $requestId,
+                'status' => $newStatus,
+                'course_count' => count($courseIds),
+            ];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('requestLdProcessing failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to request L&D processing.'];
+        }
+    }
+
+    public function getLdProgress(int $planId): array
+    {
+        $planStmt = $this->db->prepare("SELECT id, employee_id, successor_id, status, ld_status, ld_progress_percent, ld_path_title, ld_path_id, ld_last_sync_notes FROM exit_knowledge_transfer_plans WHERE id = ? LIMIT 1");
+        $planStmt->execute([$planId]);
+        $plan = $planStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$plan) {
+            return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
+        }
+
+        $gateway = $this->getLdGateway();
+        $data = [
+            'success' => true,
+            'plan_id' => $planId,
+            'status' => strtolower(trim((string)($plan['ld_status'] ?? 'not_requested'))),
+            'progress_percent' => (int)($plan['ld_progress_percent'] ?? 0),
+            'path_id' => $plan['ld_path_id'] ?? null,
+            'path_title' => $plan['ld_path_title'] ?? null,
+            'notes' => $plan['ld_last_sync_notes'] ?? null,
+            'items' => [],
+        ];
+
+        if (!$gateway || !$this->ldKnowledgeTransferIntegrationAvailable()) {
+            return array_merge($data, ['message' => 'L&D integration is not available on this server']);
+        }
+
+        try {
+            $progress = $gateway->getProgress($planId, (int)($plan['successor_id'] ?? 0));
+            $progressPercent = (int)($progress['progress_percent'] ?? $data['progress_percent']);
+            $status = $this->resolveLdStatusFromProgress($progressPercent, (string)($progress['status'] ?? $data['status']));
+            $data['status'] = $status;
+            $data['progress_percent'] = $progressPercent;
+            $data['path_id'] = $progress['path_id'] ?? $data['path_id'];
+            $data['path_title'] = $progress['path_title'] ?? $data['path_title'];
+            $data['items'] = $progress['items'] ?? [];
+            $data['successor_name'] = $progress['successor_name'] ?? null;
+            $data['course_count'] = (int)($progress['course_count'] ?? count($data['items']));
+            $data['completed_count'] = (int)($progress['completed_count'] ?? 0);
+            $data['message'] = 'L&D progress retrieved.';
+            return $data;
+        } catch (Throwable $e) {
+            error_log('getLdProgress failed: ' . $e->getMessage());
+            return array_merge($data, ['message' => 'Failed to read L&D progress.']);
+        }
+    }
+
+    public function syncLdProgress(int $planId): array
+    {
+        $planStmt = $this->db->prepare("SELECT id, successor_id, ld_status, ld_progress_percent FROM exit_knowledge_transfer_plans WHERE id = ? LIMIT 1");
+        $planStmt->execute([$planId]);
+        $plan = $planStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$plan) {
+            return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
+        }
+
+        $currentStatus = strtolower(trim((string)($plan['ld_status'] ?? 'not_requested')));
+        $gateway = $this->getLdGateway();
+        $progressStatus = $currentStatus;
+        $progressPercent = (int)($plan['ld_progress_percent'] ?? 0);
+        $pathId = null;
+        $pathTitle = null;
+        $items = [];
+
+        if ($gateway && $this->ldKnowledgeTransferIntegrationAvailable()) {
+            try {
+                $progress = $gateway->getProgress($planId, (int)($plan['successor_id'] ?? 0));
+                $progressStatus = $this->resolveLdStatusFromProgress((int)($progress['progress_percent'] ?? 0), (string)($progress['status'] ?? $currentStatus));
+                $progressPercent = (int)($progress['progress_percent'] ?? 0);
+                $pathId = $progress['path_id'] ?? null;
+                $pathTitle = $progress['path_title'] ?? null;
+                $items = $progress['items'] ?? [];
+            } catch (Throwable $e) {
+                error_log('syncLdProgress failed: ' . $e->getMessage());
+                return ['success' => false, 'message' => 'Failed to sync L&D progress.'];
+            }
+        }
+
+        $requestStmt = $this->db->prepare("SELECT id FROM exit_kt_ld_requests WHERE plan_id = ? ORDER BY created_at DESC LIMIT 1");
+        $requestStmt->execute([$planId]);
+        $requestId = (int)($requestStmt->fetchColumn() ?: 0);
+
+        $stmt = $this->db->prepare("UPDATE exit_knowledge_transfer_plans SET ld_status = ?, ld_progress_percent = ?, ld_last_synced_at = NOW(), ld_last_sync_notes = ?, ld_path_id = COALESCE(?, ld_path_id), ld_path_title = COALESCE(?, ld_path_title), updated_at = NOW() WHERE id = ?");
         $stmt->execute([
-            ':is_public' => $public ? 1 : 0,
-            ':plan_id' => $planId,
+            $progressStatus,
+            $progressPercent,
+            $this->ldKnowledgeTransferIntegrationAvailable() ? 'Synced from L&D gateway' : 'L&D integration unavailable; retaining Exit workflow state.',
+            $pathId,
+            $pathTitle,
+            $planId,
         ]);
 
-        return ['success' => true, 'message' => $public ? 'Learning path published.' : 'Learning path made private.', 'is_public' => $public ? 1 : 0];
+        if ($requestId > 0 && $progressStatus !== $currentStatus) {
+            $logStmt = $this->db->prepare("INSERT INTO exit_kt_ld_status_log (plan_id, request_id, old_status, new_status, changed_by, reason, created_at) VALUES (?, ?, ?, ?, 0, 'Synced from L&D gateway', NOW())");
+            $logStmt->execute([$planId, $requestId, $currentStatus, $progressStatus]);
+        }
+
+        if ($requestId > 0) {
+            $this->db->prepare("UPDATE exit_kt_ld_requests SET status = ?, progress_percent = ?, last_synced_at = NOW(), updated_at = NOW() WHERE id = ?")->execute([$progressStatus, $progressPercent, $requestId]);
+        }
+
+        return [
+            'success' => true,
+            'plan_id' => $planId,
+            'status' => $progressStatus,
+            'progress_percent' => $progressPercent,
+            'items' => $items,
+            'path_id' => $pathId,
+            'path_title' => $pathTitle,
+        ];
+    }
+
+    public function syncAllPendingLdProgress(): array
+    {
+        $planStmt = $this->db->query("SELECT id FROM exit_knowledge_transfer_plans WHERE ld_status IN ('not_requested', 'requested', 'in_progress') ORDER BY id ASC");
+        $plans = $planStmt->fetchAll(PDO::FETCH_ASSOC);
+        $processed = 0;
+        $results = [];
+
+        foreach ($plans as $plan) {
+            $result = $this->syncLdProgress((int)($plan['id'] ?? 0));
+            $results[] = $result;
+            if (!empty($result['success'])) {
+                $processed++;
+            }
+        }
+
+        return ['success' => true, 'processed' => $processed, 'results' => $results];
+    }
+
+    public function approveKtPlan(int $planId, int $actorId = 0, string $notes = ''): array
+    {
+        $plan = $this->db->prepare("SELECT id, ld_status FROM exit_knowledge_transfer_plans WHERE id = ? LIMIT 1");
+        $plan->execute([$planId]);
+        if (!$plan->fetch(PDO::FETCH_ASSOC)) {
+            return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
+        }
+
+        $updated = $this->setLdWorkflowState($planId, 'approved', $notes !== '' ? $notes : 'Approved by Exit staff.', $actorId > 0 ? $actorId : (int)($_SESSION['employee_id'] ?? 0));
+        $this->db->prepare("UPDATE exit_knowledge_transfer_plans SET status = 'completed', completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = ?")->execute([$planId]);
+
+        return [
+            'success' => $updated,
+            'message' => $updated ? 'Knowledge transfer plan approved.' : 'Failed to approve the knowledge transfer plan.',
+            'status' => 'approved',
+        ];
+    }
+
+    public function returnKtToLd(int $planId, int $actorId = 0, string $notes = ''): array
+    {
+        $plan = $this->db->prepare("SELECT id, ld_status FROM exit_knowledge_transfer_plans WHERE id = ? LIMIT 1");
+        $plan->execute([$planId]);
+        if (!$plan->fetch(PDO::FETCH_ASSOC)) {
+            return ['success' => false, 'message' => 'Knowledge transfer plan not found.'];
+        }
+
+        $updated = $this->setLdWorkflowState($planId, 'requested', $notes !== '' ? $notes : 'Returned for L&D revision.', $actorId > 0 ? $actorId : (int)($_SESSION['employee_id'] ?? 0));
+
+        return [
+            'success' => $updated,
+            'message' => $updated ? 'Knowledge transfer plan returned to L&D for revision.' : 'Failed to return the knowledge transfer plan to L&D.',
+            'status' => 'requested',
+        ];
+    }
+
+    public function getLearningPathRequestStatus(int $planId): array
+    {
+        $plan = $this->db->prepare("SELECT id, ld_status, ld_progress_percent, ld_path_id, ld_path_title, ld_last_sync_notes, successor_id FROM exit_knowledge_transfer_plans WHERE id = ? LIMIT 1");
+        $plan->execute([$planId]);
+        $planRow = $plan->fetch(PDO::FETCH_ASSOC);
+
+        if (!$planRow) {
+            return [
+                'status' => 'not_requested',
+                'path_id' => null,
+                'title' => null,
+                'successor_name' => null,
+                'course_count' => 0,
+                'is_public' => 0,
+                'completion_percent' => 0,
+                'courses' => [],
+            ];
+        }
+
+        $status = strtolower(trim((string)($planRow['ld_status'] ?? 'not_requested')));
+        $progressPercent = (int)($planRow['ld_progress_percent'] ?? 0);
+        $successorName = $this->db->prepare("SELECT CONCAT(first_name, ' ', last_name) AS successor_name FROM em_employees WHERE employee_id = ? LIMIT 1");
+        $successorName->execute([(int)($planRow['successor_id'] ?? 0)]);
+        $successor = $successorName->fetch(PDO::FETCH_ASSOC);
+
+        $gateway = $this->getLdGateway();
+        $items = [];
+
+        if ($gateway && $this->ldKnowledgeTransferIntegrationAvailable()) {
+            try {
+                $gatewayProgress = $gateway->getProgress($planId, (int)($planRow['successor_id'] ?? 0));
+                $status = $this->resolveLdStatusFromProgress((int)($gatewayProgress['progress_percent'] ?? $progressPercent), (string)($gatewayProgress['status'] ?? $status));
+                $progressPercent = (int)($gatewayProgress['progress_percent'] ?? $progressPercent);
+                $items = $gatewayProgress['items'] ?? [];
+            } catch (Throwable $e) {
+                error_log('getLearningPathRequestStatus fallback: ' . $e->getMessage());
+            }
+        }
+
+        return [
+            'status' => $status,
+            'path_id' => $planRow['ld_path_id'] ?? null,
+            'title' => $planRow['ld_path_title'] ?? 'Knowledge Transfer',
+            'successor_name' => $successor['successor_name'] ?? 'Successor',
+            'course_count' => count($items),
+            'is_public' => 0,
+            'completion_percent' => $progressPercent,
+            'courses' => $items,
+        ];
     }
 
     /**

@@ -87,11 +87,42 @@ class SurveyController extends ExitManagementController
             return ['error' => 'Survey not found'];
         }
 
-        // Get questions
         $questions = $this->surveyModel->getSurveyQuestions($surveyId);
         $survey['questions'] = $questions;
 
         return $survey;
+    }
+
+    public function scheduleSurvey(int $surveyId, string $scheduledDate, string $scheduledTime): array
+    {
+        try {
+            $success = $this->surveyModel->scheduleSurvey($surveyId, $scheduledDate, $scheduledTime);
+            return $success
+                ? ['success' => true, 'message' => 'Survey scheduled successfully']
+                : ['success' => false, 'message' => 'Unable to schedule survey'];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function saveSurveyRatings(int $surveyId, array $ratings): array
+    {
+        try {
+            $result = $this->surveyModel->saveSurveyRatings($surveyId, $ratings);
+            return $result;
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function completeSurvey(int $surveyId): array
+    {
+        try {
+            $result = $this->surveyModel->completeSurvey($surveyId);
+            return $result;
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 
     /**
@@ -214,6 +245,22 @@ class SurveyController extends ExitManagementController
 
             case 'unarchive_survey':
                 return $this->unarchiveSurvey($data['survey_id'] ?? 0);
+
+            case 'schedule_survey':
+                return $this->scheduleSurvey(
+                    $data['survey_id'] ?? 0,
+                    $data['scheduled_date'] ?? '',
+                    $data['scheduled_time'] ?? '09:00:00'
+                );
+
+            case 'save_survey_ratings':
+                return $this->saveSurveyRatings(
+                    $data['survey_id'] ?? 0,
+                    $data['ratings'] ?? []
+                );
+
+            case 'complete_survey':
+                return $this->completeSurvey($data['survey_id'] ?? 0);
 
             case 'get_survey_details':
                 return $this->getSurveyDetails($data['survey_id'] ?? 0);

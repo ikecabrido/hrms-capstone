@@ -375,7 +375,7 @@ class SettlementModel extends ExitManagementModel
             'bonuses', 'commission', 'hra', 'conveyance', 'lta', 'medical_allowance', 'other_allowances', 'separation_pay',
             'tax', 'sss', 'philhealth', 'pagibig', 'cash_advance', 'company_loan', 'equipment_damage', 'missing_assets',
             'late_deductions', 'absence_deductions', 'provident_fund', 'gratuity', 'notice_pay', 'outstanding_loans',
-            'other_deductions', 'net_payable'
+            'other_deductions'
         ];
 
         foreach ($settlementCols as $col) {
@@ -386,8 +386,15 @@ class SettlementModel extends ExitManagementModel
             }
         }
 
+        $hasExitNetPayableColumn = $this->columnExists('exit_employee_settlements', 'net_payable');
+        $effectiveStatusSql = $this->tableExists('pr_final_settlements')
+            ? "COALESCE(CASE WHEN ps.status = 'draft' THEN s.status ELSE ps.status END, s.status, 'requested')"
+            : "COALESCE(NULLIF(s.status, ''), 'requested')";
+
+        $payrollStatusSelect = $effectiveStatusSql . ' AS status';
+
         // Always include status and timestamps (may be present or will be NULL if missing)
-        $baseSelect[] = "COALESCE(NULLIF(s.status, ''), 'requested') AS status";
+        $baseSelect[] = $payrollStatusSelect;
         $baseSelect[] = "s.created_at";
         $baseSelect[] = "s.updated_at";
 
@@ -405,7 +412,15 @@ class SettlementModel extends ExitManagementModel
             $resignationJoin = "LEFT JOIN exit_resignations r ON 1=0";
         }
 
-        $sql = "\n            SELECT\n                {$selectList}\n            FROM exit_employee_settlements s\n            JOIN em_employees e ON s.employee_id = e.employee_id\n            {$resignationJoin}\n            LEFT JOIN em_departments d ON e.department_id = d.department_id\n            LEFT JOIN em_positions p ON e.position_id = p.position_id\n        ";
+        $payrollJoin = $this->tableExists('pr_final_settlements')
+            ? "LEFT JOIN pr_final_settlements ps ON ps.settlement_id = s.payroll_settlement_id"
+            : '';
+
+        $netPayableSelect = $this->tableExists('pr_final_settlements')
+            ? "CASE WHEN ps.status IN ('calculated', 'for_approval', 'approved', 'paid') THEN ps.net_settlement WHEN " . ($hasExitNetPayableColumn ? 's.net_payable' : 'NULL') . " IS NOT NULL THEN " . ($hasExitNetPayableColumn ? 's.net_payable' : 'NULL') . " ELSE NULL END AS net_payable"
+            : ($hasExitNetPayableColumn ? 's.net_payable AS net_payable' : 'NULL AS net_payable');
+
+        $sql = "\n            SELECT\n                {$selectList},\n                {$netPayableSelect}\n            FROM exit_employee_settlements s\n            JOIN em_employees e ON s.employee_id = e.employee_id\n            {$resignationJoin}\n            {$payrollJoin}\n            LEFT JOIN em_departments d ON e.department_id = d.department_id\n            LEFT JOIN em_positions p ON e.position_id = p.position_id\n        ";
 
         // Build a matching count query using the same resignation join logic
         $countSql = "
@@ -413,6 +428,7 @@ class SettlementModel extends ExitManagementModel
             FROM exit_employee_settlements s
             JOIN em_employees e ON s.employee_id = e.employee_id
             {$resignationJoin}
+            {$payrollJoin}
             LEFT JOIN em_departments d ON e.department_id = d.department_id
             LEFT JOIN em_positions p ON e.position_id = p.position_id
         ";
@@ -421,7 +437,7 @@ class SettlementModel extends ExitManagementModel
         $whereClause = "";
 
         if ($status && $status !== 'all') {
-            $whereClause = " WHERE s.status = :status";
+            $whereClause = ' WHERE ' . $effectiveStatusSql . ' = :status';
             $params['status'] = $status;
         }
 

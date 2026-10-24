@@ -912,12 +912,30 @@ function initializeModals() {
     $(document).off('change.exitModals', '#employeeSelect')
         .on('change.exitModals', '#employeeSelect', function() {
             const employeeId = $(this).val();
+            const isCreateMode = !$('#resignationId').val();
+            const selectedEmployee = $(this).find('option:selected');
+
             if (employeeId) {
-                checkEmployeeEligibility(employeeId);
-                loadEmployeeLastAttendanceDate(employeeId);
+                const department = selectedEmployee.data('department') || '';
+                const position = selectedEmployee.data('position') || '';
+                $('#employeeDepartment').val(department);
+                $('#employeePosition').val(position);
+
+                if (isCreateMode) {
+                    updateResignationLetterPreview();
+                    checkEmployeeEligibility(employeeId);
+                } else {
+                    checkEmployeeEligibility(employeeId);
+                    loadEmployeeExitProfile(employeeId);
+                }
             } else {
                 $('#eligibilityMessage').hide();
                 $('#lastWorkingDate').val('');
+                $('#employeeDepartment').val('');
+                $('#employeePosition').val('');
+                if (isCreateMode) {
+                    updateResignationLetterPreview();
+                }
             }
         });
 }
@@ -932,12 +950,38 @@ function loadEmployeeLastAttendanceDate(employeeId) {
         if (response.success && response.last_attendance_date) {
             $('#lastWorkingDate').val(response.last_attendance_date);
         } else {
-            // If no attendance date found, clear the field
             $('#lastWorkingDate').val('');
         }
     }, 'json').fail(function(err) {
         console.error('Error loading last attendance date:', err);
         $('#lastWorkingDate').val('');
+    });
+}
+
+function loadEmployeeExitProfile(employeeId) {
+    if (!employeeId) {
+        $('#employeeDepartment').val('');
+        $('#employeePosition').val('');
+        return;
+    }
+
+    $.post('exit_management.php', {
+        ajax_action: 'get_employee_exit_profile',
+        controller: 'resignation',
+        employee_id: employeeId
+    }, function(response) {
+        const profile = response && response.data ? response.data : null;
+        if (profile) {
+            $('#employeeDepartment').val(profile.department_name || '');
+            $('#employeePosition').val(profile.position_name || '');
+        } else {
+            $('#employeeDepartment').val('');
+            $('#employeePosition').val('');
+        }
+    }, 'json').fail(function(err) {
+        console.error('Error loading employee profile:', err);
+        $('#employeeDepartment').val('');
+        $('#employeePosition').val('');
     });
 }
 
@@ -1090,9 +1134,10 @@ function loadEmployees(callback) {
             const employeeOptions = '<option value="">Select Employee</option>' +
                 response.map(emp => {
                     console.log('[LOAD EMPLOYEES] Processing employee:', emp);
-                    return `<option value="${emp.id}">${emp.full_name} (${emp.username})</option>`;
+                    const department = escapeHtml(emp.department || emp.department_name || '');
+                    const position = escapeHtml(emp.position || emp.position_name || '');
+                    return `<option value="${emp.id}" data-department="${department}" data-position="${position}">${emp.full_name} (${emp.username})</option>`;
                 }).join('');
-
             console.log('[LOAD EMPLOYEES] Generated options HTML:', employeeOptions.substring(0, 200));
             $('#employeeSelect, #interviewEmployeeSelect').html(employeeOptions);
             console.log('[LOAD EMPLOYEES] Dropdown populated successfully');
@@ -1443,27 +1488,36 @@ function loadEmployeesNeedingKnowledgeTransfer(callback) {
 
 // Load successors for transfer modal
 function loadSuccessors(callback) {
+    const employeeId = $('#transferEmployeeSelect').val() || '';
+    const currentSuccessorId = $('#successorSelect').data('current-successor-id') || $('#successorSelect').val() || '';
+
     $.ajax({
         url: 'exit_management.php',
         method: 'POST',
         dataType: 'json',
         data: {
-            ajax_action: 'get_eligible_employees',
-            controller: 'exit_management'
+            ajax_action: 'get_successor_candidates',
+            controller: 'transfer',
+            employee_id: employeeId,
+            current_successor_id: currentSuccessorId
         }
     }).done(function(response) {
         const successors = Array.isArray(response) ? response : (response && Array.isArray(response.data) ? response.data : []);
+        const selectedSuccessorId = $('#successorSelect').val() || currentSuccessorId || '';
 
         if (successors.length > 0) {
             const successorOptions = '<option value="">Select Successor</option>' +
-                successors.map(emp => {
-                    const positionLabel = emp.position ? ` (${emp.position})` : ' (No position assigned)';
-                    return `<option value="${emp.id}">${emp.full_name} (${emp.username})${positionLabel}</option>`;
-                }).join('');
+                successors.map(emp => `<option value="${emp.id}">${emp.full_name} (${emp.username})</option>`).join('');
 
             $('#successorSelect').html(successorOptions);
+            if (selectedSuccessorId && $('#successorSelect option[value="' + selectedSuccessorId + '"]').length) {
+                $('#successorSelect').val(selectedSuccessorId);
+            } else {
+                $('#successorSelect').val('');
+            }
         } else {
-            $('#successorSelect').html('<option value="">No employees available</option>');
+            $('#successorSelect').html('<option value="">No employees without a position available</option>');
+            $('#successorSelect').val('');
         }
     }).fail(function(xhr, status, error) {
         console.error('Error loading employees for successors:', status, error, xhr.responseText);
@@ -1504,42 +1558,78 @@ function loadApprovedExitCasesForSettlements(callback) {
 
 // Modal display functions
 function showResignationModal(resignationId = null) {
-    if (!resignationId) {
-        showToast('warning', 'Resignation creation is managed through the Employee Portal.');
+    $('.modal-backdrop').remove();
+    $('body').removeClass('modal-open');
+
+    $('#resignationForm')[0].reset();
+    $('#resignationId').val(resignationId || '');
+    $('#approvalSection').hide();
+    $('#resignationLetterSection').hide();
+    $('#resignationLetterLink').hide().attr('href', '#');
+    $('#resignationLetterMissing').hide();
+    $('#eligibilityMessage').hide();
+    $('#employeeDepartment').val('');
+    $('#employeePosition').val('');
+    $('#resignationTypeGroup').hide();
+    $('#resignationType').val('');
+    $('#resignationLetterPreview').html('');
+
+    const isCreateMode = !resignationId;
+
+    if (isCreateMode) {
+        $('#resignationModalTitle').text('Submit Resignation');
+        $('#resignationForm').find('input, textarea, select').prop('disabled', false);
+        $('#resignationId').prop('disabled', false);
+        $('#resignationSubmitBtn').show().prop('disabled', false).text('Submit Resignation');
+        $('#resignationSubmitBtn').removeClass('btn-info').addClass('btn-primary');
+        $('#noticeDate').val(new Date().toISOString().slice(0, 10));
+        $('#resignationLetterPreview').html(buildResignationLetterPreview({
+            employee_name: 'Employee',
+            department: '',
+            position: '',
+            notice_date: $('#noticeDate').val(),
+            last_working_date: '',
+            reason: $('#reason').val(),
+            comments: $('#comments').val()
+        }));
+
+        const $modal = $('#resignationModal').appendTo('body');
+        $modal.css({ 'z-index': 2000, position: 'fixed' });
+        $modal.find('.modal-dialog').css({ position: 'relative', 'z-index': 2001 });
+
+        if (typeof $.fn.modal === 'function') {
+            $modal.modal({ backdrop: true, keyboard: true, show: true });
+        } else {
+            $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
+            $('body').addClass('modal-open');
+            $('.modal-backdrop').not('.modal-backdrop--active').remove();
+            $('<div class="modal-backdrop fade show modal-backdrop--active"></div>').appendTo('body').css('z-index', 1040);
+        }
+
+        loadEmployees(function() {
+            $('#employeeSelect').trigger('change');
+            updateResignationLetterPreview();
+        });
         return;
     }
 
     console.log('Opening resignation modal for ID:', resignationId);
     $('#resignationModalTitle').text('Review Resignation');
-    $('#resignationForm')[0].reset();
-    $('#resignationId').val(resignationId);
-    $('#resignationLetterSection').hide();
-    $('#resignationLetterLink').hide().attr('href', '#');
-    $('#resignationLetterMissing').hide();
-    $('#approvalSection').show();
-    $('#eligibilityMessage').hide();
     $('#resignationForm').find('input, textarea, select').prop('disabled', true);
     $('#resignationId').prop('disabled', false);
-    $('#approvalSection').find('select, textarea').prop('disabled', false);
+    $('#approvalSection').show();
     $('#resignationSubmitBtn').show().prop('disabled', false).text('Save Decision');
-    // Ensure any stray backdrops are removed and move modal to body to avoid
-    // stacking context/z-index issues that can leave a full-page overlay
-    // blocking the UI when the modal element is inside a replaced container.
-    $('.modal-backdrop').remove();
-    $('body').removeClass('modal-open');
+    $('#resignationSubmitBtn').removeClass('btn-primary').addClass('btn-info');
 
     const $modal = $('#resignationModal').appendTo('body');
     $modal.css({ 'z-index': 2000, position: 'fixed' });
     $modal.find('.modal-dialog').css({ position: 'relative', 'z-index': 2001 });
 
     if (typeof $.fn.modal === 'function') {
-        // Use a proper blocking backdrop but ensure it's created/removed safely
-        // by appending the modal to <body> and removing stray backdrops first.
         $modal.modal({ backdrop: true, keyboard: true, show: true });
     } else {
         $modal.addClass('show').css({ display: 'flex' }).attr('aria-hidden', 'false').attr('aria-modal', 'true');
         $('body').addClass('modal-open');
-        // Create a backdrop manually when Bootstrap modal plugin isn't present
         $('.modal-backdrop').not('.modal-backdrop--active').remove();
         $('<div class="modal-backdrop fade show modal-backdrop--active"></div>').appendTo('body').css('z-index', 1040);
     }
@@ -1770,7 +1860,7 @@ function formatSettlementViewDate(value) {
     });
 }
 
-function renderSettlementTracker(currentStatus, payrollSettlementId) {
+function renderSettlementTracker(currentStatus, payrollSettlementId, statusMeta = {}) {
     const statusOrder = ['processing', 'calculated', 'for_approval', 'approved', 'paid'];
     const normalizedStatus = String(currentStatus || '').toLowerCase();
 
@@ -1791,11 +1881,14 @@ function renderSettlementTracker(currentStatus, payrollSettlementId) {
         const state = index < currentIndex ? 'completed' : index === currentIndex ? 'active' : 'pending';
         const icon = index < currentIndex ? '<i class="fas fa-check"></i>' : String(index + 1);
         const label = step.replace(/_/g, ' ').replace(/\b\w/g, function(ch) { return ch.toUpperCase(); });
+        const timeValue = statusMeta[step];
+        const timeHtml = timeValue ? '<span class="step-time">' + formatSettlementViewDate(timeValue) + '</span>' : '<span class="step-time">&nbsp;</span>';
 
         return `
             <div class="settlement-step ${state}" data-status="${step}">
                 <span class="step-circle">${icon}</span>
                 <span class="step-label">${label}</span>
+                ${timeHtml}
             </div>
         `;
     }).join('');
@@ -1810,9 +1903,19 @@ function buildExitSettlementDetailHtml(exitSettlement, payrollSettlement, earnin
     const exitStatus = String(exitSettlement.status || 'requested').toLowerCase();
     const currentStatus = payrollStatus || exitStatus;
     const payrollSettlementId = payrollSettlement && (payrollSettlement.settlement_id || exitSettlement.payroll_settlement_id) ? (payrollSettlement.settlement_id || exitSettlement.payroll_settlement_id) : null;
-    const totalEarnings = Number(payrollSettlement.total_earnings || 0);
-    const totalDeductions = Number(payrollSettlement.total_deductions || 0);
-    const netSettlement = Number(payrollSettlement.net_settlement || 0);
+    const totalEarnings = Number(payrollSettlement && payrollSettlement.total_earnings !== undefined ? payrollSettlement.total_earnings : 0);
+    const totalDeductions = Number(payrollSettlement && payrollSettlement.total_deductions !== undefined ? payrollSettlement.total_deductions : 0);
+    const netSettlementValue = payrollSettlement && (payrollSettlement.net_settlement !== undefined || payrollSettlement.net_payable !== undefined)
+        ? Number(payrollSettlement.net_settlement !== undefined ? payrollSettlement.net_settlement : payrollSettlement.net_payable)
+        : Number(exitSettlement.net_payable || 0);
+    const netSettlement = Number.isFinite(netSettlementValue) ? netSettlementValue : 0;
+    const statusMeta = {
+        processing: payrollSettlement && payrollSettlement.processing_at ? payrollSettlement.processing_at : null,
+        calculated: payrollSettlement && payrollSettlement.calculated_at ? payrollSettlement.calculated_at : null,
+        for_approval: payrollSettlement && payrollSettlement.for_approval_at ? payrollSettlement.for_approval_at : null,
+        approved: payrollSettlement && payrollSettlement.approved_at ? payrollSettlement.approved_at : null,
+        paid: payrollSettlement && payrollSettlement.paid_at ? payrollSettlement.paid_at : null
+    };
 
     const earningsRows = earnings.length ? earnings.map(function(item) {
         return `
@@ -1879,7 +1982,7 @@ function buildExitSettlementDetailHtml(exitSettlement, payrollSettlement, earnin
         <div class="settlement-view-detail-wrapper">
             <div class="settlement-view-section">
                 <h3 class="settlement-view-section-title">Settlement Status</h3>
-                ${renderSettlementTracker(currentStatus, payrollSettlementId)}
+                ${renderSettlementTracker(currentStatus, payrollSettlementId, statusMeta)}
             </div>
 
             <div class="settlement-view-section">
@@ -2059,8 +2162,6 @@ function viewInterviewWithLoading(button, interviewId) {
 }
 
 function showDocumentModal(documentId = null, options = {}) {
-    // Repurposed: by default open the print selector modal to keep API compatibility.
-    // If caller explicitly requests the upload modal (options.openUploadModal === true), show the upload modal instead.
     if (options && options.openUploadModal) {
         $('.modal-backdrop').remove();
         $('body').removeClass('modal-open');
@@ -2071,9 +2172,10 @@ function showDocumentModal(documentId = null, options = {}) {
             $('#documentModalTitle').text('Edit Document');
             loadDocumentData(documentId);
         } else {
-            $('#documentModalTitle').text('Upload Document');
+            $('#documentModalTitle').text('Upload Resignation Letter');
             $('#documentForm')[0].reset();
             $('#documentId').val('');
+            $('#documentType').val('resignation_letter');
             $('#documentExitCaseType').val(options.exitCaseType || '');
             $('#documentExitCaseId').val(options.exitCaseId || '');
             $('#documentEmployeeId').val(options.employeeId || '');
@@ -2093,14 +2195,14 @@ function showDocumentModal(documentId = null, options = {}) {
         return;
     }
 
-    // Default behavior: open print selector with provided context
     openPrintSelectorModal({ exitCaseType: options.exitCaseType || null, exitCaseId: options.exitCaseId || null, employeeId: options.employeeId || null });
 }
 
 function resetDocumentUploadState() {
-    $('#documentModalTitle').text('Upload Document');
+    $('#documentModalTitle').text('Upload Resignation Letter');
     $('#documentId').val('');
-    $('#documentSubmitBtn').text('Upload Document');
+    $('#documentType').val('resignation_letter');
+    $('#documentSubmitBtn').text('Upload Resignation Letter');
     $('#documentCaseDocumentsSection').hide();
     $('#documentCaseDocumentsList').empty();
 }
@@ -2227,8 +2329,7 @@ function prepareDocumentReplacement(documentId, title, documentType) {
     $('#documentId').val(documentId);
     $('#documentModalTitle').text('Replace Document');
     $('#documentSubmitBtn').text('Replace Document');
-    $('#documentTitle').val(title || '');
-    $('#documentType').val(documentType || '');
+    $('#documentType').val(documentType || 'resignation_letter');
     $('#documentFile').prop('required', true);
     $('#documentFile').val('');
     const $fileLabel = $('#documentFile').siblings('.custom-file-label');
@@ -2349,19 +2450,28 @@ function loadEligibleSurveyEmployees() {
 
 // Form submission functions
 function submitResignationForm() {
-    const formData = new FormData($('#resignationForm')[0]);
     const resignationId = $('#resignationId').val();
+    const isCreateMode = !resignationId;
+    const employeeId = $('#employeeSelect').val();
+    const reason = $('#reason').val().trim();
+    const noticeDate = $('#noticeDate').val();
+    const lastWorkingDate = $('#lastWorkingDate').val();
 
-    if (!resignationId) {
-        showToast('error', 'Resignation creation is managed through the Employee Portal.');
+    if (isCreateMode && (!employeeId || !reason || !noticeDate || !lastWorkingDate)) {
+        showToast('warning', 'Please complete the employee, reason, notice date, and intended last working day.');
         return;
     }
 
-    // Add action and controller parameters
-    formData.append('ajax_action', 'update_resignation');
+    if (lastWorkingDate && noticeDate && lastWorkingDate < noticeDate) {
+        showToast('warning', 'Intended last working day cannot be earlier than the date of submission.');
+        return;
+    }
+
+    const formData = new FormData($('#resignationForm')[0]);
+    formData.append('ajax_action', isCreateMode ? 'submit_resignation' : 'update_resignation');
     formData.append('controller', 'resignation');
 
-    $('#resignationSubmitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+    $('#resignationSubmitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> ' + (isCreateMode ? 'Submitting...' : 'Saving...'));
 
     $.ajax({
         url: 'exit_management.php',
@@ -2372,18 +2482,18 @@ function submitResignationForm() {
         success: function(response) {
             if (response.success) {
                 $('#resignationModal').modal('hide');
-                showToast('success', response.message);
+                showToast('success', response.message || (isCreateMode ? 'Resignation submitted successfully.' : 'Resignation updated successfully.'));
                 loadResignationsTable();
                 loadDashboardData();
             } else {
-                showToast('error', response.message);
+                showToast('error', response.message || 'Unable to save resignation.');
             }
         },
         error: function() {
             showToast('error', 'An error occurred while saving the resignation.');
         },
         complete: function() {
-            $('#resignationSubmitBtn').prop('disabled', false).html('Submit Resignation');
+            $('#resignationSubmitBtn').prop('disabled', false).html(isCreateMode ? 'Submit Resignation' : 'Save Decision');
         }
     });
 }
@@ -2552,15 +2662,129 @@ function renderLdCourseChecklist(courses, skippedInactiveCount = 0) {
     $container.html(`${skippedHtml}${html}`);
 }
 
+function resetLdProcessingState() {
+    $('#ldProcessingNotes').text('No L&D processing request has been sent yet.');
+    $('#ldLearningPathMessage').text('Select the leaving employee to review the resignee\'s completed or in-progress courses.');
+    $('#ldLearningPathTitle').text('Learning Path');
+    $('#ldLearningPathProgress').text('0%').removeClass('badge-success badge-warning badge-info badge-secondary').addClass('badge-secondary');
+    $('#ldLearningPathProgressBar').css('width', '0%').removeClass('bg-success bg-warning bg-info bg-secondary').addClass('bg-secondary');
+    $('#ldLearningPathLastUpdated').text('Not requested');
+    $('#ldCourseChecklist').html('');
+    $('#ldLearningPathItemsList').html('<div class="list-group-item text-muted">No L&D learning path has been requested for this plan yet.</div>');
+    $('#ktApprovalComments').val('');
+    $('#approveKtPlanBtn').hide();
+    $('#returnKtToLdBtn').hide();
+}
+
+function updateLdProgressVisual(status, percent) {
+    const statusKey = String(status || 'not_requested').toLowerCase();
+    const progress = Math.max(0, Math.min(100, Number(percent) || 0));
+    const $badge = $('#ldLearningPathProgress');
+    const $bar = $('#ldLearningPathProgressBar');
+
+    let badgeClass = 'badge-secondary';
+    let barClass = 'bg-secondary';
+    let label = `${progress}%`;
+
+    if (statusKey === 'completed' || statusKey === 'approved') {
+        badgeClass = 'badge-success';
+        barClass = 'bg-success';
+        label = statusKey === 'approved' ? 'Approved' : 'Completed';
+    } else if (statusKey === 'in_progress') {
+        badgeClass = 'badge-warning';
+        barClass = 'bg-warning';
+    } else if (statusKey === 'requested') {
+        badgeClass = 'badge-info';
+        barClass = 'bg-info';
+    }
+
+    $badge.removeClass('badge-secondary badge-success badge-warning badge-info').addClass(badgeClass).text(label);
+    $bar.removeClass('bg-secondary bg-success bg-warning bg-info').addClass(barClass).css('width', `${progress}%`);
+}
+
+let ldProgressPollingTimer = null;
+let ldSyncPollingTimer = null;
+
+function stopLdProgressPolling() {
+    if (ldProgressPollingTimer) {
+        clearInterval(ldProgressPollingTimer);
+        ldProgressPollingTimer = null;
+    }
+}
+
+function stopLdSyncPolling() {
+    if (ldSyncPollingTimer) {
+        clearInterval(ldSyncPollingTimer);
+        ldSyncPollingTimer = null;
+    }
+}
+
+function startLdProgressPolling(planId) {
+    stopLdProgressPolling();
+    if (!planId || !$('#transferModal').hasClass('show')) {
+        return;
+    }
+
+    ldProgressPollingTimer = setInterval(function() {
+        const activePlanId = $('#transferPlanId').val();
+        if (!activePlanId || !$('#transferModal').hasClass('show')) {
+            stopLdProgressPolling();
+            return;
+        }
+
+        $.post('exit_management.php', {
+            ajax_action: 'get_ld_progress',
+            controller: 'transfer',
+            plan_id: activePlanId
+        }, 'json').done(function(response) {
+            if (!response || !response.success) {
+                return;
+            }
+
+            const status = String(response.status || 'not_requested').toLowerCase();
+            if (['approved', 'not_requested'].includes(status)) {
+                stopLdProgressPolling();
+                return;
+            }
+
+            refreshTransferLearningPathState(activePlanId);
+        });
+    }, 15000);
+}
+
+function startLdSyncPolling() {
+    if (ldSyncPollingTimer) {
+        return;
+    }
+
+    ldSyncPollingTimer = setInterval(function() {
+        if (document.hidden) {
+            stopLdSyncPolling();
+            return;
+        }
+
+        $.post('exit_management.php', {
+            ajax_action: 'sync_ld_progress_all',
+            controller: 'transfer'
+        }, 'json').done(function(response) {
+            if (response && response.success && response.processed) {
+                const activePlanId = $('#transferPlanId').val();
+                if (activePlanId) {
+                    refreshTransferLearningPathState(activePlanId);
+                }
+            }
+        });
+    }, 30000);
+}
+
 function refreshTransferLearningPathState(planId) {
     if (!planId) {
-        $('#ldLearningPathGeneratedState').addClass('d-none');
-        $('#ldLearningPathMessage').text('Select the leaving employee to review the resignee\'s completed or in-progress courses.');
+        resetLdProcessingState();
         return;
     }
 
     $.post('exit_management.php', {
-        ajax_action: 'get_kt_learning_path',
+        ajax_action: 'get_ld_progress',
         controller: 'transfer',
         plan_id: planId
     }, 'json').done(function(response) {
@@ -2568,27 +2792,37 @@ function refreshTransferLearningPathState(planId) {
             return;
         }
 
-        const path = response.path || null;
-        const summary = (path && path.status_summary) ? path.status_summary : null;
-        const statusLabel = summary && summary.status === 'path_created' ? 'Path created' : 'Not requested';
+        const status = String(response.status || 'not_requested').toLowerCase();
+        const percent = Math.max(0, Math.min(100, Number(response.progress_percent || 0) || 0));
+        const items = Array.isArray(response.items) ? response.items : [];
+        const statusLabel = status === 'completed' ? 'Completed' : status === 'in_progress' ? 'In progress' : status === 'requested' ? 'Requested' : status === 'approved' ? 'Approved' : 'Not requested';
 
-        if (!path || !summary || summary.status !== 'path_created') {
-            $('#ldLearningPathGeneratedState').addClass('d-none');
+        $('#ldProcessingNotes').text(response.notes || 'No notes have been added to the current L&D processing request.');
+        $('#ldLearningPathTitle').text(response.path_title || 'Learning Path');
+        $('#ldLearningPathLastUpdated').text(response.last_updated || (status === 'not_requested' ? 'Not requested' : 'Updated recently'));
+        updateLdProgressVisual(status, percent);
+
+        if (status === 'not_requested') {
             $('#ldLearningPathMessage').text('Not requested');
-            $('#ldLearningPathTitle').text('Learning path status');
             $('#ldLearningPathItemsList').html('<div class="list-group-item text-muted">No L&D learning path has been requested for this plan yet.</div>');
+            $('#approveKtPlanBtn').hide();
+            $('#returnKtToLdBtn').hide();
+            stopLdProgressPolling();
             return;
         }
 
-        const items = Array.isArray(response.items) ? response.items : [];
-        const percent = Number(summary.completion_percent || 0);
-        $('#ldLearningPathTitle').text(path.title || 'Generated learning path');
-        $('#ldLearningPathPublicToggle').prop('checked', Number(summary.is_public || path.is_public || 0) === 1);
-        $('#ldLearningPathGeneratedState').removeClass('d-none');
         $('#ldLearningPathMessage').html(`
             <strong>${statusLabel}</strong><br>
-            <span class="text-muted">Path #${escapeHtml(String(summary.path_id || path.id || ''))} · ${escapeHtml(summary.successor_name || path.successor_name || 'Successor')} · ${escapeHtml(String(summary.course_count || items.length || 0))} course(s)</span>
+            <span class="text-muted">Path #${escapeHtml(String(response.path_id || ''))} · ${escapeHtml(String(response.successor_name || 'Successor'))} · ${escapeHtml(String(response.course_count || items.length || 0))} course(s)</span>
         `);
+
+        if (status === 'approved' || status === 'completed') {
+            $('#approveKtPlanBtn').hide();
+            $('#returnKtToLdBtn').hide();
+        } else {
+            $('#approveKtPlanBtn').show();
+            $('#returnKtToLdBtn').show();
+        }
 
         const listHtml = items.length ? items.map((item) => {
             const currentStatus = (item.successor_status || 'enrolled').toLowerCase();
@@ -2602,12 +2836,15 @@ function refreshTransferLearningPathState(planId) {
                     <span class="badge ${badgeClass}">${escapeHtml(currentStatus)}</span>
                 </div>
             `;
-        }).join('') : '<div class="list-group-item text-muted">No items available for this generated path.</div>';
+        }).join('') : '<div class="list-group-item text-muted">No items available yet for this path.</div>';
 
-        $('#ldLearningPathItemsList').html(`
-            <div class="mb-2 small text-muted">Overall completion: <strong>${percent}%</strong></div>
-            ${listHtml}
-        `);
+        $('#ldLearningPathItemsList').html(listHtml);
+
+        if (['requested', 'in_progress'].includes(status)) {
+            startLdProgressPolling(planId);
+        } else {
+            stopLdProgressPolling();
+        }
     });
 }
 
@@ -2618,7 +2855,6 @@ function loadResigneeCoursesForTransfer() {
     if (!employeeId) {
         $('#ldCourseChecklist').html('');
         $('#ldLearningPathMessage').text('Select the leaving employee to review the resignee\'s completed or in-progress courses.');
-        $('#ldLearningPathGeneratedState').addClass('d-none');
         return;
     }
 
@@ -2647,7 +2883,7 @@ function loadResigneeCoursesForTransfer() {
     });
 }
 
-function generateTransferLearningPath() {
+function requestTransferLearningPath() {
     const employeeId = $('#transferEmployeeSelect').val();
     const successorId = $('#successorSelect').val();
     const planId = $('#transferPlanId').val();
@@ -2676,17 +2912,19 @@ function generateTransferLearningPath() {
     }
 
     if (!selectedCourseIds.length) {
-        showToast('warning', 'Choose at least one eligible course to request a learning path.');
+        showToast('warning', 'Choose at least one eligible course to request the learning path.');
         return;
     }
 
-    $('#generateTransferLearningPathBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Requesting...');
+    $('#requestLdProcessingBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Requesting...');
 
     $.post('exit_management.php', {
-        ajax_action: 'generate_kt_learning_path',
+        ajax_action: 'request_ld_processing',
         controller: 'transfer',
         plan_id: planId,
-        course_ids: selectedCourseIds
+        course_ids: selectedCourseIds,
+        requested_by: window.exitManagementUserId || null,
+        notes: 'L&D processing requested from Exit staff.'
     }, 'json').done(function(response) {
         if (response && response.success) {
             showToast('success', response.message || 'Learning path requested from L&D.');
@@ -2697,53 +2935,97 @@ function generateTransferLearningPath() {
     }).fail(function() {
         showToast('error', 'Unable to request the learning path right now.');
     }).always(function() {
-        $('#generateTransferLearningPathBtn').prop('disabled', false).html('Request Learning Path from L&D');
+        $('#requestLdProcessingBtn').prop('disabled', false).html('Request Learning Path');
     });
 }
 
-function toggleTransferLearningPathPublic() {
+function approveTransferLearningPath() {
     const planId = $('#transferPlanId').val();
-    const isPublic = $('#ldLearningPathPublicToggle').is(':checked');
+    const notes = $('#ktApprovalComments').val() || 'Approved by Exit staff.';
 
     if (!planId) {
-        showToast('warning', 'Generate a learning path first before changing its visibility.');
+        showToast('warning', 'Select a plan before approving the learning path.');
         return;
     }
 
+    $('#approveKtPlanBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Approving...');
+
     $.post('exit_management.php', {
-        ajax_action: 'toggle_kt_path_public',
+        ajax_action: 'approve_kt_plan',
         controller: 'transfer',
         plan_id: planId,
-        is_public: isPublic ? 1 : 0
+        actor_id: window.exitManagementUserId || null,
+        notes: notes
     }, 'json').done(function(response) {
         if (response && response.success) {
-            showToast('success', response.message || 'Learning path visibility updated.');
-            $('#ldLearningPathPublicToggle').prop('checked', !!Number(response.is_public || 0));
+            showToast('success', response.message || 'Knowledge transfer plan approved.');
+            refreshTransferLearningPathState(planId);
         } else {
-            showToast('error', response && response.message ? response.message : 'Unable to update visibility.');
-            $('#ldLearningPathPublicToggle').prop('checked', !isPublic);
+            showToast('error', response && response.message ? response.message : 'Unable to approve the learning path.');
         }
     }).fail(function() {
-        showToast('error', 'Unable to update the learning path visibility.');
-        $('#ldLearningPathPublicToggle').prop('checked', !isPublic);
+        showToast('error', 'Unable to approve the learning path right now.');
+    }).always(function() {
+        $('#approveKtPlanBtn').prop('disabled', false).html('Approve');
+    });
+}
+
+function returnTransferLearningPathToLd() {
+    const planId = $('#transferPlanId').val();
+    const notes = $('#ktApprovalComments').val() || 'Returned to L&D for revision.';
+
+    if (!planId) {
+        showToast('warning', 'Select a plan before returning it to L&D.');
+        return;
+    }
+
+    $('#returnKtToLdBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Returning...');
+
+    $.post('exit_management.php', {
+        ajax_action: 'return_kt_to_ld',
+        controller: 'transfer',
+        plan_id: planId,
+        actor_id: window.exitManagementUserId || null,
+        notes: notes
+    }, 'json').done(function(response) {
+        if (response && response.success) {
+            showToast('success', response.message || 'Knowledge transfer plan returned to L&D.');
+            refreshTransferLearningPathState(planId);
+        } else {
+            showToast('error', response && response.message ? response.message : 'Unable to return the learning path to L&D.');
+        }
+    }).fail(function() {
+        showToast('error', 'Unable to return the learning path to L&D right now.');
+    }).always(function() {
+        $('#returnKtToLdBtn').prop('disabled', false).html('Return to L&D');
     });
 }
 
 $(document).on('change', '#transferEmployeeSelect', function() {
-    if (!$('#transferPlanId').val()) {
-        loadResigneeCoursesForTransfer();
-    }
+    loadSuccessors(function() {
+        if (!$('#transferPlanId').val()) {
+            loadResigneeCoursesForTransfer();
+        }
+    });
 });
 
-$(document).on('click', '#generateTransferLearningPathBtn', generateTransferLearningPath);
-$(document).on('change', '#ldLearningPathPublicToggle', toggleTransferLearningPathPublic);
+$(document).on('click', '#requestLdProcessingBtn', requestTransferLearningPath);
+$(document).on('click', '#refreshLdProgressBtn', function() {
+    const planId = $('#transferPlanId').val();
+    if (planId) {
+        refreshTransferLearningPathState(planId);
+    }
+});
+$(document).on('click', '#approveKtPlanBtn', approveTransferLearningPath);
+$(document).on('click', '#returnKtToLdBtn', returnTransferLearningPathToLd);
 
 function setTransferModalMode(viewOnly = false) {
     const $formFields = $('#transferForm').find('input:not([type=hidden]), textarea, select');
     $formFields.prop('disabled', viewOnly);
 
     $('#addTransferItem').toggle(!viewOnly);
-    $('#generateTransferLearningPathBtn').toggle(!viewOnly);
+    $('#requestLdProcessingBtn').toggle(!viewOnly);
+    $('#refreshLdProgressBtn').toggle(!viewOnly);
     $('#transferSubmitBtn').toggle(!viewOnly);
 
     if (viewOnly) {
@@ -2810,6 +3092,16 @@ function submitDocumentForm() {
     const documentType = (formData.get('document_type') || '').toString();
     if (!documentType) {
         showToast('error', 'Please select a document type.');
+        return;
+    }
+
+    if (selectedCase && selectedCase.split(':')[0] !== 'resignation') {
+        showToast('error', 'Manual document uploads are only allowed for resignation cases.');
+        return;
+    }
+
+    if (documentType === 'termination_letter') {
+        showToast('error', 'Termination letters are generated automatically and cannot be uploaded manually.');
         return;
     }
 
@@ -2898,7 +3190,20 @@ function syncDocumentCaseSelection() {
     const selectedOption = $('#documentCaseSelect option:selected');
     const employeeId = selectedOption.data('employee-id') || '';
     const caseEmployeeName = selectedOption.data('employee-name') || '';
-    const defaultDocumentType = caseType === 'resignation' ? 'resignation_letter' : 'termination_letter';
+
+    if (caseType !== 'resignation') {
+        $('#documentExitCaseType').val(caseType);
+        $('#documentExitCaseId').val(caseId);
+        $('#documentEmployeeId').val(employeeId);
+        $('#documentType').val('');
+        $('#documentCaseHint').hide();
+        $('#documentCaseDocumentsSection').hide();
+        $('#documentCaseDocumentsList').empty();
+        showToast('info', 'Upload is only available for resignation cases.');
+        return;
+    }
+
+    const defaultDocumentType = 'resignation_letter';
 
     $('#documentExitCaseType').val(caseType);
     $('#documentExitCaseId').val(caseId);
@@ -2916,8 +3221,8 @@ $(document).on('change', '#documentCaseSelect', syncDocumentCaseSelection);
 
 function loadDocumentCases(employeeId = '', callback) {
     $.post('exit_management.php', {
-        ajax_action: 'get_active_exit_cases',
-        controller: 'exit_management',
+        ajax_action: 'get_cases_without_resignation_letter',
+        controller: 'documentation',
         employee_id: employeeId
     }, function(response) {
         const cases = Array.isArray(response) ? response : (response && Array.isArray(response.data) ? response.data : []);
@@ -2933,16 +3238,22 @@ function loadDocumentCases(employeeId = '', callback) {
                     `<option value="${optionValue}" data-employee-id="${escapeHtml(String(exitCase.employee_id || ''))}" data-employee-name="${escapeHtml(String(exitCase.full_name || ''))}">${optionLabel}</option>`
                 );
             });
+            $('#documentCaseSelect').html(options.join(''));
+            $('#documentFile').prop('disabled', false);
+            $('#documentSubmitBtn').prop('disabled', false);
         } else {
-            options.push('<option value="">No exit cases available</option>');
+            $('#documentCaseSelect').html('<option value="">All resignation cases already have a resignation letter</option>');
+            $('#documentFile').prop('disabled', true);
+            $('#documentSubmitBtn').prop('disabled', true);
         }
 
-        $('#documentCaseSelect').html(options.join(''));
         if (typeof callback === 'function') {
             callback(cases);
         }
     }, 'json').fail(function() {
         $('#documentCaseSelect').html('<option value="">Unable to load exit cases</option>');
+        $('#documentFile').prop('disabled', true);
+        $('#documentSubmitBtn').prop('disabled', true);
         if (typeof callback === 'function') {
             callback([]);
         }
@@ -3404,10 +3715,23 @@ function loadResignationData(id, callback) {
 
                     $section.show();
                     if (path) {
-                        const safePath = path.split('/').pop();
-                        $link.attr('href', '../employee_portal/public/uploads/' + encodeURIComponent(safePath))
-                            .show();
-                        $('#resignationLetterName').text(safePath);
+                        const stripped = path.replace(/^\/+/, '');
+                        const fileName = stripped.split('/').pop();
+
+                        if (stripped.startsWith('uploads/documents/')) {
+                            const localPath = '../uploads/' + stripped.replace(/^uploads\//, '').split('/').map(segment => encodeURIComponent(segment)).join('/');
+                            $link.attr('href', localPath)
+                                .attr('target', '_blank')
+                                .attr('rel', 'noopener')
+                                .show();
+                            $('#resignationLetterName').text(fileName);
+                        } else {
+                            $link.attr('href', '../employee_portal/public/uploads/' + encodeURIComponent(fileName))
+                                .attr('target', '_blank')
+                                .attr('rel', 'noopener')
+                                .show();
+                            $('#resignationLetterName').text(fileName);
+                        }
                         $missing.hide();
                     } else {
                         $link.hide();
@@ -3796,7 +4120,10 @@ function loadTransferData(id, viewOnly = false, callback = null) {
                 const successorLabel = planSuccessorName ? `${planSuccessorName}` : 'Selected successor';
                 $('#successorSelect').prepend(`<option value="${planSuccessorId}">${successorLabel}</option>`);
             }
-            $('#successorSelect').val(planSuccessorId || '');
+            $('#successorSelect').data('current-successor-id', planSuccessorId || '');
+            loadSuccessors(function() {
+                $('#successorSelect').val(planSuccessorId || '');
+            });
 
             setDateInputValue('#transferStartDate', plan.start_date);
             setDateInputValue('#transferEndDate', plan.end_date);
@@ -4211,6 +4538,71 @@ function loadTerminationsTable(status = 'active', page = 1, searchTerm = '') {
         tbody.html('<tr><td colspan="8" class="text-center text-danger">Error loading terminations. Check console for details.</td></tr>');
         $('#terminations-pagination').empty();
     });
+}
+
+function buildResignationLetterPreview(data = {}) {
+    const employeeName = data.employee_name || $('#employeeSelect option:selected').text().replace(/\s*\([^)]*\)$/, '') || 'Employee';
+    const employeeId = data.employee_id || $('#employeeSelect').val() || '';
+    const department = data.department || $('#employeeDepartment').val() || 'Department';
+    const position = data.position || $('#employeePosition').val() || 'Position';
+    const noticeDate = (data.notice_date || $('#noticeDate').val() || new Date().toISOString().slice(0, 10)) || 'TBD';
+    const lastWorkingDate = (data.last_working_date || $('#lastWorkingDate').val() || 'TBD') || 'TBD';
+    const reason = (data.reason || $('#reason').val() || '').trim();
+    const comments = (data.comments || $('#comments').val() || '').trim();
+    const reasonText = reason ? escapeHtml(reason) : 'Not specified.';
+    const commentsHtml = comments ? `<div style="margin-top: 12px;"><strong>Additional Comments:</strong> ${escapeHtml(comments)}</div>` : '';
+
+    return `
+        <div style="background:#fff; border:1px solid #dfe5ec; box-shadow:0 2px 10px rgba(15,23,42,0.06); width:100%; max-width:794px; min-height:1123px; padding:34px 40px; color:#212529; font-family:'Segoe UI', Arial, sans-serif; box-sizing:border-box; margin:0 auto;">
+            <div style="display:flex; align-items:center; border-bottom:2px solid #1f5fbf; padding-bottom:14px; margin-bottom:20px;">
+                <img src="/capstone_hr_management_system2/assets/pics/bcpLogo.png" alt="Bestlink College of the Philippines logo" style="width:86px; height:86px; object-fit:contain; margin-right:18px;">
+                <div>
+                    <div style="font-size:20px; font-weight:700; color:#174a8b;">Bestlink College of the Philippines — Bulacan Campus</div>
+                    <div style="font-size:12px; line-height:1.6; color:#333; margin-top:4px;">Lot 1 Ipo Road Brgy. Minuyan Proper, City of San Jose Del Monte, Bulacan.<br>Tel. No.: (044)792-1992</div>
+                </div>
+            </div>
+
+            <div style="font-size:30px; font-weight:700; letter-spacing:0.04em; color:#1d2d3d; margin-bottom:28px; text-align:center;">RESIGNATION LETTER</div>
+
+            <div style="font-size:14px; line-height:1.8; color:#1f2937;">
+                <div style="text-align:right; margin-bottom:12px;">${escapeHtml(new Date().toLocaleDateString())}</div>
+                <div style="margin-bottom:8px; font-weight:600;">To: Human Resources Office</div>
+                <p style="margin:0 0 12px;">Dear Human Resources Office,</p>
+
+                <p style="margin:0 0 12px;">This is to formally inform you that I, <strong>${escapeHtml(employeeName)}</strong>, am resigning from my position as <strong>${escapeHtml(position)}</strong> in the <strong>${escapeHtml(department)}</strong> department. My intended last working day is <strong>${escapeHtml(lastWorkingDate)}</strong>, and this notice was submitted on <strong>${escapeHtml(noticeDate)}</strong>.</p>
+
+                <p style="margin:0 0 12px; font-weight:600;">Reason for resignation:</p>
+                <p style="margin:0 0 12px;">${escapeHtml(reasonText)}</p>
+
+                ${commentsHtml}
+
+                <p style="margin:0 0 24px;">I appreciate the opportunity to serve in this organization and am grateful for the support I received during my employment. I will cooperate in the transition process and ensure a smooth turnover of duties before my final day.</p>
+
+                <p style="margin:0 0 6px;">Sincerely,</p>
+                <div style="margin-top:18px;">
+                    <div style="border-top:1px solid #000; width:320px; height:1px; margin-bottom:6px;"></div>
+                    <div style="font-weight:600;">${escapeHtml(employeeName)}</div>
+                    <div>${escapeHtml(position)}${employeeId ? ` • Employee ID ${escapeHtml(employeeId)}` : ''}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function updateResignationLetterPreview() {
+    const employeeName = $('#employeeSelect option:selected').text().replace(/\s*\([^)]*\)$/, '') || 'Employee';
+    const previewData = {
+        employee_name: employeeName,
+        employee_id: $('#employeeSelect').val() || '',
+        department: $('#employeeDepartment').val() || 'Department',
+        position: $('#employeePosition').val() || 'Position',
+        notice_date: $('#noticeDate').val() || new Date().toISOString().slice(0, 10),
+        last_working_date: $('#lastWorkingDate').val() || 'TBD',
+        reason: $('#reason').val() || '',
+        comments: $('#comments').val() || ''
+    };
+
+    $('#resignationLetterPreview').html(buildResignationLetterPreview(previewData));
 }
 
 function buildTerminationLetterPreview(data = {}) {
@@ -5192,7 +5584,10 @@ function loadSettlementsTable(status = 'all', page = 1, limit = 10, searchTerm =
 
             if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
                 response.data.forEach(function(settlement) {
-                    const statusBadge = getStatusBadge(settlement.status);
+                    const effectiveStatus = settlement.effective_status || settlement.status || 'requested';
+                    const statusBadge = getStatusBadge(effectiveStatus);
+                    const netValue = Number(settlement.net_payable ?? settlement.net_settlement ?? 0);
+                    const safeNetValue = Number.isFinite(netValue) ? netValue : 0;
                     const actions = `
                         <button class="btn btn-sm btn-info" onclick="viewSettlementWithLoading(this, ${settlement.id})" title="View Settlement">
                             <i class="fas fa-eye"></i>
@@ -5209,7 +5604,7 @@ function loadSettlementsTable(status = 'all', page = 1, limit = 10, searchTerm =
                         <tr data-settlement-id="${settlement.id}">
                             <td>${settlement.employee_name}</td>
                             <td>${settlement.settlement_date}</td>
-                            <td>$${parseFloat(settlement.net_payable).toFixed(2)}</td>
+                            <td>$${safeNetValue.toFixed(2)}</td>
                             <td>${statusBadge}</td>
                             <td>${actions}</td>
                         </tr>
@@ -5668,6 +6063,292 @@ function showPreviewModal(html) {
         $('#exitPreviewModal').modal({ backdrop: 'static' });
 }
 
+function normalizeSurveyStatus(status) {
+    const normalized = String(status || '').toLowerCase();
+    if (['completed', 'completed_surveys', 'completed_survey'].includes(normalized)) {
+        return 'completed';
+    }
+    if (['scheduled', 'approved'].includes(normalized)) {
+        return 'scheduled';
+    }
+    return 'pending';
+}
+
+function formatSurveyScheduledValue(survey) {
+    const date = survey.scheduled_date || '';
+    const time = survey.scheduled_time || '';
+    if (!date && !time) {
+        return 'Not yet scheduled';
+    }
+    return `${date || 'N/A'}${time ? ' ' + time : ''}`;
+}
+
+function getRatingLabel(value) {
+    const labels = {
+        1: 'Very poor',
+        2: 'Poor',
+        3: 'Average',
+        4: 'Good',
+        5: 'Excellent'
+    };
+    return labels[Number(value)] || 'No rating';
+}
+
+function updateSurveyProgressBadge() {
+    const total = $('#manageSurveyQuestions .survey-rating-control').length;
+    const rated = $('#manageSurveyQuestions .survey-rating-control input[type="radio"]:checked').length;
+    $('#manageSurveyProgressBadge').text(`${rated} / ${total} rated`);
+    $('#completeSurveyBtn').toggleClass('d-none', !(total > 0 && rated === total));
+    return { total, rated };
+}
+
+function renderManageSurveyQuestions(questions, readOnlyMode) {
+    const $container = $('#manageSurveyQuestions');
+    $container.empty();
+
+    if (!Array.isArray(questions) || questions.length === 0) {
+        $container.html('<div class="alert alert-info mb-0">No questions are available for this survey.</div>');
+        updateSurveyProgressBadge();
+        return;
+    }
+
+    questions.forEach((question, index) => {
+        const questionId = question.id;
+        const currentValue = question.rating !== null && question.rating !== undefined && question.rating !== '' ? Number(question.rating) : null;
+
+        const $control = $(`
+            <div class="survey-rating-control ${readOnlyMode ? 'readonly' : ''}" data-question-id="${questionId}">
+                <div class="survey-rating-header">
+                    <strong>${index + 1}. ${question.question_text || 'Question'}</strong>
+                    <span class="survey-rating-badge">${currentValue ? currentValue : 'Unrated'}</span>
+                </div>
+                <div class="survey-rating-label">${currentValue ? getRatingLabel(currentValue) : 'No rating selected'}</div>
+                <div class="survey-rating-row" aria-label="Rate this question from 1 to 5">
+                    ${[1, 2, 3, 4, 5].map(value => `
+                        <button type="button"
+                            class="survey-star ${currentValue === value ? 'selected' : ''}"
+                            data-question-id="${questionId}"
+                            data-value="${value}"
+                            aria-label="${value} star${value > 1 ? 's' : ''}"
+                            ${readOnlyMode ? 'disabled' : ''}>
+                            <i class="${currentValue === value ? 'fas' : 'far'} fa-star"></i>
+                        </button>
+                    `).join('')}
+                    ${[1, 2, 3, 4, 5].map(value => `
+                        <input type="radio"
+                            class="survey-rating-radios"
+                            name="survey_rating_${questionId}"
+                            value="${value}"
+                            ${currentValue === value ? 'checked' : ''}
+                            ${readOnlyMode ? 'disabled' : ''}>
+                    `).join('')}
+                </div>
+            </div>
+        `);
+
+        $container.append($control);
+    });
+
+    updateSurveyProgressBadge();
+
+    if (!readOnlyMode) {
+        $container.off('mouseenter', '.survey-star')
+            .on('mouseenter', '.survey-star', function() {
+                const value = Number($(this).data('value'));
+                const $control = $(this).closest('.survey-rating-control');
+                $control.find('.survey-star').removeClass('preview');
+                $control.find('.survey-star').each(function() {
+                    if (Number($(this).data('value')) <= value) {
+                        $(this).addClass('preview');
+                    }
+                });
+            })
+            .off('mouseleave', '.survey-star')
+            .on('mouseleave', '.survey-star', function() {
+                const $control = $(this).closest('.survey-rating-control');
+                const selectedValue = Number($control.find('input[type="radio"]:checked').val()) || 0;
+                $control.find('.survey-star').removeClass('preview');
+                $control.find('.survey-star').each(function() {
+                    if (Number($(this).data('value')) <= selectedValue) {
+                        $(this).addClass('selected');
+                    } else {
+                        $(this).removeClass('selected');
+                    }
+                });
+            });
+
+        $container.off('click', '.survey-star')
+            .on('click', '.survey-star', function() {
+                const value = Number($(this).data('value'));
+                const $control = $(this).closest('.survey-rating-control');
+                $control.find('input[type="radio"]').prop('checked', false);
+                $control.find(`input[type="radio"][value="${value}"]`).prop('checked', true);
+                $control.find('.survey-star').removeClass('selected preview');
+                $control.find('.survey-star').each(function() {
+                    if (Number($(this).data('value')) <= value) {
+                        $(this).addClass('selected');
+                        $(this).find('i').removeClass('far').addClass('fas');
+                    } else {
+                        $(this).find('i').removeClass('fas').addClass('far');
+                    }
+                });
+                $control.find('.survey-rating-label').text(getRatingLabel(value));
+                $control.find('.survey-rating-badge').text(value);
+                updateSurveyProgressBadge();
+            });
+
+        $container.on('keydown', '.survey-star', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                $(this).trigger('click');
+            }
+        });
+    }
+}
+
+function setManageSurveyReadOnly(isReadOnly) {
+    const $modal = $('#manageSurveyModal');
+    $modal.find('#manageSurveyDate, #manageSurveyTime').prop('disabled', isReadOnly);
+    $modal.find('#saveManageSurveyBtn').toggle(!isReadOnly);
+    $modal.find('#completeSurveyBtn').toggle(!isReadOnly);
+    $('#manageSurveyQuestions').toggleClass('readonly', isReadOnly);
+    if (isReadOnly) {
+        $('#manageSurveyQuestions .survey-star').prop('disabled', true);
+        $('#manageSurveyQuestions input[type="radio"]').prop('disabled', true);
+    }
+}
+
+function openManageSurvey(surveyId) {
+    $.post('exit_management.php', {
+        ajax_action: 'get_survey',
+        controller: 'survey',
+        survey_id: surveyId
+    }, function(response) {
+        const survey = response && response.success && response.data ? response.data : response;
+        if (!survey || typeof survey.id === 'undefined') {
+            showToast('error', 'Survey details could not be loaded.');
+            return;
+        }
+
+        const surveyStatus = normalizeSurveyStatus(survey.approval_status || survey.status);
+        const allQuestions = Array.isArray(survey.questions) ? survey.questions : [];
+        const hasCompleteStatus = surveyStatus === 'completed';
+
+        $('#manageSurveyModal').attr('data-survey-id', survey.id);
+        $('#manageSurveyModal').attr('data-status', surveyStatus);
+        $('#manageSurveyEmployee').text(survey.employee_name || 'Unknown Employee');
+        $('#manageSurveyCaseLabel').text(`${survey.exit_case_type ? survey.exit_case_type.charAt(0).toUpperCase() + survey.exit_case_type.slice(1) : 'Case'} #${survey.exit_case_id || 'N/A'}`);
+        $('#manageSurveyDate').val(survey.scheduled_date || '');
+        $('#manageSurveyTime').val(survey.scheduled_time || '');
+        renderManageSurveyQuestions(allQuestions, hasCompleteStatus || surveyStatus === 'completed');
+
+        const allRated = allQuestions.length > 0 && allQuestions.every(question => Number(question.rating) >= 1 && Number(question.rating) <= 5);
+        const showComplete = surveyStatus === 'scheduled' && allRated;
+        $('#completeSurveyBtn').toggleClass('d-none', !showComplete).prop('disabled', !showComplete);
+        $('#saveManageSurveyBtn').prop('disabled', hasCompleteStatus);
+
+        $('#manageSurveyModal').modal('show');
+    }, 'json').fail(function() {
+        showToast('error', 'Failed to open survey management modal.');
+    });
+}
+
+$('#saveManageSurveyBtn').on('click', saveSurveyManagementChanges);
+$('#completeSurveyBtn').on('click', function() {
+    const surveyId = Number($('#manageSurveyModal').attr('data-survey-id'));
+    if (surveyId) {
+        confirmCompleteSurvey(surveyId);
+    }
+});
+
+function confirmCompleteSurvey(surveyId) {
+    showConfirmation('Mark this survey as completed and lock it from further edits?', function() {
+        $.post('exit_management.php', {
+            ajax_action: 'complete_survey',
+            controller: 'survey',
+            survey_id: surveyId
+        }, function(response) {
+            if (response && response.success) {
+                showToast('success', response.message || 'Survey completed successfully.');
+                $('#manageSurveyModal').modal('hide');
+                loadSurveysTable($('#survey-status-filter').val() || 'all', 1);
+            } else {
+                showToast('error', (response && response.message) || 'Unable to complete the survey.');
+            }
+        }, 'json').fail(function() {
+            showToast('error', 'Failed to complete the survey.');
+        });
+    }, {
+        confirmButtonText: 'Complete',
+        confirmButtonClass: 'btn-success'
+    });
+}
+
+function saveSurveyManagementChanges() {
+    const surveyId = Number($('#manageSurveyModal').attr('data-survey-id'));
+    const surveyStatus = $('#manageSurveyModal').attr('data-status') || 'pending';
+    const scheduledDate = $('#manageSurveyDate').val();
+    const scheduledTime = $('#manageSurveyTime').val();
+
+    const ratings = $('#manageSurveyQuestions .survey-rating-control').map(function() {
+        const questionId = Number($(this).data('question-id'));
+        const value = Number($(this).find('input[type="radio"]:checked').val());
+        if (!questionId || !value) {
+            return null;
+        }
+        return { question_id: questionId, rating: value };
+    }).get().filter(Boolean);
+
+    let request = $.Deferred().resolve({ success: true });
+
+    if ((surveyStatus === 'pending' || surveyStatus === 'scheduled') && scheduledDate && scheduledTime) {
+        request = $.post('exit_management.php', {
+            ajax_action: 'schedule_survey',
+            controller: 'survey',
+            survey_id: surveyId,
+            scheduled_date: scheduledDate,
+            scheduled_time: scheduledTime
+        }, 'json');
+    }
+
+    request.then(function(response) {
+        if (response && response.success === false) {
+            showToast('error', response.message || 'Unable to update survey schedule.');
+            return $.Deferred().reject();
+        }
+
+        if (ratings.length > 0) {
+            return $.post('exit_management.php', {
+                ajax_action: 'save_survey_ratings',
+                controller: 'survey',
+                survey_id: surveyId,
+                ratings: ratings
+            }, 'json');
+        }
+
+        return { success: true, message: 'Survey saved successfully.' };
+    }).then(function(response) {
+        if (response && response.success === false) {
+            showToast('error', response.message || 'Unable to save the ratings.');
+            return;
+        }
+
+        showToast('success', 'Survey updated successfully.');
+        $('#manageSurveyModal').modal('hide');
+        loadSurveysTable($('#survey-status-filter').val() || 'all', 1);
+    }).fail(function() {
+        showToast('error', 'Unable to save the survey changes.');
+    });
+}
+
+function showSurveyModal(surveyId = null) {
+    if (surveyId) {
+        openManageSurvey(surveyId);
+        return;
+    }
+    showToast('info', 'Pending surveys are created automatically and managed from the survey table.');
+}
+
 function loadSurveysTable(status = 'all', page = 1, limit = 10, searchTerm = '') {
     const tbody = $('#surveys-tbody');
     showTableLoading(tbody, 5);
@@ -5681,42 +6362,54 @@ function loadSurveysTable(status = 'all', page = 1, limit = 10, searchTerm = '')
         search: searchTerm
     }, function(response) {
         tbody.empty();
+        const rows = Array.isArray(response && response.data) ? response.data : [];
 
-        if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
-            response.data.forEach(function(survey) {
-                const statusBadge = getStatusBadge(survey.approval_status || survey.status || 'scheduled');
+        if (rows.length > 0) {
+            const statusOrder = { pending: 0, scheduled: 1, completed: 2 };
+            rows.sort((a, b) => {
+                const aStatus = normalizeSurveyStatus(a.approval_status || a.status);
+                const bStatus = normalizeSurveyStatus(b.approval_status || b.status);
+                const orderDiff = (statusOrder[aStatus] ?? 99) - (statusOrder[bStatus] ?? 99);
+                if (orderDiff !== 0) return orderDiff;
+                return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+            });
+
+            rows.forEach(function(survey) {
+                const statusValue = normalizeSurveyStatus(survey.approval_status || survey.status);
+                const statusBadge = getStatusBadge(statusValue);
                 const employeeName = survey.employee_name || 'Unknown Employee';
-                const scheduledDate = survey.scheduled_date || survey.start_date || 'N/A';
-                const scheduledTime = survey.scheduled_time || 'N/A';
-                const actions = `
-                    <button class="btn btn-sm btn-primary" onclick="viewScheduledSurvey(${survey.id})">
-                        <i class="fas fa-eye"></i> View
-                    </button>
-                    <button class="btn btn-sm btn-secondary" onclick="archiveSurvey(${survey.id})" title="Archive Survey">
-                        <i class="fas fa-archive"></i> Archive
-                    </button>
-                `;
+                const caseType = survey.exit_case_type ? survey.exit_case_type.charAt(0).toUpperCase() + survey.exit_case_type.slice(1) : 'Case';
+                const caseLabel = `${caseType} #${survey.exit_case_id || 'N/A'}`;
+                const scheduledText = formatSurveyScheduledValue(survey);
+                const ratedCount = Number(survey.rated_count || 0);
+                const questionCount = Number(survey.question_count || 0);
+                const progressText = `${ratedCount} / ${questionCount} rated`;
+
+                const viewButton = `<button class="btn btn-sm btn-primary" onclick="openManageSurvey(${survey.id})"><i class="fas fa-eye"></i> View</button>`;
+                const manageButton = statusValue !== 'completed' ? `<button class="btn btn-sm btn-secondary" onclick="openManageSurvey(${survey.id})"><i class="fas fa-edit"></i> Manage</button>` : '';
+                const completeButton = statusValue === 'scheduled' && questionCount > 0 && ratedCount === questionCount ? `<button class="btn btn-sm btn-success" onclick="confirmCompleteSurvey(${survey.id})"><i class="fas fa-check"></i> Complete</button>` : '';
+                const archiveButton = `<button class="btn btn-sm btn-warning" onclick="archiveSurvey(${survey.id})" title="Archive Survey"><i class="fas fa-archive"></i> Archive</button>`;
+                const actions = [viewButton, manageButton, completeButton, archiveButton].filter(Boolean).join(' ');
 
                 tbody.append(`
                     <tr>
                         <td>${employeeName}</td>
-                        <td>${survey.title || 'Post-Exit Survey'}</td>
-                        <td>${scheduledDate}</td>
-                        <td>${scheduledTime}</td>
+                        <td>${caseLabel}</td>
+                        <td>${scheduledText}</td>
+                        <td>${progressText}</td>
                         <td>${statusBadge}</td>
                         <td>${actions}</td>
                     </tr>
                 `);
             });
         } else {
-            tbody.append('<tr><td colspan="5" class="text-center">No surveys found</td></tr>');
+            tbody.append('<tr><td colspan="6" class="text-center">No surveys found</td></tr>');
         }
 
-        // Render pagination
-        renderPagination('surveys-pagination', response.total, page, limit, (newPage) => `loadSurveysTable('${status}', ${newPage}, ${limit})`);
+        renderPagination('surveys-pagination', response.total || 0, page, limit, (newPage) => `loadSurveysTable('${status}', ${newPage}, ${limit})`);
     }).fail(function(xhr, status, error) {
         console.error('Error loading surveys:', status, error, xhr.responseText);
-        tbody.html('<tr><td colspan="5" class="text-center text-danger">Error loading surveys</td></tr>');
+        tbody.html('<tr><td colspan="6" class="text-center text-danger">Error loading surveys</td></tr>');
     });
 }
 
@@ -6052,11 +6745,10 @@ function onDocumentStatusFilterChange() {
 }
 
 function onSurveyStatusFilterChange() {
-    const selectedStatus = $('#survey-status-filter').val();
+    const selectedStatus = $('#survey-status-filter').val() || 'all';
     console.log('[Filter] Survey status:', selectedStatus);
-    // Clear search when switching filters
     $('#survey-search').val('');
-    loadSurveysTable(selectedStatus === 'active' ? 'all' : selectedStatus, 1);
+    loadSurveysTable(selectedStatus, 1);
 }
 
 function getAutomatedArchiveReason() {
@@ -8317,108 +9009,223 @@ function openPrintSelectorForCase(exitCaseType, exitCaseId, employeeId) {
 }
 
 function openPrintSelectorModal(options = {}) {
-        // options: { exitCaseType, exitCaseId, employeeId }
-        const caseOnlyMode = !!(options.exitCaseType && options.exitCaseId);
-        $('#printSelectorModal').remove();
-        const modal = `
-        <div class="modal fade" id="printSelectorModal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">${caseOnlyMode ? 'Print Exit Case PDFs' : 'Select Documents to Print'}</h5>
-                        <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+    $('#printSelectorModal').remove();
+
+    const modalHtml = `
+    <div class="modal fade" id="printSelectorModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Print Case Documents</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="printCaseSelect">Select Case</label>
+                        <select id="printCaseSelect" class="form-control">
+                            <option value="">Loading active exit cases...</option>
+                        </select>
                     </div>
-                    <div class="modal-body">
-                        <div id="printCaseHeader" class="mb-3" style="display:${caseOnlyMode ? 'block' : 'none'};"></div>
-                        <div id="printCaseListContainer" class="mb-3" style="display:${caseOnlyMode ? 'block' : 'none'};"></div>
-                        <div id="printSearchSection" class="${caseOnlyMode ? 'd-none' : ''}">
-                            <div class="form-group input-group">
-                                <input type="text" id="printSearchInput" class="form-control" placeholder="Search employee name, exit case id, or document title" aria-label="Search documents">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" id="printSearchBtn" type="button"><i class="fas fa-search"></i></button>
-                                </div>
-                            </div>
-                            <div id="printSearchSuggestions" class="list-group mb-2" style="display:none;max-height:200px;overflow:auto;"></div>
-                            <div class="mb-2"><button class="btn btn-sm btn-secondary" id="printSelectAllBtn">Select All</button></div>
-                        </div>
-                        <div id="printResultsContainer" style="max-height:50vh;overflow:auto;border:1px solid #eaeaea;padding:8px;border-radius:6px;"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary ${caseOnlyMode ? 'd-none' : ''}" id="printSelectedBtn">Preview Selected</button>
+                    <div id="printDocumentList" class="mt-3" style="max-height:50vh;overflow:auto;border:1px solid #eaeaea;padding:8px;border-radius:6px;">
+                        <div class="text-muted small">Select a case to view available documents.</div>
                     </div>
                 </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="printCasePreviewBtn" disabled>Preview / Print</button>
+                </div>
             </div>
-        </div>`;
+        </div>
+    </div>`;
 
-        $('body').append(modal);
-        $('#printSelectorModal').modal('show');
+    $('body').append(modalHtml);
+    $('#printSelectorModal').modal('show');
 
-        if (caseOnlyMode) {
-                $('#printCaseHeader').html(`<div class="badge badge-info">Case: ${escapeHtml(options.exitCaseType)} #${escapeHtml(options.exitCaseId)}</div>`);
-        }
+    function loadPrintCaseOptions() {
+        $.post('exit_management.php', {
+            ajax_action: 'get_active_exit_cases',
+            controller: 'exit_management'
+        }, function(response) {
+            const cases = Array.isArray(response) ? response : (response && Array.isArray(response.data) ? response.data : []);
+            const options = ['<option value="">Select an active exit case</option>'];
 
-        // event handlers
-        // debounce search for suggestions
-        let printSearchTimer = null;
-        $('#printSearchInput').on('keyup', function(e) {
-            const q = $(this).val().trim();
-            clearTimeout(printSearchTimer);
-            if (e.key === 'Enter') {
-                fetchPrintSearchResults(q);
-                $('#printSearchSuggestions').hide();
+            cases.forEach(function(exitCase) {
+                const exitType = (exitCase.exit_case_type || '').toLowerCase();
+                const exitDate = exitCase.exit_date || exitCase.last_working_date || 'No date';
+                const optionValue = `${exitCase.exit_case_type}:${exitCase.exit_case_id}`;
+                const optionText = `${escapeHtml(exitCase.full_name || 'Unknown')} - ${escapeHtml(exitType.charAt(0).toUpperCase() + exitType.slice(1))} - ${escapeHtml(exitDate)}`;
+                options.push(`<option value="${optionValue}">${optionText}</option>`);
+            });
+
+            $('#printCaseSelect').html(options.join(''));
+            if (options.length === 1) {
+                $('#printDocumentList').html('<div class="text-muted small">No active exit cases available.</div>');
+                $('#printCasePreviewBtn').prop('disabled', true);
+            }
+
+            if (options.length > 1 && options.some(item => item.indexOf(':') !== -1) && options[1].includes(':')) {
+                const preferredValue = options.length > 1 && options[1] ? $(options[1]).val() : '';
+                if (preferredValue && !options.some(item => item.indexOf('value="' + preferredValue + '"') !== -1)) {
+                    // no-op
+                }
+            }
+
+            if (options.length > 1 && (options[1] || '').indexOf('value="') !== -1) {
+                const firstValue = $(options[1]).val();
+                if (firstValue) {
+                    $('#printCaseSelect').val(firstValue);
+                    const split = String(firstValue).split(':');
+                    if (split.length === 2) {
+                        fetchPrintCaseDocuments(split[0], split[1]);
+                    }
+                }
+            }
+        }, 'json').fail(function() {
+            $('#printCaseSelect').html('<option value="">Unable to load exit cases</option>');
+            $('#printDocumentList').html('<div class="text-danger small">Unable to load active exit cases.</div>');
+            $('#printCasePreviewBtn').prop('disabled', true);
+        });
+    }
+
+    function fetchPrintCaseDocuments(caseType, caseId) {
+        $('#printDocumentList').html('<div class="text-center text-muted small p-3">Loading available documents...</div>');
+        $('#printCasePreviewBtn').prop('disabled', true);
+
+        $.post('exit_management.php', {
+            ajax_action: 'get_exit_case_documentation',
+            controller: 'exit_management',
+            exit_case_type: caseType,
+            exit_case_id: caseId
+        }, function(response) {
+            const caseMeta = response && response.data ? response.data : null;
+            const docs = Array.isArray(response && response.documents) ? response.documents : [];
+            const caseDocs = Array.isArray(response && response.data && response.data.documents) ? response.data.documents : docs;
+
+            const combined = [];
+            if (Array.isArray(caseDocs) && caseDocs.length) {
+                caseDocs.forEach(function(doc) {
+                    const type = String(doc.document_type || '').trim();
+                    const title = String(doc.title || '').trim();
+                    const isTerminationLetter = (!type && caseMeta && String(caseMeta.exit_case_type || '').toLowerCase() === 'termination' && title.toLowerCase() === 'termination letter');
+                    if (!type && !isTerminationLetter) {
+                        return;
+                    }
+                    const normalizedType = isTerminationLetter ? 'termination_letter' : type;
+                    combined.push({
+                        source: 'document',
+                        document: doc,
+                        id: `doc:${doc.id || Math.random()}`,
+                        value: `doc:${doc.id || doc.title || Math.random()}`,
+                        label: normalizedType === 'resignation_letter' ? 'Resignation Letter' : (normalizedType === 'termination_letter' ? 'Termination Letter' : (title || doc.document_type || 'Document'))
+                    });
+                });
+            }
+
+            if (response && response.exit_interview) {
+                combined.push({
+                    source: 'case_item',
+                    item_kind: 'interview',
+                    item_ref: response.exit_interview.id,
+                    id: `interview:${response.exit_interview.id}`,
+                    value: `interview:${response.exit_interview.id}`,
+                    label: 'Exit Interview'
+                });
+            }
+
+            if (response && response.knowledge_transfer) {
+                combined.push({
+                    source: 'case_item',
+                    item_kind: 'transfer',
+                    item_ref: response.knowledge_transfer.id,
+                    id: `transfer:${response.knowledge_transfer.id}`,
+                    value: `transfer:${response.knowledge_transfer.id}`,
+                    label: 'Knowledge Transfer'
+                });
+            }
+
+            if (response && response.settlement) {
+                combined.push({
+                    source: 'case_item',
+                    item_kind: 'settlement',
+                    item_ref: response.settlement.id,
+                    id: `settlement:${response.settlement.id}`,
+                    value: `settlement:${response.settlement.id}`,
+                    label: 'Final Settlement Form'
+                });
+            }
+
+            const uniqueItems = combined.filter(function(item, index, arr) {
+                return arr.findIndex(candidate => candidate.id === item.id) === index;
+            });
+
+            if (!uniqueItems.length) {
+                $('#printDocumentList').html('<div class="text-muted small">No documents available for this case yet.</div>');
+                $('#printCasePreviewBtn').prop('disabled', true);
                 return;
             }
-            if (!q) { $('#printSearchSuggestions').hide(); $('#printResultsContainer').empty(); return; }
-            printSearchTimer = setTimeout(function() {
-                fetchPrintSearchSuggestions(q);
-            }, 250);
+
+            const html = uniqueItems.map(function(item) {
+                return `
+                    <label class="d-flex align-items-center mb-2 p-2 border rounded" style="cursor:pointer;">
+                        <input type="radio" name="printCaseDocumentChoice" value="${escapeHtml(item.value)}" data-source="${escapeHtml(item.source)}" data-kind="${escapeHtml(item.item_kind || item.source)}" data-ref="${escapeHtml(String(item.item_ref || ''))}" data-document-id="${escapeHtml(String(item.document && item.document.id ? item.document.id : ''))}" style="margin-right:10px;">
+                        <span><strong>${escapeHtml(item.label)}</strong></span>
+                    </label>
+                `;
+            }).join('');
+
+            $('#printDocumentList').html(html);
+            $('#printCasePreviewBtn').prop('disabled', true);
+
+            $('input[name="printCaseDocumentChoice"]').on('change', function() {
+                $('#printCasePreviewBtn').prop('disabled', false);
+            });
+        }, 'json').fail(function() {
+            $('#printDocumentList').html('<div class="text-danger small">No documents available for this case yet.</div>');
+            $('#printCasePreviewBtn').prop('disabled', true);
         });
+    }
 
-        $('#printSearchBtn').on('click', function() {
-            const q = $('#printSearchInput').val().trim();
-            fetchPrintSearchResults(q);
-            $('#printSearchSuggestions').hide();
-        });
-
-        $('#printSelectAllBtn').on('click', function() {
-                $('#printResultsContainer').find('input[type=checkbox]').prop('checked', true);
-        });
-
-        $('#printSelectedBtn').on('click', function() {
-                const selected = [];
-                $('#printResultsContainer').find('input[type=checkbox]:checked').each(function() {
-                        selected.push($(this).data('doc'));
-                });
-            if (!selected.length) {
-                // if nothing selected, ask user whether to preview all found documents
-                const wantsAll = confirm('No documents selected. Do you want to preview all documents matching the current search?');
-                if (!wantsAll) return;
-                // gather all docs currently displayed
-                $('#printResultsContainer').find('input[type=checkbox]').each(function() { selected.push($(this).data('doc')); });
-                if (!selected.length) { showToast('info', 'No documents available to preview'); return; }
-            }
-
-                $('#printSelectorModal').modal('hide');
-                // open preview with selected documents (array of document objects)
-                openMultiDocumentPreview(selected);
-        });
-
-        // pre-populate search if employeeId provided and not in case-only mode
-        if (!caseOnlyMode && options.employeeId) {
-                $('#printSearchInput').val(options.employeeId);
-                fetchEmployeeDocuments(options.employeeId);
+    $('#printCaseSelect').on('change', function() {
+        const value = $(this).val();
+        if (!value) {
+            $('#printDocumentList').html('<div class="text-muted small">Select a case to view available documents.</div>');
+            $('#printCasePreviewBtn').prop('disabled', true);
+            return;
         }
 
-        // if opening directly for a specific exit case, load its linked records
-        if (caseOnlyMode) {
-                const caseLabel = `${options.exitCaseType} #${options.exitCaseId}`;
-                $('#printSearchInput').val(caseLabel);
-                $('#printSearchSection').addClass('d-none');
-                $('#printSelectedBtn').addClass('d-none');
-                $('#printCaseListContainer').html('<div class="text-center text-muted p-3">Loading case records...</div>');
-                fetchCasePrintItems(options.exitCaseType, options.exitCaseId);
+        const parts = String(value).split(':');
+        if (parts.length === 2) {
+            fetchPrintCaseDocuments(parts[0], parts[1]);
         }
+    });
+
+    $('#printCasePreviewBtn').on('click', function() {
+        const selected = $('input[name="printCaseDocumentChoice"]:checked');
+        if (!selected.length) {
+            return;
+        }
+
+        const source = selected.data('source');
+        const docId = selected.data('document-id');
+        const itemKind = selected.data('kind');
+        const itemRef = selected.data('ref');
+
+        if (source === 'document' && docId) {
+            openMultiDocumentPreview([{ id: docId }]);
+            return;
+        }
+
+        if (itemKind && itemRef) {
+            openCaseItemPreview(itemKind, itemRef);
+        }
+    });
+
+    if (options.exitCaseType && options.exitCaseId) {
+        $('#printCaseSelect').val(`${options.exitCaseType}:${options.exitCaseId}`);
+        fetchPrintCaseDocuments(options.exitCaseType, options.exitCaseId);
+    } else {
+        loadPrintCaseOptions();
+    }
 }
 
 function fetchPrintSearchResults(q) {
@@ -9594,6 +10401,25 @@ function loadSharedExitActionAlerts() {
 
 $(function() {
     loadSharedExitActionAlerts();
+    startLdSyncPolling();
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopLdSyncPolling();
+            stopLdProgressPolling();
+            return;
+        }
+
+        startLdSyncPolling();
+        const activePlanId = $('#transferPlanId').val();
+        if (activePlanId && $('#transferModal').hasClass('show')) {
+            refreshTransferLearningPathState(activePlanId);
+        }
+    });
+
+    $('#transferModal').on('hidden.bs.modal', function() {
+        stopLdProgressPolling();
+    });
 });
 
 function loadActionRequiredList() {

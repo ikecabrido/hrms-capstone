@@ -30,15 +30,15 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             <option value="deleted">Deleted</option>
                         </select>
                     </div>
-                    <div class="card-tools d-flex align-items-center">
-                        <button type="button" class="btn btn-info btn-sm mr-2" onclick="showDocumentModal(null, { openUploadModal: true })">
-                            <i class="fas fa-upload"></i> Upload
+                    <div class="card-tools d-flex flex-wrap align-items-center gap-2">
+                        <button type="button" class="btn btn-info btn-sm d-inline-flex align-items-center gap-1" onclick="showDocumentModal(null, { openUploadModal: true })">
+                            <i class="fas fa-upload"></i> <span>Upload</span>
                         </button>
-                        <button type="button" class="btn btn-warning btn-sm mr-2" onclick="archiveDocuments()">
-                            <i class="fas fa-archive"></i> Archive
+                        <button type="button" class="btn btn-secondary btn-sm d-inline-flex align-items-center gap-1" onclick="openPrintSelectorModal()">
+                            <i class="fas fa-print"></i> <span>Print</span>
                         </button>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="openPrintSelectorModal()">
-                            <i class="fas fa-print"></i> Print
+                        <button type="button" class="btn btn-warning btn-sm d-inline-flex align-items-center gap-1" onclick="archiveDocuments()">
+                            <i class="fas fa-archive"></i> <span>Archive</span>
                         </button>
                     </div>
                 </div>
@@ -80,7 +80,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                         <input type="hidden" id="documentId" name="document_id">
                         <input type="hidden" id="documentExitCaseType" name="exit_case_type">
                         <input type="hidden" id="documentExitCaseId" name="exit_case_id">
-
+                        <input type="hidden" id="documentType" name="document_type" value="resignation_letter">
                         <input type="hidden" id="documentEmployeeId" name="employee_id">
 
                         <div class="form-group">
@@ -88,32 +88,11 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                             <select class="form-control" id="documentCaseSelect" name="document_case_select" required>
                                 <option value="">Loading exit cases...</option>
                             </select>
-                            <small class="form-text text-muted">The selected case automatically determines the employee and the case-linked document type.</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="documentType">Document Type *</label>
-                            <select class="form-control" id="documentType" name="document_type" required>
-                                <option value="">Select Type</option>
-                                <option value="resignation_letter">Resignation Letter</option>
-                                <option value="clearance_form">Clearance Form</option>
-                                <option value="handover_document">Handover Document</option>
-                                <option value="settlement_receipt">Settlement Receipt</option>
-                                <option value="exit_interview">Exit Interview Notes</option>
-                                <option value="certificate">Experience Certificate</option>
-                                <option value="termination_letter">Termination Letter</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group" id="documentCaseDocumentsSection" style="display:none;">
-                            <label>Current Case Documents</label>
-                            <div id="documentCaseDocumentsHelper" class="small text-muted mb-2">View or replace an existing document for this exit case. Replacing updates the current file without keeping a separate version history.</div>
-                            <div id="documentCaseDocumentsList" class="list-group list-group-flush"></div>
+                            <small class="form-text text-muted">Only resignation cases without an active resignation letter are available for upload.</small>
                         </div>
 
                         <div class="form-group" id="documentCaseHint" style="display:none;">
-                            <small class="form-text text-info">Select a case above to view or replace its documents.</small>
+                            <small class="form-text text-info">Select a case above to continue.</small>
                         </div>
 
                         <div class="form-group">
@@ -127,7 +106,7 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-info" id="documentSubmitBtn">Upload Document</button>
+                        <button type="submit" class="btn btn-info" id="documentSubmitBtn">Upload Resignation Letter</button>
                     </div>
                 </form>
             </div>

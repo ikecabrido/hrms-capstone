@@ -15,11 +15,6 @@ class DocumentationModel extends ExitManagementModel
         $typeMap = [
             'resignation_letter' => 'Resignation Letter',
             'termination_letter' => 'Termination Letter',
-            'clearance_form' => 'Clearance Form',
-            'handover_document' => 'Handover Document',
-            'settlement_receipt' => 'Settlement Receipt',
-            'exit_interview' => 'Exit Interview Notes',
-            'certificate' => 'Experience Certificate',
         ];
 
         return $typeMap[$documentType] ?? 'Exit Document';
@@ -176,6 +171,34 @@ class DocumentationModel extends ExitManagementModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getCasesWithoutResignationLetter(): array
+    {
+        $cases = $this->getActiveExitCases();
+        if (empty($cases)) {
+            return [];
+        }
+
+        $filtered = [];
+        foreach ($cases as $case) {
+            if (strtolower((string)($case['exit_case_type'] ?? '')) !== 'resignation') {
+                continue;
+            }
+
+            $caseId = (int)($case['exit_case_id'] ?? 0);
+            if ($caseId <= 0) {
+                continue;
+            }
+
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM exit_documents WHERE exit_case_type = ? AND exit_case_id = ? AND document_type = 'resignation_letter' AND status = 'active'");
+            $stmt->execute(['resignation', $caseId]);
+            if ((int)$stmt->fetchColumn() === 0) {
+                $filtered[] = $case;
+            }
+        }
+
+        return $filtered;
+    }
+
     /**
      * Get document by ID
      */
@@ -320,20 +343,29 @@ class DocumentationModel extends ExitManagementModel
      */
     public function checkRequiredDocuments(int $employeeId): array
     {
-        // Legacy helper retained for backward compatibility: returns list of required document types vs uploaded
-        $requiredTypes = [
-            'resignation_letter',
-            'exit_interview_form',
-            'settlement_letter',
-            'experience_letter',
-            'clearance_form'
-        ];
+        $requiredType = 'resignation_letter';
+
+        $stmt = $this->db->prepare("SELECT exit_case_type FROM exit_resignations WHERE employee_id = ? AND status IN ('pending_review', 'pending_legal_review', 'approved') ORDER BY created_at DESC LIMIT 1");
+        $stmt->execute([(string)$employeeId]);
+        $resignation = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($resignation) {
+            $requiredType = 'resignation_letter';
+        } else {
+            $stmt = $this->db->prepare("SELECT exit_case_type FROM exit_terminations WHERE employee_id = ? AND status IN ('pending_review', 'pending_legal_review', 'approved') ORDER BY created_at DESC LIMIT 1");
+            $stmt->execute([(string)$employeeId]);
+            $termination = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($termination) {
+                $requiredType = 'termination_letter';
+            }
+        }
 
         $uploadedDocs = $this->getDocumentsByEmployee($employeeId);
-        $uploadedTypes = array_column($uploadedDocs, 'document_type');
+        $uploadedTypes = array_map('strtolower', array_filter(array_map(function ($value) {
+            return is_string($value) ? trim($value) : (string)$value;
+        }, array_column($uploadedDocs, 'document_type'))));
 
-        $missing = array_values(array_diff($requiredTypes, $uploadedTypes));
-        $completed = array_values(array_intersect($requiredTypes, $uploadedTypes));
+        $completed = in_array(strtolower($requiredType), $uploadedTypes, true) ? [$requiredType] : [];
+        $missing = in_array(strtolower($requiredType), $uploadedTypes, true) ? [] : [$requiredType];
 
         return [
             'completed' => $completed,
@@ -506,6 +538,7 @@ class DocumentationModel extends ExitManagementModel
     {
         return [
             'resignation_letter' => 'Resignation Letter',
+            'termination_letter' => 'Termination Letter',
             'clearance_form' => 'Clearance Form',
             'handover_document' => 'Handover Document',
             'settlement_receipt' => 'Settlement Receipt',

@@ -26,11 +26,6 @@ class DocumentationController extends ExitManagementController
         $typeMap = [
             'resignation_letter' => 'Resignation Letter',
             'termination_letter' => 'Termination Letter',
-            'clearance_form' => 'Clearance Form',
-            'handover_document' => 'Handover Document',
-            'settlement_receipt' => 'Settlement Receipt',
-            'exit_interview' => 'Exit Interview Notes',
-            'certificate' => 'Experience Certificate',
         ];
 
         if (isset($typeMap[$documentType])) {
@@ -66,6 +61,27 @@ class DocumentationController extends ExitManagementController
                     return ['success' => false, 'message' => 'Invalid exit_case_type'];
                 }
                 $data['exit_case_id'] = (int)$data['exit_case_id'];
+            }
+
+            if (($data['exit_case_type'] ?? '') === 'termination' || ($data['document_type'] ?? '') === 'termination_letter') {
+                return ['success' => false, 'message' => 'Termination letters are generated automatically and cannot be uploaded manually.'];
+            }
+
+            if (($data['exit_case_type'] ?? '') === 'resignation' && !empty($data['exit_case_id'])) {
+                $existingCaseDocs = $this->documentationModel->getDocumentsByExitCase('resignation', (int)$data['exit_case_id']);
+                $hasActiveResignationLetter = false;
+                foreach ($existingCaseDocs as $doc) {
+                    $docType = strtolower((string)($doc['document_type'] ?? ''));
+                    $docTitle = strtolower((string)($doc['title'] ?? ''));
+                    if ($docType === 'resignation_letter' || strpos($docTitle, 'resignation letter') !== false) {
+                        $hasActiveResignationLetter = true;
+                        break;
+                    }
+                }
+
+                if ($hasActiveResignationLetter) {
+                    return ['success' => false, 'message' => 'A resignation letter already exists for this case. Replace the existing document instead.'];
+                }
             }
 
             // Handle file upload if present
@@ -164,6 +180,10 @@ class DocumentationController extends ExitManagementController
                 $data['exit_case_id'] = (int)$data['exit_case_id'];
             }
 
+            if (($data['exit_case_type'] ?? '') === 'termination' || ($data['document_type'] ?? '') === 'termination_letter') {
+                return ['success' => false, 'message' => 'Termination letters are generated automatically and cannot be uploaded manually.'];
+            }
+
             $filePath = $data['file_path'] ?? null;
             if (isset($_FILES['document_file']) && $_FILES['document_file']['error'] === UPLOAD_ERR_OK) {
                 $uploadDir = __DIR__ . '/../uploads/documents/';
@@ -214,6 +234,11 @@ class DocumentationController extends ExitManagementController
     public function getDocumentsByExitCase(string $exitCaseType, int $exitCaseId): array
     {
         return $this->documentationModel->getDocumentsByExitCase($exitCaseType, $exitCaseId);
+    }
+
+    public function getCasesWithoutResignationLetter(): array
+    {
+        return $this->documentationModel->getCasesWithoutResignationLetter();
     }
 
     /**
@@ -450,6 +475,9 @@ class DocumentationController extends ExitManagementController
 
             case 'get_document_types':
                 return $this->getDocumentTypes();
+
+            case 'get_cases_without_resignation_letter':
+                return $this->getCasesWithoutResignationLetter();
 
             case 'get_documents':
                 return $this->documentationModel->getAllDocuments(
