@@ -471,7 +471,19 @@ try {
                 window.location.href = backUrl + '&done=1';
             })
             .catch(function(error) {
-                alert(error.message || 'Unable to submit evaluation. Please try again.');
+                fetch('pages/learner/study-subpage/ajax/progress/get-evaluation-status.php?session_id=' + encodeURIComponent(sessionId))
+                    .then(function(r) { return r.json(); })
+                    .then(function(status) {
+                        if (status.success && status.status !== 'in_progress') {
+                            window.location.href = backUrl + '&done=1';
+                            return;
+                        }
+
+                        alert(error.message || 'Unable to submit evaluation. Please try again.');
+                    })
+                    .catch(function() {
+                        alert(error.message || 'Unable to submit evaluation. Please try again.');
+                    });
             });
     }
 
