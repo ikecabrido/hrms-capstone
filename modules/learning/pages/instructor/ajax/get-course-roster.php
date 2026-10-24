@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 session_start();
 
-include_once dirname(__DIR__, 3) . '/classes/employee.php';
+include_once dirname(__DIR__, 3) . '/classes/Employee.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 
 try {

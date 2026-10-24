@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 4) . '/database/db.php';
 
 $employeeClass = new Employee();
 $instructorId = (int) ($employeeClass->getEmployeeId() ?? 0);
+$showLearnerImport = empty($hideLearnerImport);
 
 $courses = [];
 try {
@@ -37,13 +38,13 @@ try {
     <div id="ml-stats" class="ml-stats"></div>
 
     <!-- Tab Switcher -->
-    <div id="ml-tabs" style="display:none; gap:0; margin-bottom:0; border-bottom:2px solid #eee;">
-        <button class="ml-tab active" onclick="switchTab('import')" aria-label="Import learners" title="Import learners"><i class="fas fa-file-import" aria-hidden="true"></i> Import Learners</button>
-        <button class="ml-tab" onclick="switchTab('roster')" aria-label="Course roster" title="Course roster"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Course Roster</button>
-    </div>
+    <?php if ($showLearnerImport): ?>
+        <div id="ml-tabs" style="display:none; gap:0; margin-bottom:0; border-bottom:2px solid #eee;">
+            <button class="ml-tab active" onclick="switchTab('import')" aria-label="Import learners" title="Import learners"><i class="fas fa-file-import" aria-hidden="true"></i> Import Learners</button>
+            <button class="ml-tab" onclick="switchTab('roster')" aria-label="Course roster" title="Course roster"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Course Roster</button>
+        </div>
 
-    <!-- Import Tab -->
-    <div id="ml-tab-import" class="ml-tab-content" style="display:none;">
+        <div id="ml-tab-import" class="ml-tab-content" style="display:none;">
         <div style="background:var(--surface, #fff); border-radius:12px; padding:1.5rem; box-shadow:0 1px 4px rgba(0,0,0,0.06); margin-top:1rem;">
             <h3 style="margin:0 0 0.5rem; color:var(--text); font-size:1rem;">Import Learners</h3>
             <p style="font-size:0.8rem; color:#666; margin:0 0 1rem;">Drop a CSV file below, or paste emails/IDs/names manually.</p>
@@ -67,19 +68,20 @@ try {
                             <input type="checkbox" id="ml-select-all" onchange="toggleSelectAll(this.checked)" checked> Select All
                         </label>
                         <button onclick="bulkEnroll('invite')" id="btn-bulk-invite" style="padding:0.4rem 1rem; background:#f59e0b; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;"> Invite Selected</button>
-                        <button onclick="bulkEnroll('direct')" id="btn-bulk-direct" style="padding:0.4rem 1rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.85rem;">✅ Enroll Selected</button>
+                        <button onclick="bulkEnroll('direct')" id="btn-bulk-direct" style="padding:0.4rem 1rem; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.85rem;">Enroll Selected</button>
                     </div>
                 </div>
                 <div id="ml-parsed-list"></div>
             </div>
         </div>
-    </div>
+        </div>
+    <?php endif; ?>
 
     <!-- Roster Tab -->
-    <div id="ml-tab-roster" class="ml-tab-content" style="display:none;">
+    <div id="ml-tab-roster" class="ml-tab-content" style="display:<?= $showLearnerImport ? 'none' : 'block' ?>;">
         <div id="ml-roster-empty" style="text-align:center; padding:3rem; color:#999; display:none;">
             <div style="font-size:2rem; margin-bottom:0.5rem;"></div>
-            <p>No learners enrolled yet. Use the Import tab to add learners.</p>
+            <p>No learners enrolled yet.</p>
         </div>
         <div id="ml-roster-list"></div>
     </div>
@@ -250,9 +252,10 @@ try {
 var MANAGE_LEARNERS_AJAX_BASE = 'pages/instructor/ajax/';
 var parsedLearners = [];
 var rosterData = [];
+var showLearnerImport = <?= $showLearnerImport ? 'true' : 'false' ?>;
 
 // Initialize CSV dropzone
-var csvDrop = document.getElementById('ml-csv-dropzone');
+var csvDrop = showLearnerImport ? document.getElementById('ml-csv-dropzone') : null;
 if (csvDrop && typeof DropZone !== 'undefined') {
     DropZone.init(csvDrop, {
         accept: '.csv,.txt',
@@ -281,7 +284,9 @@ document.getElementById('ml-course-select').addEventListener('change', function 
     const cid = this.value;
     if (cid) {
         document.getElementById('ml-stats').style.display = 'grid';
-        document.getElementById('ml-tabs').style.display = 'flex';
+        if (showLearnerImport) {
+            document.getElementById('ml-tabs').style.display = 'flex';
+        }
         document.getElementById('btn-export').style.display = 'inline-flex';
         loadRoster();
     } else {
@@ -305,7 +310,7 @@ async function parseImport() {
     }
 
     document.getElementById('btn-parse').disabled = true;
-    document.getElementById('btn-parse').textContent = '⏳ Parsing...';
+    document.getElementById('btn-parse').textContent = 'Parsing...';
     document.getElementById('ml-parse-status').textContent = '';
 
     try {
@@ -317,20 +322,20 @@ async function parseImport() {
         const data = await resp.json();
 
         if (data.error) {
-            document.getElementById('ml-parse-status').textContent = '❌ ' + data.error;
+            document.getElementById('ml-parse-status').textContent = data.error;
             return;
         }
 
         parsedLearners = data.found || [];
         document.getElementById('ml-found-count').textContent = parsedLearners.length;
         document.getElementById('ml-parse-status').innerHTML = 
-            `✅ Found <strong>${data.total_found}</strong> learners` + 
+            `Found <strong>${data.total_found}</strong> learners` +
             (data.total_not_found > 0 ? ` · <span style="color:#ef4444;">${data.total_not_found} not found</span>` : '');
 
         renderParsedList();
         document.getElementById('ml-parsed-results').style.display = 'block';
     } catch (err) {
-        document.getElementById('ml-parse-status').textContent = '❌ ' + err.message;
+        document.getElementById('ml-parse-status').textContent = err.message;
     } finally {
         document.getElementById('btn-parse').disabled = false;
         document.getElementById('btn-parse').textContent = ' Parse & Find';
@@ -344,7 +349,7 @@ function renderParsedList() {
     list.innerHTML = parsedLearners.map(function (emp, i) {
         const initials = (emp.first_name[0] || '') + (emp.last_name[0] || '');
         const color = colors[i % colors.length];
-        const matchLabel = emp.matched_by === 'email' ? '' : emp.matched_by === 'employee_id' ? '🆔' : '';
+        const matchLabel = emp.matched_by === 'employee_id' ? 'Employee ID match' : '';
         
         return `<div class="ml-learner-card">
             <input type="checkbox" class="ml-check" value="${emp.employee_id}" checked style="flex-shrink:0;">
@@ -377,7 +382,7 @@ async function bulkEnroll(mode) {
     const btn = mode === 'invite' ? document.getElementById('btn-bulk-invite') : document.getElementById('btn-bulk-direct');
     const origText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '⏳ Processing...';
+    btn.textContent = 'Processing...';
 
     try {
         const resp = await fetch(MANAGE_LEARNERS_AJAX_BASE + 'bulk-enroll.php', {
@@ -414,7 +419,7 @@ async function loadRoster() {
         const data = await resp.json();
 
         if (data.error) {
-            document.getElementById('ml-roster-list').innerHTML = '<div style="color:#ef4444; padding:2rem;">❌ ' + data.error + '</div>';
+            document.getElementById('ml-roster-list').innerHTML = '<div style="color:#ef4444; padding:2rem;">' + esc(data.error) + '</div>';
             return;
         }
 
@@ -422,7 +427,7 @@ async function loadRoster() {
         renderStats(data.stats || {});
         renderRoster();
     } catch (err) {
-        document.getElementById('ml-roster-list').innerHTML = '<div style="color:#ef4444; padding:2rem;">❌ ' + err.message + '</div>';
+        document.getElementById('ml-roster-list').innerHTML = '<div style="color:#ef4444; padding:2rem;">' + esc(err.message) + '</div>';
     }
 }
 

@@ -715,6 +715,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
 
             <!-- ==================== ROSTER ==================== -->
             <div class="tab-content" data-tab="tab-roster">
+                <?php $hideLearnerImport = true; ?>
                 <?php include __DIR__ . '/manage-learners.php'; ?>
             </div>
 
