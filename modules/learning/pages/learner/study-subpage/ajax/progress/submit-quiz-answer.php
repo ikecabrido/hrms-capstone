@@ -271,8 +271,50 @@ try {
     error_log(
         '[learning] Quiz submission failed'
         . (isset($sessionId) ? ' for session ' . $sessionId : '')
+        . ' at ' . $e->getFile() . ':' . $e->getLine()
         . ': ' . $e->getMessage()
     );
+
+    if (
+        isset($pdo, $sessionId, $learnerId)
+        && $pdo instanceof PDO
+        && $sessionId > 0
+        && $learnerId > 0
+    ) {
+        try {
+            $statusStmt = $pdo->prepare(
+                'SELECT status, item_type
+                 FROM ld_quiz_session
+                 WHERE id = :session_id AND learner_id = :learner_id
+                 LIMIT 1'
+            );
+            $statusStmt->execute([
+                ':session_id' => $sessionId,
+                ':learner_id' => $learnerId,
+            ]);
+            $savedSession = $statusStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (
+                $savedSession
+                && $savedSession['item_type'] === 'quiz'
+                && in_array($savedSession['status'], ['submitted', 'expired'], true)
+            ) {
+                $retryResult = (new QuizSession($pdo))->submit($sessionId, $learnerId);
+
+                if (!empty($retryResult['success'])) {
+                    http_response_code(200);
+                    echo json_encode($retryResult);
+                    exit;
+                }
+            }
+        } catch (Throwable $recoveryError) {
+            error_log(
+                '[learning] Quiz submission recovery failed for session '
+                . $sessionId . ' at ' . $recoveryError->getFile() . ':' . $recoveryError->getLine()
+                . ': ' . $recoveryError->getMessage()
+            );
+        }
+    }
 
     http_response_code(500);
 
