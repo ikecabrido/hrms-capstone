@@ -11,26 +11,16 @@ $stats = ['pending' => 0, 'accepted' => 0, 'rejected' => 0, 'completed' => 0, 't
 try {
     $pdo = (new Database())->getConnection();
 
-    // Left joins on purpose: Workforce pushes department-level needs that have no
-    // learner row at all, so an inner join here would silently hide every integrated
-    // request. The linked course/path and the assigned instructor come along so the
-    // page shows what answers the request and who owns it. The WHERE keeps the older
-    // learner-request behaviour: a learner request whose employee no longer exists is
-    // still dropped, exactly as the inner join used to drop it.
+    // Workforce requests may have no learner row, so keep the employee joins optional.
+    // ld_training_requests does not store course or learning-path IDs.
     $stmt = $pdo->prepare("
         SELECT tr.*,
                CONCAT_WS(' ', emp.first_name, emp.last_name) AS learner_name,
                emp.employee_code AS learner_code,
-               CONCAT_WS(' ', inst.first_name, inst.last_name) AS instructor_name,
-               course.title AS course_title,
-               course.status AS course_status,
-               path.title AS path_title,
-               path.status AS path_status
+               CONCAT_WS(' ', inst.first_name, inst.last_name) AS instructor_name
         FROM ld_training_requests tr
         LEFT JOIN em_employees emp ON emp.employee_id = tr.learner_id
         LEFT JOIN em_employees inst ON inst.employee_id = tr.instructor_id
-        LEFT JOIN ld_course course ON course.id = tr.course_id
-        LEFT JOIN ld_learning_path path ON path.id = tr.learning_path_id
         WHERE tr.source_module = 'workforce' OR emp.employee_id IS NOT NULL
         ORDER BY
             CASE tr.status
@@ -199,7 +189,7 @@ function trTimeAgo($dt) {
     <div class="module-header">
         <div>
             <h1 class="module-header-title"><i class="fas fa-hand-paper" style="color:var(--primary);margin-right:0.5rem;"></i> Training Requests</h1>
-            <p class="module-header-subtitle">Learner requests and Workforce training needs, with the course or path that answers each one and the instructor who owns it.</p>
+            <p class="module-header-subtitle">Learner requests and Workforce training needs, with their assigned instructors.</p>
         </div>
     </div>
 

@@ -828,7 +828,7 @@
 
     // ---- Enroll ----
     function doEnroll(btn) {
-        if (btn.classList.contains('cc-take-path-btn')) return;
+        if (btn.disabled || btn.classList.contains('cc-take-path-btn')) return;
         var courseId = btn.dataset.courseId;
         if (!courseId) return;
         btn.disabled = true;
@@ -898,7 +898,16 @@
             body: JSON.stringify({ learning_path_id: pathId })
         })
         .then(function(response) {
-            return response.json().then(function(data) {
+            return response.text().then(function(body) {
+                var data;
+                try {
+                    data = body ? JSON.parse(body) : null;
+                } catch (error) {
+                    throw new Error('The server returned an invalid response while adding this learning path (HTTP ' + response.status + ').');
+                }
+                if (!data) {
+                    throw new Error('The server returned an empty response while adding this learning path (HTTP ' + response.status + ').');
+                }
                 if (!response.ok || !data.success) throw new Error(data.message || 'Unable to take this learning path.');
                 return data;
             });
@@ -926,8 +935,6 @@
         var btn = e.target.closest('.cc-enroll-btn.enroll');
         if (btn) { e.stopPropagation(); doEnroll(btn); }
     });
-
-    emEnrollBtn.addEventListener('click', function(e) { e.stopPropagation(); doEnroll(this); });
 
     // ---- Request Course Modal ----
     var reqBtn = document.getElementById('request-course-btn');
