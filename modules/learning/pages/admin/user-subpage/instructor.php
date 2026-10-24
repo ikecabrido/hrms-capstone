@@ -1,31 +1,66 @@
 <?php
-include_once __DIR__ . '/../../../classes/Employee.php';
+/**
+ * Admin view of an instructor's profile.
+ *
+ * Shared profile partials provide the same header, bio, personal/contact and
+ * grade-book cards used by the sidebar profile. The teaching-specific cards
+ * (courses, learners, documents, activity) remain below the shared learning
+ * activity sections.
+ */
 require_once __DIR__ . '/../../../classes/LearningRole.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 
-$employeeId = (int)($_GET['id'] ?? 0);
-$profile = null;
-$profileLearningRole = 'learner';
+$employeeId = (int) ($_GET['id'] ?? 0);
+$profileViewKind = 'instructor';
+$profileReadOnly = true;
+$profileEmployeeId = $employeeId;
+$profileRoleLabel = 'Instructor';
+
+require_once __DIR__ . '/../../shared/includes/profile-data.php';
+
+$profile = $profileData['employee'];
+$profileFound = trim((string) ($profile['first_name'] ?? '')) !== ''
+    || trim((string) ($profile['last_name'] ?? '')) !== '';
+$profileLearningRole = ($pdo && $profileFound) ? LearningRole::forEmployee($pdo, $employeeId) : 'learner';
+$profileData['role_label'] = ucfirst($profileLearningRole);
+
 $courses = [];
+$learners = [];
 $recentActivity = [];
 $documents = [];
 $documentsAvailable = false;
+$enrollments = [];
+$quizAttempts = [];
+$certificates = [];
+$ktPlans = [];
+$ktSuccessors = [];
+$teaching = ['courses' => 0, 'learners' => 0, 'completed' => 0, 'avg_score' => 0.0, 'avg_rating' => 0.0];
+$expertise = [];
 
-try {
-    $pdo = (new Database())->getConnection();
-
-    // Fetch employee profile
-    $stmt = $pdo->prepare("SELECT * FROM em_employees WHERE employee_id = :eid");
-    $stmt->execute([':eid' => $employeeId]);
-    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($profile) {
-        $profileLearningRole = LearningRole::forEmployee($pdo, $employeeId);
+$runQuery = static function (PDO $connection, string $sql, array $params = [], string $context = 'admin/user-subpage/instructor'): array {
+    try {
+        $stmt = $connection->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        error_log('[learning] ' . $context . ' query failed: ' . $e->getMessage());
+        return [];
     }
+};
 
-    // profile not found handled below
+$runScalar = static function (PDO $connection, string $sql, array $params = [], string $context = 'admin/user-subpage/instructor'): mixed {
+    try {
+        $stmt = $connection->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        error_log('[learning] ' . $context . ' query failed: ' . $e->getMessage());
+        return 0;
+    }
+};
 
-    // Fetch courses taught by this instructor
-    $courseStmt = $pdo->prepare("
+if ($pdo && $profileFound) {
+    $courses = $runQuery($pdo, "
         SELECT c.*,
                COUNT(DISTINCT e.id) AS enrollment_count,
                SUM(CASE WHEN e.status = 'completed' THEN 1 ELSE 0 END) AS completed_count,
@@ -36,12 +71,9 @@ try {
         WHERE c.instructor_id = :eid AND c.status != 'archived'
         GROUP BY c.id
         ORDER BY c.created_at DESC
-    ");
-    $courseStmt->execute([':eid' => $employeeId]);
-    $courses = $courseStmt->fetchAll(PDO::FETCH_ASSOC);
+    ", [':eid' => $employeeId]);
 
-    // Fetch learners enrolled in instructor's courses
-    $learnerStmt = $pdo->prepare("
+    $learners = $runQuery($pdo, "
         SELECT DISTINCT emp.employee_id, emp.first_name, emp.last_name, emp.email,
                e.status AS enrollment_status, e.enrolled_at, e.last_accessed_at,
                c.title AS course_title, c.id AS course_id
@@ -50,20 +82,104 @@ try {
         JOIN ld_course c ON c.id = e.course_id
         WHERE c.instructor_id = :eid
         ORDER BY e.enrolled_at DESC
-    ");
-    $learnerStmt->execute([':eid' => $employeeId]);
-    $learners = $learnerStmt->fetchAll(PDO::FETCH_ASSOC);
+    ", [':eid' => $employeeId]);
 
-    // Recent activity from audit log
-    $actStmt = $pdo->prepare("
+    $recentActivity = $runQuery($pdo, "
         SELECT al.*
         FROM ld_audit_log al
         WHERE al.user_id = :eid
         ORDER BY al.created_at DESC
         LIMIT 20
-    ");
-    $actStmt->execute([':eid' => $employeeId]);
-    $recentActivity = $actStmt->fetchAll(PDO::FETCH_ASSOC);
+    ", [':eid' => $employeeId]);
+
+    $enrollments = $runQuery($pdo, "
+        SELECT e.*, c.title AS course_title, c.category, c.thumbnail_path, c.instructor_id,
+               emp.first_name AS inst_first, emp.last_name AS inst_last,
+               g.final_score, g.status AS grade_status,
+               (SELECT COUNT(*) FROM ld_progress p WHERE p.enrollment_id = e.id AND p.status = 'completed') AS completed_items,
+               (SELECT COUNT(*) FROM ld_progress p WHERE p.enrollment_id = e.id) AS total_items
+        FROM ld_enrollment e
+        JOIN ld_course c ON c.id = e.course_id
+        LEFT JOIN em_employees emp ON emp.employee_id = c.instructor_id
+        LEFT JOIN ld_grade g ON g.learner_id = e.learner_id AND g.course_id = e.course_id
+        WHERE e.learner_id = :eid
+        ORDER BY e.enrolled_at DESC
+    ", [':eid' => $employeeId]);
+
+    $quizAttempts = $runQuery($pdo, "
+        SELECT qa.*, q.title AS quiz_title, m.title AS module_title, c.title AS course_title
+        FROM ld_quiz_attempt qa
+        JOIN ld_quiz q ON q.id = qa.quiz_id
+        LEFT JOIN ld_module m ON m.id = q.module_id
+        LEFT JOIN ld_course c ON c.id = m.course_id
+        WHERE qa.learner_id = :eid
+        ORDER BY qa.attempted_at DESC
+        LIMIT 20
+    ", [':eid' => $employeeId]);
+
+    $certificates = $runQuery($pdo, "
+        SELECT cert.*, c.title AS course_title
+        FROM ld_certificate cert
+        JOIN ld_course c ON c.id = cert.course_id
+        WHERE cert.learner_id = :eid
+        ORDER BY cert.issued_at DESC
+    ", [':eid' => $employeeId]);
+
+    $ktPlans = $runQuery($pdo, "
+        SELECT p.id, lp.id AS learning_path_id, p.employee_id, p.successor_id,
+               p.start_date, p.end_date, p.status, p.created_at,
+               CONCAT(e.first_name, ' ', IFNULL(CONCAT(e.middle_name, ' '), ''), e.last_name) AS employee_name,
+               CONCAT(s.first_name, ' ', IFNULL(CONCAT(s.middle_name, ' '), ''), s.last_name) AS successor_name,
+               (SELECT COUNT(*) FROM exit_knowledge_transfer_items WHERE plan_id = p.id) AS item_count,
+               (SELECT COUNT(*) FROM exit_knowledge_transfer_items WHERE plan_id = p.id AND status = 'completed') AS items_done
+        FROM exit_knowledge_transfer_plans p
+        LEFT JOIN ld_learning_path lp ON lp.kt_plan_id = p.id
+        LEFT JOIN em_employees e ON p.employee_id = e.employee_id
+        LEFT JOIN em_employees s ON p.successor_id = s.employee_id
+        WHERE p.employee_id = :employee_id OR p.successor_id = :successor_id
+        ORDER BY p.created_at DESC
+    ", [
+        ':employee_id' => $employeeId,
+        ':successor_id' => $employeeId,
+    ]);
+
+    $ktSuccessors = $runQuery($pdo, "
+        SELECT employee_id, CONCAT(first_name, ' ', IFNULL(CONCAT(middle_name, ' '), ''), last_name) AS full_name
+        FROM em_employees
+        WHERE employment_status = 'Active' AND employee_id <> :eid
+        ORDER BY first_name ASC, last_name ASC
+    ", [':eid' => $employeeId]);
+
+    $teaching['courses'] = count(array_filter($courses, static function ($row): bool {
+        return in_array((string) ($row['status'] ?? ''), ['active', 'draft'], true);
+    }));
+    $teaching['learners'] = count(array_unique(array_map('intval', array_column($learners, 'employee_id'))));
+    $teaching['completed'] = count(array_filter($learners, static function ($row): bool {
+        return (string) ($row['enrollment_status'] ?? '') === 'completed';
+    }));
+    $teaching['avg_score'] = (float) $runScalar($pdo, "
+        SELECT ROUND(COALESCE(AVG(g.final_score), 0), 1)
+        FROM ld_grade g
+        JOIN ld_course c ON c.id = g.course_id
+        WHERE c.instructor_id = :eid
+    ", [':eid' => $employeeId], 'admin/user-subpage/instructor avg score');
+    $teaching['avg_rating'] = (float) $runScalar($pdo, "
+        SELECT ROUND(COALESCE(AVG(r.rating), 0), 1)
+        FROM ld_rating r
+        JOIN ld_course c ON c.id = r.course_id
+        WHERE c.instructor_id = :eid
+    ", [':eid' => $employeeId], 'admin/user-subpage/instructor avg rating');
+
+    $expertise = $runQuery($pdo, "
+        SELECT s.name, COUNT(*) AS course_count
+        FROM ld_course_skill cs
+        JOIN ld_course c ON c.id = cs.course_id
+        JOIN ld_skill s ON s.id = cs.skill_id
+        WHERE c.instructor_id = :eid
+        GROUP BY s.id, s.name
+        ORDER BY course_count DESC, s.name ASC
+        LIMIT 8
+    ", [':eid' => $employeeId], 'admin/user-subpage/instructor expertise');
 
     try {
         $tableCheck = $pdo->prepare("SELECT 1 FROM information_schema.tables
@@ -74,232 +190,276 @@ try {
         $documentsAvailable = (bool) $tableCheck->fetchColumn();
 
         if ($documentsAvailable) {
-            $docStmt = $pdo->prepare("SELECT ed.*, CONCAT(up.first_name, ' ', IFNULL(CONCAT(up.middle_name, ' '), ''), up.last_name) AS uploaded_by_name FROM employee_documents ed LEFT JOIN em_employees up ON up.employee_id = ed.uploaded_by WHERE ed.employee_id = :eid ORDER BY ed.created_at DESC");
-            $docStmt->execute([':eid' => $employeeId]);
-            $documents = $docStmt->fetchAll(PDO::FETCH_ASSOC);
+            $documents = $runQuery($pdo, "
+                SELECT ed.*, CONCAT(up.first_name, ' ', IFNULL(CONCAT(up.middle_name, ' '), ''), up.last_name) AS uploaded_by_name
+                FROM employee_documents ed
+                LEFT JOIN em_employees up ON up.employee_id = ed.uploaded_by
+                WHERE ed.employee_id = :eid
+                ORDER BY ed.created_at DESC
+            ", [':eid' => $employeeId], 'admin/user-subpage/instructor documents');
         }
     } catch (Throwable $documentError) {
         error_log('[learning] Instructor document lookup unavailable: ' . $documentError->getMessage());
         $documents = [];
         $documentsAvailable = false;
     }
-
-} catch (Throwable $e) {
-    DbError::capture($e, 'admin/user-subpage/instructor');
-    $profile = null;
-    $profileLearningRole = 'learner';
-    $courses = [];
-    $learners = [];
-    $recentActivity = [];
-    $documents = [];
-    $documentsAvailable = false;
 }
 
-function instTimeAgo($dt) {
-    if (!$dt) return 'N/A';
-    $d = time() - strtotime($dt);
-    if ($d < 60) return 'just now';
-    if ($d < 3600) return floor($d / 60) . 'm ago';
-    if ($d < 86400) return floor($d / 3600) . 'h ago';
-    if ($d < 604800) return floor($d / 86400) . 'd ago';
-    return date('M j, Y', strtotime($dt));
-}
+$formatRelative = static function ($value): string {
+    if (empty($value)) {
+        return 'N/A';
+    }
+    $ts = strtotime((string) $value);
+    if (!$ts) {
+        return 'N/A';
+    }
+    $diff = time() - $ts;
+    if ($diff < 60) {
+        return 'just now';
+    }
+    if ($diff < 3600) {
+        return floor($diff / 60) . 'm ago';
+    }
+    if ($diff < 86400) {
+        return floor($diff / 3600) . 'h ago';
+    }
+    if ($diff < 604800) {
+        return floor($diff / 86400) . 'd ago';
+    }
+    return date('M j, Y', $ts);
+};
 
-$initials = $profile ? strtoupper(substr($profile['first_name'], 0, 1) . substr($profile['last_name'], 0, 1)) : '??';
-$fullName = $profile ? htmlspecialchars($profile['first_name'] . ' ' . ($profile['middle_name'] ? $profile['middle_name'] . ' ' : '') . $profile['last_name']) : 'Unknown';
+$courseStatusClass = static function (string $status): string {
+    if ($status === 'active') {
+        return 'is-green';
+    }
+    if ($status === 'draft') {
+        return 'is-amber';
+    }
+    return 'is-purple';
+};
+
+$gradebookLink = null;
 ?>
-<div class="module-header">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-        <div>
-            <h1 class="module-header-title">Instructor Profile</h1>
-            <p class="module-header-subtitle">Detailed view of instructor profile, courses, and activity.</p>
-        </div>
-        <a href="?page=admin/user" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; border:1px solid rgba(32,0,130,0.2); border-radius:999px; font-size:0.85rem; font-weight:700; color:var(--primary); text-decoration:none; white-space:nowrap;">
-            <i class="fas fa-arrow-left" style="font-size:0.8rem;"></i> Back to Users
-        </a>
-    </div>
-</div>
-
+<?php include __DIR__ . '/../../shared/includes/profile-assets.php'; ?>
 <div class="module-content">
-    <?php if (!$profile): ?>
-        <div class="mode-card">
-            <div class="content-card-body">
-                <h3>Instructor not found</h3>
-                <p>The requested instructor could not be found. <a href="?page=admin/user">Go back to User Management</a></p>
+    <div class="pfl-admin-strip">
+        <a class="pfl-admin-back" href="?page=admin/user">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i> Back to User Management
+        </a>
+        <?php if ($profileFound): ?>
+            <div class="pfl-admin-role-wrap">
+                <?php $roleControlCompact = true; include __DIR__ . '/role-control.php'; ?>
             </div>
+        <?php endif; ?>
+    </div>
+
+    <?php if (!$profileFound): ?>
+        <div class="mode-card">
+            <h3 class="pfl-section-title"><i class="fas fa-user-slash" aria-hidden="true"></i> Instructor not found</h3>
+            <p class="pfl-empty">
+                <?= $pdo ? 'The requested instructor could not be found.' : 'Profile data is unavailable while the database connection is down.' ?>
+                <a href="?page=admin/user">Go back to User Management</a>
+            </p>
         </div>
     <?php else: ?>
-        <!-- Profile Card -->
-        <div class="profile-hero" style="display:grid; grid-template-columns:300px 1fr; gap:1.5rem; margin-bottom:2rem;">
-            <div class="mode-card" style="text-align:center; padding:2rem;">
-                <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, rgba(32,0,130,0.9), rgba(91,85,255,0.75)); color:var(--surface); display:flex; align-items:center; justify-content:center; font-size:2.2rem; font-weight:800; margin:0 auto 1rem;"><?= $initials ?></div>
-                <h2 style="margin:0 0 0.25rem; color:var(--text);"><?= $fullName ?></h2>
-                <p style="margin:0 0 0.5rem; color:var(--primary); font-weight:600;"><?= htmlspecialchars(ucfirst($profileLearningRole), ENT_QUOTES, 'UTF-8') ?></p>
-                <p style="margin:0 0 1rem; color:rgba(32,0,130,0.6); font-size:0.9rem;"><?= htmlspecialchars($profile['email'] ?? '') ?></p>
-                <?php include __DIR__ . '/role-control.php'; ?>
-                <div style="display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
-                    <div style="padding:0.5rem 1rem; border-radius:10px; background:rgba(32,0,130,0.06);">
-                        <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Courses</div>
-                        <div style="font-size:1.4rem; font-weight:800; color:var(--text);"><?= count($courses) ?></div>
-                    </div>
-                    <div style="padding:0.5rem 1rem; border-radius:10px; background:rgba(16,185,129,0.06);">
-                        <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:#10b981; font-weight:700;">Learners</div>
-                        <div style="font-size:1.4rem; font-weight:800; color:var(--text);"><?= count($learners) ?></div>
-                    </div>
+        <?php include __DIR__ . '/../../shared/includes/profile-header.php'; ?>
+        <?php include __DIR__ . '/../../shared/includes/profile-completion.php'; ?>
+        <?php include __DIR__ . '/../../shared/includes/profile-bio.php'; ?>
+
+        <div class="pfl-grid" style="margin-bottom:1.5rem;">
+            <?php include __DIR__ . '/../../shared/includes/profile-info.php'; ?>
+            <?php include __DIR__ . '/../../shared/includes/profile-contact.php'; ?>
+        </div>
+
+        <div class="mode-card" style="margin-bottom:1.5rem;">
+            <h3 class="pfl-section-title"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Teaching Overview</h3>
+            <div class="pfl-stats">
+                <div class="pfl-stat">
+                    <div class="pfl-stat-label"><i class="fas fa-book" aria-hidden="true"></i> Courses</div>
+                    <div class="pfl-stat-value"><?= (int) $teaching['courses'] ?></div>
+                    <div class="pfl-stat-sub">created</div>
+                </div>
+                <div class="pfl-stat">
+                    <div class="pfl-stat-label"><i class="fas fa-users" aria-hidden="true"></i> Learners</div>
+                    <div class="pfl-stat-value is-teal"><?= (int) $teaching['learners'] ?></div>
+                    <div class="pfl-stat-sub"><?= (int) $teaching['completed'] ?> course<?= (int) $teaching['completed'] !== 1 ? 's' : '' ?> completed</div>
+                </div>
+                <div class="pfl-stat">
+                    <div class="pfl-stat-label"><i class="fas fa-star" aria-hidden="true"></i> Avg Score</div>
+                    <div class="pfl-stat-value is-green"><?= number_format((float) $teaching['avg_score'], 1) ?>%</div>
+                    <div class="pfl-stat-sub">student average</div>
+                </div>
+                <div class="pfl-stat">
+                    <div class="pfl-stat-label"><i class="fas fa-thumbs-up" aria-hidden="true"></i> Avg Rating</div>
+                    <div class="pfl-stat-value is-amber"><?= number_format((float) $teaching['avg_rating'], 1) ?><span style="font-size:1rem;">/5</span></div>
+                    <div class="pfl-stat-sub">from course reviews</div>
                 </div>
             </div>
 
-            <!-- Info Panel -->
-            <div class="mode-card">
-                <h3 style="margin:0 0 1rem; color:var(--text);">Personal Information</h3>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Employee Code</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['employee_code'] ?? 'N/A') ?></div>
+            <div style="margin-top:1.25rem; padding-top:1.1rem; border-top:1px solid rgba(0,0,0,0.06);">
+                <div class="pfl-stat-label" style="margin-bottom:0.6rem;"><i class="fas fa-lightbulb" aria-hidden="true"></i> Areas of Expertise</div>
+                <?php if (empty($expertise)): ?>
+                    <p class="pfl-empty">Tag courses with skills to build this instructor's expertise profile.</p>
+                <?php else: ?>
+                    <div class="pfl-chips">
+                        <?php foreach ($expertise as $skill): ?>
+                            <span class="pfl-chip"><?= htmlspecialchars((string) $skill['name'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php endforeach; ?>
                     </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Email</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['email'] ?? 'N/A') ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Mobile</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['mobile_no'] ?? 'N/A') ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Employment Status</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['employment_status'] ?? 'N/A') ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Hire Date</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= $profile['hire_date'] ? date('M j, Y', strtotime($profile['hire_date'])) : 'N/A' ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Ranking</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['ranking'] ?? 'N/A') ?></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Courses Section -->
-        <div class="mode-card" style="margin-bottom:1.5rem;">
-            <h3 style="margin:0 0 1rem; color:var(--text);">Courses Taught (<?= count($courses) ?>)</h3>
-            <?php if (empty($courses)): ?>
-                <p style="color:rgba(32,0,130,0.5);">No courses assigned yet.</p>
-            <?php else: ?>
-                <div class="profile-course-list" style="display:grid; gap:0.75rem;">
-                    <?php foreach ($courses as $c): ?>
-                        <div class="profile-course-row" style="display:grid; grid-template-columns:1fr auto auto auto; gap:1rem; align-items:center; padding:1rem 1.25rem; border:1px solid rgba(32,0,130,0.1); border-radius:12px; background:rgba(32,0,130,0.02);">
-                            <div>
-                                <div style="font-weight:700; color:var(--text);"><?= htmlspecialchars($c['title']) ?></div>
-                                <div style="font-size:0.85rem; color:rgba(32,0,130,0.6);"><?= htmlspecialchars($c['category'] ?? 'Uncategorized') ?></div>
-                            </div>
-                            <div style="text-align:center;">
-                                <div style="font-size:0.7rem; text-transform:uppercase; color:var(--primary); font-weight:700;">Enrolled</div>
-                                <div style="font-size:1.1rem; font-weight:800; color:var(--text);"><?= $c['enrollment_count'] ?></div>
-                            </div>
-                            <div style="text-align:center;">
-                                <div style="font-size:0.7rem; text-transform:uppercase; color:#10b981; font-weight:700;">Completed</div>
-                                <div style="font-size:1.1rem; font-weight:800; color:var(--text);"><?= $c['completed_count'] ?></div>
-                            </div>
-                            <div>
-                                <span style="padding:0.35rem 0.7rem; border-radius:999px; font-size:0.75rem; font-weight:700; background:<?= $c['status'] === 'active' ? 'rgba(16,185,129,0.1)' : ($c['status'] === 'draft' ? 'rgba(245,158,11,0.1)' : 'rgba(107,114,128,0.1)') ?>; color:<?= $c['status'] === 'active' ? '#10b981' : ($c['status'] === 'draft' ? '#f59e0b' : '#6b7280') ?>;">
-                                    <?= ucfirst($c['status']) ?>
-                                </span>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Learners Section -->
-        <div class="mode-card" style="margin-bottom:1.5rem;">
-            <h3 style="margin:0 0 1rem; color:var(--text);">Assigned Learners (<?= count($learners) ?>)</h3>
-            <?php if (empty($learners)): ?>
-                <p style="color:rgba(32,0,130,0.5);">No learners enrolled in your courses yet.</p>
-            <?php else: ?>
-                <div class="profile-learner-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1rem;">
-                    <?php foreach ($learners as $lrn):
-                        $lInitials = strtoupper(substr($lrn['first_name'], 0, 1) . substr($lrn['last_name'], 0, 1));
-                        $lName = htmlspecialchars($lrn['first_name'] . ' ' . $lrn['last_name']);
-                        $statusColor = $lrn['enrollment_status'] === 'completed' ? '#10b981' : ($lrn['enrollment_status'] === 'in_progress' ? '#3b82f6' : '#f59e0b');
-                    ?>
-                        <div style="display:flex; gap:0.75rem; padding:1rem; border:1px solid rgba(32,0,130,0.1); border-radius:12px; background:var(--surface, #fff); align-items:center;">
-                            <div style="width:42px; height:42px; min-width:42px; border-radius:50%; background:linear-gradient(135deg, rgba(16,185,129,0.9), rgba(52,211,153,0.75)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.85rem;"><?= $lInitials ?></div>
-                            <div style="flex:1; min-width:0;">
-                                <div style="font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= $lName ?></div>
-                                <div style="font-size:0.8rem; color:rgba(32,0,130,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"><?= htmlspecialchars($lrn['course_title']) ?></div>
-                            </div>
-                            <span style="padding:0.25rem 0.6rem; border-radius:999px; font-size:0.7rem; font-weight:700; background:<?= $statusColor ?>15; color:<?= $statusColor ?>; white-space:nowrap;">
-                                <?= ucfirst(str_replace('_', ' ', $lrn['enrollment_status'])) ?>
-                            </span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Documents Section -->
-        <div class="mode-card" style="margin-top:1.5rem;">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-                <h3 style="margin:0; color:var(--text);"><i class="fas fa-folder" style="margin-right:0.5rem; color:var(--primary);"></i> Documents (<?= count($documents ?? []) ?>)</h3>
-                <?php if ($documentsAvailable): ?>
-                    <a href="?page=admin/user-subpage/documents&id=<?= $employeeId ?>" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:var(--surface); border:none; border-radius:999px; font-size:0.85rem; font-weight:700; text-decoration:none; white-space:nowrap;">
-                        <i class="fas fa-upload" style="font-size:0.8rem;"></i> Manage Documents
-                    </a>
                 <?php endif; ?>
             </div>
-            <?php if (!$documentsAvailable): ?>
-                <p style="color:rgba(32,0,130,0.5);">Document storage is not configured in this database.</p>
-            <?php elseif (empty($documents ?? [])): ?>
-                <p style="color:rgba(32,0,130,0.5);">No documents uploaded yet.</p>
+        </div>
+
+        <div class="mode-card" style="margin-bottom:1.5rem;">
+            <div class="pfl-card-head">
+                <h3 class="pfl-section-title" style="margin:0;">
+                    <i class="fas fa-chalkboard" aria-hidden="true"></i> Courses Taught
+                </h3>
+                <span class="pfl-count-badge"><?= count($courses) ?></span>
+            </div>
+            <?php if (empty($courses)): ?>
+                <div class="pfl-empty-state">
+                    <i class="fas fa-chalkboard" aria-hidden="true"></i>
+                    <p>No courses are assigned to this instructor yet.</p>
+                </div>
             <?php else: ?>
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.92rem;">
+                <div class="pfl-list">
+                    <?php foreach ($courses as $course):
+                        $courseStatus = strtolower((string) ($course['status'] ?? ''));
+                    ?>
+                        <div class="pfl-list-item">
+                            <div class="pfl-list-head">
+                                <div>
+                                    <div class="pfl-list-title"><?= htmlspecialchars((string) ($course['title'] ?? 'Untitled course'), ENT_QUOTES, 'UTF-8') ?></div>
+                                    <div class="pfl-list-sub"><?= htmlspecialchars((string) (($course['category'] ?? '') !== '' ? $course['category'] : 'Uncategorized'), ENT_QUOTES, 'UTF-8') ?></div>
+                                </div>
+                                <span class="pfl-badge <?= $courseStatusClass($courseStatus) ?>"><?= htmlspecialchars(ucfirst($courseStatus !== '' ? $courseStatus : 'unknown'), ENT_QUOTES, 'UTF-8') ?></span>
+                            </div>
+                            <div class="pfl-meta">
+                                <span><i class="fas fa-user-plus" aria-hidden="true"></i>Enrolled: <strong><?= (int) ($course['enrollment_count'] ?? 0) ?></strong></span>
+                                <span><i class="fas fa-check" aria-hidden="true"></i>Completed: <strong><?= (int) ($course['completed_count'] ?? 0) ?></strong></span>
+                                <span><i class="fas fa-star" aria-hidden="true"></i>Avg score: <strong><?= number_format((float) ($course['avg_score'] ?? 0), 1) ?>%</strong></span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="mode-card" style="margin-bottom:1.5rem;">
+            <div class="pfl-card-head">
+                <h3 class="pfl-section-title" style="margin:0;">
+                    <i class="fas fa-users" aria-hidden="true"></i> Assigned Learners
+                </h3>
+                <span class="pfl-count-badge"><?= count($learners) ?></span>
+            </div>
+            <?php if (empty($learners)): ?>
+                <div class="pfl-empty-state">
+                    <i class="fas fa-users" aria-hidden="true"></i>
+                    <p>No learners are enrolled in this instructor's courses yet.</p>
+                </div>
+            <?php else: ?>
+                <div class="pfl-person-grid">
+                    <?php foreach ($learners as $learner):
+                        $learnerInitials = strtoupper(substr((string) ($learner['first_name'] ?? ''), 0, 1) . substr((string) ($learner['last_name'] ?? ''), 0, 1));
+                        $learnerName = trim((string) ($learner['first_name'] ?? '') . ' ' . (string) ($learner['last_name'] ?? ''));
+                        $enrollmentStatus = strtolower((string) ($learner['enrollment_status'] ?? ''));
+                        $enrollmentClass = $enrollmentStatus === 'completed' ? 'is-green' : ($enrollmentStatus === 'in_progress' ? 'is-blue' : 'is-amber');
+                    ?>
+                        <div class="pfl-person">
+                            <div class="pfl-person-avatar"><?= htmlspecialchars($learnerInitials !== '' ? $learnerInitials : '??', ENT_QUOTES, 'UTF-8') ?></div>
+                            <div class="pfl-person-main">
+                                <div class="pfl-person-name"><?= htmlspecialchars($learnerName !== '' ? $learnerName : 'Unknown learner', ENT_QUOTES, 'UTF-8') ?></div>
+                                <div class="pfl-person-sub"><?= htmlspecialchars((string) ($learner['course_title'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
+                            </div>
+                            <span class="pfl-badge <?= $enrollmentClass ?>"><?= htmlspecialchars(ucfirst(str_replace('_', ' ', $enrollmentStatus !== '' ? $enrollmentStatus : 'unknown')), ENT_QUOTES, 'UTF-8') ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <?php include __DIR__ . '/../../shared/includes/profile-learning-activity.php'; ?>
+
+        <div class="mode-card" style="margin-bottom:1.5rem;">
+            <div class="pfl-card-head">
+                <h3 class="pfl-section-title" style="margin:0;">
+                    <i class="fas fa-folder" aria-hidden="true"></i> Documents
+                </h3>
+                <?php if ($documentsAvailable): ?>
+                    <a class="pfl-link-btn" href="?page=admin/user-subpage/documents&amp;id=<?= $employeeId ?>">
+                        <i class="fas fa-upload" aria-hidden="true"></i> Manage Documents
+                    </a>
+                <?php endif; ?>
+                <span class="pfl-count-badge"><?= count($documents) ?></span>
+            </div>
+            <?php if (!$documentsAvailable): ?>
+                <div class="pfl-empty-state">
+                    <i class="fas fa-folder-open" aria-hidden="true"></i>
+                    <p>Document storage is not configured in this database.</p>
+                </div>
+            <?php elseif (empty($documents)): ?>
+                <div class="pfl-empty-state">
+                    <i class="fas fa-folder-open" aria-hidden="true"></i>
+                    <p>No documents uploaded yet.</p>
+                </div>
+            <?php else: ?>
+                <div class="pfl-table-wrap">
+                    <table class="pfl-table">
                         <thead>
-                            <tr style="border-bottom:2px solid rgba(32,0,130,0.12); text-align:left;">
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Document</th>
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Type</th>
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Category</th>
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Uploaded</th>
-                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; text-align:center;">Actions</th>
+                            <tr>
+                                <th>Document</th>
+                                <th>Type</th>
+                                <th>Category</th>
+                                <th>Uploaded</th>
+                                <th style="text-align:center;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($documents as $doc): 
-                                $docIcon = 'fa-file'; $docColor = 'rgba(32,0,130,0.5)';
-                                $dt = strtolower($doc['document_type'] ?? '');
-                                if ($dt === 'resume/cv' || $dt === 'resume' || $dt === 'cv') { $docIcon = 'fa-file-lines'; $docColor = '#6366f1'; }
-                                elseif ($dt === 'contract') { $docIcon = 'fa-file-signature'; $docColor = '#f59e0b'; }
-                                elseif ($dt === 'certificate' || $dt === 'certification') { $docIcon = 'fa-certificate'; $docColor = '#10b981'; }
-                                elseif ($dt === 'identification' || $dt === 'id') { $docIcon = 'fa-id-card'; $docColor = '#3b82f6'; }
-                                elseif ($dt === 'medical') { $docIcon = 'fa-heart-pulse'; $docColor = '#ef4444'; }
-                                elseif ($dt === 'legal') { $docIcon = 'fa-scale-balanced'; $docColor = '#8b5cf6'; }
+                            <?php foreach ($documents as $document):
+                                $documentType = strtolower((string) ($document['document_type'] ?? ''));
+                                $documentIcon = 'fa-file';
+                                $documentColor = 'rgba(32,0,130,0.5)';
+                                if (in_array($documentType, ['resume/cv', 'resume', 'cv'], true)) {
+                                    $documentIcon = 'fa-file-lines';
+                                    $documentColor = '#6366f1';
+                                } elseif ($documentType === 'contract') {
+                                    $documentIcon = 'fa-file-signature';
+                                    $documentColor = '#f59e0b';
+                                } elseif (in_array($documentType, ['certificate', 'certification'], true)) {
+                                    $documentIcon = 'fa-certificate';
+                                    $documentColor = '#10b981';
+                                } elseif (in_array($documentType, ['identification', 'id'], true)) {
+                                    $documentIcon = 'fa-id-card';
+                                    $documentColor = '#3b82f6';
+                                } elseif ($documentType === 'medical') {
+                                    $documentIcon = 'fa-heart-pulse';
+                                    $documentColor = '#ef4444';
+                                } elseif ($documentType === 'legal') {
+                                    $documentIcon = 'fa-scale-balanced';
+                                    $documentColor = '#8b5cf6';
+                                }
+                                $documentCreated = !empty($document['created_at']) ? strtotime((string) $document['created_at']) : false;
                             ?>
-                                <tr style="border-bottom:1px solid rgba(32,0,130,0.06);" onmouseover="this.style.background='rgba(32,0,130,0.03)'" onmouseout="this.style.background='transparent'">
-                                    <td style="padding:0.75rem 1rem;">
-                                        <div style="display:flex; align-items:center; gap:0.6rem;">
-                                            <div style="width:32px; height:32px; min-width:32px; border-radius:8px; background:rgba(32,0,130,0.06); display:flex; align-items:center; justify-content:center;">
-                                                <i class="fas <?= $docIcon ?>" style="color:<?= $docColor ?>; font-size:0.85rem;"></i>
+                                <tr>
+                                    <td>
+                                        <div class="pfl-doc-cell">
+                                            <div class="pfl-doc-icon">
+                                                <i class="fas <?= htmlspecialchars($documentIcon, ENT_QUOTES, 'UTF-8') ?>" style="color:<?= htmlspecialchars($documentColor, ENT_QUOTES, 'UTF-8') ?>;font-size:0.85rem;" aria-hidden="true"></i>
                                             </div>
-                                            <div>
-                                                <div style="font-weight:600; color:var(--text); font-size:0.88rem;"><?= htmlspecialchars($doc['document_name']) ?></div>
-                                                <div style="font-size:0.72rem; color:rgba(32,0,130,0.4);"><?= htmlspecialchars($doc['file_name']) ?></div>
+                                            <div style="min-width:0;">
+                                                <div class="pfl-doc-name"><?= htmlspecialchars((string) ($document['document_name'] ?? 'Document'), ENT_QUOTES, 'UTF-8') ?></div>
+                                                <div class="pfl-doc-file"><?= htmlspecialchars((string) ($document['file_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td style="padding:0.75rem 1rem; font-size:0.82rem;">
-                                        <span style="display:inline-block; padding:0.1rem 0.45rem; border-radius:4px; background:rgba(32,0,130,0.04); font-size:0.72rem; font-weight:600; color:<?= $docColor ?>;">
-                                            <?= htmlspecialchars($doc['document_type'] ?? 'Other') ?>
-                                        </span>
-                                    </td>
-                                    <td style="padding:0.75rem 1rem; font-size:0.82rem; color:rgba(32,0,130,0.5);"><?= htmlspecialchars($doc['category'] ?? 'Other') ?></td>
-                                    <td style="padding:0.75rem 1rem; font-size:0.82rem; color:rgba(32,0,130,0.5);"><?= $doc['created_at'] ? date('M j, Y', strtotime($doc['created_at'])) : 'N/A' ?></td>
-                                    <td style="padding:0.75rem 1rem; text-align:center;">
-                                        <a href="pages/admin/ajax/download-document.php?doc_id=<?= $doc['document_id'] ?>" download="<?= htmlspecialchars($doc['file_name']) ?>"
-                                           style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.35rem 0.6rem; border-radius:999px; font-size:0.72rem; font-weight:700; border:1px solid rgba(32,0,130,0.15); color:var(--primary); text-decoration:none; background:transparent; white-space:nowrap;">
-                                            <i class="fas fa-download"></i> Download
+                                    <td><span class="pfl-badge"><?= htmlspecialchars((string) ($document['document_type'] ?? 'Other'), ENT_QUOTES, 'UTF-8') ?></span></td>
+                                    <td><?= htmlspecialchars((string) ($document['category'] ?? 'Other'), ENT_QUOTES, 'UTF-8') ?></td>
+                                    <td><?= $documentCreated ? htmlspecialchars(date('M j, Y', $documentCreated), ENT_QUOTES, 'UTF-8') : 'N/A' ?></td>
+                                    <td style="text-align:center;">
+                                        <a class="pfl-link-btn" href="pages/admin/ajax/download-document.php?doc_id=<?= (int) ($document['document_id'] ?? 0) ?>" download="<?= htmlspecialchars((string) ($document['file_name'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                            <i class="fas fa-download" aria-hidden="true"></i> Download
                                         </a>
                                     </td>
                                 </tr>
@@ -310,20 +470,27 @@ $fullName = $profile ? htmlspecialchars($profile['first_name'] . ' ' . ($profile
             <?php endif; ?>
         </div>
 
-        <!-- Activity Timeline -->
         <div class="mode-card">
-            <h3 style="margin:0 0 1rem; color:var(--text);">Recent Activity</h3>
+            <h3 class="pfl-section-title"><i class="fas fa-clock-rotate-left" aria-hidden="true"></i> Recent Activity</h3>
             <?php if (empty($recentActivity)): ?>
-                <p style="color:rgba(32,0,130,0.5);">No recent activity recorded.</p>
+                <p class="pfl-empty">No recent activity recorded.</p>
             <?php else: ?>
-                <div style="position:relative; padding-left:1.5rem;">
-                    <div style="position:absolute; left:0.5rem; top:0; bottom:0; width:2px; background:rgba(32,0,130,0.12);"></div>
-                    <?php foreach ($recentActivity as $act): ?>
-                        <div style="position:relative; padding:0.75rem 0 0.75rem 1.5rem;">
-                            <div style="position:absolute; left:-0.25rem; top:1rem; width:10px; height:10px; border-radius:50%; background:var(--primary); border:2px solid var(--surface);"></div>
-                            <div style="font-weight:600; color:var(--text);"><?= htmlspecialchars($act['action'] ?? 'Activity') ?></div>
-                            <div style="font-size:0.85rem; color:rgba(32,0,130,0.6);"><?= htmlspecialchars(($act['item_type'] ? $act['item_type'] . ' #' . $act['reference_id'] : '') . ' ' . ($act['details'] ?? '')) ?></div>
-                            <div style="font-size:0.75rem; color:rgba(32,0,130,0.4); margin-top:0.2rem;"><?= instTimeAgo($act['created_at']) ?></div>
+                <div>
+                    <?php foreach ($recentActivity as $activity):
+                        $activityLabel = (string) ($activity['action'] ?? 'Activity');
+                        $activityDetails = trim((string) ($activity['details'] ?? ''));
+                        if ($activityDetails === '' && !empty($activity['item_type'])) {
+                            $activityDetails = (string) $activity['item_type'] . ' #' . (string) ($activity['reference_id'] ?? '');
+                        }
+                    ?>
+                        <div class="pfl-activity">
+                            <span class="pfl-activity-dot" style="background:var(--primary);"></span>
+                            <div class="pfl-activity-main">
+                                <span class="pfl-activity-title"><?= htmlspecialchars($activityLabel, ENT_QUOTES, 'UTF-8') ?></span>
+                                <span class="pfl-activity-date">
+                                    <?php if ($activityDetails !== ''): ?><?= htmlspecialchars($activityDetails, ENT_QUOTES, 'UTF-8') ?> &bull; <?php endif; ?><?= htmlspecialchars($formatRelative($activity['created_at'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                                </span>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>

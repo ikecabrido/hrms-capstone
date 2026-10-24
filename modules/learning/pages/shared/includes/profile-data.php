@@ -18,7 +18,11 @@ require_once dirname(__DIR__, 3) . '/classes/UserSession.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 
 $employeeClass = new Employee();
-$profileId = (int) ($employeeClass->getEmployeeId() ?? 0);
+$signedInEmployeeId = (int) ($employeeClass->getEmployeeId() ?? 0);
+$viewedEmployeeId = isset($profileEmployeeId) ? (int) $profileEmployeeId : 0;
+$profileId = $viewedEmployeeId > 0
+    ? $viewedEmployeeId
+    : $signedInEmployeeId;
 
 $pdo = null;
 try {
@@ -40,6 +44,9 @@ $employee = [
     'permanent_address' => '',
     'position_name'     => '',
     'department_name'   => '',
+    'employment_status' => '',
+    'hire_date'         => '',
+    'ranking'           => '',
 ];
 
 if ($pdo && $profileId > 0) {
@@ -47,6 +54,7 @@ if ($pdo && $profileId > 0) {
         $stmt = $pdo->prepare(
             "SELECT e.employee_id, e.employee_code, e.first_name, e.last_name, e.email,
                     e.mobile_no, e.phone_no, e.current_address, e.permanent_address,
+                    e.employment_status, e.hire_date, e.ranking,
                     p.position_name, d.department_name
              FROM em_employees e
              LEFT JOIN em_positions p ON p.position_id = e.position_id
@@ -106,10 +114,12 @@ $completionPercent = (int) round($completionDone / max(1, count($completionItems
 // ─── Security: active sessions + previous login ──────────────────────────────
 $sessions = [];
 $previousLogin = $_SESSION['ld_prev_login'] ?? null;
-try {
-    $sessions = (new UserSession($pdo))->listActive($profileId, UserSession::currentToken());
-} catch (Throwable $e) {
-    $sessions = [];
+if ($profileId > 0 && $profileId === $signedInEmployeeId) {
+    try {
+        $sessions = (new UserSession($pdo))->listActive($profileId, UserSession::currentToken());
+    } catch (Throwable $e) {
+        $sessions = [];
+    }
 }
 
 // ─── Grade-book summary (only rendered by the admin / learner pages) ─────────
@@ -186,4 +196,5 @@ $profileData = [
     ],
     'sessions'        => $sessions,
     'previous_login'  => $previousLogin,
+    'is_self'         => $profileId === $signedInEmployeeId,
 ];

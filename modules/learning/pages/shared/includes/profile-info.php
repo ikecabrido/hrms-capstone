@@ -32,5 +32,23 @@ if ($employeeRef === '') {
             <span class="pfl-row-label">Department</span>
             <span class="pfl-row-value"><?= htmlspecialchars($employee['department_name'] !== '' ? $employee['department_name'] : '—') ?></span>
         </div>
+        <?php if (trim((string) ($employee['employment_status'] ?? '')) !== ''): ?>
+            <div class="pfl-row">
+                <span class="pfl-row-label">Employment status</span>
+                <span class="pfl-row-value"><?= htmlspecialchars((string) $employee['employment_status']) ?></span>
+            </div>
+        <?php endif; ?>
+        <?php if (trim((string) ($employee['ranking'] ?? '')) !== ''): ?>
+            <div class="pfl-row">
+                <span class="pfl-row-label">Ranking</span>
+                <span class="pfl-row-value"><?= htmlspecialchars((string) $employee['ranking']) ?></span>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($employee['hire_date'])): ?>
+            <div class="pfl-row">
+                <span class="pfl-row-label">Hire date</span>
+                <span class="pfl-row-value"><?= htmlspecialchars(date('M j, Y', strtotime((string) $employee['hire_date']))) ?></span>
+            </div>
+        <?php endif; ?>
     </div>
 </div>

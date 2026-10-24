@@ -1,31 +1,55 @@
 <?php
-include_once __DIR__ . '/../../../classes/Employee.php';
+/**
+ * Admin view of a learner's profile.
+ *
+ * The layout and read-only profile cards come from the shared profile partials
+ * so this page matches the profile reached from the sidebar. Admin-only
+ * additions are the back link, the compact Learning role control and the
+ * activity sections below.
+ */
 require_once __DIR__ . '/../../../classes/LearningRole.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 
-$employeeId = (int)($_GET['id'] ?? 0);
-$profile = null;
-$profileLearningRole = 'learner';
+$employeeId = (int) ($_GET['id'] ?? 0);
+$profileViewKind = 'learner';
+$profileReadOnly = true;
+$profileEmployeeId = $employeeId;
+$profileRoleLabel = 'Learner';
+
+require_once __DIR__ . '/../../shared/includes/profile-data.php';
+
+$profile = $profileData['employee'];
+$profileFound = trim((string) ($profile['first_name'] ?? '')) !== ''
+    || trim((string) ($profile['last_name'] ?? '')) !== '';
+$profileLearningRole = ($pdo && $profileFound) ? LearningRole::forEmployee($pdo, $employeeId) : 'learner';
+$profileData['role_label'] = ucfirst($profileLearningRole);
+
 $enrollments = [];
 $quizAttempts = [];
 $certificates = [];
+$ktPlans = [];
 $ktSuccessors = [];
+$learning = [
+    'enrolled' => 0,
+    'completed' => 0,
+    'certificates' => 0,
+    'study_seconds' => 0,
+    'streak' => 0,
+];
 
-try {
-    $pdo = (new Database())->getConnection();
-
-    // Fetch employee profile
-    $stmt = $pdo->prepare("SELECT * FROM em_employees WHERE employee_id = :eid");
-    $stmt->execute([':eid' => $employeeId]);
-    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($profile) {
-        $profileLearningRole = LearningRole::forEmployee($pdo, $employeeId);
+$runQuery = static function (PDO $connection, string $sql, array $params = [], string $context = 'admin/user-subpage/learner'): array {
+    try {
+        $stmt = $connection->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        error_log('[learning] ' . $context . ' query failed: ' . $e->getMessage());
+        return [];
     }
+};
 
-    // profile not found handled below
-
-    // Fetch enrollments with course info and progress
-    $enrollStmt = $pdo->prepare("
+if ($pdo && $profileFound) {
+    $enrollments = $runQuery($pdo, "
         SELECT e.*, c.title AS course_title, c.category, c.thumbnail_path, c.instructor_id,
                emp.first_name AS inst_first, emp.last_name AS inst_last,
                g.final_score, g.status AS grade_status,
@@ -37,12 +61,9 @@ try {
         LEFT JOIN ld_grade g ON g.learner_id = e.learner_id AND g.course_id = e.course_id
         WHERE e.learner_id = :eid
         ORDER BY e.enrolled_at DESC
-    ");
-    $enrollStmt->execute([':eid' => $employeeId]);
-    $enrollments = $enrollStmt->fetchAll(PDO::FETCH_ASSOC);
+    ", [':eid' => $employeeId]);
 
-    // Fetch quiz attempts
-    $quizStmt = $pdo->prepare("
+    $quizAttempts = $runQuery($pdo, "
         SELECT qa.*, q.title AS quiz_title, m.title AS module_title, c.title AS course_title
         FROM ld_quiz_attempt qa
         JOIN ld_quiz q ON q.id = qa.quiz_id
@@ -51,477 +72,152 @@ try {
         WHERE qa.learner_id = :eid
         ORDER BY qa.attempted_at DESC
         LIMIT 20
-    ");
-    $quizStmt->execute([':eid' => $employeeId]);
-    $quizAttempts = $quizStmt->fetchAll(PDO::FETCH_ASSOC);
+    ", [':eid' => $employeeId]);
 
-    // Fetch certificates
-    $certStmt = $pdo->prepare("
+    $certificates = $runQuery($pdo, "
         SELECT cert.*, c.title AS course_title
         FROM ld_certificate cert
         JOIN ld_course c ON c.id = cert.course_id
         WHERE cert.learner_id = :eid
         ORDER BY cert.issued_at DESC
-    ");
-    $certStmt->execute([':eid' => $employeeId]);
-    $certificates = $certStmt->fetchAll(PDO::FETCH_ASSOC);
+    ", [':eid' => $employeeId]);
 
-    // Fetch knowledge transfer plans for this employee
-    $ktStmt = $pdo->prepare("
-         SELECT p.id, lp.id AS learning_path_id, p.employee_id, p.successor_id, p.start_date, p.end_date, p.status, p.created_at,
+    $ktPlans = $runQuery($pdo, "
+        SELECT p.id, lp.id AS learning_path_id, p.employee_id, p.successor_id,
+               p.start_date, p.end_date, p.status, p.created_at,
                CONCAT(e.first_name, ' ', IFNULL(CONCAT(e.middle_name, ' '), ''), e.last_name) AS employee_name,
                CONCAT(s.first_name, ' ', IFNULL(CONCAT(s.middle_name, ' '), ''), s.last_name) AS successor_name,
                (SELECT COUNT(*) FROM exit_knowledge_transfer_items WHERE plan_id = p.id) AS item_count,
                (SELECT COUNT(*) FROM exit_knowledge_transfer_items WHERE plan_id = p.id AND status = 'completed') AS items_done
         FROM exit_knowledge_transfer_plans p
-         LEFT JOIN ld_learning_path lp ON lp.kt_plan_id = p.id
+        LEFT JOIN ld_learning_path lp ON lp.kt_plan_id = p.id
         LEFT JOIN em_employees e ON p.employee_id = e.employee_id
         LEFT JOIN em_employees s ON p.successor_id = s.employee_id
         WHERE p.employee_id = :employee_id OR p.successor_id = :successor_id
         ORDER BY p.created_at DESC
-    ");
-    $ktStmt->execute([
+    ", [
         ':employee_id' => $employeeId,
         ':successor_id' => $employeeId,
     ]);
-    $ktPlans = $ktStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Active employees for the successor picker in the KT modal. Rendered
-    // server-side because the Exit module endpoint the page used to call does
-    // not exist, which left the picker permanently empty.
-    $ktSuccessorStmt = $pdo->prepare("
+    $ktSuccessors = $runQuery($pdo, "
         SELECT employee_id, CONCAT(first_name, ' ', IFNULL(CONCAT(middle_name, ' '), ''), last_name) AS full_name
         FROM em_employees
         WHERE employment_status = 'Active' AND employee_id <> :eid
         ORDER BY first_name ASC, last_name ASC
-    ");
-    $ktSuccessorStmt->execute([':eid' => $employeeId]);
-    $ktSuccessors = $ktSuccessorStmt->fetchAll(PDO::FETCH_ASSOC);
+    ", [':eid' => $employeeId]);
 
-} catch (Throwable $e) {
-    DbError::capture($e, 'admin/user-subpage/learner');
-    $profile = null;
-    $profileLearningRole = 'learner';
-    $enrollments = [];
-    $quizAttempts = [];
-    $certificates = [];
-    $ktPlans = [];
-    $ktSuccessors = [];
+    $learning['enrolled'] = count(array_filter($enrollments, static function ($row): bool {
+        return in_array((string) ($row['status'] ?? ''), ['invited', 'enrolled', 'in_progress'], true);
+    }));
+    $learning['completed'] = count(array_filter($enrollments, static function ($row): bool {
+        return (string) ($row['status'] ?? '') === 'completed';
+    }));
+    $learning['certificates'] = count(array_filter($certificates, static function ($row): bool {
+        return (string) ($row['status'] ?? '') === 'active';
+    }));
+
+    try {
+        $stmt = $pdo->prepare("SELECT COALESCE(SUM(active_seconds), 0) FROM ld_study_time_log WHERE learner_id = :lid");
+        $stmt->execute([':lid' => $employeeId]);
+        $learning['study_seconds'] = (int) $stmt->fetchColumn();
+
+        $daysStmt = $pdo->prepare("SELECT DISTINCT DATE(recorded_at) AS d FROM ld_study_time_log WHERE learner_id = :lid ORDER BY d DESC LIMIT 90");
+        $daysStmt->execute([':lid' => $employeeId]);
+        $days = array_map('strval', $daysStmt->fetchAll(PDO::FETCH_COLUMN));
+
+        if (!empty($days)) {
+            $today = new DateTimeImmutable('today');
+            $cursor = new DateTimeImmutable($days[0]);
+            if ($cursor->diff($today)->days <= 1) {
+                $streak = 0;
+                foreach ($days as $day) {
+                    $current = new DateTimeImmutable($day);
+                    if ($current->format('Y-m-d') === $cursor->format('Y-m-d')) {
+                        $streak++;
+                        $cursor = $cursor->modify('-1 day');
+                    } elseif ($current < $cursor) {
+                        break;
+                    }
+                }
+                $learning['streak'] = $streak;
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('[learning] admin/user-subpage/learner study time query failed: ' . $e->getMessage());
+    }
 }
 
-function lrnTimeAgo($dt) {
-    if (!$dt) return 'N/A';
-    $d = time() - strtotime($dt);
-    if ($d < 60) return 'just now';
-    if ($d < 3600) return floor($d / 60) . 'm ago';
-    if ($d < 86400) return floor($d / 3600) . 'h ago';
-    if ($d < 604800) return floor($d / 86400) . 'd ago';
-    return date('M j, Y', strtotime($dt));
+$seconds = (int) $learning['study_seconds'];
+if ($seconds >= 3600) {
+    $studyTimeLabel = floor($seconds / 3600) . 'h ' . floor(($seconds % 3600) / 60) . 'm';
+} elseif ($seconds >= 60) {
+    $studyTimeLabel = floor($seconds / 60) . 'm';
+} elseif ($seconds > 0) {
+    $studyTimeLabel = $seconds . 's';
+} else {
+    $studyTimeLabel = '0m';
 }
 
-$initials = $profile ? strtoupper(substr($profile['first_name'], 0, 1) . substr($profile['last_name'], 0, 1)) : '??';
-$fullName = $profile ? htmlspecialchars($profile['first_name'] . ' ' . ($profile['middle_name'] ? $profile['middle_name'] . ' ' : '') . $profile['last_name']) : 'Unknown';
-
-// Calculate stats
-$totalEnrolled = count($enrollments);
-$completedEnrollments = count(array_filter($enrollments, fn($e) => $e['status'] === 'completed'));
-$inProgressEnrollments = count(array_filter($enrollments, fn($e) => $e['status'] === 'in_progress'));
-$avgScore = 0;
-$scoredEnrollments = array_filter($enrollments, fn($e) => $e['final_score'] !== null);
-if (count($scoredEnrollments) > 0) {
-    $avgScore = round(array_sum(array_map(fn($e) => $e['final_score'], $scoredEnrollments)) / count($scoredEnrollments), 1);
-}
-$quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
+$gradebookLink = null;
 ?>
-<div class="module-header">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem;">
-        <div>
-            <h1 class="module-header-title">Learner Profile</h1>
-            <p class="module-header-subtitle">Detailed view of learner enrollment, progress, and performance.</p>
-        </div>
-        <a href="?page=admin/user" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; border:1px solid rgba(32,0,130,0.2); border-radius:999px; font-size:0.85rem; font-weight:700; color:var(--primary); text-decoration:none; white-space:nowrap;">
-            <i class="fas fa-arrow-left" style="font-size:0.8rem;"></i> Back to Users
-        </a>
-    </div>
-</div>
-
+<?php include __DIR__ . '/../../shared/includes/profile-assets.php'; ?>
 <div class="module-content">
-    <?php if (!$profile): ?>
-        <div class="mode-card">
-            <div class="content-card-body">
-                <h3>Learner not found</h3>
-                <p>The requested learner could not be found. <a href="?page=admin/user">Go back to User Management</a></p>
+    <div class="pfl-admin-strip">
+        <a class="pfl-admin-back" href="?page=admin/user">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i> Back to User Management
+        </a>
+        <?php if ($profileFound): ?>
+            <div class="pfl-admin-role-wrap">
+                <?php $roleControlCompact = true; include __DIR__ . '/role-control.php'; ?>
             </div>
+        <?php endif; ?>
+    </div>
+
+    <?php if (!$profileFound): ?>
+        <div class="mode-card">
+            <h3 class="pfl-section-title"><i class="fas fa-user-slash" aria-hidden="true"></i> Learner not found</h3>
+            <p class="pfl-empty">
+                <?= $pdo ? 'The requested learner could not be found.' : 'Profile data is unavailable while the database connection is down.' ?>
+                <a href="?page=admin/user">Go back to User Management</a>
+            </p>
         </div>
     <?php else: ?>
-        <!-- Profile Card -->
-        <div class="profile-hero" style="display:grid; grid-template-columns:300px 1fr; gap:1.5rem; margin-bottom:2rem;">
-            <div class="mode-card" style="text-align:center; padding:2rem;">
-                <div style="width:100px; height:100px; border-radius:50%; background:linear-gradient(135deg, rgba(16,185,129,0.9), rgba(52,211,153,0.75)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:2.2rem; font-weight:800; margin:0 auto 1rem;"><?= $initials ?></div>
-                <h2 style="margin:0 0 0.25rem; color:var(--text);"><?= $fullName ?></h2>
-                <p style="margin:0 0 0.5rem; color:#10b981; font-weight:600;"><?= htmlspecialchars(ucfirst($profileLearningRole), ENT_QUOTES, 'UTF-8') ?></p>
-                <p style="margin:0 0 1rem; color:rgba(32,0,130,0.6); font-size:0.9rem;"><?= htmlspecialchars($profile['email'] ?? '') ?></p>
-                <?php include __DIR__ . '/role-control.php'; ?>
-                <div style="display:flex; justify-content:center; gap:0.75rem; flex-wrap:wrap; margin-top:1rem;">
-                    <div style="padding:0.5rem 1rem; border-radius:10px; background:rgba(32,0,130,0.06);">
-                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Enrolled</div>
-                        <div style="font-size:1.3rem; font-weight:800; color:var(--text);"><?= $totalEnrolled ?></div>
-                    </div>
-                    <div style="padding:0.5rem 1rem; border-radius:10px; background:rgba(16,185,129,0.06);">
-                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:#10b981; font-weight:700;">Done</div>
-                        <div style="font-size:1.3rem; font-weight:800; color:var(--text);"><?= $completedEnrollments ?></div>
-                    </div>
-                    <div style="padding:0.5rem 1rem; border-radius:10px; background:rgba(59,130,246,0.06);">
-                        <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:#3b82f6; font-weight:700;">Avg Score</div>
-                        <div style="font-size:1.3rem; font-weight:800; color:var(--text);"><?= $avgScore ?>%</div>
-                    </div>
-                </div>
-            </div>
+        <?php include __DIR__ . '/../../shared/includes/profile-header.php'; ?>
+        <?php include __DIR__ . '/../../shared/includes/profile-completion.php'; ?>
+        <?php include __DIR__ . '/../../shared/includes/profile-bio.php'; ?>
 
-            <!-- Info Panel -->
-            <div class="mode-card">
-                <h3 style="margin:0 0 1rem; color:var(--text);">Personal Information</h3>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Employee Code</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['employee_code'] ?? 'N/A') ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Email</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['email'] ?? 'N/A') ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Mobile</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['mobile_no'] ?? 'N/A') ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Department</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['department_id'] ?? 'N/A') ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Employment Status</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= htmlspecialchars($profile['employment_status'] ?? 'N/A') ?></div>
-                    </div>
-                    <div>
-                        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Hire Date</div>
-                        <div style="margin-top:0.3rem; color:var(--text);"><?= $profile['hire_date'] ? date('M j, Y', strtotime($profile['hire_date'])) : 'N/A' ?></div>
-                    </div>
-                </div>
-            </div>
+        <div class="pfl-grid" style="margin-bottom:1.5rem;">
+            <?php include __DIR__ . '/../../shared/includes/profile-info.php'; ?>
+            <?php include __DIR__ . '/../../shared/includes/profile-contact.php'; ?>
         </div>
 
-        <!-- Enrollments Section -->
         <div class="mode-card" style="margin-bottom:1.5rem;">
-            <h3 style="margin:0 0 1rem; color:var(--text);">Course Enrollments (<?= $totalEnrolled ?>)</h3>
-            <?php if (empty($enrollments)): ?>
-                <p style="color:rgba(32,0,130,0.5);">No course enrollments yet.</p>
-            <?php else: ?>
-                <div class="profile-enrollments" style="display:grid; gap:0.75rem;">
-                    <?php foreach ($enrollments as $en):
-                        $progress = $en['total_items'] > 0 ? round(($en['completed_items'] / $en['total_items']) * 100) : 0;
-                        $statusColor = $en['status'] === 'completed' ? '#10b981' : ($en['status'] === 'in_progress' ? '#3b82f6' : '#f59e0b');
-                        $instName = $en['inst_first'] ? htmlspecialchars($en['inst_first'] . ' ' . $en['inst_last']) : 'N/A';
-                    ?>
-                        <div class="profile-enrollment" style="padding:1.25rem; border:1px solid rgba(32,0,130,0.1); border-radius:12px; background:var(--surface, #fff);">
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; margin-bottom:0.75rem;">
-                                <div>
-                                    <div style="font-weight:700; color:var(--text); font-size:1rem;"><?= htmlspecialchars($en['course_title']) ?></div>
-                                    <div style="font-size:0.85rem; color:rgba(32,0,130,0.5);">by <?= $instName ?></div>
-                                </div>
-                                <span style="padding:0.3rem 0.65rem; border-radius:999px; font-size:0.72rem; font-weight:700; background:<?= $statusColor ?>15; color:<?= $statusColor ?>; white-space:nowrap;">
-                                    <?= ucfirst(str_replace('_', ' ', $en['status'])) ?>
-                                </span>
-                            </div>
-                            <!-- Progress Bar -->
-                            <div style="margin-bottom:0.5rem;">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
-                                    <span style="font-size:0.75rem; color:rgba(32,0,130,0.6);">Progress</span>
-                                    <span style="font-size:0.75rem; font-weight:700; color:var(--text);"><?= $progress ?>%</span>
-                                </div>
-                                <div style="height:6px; border-radius:999px; background:rgba(32,0,130,0.08); overflow:hidden;">
-                                    <div style="height:100%; width:<?= $progress ?>%; border-radius:999px; background:linear-gradient(90deg, var(--primary), var(--accent));"></div>
-                                </div>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                                <div style="display:flex; gap:1rem; font-size:0.8rem; color:rgba(32,0,130,0.6);">
-                                    <?php if ($en['final_score'] !== null): ?>
-                                        <span>Score: <strong style="color:var(--text);"><?= $en['final_score'] ?>%</strong></span>
-                                    <?php endif; ?>
-                                    <span>Items: <?= $en['completed_items'] ?>/<?= $en['total_items'] ?></span>
-                                </div>
-                                <span style="font-size:0.75rem; color:rgba(32,0,130,0.4);">Enrolled <?= lrnTimeAgo($en['enrolled_at']) ?></span>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
+            <h3 class="pfl-section-title"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Learning Overview</h3>
+            <div class="pfl-stats">
+                <div class="pfl-stat">
+                    <div class="pfl-stat-label"><i class="fas fa-book-open" aria-hidden="true"></i> Enrolled</div>
+                    <div class="pfl-stat-value"><?= (int) $learning['enrolled'] ?></div>
+                    <div class="pfl-stat-sub">active enrollments</div>
                 </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Quiz Attempts Section -->
-        <div class="mode-card" style="margin-bottom:1.5rem;">
-            <h3 style="margin:0 0 1rem; color:var(--text);">Quiz Attempts (<?= count($quizAttempts) ?>)</h3>
-            <?php if (empty($quizAttempts)): ?>
-                <p style="color:rgba(32,0,130,0.5);">No quiz attempts recorded yet.</p>
-            <?php else: ?>
-                <div class="profile-quiz-scroll" style="display:grid; gap:0.5rem;">
-                    <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr; gap:0.75rem; padding:0.6rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; border-bottom:2px solid rgba(32,0,130,0.1);">
-                        <span>Quiz</span>
-                        <span>Score</span>
-                        <span>Items</span>
-                        <span>Result</span>
-                        <span>Date</span>
-                    </div>
-                    <?php foreach ($quizAttempts as $qa):
-                        $passColor = $qa['passed'] ? '#10b981' : '#ef4444';
-                    ?>
-                        <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr; gap:0.75rem; padding:0.7rem 1rem; border:1px solid rgba(32,0,130,0.08); border-radius:8px; align-items:center;">
-                            <div>
-                                <div style="font-weight:600; color:var(--text); font-size:0.9rem;"><?= htmlspecialchars($qa['quiz_title']) ?></div>
-                                <div style="font-size:0.75rem; color:rgba(32,0,130,0.5);"><?= htmlspecialchars($qa['course_title'] ?? '') ?></div>
-                            </div>
-                            <div style="font-weight:700; color:var(--text);"><?= $qa['score'] ?>%</div>
-                            <div style="font-size:0.85rem; color:rgba(32,0,130,0.6);"><?= $qa['total_items'] ?></div>
-                            <div>
-                                <span style="padding:0.2rem 0.5rem; border-radius:999px; font-size:0.7rem; font-weight:700; background:<?= $passColor ?>15; color:<?= $passColor ?>;">
-                                    <?= $qa['passed'] ? 'Passed' : 'Failed' ?>
-                                </span>
-                            </div>
-                            <div style="font-size:0.8rem; color:rgba(32,0,130,0.5);"><?= lrnTimeAgo($qa['attempted_at']) ?></div>
-                        </div>
-                    <?php endforeach; ?>
+                <div class="pfl-stat">
+                    <div class="pfl-stat-label"><i class="fas fa-check-circle" aria-hidden="true"></i> Completed</div>
+                    <div class="pfl-stat-value is-green"><?= (int) $learning['completed'] ?></div>
+                    <div class="pfl-stat-sub">courses finished</div>
                 </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Certificates Section -->
-        <div class="mode-card">
-            <h3 style="margin:0 0 1rem; color:var(--text);">Certificates (<?= count($certificates) ?>)</h3>
-            <?php if (empty($certificates)): ?>
-                <p style="color:rgba(32,0,130,0.5);">No certificates earned yet.</p>
-            <?php else: ?>
-                <div class="profile-cert-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:1rem;">
-                    <?php foreach ($certificates as $cert): ?>
-                        <div style="padding:1.25rem; border:2px solid rgba(16,185,129,0.3); border-radius:12px; background:rgba(16,185,129,0.03); text-align:center;">
-                            <div style="font-size:2rem; margin-bottom:0.5rem; color:#10b981;"><i class="fas fa-award"></i></div>
-                            <div style="font-weight:700; color:var(--text);"><?= htmlspecialchars($cert['course_title']) ?></div>
-                            <div style="font-size:0.8rem; color:rgba(32,0,130,0.5); margin-top:0.3rem;">Issued <?= $cert['issued_at'] ? date('M j, Y', strtotime($cert['issued_at'])) : 'N/A' ?></div>
-                        </div>
-                    <?php endforeach; ?>
+                <div class="pfl-stat">
+                    <div class="pfl-stat-label"><i class="fas fa-certificate" aria-hidden="true"></i> Certificates</div>
+                    <div class="pfl-stat-value is-amber"><?= (int) $learning['certificates'] ?></div>
+                    <div class="pfl-stat-sub">earned</div>
                 </div>
-            <?php endif; ?>
-        </div>
-
-
-        <!-- Knowledge Transfer Section -->
-        <div class="mode-card" style="margin-top:1.5rem;">
-            <div class="profile-kt-head" style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
-                <h3 style="margin:0; color:var(--text);"><i class="fas fa-exchange-alt" style="color:var(--primary); margin-right:0.4rem;"></i>Knowledge Transfer</h3>
-                <button id="kt-create-btn" style="padding:0.45rem 0.9rem; background:var(--primary); color:#fff; border:none; border-radius:999px; font-size:0.8rem; font-weight:700; cursor:pointer;">
-                    <i class="fas fa-plus" style="margin-right:0.3rem;"></i>Create KT Plan
-                </button>
+                <div class="pfl-stat">
+                    <div class="pfl-stat-label"><i class="fas fa-clock" aria-hidden="true"></i> Study Time</div>
+                    <div class="pfl-stat-value is-teal"><?= htmlspecialchars($studyTimeLabel, ENT_QUOTES, 'UTF-8') ?></div>
+                    <div class="pfl-stat-sub"><?= (int) $learning['streak'] ?>-day streak</div>
+                </div>
             </div>
-            <?php if (empty($ktPlans)): ?>
-                <div style="text-align:center; padding:2rem; color:rgba(32,0,130,0.4);">
-                    <i class="fas fa-exchange-alt" style="font-size:1.5rem; display:block; margin-bottom:0.5rem; opacity:0.5;"></i>
-                    <p style="margin:0; font-size:0.88rem;">No knowledge transfer plans are recorded for this employee yet.</p>
-                </div>
-            <?php else: ?>
-                <div style="display:grid; gap:0.75rem;">
-                    <?php foreach ($ktPlans as $ktp): 
-                        $ktStatusColor = $ktp['status'] === 'active' ? '#059669' : ($ktp['status'] === 'completed' ? '#2563eb' : '#dc3545');
-                        $ktEmpName = $ktp['employee_name'] ?? 'N/A';
-                        $ktSuccessorName = $ktp['successor_name'] ?? '—';
-                        $ktIsSuccessor = (int) $ktp['successor_id'] === $employeeId;
-                        $ktRelationship = $ktIsSuccessor
-                            ? 'Receives transfer from: ' . $ktEmpName
-                            : 'Successor: ' . $ktSuccessorName;
-                        $ktItemsDone = (int) ($ktp['items_done'] ?? 0);
-                        $ktItemsTotal = (int) ($ktp['item_count'] ?? 0);
-                    ?>
-                        <div class="profile-kt-row" style="display:flex; align-items:center; gap:1rem; padding:1rem; background:rgba(32,0,130,0.03); border:1px solid rgba(32,0,130,0.08); border-radius:10px;">
-                            <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, rgba(32,0,130,0.8), rgba(91,85,255,0.6)); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                                <i class="fas fa-exchange-alt" style="font-size:1rem;"></i>
-                            </div>
-                            <div style="flex:1; min-width:0;">
-                                <div style="font-weight:700; color:var(--text); font-size:0.92rem;"><?= htmlspecialchars($ktEmpName) ?></div>
-                                <div style="font-size:0.8rem; color:rgba(32,0,130,0.5); margin-top:0.2rem;">
-                                    <?= htmlspecialchars($ktRelationship) ?> &bull; 
-                                    <?= date('M j, Y', strtotime($ktp['start_date'])) ?> – <?= date('M j, Y', strtotime($ktp['end_date'])) ?> &bull; 
-                                    <?= $ktItemsDone ?>/<?= $ktItemsTotal ?> items done
-                                </div>
-                            </div>
-                            <span style="padding:0.25rem 0.6rem; border-radius:999px; font-size:0.7rem; font-weight:700; background:<?= $ktStatusColor ?>15; color:<?= $ktStatusColor ?>; white-space:nowrap;">
-                                <?= ucfirst($ktp['status']) ?>
-                            </span>
-                            <a href="?page=instructor/training&amp;view_learning_path=<?= (int)($ktp['learning_path_id'] ?? 0) ?>" style="padding:0.35rem 0.7rem; font-size:0.72rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.15); border-radius:999px; cursor:pointer; font-weight:600; white-space:nowrap; text-decoration:none;">
-                                <i class="fas fa-eye" style="margin-right:0.2rem;"></i>View
-                            </a>
-                            <a href="?page=instructor/learning-path&amp;id=<?= (int)($ktp['learning_path_id'] ?? 0) ?>" style="padding:0.35rem 0.7rem; font-size:0.72rem; background:rgba(245,158,11,0.1); color:#d97706; border:1px solid rgba(245,158,11,0.2); border-radius:999px; cursor:pointer; font-weight:600; white-space:nowrap; text-decoration:none;">
-                                <i class="fas fa-pen" style="margin-right:0.2rem;"></i>Edit
-                            </a>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
         </div>
+
+        <?php include __DIR__ . '/../../shared/includes/profile-learning-activity.php'; ?>
     <?php endif; ?>
 </div>
-
-<!-- KT Create/Edit Modal -->
-<div id="kt-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10000; align-items:center; justify-content:center;">
-    <div style="background:var(--surface); border-radius:18px; width:90%; max-width:520px; box-shadow:0 20px 60px rgba(0,0,0,0.25); padding:1.5rem;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
-            <h3 id="kt-modal-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text);">Create Knowledge Transfer Plan</h3>
-            <button id="kt-modal-close" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--muted);"><i class="fas fa-times"></i></button>
-        </div>
-        <div style="display:grid; gap:1rem;">
-            <div>
-                <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Employee</label>
-                <input type="text" id="kt-employee-name" readonly style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; background:rgba(32,0,130,0.03); outline:none;" />
-            </div>
-            <div>
-                <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Successor (optional; can be assigned later)</label>
-                <select id="kt-successor" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none; background:#fff;">
-                    <option value="">Select successor...</option>
-                    <?php foreach ($ktSuccessors as $ktCandidate): ?>
-                        <option value="<?= (int) $ktCandidate['employee_id'] ?>"><?= htmlspecialchars($ktCandidate['full_name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                <div>
-                    <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Start Date</label>
-                    <input type="date" id="kt-start-date" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none;" />
-                </div>
-                <div>
-                    <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">End Date</label>
-                    <input type="date" id="kt-end-date" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none;" />
-                </div>
-            </div>
-            <div>
-                <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Status</label>
-                <select id="kt-status" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none; background:#fff;">
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-            </div>
-        </div>
-        <div style="display:flex; gap:0.6rem; justify-content:flex-end; margin-top:1.5rem;">
-            <button type="button" id="kt-modal-cancel" style="padding:0.5rem 1rem; background:transparent; color:var(--text); border:1.5px solid rgba(32,0,130,0.15); border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Cancel</button>
-            <button type="button" id="kt-modal-save" style="padding:0.5rem 1rem; background:var(--primary); color:var(--surface); border:none; border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Save Plan</button>
-        </div>
-    </div>
-</div>
-
-<script>
-(function() {
-    var employeeId = <?= $employeeId ?>;
-    var employeeName = '<?= addslashes($fullName) ?>';
-    var editingPlanId = null;
-
-    var successorSelect = document.getElementById('kt-successor');
-    var startDateInput = document.getElementById('kt-start-date');
-    var endDateInput = document.getElementById('kt-end-date');
-    var statusInput = document.getElementById('kt-status');
-    var modalOverlay = document.getElementById('kt-modal-overlay');
-    var modalTitle = document.getElementById('kt-modal-title');
-    var saveBtn = document.getElementById('kt-modal-save');
-    var cancelBtn = document.getElementById('kt-modal-cancel');
-    var closeBtn = document.getElementById('kt-modal-close');
-    var empNameInput = document.getElementById('kt-employee-name');
-
-    document.addEventListener('click', function(e) {
-        var btn = e.target.closest('.kt-view-btn');
-        if (btn) {
-            e.preventDefault();
-            var planId = btn.dataset.id;
-            fetch('pages/admin/ajax/get-kt-plan.php?id=' + planId, {
-                credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (!data.success || !data.plan) { alert('Unable to load plan details.'); return; }
-                modalTitle.textContent = 'Knowledge Transfer Plan #' + planId;
-                empNameInput.value = data.plan.employee_name || 'N/A';
-                successorSelect.value = data.plan.successor_id || '';
-                startDateInput.value = data.plan.start_date || '';
-                endDateInput.value = data.plan.end_date || '';
-                statusInput.value = data.plan.status || 'active';
-                editingPlanId = planId;
-                modalOverlay.style.display = 'flex';
-            })
-            .catch(function() { alert('Failed to load plan.'); });
-            return;
-        }
-
-        var editBtn = e.target.closest('.kt-edit-btn');
-        if (editBtn) {
-            e.preventDefault();
-            var planId = editBtn.dataset.id;
-            fetch('pages/admin/ajax/get-kt-plan.php?id=' + planId, {
-                credentials: 'same-origin',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (!data.success || !data.plan) { alert('Unable to load plan details.'); return; }
-                modalTitle.textContent = 'Edit Knowledge Transfer Plan #' + planId;
-                empNameInput.value = data.plan.employee_name || 'N/A';
-                successorSelect.value = data.plan.successor_id || '';
-                startDateInput.value = data.plan.start_date || '';
-                endDateInput.value = data.plan.end_date || '';
-                statusInput.value = data.plan.status || 'active';
-                editingPlanId = planId;
-                modalOverlay.style.display = 'flex';
-            })
-            .catch(function() { alert('Failed to load plan.'); });
-            return;
-        }
-
-        var createBtn = e.target.closest('#kt-create-btn');
-        if (createBtn && !createBtn.classList.contains('kt-view-btn') && !createBtn.classList.contains('kt-edit-btn')) {
-            e.preventDefault();
-            editingPlanId = null;
-            modalTitle.textContent = 'Create Knowledge Transfer Plan';
-            empNameInput.value = employeeName;
-            successorSelect.value = '';
-            startDateInput.value = '';
-            endDateInput.value = '';
-            statusInput.value = 'active';
-            modalOverlay.style.display = 'flex';
-        }
-    });
-
-    function closeModal() { modalOverlay.style.display = 'none'; editingPlanId = null; }
-    closeBtn.addEventListener('click', closeModal);
-    cancelBtn.addEventListener('click', closeModal);
-    modalOverlay.addEventListener('click', function(e) { if (e.target === modalOverlay) closeModal(); });
-
-    saveBtn.addEventListener('click', function() {
-        var successorId = parseInt(successorSelect.value) || null;
-        var startDate = startDateInput.value;
-        var endDate = endDateInput.value;
-        var status = statusInput.value;
-
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving...';
-
-        var payload = { employee_id: employeeId, successor_id: successorId, start_date: startDate, end_date: endDate, status: status };
-        if (editingPlanId) payload.id = editingPlanId;
-
-        fetch('pages/admin/ajax/save-kt-plan.php', {
-            method: 'POST', credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-            body: JSON.stringify(payload)
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.success) { alert('KT plan ' + (editingPlanId ? 'updated' : 'created') + ' successfully.'); window.location.reload(); }
-            else { alert('Error: ' + (data.error || 'Unknown error')); saveBtn.disabled = false; saveBtn.textContent = 'Save Plan'; }
-        })
-        .catch(function() { alert('Network error.'); saveBtn.disabled = false; saveBtn.textContent = 'Save Plan'; });
-    });
-})();
-</script>
