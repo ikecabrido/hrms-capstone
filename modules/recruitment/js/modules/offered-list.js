@@ -1,5 +1,30 @@
 // modules/offered-list.js
 
+document.addEventListener("DOMContentLoaded", function () {
+  const searchInput = document.getElementById("offeredListSearch");
+  const table = document.getElementById("offeredListTable");
+
+  if (!searchInput || !table) {
+    return;
+  }
+
+  const rows = Array.from(table.querySelectorAll("tbody tr.candidate-row"));
+
+  searchInput.addEventListener("input", function () {
+    const query = this.value.trim().toLowerCase();
+
+    rows.forEach((row) => {
+      const applicationId = (row.cells[0]?.textContent || "").trim().toLowerCase();
+      const candidateName = (row.querySelector(".candidate-name")?.textContent || "").trim().toLowerCase();
+      const positionDetails = (row.cells[2]?.textContent || "").trim().toLowerCase();
+
+      row.style.display = !query || applicationId.includes(query) || candidateName.includes(query) || positionDetails.includes(query)
+        ? ""
+        : "none";
+    });
+  });
+});
+
 // =========================
 // OPEN APPLICANT MODAL
 // =========================
