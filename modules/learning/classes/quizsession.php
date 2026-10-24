@@ -445,13 +445,17 @@ public function saveAnswer(
         }
 
         $item = $this->getParentItem($session['item_type'], $session['reference_id']);
+        $passingScore = $item['passing_score'] ?? null;
+        $passed = $session['passed'] !== null
+            ? (bool) $session['passed']
+            : ($passingScore === null || (float) ($session['score'] ?? 0) >= (float) $passingScore);
 
         if (empty($item['show_answers_after_submit'])) {
             return [
                 'success' => true,
                 'blind' => true,
                 'score' => $session['score'],
-                'passed' => (bool) $session['passed'],
+                'passed' => $passed,
                 'message' => 'Answer review is not enabled for this ' . $session['item_type'] . '.',
             ];
         }
@@ -492,7 +496,7 @@ public function saveAnswer(
             'success' => true,
             'blind' => false,
             'score' => $session['score'],
-            'passed' => (bool) $session['passed'],
+            'passed' => $passed,
             'questions' => $breakdown,
         ];
     }
@@ -545,7 +549,7 @@ public function saveAnswer(
 
         $item = $this->getParentItem($session['item_type'], $session['reference_id']);
         $passingScore = $item['passing_score'] ?? null;
-        $passed = $passingScore !== null ? $score >= (float) $passingScore : null;
+        $passed = $passingScore === null || $score >= (float) $passingScore;
 
         $status = $expired ? 'expired' : 'submitted';
 
@@ -605,13 +609,19 @@ public function saveAnswer(
             }
         }
 
+        $item = $this->getParentItem($session['item_type'], (int) $session['reference_id']);
+        $passingScore = $item['passing_score'] ?? null;
+        $passed = $session['passed'] !== null
+            ? (bool) $session['passed']
+            : ($passingScore === null || (float) ($session['score'] ?? 0) >= (float) $passingScore);
+
         $summarySaved = true;
         if ($session['item_type'] === 'quiz') {
             $summarySaved = $this->recordQuizAttempt(
                 $session,
                 (float) ($session['score'] ?? 0),
                 $total,
-                $session['passed'] !== null ? (bool) $session['passed'] : null
+                $passed
             );
         }
 
@@ -619,7 +629,7 @@ public function saveAnswer(
             'success' => true,
             'message' => 'Attempt submitted.',
             'score' => $session['score'] !== null ? (float) $session['score'] : 0.0,
-            'passed' => $session['passed'] !== null ? (bool) $session['passed'] : null,
+            'passed' => $passed,
             'total_items' => $total,
             'correct_items' => $correct,
         ];
@@ -640,7 +650,18 @@ public function saveAnswer(
                 'SELECT id FROM ld_quiz_attempt WHERE quiz_session_id = :session_id LIMIT 1'
             );
             $existing->execute([':session_id' => $sessionId]);
-            if ($existing->fetchColumn()) {
+            $existingId = $existing->fetchColumn();
+            if ($existingId) {
+                if (($session['passed'] ?? null) === null) {
+                    $repair = $this->conn->prepare(
+                        'UPDATE ld_quiz_attempt SET passed = :passed WHERE id = :id'
+                    );
+                    $repair->execute([
+                        ':passed' => $passed ?? false,
+                        ':id' => $existingId,
+                    ]);
+                }
+
                 return true;
             }
 

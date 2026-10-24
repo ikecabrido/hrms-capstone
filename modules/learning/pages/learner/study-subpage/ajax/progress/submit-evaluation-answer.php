@@ -64,11 +64,16 @@ try {
 
     echo json_encode($result);
 } catch (Throwable $e) {
+    error_log(
+        '[learning] Evaluation submission failed'
+        . (isset($sessionId) ? ' for session ' . $sessionId : '')
+        . ': ' . $e->getMessage()
+    );
+
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => 'Failed to submit evaluation.',
-        'error' => $e->getMessage(),
     ]);
 }
 exit;
