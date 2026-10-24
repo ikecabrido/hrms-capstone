@@ -95,44 +95,102 @@ try {
                                 </td>
 
 
+
                                 <td>
                                     <?php
                                     $resumePath = trim($resume['resume'] ?? '');
+                                    $resumeUrl = null;
 
-                                    if (!empty($resumePath)):
-                                        // Preserve full URLs; convert relative paths to browser URLs.
+                                    if ($resumePath !== '') {
+
+                                        // Normalize Windows-style separators.
+                                        $resumePath = str_replace('\\', '/', $resumePath);
+
+                                        // Preserve a full HTTP/HTTPS URL.
                                         if (preg_match('~^https?://~i', $resumePath)) {
-                                            $resumeUrl = $resumePath;
-                                        } elseif (str_starts_with($resumePath, '/modules/')) {
+
                                             $resumeUrl = $resumePath;
                                         } else {
-                                            $resumePath = str_replace('\\', '/', $resumePath);
 
-                                            // Convert a stored server filesystem path into a URL.
-                                            $marker = '/modules/recruitment/JobPortal/uploads/';
-                                            $position = strpos($resumePath, $marker);
+                                            // Normalize common paths saved in the database.
+                                            $resumePath = ltrim($resumePath, '/');
 
-                                            if ($position !== false) {
-                                                $resumeUrl = substr($resumePath, $position);
-                                            } else {
-                                                $resumeUrl = '/modules/recruitment/JobPortal/' .
-                                                    ltrim($resumePath, '/');
+                                            // Reject directory traversal.
+                                            $pathParts = explode('/', $resumePath);
+
+                                            if (!in_array('..', $pathParts, true)) {
+
+                                                // New applicant uploads:
+                                                // JobPortal/uploads/14/resume_example.pdf
+                                                if (
+                                                    strpos($resumePath, 'JobPortal/uploads/') === 0
+                                                ) {
+                                                    $resumeUrl = '/modules/recruitment/' .
+                                                        implode(
+                                                            '/',
+                                                            array_map('rawurlencode', $pathParts)
+                                                        );
+
+                                                    // Older uploads:
+                                                    // uploads/14/resume_example.pdf
+                                                } elseif (
+                                                    strpos($resumePath, 'uploads/') === 0
+                                                ) {
+                                                    $resumeUrl = '/modules/recruitment/JobPortal/' .
+                                                        implode(
+                                                            '/',
+                                                            array_map('rawurlencode', $pathParts)
+                                                        );
+
+                                                    // Stored filesystem path.
+                                                } else {
+                                                    $marker = '/modules/recruitment/JobPortal/uploads/';
+                                                    $position = strpos($resumePath, $marker);
+
+                                                    if ($position !== false) {
+
+                                                        $relativePath = substr(
+                                                            $resumePath,
+                                                            $position + strlen('/modules/recruitment/')
+                                                        );
+
+                                                        $resumeUrl = '/modules/recruitment/' .
+                                                            implode(
+                                                                '/',
+                                                                array_map(
+                                                                    'rawurlencode',
+                                                                    explode('/', $relativePath)
+                                                                )
+                                                            );
+                                                    }
+                                                }
                                             }
                                         }
+                                    }
                                     ?>
-                                        <a href="<?= htmlspecialchars($resumeUrl, ENT_QUOTES, 'UTF-8') ?>"
+
+                                    <?php if ($resumeUrl !== null): ?>
+
+                                        <a
+                                            href="<?= htmlspecialchars($resumeUrl, ENT_QUOTES, 'UTF-8') ?>"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             class="btn-view-resume"
                                             title="View Resume">
+
                                             <i class="fas fa-file-pdf"></i>
+
                                         </a>
+
                                     <?php else: ?>
+
                                         <span class="text-muted small">
                                             <i class="fas fa-file-excel"></i> No Resume
                                         </span>
+
                                     <?php endif; ?>
                                 </td>
+
 
 
                                 <!-- Next Steps Column -->
