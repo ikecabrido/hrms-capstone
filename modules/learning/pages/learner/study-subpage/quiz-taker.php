@@ -451,7 +451,19 @@ try {
                 window.location.href = '?page=learner/study-subpage/quiz-review&session_id=' + sessionId + '&course_id=' + courseId;
             })
             .catch(function(error) {
-                alert(error.message || 'Unable to submit quiz. Please try again.');
+                fetch('pages/learner/study-subpage/ajax/progress/get-quiz-status.php?session_id=' + encodeURIComponent(sessionId))
+                    .then(function(r) { return r.json(); })
+                    .then(function(status) {
+                        if (status.success && status.status !== 'in_progress') {
+                            window.location.href = '?page=learner/study-subpage/quiz-review&session_id=' + sessionId + '&course_id=' + courseId;
+                            return;
+                        }
+
+                        alert(error.message || 'Unable to submit quiz. Please try again.');
+                    })
+                    .catch(function() {
+                        alert(error.message || 'Unable to submit quiz. Please try again.');
+                    });
             });
     }
 

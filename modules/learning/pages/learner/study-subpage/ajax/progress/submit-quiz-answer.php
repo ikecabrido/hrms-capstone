@@ -237,29 +237,32 @@ try {
      * Mark this quiz complete in learner progress.
      * ---------------------------------------------------------
      */
-    $progress = new Progress($pdo);
+    try {
+        $progress = new Progress($pdo);
+        $progressResult = $progress->markComplete(
+            (int) $enrollmentRow['id'],
+            'quiz',
+            $quizId
+        );
 
-    $progressResult = $progress->markComplete(
-        (int) $enrollmentRow['id'],
-        'quiz',
-        $quizId
-    );
+        if (is_array($progressResult)) {
+            $result['progress'] = $progressResult;
+        }
+    } catch (Throwable $e) {
+        error_log(
+            '[learning] Quiz progress update failed after submission for session '
+            . $sessionId . ': ' . $e->getMessage()
+        );
+        $result['progress_warning'] = 'The quiz was submitted, but course progress could not be updated.';
+    }
 
-    /*
-     * Keep the submission successful even if progress reporting
-     * returns no useful payload. The quiz itself was already
-     * finalized by QuizSession::submit().
-     */
-    $enrollment->touchLastAccessed(
-        (int) $enrollmentRow['id']
-    );
-
-    /*
-     * Include progress information when available without
-     * changing the existing quiz result structure.
-     */
-    if (is_array($progressResult)) {
-        $result['progress'] = $progressResult;
+    try {
+        $enrollment->touchLastAccessed((int) $enrollmentRow['id']);
+    } catch (Throwable $e) {
+        error_log(
+            '[learning] Enrollment access update failed after quiz submission for session '
+            . $sessionId . ': ' . $e->getMessage()
+        );
     }
 
     echo json_encode($result);

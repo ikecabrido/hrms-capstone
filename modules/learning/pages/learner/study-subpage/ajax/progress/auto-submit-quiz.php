@@ -48,9 +48,28 @@ try {
     $enrollmentRow = $enrollment->getByLearnerAndCourse($learnerId, $courseId);
 
     if ($enrollmentRow) {
-        $progress = new Progress($pdo);
-        $progress->markComplete((int) $enrollmentRow['id'], 'quiz', $quizId);
-        $enrollment->touchLastAccessed((int) $enrollmentRow['id']);
+        try {
+            $progress = new Progress($pdo);
+            $progressResult = $progress->markComplete((int) $enrollmentRow['id'], 'quiz', $quizId);
+            if (is_array($progressResult)) {
+                $result['progress'] = $progressResult;
+            }
+        } catch (Throwable $e) {
+            error_log(
+                '[learning] Quiz progress update failed after auto-submission for session '
+                . $sessionId . ': ' . $e->getMessage()
+            );
+            $result['progress_warning'] = 'The quiz was submitted, but course progress could not be updated.';
+        }
+
+        try {
+            $enrollment->touchLastAccessed((int) $enrollmentRow['id']);
+        } catch (Throwable $e) {
+            error_log(
+                '[learning] Enrollment access update failed after quiz auto-submission for session '
+                . $sessionId . ': ' . $e->getMessage()
+            );
+        }
     }
 
     echo json_encode($result);
