@@ -51,7 +51,7 @@ try {
     <?php endif; ?>
 
     <form
-        action="/hrms-capstone/modules/recruitment/index.php?page=store-application"
+        action="/modules/recruitment/index.php?page=store-application"
         method="POST"
         enctype="multipart/form-data"
         class="application-form"
