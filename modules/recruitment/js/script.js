@@ -12,4 +12,3 @@ import "./modules/offer.js";
 import "./modules/onboarding-selection.js";
 import "./modules/onboarding-checklist.js";
 import "./modules/offered-list.js";
-import "./modules/page-init.js";

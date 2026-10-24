@@ -62,42 +62,6 @@
   border-bottom: 1px solid #343434;
 }
 
-.onboarding-search-wrap {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
-}
-
-.onboarding-search {
-  width: 290px;
-  max-width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #dbe3ee;
-  border-radius: 8px;
-  background: #ffffff;
-  font-size: 14px;
-}
-
-@media (max-width: 480px) {
-  .onboarding-search {
-    width: 100%;
-  }
-}
-
-.onboarding-table-scroll {
-  max-height: 500px;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.onboarding-empty-state {
-  height: 400px;
-  padding: 40px;
-  color: #64748b;
-  text-align: center;
-  vertical-align: middle;
-}
-
 .checklist-row label,
 .checklist-row > span {
   display: flex;
