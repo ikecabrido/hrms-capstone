@@ -141,49 +141,77 @@
 |--------------------------------------------------------------------------
 | RESUME PATH
 |--------------------------------------------------------------------------
-| Database stores the resume as a relative path, for example:
+| The database currently stores paths like:
 |
-| uploads/14/resume.pdf
+| JobPortal/uploads/14/resume_20261024_220500_xxxxxxxx.pdf
 |
-| The physical deployed location is:
+| The actual public URL is:
 |
-| /modules/recruitment/JobPortal/uploads/14/resume.pdf
+| /modules/recruitment/JobPortal/uploads/14/filename.pdf
+|
+| Older records may contain:
+|
+| uploads/14/filename.pdf
+|
+| This code supports BOTH formats.
 |--------------------------------------------------------------------------
 */
 
                         $resumeUrl = null;
 
-                        $storedResumePath = trim($row['resume'] ?? '');
+                        if (!empty($row['resume'])) {
 
-                        if ($storedResumePath !== '') {
-
-                            // Normalize Windows-style paths
-                            $storedResumePath = str_replace('\\', '/', $storedResumePath);
+                            $storedResumePath = str_replace(
+                                '\\',
+                                '/',
+                                trim($row['resume'])
+                            );
 
                             // Remove leading slash
                             $storedResumePath = ltrim($storedResumePath, '/');
 
-                            /*
-     * Only allow files stored inside uploads/.
-     * Prevent directory traversal.
-     */
-                            if (
-                                strpos($storedResumePath, 'uploads/') === 0 &&
-                                !in_array('..', explode('/', $storedResumePath), true)
-                            ) {
+                            // Prevent directory traversal
+                            $pathParts = explode('/', $storedResumePath);
 
-                                $resumeUrl = '/modules/recruitment/JobPortal/' .
-                                    implode(
-                                        '/',
-                                        array_map(
-                                            'rawurlencode',
-                                            explode('/', $storedResumePath)
-                                        )
-                                    );
+                            if (!in_array('..', $pathParts, true)) {
+
+                                /*
+        |--------------------------------------------------------------------------
+        | CASE 1:
+        | Database already contains JobPortal/uploads/...
+        |--------------------------------------------------------------------------
+        */
+
+                                if (strpos($storedResumePath, 'JobPortal/uploads/') === 0) {
+
+                                    $resumeUrl = '/modules/recruitment/' .
+                                        implode(
+                                            '/',
+                                            array_map(
+                                                'rawurlencode',
+                                                $pathParts
+                                            )
+                                        );
+                                }
+
+                                /*
+        |--------------------------------------------------------------------------
+        | CASE 2:
+        | Older database records contain uploads/...
+        |--------------------------------------------------------------------------
+        */ elseif (strpos($storedResumePath, 'uploads/') === 0) {
+
+                                    $resumeUrl = '/modules/recruitment/JobPortal/' .
+                                        implode(
+                                            '/',
+                                            array_map(
+                                                'rawurlencode',
+                                                $pathParts
+                                            )
+                                        );
+                                }
                             }
                         }
-
-
                         ?>
 
                         <tr
