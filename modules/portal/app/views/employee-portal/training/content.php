@@ -268,7 +268,15 @@
                         $thumbnail = $course['thumbnail_path'] ?? '';
 
                         if (!empty($thumbnail)) {
-                            $thumbnailUrl = '/hrms-capstone/modules/portal/public/' . ltrim($thumbnail, '/');
+                            $thumbnail = ltrim($thumbnail, '/');
+
+                            $thumbnail = preg_replace(
+                                '~^(?:hrms-capstone/)?modules/portal/public/~',
+                                '',
+                                $thumbnail
+                            );
+
+                            $thumbnailUrl = asset($thumbnail);
                         } else {
                             $thumbnailUrl = '';
                         }
