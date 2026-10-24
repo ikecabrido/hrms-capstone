@@ -34,19 +34,9 @@ try {
 
     <div class="dashboard-content">
 
-        <div class="table-container interview-results-container">
+        <div class="table-container">
 
-            <div class="interview-results-search-wrap">
-                <input
-                    type="search"
-                    id="interviewResultsSearch"
-                    class="interview-results-search"
-                    placeholder="Search by applicant name"
-                    aria-label="Search interview results by applicant name">
-            </div>
-
-            <div class="interview-results-scroll">
-                <table class="admin-table" id="interviewResultsTable">
+            <table class="admin-table">
 
                 <thead>
                     <tr>
@@ -235,7 +225,13 @@ try {
                     <?php else: ?>
 
                         <tr>
-                            <td colspan="5" class="interview-empty-state">
+                            <td
+                                colspan="5"
+                                style="
+                                    text-align:center;
+                                    padding:40px;
+                                    color:#64748b;
+                                ">
 
                                 <?php if (!empty($error)): ?>
 
@@ -247,7 +243,6 @@ try {
 
                                 <?php else: ?>
 
-                                    <i class="fas fa-folder-open empty-state-icon"></i>
                                     No interview tracking records found.
 
                                 <?php endif; ?>
@@ -259,8 +254,7 @@ try {
 
                 </tbody>
 
-                </table>
-            </div>
+            </table>
 
         </div>
 

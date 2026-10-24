@@ -16,18 +16,8 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
 
 <div class="module-content">
     <div class="table-container">
-        <div class="onboarding-search-wrap">
-            <input
-                type="search"
-                id="onboardingSearch"
-                class="onboarding-search"
-                placeholder="Search by ID, employee, position, or department"
-                aria-label="Search onboarding records by ID, employee name, position, or department">
-        </div>
-
-        <div class="onboarding-table-scroll">
-            <table class="admin-table" id="onboardingTable">
-                <thead>
+        <table class="admin-table">
+            <thead>
                 <tr>
                     <th width="80">ID</th>
                     <th>Employee Name</th>
@@ -41,7 +31,7 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
                 <?php if (!empty($records)): ?>
                     <?php foreach ($records as $record): ?>
                         <?php $progress = (float)($record['progress'] ?? 0); ?>
-                        <tr class="onboarding-row">
+                        <tr>
                             <td><span class="badge">#<?= (int)($record['id'] ?? 0) ?></span></td>
                             <td><strong><?= htmlspecialchars($record['full_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong></td>
                             <td>
@@ -77,15 +67,11 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                    <td colspan="6" class="onboarding-empty-state">
-                        <i class="fas fa-folder-open empty-state-icon"></i>
-                        No onboarding records found.
-                    </td>
+                        <td colspan="6" style="text-align:center;padding:40px;color:#64748b;">No onboarding records found.</td>
                     </tr>
                 <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+            </tbody>
+        </table>
 
         <div id="onboardingModal" class="onboarding-modal" aria-hidden="true">
             <div class="onboarding-modal-content">
