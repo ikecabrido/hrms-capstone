@@ -56,26 +56,6 @@ function trTimeAgo($dt) {
 
 <style>
 .tr-page { --tr-line:rgba(32,0,130,0.10); --tr-tint:rgba(32,0,130,0.035); }
-.tr-page .module-header {
-    min-height:0;
-    padding:1.35rem 1.5rem;
-    border:1px solid var(--tr-line);
-    border-radius:12px;
-    box-shadow:0 2px 10px rgba(15,23,42,0.045);
-    margin-bottom:1.25rem;
-}
-.tr-page .module-header-title { display:flex; align-items:center; gap:0.65rem; margin:0; }
-.tr-page .module-header-title i {
-    display:grid;
-    place-items:center;
-    width:2.35rem;
-    height:2.35rem;
-    margin:0 !important;
-    border-radius:10px;
-    background:rgba(32,0,130,0.08);
-    font-size:0.95rem;
-}
-.tr-page .module-header-subtitle { margin:0.4rem 0 0 3rem; color:var(--muted); }
 
 .tr-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:0.85rem; margin-bottom:1.1rem; }
 .tr-stat {
@@ -254,7 +234,6 @@ function trTimeAgo($dt) {
     .tr-stats { grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.65rem; }
     .tr-stat { padding:0.75rem; gap:0.65rem; }
     .tr-stat-icon { width:2.2rem; height:2.2rem; flex-basis:2.2rem; }
-    .tr-page .module-header-subtitle { margin-left:0; }
 }
 @media (max-width:420px) {
     .tr-card-header { flex-wrap:wrap; }
@@ -295,61 +274,69 @@ function trTimeAgo($dt) {
 </style>
 
 <div class="module-content tr-page">
-    <div class="module-header">
-        <div>
-            <h1 class="module-header-title"><i class="fas fa-hand-paper" aria-hidden="true"></i> Training Requests</h1>
-            <p class="module-header-subtitle">Learner requests and Workforce training needs, with their assigned instructors.</p>
-        </div>
-    </div>
+    <div class="home-dashboard">
+        <section class="home-hero" aria-labelledby="training-requests-title">
+            <div class="home-hero-main">
+                <h1 id="training-requests-title">Training Requests</h1>
+                <p>Review learner requests and Workforce training needs, then decide what happens next.</p>
+            </div>
+            <div class="home-hero-aside">
+                <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-inbox" aria-hidden="true"></i> <?= $stats['total'] ?> total request<?= $stats['total'] === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-hourglass-half" aria-hidden="true"></i> <?= $stats['pending'] ?> pending</span>
+                    <span class="home-hero-chip"><i class="fas fa-flag-checkered" aria-hidden="true"></i> <?= $stats['completed'] ?> completed</span>
+                </div>
+            </div>
+        </section>
 
-    <!-- Stats -->
-    <div class="tr-stats">
-        <div class="tr-stat pending">
-            <span class="tr-stat-icon"><i class="fas fa-hourglass-half" aria-hidden="true"></i></span>
-            <span><span class="tr-stat-val"><?= $stats['pending'] ?></span><span class="tr-stat-label">Pending</span></span>
+        <!-- Stats -->
+        <div class="tr-stats">
+            <div class="tr-stat pending">
+                <span class="tr-stat-icon"><i class="fas fa-hourglass-half" aria-hidden="true"></i></span>
+                <span><span class="tr-stat-val"><?= $stats['pending'] ?></span><span class="tr-stat-label">Pending</span></span>
+            </div>
+            <div class="tr-stat accepted">
+                <span class="tr-stat-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
+                <span><span class="tr-stat-val"><?= $stats['accepted'] ?></span><span class="tr-stat-label">Accepted</span></span>
+            </div>
+            <div class="tr-stat rejected">
+                <span class="tr-stat-icon"><i class="fas fa-circle-xmark" aria-hidden="true"></i></span>
+                <span><span class="tr-stat-val"><?= $stats['rejected'] ?></span><span class="tr-stat-label">Rejected</span></span>
+            </div>
+            <div class="tr-stat completed">
+                <span class="tr-stat-icon"><i class="fas fa-flag-checkered" aria-hidden="true"></i></span>
+                <span><span class="tr-stat-val"><?= $stats['completed'] ?></span><span class="tr-stat-label">Completed</span></span>
+            </div>
         </div>
-        <div class="tr-stat accepted">
-            <span class="tr-stat-icon"><i class="fas fa-circle-check" aria-hidden="true"></i></span>
-            <span><span class="tr-stat-val"><?= $stats['accepted'] ?></span><span class="tr-stat-label">Accepted</span></span>
-        </div>
-        <div class="tr-stat rejected">
-            <span class="tr-stat-icon"><i class="fas fa-circle-xmark" aria-hidden="true"></i></span>
-            <span><span class="tr-stat-val"><?= $stats['rejected'] ?></span><span class="tr-stat-label">Rejected</span></span>
-        </div>
-        <div class="tr-stat completed">
-            <span class="tr-stat-icon"><i class="fas fa-flag-checkered" aria-hidden="true"></i></span>
-            <span><span class="tr-stat-val"><?= $stats['completed'] ?></span><span class="tr-stat-label">Completed</span></span>
-        </div>
-    </div>
 
-    <!-- Toolbar -->
-    <div class="catalog-toolbar">
-        <div class="catalog-search">
-            <i class="fas fa-search"></i>
-            <input type="search" id="tr-search" placeholder="Search by learner or skill..." aria-label="Search requests" />
+        <!-- Toolbar -->
+        <div class="catalog-toolbar">
+            <div class="catalog-search">
+                <i class="fas fa-search"></i>
+                <input type="search" id="tr-search" placeholder="Search by learner or skill..." aria-label="Search requests" />
+            </div>
+            <div class="catalog-tab-select">
+                <select id="tr-status-filter">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="completed">Completed</option>
+                </select>
+                <i class="fas fa-chevron-down select-icon"></i>
+            </div>
+            <span class="catalog-count" id="tr-count"><?= count($requests) ?> request<?= count($requests) === 1 ? '' : 's' ?></span>
         </div>
-        <div class="catalog-tab-select">
-            <select id="tr-status-filter">
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="accepted">Accepted</option>
-                <option value="rejected">Rejected</option>
-                <option value="completed">Completed</option>
-            </select>
-            <i class="fas fa-chevron-down select-icon"></i>
-        </div>
-        <span class="catalog-count" id="tr-count"><?= count($requests) ?> request<?= count($requests) === 1 ? '' : 's' ?></span>
-    </div>
 
-    <?php if (empty($requests)): ?>
-    <div class="tr-empty">
-        <i class="fas fa-inbox"></i>
-        <h4>No Training Requests</h4>
-        <p>When learners request training for gap skills, or Workforce sends a training need, it appears here.</p>
-    </div>
-    <?php else: ?>
-    <div class="tr-list" id="tr-list">
-        <?php foreach ($requests as $req):
+        <?php if (empty($requests)): ?>
+            <div class="tr-empty">
+                <i class="fas fa-inbox"></i>
+                <h4>No Training Requests</h4>
+                <p>When learners request training for gap skills, or Workforce sends a training need, it appears here.</p>
+            </div>
+        <?php else: ?>
+            <div class="tr-list" id="tr-list">
+            <?php foreach ($requests as $req):
             $status = $req['status'];
             $avatarColors = ['pending'=>'#f59e0b','accepted'=>'#10b981','rejected'=>'#ef4444','completed'=>'#3b82f6'];
             $avatarColor = $avatarColors[$status] ?? '#6366f1';
@@ -438,8 +425,9 @@ function trTimeAgo($dt) {
                 <?php elseif ($status === 'accepted'): ?>
                 <div class="tr-card-actions">
                     <button class="tr-btn tr-btn-complete" data-action="complete" data-id="<?= (int)$req['id'] ?>"><i class="fas fa-flag-checkered"></i> Mark Complete</button>
+                        </div>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
             </div>
         </div>
         <?php endforeach; ?>
