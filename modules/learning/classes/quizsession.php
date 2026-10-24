@@ -561,7 +561,7 @@ public function saveAnswer(
         $update->execute([
             ':status' => $status,
             ':score' => $score,
-            ':passed' => $passed,
+            ':passed' => $passed ? 1 : 0,
             ':id' => $sessionId,
         ]);
 
@@ -657,7 +657,7 @@ public function saveAnswer(
                         'UPDATE ld_quiz_attempt SET passed = :passed WHERE id = :id'
                     );
                     $repair->execute([
-                        ':passed' => $passed ?? false,
+                        ':passed' => $passed ? 1 : 0,
                         ':id' => $existingId,
                     ]);
                 }
@@ -675,7 +675,7 @@ public function saveAnswer(
                 ':quiz_session_id' => $sessionId,
                 ':score' => $score,
                 ':total_items' => $total,
-                ':passed' => $passed ?? false,
+                ':passed' => $passed ? 1 : 0,
             ]);
 
             return true;

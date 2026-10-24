@@ -458,7 +458,8 @@ try {
                         submitError.response = {
                             status: response.status,
                             statusText: response.statusText,
-                            body: data || text
+                            body: data || text,
+                            rawBody: text
                         };
                         throw submitError;
                     }
@@ -473,16 +474,33 @@ try {
                 window.location.href = '?page=learner/study-subpage/quiz-review&session_id=' + sessionId + '&course_id=' + courseId;
             })
             .catch(function(error) {
-                console.error('[learning] Quiz submission request failed', {
-                    sessionId: sessionId,
-                    endpoint: url,
-                    message: error.message,
-                    response: error.response || null,
-                    error: error
-                });
+                console.error('[learning] Quiz submission request failed.');
+                console.error('Session ID:', sessionId);
+                console.error('Endpoint:', url);
+                console.error('Error:', error.message);
+                if (error.response) {
+                    console.error('HTTP status:', error.response.status, error.response.statusText);
+                    console.error('Response body:', error.response.rawBody);
+                } else {
+                    console.error('Network/client error:', error);
+                }
 
                 fetch('pages/learner/study-subpage/ajax/progress/get-quiz-status.php?session_id=' + encodeURIComponent(sessionId))
-                    .then(function(r) { return r.json(); })
+                    .then(function(response) {
+                        return response.text().then(function(text) {
+                            var status;
+                            try {
+                                status = JSON.parse(text);
+                            } catch (statusParseError) {
+                                console.error('[learning] Could not parse quiz status response:', text);
+                                throw statusParseError;
+                            }
+                            if (!response.ok) {
+                                console.error('[learning] Quiz status HTTP error:', response.status, text);
+                            }
+                            return status;
+                        });
+                    })
                     .then(function(status) {
                         if (status.success && status.status !== 'in_progress') {
                             window.location.href = '?page=learner/study-subpage/quiz-review&session_id=' + sessionId + '&course_id=' + courseId;
@@ -491,7 +509,8 @@ try {
 
                         alert(error.message || 'Unable to submit quiz. Please try again.');
                     })
-                    .catch(function() {
+                    .catch(function(statusError) {
+                        console.error('[learning] Failed to check quiz submission status:', statusError);
                         alert(error.message || 'Unable to submit quiz. Please try again.');
                     });
             });
