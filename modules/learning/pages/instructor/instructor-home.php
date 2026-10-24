@@ -30,7 +30,7 @@ try {
     $stmt = $pdo->prepare("SELECT ROUND(COALESCE(AVG(g.final_score),0),1) FROM ld_grade g JOIN ld_course c ON c.id = g.course_id WHERE c.instructor_id = :iid");
     $stmt->execute([':iid' => $instructorId]);
     $stats['avg_score'] = (float) $stmt->fetchColumn();
-    $recentEnrollments = $pdo->prepare("SELECT e.status, e.enrolled_at, c.title AS course_title, CONCAT(emp.first_name,' ',emp.last_name) AS learner_name FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id LEFT JOIN em_employees emp ON emp.employee_id = e.learner_id WHERE c.instructor_id = :iid ORDER BY e.enrolled_at DESC LIMIT 5");
+    $recentEnrollments = $pdo->prepare("SELECT e.learner_id, e.status, e.enrolled_at, c.title AS course_title, CONCAT(emp.first_name,' ',emp.last_name) AS learner_name FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id LEFT JOIN em_employees emp ON emp.employee_id = e.learner_id WHERE c.instructor_id = :iid ORDER BY e.enrolled_at DESC LIMIT 5");
     $recentEnrollments->execute([':iid' => $instructorId]);
     $recentEnrollments = $recentEnrollments->fetchAll(PDO::FETCH_ASSOC);
     $topCourses = $pdo->prepare("SELECT c.title, COUNT(e.id) AS enrollment_count, ROUND(COALESCE(AVG(g.final_score),0),1) AS avg_score, SUM(CASE WHEN e.status='completed' THEN 1 ELSE 0 END) AS completed_count FROM ld_course c LEFT JOIN ld_enrollment e ON e.course_id = c.id LEFT JOIN ld_grade g ON g.course_id = c.id AND g.learner_id = e.learner_id WHERE c.instructor_id = :iid AND c.status = 'active' GROUP BY c.id,c.title ORDER BY enrollment_count DESC LIMIT 5");
@@ -147,7 +147,7 @@ function instrTimeAgo($dt) {
                             <div class="home-row">
                                 <span class="home-row-icon tone-<?= $re['status'] === 'completed' ? 'emerald' : 'amber' ?>"><i class="fas fa-user"></i></span>
                                 <span class="home-row-body">
-                                    <span class="home-row-title"><?= htmlspecialchars($re['learner_name']) ?></span>
+                                    <a class="home-row-title" href="?page=instructor/learner-profile&amp;id=<?= (int) $re['learner_id'] ?>"><?= htmlspecialchars($re['learner_name']) ?></a>
                                     <span class="home-row-meta"><?= htmlspecialchars(mb_substr($re['course_title'], 0, 40)) ?></span>
                                 </span>
                                 <span class="home-badge <?= $re['status'] === 'completed' ? 'is-success' : 'is-warn' ?>"><?= htmlspecialchars(str_replace('_', ' ', $re['status'])) ?></span>

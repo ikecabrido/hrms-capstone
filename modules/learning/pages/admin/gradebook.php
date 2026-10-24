@@ -342,13 +342,13 @@ function gbTimeAgo($datetime) {
                             data-letter="<?= $letter ?>"
                             data-status="<?= $status === 'Passed' ? 'pass' : ($status === 'In Progress' ? 'progress' : 'none') ?>">
                             <td>
-                                <div class="gb-student-name"><?= htmlspecialchars($row['learner_name']) ?></div>
+                                <a class="gb-student-name" href="?page=admin/user-subpage/learner&amp;id=<?= (int) $row['learner_id'] ?>"><?= htmlspecialchars($row['learner_name']) ?></a>
                                 <?php if ($row['employee_code']): ?>
                                 <div class="gb-student-id"><?= htmlspecialchars($row['employee_code']) ?></div>
                                 <?php endif; ?>
                             </td>
                             <td><span class="gb-tag" title="<?= htmlspecialchars($row['course_title']) ?>"><?= htmlspecialchars($row['course_title']) ?></span></td>
-                            <td><span class="gb-tag is-instructor" title="<?= htmlspecialchars($row['instructor_name'] ?? '') ?>"><?= htmlspecialchars($row['instructor_name'] ?? '-') ?></span></td>
+                            <td><span class="gb-tag is-instructor" title="<?= htmlspecialchars($row['instructor_name'] ?? '') ?>"><a href="?page=admin/user-subpage/instructor&amp;id=<?= (int) $row['instructor_id'] ?>"><?= htmlspecialchars($row['instructor_name'] ?? '-') ?></a></span></td>
                             <td><span class="gb-quizzes"><?= (int) $row['quizzes_attempted'] ?> / <?= (int) $row['total_quizzes'] ?></span></td>
                             <td><span class="gb-score <?= $avgClass ?>"><?= $avg !== null ? $avg . '%' : '---' ?></span></td>
                             <td><span class="gb-letter <?= $letterClass ?>"><?= $letter ?></span></td>

@@ -27,7 +27,7 @@ try {
 
     // Recent enrollments
     $recentEnrollments = $pdo->query("
-        SELECT e.status, e.enrolled_at, e.completed_at, c.title AS course_title,
+        SELECT e.learner_id, e.status, e.enrolled_at, e.completed_at, c.title AS course_title,
                CONCAT(emp.first_name,' ',emp.last_name) AS learner_name
         FROM ld_enrollment e
         JOIN ld_course c ON c.id = e.course_id
@@ -169,7 +169,11 @@ $completionRate = ($stats['active_enrollments'] + $stats['completed']) > 0
                             <div class="home-row">
                                 <span class="home-row-icon tone-<?= $r['status'] === 'completed' ? 'emerald' : 'amber' ?>"><i class="fas fa-user"></i></span>
                                 <span class="home-row-body">
-                                    <span class="home-row-title"><?= htmlspecialchars($r['learner_name'] ?? 'Unknown') ?></span>
+                                    <?php if ((int) ($r['learner_id'] ?? 0) > 0): ?>
+                                        <a class="home-row-title" href="?page=admin/user-subpage/learner&amp;id=<?= (int) $r['learner_id'] ?>"><?= htmlspecialchars($r['learner_name'] ?? 'Unknown') ?></a>
+                                    <?php else: ?>
+                                        <span class="home-row-title"><?= htmlspecialchars($r['learner_name'] ?? 'Unknown') ?></span>
+                                    <?php endif; ?>
                                     <span class="home-row-meta"><?= htmlspecialchars($r['course_title']) ?></span>
                                 </span>
                                 <span class="home-badge <?= $r['status'] === 'completed' ? 'is-success' : 'is-warn' ?>"><?= htmlspecialchars(str_replace('_', ' ', $r['status'])) ?></span>

@@ -5,6 +5,9 @@ require_once dirname(__DIR__, 4) . '/database/db.php';
 $employeeClass = new Employee();
 $instructorId = (int) ($employeeClass->getEmployeeId() ?? 0);
 $showLearnerImport = empty($hideLearnerImport);
+$learnerProfilePage = !empty($hideLearnerImport) && ($analyticsScope ?? '') === 'admin'
+    ? 'admin/user-subpage/learner'
+    : 'instructor/learner-profile';
 
 $courses = [];
 try {
@@ -259,6 +262,7 @@ var MANAGE_LEARNERS_AJAX_BASE = 'pages/instructor/ajax/';
 var parsedLearners = [];
 var rosterData = [];
 var showLearnerImport = <?= $showLearnerImport ? 'true' : 'false' ?>;
+var learnerProfilePage = <?= json_encode($learnerProfilePage, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
 // Initialize CSV dropzone
 var csvDrop = showLearnerImport ? document.getElementById('ml-csv-dropzone') : null;
@@ -501,7 +505,7 @@ function renderRoster() {
         return `<div class="ml-learner-card">
             <div class="ml-avatar" style="background:${color};">${initials}</div>
             <div style="flex:1; min-width:0;">
-                <div class="ml-name">${esc(r.first_name)} ${esc(r.last_name)}</div>
+                <a class="ml-name" href="?page=${learnerProfilePage}&amp;id=${encodeURIComponent(Number(r.learner_id))}">${esc(r.first_name)} ${esc(r.last_name)}</a>
                 <div class="ml-email">${esc(r.email)} · Enrolled ${enrolledDate}</div>
             </div>
             <div class="ml-progress-bar" title="${pct}% complete">

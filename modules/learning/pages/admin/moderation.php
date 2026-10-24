@@ -23,7 +23,7 @@ try {
     }
 
     $pendingReports = $pdo->query(
-        "SELECT r.id, r.item_type, r.reference_id, r.reason, r.status, r.created_at,
+        "SELECT r.id, r.learner_id, r.item_type, r.reference_id, r.reason, r.status, r.created_at,
                 CONCAT(e.first_name, ' ', e.last_name) AS learner_name
          FROM ld_report r
          LEFT JOIN em_employees e ON e.employee_id = r.learner_id
@@ -33,7 +33,7 @@ try {
     )->fetchAll(PDO::FETCH_ASSOC);
 
     $reviewedReports = $pdo->query(
-        "SELECT r.id, r.item_type, r.reference_id, r.reason, r.status, r.created_at,
+        "SELECT r.id, r.learner_id, r.item_type, r.reference_id, r.reason, r.status, r.created_at,
                 CONCAT(e.first_name, ' ', e.last_name) AS learner_name
          FROM ld_report r
          LEFT JOIN em_employees e ON e.employee_id = r.learner_id
@@ -43,7 +43,7 @@ try {
     )->fetchAll(PDO::FETCH_ASSOC);
 
     $archivedReports = $pdo->query(
-        "SELECT r.id, r.item_type, r.reference_id, r.reason, r.status, r.created_at,
+        "SELECT r.id, r.learner_id, r.item_type, r.reference_id, r.reason, r.status, r.created_at,
                 CONCAT(e.first_name, ' ', e.last_name) AS learner_name
          FROM ld_report r
          LEFT JOIN em_employees e ON e.employee_id = r.learner_id
@@ -85,6 +85,7 @@ function renderReportCards($items, $emptyTitle, $emptyText) {
             $status = 'pending';
         }
         $learner = trim((string) ($item['learner_name'] ?? ''));
+        $learnerId = (int) ($item['learner_id'] ?? 0);
         if ($learner === '') {
             $learner = 'Unknown learner';
         }
@@ -101,7 +102,11 @@ function renderReportCards($items, $emptyTitle, $emptyText) {
         echo '<h3>Report #' . $id . '</h3>';
         echo '<p>' . htmlspecialchars(mb_substr(strip_tags($reason), 0, 160)) . '</p>';
         echo '<div class="content-card-footer">'
-            . '<span><i class="fas fa-user" aria-hidden="true"></i> ' . htmlspecialchars($learner) . '</span>'
+            . '<span><i class="fas fa-user" aria-hidden="true"></i> '
+            . ($learnerId > 0
+                ? '<a href="?page=admin/user-subpage/learner&amp;id=' . $learnerId . '">' . htmlspecialchars($learner) . '</a>'
+                : htmlspecialchars($learner))
+            . '</span>'
             . '<span><i class="fas fa-calendar-day" aria-hidden="true"></i> ' . htmlspecialchars($date) . '</span>'
             . '</div>';
         echo '</div>';

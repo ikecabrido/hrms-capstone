@@ -9,6 +9,10 @@ $instructorId = (int) ($employeeClass->getEmployeeId() ?? 0);
 // their existing course-scoped analytics.
 $analyticsScope = $analyticsScope ?? 'instructor';
 $isAdminScope = $analyticsScope === 'admin';
+$learnerProfileUrl = static function (int $learnerId) use ($isAdminScope): string {
+    $page = $isAdminScope ? 'admin/user-subpage/learner' : 'instructor/learner-profile';
+    return '?page=' . $page . '&id=' . $learnerId;
+};
 $scopeSql = $isAdminScope ? '' : ' AND c.instructor_id = :iid';
 $scopeParams = $isAdminScope ? [] : [':iid' => $instructorId];
 $programScopeSql = $isAdminScope ? '' : ' AND p.instructor_id = :iid';
@@ -131,7 +135,7 @@ try {
 
     // Recent grades
     $recentGrades = $pdo->prepare("
-        SELECT g.final_score, g.status, g.issued_at, c.title AS course_title,
+        SELECT g.learner_id, g.final_score, g.status, g.issued_at, c.title AS course_title,
             CONCAT(emp.first_name, ' ', emp.last_name) AS learner_name
         FROM ld_grade g
         JOIN ld_course c ON c.id = g.course_id
@@ -374,7 +378,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                                         $arLabel = $ar['risk_reason'] === 'inactive' ? $ar['days_inactive'] . 'd inactive' : ($ar['risk_reason'] === 'failing' ? $ar['avg_score'] . '% avg' : 'Slow progress');
                                     ?>
                                     <tr>
-                                        <td><strong><?= htmlspecialchars($ar['learner_name']) ?></strong></td>
+                                        <td><strong><a href="<?= htmlspecialchars($learnerProfileUrl((int) $ar['learner_id']), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($ar['learner_name']) ?></a></strong></td>
                                         <td class="an-muted"><?= htmlspecialchars($ar['course_title']) ?></td>
                                         <td class="an-td-num"><span class="an-pill <?= $arPill ?>"><?= htmlspecialchars($arLabel) ?></span></td>
                                     </tr>
@@ -426,7 +430,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                                             <div class="an-course">
                                                 <span class="an-rank"><?= $idx + 1 ?></span>
                                                 <span>
-                                                    <span class="an-course-name" title="<?= htmlspecialchars($sl['learner_name']) ?>"><?= htmlspecialchars($sl['learner_name']) ?></span>
+                                                    <a class="an-course-name" href="<?= htmlspecialchars($learnerProfileUrl((int) $sl['learner_id']), ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($sl['learner_name']) ?>"><?= htmlspecialchars($sl['learner_name']) ?></a>
                                                     <?php if (!empty($sl['learner_position'])): ?>
                                                     <span class="an-sub"><?= htmlspecialchars($sl['learner_position']) ?></span>
                                                     <?php endif; ?>
@@ -474,7 +478,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                                         $arScore = $ar['avg_score'] >= 70 ? '' : 'is-low';
                                     ?>
                                     <tr>
-                                        <td><strong><?= htmlspecialchars($ar['learner_name']) ?></strong></td>
+                                        <td><strong><a href="<?= htmlspecialchars($learnerProfileUrl((int) $ar['learner_id']), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($ar['learner_name']) ?></a></strong></td>
                                         <td class="an-muted"><?= htmlspecialchars($ar['course_title']) ?></td>
                                         <td class="an-td-num"><span class="an-pill is-neutral"><?= ucfirst(str_replace('_', ' ', $ar['enrollment_status'])) ?></span></td>
                                         <td class="an-td-num"><span class="an-score <?= $arScore ?>"><?= $ar['avg_score'] ?>%</span></td>
@@ -698,7 +702,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                                         $rgScore = $rg['final_score'] >= 70 ? '' : ($rg['final_score'] >= 50 ? 'is-warn' : 'is-low');
                                     ?>
                                     <tr>
-                                        <td><strong><?= htmlspecialchars($rg['learner_name']) ?></strong></td>
+                                        <td><strong><a href="<?= htmlspecialchars($learnerProfileUrl((int) $rg['learner_id']), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($rg['learner_name']) ?></a></strong></td>
                                         <td class="an-muted"><?= htmlspecialchars($rg['course_title']) ?></td>
                                         <td class="an-td-num"><span class="an-score <?= $rgScore ?>"><?= round($rg['final_score'], 1) ?>%</span></td>
                                         <td class="an-td-num"><span class="an-pill <?= $rg['status'] === 'passed' ? 'is-good' : 'is-bad' ?>"><?= ucfirst($rg['status']) ?></span></td>

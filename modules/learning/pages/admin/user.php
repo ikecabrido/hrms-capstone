@@ -193,7 +193,7 @@ function userEmailCell(array $row): string {
                                         <div class="user-cell-name">
                                             <span class="user-avatar<?= $roleClass === 'learner' ? ' is-learner' : '' ?>"><?= userInitials($user) ?></span>
                                             <span class="user-name-block">
-                                                <span class="user-name"><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></span>
+                                                <a class="user-name" href="?page=admin/user-subpage/<?= $profileType ?>&amp;id=<?= (int) $user['employee_id'] ?>"><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></a>
                                                 <span class="user-meta">Emp #<?= (int) $user['employee_id'] ?></span>
                                             </span>
                                         </div>
@@ -237,7 +237,7 @@ function userEmailCell(array $row): string {
                                         <div class="user-cell-name">
                                             <span class="user-avatar"><?= userInitials($admin) ?></span>
                                             <span class="user-name-block">
-                                                <span class="user-name"><?= htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']) ?></span>
+                                                <a class="user-name" href="?page=admin/user-subpage/instructor&amp;id=<?= (int) $admin['employee_id'] ?>"><?= htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']) ?></a>
                                                 <span class="user-meta">Emp #<?= (int) $admin['employee_id'] ?></span>
                                             </span>
                                         </div>
@@ -287,7 +287,7 @@ function userEmailCell(array $row): string {
                                         <div class="user-cell-name">
                                             <span class="user-avatar"><?= userInitials($inst) ?></span>
                                             <span class="user-name-block">
-                                                <span class="user-name"><?= htmlspecialchars($inst['first_name'] . ' ' . $inst['last_name']) ?></span>
+                                                <a class="user-name" href="?page=admin/user-subpage/instructor&amp;id=<?= (int) $inst['employee_id'] ?>"><?= htmlspecialchars($inst['first_name'] . ' ' . $inst['last_name']) ?></a>
                                                 <span class="user-meta">Emp #<?= (int) $inst['employee_id'] ?></span>
                                             </span>
                                         </div>
@@ -339,7 +339,7 @@ function userEmailCell(array $row): string {
                                         <div class="user-cell-name">
                                             <span class="user-avatar is-learner"><?= userInitials($lrn) ?></span>
                                             <span class="user-name-block">
-                                                <span class="user-name"><?= htmlspecialchars($lrn['first_name'] . ' ' . $lrn['last_name']) ?></span>
+                                                <a class="user-name" href="?page=admin/user-subpage/learner&amp;id=<?= (int) $lrn['employee_id'] ?>"><?= htmlspecialchars($lrn['first_name'] . ' ' . $lrn['last_name']) ?></a>
                                                 <span class="user-meta">Emp #<?= (int) $lrn['employee_id'] ?></span>
                                             </span>
                                         </div>
