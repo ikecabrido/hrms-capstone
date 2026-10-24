@@ -42,6 +42,7 @@ function initReports() {
   const reportTitleEl = document.getElementById("rpReportTitle");
   const reportPeriodEl = document.getElementById("rpReportPeriod");
   const reportGeneratedEl = document.getElementById("rpReportGenerated");
+  const reportRunEl = document.getElementById("rpReportRun");
   const reportBodyEl = document.getElementById("rpReportBody");
 
   const printSheet = document.getElementById("rpPrintSheet");
@@ -545,6 +546,60 @@ function initReports() {
   reportTypeSelect.addEventListener("change", syncFieldsToReportType);
   syncFieldsToReportType();
 
+  // ---- Number helpers for dense report tables --------------------------------------------------------------
+  // Money columns omit the peso sign (the column headers say "₱") so that
+  // eight or more amount columns stay readable on screen and on paper.
+  function formatAmount(value) {
+    const n = Number(value) || 0;
+    return n.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  function formatAmountOrDash(value) {
+    return Number(value) ? formatAmount(value) : "–";
+  }
+
+  function sumOf(rows, key) {
+    return rows.reduce(function (total, r) {
+      return total + (Number(r[key]) || 0);
+    }, 0);
+  }
+
+  function formatPercent(part, total) {
+    const t = Number(total) || 0;
+    if (t <= 0) return "—";
+    return (((Number(part) || 0) / t) * 100).toFixed(1) + "%";
+  }
+
+  function plural(n, one, many) {
+    return n + " " + (n === 1 ? one : many);
+  }
+
+  // ---- Payroll run reference (run number, finalized date, who finalized it) ----------------------------------------
+  function describeRun(run) {
+    if (!run) return "";
+    const parts = ["Payroll Run #" + run.run_id];
+    if (run.finalized_at) {
+      parts.push("Finalized " + formatDateTime(run.finalized_at));
+    }
+    if (run.finalized_by_name) {
+      parts.push("by " + run.finalized_by_name);
+    }
+    return parts.join(" · ");
+  }
+
+  function employeeLine(e) {
+    return [
+      `${e.employee_code} — ${e.employee_name}`,
+      e.position_name,
+      e.department_name,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
   // ---- Summary block (shared by all period-based report types) --------------------------------------------------------------
   function renderSummaryBlock(summary) {
     return `
@@ -573,8 +628,212 @@ function initReports() {
     `;
   }
 
+  // Shown under a report when the itemised lines do not add up to the
+  // payslip totals (for example an old payslip with no line items).
+  function renderReconciliationNote(summary) {
+    const earningsDiff =
+      (Number(summary.total_gross) || 0) -
+      (Number(summary.earnings_items_total) || 0);
+    const deductionsDiff =
+      (Number(summary.total_deductions) || 0) -
+      (Number(summary.deduction_items_total) || 0);
+
+    if (Math.abs(earningsDiff) < 0.01 && Math.abs(deductionsDiff) < 0.01) {
+      return "";
+    }
+
+    return `<p class="rp-note">Note: itemised lines total
+      ${formatCurrency(summary.earnings_items_total)} earnings and
+      ${formatCurrency(summary.deduction_items_total)} deductions, which differs from the
+      payslip totals above by ${formatCurrency(Math.abs(earningsDiff))} and
+      ${formatCurrency(Math.abs(deductionsDiff))}. This usually means some payslips
+      have no itemised lines or had deductions capped at gross pay.</p>`;
+  }
+
   // ---- Table renderers per report type --------------------------------------------------------------
   function renderPayrollRegisterTable(rows) {
+    if (rows.length === 0) {
+      return '<p class="rp-no-data">No data found for the selected criteria.</p>';
+    }
+
+    const money = [
+      "basic_pay",
+      "other_earnings",
+      "gross_pay",
+      "sss",
+      "philhealth",
+      "pagibig",
+      "tax",
+      "late_absence",
+      "other_deductions",
+      "total_deductions",
+      "net_pay",
+    ];
+
+    const totalCells = money
+      .map(function (key) {
+        const strong =
+          key === "gross_pay" ||
+          key === "total_deductions" ||
+          key === "net_pay";
+        return `<td class="rp-num${strong ? " rp-num-strong" : ""}">${formatAmount(sumOf(rows, key))}</td>`;
+      })
+      .join("");
+
+    return `
+      <table class="pm-table rp-report-table rp-register-table">
+        <thead>
+          <tr>
+            <th class="rp-col-no">#</th>
+            <th>Employee</th>
+            <th class="rp-num">Basic Pay (₱)</th>
+            <th class="rp-num">Other Earnings</th>
+            <th class="rp-num">Gross Pay</th>
+            <th class="rp-num">SSS</th>
+            <th class="rp-num">PhilHealth</th>
+            <th class="rp-num">Pag-IBIG</th>
+            <th class="rp-num">W/Tax</th>
+            <th class="rp-num">Late / Absence</th>
+            <th class="rp-num">Other Ded.</th>
+            <th class="rp-num">Total Ded.</th>
+            <th class="rp-num">Net Pay</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows
+            .map(
+              (r, i) => `
+            <tr>
+              <td class="rp-col-no">${i + 1}</td>
+              <td>
+                <span class="rp-emp-name">${esc(r.employee_name)}</span>
+                <span class="rp-emp-sub">${esc(
+                  [r.employee_code, r.position_name, r.employment_type]
+                    .filter(Boolean)
+                    .join(" · "),
+                )}</span>
+                <span class="rp-emp-sub">${esc(r.department_name || "—")}</span>
+              </td>
+              <td class="rp-num">${formatAmount(r.basic_pay)}</td>
+              <td class="rp-num">${formatAmountOrDash(r.other_earnings)}</td>
+              <td class="rp-num rp-num-strong">${formatAmount(r.gross_pay)}</td>
+              <td class="rp-num">${formatAmountOrDash(r.sss)}</td>
+              <td class="rp-num">${formatAmountOrDash(r.philhealth)}</td>
+              <td class="rp-num">${formatAmountOrDash(r.pagibig)}</td>
+              <td class="rp-num">${formatAmountOrDash(r.tax)}</td>
+              <td class="rp-num">${formatAmountOrDash(r.late_absence)}</td>
+              <td class="rp-num">${formatAmountOrDash(r.other_deductions)}</td>
+              <td class="rp-num rp-num-strong">${formatAmountOrDash(r.total_deductions)}</td>
+              <td class="rp-num rp-num-strong">${formatAmount(r.net_pay)}</td>
+            </tr>`,
+            )
+            .join("")}
+        </tbody>
+        <tfoot>
+          <tr class="rp-total-row">
+            <td colspan="2">Total — ${esc(plural(rows.length, "employee", "employees"))}</td>
+            ${totalCells}
+          </tr>
+        </tfoot>
+      </table>
+    `;
+  }
+
+  // Earnings and deductions by category, with a subtotal for each side.
+  function renderItemSummaryTable(rows) {
+    if (rows.length === 0) {
+      return '<p class="rp-no-data">No data found for the selected criteria.</p>';
+    }
+
+    const earnings = rows.filter((r) => r.item_type === "earning");
+    const deductions = rows.filter((r) => r.item_type !== "earning");
+
+    function section(title, items, subtotalLabel) {
+      if (!items.length) return "";
+      const total = sumOf(items, "total_amount");
+      return `
+        <tr class="rp-group-row"><td colspan="4">${esc(title)}</td></tr>
+        ${items
+          .map(
+            (r) => `
+          <tr>
+            <td>${esc(r.label || r.description)}</td>
+            <td class="rp-num">${esc(r.employee_count)}</td>
+            <td class="rp-num">${formatCurrency(r.total_amount)}</td>
+            <td class="rp-num">${formatPercent(r.total_amount, total)}</td>
+          </tr>`,
+          )
+          .join("")}
+        <tr class="rp-subtotal-row">
+          <td>${esc(subtotalLabel)}</td>
+          <td class="rp-num"></td>
+          <td class="rp-num rp-num-strong">${formatCurrency(total)}</td>
+          <td class="rp-num">100.0%</td>
+        </tr>`;
+    }
+
+    return `
+      <table class="pm-table rp-report-table rp-breakdown-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th class="rp-num">Employees</th>
+            <th class="rp-num">Total Amount</th>
+            <th class="rp-num">Share</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${section("Earnings", earnings, "Total Earnings")}
+          ${section("Deductions", deductions, "Total Deductions")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  // Gross-to-net statement for the Payroll Summary report.
+  function renderGrossToNetTable(itemRows, summary) {
+    const earnings = itemRows.filter((r) => r.item_type === "earning");
+    const deductions = itemRows.filter((r) => r.item_type !== "earning");
+
+    return `
+      <table class="pm-table rp-report-table rp-statement-table">
+        <tbody>
+          ${earnings
+            .map(
+              (r) => `
+            <tr>
+              <td>${esc(r.label || r.description)}</td>
+              <td class="rp-num">${formatCurrency(r.total_amount)}</td>
+            </tr>`,
+            )
+            .join("")}
+          <tr class="rp-subtotal-row">
+            <td>Gross Pay</td>
+            <td class="rp-num rp-num-strong">${formatCurrency(summary.total_gross)}</td>
+          </tr>
+          ${deductions
+            .map(
+              (r) => `
+            <tr>
+              <td>Less: ${esc(r.label || r.description)}</td>
+              <td class="rp-num">${formatCurrency(r.total_amount)}</td>
+            </tr>`,
+            )
+            .join("")}
+          <tr class="rp-subtotal-row">
+            <td>Total Deductions</td>
+            <td class="rp-num rp-num-strong">${formatCurrency(summary.total_deductions)}</td>
+          </tr>
+          <tr class="rp-total-row">
+            <td>Net Payroll</td>
+            <td class="rp-num">${formatCurrency(summary.total_net)}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  }
+
+  function renderEmploymentSummaryTable(rows) {
     if (rows.length === 0) {
       return '<p class="rp-no-data">No data found for the selected criteria.</p>';
     }
@@ -582,11 +841,8 @@ function initReports() {
       <table class="pm-table rp-report-table">
         <thead>
           <tr>
-            <th>Employee Code</th>
-            <th>Employee Name</th>
-            <th>Department</th>
-            <th>Position</th>
-            <th>Type</th>
+            <th>Employment Type</th>
+            <th class="rp-num">Employees</th>
             <th class="rp-num">Gross Pay</th>
             <th class="rp-num">Deductions</th>
             <th class="rp-num">Net Pay</th>
@@ -597,49 +853,24 @@ function initReports() {
             .map(
               (r) => `
             <tr>
-              <td>${esc(r.employee_code)}</td>
-              <td>${esc(r.employee_name)}</td>
-              <td>${esc(r.department_name || "\u2014")}</td>
-              <td>${esc(r.position_name || "\u2014")}</td>
-              <td>${esc(r.employment_type || "\u2014")}</td>
-              <td class="rp-num">${formatCurrency(r.gross_pay)}</td>
+              <td>${esc(r.employment_type || "Unspecified")}</td>
+              <td class="rp-num">${esc(r.total_employees)}</td>
+              <td class="rp-num">${formatCurrency(r.total_gross)}</td>
               <td class="rp-num">${formatCurrency(r.total_deductions)}</td>
-              <td class="rp-num rp-num-strong">${formatCurrency(r.net_pay)}</td>
+              <td class="rp-num rp-num-strong">${formatCurrency(r.total_net)}</td>
             </tr>`,
             )
             .join("")}
         </tbody>
-      </table>
-    `;
-  }
-
-  function renderItemSummaryTable(rows) {
-    if (rows.length === 0) {
-      return '<p class="rp-no-data">No data found for the selected criteria.</p>';
-    }
-    return `
-      <table class="pm-table rp-report-table">
-        <thead>
-          <tr>
-            <th>Item Type</th>
-            <th>Description</th>
-            <th class="rp-num">Count</th>
-            <th class="rp-num">Total Amount</th>
+        <tfoot>
+          <tr class="rp-total-row">
+            <td>Total</td>
+            <td class="rp-num">${sumOf(rows, "total_employees")}</td>
+            <td class="rp-num">${formatCurrency(sumOf(rows, "total_gross"))}</td>
+            <td class="rp-num">${formatCurrency(sumOf(rows, "total_deductions"))}</td>
+            <td class="rp-num">${formatCurrency(sumOf(rows, "total_net"))}</td>
           </tr>
-        </thead>
-        <tbody>
-          ${rows
-            .map(
-              (r) => `
-            <tr>
-              <td>${esc(r.item_type)}</td>
-              <td>${esc(r.description)}</td>
-              <td class="rp-num">${esc(r.item_count)}</td>
-              <td class="rp-num rp-num-strong">${formatCurrency(r.total_amount)}</td>
-            </tr>`,
-            )
-            .join("")}
-        </tbody>
+        </tfoot>
       </table>
     `;
   }
@@ -673,6 +904,15 @@ function initReports() {
             )
             .join("")}
         </tbody>
+        <tfoot>
+          <tr class="rp-total-row">
+            <td>Total</td>
+            <td class="rp-num">${sumOf(rows, "total_employees")}</td>
+            <td class="rp-num">${formatCurrency(sumOf(rows, "total_gross"))}</td>
+            <td class="rp-num">${formatCurrency(sumOf(rows, "total_deductions"))}</td>
+            <td class="rp-num">${formatCurrency(sumOf(rows, "total_net"))}</td>
+          </tr>
+        </tfoot>
       </table>
     `;
   }
@@ -700,7 +940,7 @@ function initReports() {
               (r) => `
             <tr>
               <td>${esc(r.period_name)}</td>
-              <td>${formatDate(r.start_date)} \u2013 ${formatDate(r.end_date)}</td>
+              <td>${formatDate(r.start_date)} – ${formatDate(r.end_date)}</td>
               <td>${formatDate(r.pay_date)}</td>
               <td class="rp-num">${formatCurrency(r.gross_pay)}</td>
               <td class="rp-num">${formatCurrency(r.total_deductions)}</td>
@@ -710,7 +950,26 @@ function initReports() {
             )
             .join("")}
         </tbody>
+        <tfoot>
+          <tr class="rp-total-row">
+            <td colspan="3">Total — ${esc(plural(history.length, "payslip", "payslips"))}</td>
+            <td class="rp-num">${formatCurrency(sumOf(history, "gross_pay"))}</td>
+            <td class="rp-num">${formatCurrency(sumOf(history, "total_deductions"))}</td>
+            <td class="rp-num">${formatCurrency(sumOf(history, "net_pay"))}</td>
+            <td></td>
+          </tr>
+        </tfoot>
       </table>
+    `;
+  }
+
+  // Titled sections used by the on-screen preview of the Summary report.
+  function renderTitledBlock(title, innerHtml) {
+    return `
+      <div class="rp-block">
+        <div class="rp-block-title">${esc(title)}</div>
+        ${innerHtml}
+      </div>
     `;
   }
 
@@ -718,18 +977,19 @@ function initReports() {
   function renderReport() {
     const r = currentReport;
     reportTitleEl.textContent = REPORT_TYPE_LABELS[r.type] || "Payroll Report";
+    reportRunEl.textContent = "";
 
     if (r.type === "employee_history") {
-      reportPeriodEl.textContent = `Employee: ${r.employee.employee_code} \u2014 ${r.employee.employee_name}`;
+      reportPeriodEl.textContent = `Employee: ${employeeLine(r.employee)}`;
       reportGeneratedEl.textContent = `Generated: ${formatDateTime(new Date().toISOString())}`;
-      reportBodyEl.innerHTML = renderEmployeeHistoryTable(r.history);
+      reportBodyEl.innerHTML = `<div class="rp-table-wrapper">${renderEmployeeHistoryTable(r.history)}</div>`;
       previewCard.style.display = "";
       emptyState.style.display = "none";
       btnPrint.disabled = false;
       return;
     }
 
-    reportPeriodEl.textContent = `Payroll Period: ${r.period.period_name} (${formatDate(r.period.start_date)} \u2013 ${formatDate(r.period.end_date)})`;
+    reportPeriodEl.textContent = `Payroll Period: ${r.period.period_name} (${formatDate(r.period.start_date)} – ${formatDate(r.period.end_date)})`;
     reportGeneratedEl.textContent = `Generated: ${formatDateTime(new Date().toISOString())}`;
 
     if (!r.has_finalized_payroll) {
@@ -741,6 +1001,8 @@ function initReports() {
       return;
     }
 
+    reportRunEl.textContent = describeRun(r.run);
+
     let tableHtml = "";
     if (r.type === "payroll_register") {
       tableHtml = renderPayrollRegisterTable(r.payroll);
@@ -748,12 +1010,27 @@ function initReports() {
       tableHtml = renderItemSummaryTable(r.item_summary);
     } else if (r.type === "department_summary") {
       tableHtml = renderDepartmentSummaryTable(r.department_summary);
+    } else if (r.type === "payroll_summary") {
+      tableHtml =
+        renderTitledBlock(
+          "Gross-to-Net Statement",
+          renderGrossToNetTable(r.item_summary, r.summary),
+        ) +
+        renderTitledBlock(
+          "By Employment Type",
+          renderEmploymentSummaryTable(r.employment_summary || []),
+        );
     }
-    // payroll_summary has no row-level table — the summary grid below is the report.
+
+    const note =
+      r.type === "item_summary" || r.type === "payroll_summary"
+        ? renderReconciliationNote(r.summary)
+        : "";
 
     reportBodyEl.innerHTML = `
       ${renderSummaryBlock(r.summary)}
       ${tableHtml ? `<div class="rp-table-wrapper">${tableHtml}</div>` : ""}
+      ${note}
     `;
 
     previewCard.style.display = "";
@@ -847,28 +1124,57 @@ function initReports() {
     `;
   }
 
+  // Turns an on-screen table into its print version.
+  function toPrintTable(html) {
+    return html.replace(/pm-table/, "rp-doc-table");
+  }
+
   function buildPrintDocument(r) {
     const now = formatDateTime(new Date().toISOString());
-    const periodLine =
-      r.type === "employee_history"
-        ? `Employee: ${esc(r.employee.employee_code)} \u2014 ${esc(r.employee.employee_name)}`
-        : `Payroll Period: ${esc(r.period.period_name)} (${formatDate(r.period.start_date)} \u2013 ${formatDate(r.period.end_date)})`;
+    const title = REPORT_TYPE_LABELS[r.type] || "Payroll Report";
+    const isHistory = r.type === "employee_history";
+
+    const periodLine = isHistory
+      ? `Employee: ${esc(employeeLine(r.employee))}`
+      : `Payroll Period: ${esc(r.period.period_name)} (${formatDate(r.period.start_date)} – ${formatDate(r.period.end_date)})`;
+
+    const runLine = !isHistory && r.run ? esc(describeRun(r.run)) : "";
+
+    // Footer reference printed on every page.
+    const footerRef = isHistory
+      ? `${title} · ${r.employee.employee_code}`
+      : `${title} · ${r.period.period_name}${r.run ? " · Run #" + r.run.run_id : ""}`;
 
     let bodyHtml = "";
 
-    if (r.type === "employee_history") {
+    if (isHistory) {
       bodyHtml = printSectionHtml(
         "Payroll History",
-        renderEmployeeHistoryTable(r.history).replace(
-          /pm-table/,
-          "rp-doc-table",
-        ),
+        toPrintTable(renderEmployeeHistoryTable(r.history)),
       );
     } else if (!r.has_finalized_payroll) {
       bodyHtml =
         '<p class="rp-no-data">No finalized payroll is available for this payroll period.</p>';
+    } else if (r.type === "payroll_register") {
+      // The table's own totals row replaces the separate totals block.
+      bodyHtml = printSectionHtml(
+        "Payroll Register",
+        toPrintTable(renderPayrollRegisterTable(r.payroll)),
+      );
+    } else if (r.type === "item_summary") {
+      bodyHtml =
+        printSectionHtml(
+          "Earnings & Deductions Breakdown",
+          toPrintTable(renderItemSummaryTable(r.item_summary)),
+        ) + renderReconciliationNote(r.summary);
+    } else if (r.type === "department_summary") {
+      bodyHtml = printSectionHtml(
+        "Department Summary",
+        toPrintTable(renderDepartmentSummaryTable(r.department_summary)),
+      );
     } else {
-      const summaryHtml = `
+      // payroll_summary
+      const totalsHtml = `
         <table class="rp-doc-table rp-doc-totals-table">
           <tbody>
             <tr><td>Total Employees</td><td>${esc(r.summary.total_employees)}</td></tr>
@@ -879,36 +1185,28 @@ function initReports() {
           </tbody>
         </table>
       `;
-
-      let tableSection = "";
-      if (r.type === "payroll_register") {
-        tableSection = printSectionHtml(
-          "Payroll Register",
-          renderPayrollRegisterTable(r.payroll).replace(
-            /pm-table/,
-            "rp-doc-table",
+      bodyHtml =
+        printSectionHtml("Payroll Totals", totalsHtml) +
+        printSectionHtml(
+          "Gross-to-Net Statement",
+          toPrintTable(renderGrossToNetTable(r.item_summary, r.summary)),
+        ) +
+        printSectionHtml(
+          "By Employment Type",
+          toPrintTable(
+            renderEmploymentSummaryTable(r.employment_summary || []),
           ),
-        );
-      } else if (r.type === "item_summary") {
-        tableSection = printSectionHtml(
-          "Earnings & Deductions Breakdown",
-          renderItemSummaryTable(r.item_summary).replace(
-            /pm-table/,
-            "rp-doc-table",
-          ),
-        );
-      } else if (r.type === "department_summary") {
-        tableSection = printSectionHtml(
-          "Department Summary",
-          renderDepartmentSummaryTable(r.department_summary).replace(
-            /pm-table/,
-            "rp-doc-table",
-          ),
-        );
-      }
-
-      bodyHtml = printSectionHtml("Payroll Totals", summaryHtml) + tableSection;
+        ) +
+        renderReconciliationNote(r.summary);
     }
+
+    const signature = (label) => `
+      <div class="rp-doc-signature">
+        <span class="rp-doc-signature-label">${label}</span>
+        <div class="rp-doc-signature-space"></div>
+        <span class="rp-doc-signature-caption">Signature over printed name</span>
+        <span class="rp-doc-signature-caption">Position / Date</span>
+      </div>`;
 
     return `
       <div class="rp-doc-header">
@@ -922,34 +1220,73 @@ function initReports() {
 
       <div class="rp-doc-title-row">
         <div>
-          <h4>${esc(REPORT_TYPE_LABELS[r.type] || "Payroll Report")}</h4>
+          <h4>${esc(title)}</h4>
           <div class="rp-doc-period">${periodLine}</div>
+          ${runLine ? `<div class="rp-doc-period">${runLine}</div>` : ""}
         </div>
-        <div class="rp-doc-generated">Generated: ${now}</div>
+        <div class="rp-doc-generated">Printed: ${now}</div>
       </div>
 
       ${bodyHtml}
 
       <div class="rp-doc-signatures">
-        <div class="rp-doc-signature-line">
-          <span>Prepared by:</span>
-          <div class="rp-doc-signature-space"></div>
-        </div>
-        <div class="rp-doc-signature-line">
-          <span>Approved by:</span>
-          <div class="rp-doc-signature-space"></div>
-        </div>
-        <div class="rp-doc-signature-line">
-          <span>Date:</span>
-          <div class="rp-doc-signature-space"></div>
-        </div>
+        ${signature("Prepared by:")}
+        ${signature("Checked by:")}
+        ${signature("Approved by:")}
+      </div>
+
+      <div class="rp-doc-footer">
+        <span>${esc(footerRef)}</span>
+        <span>Confidential &mdash; for payroll use only</span>
       </div>
     `;
   }
 
-  btnPrint.addEventListener("click", function () {
+  // The payroll register is wide, so it prints on landscape paper; every
+  // other report prints portrait. Applied just before printing and removed
+  // afterwards so it never affects other pages.
+  function applyPageOrientation(type) {
+    removePageOrientation();
+    const style = document.createElement("style");
+    style.id = "rpPageOrientation";
+    style.textContent =
+      type === "payroll_register"
+        ? "@page { size: A4 landscape; margin: 0.4in; }"
+        : "@page { size: A4 portrait; margin: 0.5in; }";
+    document.head.appendChild(style);
+  }
+
+  function removePageOrientation() {
+    const old = document.getElementById("rpPageOrientation");
+    if (old) old.remove();
+  }
+
+  // Wait for the logo to load so it is never missing from the printout.
+  function waitForImages(root, timeoutMs) {
+    const imgs = Array.from(root.querySelectorAll("img"));
+    const loaded = Promise.all(
+      imgs.map(function (img) {
+        if (img.complete) return Promise.resolve();
+        return new Promise(function (resolve) {
+          img.addEventListener("load", resolve, { once: true });
+          img.addEventListener("error", resolve, { once: true });
+        });
+      }),
+    );
+    const timeout = new Promise(function (resolve) {
+      window.setTimeout(resolve, timeoutMs);
+    });
+    return Promise.race([loaded, timeout]);
+  }
+
+  btnPrint.addEventListener("click", async function () {
     if (!currentReport) return;
     printSheet.innerHTML = buildPrintDocument(currentReport);
+    applyPageOrientation(currentReport.type);
+    await waitForImages(printSheet, 2000);
+    window.addEventListener("afterprint", removePageOrientation, {
+      once: true,
+    });
     window.print();
   });
 

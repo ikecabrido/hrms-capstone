@@ -1202,7 +1202,7 @@ class PayrollModel
 
         $workedDays = count($workedDates);
         $leaveDays = count($leaveOnlyDates);
-        $payableDays = $workedDays + $workedDays + $leaveDays;
+        $payableDays = $workedDays + $leaveDays;
 
         // Earning lines shown on the payroll breakdown and the payslip.
         $rateText = number_format($dailyRate, 2);
@@ -1212,7 +1212,8 @@ class PayrollModel
             $earningLines[] = [
                 'description' => 'Daily Rate (' . $rateText . ' × ' .
                     number_format($workedDays, 2) . ' days worked)',
-                'amount' => round($dailyRate * $workedDays, 2)
+                'amount' => round($dailyRate * $workedDays, 2),
+                'category' => 'basic'
             ];
         }
 
@@ -1225,7 +1226,8 @@ class PayrollModel
             $earningLines[] = [
                 'description' => 'Paid Leave - ' . $type . ' (' . $rateText .
                     ' × ' . number_format($days, 2) . ' days)',
-                'amount' => round($dailyRate * $days, 2)
+                'amount' => round($dailyRate * $days, 2),
+                'category' => 'leave'
             ];
         }
 
@@ -1233,7 +1235,8 @@ class PayrollModel
         if (!$earningLines) {
             $earningLines[] = [
                 'description' => 'Daily Rate (' . $rateText . ' × 0.00 days worked)',
-                'amount' => 0.00
+                'amount' => 0.00,
+                'category' => 'basic'
             ];
         }
 
@@ -1344,7 +1347,8 @@ class PayrollModel
                 $grossPay = round($ojtAllowance, 2);
                 $earnings[] = [
                     'description' => 'OJT Training Allowance',
-                    'amount' => $grossPay
+                    'amount' => $grossPay,
+                    'category' => 'allowance'
                 ];
             }
         } elseif ($isFaculty) {
@@ -1368,7 +1372,8 @@ class PayrollModel
                             date('M d, Y', strtotime($day['date'])) .
                             ' (' . number_format($day['regular_hours'], 2) .
                             ' hrs × ₱' . number_format($day['hourly_rate'], 2) . ')',
-                        'amount' => $day['regular_gross']
+                        'amount' => $day['regular_gross'],
+                        'category' => $day['is_paid_leave'] ? 'leave' : 'basic'
                     ];
                 }
 
@@ -1378,7 +1383,8 @@ class PayrollModel
                             date('M d, Y', strtotime($day['date'])) .
                             ' (' . number_format($day['overload_hours'], 2) .
                             ' hrs × ₱' . number_format($day['hourly_rate'], 2) . ')',
-                        'amount' => $day['overload_gross']
+                        'amount' => $day['overload_gross'],
+                        'category' => 'overload'
                     ];
                 }
             }
@@ -1388,7 +1394,8 @@ class PayrollModel
                     'description' => $hasSmsFacultyRecord
                         ? 'No scheduled teaching load found for this period — no pay'
                         : 'No SMS faculty/schedule record found for this employee — no pay',
-                    'amount' => 0
+                    'amount' => 0,
+                    'category' => 'basic'
                 ];
             }
         } elseif ($isPartTime) {
@@ -1403,7 +1410,8 @@ class PayrollModel
                 'description' => 'Part-time Hours (' .
                     number_format($result['hours_worked'], 2) .
                     ' hrs × ₱' . number_format($result['hourly_rate'], 2) . ')',
-                'amount' => $grossPay
+                'amount' => $grossPay,
+                'category' => 'basic'
             ];
         } else {
             $result = $this->calculateRegularPayroll(
@@ -1435,7 +1443,8 @@ class PayrollModel
 
             $deductions[] = [
                 'description' => $adjustment['description'],
-                'amount' => $amount
+                'amount' => $amount,
+                'category' => 'adjustment'
             ];
             $totalDeductions += $amount;
         }
@@ -1467,7 +1476,8 @@ class PayrollModel
                         $lateDeduction['late_minutes'] .
                         ' minutes × ₱' .
                         number_format($lateDeduction['rate_per_minute'], 2) . ')',
-                    'amount' => $lateDeduction['deduction']
+                    'amount' => $lateDeduction['deduction'],
+                    'category' => 'late'
                 ];
                 $totalDeductions += $lateDeduction['deduction'];
             }
@@ -1501,7 +1511,7 @@ class PayrollModel
                 $sss = $this->calculateSSS($monthlyEquivalent);
                 if ($sss > 0) {
                     $amount = round($sss / 2, 2);
-                    $deductions[] = ['description' => 'SSS', 'amount' => $amount];
+                    $deductions[] = ['description' => 'SSS', 'amount' => $amount, 'category' => 'sss'];
                     $totalDeductions += $amount;
                 }
             }
@@ -1510,7 +1520,7 @@ class PayrollModel
                 $philhealth = $this->calculatePhilHealth($monthlyEquivalent);
                 if ($philhealth > 0) {
                     $amount = round($philhealth / 2, 2);
-                    $deductions[] = ['description' => 'PhilHealth', 'amount' => $amount];
+                    $deductions[] = ['description' => 'PhilHealth', 'amount' => $amount, 'category' => 'philhealth'];
                     $totalDeductions += $amount;
                 }
             }
@@ -1519,7 +1529,7 @@ class PayrollModel
                 $pagibig = $this->calculatePagIBIG($monthlyEquivalent);
                 if ($pagibig > 0) {
                     $amount = round($pagibig / 2, 2);
-                    $deductions[] = ['description' => 'Pag-IBIG', 'amount' => $amount];
+                    $deductions[] = ['description' => 'Pag-IBIG', 'amount' => $amount, 'category' => 'pagibig'];
                     $totalDeductions += $amount;
                 }
             }
@@ -1538,7 +1548,8 @@ class PayrollModel
                     $withholdingTax = round($withholdingTax, 2);
                     $deductions[] = [
                         'description' => 'Withholding Tax',
-                        'amount' => $withholdingTax
+                        'amount' => $withholdingTax,
+                        'category' => 'tax'
                     ];
                     $totalDeductions += $withholdingTax;
                 }
@@ -1749,7 +1760,30 @@ class PayrollModel
         /*
          * Store detailed earnings.
          */
-        $itemStmt = $this->db->prepare("
+        // pr_payslip_items.category is added by the migration in
+        // sql/add_payslip_item_category.sql. Until that column exists the
+        // insert falls back to the original four columns, so finalizing
+        // payroll keeps working either way.
+        $hasCategory = $this->payslipItemsHaveCategory();
+
+        $itemStmt = $this->db->prepare($hasCategory ? "
+            INSERT INTO pr_payslip_items
+                (
+                    payslip_id,
+                    item_type,
+                    category,
+                    description,
+                    amount
+                )
+            VALUES
+                (
+                    :payslip_id,
+                    :item_type,
+                    :category,
+                    :description,
+                    :amount
+                )
+        " : "
             INSERT INTO pr_payslip_items
                 (
                     payslip_id,
@@ -1765,20 +1799,30 @@ class PayrollModel
                     :amount
                 )
         ");
+
+        $insertItem = function (
+            string $itemType,
+            array $item,
+            string $defaultCategory
+        ) use ($itemStmt, $payslipId, $hasCategory): void {
+            $params = [
+                ':payslip_id' => $payslipId,
+                ':item_type' => $itemType,
+                ':description' => $item['description'],
+                ':amount' => $item['amount']
+            ];
+            if ($hasCategory) {
+                $params[':category'] =
+                    $item['category'] ?? $defaultCategory;
+            }
+            $itemStmt->execute($params);
+        };
+
         foreach (
             ($data['earnings'] ?? [])
             as $earning
         ) {
-            $itemStmt->execute([
-                ':payslip_id' =>
-                $payslipId,
-                ':item_type' =>
-                'earning',
-                ':description' =>
-                $earning['description'],
-                ':amount' =>
-                $earning['amount']
-            ]);
+            $insertItem('earning', $earning, 'other_earning');
         }
         /*
          * Store detailed deductions.
@@ -1787,18 +1831,30 @@ class PayrollModel
             ($data['deductions'] ?? [])
             as $deduction
         ) {
-            $itemStmt->execute([
-                ':payslip_id' =>
-                $payslipId,
-                ':item_type' =>
-                'deduction',
-                ':description' =>
-                $deduction['description'],
-                ':amount' =>
-                $deduction['amount']
-            ]);
+            $insertItem('deduction', $deduction, 'adjustment');
         }
         return $payslipId;
+    }
+
+    /**
+     * Whether pr_payslip_items has the category column yet.
+     * Checked once per request.
+     */
+    private function payslipItemsHaveCategory(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        try {
+            $stmt = $this->db->query(
+                "SHOW COLUMNS FROM pr_payslip_items LIKE 'category'"
+            );
+            $cache = (bool)($stmt && $stmt->fetch());
+        } catch (Throwable $e) {
+            $cache = false;
+        }
+        return $cache;
     }
     /* ============================================================
        FINALIZE RUN

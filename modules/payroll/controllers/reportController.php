@@ -41,6 +41,8 @@ class ReportController
         $payroll = [];
         $itemSummary = [];
         $departmentSummary = [];
+        $employmentSummary = [];
+        $run = null;
         $hasFinalizedPayroll = false;
 
         if ($periodId > 0) {
@@ -82,6 +84,32 @@ class ReportController
                     $this->model->getDepartmentSummary(
                         $periodId
                     );
+
+                $employmentSummary =
+                    $this->model->getEmploymentTypeSummary(
+                        $periodId
+                    );
+
+                $run =
+                    $this->model->getFinalizedRun(
+                        $periodId
+                    );
+
+                // Itemised totals, so the report can flag a payslip whose
+                // lines do not add up to its own gross / deductions.
+                $earningsItems = 0.0;
+                $deductionItems = 0.0;
+                foreach ($itemSummary as $row) {
+                    if ($row['item_type'] === 'earning') {
+                        $earningsItems += $row['total_amount'];
+                    } else {
+                        $deductionItems += $row['total_amount'];
+                    }
+                }
+                $summary['earnings_items_total'] =
+                    round($earningsItems, 2);
+                $summary['deduction_items_total'] =
+                    round($deductionItems, 2);
             }
         }
 
@@ -103,6 +131,12 @@ class ReportController
 
             'department_summary' =>
             $departmentSummary,
+
+            'employment_summary' =>
+            $employmentSummary,
+
+            'run' =>
+            $run,
 
             'has_finalized_payroll' =>
             $hasFinalizedPayroll
@@ -429,7 +463,9 @@ class ReportController
             'total_gross' => 0.00,
             'total_deductions' => 0.00,
             'total_net' => 0.00,
-            'average_net' => 0.00
+            'average_net' => 0.00,
+            'earnings_items_total' => 0.00,
+            'deduction_items_total' => 0.00
         ];
     }
 }

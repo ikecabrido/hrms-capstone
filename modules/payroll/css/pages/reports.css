@@ -179,6 +179,93 @@
   font-size: 0.9rem;
 }
 
+/* ---------- Register / breakdown tables ---------- */
+.rp-register-table {
+  min-width: 1150px;
+}
+
+.rp-register-table th,
+.rp-register-table td {
+  font-size: 0.8rem;
+  padding: 0.55rem 0.6rem;
+}
+
+.rp-register-table th:nth-child(2),
+.rp-register-table td:nth-child(2) {
+  min-width: 230px;
+}
+
+.rp-col-no {
+  width: 2rem;
+  text-align: center;
+  color: var(--color5);
+}
+
+.rp-emp-name {
+  display: block;
+  font-weight: 600;
+  color: var(--color8);
+}
+
+.rp-emp-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color5);
+  line-height: 1.35;
+}
+
+.rp-breakdown-table,
+.rp-statement-table {
+  max-width: 760px;
+}
+
+.rp-statement-table td:first-child {
+  width: 70%;
+}
+
+/* Group heading row ("Earnings", "Deductions") inside a table */
+.rp-group-row td {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color5);
+  background: var(--color9);
+}
+
+/* Subtotal / total rows */
+.rp-subtotal-row td {
+  font-weight: 600;
+  border-top: 1px solid var(--color4);
+}
+
+.rp-total-row td {
+  font-weight: 700;
+  border-top: 2px solid var(--color8);
+  background: var(--color9);
+}
+
+/* Titled blocks inside the Payroll Summary preview */
+.rp-block {
+  margin-bottom: 1.5rem;
+}
+
+.rp-block-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color5);
+  margin-bottom: 0.6rem;
+}
+
+.rp-note {
+  margin: 1rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color5);
+}
+
 /* ==========================================================================
    Print document — hidden on screen, shown only via @media print
    ========================================================================== */
@@ -289,26 +376,54 @@
 
 .rp-doc-signatures {
   margin-top: 2.5rem;
-  padding-top: 1.5rem;
+  padding-top: 1.25rem;
   border-top: 1px dashed var(--color4);
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
 }
 
-.rp-doc-signature-line {
+.rp-doc-signature {
   display: flex;
-  align-items: flex-end;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.2rem;
   font-size: 0.82rem;
   color: var(--color5);
 }
 
+.rp-doc-signature-label {
+  font-weight: 600;
+  color: var(--color8);
+}
+
 .rp-doc-signature-space {
-  flex: 1;
   border-bottom: 1px solid var(--color8);
-  max-width: 280px;
-  height: 1.1rem;
+  height: 2.2rem;
+}
+
+.rp-doc-signature-caption {
+  font-size: 0.68rem;
+  color: var(--color5);
+}
+
+.rp-doc-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.68rem;
+  color: var(--color5);
+}
+
+/* Table footers (totals) */
+.rp-doc-table tfoot td {
+  font-weight: 700;
+  border-top: 2px solid var(--color8);
+  border-bottom: none;
+}
+
+.rp-doc-table .rp-num {
+  text-align: right;
+  white-space: nowrap;
 }
 
 @media print {
@@ -332,6 +447,8 @@
 
   #rpPrintSheet {
     display: block !important;
+    /* room for the fixed footer so it never overlaps content */
+    padding-bottom: 0.45in;
   }
 
   #rpPrintSheet .rp-doc-table th {
@@ -340,31 +457,125 @@
     print-color-adjust: exact;
   }
 
+  #rpPrintSheet .rp-doc-table .rp-total-row td,
+  #rpPrintSheet .rp-doc-table .rp-group-row td {
+    background: #f1f1f1 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   #rpPrintSheet .rp-doc-header,
   #rpPrintSheet .rp-doc-title-row,
-  #rpPrintSheet .rp-doc-section,
+  #rpPrintSheet .rp-doc-section-title,
   #rpPrintSheet .rp-doc-table tr,
   #rpPrintSheet .rp-doc-signatures {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
+  /* Repeat column headings on every page; show totals once, at the end. */
   #rpPrintSheet .rp-doc-table thead {
     display: table-header-group;
   }
 
-  #rpPrintSheet::after {
-    content: "Page " counter(page) " of " counter(pages);
-    position: fixed;
-    bottom: 0.3in;
-    right: 0.5in;
-    font-size: 0.72rem;
-    color: #555;
+  #rpPrintSheet .rp-doc-table tfoot {
+    display: table-row-group;
   }
 
+  /* Tighter vertical rhythm on paper so short reports fit on one page */
+  #rpPrintSheet .rp-doc-header {
+    padding-bottom: 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+
+  #rpPrintSheet .rp-doc-title-row {
+    margin-bottom: 0.8rem;
+  }
+
+  #rpPrintSheet .rp-doc-section {
+    margin-bottom: 0.9rem;
+  }
+
+  #rpPrintSheet .rp-doc-table td {
+    padding: 0.35rem 0.6rem;
+  }
+
+  #rpPrintSheet .rp-doc-table th {
+    padding: 0.4rem 0.6rem;
+  }
+
+  #rpPrintSheet .rp-doc-signatures {
+    margin-top: 1rem;
+    padding-top: 0.7rem;
+  }
+
+  #rpPrintSheet .rp-doc-signature-space {
+    height: 1.7rem;
+  }
+
+  /* Dense register on paper: fixed column widths so names never wrap
+     to three lines and the amount columns line up. */
+  #rpPrintSheet .rp-register-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  #rpPrintSheet .rp-register-table th:nth-child(1) {
+    width: 3%;
+  }
+
+  #rpPrintSheet .rp-register-table th:nth-child(2) {
+    width: 24%;
+  }
+
+  #rpPrintSheet .rp-register-table th:nth-child(n + 3) {
+    width: 6.6%;
+    white-space: normal;
+    line-height: 1.2;
+  }
+
+  #rpPrintSheet .rp-register-table th,
+  #rpPrintSheet .rp-register-table td {
+    font-size: 0.66rem;
+    padding: 0.3rem 0.35rem;
+  }
+
+  #rpPrintSheet .rp-register-table .rp-emp-name {
+    font-size: 0.7rem;
+  }
+
+  #rpPrintSheet .rp-register-table .rp-emp-sub {
+    font-size: 0.6rem;
+  }
+
+  #rpPrintSheet .rp-doc-table {
+    min-width: 0;
+  }
+
+  #rpPrintSheet .rp-doc-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding-top: 0.25rem;
+    border-top: 1px solid #ccc;
+    background: #fff;
+  }
+
+  /* Default paper. The Payroll Register switches to landscape at print
+     time (see applyPageOrientation in reports.js). Page numbers use CSS
+     page margin boxes, which current Chromium-based browsers support;
+     browsers without support simply omit them. */
   @page {
     size: A4 portrait;
     margin: 0.5in;
+
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      color: #555;
+    }
   }
 }
 

@@ -102,6 +102,7 @@
                     <h2 id="rpReportTitle">Payroll Report</h2>
                     <div class="rp-preview-meta">
                         <span id="rpReportPeriod">&mdash;</span>
+                        <span id="rpReportRun"></span>
                         <span id="rpReportGenerated">&mdash;</span>
                     </div>
                 </div>
