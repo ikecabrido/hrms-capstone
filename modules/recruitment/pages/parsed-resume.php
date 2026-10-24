@@ -171,31 +171,24 @@ try {
 
                                     <?php if ($resumeUrl !== null): ?>
 
-                                        <a
-                                            href="<?= htmlspecialchars($resumeUrl, ENT_QUOTES, 'UTF-8') ?>"
+                                        <a href="<?= htmlspecialchars($resumeUrl, ENT_QUOTES, 'UTF-8') ?>"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             class="btn-view-resume"
                                             title="View Resume">
-
                                             <i class="fas fa-file-pdf"></i>
-
                                         </a>
-
                                     <?php else: ?>
-
                                         <span class="text-muted small">
                                             <i class="fas fa-file-excel"></i> No Resume
                                         </span>
-
                                     <?php endif; ?>
                                 </td>
 
 
-
                                 <!-- Next Steps Column -->
                                 <td>
-                                    <a href="index.php?page=schedule-interview&id=<?= urlencode($resume['application_id']) ?>" class="badge-position">
+                                    <a href="index.php?page=schedule-interview&id=<?= urlencode($resume['application_id']) ?>" class="btn-schedule">
                                         <i class="fas fa-calendar-plus"></i> Schedule
                                     </a>
                                 </td>
