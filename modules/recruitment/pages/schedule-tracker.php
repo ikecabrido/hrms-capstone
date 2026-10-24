@@ -36,156 +36,165 @@ try {
         <button type="button" class="filter-pill stage-filter" data-stage-filter="completed">
             Completed
         </button>
-        <input
-            type="search"
-            id="scheduleSearch"
-            class="schedule-search"
-            placeholder="Search by ID or applicant name"
-            aria-label="Search schedules by application ID or applicant name">
+        <div style="margin-left:auto;">
+            <input
+                type="search"
+                id="applicationSearch"
+                placeholder="Search by ID, name, or job title"
+                style="
+                        width: 290px;
+                        max-width: 100%;
+                        padding: 10px 12px;
+                        border: 1px solid #dbe3ee;
+                        border-radius: 8px;
+                        font-size: 14px;
+                        background: #fff;
+                    ">
+        </div>
     </div>
 
     <div class="schedule-table-scroll">
         <table class="admin-table schedule-table">
             <thead>
-            <tr>
-                <th width="80">App ID</th>
-                <th>Applicant Name</th>
-                <th class="date-column">Date</th>
-                <th class="time-column">Time</th>
-                <th class="completed-position-column">Position</th>
-                <th class="completed-department-column">Department</th>
-                <th class="interviewer-column">Interviewer</th>
-                <th class="stage-column">Stage</th>
-                <th>Status</th>
-                <th>Result</th>
-            </tr>
-        </thead>
-        <tbody>
+                <tr>
+                    <th width="80">App ID</th>
+                    <th>Applicant Name</th>
+                    <th class="date-column">Date</th>
+                    <th class="time-column">Time</th>
+                    <th class="completed-position-column">Position</th>
+                    <th class="completed-department-column">Department</th>
+                    <th class="interviewer-column">Interviewer</th>
+                    <th class="stage-column">Stage</th>
+                    <th>Status</th>
+                    <th>Result</th>
+                </tr>
+            </thead>
+            <tbody>
 
-            <?php if (!empty($interviews)): ?>
+                <?php if (!empty($interviews)): ?>
 
-                <?php foreach ($interviews as $row): ?>
+                    <?php foreach ($interviews as $row): ?>
 
-                    <?php
-                    $res = $row['result'] ?? 'pending';
-                    $stage = (int)($row['stage_order'] ?? 0);
-                    $appId = $row['application_id'];
-                    $interId = $row['id'];
-                    $status = $row['computed_status'] ?? 'Scheduled';
-                    $isCompleted = strtolower($status) === 'completed';
-                    ?>
+                        <?php
+                        $res = $row['result'] ?? 'pending';
+                        $stage = (int)($row['stage_order'] ?? 0);
+                        $appId = $row['application_id'];
+                        $interId = $row['id'];
+                        $status = $row['computed_status'] ?? 'Scheduled';
+                        $isCompleted = strtolower($status) === 'completed';
+                        ?>
 
-                    <tr data-interview-stage="<?= $stage ?>"
-                        data-interview-status="<?= htmlspecialchars(strtolower($status), ENT_QUOTES, 'UTF-8') ?>"
-                        data-read-only="<?= $isCompleted ? 'true' : 'false' ?>"
-                        data-schedule-url="index.php?page=schedule-interview&id=<?= urlencode($appId) ?>"
-                        class="schedule-row" tabindex="0">
+                        <tr data-interview-stage="<?= $stage ?>"
+                            data-interview-status="<?= htmlspecialchars(strtolower($status), ENT_QUOTES, 'UTF-8') ?>"
+                            data-read-only="<?= $isCompleted ? 'true' : 'false' ?>"
+                            data-schedule-url="index.php?page=schedule-interview&id=<?= urlencode($appId) ?>"
+                            class="schedule-row" tabindex="0">
 
-                        <td>
-                            <span class="badge"
-                                style="background:#f1f5f9;color:#64748b;font-family:monospace;">
-                                #<?= htmlspecialchars($appId) ?>
-                            </span>
-                        </td>
-
-                        <td style="font-weight:600;color:#1e293b;">
-                            <?= htmlspecialchars($row['full_name'] ?? 'Unknown Applicant') ?>
-                        </td>
-
-                        <td class="date-column">
-                            <i class="far fa-calendar-alt" style="color:#94a3b8;width:15px;"></i>
-                            <?= !empty($row['interview_date'])
-                                ? date("M d, Y", strtotime($row['interview_date']))
-                                : 'N/A'
-                            ?>
-                        </td>
-
-                        <td class="time-column">
-                            <i class="far fa-clock" style="color:#94a3b8;width:15px;"></i>
-                            <?= !empty($row['interview_time'])
-                                ? date("h:i A", strtotime($row['interview_time']))
-                                : 'N/A'
-                            ?>
-                        </td>
-
-                        <td class="completed-position-column">
-                            <?= htmlspecialchars($row['position'] ?? 'N/A') ?>
-                        </td>
-
-                        <td class="completed-department-column">
-                            <?= htmlspecialchars($row['department'] ?? 'N/A') ?>
-                        </td>
-
-                        <td class="interviewer-column">
-                            <?= htmlspecialchars($row['interviewer'] ?? 'Not Assigned') ?>
-                        </td>
-
-                        <td class="stage-column">
-                            <?php
-                            if ($stage === 1) {
-                                echo '<span class="badge stage-initial">Initial Interview</span>';
-                            } elseif ($stage === 2) {
-                                echo '<span class="badge stage-technical">Technical Interview</span>';
-                            } elseif ($stage === 3) {
-                                echo '<span class="badge stage-final">Final Interview</span>';
-                            } else {
-                                echo '<span class="badge">Unknown</span>';
-                            }
-                            ?>
-                        </td>
-
-                        <td>
-                            <?= htmlspecialchars($status) ?>
-                        </td>
-
-                        <td>
-                            <?php if ($res === 'pending'): ?>
-
-                                <span style="color:#64748b;">
-                                    Pending
+                            <td>
+                                <span class="badge"
+                                    style="background:#f1f5f9;color:#64748b;font-family:monospace;">
+                                    #<?= htmlspecialchars($appId) ?>
                                 </span>
+                            </td>
 
-                            <?php elseif ($res === 'passed'): ?>
+                            <td style="font-weight:600;color:#1e293b;">
+                                <?= htmlspecialchars($row['full_name'] ?? 'Unknown Applicant') ?>
+                            </td>
 
-                                <b style="color:#10b981;">
-                                    <i class="fas fa-check-circle"></i>
-                                    Passed
-                                </b>
+                            <td class="date-column">
+                                <i class="far fa-calendar-alt" style="color:#94a3b8;width:15px;"></i>
+                                <?= !empty($row['interview_date'])
+                                    ? date("M d, Y", strtotime($row['interview_date']))
+                                    : 'N/A'
+                                ?>
+                            </td>
 
-                            <?php elseif ($res === 'failed'): ?>
+                            <td class="time-column">
+                                <i class="far fa-clock" style="color:#94a3b8;width:15px;"></i>
+                                <?= !empty($row['interview_time'])
+                                    ? date("h:i A", strtotime($row['interview_time']))
+                                    : 'N/A'
+                                ?>
+                            </td>
 
-                                <b style="color:#ef4444;">
-                                    <i class="fas fa-times-circle"></i>
-                                    Failed
-                                </b>
+                            <td class="completed-position-column">
+                                <?= htmlspecialchars($row['position'] ?? 'N/A') ?>
+                            </td>
+
+                            <td class="completed-department-column">
+                                <?= htmlspecialchars($row['department'] ?? 'N/A') ?>
+                            </td>
+
+                            <td class="interviewer-column">
+                                <?= htmlspecialchars($row['interviewer'] ?? 'Not Assigned') ?>
+                            </td>
+
+                            <td class="stage-column">
+                                <?php
+                                if ($stage === 1) {
+                                    echo '<span class="badge stage-initial">Initial Interview</span>';
+                                } elseif ($stage === 2) {
+                                    echo '<span class="badge stage-technical">Technical Interview</span>';
+                                } elseif ($stage === 3) {
+                                    echo '<span class="badge stage-final">Final Interview</span>';
+                                } else {
+                                    echo '<span class="badge">Unknown</span>';
+                                }
+                                ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars($status) ?>
+                            </td>
+
+                            <td>
+                                <?php if ($res === 'pending'): ?>
+
+                                    <span style="color:#64748b;">
+                                        Pending
+                                    </span>
+
+                                <?php elseif ($res === 'passed'): ?>
+
+                                    <b style="color:#10b981;">
+                                        <i class="fas fa-check-circle"></i>
+                                        Passed
+                                    </b>
+
+                                <?php elseif ($res === 'failed'): ?>
+
+                                    <b style="color:#ef4444;">
+                                        <i class="fas fa-times-circle"></i>
+                                        Failed
+                                    </b>
+
+                                <?php endif; ?>
+                            </td>
+
+                        </tr>
+
+                    <?php endforeach; ?>
+
+                <?php else: ?>
+
+                    <tr>
+                        <td colspan="10" class="empty-state-cell">
+
+                            <?php if (!empty($error)): ?>
+
+                                <?= htmlspecialchars($error) ?>
+
+                            <?php else: ?>
+
+                                <i class="fas fa-folder-open empty-state-icon"></i>
+                                No schedules found.
 
                             <?php endif; ?>
-                        </td>
 
+                        </td>
                     </tr>
 
-                <?php endforeach; ?>
-
-            <?php else: ?>
-
-                <tr>
-                    <td colspan="10" class="empty-state-cell">
-
-                        <?php if (!empty($error)): ?>
-
-                            <?= htmlspecialchars($error) ?>
-
-                        <?php else: ?>
-
-                            <i class="fas fa-folder-open empty-state-icon"></i>
-                            No schedules found.
-
-                        <?php endif; ?>
-
-                    </td>
-                </tr>
-
-            <?php endif; ?>
+                <?php endif; ?>
 
             </tbody>
         </table>
