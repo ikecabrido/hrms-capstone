@@ -417,12 +417,7 @@ case 'evaluation':
             return 0.0;
         }
 
-        $stmt = $this->conn->prepare(
-            "SELECT COUNT(*) FROM ld_progress
-             WHERE enrollment_id = :enrollment_id AND status = 'completed' AND item_type IN ('lesson','quiz')"
-        );
-        $stmt->execute([':enrollment_id' => $enrollmentId]);
-        $completed = (int) $stmt->fetchColumn();
+        $completed = $this->countCompletedCourseContent($enrollmentId, $courseId);
 
         return round(($completed / $total) * 100, 2);
     }
@@ -439,14 +434,65 @@ case 'evaluation':
             return false; // a course with no lessons/quizzes cannot be auto-completed
         }
 
-        $stmt = $this->conn->prepare(
-            "SELECT COUNT(*) FROM ld_progress
-             WHERE enrollment_id = :enrollment_id AND status = 'completed' AND item_type IN ('lesson','quiz')"
-        );
-        $stmt->execute([':enrollment_id' => $enrollmentId]);
-        $completed = (int) $stmt->fetchColumn();
+        return $this->countCompletedCourseContent($enrollmentId, $courseId) >= $total;
+    }
 
-        return $completed >= $total;
+    public function countCompletedCourseContent(int $enrollmentId, int $courseId): int
+    {
+        $enrollmentStmt = $this->conn->prepare(
+            'SELECT learner_id FROM ld_enrollment WHERE id = :enrollment_id AND course_id = :course_id LIMIT 1'
+        );
+        $enrollmentStmt->execute([
+            ':enrollment_id' => $enrollmentId,
+            ':course_id' => $courseId,
+        ]);
+        $learnerId = $enrollmentStmt->fetchColumn();
+
+        if ($learnerId === false) {
+            return 0;
+        }
+
+        $lessonStmt = $this->conn->prepare(
+            "SELECT COUNT(*) FROM ld_lesson l
+             JOIN ld_module m ON m.id = l.module_id
+             WHERE m.course_id = :course_id AND m.status = 'active' AND l.status = 'active'
+               AND EXISTS (
+                   SELECT 1 FROM ld_progress p
+                   WHERE p.enrollment_id = :enrollment_id AND p.item_type = 'lesson'
+                     AND p.reference_id = l.id AND p.status = 'completed'
+               )"
+        );
+        $lessonStmt->execute([
+            ':course_id' => $courseId,
+            ':enrollment_id' => $enrollmentId,
+        ]);
+        $completedLessons = (int) $lessonStmt->fetchColumn();
+
+        $quizStmt = $this->conn->prepare(
+            "SELECT COUNT(*) FROM ld_quiz q
+             JOIN ld_module m ON m.id = q.module_id
+             WHERE m.course_id = :course_id AND m.status = 'active' AND q.status = 'active'
+               AND (
+                   EXISTS (
+                       SELECT 1 FROM ld_progress p
+                       WHERE p.enrollment_id = :enrollment_id AND p.item_type = 'quiz'
+                         AND p.reference_id = q.id AND p.status = 'completed'
+                   )
+                   OR EXISTS (
+                       SELECT 1 FROM ld_quiz_session s
+                       WHERE s.learner_id = :learner_id AND s.item_type = 'quiz'
+                         AND s.reference_id = q.id AND s.status IN ('submitted', 'expired')
+                   )
+               )"
+        );
+        $quizStmt->execute([
+            ':course_id' => $courseId,
+            ':enrollment_id' => $enrollmentId,
+            ':learner_id' => (int) $learnerId,
+        ]);
+        $completedQuizzes = (int) $quizStmt->fetchColumn();
+
+        return $completedLessons + $completedQuizzes;
     }
 
     /**

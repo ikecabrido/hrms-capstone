@@ -72,7 +72,7 @@ try {
 
                 // Fetch quizzes with attempt info
                 $qStmt = $pdo->prepare("
-                    SELECT q.id, q.title,
+                    SELECT q.id, q.title, q.passing_score,
                         (SELECT s.score FROM ld_quiz_session s
                          WHERE s.learner_id = :lid AND s.item_type = 'quiz' AND s.reference_id = q.id
                            AND s.status IN ('submitted','expired')
@@ -603,7 +603,8 @@ $currentPageId = $courseId;
                                 <?php if (!empty($mod['quizzes'])): ?>
                                     <?php foreach ($mod['quizzes'] as $quiz): ?>
                                         <?php
-                                            $qDone = ($quiz['last_passed'] == 1);
+                                            $qDone = $quiz['last_passed'] == 1
+                                                || ($quiz['passing_score'] === null && (int) $quiz['attempt_count'] > 0);
                                             $qFailed = ($quiz['attempt_count'] > 0 && !$qDone);
                                         ?>
                                         <a href="?page=learner/study-subpage/quiz&quiz_id=<?= $quiz['id'] ?>&course_id=<?= $courseId ?>" class="module-child-item">

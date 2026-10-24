@@ -195,7 +195,7 @@ $showRecent = $recentAttempt !== null && (!$showBest || (int) $recentAttempt['id
                                 <span class="home-row-meta"><?= htmlspecialchars(date('M j, Y', strtotime((string) $bestAttempt['submitted_at']))) ?></span>
                             </span>
                             <span class="home-row-trail">
-                                <span class="home-badge <?= $bestAttempt['passed'] ? 'is-success' : 'is-danger' ?>"><?= $fmtScore($bestAttempt['score']) ?></span>
+                                <span class="home-badge <?= $bestAttempt['passed'] || $passingScore === null ? 'is-success' : 'is-danger' ?>"><?= $fmtScore($bestAttempt['score']) ?></span>
                                 <a class="home-card-link" href="?page=learner/study-subpage/quiz-review&session_id=<?= (int) $bestAttempt['id'] ?>&course_id=<?= $courseId ?>">Review <i class="fas fa-arrow-right"></i></a>
                             </span>
                         </div>
@@ -208,7 +208,7 @@ $showRecent = $recentAttempt !== null && (!$showBest || (int) $recentAttempt['id
                                 <span class="home-row-meta"><?= htmlspecialchars(date('M j, Y', strtotime((string) $recentAttempt['submitted_at']))) ?></span>
                             </span>
                             <span class="home-row-trail">
-                                <span class="home-badge <?= $recentAttempt['passed'] ? 'is-success' : 'is-danger' ?>"><?= $fmtScore($recentAttempt['score']) ?></span>
+                                <span class="home-badge <?= $recentAttempt['passed'] || $passingScore === null ? 'is-success' : 'is-danger' ?>"><?= $fmtScore($recentAttempt['score']) ?></span>
                                 <a class="home-card-link" href="?page=learner/study-subpage/quiz-review&session_id=<?= (int) $recentAttempt['id'] ?>&course_id=<?= $courseId ?>">Review <i class="fas fa-arrow-right"></i></a>
                             </span>
                         </div>

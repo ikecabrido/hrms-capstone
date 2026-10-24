@@ -224,7 +224,7 @@ try {
                 $llStmt->execute([':mid' => $lm['id'], ':eid' => $lastEnrollment['id']]);
                 $lm['lessons'] = $llStmt->fetchAll(PDO::FETCH_ASSOC);
 
-                $lqStmt = $pdo->prepare("SELECT q.id, q.title, (SELECT CASE WHEN qs.passed = 1 THEN 'passed' ELSE 'failed' END FROM ld_quiz_session qs WHERE qs.learner_id = :lid AND qs.item_type = 'quiz' AND qs.reference_id = q.id AND qs.status IN ('submitted','expired') ORDER BY qs.submitted_at DESC, qs.id DESC LIMIT 1) AS attempt_status FROM ld_quiz q WHERE q.module_id = :mid AND q.status = 'active' ORDER BY q.id ASC");
+                $lqStmt = $pdo->prepare("SELECT q.id, q.title, (SELECT CASE WHEN qs.passed = 1 OR q.passing_score IS NULL THEN 'passed' ELSE 'failed' END FROM ld_quiz_session qs WHERE qs.learner_id = :lid AND qs.item_type = 'quiz' AND qs.reference_id = q.id AND qs.status IN ('submitted','expired') ORDER BY qs.submitted_at DESC, qs.id DESC LIMIT 1) AS attempt_status FROM ld_quiz q WHERE q.module_id = :mid AND q.status = 'active' ORDER BY q.id ASC");
                 $lqStmt->execute([':mid' => $lm['id'], ':lid' => $learnerId]);
                 $lm['quizzes'] = $lqStmt->fetchAll(PDO::FETCH_ASSOC);
             }

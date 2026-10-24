@@ -51,7 +51,7 @@ try {
             SELECT q.id, q.title, ROUND(q.duration_seconds / 60) AS time_limit_minutes, q.passing_score,
                 (SELECT COUNT(*) FROM ld_quiz_question qq
                  WHERE qq.item_type = 'quiz' AND qq.reference_id = q.id AND qq.status = 'active') AS question_count,
-                (SELECT CASE WHEN s.passed = 1 THEN 'passed' ELSE 'failed' END
+                (SELECT CASE WHEN s.passed = 1 OR q.passing_score IS NULL THEN 'passed' ELSE 'failed' END
                  FROM ld_quiz_session s
                  WHERE s.learner_id = :lid AND s.item_type = 'quiz' AND s.reference_id = q.id
                    AND s.status IN ('submitted','expired')

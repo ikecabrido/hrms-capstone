@@ -76,9 +76,7 @@ try {
             $quizStmt->execute([':cid' => $courseId]);
             $totalItems = (int) $lessonStmt->fetchColumn() + (int) $quizStmt->fetchColumn();
 
-            $doneStmt = $pdo->prepare("SELECT COUNT(*) FROM ld_progress WHERE enrollment_id = :eid AND status = 'completed' AND item_type IN ('lesson','quiz')");
-            $doneStmt->execute([':eid' => $enrollment['id']]);
-            $completedItems = (int) $doneStmt->fetchColumn();
+            $completedItems = $progress->countCompletedCourseContent((int) $enrollment['id'], $courseId);
         }
     }
 } catch (Throwable $e) {

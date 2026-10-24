@@ -42,7 +42,7 @@ foreach ($allModules as &$am) {
     $am['lessons'] = $lStmt->fetchAll(PDO::FETCH_ASSOC);
 
     $qStmt = $pdo->prepare("
-        SELECT q.id, q.title,
+        SELECT q.id, q.title, q.passing_score,
             (SELECT s.passed FROM ld_quiz_session s
              WHERE s.learner_id = :lid AND s.item_type = 'quiz' AND s.reference_id = q.id
                AND s.status IN ('submitted','expired')
@@ -224,7 +224,8 @@ $courseEvaluations = $evalStmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php endforeach; ?>
                     <?php foreach ($am['quizzes'] as $aq):
                         $isActive = ($currentPageType === 'quiz' && $currentPageId == $aq['id']);
-                        $quizDone = $aq['attempt_status'] == 1;
+                        $quizDone = $aq['attempt_status'] == 1
+                            || ($aq['passing_score'] === null && (int) $aq['attempt_count'] > 0);
                         $quizScore = $aq['last_score'] !== null ? round($aq['last_score'], 1) : null;
                         $quizAttempted = $aq['attempt_count'] > 0;
                     ?>
