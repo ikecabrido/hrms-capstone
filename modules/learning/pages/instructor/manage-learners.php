@@ -21,10 +21,16 @@ try {
     <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; align-items:end;">
         <div style="flex:1; min-width:200px;">
             <label style="font-size:0.8rem; color:#666; display:block; margin-bottom:0.25rem;">Select Course</label>
-            <select id="ml-course-select" style="width:100%; padding:0.6rem 0.8rem; border:1px solid #ddd; border-radius:8px; font-size:0.9rem;">
+            <input id="ml-course-search" type="search" list="ml-course-options" placeholder="Search courses by name..." autocomplete="off" aria-label="Search and select a course" style="width:100%; padding:0.6rem 0.8rem; border:1px solid #ddd; border-radius:8px; font-size:0.9rem; box-sizing:border-box;">
+            <datalist id="ml-course-options">
+                <?php foreach ($courses as $c): ?>
+                    <option value="<?= htmlspecialchars($c['title'] . ' (Course #' . $c['id'] . ')', ENT_QUOTES, 'UTF-8') ?>" data-course-id="<?= (int) $c['id'] ?>"></option>
+                <?php endforeach; ?>
+            </datalist>
+            <select id="ml-course-select" aria-hidden="true" tabindex="-1" style="display:none;">
                 <option value="">— Choose a course —</option>
                 <?php foreach ($courses as $c): ?>
-                    <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['title']) ?></option>
+                    <option value="<?= (int) $c['id'] ?>"><?= htmlspecialchars($c['title'], ENT_QUOTES, 'UTF-8') ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -279,7 +285,18 @@ function switchTab(tab) {
     document.getElementById('ml-tab-' + tab).style.display = 'block';
 }
 
+function updateSelectedCourse() {
+    const searchInput = document.getElementById('ml-course-search');
+    const courseSelect = document.getElementById('ml-course-select');
+    const selectedOption = Array.from(document.getElementById('ml-course-options').options)
+        .find(function(option) { return option.value === searchInput.value; });
+    courseSelect.value = selectedOption ? selectedOption.dataset.courseId : '';
+    courseSelect.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
 // Course selection
+document.getElementById('ml-course-search').addEventListener('input', updateSelectedCourse);
+document.getElementById('ml-course-search').addEventListener('change', updateSelectedCourse);
 document.getElementById('ml-course-select').addEventListener('change', function () {
     const cid = this.value;
     if (cid) {
