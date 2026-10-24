@@ -138,37 +138,40 @@
                         );
 
                         /*
-                         * =====================================================
-                         * RESUME PATH
-                         * =====================================================
-                         *
-                         * Expected database value:
-                         *
-                         * uploads/2/resume/
-                         * resume_20260922_140012_a1b2c3d4.pdf
-                         *
-                         * We use the stored relative path directly.
-                         */
-
-
+|--------------------------------------------------------------------------
+| RESUME PATH
+|--------------------------------------------------------------------------
+| Database stores the resume as a relative path, for example:
+|
+| uploads/14/resume.pdf
+|
+| The physical deployed location is:
+|
+| /modules/recruitment/JobPortal/uploads/14/resume.pdf
+|--------------------------------------------------------------------------
+*/
 
                         $resumeUrl = null;
 
-                        if (!empty($row['resume'])) {
-                            $storedResumePath = str_replace(
-                                '\\',
-                                '/',
-                                trim($row['resume'])
-                            );
+                        $storedResumePath = trim($row['resume'] ?? '');
 
+                        if ($storedResumePath !== '') {
+
+                            // Normalize Windows-style paths
+                            $storedResumePath = str_replace('\\', '/', $storedResumePath);
+
+                            // Remove leading slash
                             $storedResumePath = ltrim($storedResumePath, '/');
 
-                            // Allow only paths inside uploads/.
+                            /*
+     * Only allow files stored inside uploads/.
+     * Prevent directory traversal.
+     */
                             if (
                                 strpos($storedResumePath, 'uploads/') === 0 &&
                                 !in_array('..', explode('/', $storedResumePath), true)
                             ) {
-                                // Files are physically stored inside JobPortal/uploads/.
+
                                 $resumeUrl = '/modules/recruitment/JobPortal/' .
                                     implode(
                                         '/',
