@@ -1,6 +1,5 @@
 <?php
-require_once __DIR__ . '/../../auth/session.php';
-require_once __DIR__ . '/classes/Page.php';
+require_once 'classes/Page.php';
 
 $pageController = new Page();
 

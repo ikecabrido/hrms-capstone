@@ -1,155 +1,258 @@
-<?php
-
-$page = 'dashboard-overview';
-include __DIR__ . '/../includes/analytics-setup.php';
-
-$learningAnalytics = $employeeClass->getLearningAnalytics();
-$certificationStatus = $employeeClass->getCertificationStatus();
-$jobVacancies = $employeeClass->getJobVacancies();
-$departmentCounts = [];
-foreach ($employees as $employee) {
-    $department = $employee['department_name'] ?? 'Unassigned';
-    $departmentCounts[$department] = ($departmentCounts[$department] ?? 0) + 1;
-}
-arsort($departmentCounts);
-$departmentCounts = array_slice($departmentCounts, 0, 6, true);
-$maxDepartmentCount = max($departmentCounts ?: [1]);
-$view = [
-    'eyebrow' => 'Workforce intelligence',
-    'title' => 'Dashboard & Metrics',
-    'description' => 'A live view of the people signals shaping your workforce decisions.',
-    'cards' => [
-        ['Total employees', $dashboardMetrics['total_employees'] ?? 0, 'All active and separated records'],
-        ['Active employees', $dashboardMetrics['active_employees'] ?? 0, 'Current workforce'],
-        ['New hires', $dashboardMetrics['new_hires'] ?? 0, 'Since January ' . date('Y')],
-        ['Employees on leave', $dashboardMetrics['employees_on_leave'] ?? 0, 'Approved leave today'],
-        ['Resigned / terminated', $dashboardMetrics['separated_employees'] ?? 0, 'Current workforce movement'],
-        ['Attendance rate', ($dashboardMetrics['estimated_30_day_rate'] ?? 0) . '%', 'Estimated from last 30 recorded days'],
-        ['Today attendance', ($dashboardMetrics['today_attendance_rate'] ?? 0) . '%', 'Present or late vs active workforce'],
-        ['Turnover rate', ($dashboardMetrics['turnover_rate'] ?? 0) . '%', 'Based on total employees'],
-    ],
-];
-include __DIR__ . '/../includes/analytics-header.php';
-?>
-<section class="wa-panel wa-vacancies-panel">
-    <div class="wa-panel-heading">
-        <div><span class="wa-eyebrow">Recruitment planning</span><h2>Job vacancies</h2><p class="wa-muted">Open roles shared with the Recruitment module.</p></div>
+<div class="module-header">
+    <div class="dash-header-row">
+        <div>
+            <h1>Payroll Dashboard</h1>
+            <p class="dash-subtitle">Overview of payroll processing, expenses, deductions, and employee payroll activity.</p>
+        </div>
+        <div class="dash-header-actions">
+            <div class="dash-period-pill" id="dashHeaderPeriod">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span id="dashHeaderPeriodName">Loading period&hellip;</span>
+                <span class="pm-badge" id="dashHeaderStatusBadge" style="display:none;"></span>
+            </div>
+            <a href="?page=payroll-processing" data-page="payroll-processing" class="pm-btn pm-btn-primary">
+                <i class="fa-solid fa-money-check-dollar"></i> Process Payroll
+            </a>
+        </div>
     </div>
-    <?php if ($jobVacancies): ?>
-        <table class="wa-table">
-            <thead><tr><th>Position</th><th>Location</th><th>Applicants</th></tr></thead>
-            <tbody>
-                <?php foreach ($jobVacancies as $vacancy): ?>
-                    <?php $limit = (int) ($vacancy['max_applicants'] ?? 0); ?>
-                    <tr>
-                        <td><strong><?= htmlspecialchars($vacancy['title']) ?></strong><br><small><?= htmlspecialchars($vacancy['category'] ?: 'General') ?></small></td>
-                        <td><?= htmlspecialchars($vacancy['location'] ?: 'Not specified') ?></td>
-                        <td><?= (int) $vacancy['total_applicants'] ?> / <?= $limit > 0 ? $limit : 'Unlimited' ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    <?php else: ?>
-        <p class="wa-empty">No vacancies have been created yet.</p>
-    <?php endif; ?>
-</section>
-<div class="wa-dashboard-grid">
-    <article class="wa-panel wa-hiring-panel">
-        <div class="wa-panel-heading">
-            <div><span class="wa-eyebrow">Recruitment analytics</span><h2>Employee hire trend</h2><p class="wa-muted">Monthly hiring activity and recruitment progression.</p></div>
-            <span class="wa-pill">Jan - Jun</span>
-        </div>
-        <div class="wa-hiring-content">
-            <div>
-                <h3>Hiring breakdown</h3>
-                <table class="wa-table"><thead><tr><th>Month</th><th>New hires</th></tr></thead><tbody>
-                    <?php foreach ($analytics['hire_months'] as $month): ?>
-                        <tr><td><?= htmlspecialchars($month['month_name']) ?></td><td><strong><?= (int) $month['total'] ?></strong></td></tr>
-                    <?php endforeach; ?>
-                </tbody></table>
-            </div>
-            <div class="wa-trend">
-                <h3>Hire trend</h3>
-                <div class="wa-trend-chart">
-                    <svg viewBox="0 0 360 150" role="img" aria-label="Monthly hires trend">
-                        <path class="wa-chart-area" d="M10 124 C45 104, 62 91, 82 96 S122 132, 145 112 S184 49, 213 55 S260 22, 292 24 S330 24, 350 24 L350 140 L10 140 Z"></path>
-                        <path class="wa-chart-line" d="M10 124 C45 104, 62 91, 82 96 S122 132, 145 112 S184 49, 213 55 S260 22, 292 24 S330 24, 350 24"></path>
-                        <?php foreach ([[10, 124], [82, 96], [145, 112], [213, 55], [292, 24], [350, 24]] as $point): ?>
-                            <circle cx="<?= $point[0] ?>" cy="<?= $point[1] ?>" r="4"></circle>
-                        <?php endforeach; ?>
-                    </svg>
-                </div>
-                <div class="wa-chart-labels"><span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span></div>
-            </div>
-        </div>
-    </article>
-    <article class="wa-panel wa-attendance-panel">
-        <div class="wa-panel-heading">
-            <div><span class="wa-eyebrow">Attendance analytics</span><h2>Attendance trends</h2><p class="wa-muted">Realtime attendance status across the workforce.</p></div>
-            <span class="wa-pill">Realtime</span>
-        </div>
-        <div class="wa-donut" style="background: conic-gradient(var(--wa-teal) 0 <?= htmlspecialchars((string) $attendanceDonutPresent) ?>%, #e77b5d <?= htmlspecialchars((string) $attendanceDonutPresent) ?>% <?= htmlspecialchars((string) min(100, $attendanceDonutPresent + $attendanceDonutAbsent)) ?>%, #e7bd4d <?= htmlspecialchars((string) min(100, $attendanceDonutPresent + $attendanceDonutAbsent)) ?>% <?= htmlspecialchars((string) min(100, $attendanceDonutPresent + $attendanceDonutAbsent + $attendanceDonutLeave)) ?>%);">
-            <span><strong><?= htmlspecialchars((string) number_format($attendanceRate, 1)) ?>%</strong><small>Present</small></span>
-        </div>
-        <div class="wa-attendance-monitor">
-            <div><span>Late today</span><strong><?= htmlspecialchars((string) ($dashboardMetrics['late_today'] ?? 0)) ?></strong></div>
-            <div><span>Absent today</span><strong><?= htmlspecialchars((string) ($dashboardMetrics['absent_today'] ?? 0)) ?></strong></div>
-            <div><span>On leave today</span><strong><?= htmlspecialchars((string) ($dashboardMetrics['leave_today'] ?? 0)) ?></strong></div>
-        </div>
-        <div class="wa-legend"><span><i class="present"></i>Present</span><span><i class="absent"></i>Absent</span><span><i class="leave"></i>On leave</span></div>
-    </article>
-    <article class="wa-panel">
-        <div class="wa-panel-heading"><div><span class="wa-eyebrow">Attendance monitoring</span><h2>Workforce attendance signal</h2><p class="wa-muted">Attendance data shared from the Time &amp; Attendance module.</p></div><span class="wa-pill"><?= (int) ($dashboardMetrics['attendance_days'] ?? 0) ?> days tracked</span></div>
-        <div class="wa-coverage"><strong><?= htmlspecialchars((string) ($dashboardMetrics['estimated_30_day_rate'] ?? 0)) ?>%</strong><span>Estimated 30-day attendance<small><?= (int) ($dashboardMetrics['attended_today'] ?? 0) ?> employees present or late today</small></span></div>
-        <ul class="wa-source-list"><li>Present today <b><?= (int) ($dashboardMetrics['present_today'] ?? 0) ?></b></li><li>Late today <b><?= (int) ($dashboardMetrics['late_today'] ?? 0) ?></b></li><li>Absent today <b><?= (int) ($dashboardMetrics['absent_today'] ?? 0) ?></b></li></ul>
-    </article>
-    <article class="wa-panel">
-        <div class="wa-panel-heading"><div><span class="wa-eyebrow">Descriptive analytics</span><h2>Department headcount</h2><p class="wa-muted">Employee distribution by department.</p></div><span class="wa-pill"><?= $employeeCount ?> employees</span></div>
-        <div class="wa-departments"><?php foreach ($departmentCounts as $department => $count): ?><div><span><?= htmlspecialchars($department) ?></span><b style="width:<?= round(($count / $maxDepartmentCount) * 100) ?>%"><?= $count ?></b></div><?php endforeach; ?></div>
-    </article>
-    <article class="wa-panel">
-        <div class="wa-panel-heading"><div><span class="wa-eyebrow">Demographic analytics</span><h2>Gender distribution</h2><p class="wa-muted">Employee profile distribution.</p></div></div>
-        <div class="wa-demographics"><?php foreach ($analytics['gender'] as $group): ?><div><span><?= htmlspecialchars($group['gender'] ?? 'Not specified') ?></span><b><?= (int) $group['total'] ?></b></div><?php endforeach; ?></div>
-    </article>
-    <article class="wa-panel">
-        <div class="wa-panel-heading"><div><span class="wa-eyebrow">Learning analytics</span><h2>Training activity</h2><p class="wa-muted">Live learning activity from the Learning account.</p></div><span class="wa-pill">Connected</span></div>
-        <div class="wa-coverage"><strong><?= $learningAnalytics['completed_enrollments'] ?></strong><span>Completed enrollments<small><?= $learningAnalytics['total_certificates'] ?> certificates issued</small></span></div>
-        <ul class="wa-source-list"><li>Total enrollments <b><?= $learningAnalytics['total_enrollments'] ?></b></li><li>In progress <b><?= $learningAnalytics['in_progress_enrollments'] ?></b></li><li>Pending <b><?= $learningAnalytics['pending_enrollments'] ?></b></li></ul>
-    </article>
 </div>
-<article class="wa-panel wa-certification-panel">
-    <div class="wa-panel-heading">
-        <div style="display:flex;align-items:center;gap:0.75rem;">
-            <img src="assets/bcp-logo.png" alt="Bestlink College of the Philippines logo" style="width:42px;height:42px;object-fit:contain;">
-            <div><span class="wa-eyebrow">Learning analytics</span><h2>Certification status</h2><p class="wa-muted">Issued certificates and their expiry dates.</p></div>
+
+<div class="module-content">
+    <div class="dash-page" id="dashboardOverviewPage" data-page="dashboard-overview">
+
+        <div class="pm-alert" id="dashAlert" role="alert" style="display:none;"></div>
+
+        <!-- ============================================================
+             SUMMARY CARDS
+             ============================================================ -->
+        <div class="dash-summary-cards" id="dashSummaryCards">
+
+            <div class="dash-card dash-card-anim">
+                <div class="dash-card-icon dash-icon-employees"><i class="fa-solid fa-users"></i></div>
+                <div class="dash-card-text">
+                    <span class="dash-card-value" id="dashActiveEmployees" data-count-up="0">&mdash;</span>
+                    <span class="dash-card-label">Active Employees</span>
+                </div>
+            </div>
+
+            <div class="dash-card dash-card-anim">
+                <div class="dash-card-icon dash-icon-gross"><i class="fa-solid fa-sack-dollar"></i></div>
+                <div class="dash-card-text">
+                    <span class="dash-card-value" id="dashGrossPayroll">&mdash;</span>
+                    <span class="dash-card-label">Gross Payroll</span>
+                    <span class="dash-card-sub" id="dashGrossPayrollSub">Latest finalized payroll</span>
+                </div>
+            </div>
+
+            <div class="dash-card dash-card-anim">
+                <div class="dash-card-icon dash-icon-deductions"><i class="fa-solid fa-scale-balanced"></i></div>
+                <div class="dash-card-text">
+                    <span class="dash-card-value" id="dashTotalDeductions">&mdash;</span>
+                    <span class="dash-card-label">Total Deductions</span>
+                    <span class="dash-card-sub" id="dashTotalDeductionsSub">Latest finalized payroll</span>
+                </div>
+            </div>
+
+            <div class="dash-card dash-card-anim">
+                <div class="dash-card-icon dash-icon-net"><i class="fa-solid fa-wallet"></i></div>
+                <div class="dash-card-text">
+                    <span class="dash-card-value" id="dashNetPayroll">&mdash;</span>
+                    <span class="dash-card-label">Net Payroll</span>
+                    <span class="dash-card-sub" id="dashNetPayrollSub">Latest finalized payroll</span>
+                </div>
+            </div>
+
+            <div class="dash-card dash-card-anim">
+                <div class="dash-card-icon dash-icon-average"><i class="fa-solid fa-chart-simple"></i></div>
+                <div class="dash-card-text">
+                    <span class="dash-card-value" id="dashAverageNetPay">&mdash;</span>
+                    <span class="dash-card-label">Average Net Pay</span>
+                    <span class="dash-card-sub">Per employee, latest payroll</span>
+                </div>
+            </div>
+
+            <div class="dash-card dash-card-anim">
+                <div class="dash-card-icon dash-icon-lifetime"><i class="fa-solid fa-coins"></i></div>
+                <div class="dash-card-text">
+                    <span class="dash-card-value" id="dashLifetimePayroll">&mdash;</span>
+                    <span class="dash-card-label">Lifetime Net Payroll</span>
+                    <span class="dash-card-sub">All finalized payroll runs</span>
+                </div>
+            </div>
+
         </div>
-        <span class="wa-pill"><?= $certificationStatus['total_certificates'] ?> total</span>
-    </div>
-    <?php if ($certificationStatus['certificates']): ?>
-        <div class="wa-table-scroll">
-            <table class="wa-table">
-                <thead><tr><th>Certificate</th><th>Employee</th><th>Issued</th><th>Expiry date</th><th>Status</th></tr></thead>
-                <tbody>
-                    <?php foreach ($certificationStatus['certificates'] as $certificate): ?>
+
+        <!-- ============================================================
+             PAYROLL STATUS / PROCESSING OVERVIEW
+             ============================================================ -->
+        <div class="dash-status-grid">
+
+            <div class="dash-panel">
+                <div class="dash-panel-header">
+                    <h2><i class="fa-solid fa-calendar-check"></i> Current Payroll Period</h2>
+                </div>
+                <div class="dash-panel-body" id="dashPeriodPanelBody">
+                    <div class="dash-loading-inline"><i class="fa-solid fa-spinner fa-spin"></i> Loading period information&hellip;</div>
+                </div>
+            </div>
+
+            <div class="dash-panel">
+                <div class="dash-panel-header">
+                    <h2><i class="fa-solid fa-list-check"></i> Payroll Run Progress</h2>
+                </div>
+                <div class="dash-panel-body" id="dashProgressPanelBody">
+                    <div class="dash-loading-inline"><i class="fa-solid fa-spinner fa-spin"></i> Loading processing progress&hellip;</div>
+                </div>
+            </div>
+
+            <div class="dash-panel">
+                <div class="dash-panel-header">
+                    <h2><i class="fa-solid fa-layer-group"></i> Payroll Runs</h2>
+                </div>
+                <div class="dash-panel-body" id="dashRunCountersPanelBody">
+                    <div class="dash-loading-inline"><i class="fa-solid fa-spinner fa-spin"></i> Loading run totals&hellip;</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================================
+             GRAPH: PAYROLL EXPENSE TREND
+             ============================================================ -->
+        <div class="dash-chart-card dash-chart-card-wide">
+            <div class="dash-chart-header">
+                <h2><i class="fa-solid fa-chart-line"></i> Payroll Expense Trend</h2>
+                <span class="dash-chart-sub">Gross pay, deductions, and net pay across the last finalized payroll runs</span>
+            </div>
+            <div class="dash-chart-body">
+                <canvas id="dashTrendChart" height="110"></canvas>
+                <div class="dash-empty-state" id="dashTrendEmpty" style="display:none;">
+                    <i class="fa-regular fa-chart-bar"></i>
+                    <p>No payroll data available for this period.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             GRAPH: GROSS VS NET  +  DEDUCTION BREAKDOWN
+             ============================================================ -->
+        <div class="dash-chart-grid">
+
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h2><i class="fa-solid fa-scale-unbalanced"></i> Gross vs Net Payroll</h2>
+                    <span class="dash-chart-sub">Latest finalized payroll run</span>
+                </div>
+                <div class="dash-chart-body">
+                    <canvas id="dashCompositionChart" height="220"></canvas>
+                    <div class="dash-empty-state" id="dashCompositionEmpty" style="display:none;">
+                        <i class="fa-regular fa-chart-bar"></i>
+                        <p>No payroll data available for this period.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h2><i class="fa-solid fa-chart-pie"></i> Deduction Breakdown</h2>
+                    <span class="dash-chart-sub">Latest finalized payroll run</span>
+                </div>
+                <div class="dash-chart-body">
+                    <canvas id="dashDeductionChart" height="220"></canvas>
+                    <div class="dash-empty-state" id="dashDeductionEmpty" style="display:none;">
+                        <i class="fa-regular fa-chart-bar"></i>
+                        <p>No payroll data available for this period.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================================
+             GRAPH: PAYROLL BY DEPARTMENT
+             ============================================================ -->
+        <div class="dash-chart-card dash-chart-card-wide">
+            <div class="dash-chart-header">
+                <h2><i class="fa-solid fa-building"></i> Payroll Cost by Department</h2>
+                <span class="dash-chart-sub">Net pay distribution across departments &mdash; latest finalized payroll run</span>
+            </div>
+            <div class="dash-chart-body">
+                <canvas id="dashDepartmentChart" height="100"></canvas>
+                <div class="dash-empty-state" id="dashDepartmentEmpty" style="display:none;">
+                    <i class="fa-regular fa-chart-bar"></i>
+                    <p>No payroll data available for this period.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             GRAPH: EMPLOYEE DISTRIBUTION
+             ============================================================ -->
+        <div class="dash-chart-grid">
+
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h2><i class="fa-solid fa-sitemap"></i> Active Employees by Department</h2>
+                </div>
+                <div class="dash-chart-body">
+                    <canvas id="dashEmployeeDeptChart" height="220"></canvas>
+                    <div class="dash-empty-state" id="dashEmployeeDeptEmpty" style="display:none;">
+                        <i class="fa-regular fa-chart-bar"></i>
+                        <p>No employee data available.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dash-chart-card">
+                <div class="dash-chart-header">
+                    <h2><i class="fa-solid fa-id-badge"></i> Employees by Employment Type</h2>
+                </div>
+                <div class="dash-chart-body">
+                    <canvas id="dashEmployeeTypeChart" height="220"></canvas>
+                    <div class="dash-empty-state" id="dashEmployeeTypeEmpty" style="display:none;">
+                        <i class="fa-regular fa-chart-bar"></i>
+                        <p>No employee data available.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ============================================================
+             RECENT PAYROLL ACTIVITY
+             ============================================================ -->
+        <div class="pm-table-card dash-recent-card">
+            <div class="dash-chart-header dash-recent-header">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> Recent Payroll Activity</h2>
+                <a href="?page=reports" data-page="reports" class="dash-view-all-link">View All <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            <div class="pm-table-wrapper">
+                <table class="pm-table">
+                    <thead>
                         <tr>
-                            <td><strong><?= htmlspecialchars($certificate['course_title']) ?></strong><br><small><?= htmlspecialchars($certificate['verification_code']) ?></small></td>
-                            <td><?= htmlspecialchars($certificate['learner_name']) ?></td>
-                            <td><?= htmlspecialchars(date('M d, Y', strtotime($certificate['issued_at']))) ?></td>
-                            <td><?= $certificate['valid_until'] ? htmlspecialchars(date('M d, Y', strtotime($certificate['valid_until']))) : 'No expiry' ?></td>
-                            <td>
-                                <span class="wa-pill"><?= htmlspecialchars($certificate['display_status']) ?></span>
-                                <a class="wa-text-link" href="?page=certificate-print&amp;certificate_id=<?= (int) $certificate['id'] ?>" target="_blank" rel="noopener">
-                                    <i class="fa-solid fa-print" aria-hidden="true"></i> Print
-                                </a>
+                            <th>Payroll Period</th>
+                            <th>Employees</th>
+                            <th>Gross Payroll</th>
+                            <th>Deductions</th>
+                            <th>Net Payroll</th>
+                            <th>Status</th>
+                            <th>Pay Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashRecentRunsBody">
+                        <tr>
+                            <td colspan="7" class="pm-loading-row">
+                                <i class="fa-solid fa-spinner fa-spin"></i> Loading recent payroll activity&hellip;
                             </td>
                         </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pm-empty-state" id="dashRecentRunsEmpty" style="display:none;">
+                <i class="fa-regular fa-folder-open"></i>
+                <p>No finalized payroll runs yet.</p>
+            </div>
         </div>
-    <?php else: ?>
-        <p class="wa-empty">No certificates have been issued yet.</p>
-    <?php endif; ?>
-</article>
-<article class="wa-panel wa-operating"><div><span class="wa-eyebrow">Analytics operating model</span><h2>From data to action</h2></div><ol><?php foreach (['Collect', 'Clean', 'Describe', 'Diagnose', 'Predict', 'Prescribe', 'Operationalize'] as $index => $step): ?><li class="<?= $index === 0 ? 'current' : '' ?>"><b><?= sprintf('%02d', $index + 1) ?></b><span><?= $step ?></span></li><?php endforeach; ?></ol></article>
-<?php include __DIR__ . '/../includes/analytics-footer.php'; ?>
+
+    </div>
+</div>

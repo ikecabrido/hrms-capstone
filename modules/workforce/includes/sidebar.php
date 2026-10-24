@@ -44,14 +44,14 @@ $employeeClass = new Employee();
                     </div>
                     <ul class="user-menu">
                         <li>
-                            <a href="?page=profile-settings"><i class="fa-regular fa-user"></i> Profile Settings</a>
+                            <a href="#"><i class="fa-regular fa-user"></i> Profile Settings</a>
                         </li>
                         <li>
-                            <a href="?page=change-password"><i class="fa-solid fa-lock"></i> Change Password</a>
+                            <a href="#"><i class="fa-solid fa-lock"></i> Change Password</a>
                         </li>
                         <li class="divider"></li>
                         <li>
-                            <a href="../../auth/logout.php" class="signout-link">
+                            <a href="/hrms-capstone/auth/logout.php" class="signout-link">
                                 <i class="fa-solid fa-right-from-bracket"></i> Sign Out
                             </a>
                         </li>
@@ -66,7 +66,7 @@ $employeeClass = new Employee();
         <h1 class="employee_name"><?= htmlspecialchars($employeeClass->getEmployeeName()) ?></h1>
         <p class="employee_position"><?= htmlspecialchars($employeeClass->getEmployeePosition()) ?></p>
     </div>
-    <h2>Workforce Analytics Report</h2>
+    <h2>WORKFORCE ANALYTICS REPORT</h2>
     <ul>
         <?php $pageController->renderNav(); ?>
     </ul>
