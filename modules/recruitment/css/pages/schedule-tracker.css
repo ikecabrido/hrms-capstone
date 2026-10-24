@@ -8,6 +8,12 @@
   flex-wrap: wrap;
 }
 
+@media (min-width: 1025px) {
+  .schedule-tracker-content {
+    padding: 0.5rem;
+  }
+}
+
 .filter-pill {
   padding: 6px 14px;
   border-radius: 6px;
@@ -61,6 +67,24 @@
   color: #16a34a;
   border-color: #bbf7d0;
   font-weight: 600;
+}
+
+.schedule-search {
+  width: 290px;
+  max-width: 100%;
+  margin-left: auto;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+.schedule-table-scroll {
+  width: 100%;
+  max-height: 640px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .schedule-table.completed-view .interviewer-column,
