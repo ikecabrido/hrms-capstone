@@ -208,7 +208,7 @@ WHERE LOWER(TRIM(status)) = 'shortlisted'
              <div class="widget-card" style="background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                      <h3 style="margin: 0; color: #1e293b; font-size: 1.1rem; font-weight: 700;">Upcoming Interviews</h3>
-                     <a href="index.php?page=interview-tracker" style="font-size: 12px; color: #2563eb; text-decoration: none; font-weight: 600;">View All</a>
+                     <a href="index.php?page=schedule-tracker" style="font-size: 12px; color: #2563eb; text-decoration: none; font-weight: 600;">View All</a>
                  </div>
 
                  <div class="interview-list">
