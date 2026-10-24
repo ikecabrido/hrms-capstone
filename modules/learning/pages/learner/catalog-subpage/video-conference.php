@@ -14,7 +14,7 @@ try {
 
     // Fetch video conference with instructor and linked course/program
     $stmt = $pdo->prepare("
-        SELECT vc.id, vc.title, vc.platform, vc.meeting_link, vc.scheduled_at, vc.duration_minutes,
+        SELECT vc.id, vc.instructor_id, vc.title, vc.platform, vc.meeting_link, vc.scheduled_at, vc.duration_minutes,
                vc.status, vc.created_at,
                CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
                vc.course_id, vc.program_id,
@@ -92,7 +92,7 @@ $platformColor = match($conference['platform']) {
                             <i class="fas fa-user-tie" style="color:var(--primary);"></i>
                             <div>
                                 <div style="font-size:0.75rem; color:#999; text-transform:uppercase;">Host</div>
-                                <div style="font-weight:600; color:#333;"><?= htmlspecialchars($conference['instructor_name']) ?></div>
+                                <div style="font-weight:600; color:#333;"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $conference['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($conference['instructor_name']) ?></a></div>
                             </div>
                         </div>
                     <?php endif; ?>

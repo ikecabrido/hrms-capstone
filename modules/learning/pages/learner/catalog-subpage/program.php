@@ -16,7 +16,7 @@ try {
 
     // Fetch program with instructor
     $stmt = $pdo->prepare("
-        SELECT p.id, p.title, p.description, p.status, p.created_at,
+        SELECT p.id, p.instructor_id, p.title, p.description, p.status, p.created_at,
                CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name
         FROM ld_program p
         LEFT JOIN em_employees emp ON emp.employee_id = p.instructor_id
@@ -79,7 +79,7 @@ if (!$program) {
                             <i class="fas fa-user-tie" style="color:var(--primary);"></i>
                             <div>
                                 <div style="font-size:0.75rem; color:#999; text-transform:uppercase;">Coordinator</div>
-                                <div style="font-weight:600; color:#333;"><?= htmlspecialchars($program['instructor_name']) ?></div>
+                                <div style="font-weight:600; color:#333;"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $program['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($program['instructor_name']) ?></a></div>
                             </div>
                         </div>
                     <?php endif; ?>

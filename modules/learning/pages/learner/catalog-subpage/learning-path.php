@@ -16,7 +16,7 @@ try {
 
     // Fetch learning path with instructor
     $stmt = $pdo->prepare("
-        SELECT lp.id, lp.title, lp.description, lp.status, lp.created_at,
+        SELECT lp.id, lp.instructor_id, lp.title, lp.description, lp.status, lp.created_at,
                CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name
         FROM ld_learning_path lp
         LEFT JOIN em_employees emp ON emp.employee_id = lp.instructor_id
@@ -133,7 +133,7 @@ $lessonCount = count(array_filter($items, fn($i) => $i['item_type'] === 'lesson'
                             <i class="fas fa-user-tie" style="color:var(--primary);"></i>
                             <div>
                                 <div style="font-size:0.75rem; color:#999; text-transform:uppercase;">Designed By</div>
-                                <div style="font-weight:600; color:#333;"><?= htmlspecialchars($learningPath['instructor_name']) ?></div>
+                                <div style="font-weight:600; color:#333;"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $learningPath['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($learningPath['instructor_name']) ?></a></div>
                             </div>
                         </div>
                     <?php endif; ?>

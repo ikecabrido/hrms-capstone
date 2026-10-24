@@ -170,7 +170,7 @@ $completionRate = ($stats['active_enrollments'] + $stats['completed']) > 0
                                 <span class="home-row-icon tone-<?= $r['status'] === 'completed' ? 'emerald' : 'amber' ?>"><i class="fas fa-user"></i></span>
                                 <span class="home-row-body">
                                     <?php if ((int) ($r['learner_id'] ?? 0) > 0): ?>
-                                        <a class="home-row-title" href="?page=admin/user-subpage/learner&amp;id=<?= (int) $r['learner_id'] ?>"><?= htmlspecialchars($r['learner_name'] ?? 'Unknown') ?></a>
+                                        <a class="home-row-title" href="<?= htmlspecialchars(LearningProfileLink::url((int) $r['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($r['learner_name'] ?? 'Unknown') ?></a>
                                     <?php else: ?>
                                         <span class="home-row-title"><?= htmlspecialchars($r['learner_name'] ?? 'Unknown') ?></span>
                                     <?php endif; ?>

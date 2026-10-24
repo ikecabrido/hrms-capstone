@@ -591,8 +591,14 @@ $renderInstructorControl = static function (array $record) use ($instructorOptio
 
     echo '<div class="wf-assign">';
     echo '<span class="wf-assign-label"><i class="fas fa-user-tie" aria-hidden="true"></i>Instructor</span>';
-    echo '<span class="wf-assign-name' . ($assignedName === '' ? ' is-empty' : '') . '">'
-        . $escape($assignedName !== '' ? $assignedName : 'Unassigned') . '</span>';
+    echo '<span class="wf-assign-name' . ($assignedName === '' ? ' is-empty' : '') . '">';
+    if ($assignedId > 0 && $assignedName !== '') {
+        echo '<a href="' . htmlspecialchars(LearningProfileLink::url($assignedId, 'instructor'), ENT_QUOTES, 'UTF-8') . '">'
+            . $escape($assignedName) . '</a>';
+    } else {
+        echo $escape($assignedName !== '' ? $assignedName : 'Unassigned');
+    }
+    echo '</span>';
 
     if (!$instructorOptions) {
         echo '<span class="wf-link-none">No instructors are designated yet.</span>';
@@ -773,7 +779,7 @@ $levelBadge = static function ($level) use ($escape): string {
                                 <tbody>
                                     <?php foreach ($records['risk'] as $record): ?>
                                         <tr>
-                                            <td><span class="wf-cell-title"><?= $escape($record['employee_name'] ?: ($record['employee_id'] ? 'Employee #' . $record['employee_id'] : 'Workforce group')) ?></span></td>
+                                            <td><span class="wf-cell-title"><?php if ((int) $record['employee_id'] > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $record['employee_id'], LearningRole::forEmployee($pdo, (int) $record['employee_id'])), ENT_QUOTES, 'UTF-8') ?>"><?= $escape($record['employee_name'] ?: 'Employee #' . $record['employee_id']) ?></a><?php else: ?><?= $escape($record['employee_name'] ?: 'Workforce group') ?><?php endif; ?></span></td>
                                             <td>
                                                 <span class="wf-cell-title"><?= $escape($record['department']) ?></span>
                                                 <?php if ((string) $record['position_name'] !== ''): ?><span class="wf-cell-sub"><?= $escape($record['position_name']) ?></span><?php endif; ?>
@@ -813,7 +819,7 @@ $levelBadge = static function ($level) use ($escape): string {
                                 <tbody>
                                     <?php foreach ($records['engagement'] as $record): ?>
                                         <tr>
-                                            <td><span class="wf-cell-title"><?= $escape($record['learner_name'] ?: ($record['learner_id'] ? 'Employee #' . $record['learner_id'] : ucwords(str_replace('-', ' ', $record['learner_team_type'])))) ?></span></td>
+                                            <td><span class="wf-cell-title"><?php if ((int) $record['learner_id'] > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $record['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= $escape($record['learner_name'] ?: 'Employee #' . $record['learner_id']) ?></a><?php else: ?><?= $escape($record['learner_name'] ?: ucwords(str_replace('-', ' ', $record['learner_team_type']))) ?><?php endif; ?></span></td>
                                             <td><?= $escape($record['department']) ?></td>
                                             <td><?= $escape(ucwords(str_replace('-', ' ', $record['training_activity']))) ?></td>
                                             <td>

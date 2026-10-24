@@ -99,7 +99,7 @@ $activePlans = count(array_filter($ktPlans, fn($p) => ($p['status'] ?? '') === '
                     <div class="home-card-head">
                         <h2 class="home-card-title">
                             <span class="home-card-icon"><i class="fas fa-exchange-alt"></i></span>
-                            Plan #<?= (int) $plan['id'] ?> — from <?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?>
+                            Plan #<?= (int) $plan['id'] ?> — from <?php if ((int) ($plan['employee_id'] ?? 0) > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::publicUrl((int) $plan['employee_id']), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?></a><?php else: ?><?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?><?php endif; ?>
                         </h2>
                         <span class="home-badge <?= $statusBadgeClass ?>"><?= htmlspecialchars($statusBadgeLabel) ?></span>
                     </div>
@@ -108,7 +108,7 @@ $activePlans = count(array_filter($ktPlans, fn($p) => ($p['status'] ?? '') === '
 
                     <div class="home-kv">
                         <span class="home-kv-label"><i class="fas fa-user-tie"></i> From</span>
-                        <span class="home-kv-value"><?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?></span>
+                        <span class="home-kv-value"><?php if ((int) ($plan['employee_id'] ?? 0) > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::publicUrl((int) $plan['employee_id']), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?></a><?php else: ?><?= htmlspecialchars($plan['employee_name'] ?? 'N/A') ?><?php endif; ?></span>
                     </div>
                     <div class="home-kv">
                         <span class="home-kv-label"><i class="fas fa-calendar"></i> Duration</span>

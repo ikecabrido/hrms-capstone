@@ -154,7 +154,7 @@ function ktDate(?string $date): string {
                         <div class="kt-card-head">
                             <span class="kt-card-avatar"><i class="fas fa-exchange-alt" aria-hidden="true"></i></span>
                             <div class="kt-card-ident">
-                                <h3 class="kt-card-name"><?= htmlspecialchars($employee) ?></h3>
+                                <h3 class="kt-card-name"><?php if ((int) $plan['employee_id'] > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $plan['employee_id'], LearningRole::forEmployee($pdo, (int) $plan['employee_id'])), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($employee) ?></a><?php else: ?><?= htmlspecialchars($employee) ?><?php endif; ?></h3>
                                 <span class="kt-card-id">Plan #<?= (int) $plan['id'] ?></span>
                             </div>
                             <span class="kt-badge <?= $badgeClass ?>"><?= htmlspecialchars($badgeLabel) ?></span>
@@ -163,7 +163,7 @@ function ktDate(?string $date): string {
                         <div class="kt-card-meta">
                             <div>
                                 <span class="kt-meta-label">Successor</span>
-                                <span class="kt-meta-value"><?= htmlspecialchars($plan['successor_name'] ?: '—') ?></span>
+                                <span class="kt-meta-value"><?php if ((int) ($plan['successor_id'] ?? 0) > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $plan['successor_id'], LearningRole::forEmployee($pdo, (int) $plan['successor_id'])), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($plan['successor_name'] ?: '—') ?></a><?php else: ?><?= htmlspecialchars($plan['successor_name'] ?: '—') ?><?php endif; ?></span>
                             </div>
                             <div>
                                 <span class="kt-meta-label">Duration</span>
@@ -311,8 +311,14 @@ function ktDate(?string $date): string {
     // ---- Detail modal -------------------------------------------------------
     function renderPlan(plan, items) {
         var html = '<div class="kt-detail-grid">';
-        html += detail('Employee', esc(plan.employee_name || 'N/A'));
-        html += detail('Successor', esc(plan.successor_name || '—'));
+        var employeeValue = plan.employee_profile_url
+            ? '<a href="' + esc(plan.employee_profile_url) + '">' + esc(plan.employee_name || 'N/A') + '</a>'
+            : esc(plan.employee_name || 'N/A');
+        var successorValue = plan.successor_profile_url && plan.successor_id
+            ? '<a href="' + esc(plan.successor_profile_url) + '">' + esc(plan.successor_name || '—') + '</a>'
+            : esc(plan.successor_name || '—');
+        html += detail('Employee', employeeValue);
+        html += detail('Successor', successorValue);
         html += detail('Start date', formatDate(plan.start_date));
         html += detail('End date', formatDate(plan.end_date));
         html += detail('Created', formatDate(plan.created_at));

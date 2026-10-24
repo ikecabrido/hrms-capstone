@@ -19,7 +19,7 @@ try {
 
     if ($course) {
         $cStmt = $pdo->prepare("
-            SELECT cm.id, cm.comment_text, cm.created_at,
+            SELECT cm.id, cm.learner_id, cm.comment_text, cm.created_at,
                    CONCAT(emp.first_name, ' ', emp.last_name) AS author_name,
                    CASE WHEN cm.learner_id = :lid THEN 1 ELSE 0 END AS is_own
             FROM ld_comment cm
@@ -66,7 +66,7 @@ try {
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
                             <div style="display:flex; align-items:center; gap:0.5rem;">
                                 <div style="width:28px; height:28px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700;"><?= strtoupper(substr($comment['author_name'], 0, 1)) ?></div>
-                                <span style="font-weight:600; font-size:0.9rem;"><?= htmlspecialchars($comment['author_name']) ?></span>
+                                <span style="font-weight:600; font-size:0.9rem;"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $comment['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($comment['author_name']) ?></a></span>
                             </div>
                             <span style="font-size:0.8rem; color:var(--text-muted);"><?= date('M j, Y g:i A', strtotime($comment['created_at'])) ?></span>
                         </div>

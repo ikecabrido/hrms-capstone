@@ -2,6 +2,7 @@
 require_once __DIR__ . '/dberror.php';
 require_once __DIR__ . '/backlink.php';
 require_once __DIR__ . '/LearningRole.php';
+require_once __DIR__ . '/ProfileLink.php';
 
 class Page {
     private $default = 'dashboard-overview';

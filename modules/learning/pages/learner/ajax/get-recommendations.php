@@ -38,7 +38,7 @@ try {
 
     // Get all active courses with their skills and enrollment counts
     $allCoursesStmt = $pdo->prepare("
-        SELECT c.id, c.title, c.description, c.category, c.status, c.created_at,
+        SELECT c.id, c.instructor_id, c.title, c.description, c.category, c.status, c.created_at,
                CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
                (SELECT COUNT(*) FROM ld_enrollment e WHERE e.course_id = c.id) AS enrollment_count,
                (SELECT COUNT(*) FROM ld_module m WHERE m.course_id = c.id AND m.status = 'active') AS module_count
@@ -125,6 +125,7 @@ try {
             'description' => mb_substr(strip_tags($course['description'] ?? ''), 0, 120),
             'category' => $course['category'] ?? '',
             'instructor_name' => trim($course['instructor_name'] ?? ''),
+            'instructor_profile_url' => '?page=public/user-profile&id=' . (int) $course['instructor_id'],
             'enrollment_count' => $enrollmentCount,
             'module_count' => (int) $course['module_count'],
             'skills' => array_column($skills, 'name'),

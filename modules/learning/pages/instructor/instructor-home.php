@@ -147,7 +147,7 @@ function instrTimeAgo($dt) {
                             <div class="home-row">
                                 <span class="home-row-icon tone-<?= $re['status'] === 'completed' ? 'emerald' : 'amber' ?>"><i class="fas fa-user"></i></span>
                                 <span class="home-row-body">
-                                    <a class="home-row-title" href="?page=instructor/learner-profile&amp;id=<?= (int) $re['learner_id'] ?>"><?= htmlspecialchars($re['learner_name']) ?></a>
+                                    <a class="home-row-title" href="<?= htmlspecialchars(LearningProfileLink::url((int) $re['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($re['learner_name']) ?></a>
                                     <span class="home-row-meta"><?= htmlspecialchars(mb_substr($re['course_title'], 0, 40)) ?></span>
                                 </span>
                                 <span class="home-badge <?= $re['status'] === 'completed' ? 'is-success' : 'is-warn' ?>"><?= htmlspecialchars(str_replace('_', ' ', $re['status'])) ?></span>

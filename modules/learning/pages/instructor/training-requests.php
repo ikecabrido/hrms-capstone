@@ -4,6 +4,7 @@ require_once dirname(__DIR__, 4) . '/database/db.php';
 
 $employeeClass = new Employee();
 $instructorId = (int) ($employeeClass->getEmployeeId() ?? 0);
+$instructorProfileUrl = LearningProfileLink::url($instructorId, 'instructor');
 
 $requests = [];
 $stats = ['pending' => 0, 'accepted' => 0, 'rejected' => 0, 'completed' => 0, 'total' => 0];
@@ -344,6 +345,13 @@ function trTimeAgo($dt) {
             $isWorkforce = ($req['source_module'] ?? '') === 'workforce';
             $learnerName = trim((string) ($req['learner_name'] ?? ''));
             $displayName = $learnerName !== '' ? $learnerName : ($isWorkforce ? 'Workforce training need' : 'Unknown learner');
+            $learnerId = (int) ($req['learner_id'] ?? 0);
+            $assignedInstructorId = (int) ($req['instructor_id'] ?? 0);
+            $learnerProfileUrl = $learnerId > 0
+                ? ($assignedInstructorId === $instructorId
+                    ? LearningProfileLink::url($learnerId, 'learner')
+                    : LearningProfileLink::publicUrl($learnerId))
+                : '';
             $initials = strtoupper(substr($displayName, 0, 1));
 
             $department = trim((string) ($req['target_department'] ?? ''));
@@ -379,7 +387,7 @@ function trTimeAgo($dt) {
             <div class="tr-card-header">
                 <div class="tr-card-avatar" style="background:<?= $avatarColor ?>;"><?= htmlspecialchars($initials) ?></div>
                 <div class="tr-card-info">
-                    <div class="tr-card-name"><?= htmlspecialchars($displayName) ?><?php if ($isWorkforce): ?> <span class="tr-badge-workforce">Workforce</span><?php endif; ?></div>
+                    <div class="tr-card-name"><?php if ($learnerProfileUrl !== ''): ?><a href="<?= htmlspecialchars($learnerProfileUrl, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($displayName) ?></a><?php else: ?><?= htmlspecialchars($displayName) ?><?php endif; ?><?php if ($isWorkforce): ?> <span class="tr-badge-workforce">Workforce</span><?php endif; ?></div>
                     <div class="tr-card-meta"><?= htmlspecialchars(implode(' · ', $metaParts)) ?></div>
                 </div>
                 <span class="tr-card-status <?= $status ?>"><?= ucfirst($status) ?></span>
@@ -401,7 +409,11 @@ function trTimeAgo($dt) {
                 <?php endif; ?>
 
                 <?php if ($instructorName !== ''): ?>
+                <?php if ($assignedInstructorId > 0): ?>
+                <a class="tr-chip is-instructor" data-role="instructor" href="<?= htmlspecialchars(LearningProfileLink::url($assignedInstructorId, 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($instructorName) ?></a>
+                <?php else: ?>
                 <span class="tr-chip is-instructor" data-role="instructor"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($instructorName) ?></span>
+                <?php endif; ?>
                 <?php else: ?>
                 <span class="tr-chip is-empty" data-role="instructor"><i class="fas fa-user-slash"></i> Unassigned</span>
                 <?php endif; ?>
@@ -449,6 +461,7 @@ function trTimeAgo($dt) {
 </div>
 
 <script>
+var instructorProfileUrl = <?= json_encode($instructorProfileUrl, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 (function() {
     var list = document.getElementById('tr-list');
     if (!list) return;
@@ -501,7 +514,10 @@ function trTimeAgo($dt) {
                 var icon = document.createElement('i');
                 icon.className = 'fas fa-user-tie';
                 chip.appendChild(icon);
-                chip.appendChild(document.createTextNode(' ' + instructorName));
+                var profileLink = document.createElement('a');
+                profileLink.href = instructorProfileUrl;
+                profileLink.textContent = ' ' + instructorName;
+                chip.appendChild(profileLink);
             }
         }
         var actionsEl = card.querySelector('.tr-card-actions');

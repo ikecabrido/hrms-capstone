@@ -16,6 +16,7 @@ try {
     // Get upcoming video conference sessions the learner is enrolled in
     $stmt = $pdo->prepare("
         SELECT vc.id, vc.title, vc.platform, vc.scheduled_at, vc.duration_minutes, vc.meeting_link,
+               vc.instructor_id,
                CONCAT(emp.first_name, ' ', emp.last_name) AS host_name,
                'video-conference' AS event_type
         FROM ld_video_conference vc
@@ -52,7 +53,12 @@ try {
             'type' => 'Video Conference',
             'color' => '#007bff',
             'icon' => 'fa-video',
-            'meta' => $s['platform'] . ' • ' . $s['duration_minutes'] . ' min • ' . $s['host_name'],
+            'meta' => $s['platform'] . ' • ' . $s['duration_minutes'] . ' min',
+            'host_name' => $s['host_name'],
+            'instructor_profile_url' => LearningProfileLink::url(
+                (int) $s['instructor_id'],
+                LearningRole::forEmployee($pdo, (int) $s['instructor_id'])
+            ),
             'datetime' => $s['scheduled_at'],
             'conference_id' => $s['id'],
         ];
@@ -391,6 +397,12 @@ function openDayModal(cell) {
             html += '<span class="lc-day-ev-title">' + lcEsc(ev.title) + '</span>';
             html += '<span class="lc-day-ev-meta">' + lcEsc(ev.time) + ' · ' + lcEsc(ev.type) + '</span>';
             if (ev.meta) html += '<span class="lc-day-ev-meta">' + lcEsc(ev.meta) + '</span>';
+            if (ev.host_name) {
+                var host = ev.instructor_profile_url
+                    ? '<a href="' + lcEsc(ev.instructor_profile_url) + '">' + lcEsc(ev.host_name) + '</a>'
+                    : lcEsc(ev.host_name);
+                html += '<span class="lc-day-ev-meta">Host: ' + host + '</span>';
+            }
             html += '</span>';
             if (ev.is_user_event) {
                 var id = parseInt(ev.event_id, 10) || 0;

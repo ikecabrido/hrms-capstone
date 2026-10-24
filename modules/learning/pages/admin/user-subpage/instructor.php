@@ -370,7 +370,7 @@ $gradebookLink = null;
                         <div class="pfl-person">
                             <div class="pfl-person-avatar"><?= htmlspecialchars($learnerInitials !== '' ? $learnerInitials : '??', ENT_QUOTES, 'UTF-8') ?></div>
                             <div class="pfl-person-main">
-                                <div class="pfl-person-name"><?= htmlspecialchars($learnerName !== '' ? $learnerName : 'Unknown learner', ENT_QUOTES, 'UTF-8') ?></div>
+                                <div class="pfl-person-name"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $learner['employee_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($learnerName !== '' ? $learnerName : 'Unknown learner', ENT_QUOTES, 'UTF-8') ?></a></div>
                                 <div class="pfl-person-sub"><?= htmlspecialchars((string) ($learner['course_title'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
                             </div>
                             <span class="pfl-badge <?= $enrollmentClass ?>"><?= htmlspecialchars(ucfirst(str_replace('_', ' ', $enrollmentStatus !== '' ? $enrollmentStatus : 'unknown')), ENT_QUOTES, 'UTF-8') ?></span>

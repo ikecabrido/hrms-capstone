@@ -337,7 +337,7 @@ function instrGradeBookTimeAgo($datetime) {
                             data-letter="<?= $letter ?>"
                             data-status="<?= $status === 'Passed' ? 'pass' : ($status === 'In Progress' ? 'progress' : 'none') ?>">
                             <td>
-                                <a class="gb-student-name" href="?page=instructor/learner-profile&amp;id=<?= (int) $row['learner_id'] ?>"><?= htmlspecialchars($row['learner_name']) ?></a>
+                                <a class="gb-student-name" href="<?= htmlspecialchars(LearningProfileLink::url((int) $row['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($row['learner_name']) ?></a>
                                 <?php if ($row['employee_id']): ?>
                                 <div class="gb-student-id"><?= htmlspecialchars($row['employee_id']) ?></div>
                                 <?php endif; ?>

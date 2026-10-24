@@ -154,11 +154,12 @@
                 ' data-link="' + rec.link + '"' +
                 ' data-title="' + (rec.title || '').replace(/"/g, '&quot;') + '"' +
                 ' data-desc="' + reasons.replace(/"/g, '&quot;') + '"' +
-                ' data-instructor="' + (rec.instructor_name || '').replace(/"/g, '&quot;') + '">' +
+                ' data-instructor="' + (rec.instructor_name || '').replace(/"/g, '&quot;') + '"' +
+                ' data-instructor-url="' + (rec.instructor_profile_url || '').replace(/"/g, '&quot;') + '">' +
                 '<div class="catalog-card-thumb" style="background:linear-gradient(135deg,var(--primary),var(--accent)); height:110px;"><i class="fas fa-graduation-cap thumb-icon"></i><div class="thumb-overlay"></div></div>' +
                 '<div class="catalog-card-body" style="padding:0.8rem 1rem;">' +
                     '<h4 style="font-size:0.9rem; margin-bottom:0.25rem;">' + rec.title + '</h4>' +
-                    '<div class="cc-instructor" style="margin-bottom:0.3rem;"><i class="fas fa-user-tie"></i> ' + rec.instructor_name + '</div>' +
+                    '<div class="cc-instructor" style="margin-bottom:0.3rem;"><i class="fas fa-user-tie"></i> <a href="' + (rec.instructor_profile_url || '#').replace(/"/g, '&quot;') + '" onclick="event.stopPropagation();">' + (rec.instructor_name || '') + '</a></div>' +
                 '</div>' +
                 '<div class="catalog-card-footer" style="padding:0.5rem 1rem;">' +
                     '<span class="cc-deadline" style="font-size:0.72rem;">' + reasons + '</span>' +
@@ -311,6 +312,10 @@
         var label = typeLabels[itemType] || 'Item';
         var cat = card.dataset.category || 'General';
         var instructorName = card.dataset.instructor || '';
+        var instructorUrl = card.dataset.instructorUrl || '';
+        var instructorValue = instructorUrl
+            ? '<a href="' + escapeModalText(instructorUrl) + '">' + escapeModalText(instructorName) + '</a>'
+            : escapeModalText(instructorName);
 
         emState = { type: itemType, id: id, link: link, enrolled: enrolled, activeTab: 'overview', data: { title: title, description: desc, category: cat, instructor_name: instructorName, course_id: card.dataset.courseId || '' } };
         emTitle.textContent = title;
@@ -344,12 +349,12 @@
             if (platformLabel) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Platform</span><p class="ec-field-value"><span class="ec-pill is-primary">' + platformLabel + '</span></p></div>';
             if (scheduledDate) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Scheduled</span><p class="ec-field-value">' + scheduledDate + '</p></div>';
             if (duration) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Duration</span><p class="ec-field-value">' + duration + ' minutes</p></div>';
-            if (instructorName) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Host</span><p class="ec-field-value"><i class="fas fa-user-tie" aria-hidden="true"></i>' + instructorName + '</p></div>';
+            if (instructorName) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Host</span><p class="ec-field-value"><i class="fas fa-user-tie" aria-hidden="true"></i>' + instructorValue + '</p></div>';
         } else {
             overviewHtml += '<div class="ec-field"><span class="ec-field-label">Type</span><p class="ec-field-value">' + label + '</p></div>';
             overviewHtml += '<div class="ec-field"><span class="ec-field-label">Status</span><p class="ec-field-value"><span class="ec-pill ' + (enrolled ? 'is-success' : 'is-primary') + '">' + (enrolled ? 'Enrolled' : 'Available') + '</span></p></div>';
             overviewHtml += '<div class="ec-field"><span class="ec-field-label">Category</span><p class="ec-field-value">' + cat + '</p></div>';
-            if (instructorName) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Instructor</span><p class="ec-field-value">' + instructorName + '</p></div>';
+            if (instructorName) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Instructor</span><p class="ec-field-value">' + instructorValue + '</p></div>';
         }
         emOverviewGrid.innerHTML = overviewHtml;
         emDescription.textContent = desc;

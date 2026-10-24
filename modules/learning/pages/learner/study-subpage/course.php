@@ -22,7 +22,7 @@ try {
     $pdo = $database->getConnection();
 
     $stmt = $pdo->prepare("
-        SELECT c.id, c.title, c.description, c.category, c.status, c.thumbnail_path,
+        SELECT c.id, c.instructor_id, c.title, c.description, c.category, c.status, c.thumbnail_path,
                c.start_date, c.enrollment_deadline, c.created_at,
                CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
                c.instructor_id
@@ -481,7 +481,7 @@ $currentPageId = $courseId;
                     <i class="fas fa-user-tie"></i>
                     <div>
                         <div class="course-meta-label">Instructor</div>
-                        <div class="course-meta-value"><?= htmlspecialchars($course['instructor_name']) ?></div>
+                        <div class="course-meta-value"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $course['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($course['instructor_name']) ?></a></div>
                     </div>
                 </div>
             <?php endif; ?>

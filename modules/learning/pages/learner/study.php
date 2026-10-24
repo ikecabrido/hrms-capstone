@@ -81,7 +81,7 @@ try {
         elseif ($status === 'invited') $tabCounts['invited'] += $total;
     }
 
-        $pathStmt = $pdo->prepare("SELECT lp.id, lp.title, lp.description,
+        $pathStmt = $pdo->prepare("        SELECT lp.id, lp.instructor_id, lp.title, lp.description,
                                                                             CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name
                                                              FROM ld_learning_path lp
                                                              LEFT JOIN em_employees emp ON emp.employee_id = lp.instructor_id
@@ -119,7 +119,7 @@ try {
         }
         unset($studyPath);
 
-        $pathInvitationStmt = $pdo->prepare("SELECT pi.id AS invitation_id, lp.id AS path_id, lp.title, lp.description,
+        $pathInvitationStmt = $pdo->prepare("SELECT pi.id AS invitation_id, lp.id AS path_id, lp.instructor_id, lp.title, lp.description,
                                                                                                 CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name
                                                                                  FROM ld_learning_path_invitation pi
                                                                                  JOIN ld_learning_path lp ON lp.id = pi.learning_path_id
@@ -134,7 +134,7 @@ try {
 
     $stmt = $pdo->prepare("
         SELECT e.id AS enrollment_id, e.status AS enrollment_status, e.enrolled_at, e.last_accessed_at,
-               c.id, c.title, c.description, c.category, c.status, c.thumbnail_path, c.start_date, c.enrollment_deadline,
+               c.id, c.instructor_id, c.title, c.description, c.category, c.status, c.thumbnail_path, c.start_date, c.enrollment_deadline,
                CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
                (SELECT COUNT(*) FROM ld_module m WHERE m.course_id = c.id AND m.status = 'active') AS module_count,
                (SELECT COUNT(*) FROM ld_lesson l JOIN ld_module m2 ON m2.id = l.module_id WHERE m2.course_id = c.id AND l.status = 'active') AS lesson_count,
@@ -287,16 +287,16 @@ function getStudyGradient($category, $gradients) {
         <?php if ($lastCourse): ?>
             <div class="sp-sidebar-header">
                 <div class="sp-sidebar-title">Continue Learning</div>
-                <a href="?page=learner/study-subpage/course&course_id=<?= $lastCourse['id'] ?>" class="sp-course-card">
-                    <div class="sp-course-name"><?= htmlspecialchars($lastCourse['title']) ?></div>
-                    <div class="sp-course-meta"><?= htmlspecialchars($lastCourse['instructor_name'] ?? '') ?></div>
+                <div class="sp-course-card">
+                    <div class="sp-course-name"><a href="?page=learner/study-subpage/course&course_id=<?= $lastCourse['id'] ?>"><?= htmlspecialchars($lastCourse['title']) ?></a></div>
+                    <div class="sp-course-meta"><?php if ((int) ($lastCourse['instructor_id'] ?? 0) > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $lastCourse['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>" onclick="event.stopPropagation();"><?= htmlspecialchars($lastCourse['instructor_name'] ?? '') ?></a><?php else: ?><?= htmlspecialchars($lastCourse['instructor_name'] ?? '') ?><?php endif; ?></div>
                     <div class="sp-progress">
                         <div class="sp-progress-label"><?= $lastProgress ?>% complete</div>
                         <div class="sp-progress-track">
                             <div class="sp-progress-fill" style="width:<?= $lastProgress ?>%;"></div>
                         </div>
                     </div>
-                </a>
+                </div>
             </div>
             <nav class="sp-nav">
                 <?php if (empty($lastModules)): ?>
@@ -405,7 +405,7 @@ function getStudyGradient($category, $gradients) {
                     <div class="study-card-thumb" style="background:<?= $gradient ?>"><i class="fas fa-graduation-cap study-card-thumb-icon"></i><span class="study-card-badge"><?= $category ?></span><span class="study-card-status" style="background:<?= $statusBg ?>;"><?= $statusLabel ?></span></div>
                     <div class="study-card-body">
                         <h3 class="study-card-title"><?= $title ?></h3>
-                        <?php if ($instructor): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> <?= $instructor ?></div><?php endif; ?>
+                        <?php if ($instructor): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> <a href="<?= htmlspecialchars(LearningProfileLink::url((int) ($course['instructor_id'] ?? 0), 'instructor'), ENT_QUOTES, 'UTF-8') ?>" onclick="event.stopPropagation();"><?= $instructor ?></a></div><?php endif; ?>
                         <p class="study-card-desc"><?= $desc ?></p>
                         <div class="study-card-stats"><span class="study-card-stat"><i class="fas fa-folder"></i> <?= $modules ?> module<?= $modules === 1 ? '' : 's' ?></span><span class="study-card-stat"><i class="fas fa-file-alt"></i> <?= $lessons ?> lesson<?= $lessons === 1 ? '' : 's' ?></span></div>
                         <div class="study-card-progress"><div class="study-card-progress-header"><span class="study-card-progress-label">Progress</span><span class="study-card-progress-pct"><?= $pct ?>%</span></div><div class="study-card-progress-bar"><div class="study-card-progress-fill" style="width:<?= $pct ?>%;background:<?= $barColor ?>;"></div></div></div>
@@ -425,14 +425,14 @@ function getStudyGradient($category, $gradients) {
             ?>
                 <article class="study-card" data-search="<?= htmlspecialchars(strtolower(($studyPath['title'] ?? '') . ' ' . ($studyPath['instructor_name'] ?? '')), ENT_QUOTES) ?>">
                     <div class="study-card-thumb" style="background:linear-gradient(135deg,#a34b16,#e5a525);"><i class="fas fa-route study-card-thumb-icon"></i><span class="study-card-badge">Learning Path</span><span class="study-card-status" style="background:<?= $studyPath['study_status'] === 'completed' ? 'rgba(16,185,129,0.9)' : 'rgba(59,130,246,0.9)' ?>;"><?= $studyPath['study_status'] === 'completed' ? 'Completed' : 'In Progress' ?></span></div>
-                    <div class="study-card-body"><h3 class="study-card-title"><?= htmlspecialchars($studyPath['title']) ?></h3><?php if (!empty($studyPath['instructor_name'])): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($studyPath['instructor_name']) ?></div><?php endif; ?><p class="study-card-desc"><?= htmlspecialchars(mb_substr(strip_tags($studyPath['description'] ?? ''), 0, 100)) ?></p><div class="study-card-stats"><span class="study-card-stat"><i class="fas fa-list-ol"></i> <?= (int) $studyPath['step_count'] ?> step<?= (int) $studyPath['step_count'] === 1 ? '' : 's' ?></span><span class="study-card-stat"><i class="fas fa-graduation-cap"></i> <?= (int) $studyPath['course_count'] ?> course<?= (int) $studyPath['course_count'] === 1 ? '' : 's' ?></span></div><div class="study-card-progress"><div class="study-card-progress-header"><span class="study-card-progress-label">Progress</span><span class="study-card-progress-pct"><?= $pathProgress ?>%</span></div><div class="study-card-progress-bar"><div class="study-card-progress-fill" style="width:<?= $pathProgress ?>%;background:<?= $pathProgress >= 100 ? '#10b981' : '#3b82f6' ?>;"></div></div></div></div>
+                    <div class="study-card-body"><h3 class="study-card-title"><?= htmlspecialchars($studyPath['title']) ?></h3><?php if (!empty($studyPath['instructor_name'])): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> <a href="<?= htmlspecialchars(LearningProfileLink::url((int) ($studyPath['instructor_id'] ?? 0), 'instructor'), ENT_QUOTES, 'UTF-8') ?>" onclick="event.stopPropagation();"><?= htmlspecialchars($studyPath['instructor_name']) ?></a></div><?php endif; ?><p class="study-card-desc"><?= htmlspecialchars(mb_substr(strip_tags($studyPath['description'] ?? ''), 0, 100)) ?></p><div class="study-card-stats"><span class="study-card-stat"><i class="fas fa-list-ol"></i> <?= (int) $studyPath['step_count'] ?> step<?= (int) $studyPath['step_count'] === 1 ? '' : 's' ?></span><span class="study-card-stat"><i class="fas fa-graduation-cap"></i> <?= (int) $studyPath['course_count'] ?> course<?= (int) $studyPath['course_count'] === 1 ? '' : 's' ?></span></div><div class="study-card-progress"><div class="study-card-progress-header"><span class="study-card-progress-label">Progress</span><span class="study-card-progress-pct"><?= $pathProgress ?>%</span></div><div class="study-card-progress-bar"><div class="study-card-progress-fill" style="width:<?= $pathProgress ?>%;background:<?= $pathProgress >= 100 ? '#10b981' : '#3b82f6' ?>;"></div></div></div></div>
                     <div class="study-card-footer"><span class="study-card-time">My Learning Path</span><a class="study-card-action" href="?page=learner/my-learning-path&amp;path_id=<?= $pathId ?>">Open path <i class="fas fa-arrow-right"></i></a></div>
                 </article>
             <?php endforeach; ?>
             <?php if ($currentTab === 'invited'): foreach ($pathInvitations as $pathInvitation): ?>
                 <article class="study-card" data-search="<?= htmlspecialchars(strtolower(($pathInvitation['title'] ?? '') . ' ' . ($pathInvitation['instructor_name'] ?? '')), ENT_QUOTES) ?>">
                     <div class="study-card-thumb" style="background:linear-gradient(135deg,#a34b16,#e5a525);"><i class="fas fa-route study-card-thumb-icon"></i><span class="study-card-badge">Learning Path</span><span class="study-card-status" style="background:rgba(245,158,11,0.9);">Invited</span></div>
-                    <div class="study-card-body"><h3 class="study-card-title"><?= htmlspecialchars($pathInvitation['title']) ?></h3><?php if (!empty($pathInvitation['instructor_name'])): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> From <?= htmlspecialchars($pathInvitation['instructor_name']) ?></div><?php endif; ?><p class="study-card-desc"><?= htmlspecialchars(mb_substr(strip_tags($pathInvitation['description'] ?? ''), 0, 100)) ?></p></div>
+                    <div class="study-card-body"><h3 class="study-card-title"><?= htmlspecialchars($pathInvitation['title']) ?></h3><?php if (!empty($pathInvitation['instructor_name'])): ?><div class="study-card-instructor"><i class="fas fa-user-tie"></i> From <a href="<?= htmlspecialchars(LearningProfileLink::url((int) ($pathInvitation['instructor_id'] ?? 0), 'instructor'), ENT_QUOTES, 'UTF-8') ?>" onclick="event.stopPropagation();"><?= htmlspecialchars($pathInvitation['instructor_name']) ?></a></div><?php endif; ?><p class="study-card-desc"><?= htmlspecialchars(mb_substr(strip_tags($pathInvitation['description'] ?? ''), 0, 100)) ?></p></div>
                     <div class="study-card-footer"><span class="study-card-time">Path invitation</span><div class="study-invitation-actions"><button type="button" class="study-invitation-action" data-kind="path" data-action="decline" data-id="<?= (int) $pathInvitation['invitation_id'] ?>">Reject</button><button type="button" class="study-invitation-action" data-kind="path" data-action="accept" data-id="<?= (int) $pathInvitation['invitation_id'] ?>">Enroll</button></div></div>
                 </article>
             <?php endforeach; endif; ?>

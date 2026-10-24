@@ -193,7 +193,7 @@ function userEmailCell(array $row): string {
                                         <div class="user-cell-name">
                                             <span class="user-avatar<?= $roleClass === 'learner' ? ' is-learner' : '' ?>"><?= userInitials($user) ?></span>
                                             <span class="user-name-block">
-                                                <a class="user-name" href="?page=admin/user-subpage/<?= $profileType ?>&amp;id=<?= (int) $user['employee_id'] ?>"><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></a>
+                                                <a class="user-name" href="<?= htmlspecialchars(LearningProfileLink::url((int) $user['employee_id'], $roleClass), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></a>
                                                 <span class="user-meta">Emp #<?= (int) $user['employee_id'] ?></span>
                                             </span>
                                         </div>
@@ -201,7 +201,7 @@ function userEmailCell(array $row): string {
                                     <td class="user-cell-email"><?= userEmailCell($user) ?></td>
                                     <td><span class="user-role is-<?= $roleClass ?>"><?= htmlspecialchars(ucfirst($roleClass)) ?></span></td>
                                     <td class="is-center">
-                                        <a class="user-view-btn" href="?page=admin/user-subpage/<?= $profileType ?>&amp;id=<?= (int) $user['employee_id'] ?>">View</a>
+                                        <a class="user-view-btn" href="<?= htmlspecialchars(LearningProfileLink::url((int) $user['employee_id'], $roleClass), ENT_QUOTES, 'UTF-8') ?>">View</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -237,7 +237,7 @@ function userEmailCell(array $row): string {
                                         <div class="user-cell-name">
                                             <span class="user-avatar"><?= userInitials($admin) ?></span>
                                             <span class="user-name-block">
-                                                <a class="user-name" href="?page=admin/user-subpage/instructor&amp;id=<?= (int) $admin['employee_id'] ?>"><?= htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']) ?></a>
+                                                <a class="user-name" href="<?= htmlspecialchars(LearningProfileLink::url((int) $admin['employee_id'], 'admin'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']) ?></a>
                                                 <span class="user-meta">Emp #<?= (int) $admin['employee_id'] ?></span>
                                             </span>
                                         </div>
@@ -245,7 +245,7 @@ function userEmailCell(array $row): string {
                                     <td class="user-cell-email"><?= userEmailCell($admin) ?></td>
                                     <td><span class="user-role is-admin">Admin</span></td>
                                     <td class="is-center">
-                                        <a class="user-view-btn" href="?page=admin/user-subpage/instructor&amp;id=<?= (int) $admin['employee_id'] ?>">View</a>
+                                        <a class="user-view-btn" href="<?= htmlspecialchars(LearningProfileLink::url((int) $admin['employee_id'], 'admin'), ENT_QUOTES, 'UTF-8') ?>">View</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -287,7 +287,7 @@ function userEmailCell(array $row): string {
                                         <div class="user-cell-name">
                                             <span class="user-avatar"><?= userInitials($inst) ?></span>
                                             <span class="user-name-block">
-                                                <a class="user-name" href="?page=admin/user-subpage/instructor&amp;id=<?= (int) $inst['employee_id'] ?>"><?= htmlspecialchars($inst['first_name'] . ' ' . $inst['last_name']) ?></a>
+                                                <a class="user-name" href="<?= htmlspecialchars(LearningProfileLink::url((int) $inst['employee_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($inst['first_name'] . ' ' . $inst['last_name']) ?></a>
                                                 <span class="user-meta">Emp #<?= (int) $inst['employee_id'] ?></span>
                                             </span>
                                         </div>
@@ -298,7 +298,7 @@ function userEmailCell(array $row): string {
                                     <td class="is-center user-stat"><?= (int) $inst['learner_count'] ?></td>
                                     <td class="is-center"><span class="user-rate <?= $rateClass ?>"><?= $completionRate ?>%</span></td>
                                     <td class="is-center">
-                                        <a class="user-view-btn" href="?page=admin/user-subpage/instructor&amp;id=<?= (int) $inst['employee_id'] ?>">View</a>
+                                        <a class="user-view-btn" href="<?= htmlspecialchars(LearningProfileLink::url((int) $inst['employee_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>">View</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -339,7 +339,7 @@ function userEmailCell(array $row): string {
                                         <div class="user-cell-name">
                                             <span class="user-avatar is-learner"><?= userInitials($lrn) ?></span>
                                             <span class="user-name-block">
-                                                <a class="user-name" href="?page=admin/user-subpage/learner&amp;id=<?= (int) $lrn['employee_id'] ?>"><?= htmlspecialchars($lrn['first_name'] . ' ' . $lrn['last_name']) ?></a>
+                                                <a class="user-name" href="<?= htmlspecialchars(LearningProfileLink::url((int) $lrn['employee_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($lrn['first_name'] . ' ' . $lrn['last_name']) ?></a>
                                                 <span class="user-meta">Emp #<?= (int) $lrn['employee_id'] ?></span>
                                             </span>
                                         </div>
@@ -350,7 +350,7 @@ function userEmailCell(array $row): string {
                                     <td class="is-center"><span class="user-rate <?= $scoreClass ?>"><?= $lrn['avg_score'] ?>%</span></td>
                                     <td class="user-meta"><?= userTimeAgo($lrn['last_active']) ?></td>
                                     <td class="is-center">
-                                        <a class="user-view-btn" href="?page=admin/user-subpage/learner&amp;id=<?= (int) $lrn['employee_id'] ?>">View</a>
+                                        <a class="user-view-btn" href="<?= htmlspecialchars(LearningProfileLink::url((int) $lrn['employee_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>">View</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

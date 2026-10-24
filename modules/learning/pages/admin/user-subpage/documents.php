@@ -51,7 +51,7 @@ function formatFileSize($bytes) {
             <h1 class="module-header-title">Documents</h1>
             <p class="module-header-subtitle">
                 <?php if ($employee): ?>
-                    <?= htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']) ?>
+                    <a href="<?= htmlspecialchars(LearningProfileLink::url((int) $employee['employee_id'], LearningRole::forEmployee($pdo, (int) $employee['employee_id'])), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']) ?></a>
                     <span style="color:#999; font-weight:400;"> — Emp #<?= $employee['employee_id'] ?></span>
                 <?php else: ?>
                     Employee Documents
@@ -78,7 +78,7 @@ function formatFileSize($bytes) {
                 <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg, rgba(32,0,130,0.9), rgba(91,85,255,0.75)); color:var(--surface); display:flex; align-items:center; justify-content:center; font-size:1.8rem; font-weight:800; margin:0 auto 1rem;">
                     <?= strtoupper(substr($employee['first_name'], 0, 1) . substr($employee['last_name'], 0, 1)) ?>
                 </div>
-                <h2 style="margin:0 0 0.25rem; color:var(--text);"><?= htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']) ?></h2>
+                <h2 style="margin:0 0 0.25rem; color:var(--text);"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $employee['employee_id'], LearningRole::forEmployee($pdo, (int) $employee['employee_id'])), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']) ?></a></h2>
                 <p style="margin:0 0 0.5rem; color:rgba(32,0,130,0.5); font-size:0.85rem;"><?= htmlspecialchars($employee['employee_code'] ?? '') ?></p>
                 <p style="margin:0 0 1rem; color:rgba(32,0,130,0.6); font-size:0.85rem;"><?= htmlspecialchars($employee['email'] ?? '') ?></p>
                 <?php if (!empty($documents)): ?>

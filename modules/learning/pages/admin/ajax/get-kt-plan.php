@@ -29,6 +29,8 @@ if (empty($_SESSION['employee_id'])) {
 }
 
 require_once dirname(__DIR__, 5) . '/database/db.php';
+require_once dirname(__DIR__, 3) . '/classes/LearningRole.php';
+require_once dirname(__DIR__, 3) . '/classes/ProfileLink.php';
 
 try {
     $pdo = (new Database())->getConnection();
@@ -56,6 +58,17 @@ try {
         echo json_encode(['success' => false, 'error' => 'Plan not found.']);
         exit;
     }
+
+    $employeeId = (int) ($plan['employee_id'] ?? 0);
+    $successorId = (int) ($plan['successor_id'] ?? 0);
+    $plan['employee_profile_url'] = LearningProfileLink::url(
+        $employeeId,
+        LearningRole::forEmployee($pdo, $employeeId)
+    );
+    $plan['successor_profile_url'] = LearningProfileLink::url(
+        $successorId,
+        LearningRole::forEmployee($pdo, $successorId)
+    );
 
     $itemStmt = $pdo->prepare("
         SELECT *

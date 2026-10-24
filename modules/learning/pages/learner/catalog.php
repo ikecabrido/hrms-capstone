@@ -18,7 +18,7 @@ try {
     $pdo = $database->getConnection();
 
     // Courses
-    $courses = $pdo->query("SELECT c.id, c.title, c.description, c.category, c.status, c.thumbnail_path, c.created_at, c.start_date, c.enrollment_deadline, 'course' AS item_type,
+    $courses = $pdo->query("SELECT c.id, c.instructor_id, c.title, c.description, c.category, c.status, c.thumbnail_path, c.created_at, c.start_date, c.enrollment_deadline, 'course' AS item_type,
         CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
         (SELECT COUNT(*) FROM ld_module m WHERE m.course_id = c.id AND m.status = 'active') AS module_count,
         (SELECT COUNT(*) FROM ld_lesson l JOIN ld_module m2 ON m2.id = l.module_id WHERE m2.course_id = c.id AND l.status = 'active') AS lesson_count,
@@ -30,7 +30,7 @@ try {
     $catalogItems = array_merge($catalogItems, $courses);
 
     // Modules
-    $modules = $pdo->query("SELECT m.id, m.title, m.description, c.category, m.status, NULL AS thumbnail_path, m.created_at, 'module' AS item_type,
+    $modules = $pdo->query("SELECT m.id, c.instructor_id, m.title, m.description, c.category, m.status, NULL AS thumbnail_path, m.created_at, 'module' AS item_type,
         CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
         c.title AS course_title, c.id AS course_id,
         (SELECT COUNT(*) FROM ld_lesson l WHERE l.module_id = m.id AND l.status = 'active') AS lesson_count,
@@ -42,7 +42,7 @@ try {
     $catalogItems = array_merge($catalogItems, $modules);
 
     // Lessons
-    $lessons = $pdo->query("SELECT l.id, l.title, COALESCE(l.content_body, l.video_url, 'No description') AS description, c.category, l.status, NULL AS thumbnail_path, l.created_at, 'lesson' AS item_type,
+    $lessons = $pdo->query("SELECT l.id, c.instructor_id, l.title, COALESCE(l.content_body, l.video_url, 'No description') AS description, c.category, l.status, NULL AS thumbnail_path, l.created_at, 'lesson' AS item_type,
         CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
         c.title AS course_title, c.id AS course_id, m.title AS module_title, m.id AS module_id, l.content_type
         FROM ld_lesson l JOIN ld_module m ON m.id = l.module_id JOIN ld_course c ON c.id = m.course_id
@@ -52,7 +52,7 @@ try {
     $catalogItems = array_merge($catalogItems, $lessons);
 
     // Quizzes
-    $quizzes = $pdo->query("SELECT q.id, q.title, CONCAT('Pass: ', q.passing_score, '% | ', q.question_count, ' questions') AS description, c.category, q.status, NULL AS thumbnail_path, q.created_at, 'quiz' AS item_type,
+    $quizzes = $pdo->query("SELECT q.id, c.instructor_id, q.title, CONCAT('Pass: ', q.passing_score, '% | ', q.question_count, ' questions') AS description, c.category, q.status, NULL AS thumbnail_path, q.created_at, 'quiz' AS item_type,
         CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
         c.title AS course_title, c.id AS course_id, m.title AS module_title, m.id AS module_id,
         q.duration_seconds, q.passing_score, q.question_count, q.max_attempts
@@ -63,7 +63,7 @@ try {
     $catalogItems = array_merge($catalogItems, $quizzes);
 
     // Learning Paths (standard paths + public knowledge transfer paths)
-    $learningPathsStmt = $pdo->prepare("SELECT lp.id, lp.title, lp.description, CASE WHEN lp.type = 'knowledge_transfer' THEN 'Knowledge Transfer' ELSE 'Learning Path' END AS category, lp.status, NULL AS thumbnail_path, lp.created_at, 'learning-path' AS item_type,
+    $learningPathsStmt = $pdo->prepare("SELECT lp.id, lp.instructor_id, lp.title, lp.description, CASE WHEN lp.type = 'knowledge_transfer' THEN 'Knowledge Transfer' ELSE 'Learning Path' END AS category, lp.status, NULL AS thumbnail_path, lp.created_at, 'learning-path' AS item_type,
         CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
         lp.type, lp.is_public,
         (SELECT COUNT(*) FROM ld_learning_path_item lpi WHERE lpi.learning_path_id = lp.id) AS item_count
@@ -96,7 +96,7 @@ try {
         ':path_successor' => $learnerId,
     ]);
     $learningPaths = $learningPathsStmt->fetchAll(PDO::FETCH_ASSOC);
-        $pathInvitationsStmt = $pdo->prepare("SELECT pi.id AS invitation_id, lp.id AS path_id, lp.title, lp.description,
+        $pathInvitationsStmt = $pdo->prepare("SELECT pi.id AS invitation_id, lp.id AS path_id, lp.instructor_id, lp.title, lp.description,
                                                                                                  CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
                                                                                                  pi.invited_at
                                                                                     FROM ld_learning_path_invitation pi
@@ -129,7 +129,7 @@ try {
             }
         }
 
-        $courseInvitationsStmt = $pdo->prepare("SELECT e.id AS enrollment_id, e.course_id, e.invited_by,
+        $courseInvitationsStmt = $pdo->prepare("SELECT e.id AS enrollment_id, e.course_id, e.invited_by AS inviter_id,
                                                         c.title AS course_title,
                                                         CONCAT(inviter.first_name, ' ', inviter.last_name) AS inviter_name
                                                  FROM ld_enrollment e
@@ -143,7 +143,7 @@ try {
     $catalogItems = array_merge($catalogItems, $learningPaths);
 
     // Programs
-    $programs = $pdo->query("SELECT p.id, p.title, p.description, 'Training Program' AS category, p.status, NULL AS thumbnail_path, p.created_at, 'program' AS item_type,
+    $programs = $pdo->query("SELECT p.id, p.instructor_id, p.title, p.description, 'Training Program' AS category, p.status, NULL AS thumbnail_path, p.created_at, 'program' AS item_type,
         CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name
         FROM ld_program p LEFT JOIN em_employees emp ON emp.employee_id = p.instructor_id
         WHERE p.status = 'active'
@@ -151,7 +151,7 @@ try {
     $catalogItems = array_merge($catalogItems, $programs);
 
     // Video Conferences
-    $videoConfs = $pdo->query("SELECT vc.id, vc.title, vc.title AS description, vc.platform AS category, vc.status, NULL AS thumbnail_path, vc.created_at, 'video-conference' AS item_type,
+    $videoConfs = $pdo->query("SELECT vc.id, vc.instructor_id, vc.title, vc.title AS description, vc.platform AS category, vc.status, NULL AS thumbnail_path, vc.created_at, 'video-conference' AS item_type,
         CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
         vc.scheduled_at, vc.duration_minutes, vc.meeting_link
         FROM ld_video_conference vc LEFT JOIN em_employees emp ON emp.employee_id = vc.instructor_id
@@ -874,7 +874,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
                 <div class="path-invitation-row" data-invitation-id="<?= (int) $pathInvitation['invitation_id'] ?>" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.75rem 0.9rem; border:1px solid rgba(32,0,130,0.12); border-radius:8px; background:var(--surface,#fff);">
                     <div style="min-width:0;">
                         <div style="font-weight:700; color:var(--text);"><?= htmlspecialchars($pathInvitation['title']) ?></div>
-                        <div style="font-size:0.8rem; color:var(--muted);">From <?= htmlspecialchars($pathInvitation['instructor_name'] ?: 'Learning & Development') ?></div>
+                        <div style="font-size:0.8rem; color:var(--muted);">From <?php if ((int) ($pathInvitation['instructor_id'] ?? 0) > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $pathInvitation['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($pathInvitation['instructor_name'] ?: 'Learning & Development') ?></a><?php else: ?><?= htmlspecialchars($pathInvitation['instructor_name'] ?: 'Learning & Development') ?><?php endif; ?></div>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.45rem; flex-shrink:0;">
                         <button type="button" class="path-invitation-respond" data-action="decline" style="padding:0.42rem 0.7rem; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text); font:inherit; font-size:0.8rem; cursor:pointer;">Decline</button>
@@ -894,7 +894,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
                 <div class="course-invitation-row" data-enrollment-id="<?= (int) $courseInvitation['enrollment_id'] ?>" style="display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:0.75rem 0.9rem; border:1px solid rgba(32,0,130,0.12); border-radius:8px; background:var(--surface,#fff);">
                     <div style="min-width:0;">
                         <div style="font-weight:700; color:var(--text);"> <?= htmlspecialchars($courseInvitation['course_title']) ?></div>
-                        <div style="font-size:0.8rem; color:var(--muted);">From <?= htmlspecialchars($courseInvitation['inviter_name'] ?: 'Learning & Development') ?></div>
+                        <div style="font-size:0.8rem; color:var(--muted);">From <?php if ((int) ($courseInvitation['inviter_id'] ?? 0) > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $courseInvitation['inviter_id'], LearningRole::forEmployee($pdo, (int) $courseInvitation['inviter_id'])), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($courseInvitation['inviter_name'] ?: 'Learning & Development') ?></a><?php else: ?><?= htmlspecialchars($courseInvitation['inviter_name'] ?: 'Learning & Development') ?><?php endif; ?></div>
                     </div>
                     <div style="display:flex; align-items:center; gap:0.45rem; flex-shrink:0;">
                         <button type="button" class="course-invitation-respond" data-action="decline" style="padding:0.42rem 0.7rem; border:1px solid var(--border); border-radius:6px; background:transparent; color:var(--text); font:inherit; font-size:0.8rem; cursor:pointer;">Decline</button>
@@ -966,6 +966,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
             $icon = $typeIcons[$itemType] ?? 'fa-book';
             $meta = trim((string) ($item['instructor_name'] ?? ''));
             $instructorName = $meta;
+            $instructorId = (int) ($item['instructor_id'] ?? 0);
             if (empty($meta)) $meta = trim((string) ($item['course_title'] ?? $item['category'] ?? ''));
             $category = trim((string) ($item['category'] ?? 'General'));
             $gradient = getCatGradient($category, $catGradients, $defaultGrad);
@@ -1033,6 +1034,8 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
                  data-title="<?= htmlspecialchars($title) ?>"
                  data-desc="<?= htmlspecialchars($shortDesc) ?>"
                  data-instructor="<?= htmlspecialchars($instructorName) ?>"
+                 data-instructor-id="<?= $instructorId ?>"
+                 data-instructor-url="<?= htmlspecialchars($instructorId > 0 ? LearningProfileLink::url($instructorId, 'instructor') : '', ENT_QUOTES, 'UTF-8') ?>"
                  <?php if ($itemType === 'video-conference'): ?>
                  data-scheduled="<?= htmlspecialchars($item['scheduled_at'] ?? '') ?>"
                  data-duration="<?= (int)($item['duration_minutes'] ?? 0) ?>"
@@ -1055,7 +1058,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
             <div class="catalog-card-body">
                 <h4 title="<?= htmlspecialchars($title) ?>"><?= htmlspecialchars($title) ?></h4>
                 <?php if ($meta): ?>
-                <div class="cc-instructor"><i class="fas fa-user-tie"></i> <?= htmlspecialchars($meta) ?></div>
+                <div class="cc-instructor"><i class="fas fa-user-tie"></i> <?php if ($instructorId > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url($instructorId, 'instructor'), ENT_QUOTES, 'UTF-8') ?>" onclick="event.stopPropagation();"><?= htmlspecialchars($meta) ?></a><?php else: ?><?= htmlspecialchars($meta) ?><?php endif; ?></div>
                 <?php endif; ?>
                 <p class="cc-desc"><?= htmlspecialchars($shortDesc) ?></p>
             </div>

@@ -104,7 +104,7 @@ function renderReportCards($items, $emptyTitle, $emptyText) {
         echo '<div class="content-card-footer">'
             . '<span><i class="fas fa-user" aria-hidden="true"></i> '
             . ($learnerId > 0
-                ? '<a href="?page=admin/user-subpage/learner&amp;id=' . $learnerId . '">' . htmlspecialchars($learner) . '</a>'
+                ? '<a href="' . htmlspecialchars(LearningProfileLink::url($learnerId, 'learner'), ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($learner) . '</a>'
                 : htmlspecialchars($learner))
             . '</span>'
             . '<span><i class="fas fa-calendar-day" aria-hidden="true"></i> ' . htmlspecialchars($date) . '</span>'

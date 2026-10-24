@@ -28,6 +28,18 @@ try {
             ':learner_id' => $profileEmployeeId,
         ]);
         $profileAuthorized = (bool) $accessCheck->fetchColumn();
+        if (!$profileAuthorized) {
+            $requestCheck = $pdo->prepare(
+                "SELECT 1 FROM ld_training_requests
+                 WHERE instructor_id = :instructor_id AND learner_id = :learner_id
+                 LIMIT 1"
+            );
+            $requestCheck->execute([
+                ':instructor_id' => $instructorId,
+                ':learner_id' => $profileEmployeeId,
+            ]);
+            $profileAuthorized = (bool) $requestCheck->fetchColumn();
+        }
     }
 } catch (Throwable $e) {
     error_log('[learning] Instructor learner profile lookup failed: ' . $e->getMessage());

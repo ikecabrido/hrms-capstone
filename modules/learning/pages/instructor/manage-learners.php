@@ -8,6 +8,7 @@ $showLearnerImport = empty($hideLearnerImport);
 $learnerProfilePage = !empty($hideLearnerImport) && ($analyticsScope ?? '') === 'admin'
     ? 'admin/user-subpage/learner'
     : 'instructor/learner-profile';
+$publicProfileBase = '?page=public/user-profile&id=';
 
 $courses = [];
 try {
@@ -263,6 +264,7 @@ var parsedLearners = [];
 var rosterData = [];
 var showLearnerImport = <?= $showLearnerImport ? 'true' : 'false' ?>;
 var learnerProfilePage = <?= json_encode($learnerProfilePage, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+var publicProfileBase = <?= json_encode($publicProfileBase, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
 // Initialize CSV dropzone
 var csvDrop = showLearnerImport ? document.getElementById('ml-csv-dropzone') : null;
@@ -376,7 +378,7 @@ function renderParsedList() {
             <input type="checkbox" class="ml-check" value="${emp.employee_id}" checked style="flex-shrink:0;">
             <div class="ml-avatar" style="background:${color};">${initials}</div>
             <div style="flex:1; min-width:0;">
-                <div class="ml-name">${esc(emp.first_name)} ${esc(emp.last_name)}</div>
+                <a class="ml-name" href="${publicProfileBase}${encodeURIComponent(Number(emp.employee_id))}">${esc(emp.first_name)} ${esc(emp.last_name)}</a>
                 <div class="ml-email">${esc(emp.email)} ${matchLabel} ${esc(emp.matched_by)}</div>
             </div>
         </div>`;

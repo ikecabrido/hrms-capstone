@@ -46,6 +46,7 @@ try {
     // Continue Learning with progress
     $stmt = $pdo->prepare("
         SELECT e.course_id, e.last_accessed_at, e.enrolled_at, c.title, c.category, c.start_date, c.enrollment_deadline,
+               c.instructor_id,
                CONCAT(emp.first_name,' ',emp.last_name) AS instructor_name,
                (SELECT COUNT(*) FROM ld_lesson l JOIN ld_module m ON m.id = l.module_id WHERE m.course_id = c.id AND l.status = 'active') AS total_lessons,
                (SELECT COUNT(DISTINCT p.reference_id) FROM ld_progress p JOIN ld_enrollment e2 ON e2.id = p.enrollment_id WHERE e2.course_id = c.id AND p.item_type = 'lesson' AND p.status = 'completed') AS completed_lessons
@@ -343,11 +344,11 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
                         $done = (int) ($cl['completed_lessons'] ?? 0);
                         $pct = $total > 0 ? round(($done / $total) * 100) : 0;
                     ?>
-                    <a class="home-row" href="?page=learner/study-subpage/course&course_id=<?= (int) $cl['course_id'] ?>">
+                    <div class="home-row">
                         <span class="home-row-icon tone-violet"><i class="fas fa-graduation-cap"></i></span>
                         <span class="home-row-body">
-                            <span class="home-row-title"><?= htmlspecialchars($cl['title']) ?></span>
-                            <span class="home-row-meta"><?= htmlspecialchars($cl['instructor_name'] ?? '') ?> &bull; <?= $done ?>/<?= $total ?> lessons</span>
+                            <a class="home-row-title" href="?page=learner/study-subpage/course&amp;course_id=<?= (int) $cl['course_id'] ?>"><?= htmlspecialchars($cl['title']) ?></a>
+                            <span class="home-row-meta"><?php if ((int) ($cl['instructor_id'] ?? 0) > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $cl['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($cl['instructor_name'] ?? '') ?></a><?php else: ?><?= htmlspecialchars($cl['instructor_name'] ?? '') ?><?php endif; ?> &bull; <?= $done ?>/<?= $total ?> lessons</span>
                             <span class="home-progress">
                                 <span class="home-progress-track"><span class="home-progress-fill" style="width:<?= $pct ?>%"></span></span>
                                 <span class="home-progress-val"><?= $pct ?>%</span>
@@ -357,7 +358,7 @@ foreach ($weeklyActivity as $wa) { $heatmap[$wa['day']] = (int) $wa['courses_acc
                             <span class="home-row-meta"><?= homeTimeAgo($cl['last_accessed_at']) ?></span>
                             <i class="fas fa-chevron-right home-row-chev"></i>
                         </span>
-                    </a>
+                    </div>
                     <?php endforeach; ?>
                 </div>
             </div>

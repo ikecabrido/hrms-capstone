@@ -9,9 +9,8 @@ $instructorId = (int) ($employeeClass->getEmployeeId() ?? 0);
 // their existing course-scoped analytics.
 $analyticsScope = $analyticsScope ?? 'instructor';
 $isAdminScope = $analyticsScope === 'admin';
-$learnerProfileUrl = static function (int $learnerId) use ($isAdminScope): string {
-    $page = $isAdminScope ? 'admin/user-subpage/learner' : 'instructor/learner-profile';
-    return '?page=' . $page . '&id=' . $learnerId;
+$learnerProfileUrl = static function (int $learnerId): string {
+    return LearningProfileLink::url($learnerId, 'learner');
 };
 $scopeSql = $isAdminScope ? '' : ' AND c.instructor_id = :iid';
 $scopeParams = $isAdminScope ? [] : [':iid' => $instructorId];

@@ -204,7 +204,7 @@ $totalSteps = count($items);
 
                 <div class="home-row-meta" style="margin-top:0.6rem;">
                     <?php if (!empty($assignedPath['instructor_name'])): ?>
-                        <i class="fas fa-user-tie"></i> Designed by <?= htmlspecialchars($assignedPath['instructor_name']) ?>
+                        <i class="fas fa-user-tie"></i> Designed by <a href="<?= htmlspecialchars(LearningProfileLink::url((int) $assignedPath['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($assignedPath['instructor_name']) ?></a>
                         &nbsp;&bull;&nbsp;
                     <?php endif; ?>
                     <i class="fas fa-list-ol"></i> <?= $totalSteps ?> step<?= $totalSteps !== 1 ? 's' : '' ?>

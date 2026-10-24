@@ -112,7 +112,7 @@ include __DIR__ . '/profile-gradebook.php';
                     <div class="pfl-list-head">
                         <div>
                             <div class="pfl-list-title"><?= htmlspecialchars((string) ($enrollment['course_title'] ?? 'Untitled course'), ENT_QUOTES, 'UTF-8') ?></div>
-                            <div class="pfl-list-sub">by <?= htmlspecialchars($instructorName, ENT_QUOTES, 'UTF-8') ?></div>
+                            <div class="pfl-list-sub">by <?php if ((int) ($enrollment['instructor_id'] ?? 0) > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $enrollment['instructor_id'], LearningRole::forEmployee($pdo, (int) $enrollment['instructor_id'])), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($instructorName, ENT_QUOTES, 'UTF-8') ?></a><?php else: ?><?= htmlspecialchars($instructorName, ENT_QUOTES, 'UTF-8') ?><?php endif; ?></div>
                         </div>
                         <span class="pfl-badge <?= $enrollmentStatusClass($status) ?>"><?= htmlspecialchars(ucfirst(str_replace('_', ' ', $status !== '' ? $status : 'unknown')), ENT_QUOTES, 'UTF-8') ?></span>
                     </div>
@@ -229,13 +229,19 @@ include __DIR__ . '/profile-gradebook.php';
                 $planStatus = strtolower((string) ($plan['status'] ?? 'active'));
                 $planEmployeeName = (string) ($plan['employee_name'] ?? $profileData['full_name'] ?? 'N/A');
                 $successorName = trim((string) ($plan['successor_name'] ?? ''));
+                $planEmployeeId = (int) ($plan['employee_id'] ?? 0);
+                $successorId = (int) ($plan['successor_id'] ?? 0);
                 if ($successorName === '') {
                     $successorName = 'Not assigned';
                 }
                 $isSuccessor = (int) ($plan['successor_id'] ?? 0) === $employeeId;
                 $relationship = $isSuccessor
-                    ? 'Receives transfer from ' . $planEmployeeName
-                    : 'Successor: ' . $successorName;
+                    ? 'Receives transfer from ' . ($planEmployeeId > 0
+                        ? '<a href="' . htmlspecialchars(LearningProfileLink::url($planEmployeeId, LearningRole::forEmployee($pdo, $planEmployeeId)), ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($planEmployeeName, ENT_QUOTES, 'UTF-8') . '</a>'
+                        : htmlspecialchars($planEmployeeName, ENT_QUOTES, 'UTF-8'))
+                    : 'Successor: ' . ($successorId > 0
+                        ? '<a href="' . htmlspecialchars(LearningProfileLink::url($successorId, LearningRole::forEmployee($pdo, $successorId)), ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($successorName, ENT_QUOTES, 'UTF-8') . '</a>'
+                        : htmlspecialchars($successorName, ENT_QUOTES, 'UTF-8'));
                 $startLabel = $formatDate($plan['start_date'] ?? null);
                 $endLabel = $formatDate($plan['end_date'] ?? null);
                 $dateLabel = ($startLabel !== '—' || $endLabel !== '—') ? $startLabel . ' – ' . $endLabel : 'Dates not set';
@@ -246,9 +252,9 @@ include __DIR__ . '/profile-gradebook.php';
                 <div class="pfl-kt-row">
                     <div class="pfl-kt-icon"><i class="fas fa-right-left" aria-hidden="true"></i></div>
                     <div class="pfl-kt-main">
-                        <div class="pfl-kt-title"><?= htmlspecialchars($planEmployeeName, ENT_QUOTES, 'UTF-8') ?></div>
+                        <div class="pfl-kt-title"><?php if ($planEmployeeId > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url($planEmployeeId, LearningRole::forEmployee($pdo, $planEmployeeId)), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($planEmployeeName, ENT_QUOTES, 'UTF-8') ?></a><?php else: ?><?= htmlspecialchars($planEmployeeName, ENT_QUOTES, 'UTF-8') ?><?php endif; ?></div>
                         <div class="pfl-kt-meta">
-                            <?= htmlspecialchars($relationship, ENT_QUOTES, 'UTF-8') ?>
+                            <?= $relationship ?>
                             &bull; <?= htmlspecialchars($dateLabel, ENT_QUOTES, 'UTF-8') ?>
                             &bull; <?= $itemsDone ?>/<?= $itemsTotal ?> items done
                         </div>
