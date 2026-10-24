@@ -137,7 +137,7 @@ try {
 
                                 <!-- Next Steps Column -->
                                 <td>
-                                    <a href="index.php?page=schedule-interview&id=<?= urlencode($resume['application_id']) ?>" class="btn-schedule">
+                                    <a href="index.php?page=schedule-interview&id=<?= urlencode($resume['application_id']) ?>" class="badge-position">
                                         <i class="fas fa-calendar-plus"></i> Schedule
                                     </a>
                                 </td>
