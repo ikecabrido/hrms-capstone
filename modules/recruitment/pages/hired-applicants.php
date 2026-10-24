@@ -23,8 +23,18 @@ $message = $_GET['message'] ?? '';
     <?php endif; ?>
 
     <div class="table-container">
-        <table class="admin-table">
-            <thead>
+        <div class="hired-applicants-search-wrap">
+            <input
+                type="search"
+                id="hiredApplicantsSearch"
+                class="hired-applicants-search"
+                placeholder="Search by applicant name"
+                aria-label="Search hired applicants by name">
+        </div>
+
+        <div class="hired-applicants-scroll">
+            <table class="admin-table" id="hiredApplicantsTable">
+                <thead>
                 <tr>
                     <th>Applicant Name</th>
                     <th>Email</th>
@@ -37,7 +47,7 @@ $message = $_GET['message'] ?? '';
             <tbody>
                 <?php if (!empty($applications)): ?>
                     <?php foreach ($applications as $application): ?>
-                        <tr>
+                        <tr class="hired-applicant-row">
                             <td><strong><?= htmlspecialchars(trim(($application['first_name'] ?? '') . ' ' . ($application['last_name'] ?? ''), ' ') ?: 'N/A', ENT_QUOTES, 'UTF-8') ?></strong></td>
                             <td><?= htmlspecialchars($application['email'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars($application['phone'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
@@ -48,10 +58,14 @@ $message = $_GET['message'] ?? '';
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="6" style="text-align:center;padding:40px;color:#64748b;">No hired applicants found.</td>
+                        <td colspan="6" class="empty-state-cell">
+                            <i class="fas fa-folder-open empty-state-icon"></i>
+                            No hired applicants found.
+                        </td>
                     </tr>
                 <?php endif; ?>
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
