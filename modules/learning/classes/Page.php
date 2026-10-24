@@ -41,7 +41,6 @@ class Page {
             ['label' => 'User', 'page' => 'admin/user'],
             ['label' => 'Grade Book', 'page' => 'admin/gradebook'],
             ['label' => 'Analytics', 'page' => 'admin/analytics'],
-            ['label' => 'Instructor Analytics', 'page' => 'instructor/analytics'],
             ['label' => 'Workforce Inbox', 'page' => 'admin/workforce-integration'],
             ['label' => 'Calendar', 'page' => 'admin/calendar'],
             ['label' => 'Moderation', 'page' => 'admin/moderation'],
@@ -106,6 +105,11 @@ class Page {
         $requested = isset($_GET['page']) && is_string($_GET['page']) ? $_GET['page'] : '';
 
         if ($requested !== '' && in_array($requested, $this->allowed, true)) {
+            if ($requested === 'instructor/analytics' && $this->getLearningRole() === 'admin') {
+                header('Location: ?page=admin/analytics');
+                exit;
+            }
+
             if ($this->isPageAllowedForRole($requested)) {
                 return $requested;
             }

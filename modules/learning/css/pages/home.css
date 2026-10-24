@@ -568,6 +568,43 @@ a.home-row:hover .home-row-title {
     }
 }
 
+/* Wide desktop: give the chip group a little more room than its content and
+   spread the chips across it. The per-count caps keep short groups compact and
+   stop a wrapped row from stretching across the whole hero. */
+@media (min-width: 1100px) {
+    .home-hero-aside:has(.home-hero-chip) {
+        flex: 1 0 auto;
+    }
+
+    .home-hero-aside:has(.home-hero-chip:nth-child(2)) {
+        max-width: 240px;
+    }
+
+    .home-hero-aside:has(.home-hero-chip:nth-child(3)) {
+        max-width: 440px;
+    }
+
+    .home-hero-aside:has(.home-hero-chip:nth-child(4)) {
+        max-width: 560px;
+    }
+
+    .home-hero-aside:has(.home-hero-chip:nth-child(5)) {
+        max-width: 680px;
+    }
+
+    .home-hero-chips {
+        width: 100%;
+        justify-content: space-evenly;
+    }
+}
+
+@media (min-width: 721px) and (max-width: 1099px) {
+    .home-hero-chips {
+        width: 100%;
+        justify-content: space-evenly;
+    }
+}
+
 @media (max-width: 720px) {
     .home-hero {
         padding: 1.25rem;
@@ -583,11 +620,30 @@ a.home-row:hover .home-row-title {
         margin-left: 0;
     }
 
-    /* Distribute each wrapped chip row across the available width while
-       keeping the shared 0.5rem gutter as a minimum between chips. */
+    /* Two balanced columns keep every chip row evenly spaced. The odd chip is
+       centred across both columns, so three- and five-chip groups stay
+       symmetrical instead of leaving a ragged half-row. */
     .home-hero-chips {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
         width: 100%;
-        justify-content: space-evenly;
+        justify-items: center;
+    }
+
+    .home-hero-chip {
+        max-width: 100%;
+        padding: 0.4rem 0.55rem;
+        gap: 0.4rem;
+        font-size: 0.76rem;
+    }
+
+    .home-hero-chip i {
+        font-size: 0.76rem;
+    }
+
+    .home-hero-chip:last-child:nth-child(odd) {
+        grid-column: 1 / -1;
     }
 
     .home-stat {
@@ -611,6 +667,16 @@ a.home-row:hover .home-row-title {
 
     .home-heatmap {
         display: none;
+    }
+}
+
+@media (max-width: 389px) {
+    .home-hero-chips {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .home-hero-chip:last-child:nth-child(odd) {
+        grid-column: auto;
     }
 }
 

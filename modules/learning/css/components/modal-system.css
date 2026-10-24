@@ -211,6 +211,44 @@
     opacity: 0.85;
 }
 
+/* Entity tab icons are drawn as masks instead of relying on the Font Awesome
+   webfont. The CDN font can arrive after the modal opens, which left the
+   icon-only mobile tabs looking like empty pills. The existing <i> classes are
+   kept so the tab scripts and accessibility markup continue to work. */
+.entity-content-tabs .entity-content-tab i.fa-eye,
+.entity-content-tabs .entity-content-tab i.fa-sitemap,
+.entity-content-tabs .entity-content-tab i.fa-chart-line {
+    display: inline-block;
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: 0 0 0.9rem;
+    overflow: hidden;
+    background-color: currentColor;
+    font-size: 0 !important;
+    line-height: 1;
+    vertical-align: middle;
+    -webkit-mask-image: var(--entity-tab-icon);
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-image: var(--entity-tab-icon);
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+}
+
+.entity-content-tabs .entity-content-tab i.fa-eye {
+    --entity-tab-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M2%2012s3.5-7%2010-7%2010%207%2010%207-3.5%207-10%207S2%2012%202%2012z'/%3E%3Ccircle%20cx='12'%20cy='12'%20r='3'/%3E%3C/svg%3E");
+}
+
+.entity-content-tabs .entity-content-tab i.fa-sitemap {
+    --entity-tab-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='9'%20y='2'%20width='6'%20height='5'%20rx='1'/%3E%3Crect%20x='3'%20y='17'%20width='6'%20height='5'%20rx='1'/%3E%3Crect%20x='15'%20y='17'%20width='6'%20height='5'%20rx='1'/%3E%3Cpath%20d='M12%207v7M6%2017v-3h12v3'/%3E%3C/svg%3E");
+}
+
+.entity-content-tabs .entity-content-tab i.fa-chart-line {
+    --entity-tab-icon: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='black'%20stroke-width='2.2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M3%203v18h18'/%3E%3Cpath%20d='M7%2014l4-4%203%203%205-6'/%3E%3C/svg%3E");
+}
+
 .entity-content-tabs .entity-content-tab:hover:not(.active) {
     background: rgba(32, 0, 130, 0.06) !important;
     color: var(--ld-modal-accent) !important;
@@ -296,7 +334,9 @@
 
     .entity-content-actions {
         width: 100%;
-        justify-content: flex-start;
+        justify-content: space-evenly;
+        column-gap: 0;
+        row-gap: 0.5rem;
     }
 
     .entity-content-tabs {
@@ -305,7 +345,8 @@
     }
 
     .entity-content-tabs .entity-content-tab {
-        flex: 0 0 auto;
+        flex: 1 1 0;
+        min-width: 0;
     }
 
     .ld-modal-body,

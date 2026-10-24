@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 header('Content-Type: application/json; charset=utf-8');
 require_once dirname(__FILE__, 6) . '/database/db.php';
 require_once dirname(__FILE__, 4) . '/classes/LearningRole.php';
+require_once dirname(__FILE__, 4) . '/classes/LearningDatabaseTools.php';
 
 function importResponse(int $status, array $body): void
 {
@@ -102,7 +103,8 @@ if (empty($_SESSION['employee_id'])) {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     importResponse(405, ['success' => false, 'message' => 'Method not allowed.']);
 }
-if (LearningRole::forEmployee((new Database())->getConnection(), (int) $_SESSION['employee_id']) !== 'admin') {
+$appPdo = (new Database())->getConnection();
+if (LearningRole::forEmployee($appPdo, (int) $_SESSION['employee_id']) !== 'admin') {
     importResponse(403, ['success' => false, 'message' => 'Forbidden.']);
 }
 
@@ -117,7 +119,16 @@ if (strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION)) !== 'sql') 
     importResponse(415, ['success' => false, 'message' => 'Upload an .sql file created by the Learning database export.']);
 }
 
-$pdo = (new Database())->getConnection();
+try {
+    $pdo = LearningDatabaseTools::connection();
+} catch (Throwable $e) {
+    error_log('Learning data import could not open its database connection: ' . $e->getMessage());
+    importResponse(500, [
+        'success' => false,
+        'message' => 'The import database connection could not be opened. Check the import database credentials.',
+    ]);
+}
+
 $validateOnly = ($_POST['mode'] ?? 'import') === 'validate';
 $handle = fopen($file['tmp_name'], 'rb');
 if ($handle === false) {
@@ -148,6 +159,11 @@ try {
 
     while (($line = fgets($handle)) !== false) {
         $line = trim($line);
+        if (preg_match('/^(?:CREATE|ALTER|DROP|RENAME)\s+(?:TEMPORARY\s+)?TABLE\b/i', $line)) {
+            throw new InvalidArgumentException(
+                'This file contains table definitions. Use Apply schema file to create or change the tables, then import a file containing only INSERT statements.'
+            );
+        }
         if (strpos($line, 'INSERT INTO ') !== 0) {
             continue;
         }

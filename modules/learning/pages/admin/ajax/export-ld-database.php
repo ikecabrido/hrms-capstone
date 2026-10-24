@@ -5,6 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once dirname(__FILE__, 6) . '/database/db.php';
 require_once dirname(__FILE__, 4) . '/classes/LearningRole.php';
+require_once dirname(__FILE__, 4) . '/classes/LearningDatabaseTools.php';
 
 if (empty($_SESSION['employee_id'])) {
     http_response_code(401);
@@ -12,11 +13,13 @@ if (empty($_SESSION['employee_id'])) {
 }
 
 try {
-    $pdo = (new Database())->getConnection();
-    if (LearningRole::forEmployee($pdo, (int) $_SESSION['employee_id']) !== 'admin') {
+    $appPdo = (new Database())->getConnection();
+    if (LearningRole::forEmployee($appPdo, (int) $_SESSION['employee_id']) !== 'admin') {
         http_response_code(403);
         exit('Forbidden.');
     }
+
+    $pdo = LearningDatabaseTools::connection();
 
     $tables = $pdo->query("SELECT TABLE_NAME
         FROM information_schema.TABLES

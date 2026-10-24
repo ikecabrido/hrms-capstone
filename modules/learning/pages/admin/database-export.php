@@ -1,9 +1,10 @@
 <?php
 require_once dirname(__DIR__, 4) . '/database/db.php';
+require_once __DIR__ . '/../../classes/LearningDatabaseTools.php';
 
 $learningTableCount = 0;
 try {
-    $pdo = (new Database())->getConnection();
+    $pdo = LearningDatabaseTools::connection();
     $learningTableCount = (int) $pdo->query("SELECT COUNT(*)
         FROM information_schema.TABLES
         WHERE TABLE_SCHEMA = DATABASE()
@@ -61,7 +62,7 @@ try {
                     </form>
                     <p class="ldx-note is-info">
                         <i class="fas fa-circle-info" aria-hidden="true"></i>
-                        <span>Only literal INSERT statements for existing <code>ld_</code> tables are processed. Duplicate keys or any other error roll back the entire import.</span>
+                        <span>Only literal INSERT statements for existing <code>ld_</code> tables are processed. To create new tables, use <strong>Apply schema file</strong> below. Duplicate keys or any other error roll back the entire import.</span>
                     </p>
                 </section>
 

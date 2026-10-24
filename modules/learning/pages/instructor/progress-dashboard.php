@@ -4,6 +4,8 @@ require_once dirname(__DIR__, 4) . '/database/db.php';
 
 $employeeClass = new Employee();
 $instructorId = (int) ($employeeClass->getEmployeeId() ?? 0);
+$analyticsAllCourses = (($analyticsScope ?? '') === 'admin');
+$analyticsPage = $analyticsAllCourses ? 'admin/analytics' : 'instructor/analytics';
 
 $courses = [];
 $learners = [];
@@ -16,10 +18,14 @@ $weeklyTrend = [];
 try {
     $pdo = (new Database())->getConnection();
 
-    // Courses by this instructor
-    $stmt = $pdo->prepare("SELECT id, title, status FROM ld_course WHERE instructor_id = :iid ORDER BY title ASC");
-    $stmt->execute([':iid' => $instructorId]);
-    $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Courses by this instructor, or every course for admin analytics.
+    if ($analyticsAllCourses) {
+        $courses = $pdo->query("SELECT id, title, status FROM ld_course ORDER BY title ASC")->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $stmt = $pdo->prepare("SELECT id, title, status FROM ld_course WHERE instructor_id = :iid ORDER BY title ASC");
+        $stmt->execute([':iid' => $instructorId]);
+        $courses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     $courseIds = array_column($courses, 'id');
     if (!empty($courseIds)) {
@@ -234,7 +240,7 @@ try {
                 <div style="text-align:center;"><span style="font-size:0.75rem; color:var(--accent); font-weight:600;"><?= $cp['enrolled'] + $cp['in_progress'] ?></span><br><span style="font-size:0.65rem; color:#999;">active</span></div>
                 <div style="text-align:center;"><span style="font-size:0.75rem; color:var(--primary); font-weight:600;"><?= $cp['completed'] ?></span><br><span style="font-size:0.65rem; color:#999;">done</span></div>
                 <div style="text-align:center;"><span style="font-size:0.75rem; color:#666; font-weight:600;"><?= $cp['total'] ?></span><br><span style="font-size:0.65rem; color:#999;">total</span></div>
-                <div style="text-align:right;"><a href="?page=instructor/analytics&course_id=<?= $cp['id'] ?>" style="font-size:0.75rem; color:var(--primary); text-decoration:none; font-weight:600;">View →</a></div>
+                <div style="text-align:right;"><a href="?page=<?= $analyticsPage ?>&course_id=<?= $cp['id'] ?>" style="font-size:0.75rem; color:var(--primary); text-decoration:none; font-weight:600;">View →</a></div>
             </div>
             <?php endforeach; ?>
         </div>

@@ -5,6 +5,14 @@ require_once dirname(__DIR__, 4) . '/database/db.php';
 $employeeClass = new Employee();
 $instructorId = (int) ($employeeClass->getEmployeeId() ?? 0);
 
+// Admin analytics reuses this view with platform-wide data. Instructors keep
+// their existing course-scoped analytics.
+$analyticsScope = $analyticsScope ?? 'instructor';
+$isAdminScope = $analyticsScope === 'admin';
+$scopeSql = $isAdminScope ? '' : ' AND c.instructor_id = :iid';
+$scopeParams = $isAdminScope ? [] : [':iid' => $instructorId];
+$programScopeSql = $isAdminScope ? '' : ' AND p.instructor_id = :iid';
+
 $stats = ['my_courses' => 0, 'my_modules' => 0, 'my_learners' => 0, 'my_programs' => 0, 'completed' => 0, 'in_progress' => 0, 'avg_score' => 0, 'pass_rate' => 0, 'total_quizzes' => 0];
 $coursePerformance = [];
 $studentLeaderboard = [];
@@ -18,39 +26,39 @@ try {
     $pdo = (new Database())->getConnection();
 
     // Core stats
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_course WHERE instructor_id = :iid AND status IN ('active','draft')");
-    $stmt->execute([':iid' => $instructorId]);
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_course c WHERE 1=1 $scopeSql AND c.status IN ('active','draft')");
+    $stmt->execute($scopeParams);
     $stats['my_courses'] = (int) $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_module m JOIN ld_course c ON c.id = m.course_id WHERE c.instructor_id = :iid AND m.status = 'active'");
-    $stmt->execute([':iid' => $instructorId]);
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_module m JOIN ld_course c ON c.id = m.course_id WHERE 1=1 $scopeSql AND m.status = 'active'");
+    $stmt->execute($scopeParams);
     $stats['my_modules'] = (int) $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(DISTINCT e.learner_id) FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id WHERE c.instructor_id = :iid");
-    $stmt->execute([':iid' => $instructorId]);
+    $stmt = $pdo->prepare("SELECT COUNT(DISTINCT e.learner_id) FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id WHERE 1=1 $scopeSql");
+    $stmt->execute($scopeParams);
     $stats['my_learners'] = (int) $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_program WHERE instructor_id = :iid AND status = 'active'");
-    $stmt->execute([':iid' => $instructorId]);
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_program p WHERE 1=1 $programScopeSql AND p.status = 'active'");
+    $stmt->execute($scopeParams);
     $stats['my_programs'] = (int) $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id WHERE c.instructor_id = :iid AND e.status = 'completed'");
-    $stmt->execute([':iid' => $instructorId]);
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id WHERE 1=1 $scopeSql AND e.status = 'completed'");
+    $stmt->execute($scopeParams);
     $stats['completed'] = (int) $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id WHERE c.instructor_id = :iid AND e.status IN ('enrolled','in_progress')");
-    $stmt->execute([':iid' => $instructorId]);
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id WHERE 1=1 $scopeSql AND e.status IN ('enrolled','in_progress')");
+    $stmt->execute($scopeParams);
     $stats['in_progress'] = (int) $stmt->fetchColumn();
 
-    $stmt = $pdo->prepare("SELECT ROUND(COALESCE(AVG(g.final_score),0),1) FROM ld_grade g JOIN ld_course c ON c.id = g.course_id WHERE c.instructor_id = :iid");
-    $stmt->execute([':iid' => $instructorId]);
+    $stmt = $pdo->prepare("SELECT ROUND(COALESCE(AVG(g.final_score),0),1) FROM ld_grade g JOIN ld_course c ON c.id = g.course_id WHERE 1=1 $scopeSql");
+    $stmt->execute($scopeParams);
     $stats['avg_score'] = (float) $stmt->fetchColumn();
 
     $totalEnrollments = $stats['completed'] + $stats['in_progress'];
     $stats['pass_rate'] = $totalEnrollments > 0 ? round(($stats['completed'] / $totalEnrollments) * 100) : 0;
 
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_quiz q JOIN ld_module m ON m.id = q.module_id JOIN ld_course c ON c.id = m.course_id WHERE c.instructor_id = :iid AND q.status = 'active'");
-    $stmt->execute([':iid' => $instructorId]);
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM ld_quiz q JOIN ld_module m ON m.id = q.module_id JOIN ld_course c ON c.id = m.course_id WHERE 1=1 $scopeSql AND q.status = 'active'");
+    $stmt->execute($scopeParams);
     $stats['total_quizzes'] = (int) $stmt->fetchColumn();
 
     // Course performance
@@ -65,11 +73,11 @@ try {
         FROM ld_course c
         LEFT JOIN ld_enrollment e ON e.course_id = c.id
         LEFT JOIN ld_grade g ON g.course_id = c.id AND g.learner_id = e.learner_id
-        WHERE c.instructor_id = :iid AND c.status IN ('active','draft')
+        WHERE 1=1 $scopeSql AND c.status IN ('active','draft')
         GROUP BY c.id, c.title, c.status
         ORDER BY enrollment_count DESC
     ");
-    $coursePerformance->execute([':iid' => $instructorId]);
+    $coursePerformance->execute($scopeParams);
     $coursePerformance = $coursePerformance->fetchAll(PDO::FETCH_ASSOC);
 
     // Student leaderboard
@@ -86,12 +94,12 @@ try {
         LEFT JOIN em_employees emp ON emp.employee_id = e.learner_id
         LEFT JOIN em_positions pos ON pos.position_id = emp.position_id
         LEFT JOIN ld_grade g ON g.learner_id = e.learner_id AND g.course_id = e.course_id
-        WHERE c.instructor_id = :iid AND e.status IN ('enrolled','in_progress','completed')
+        WHERE 1=1 $scopeSql AND e.status IN ('enrolled','in_progress','completed')
         GROUP BY e.learner_id, emp.first_name, emp.last_name, pos.position_name
         ORDER BY avg_score DESC, courses_completed DESC
         LIMIT 20
     ");
-    $studentLeaderboard->execute([':iid' => $instructorId]);
+    $studentLeaderboard->execute($scopeParams);
     $studentLeaderboard = $studentLeaderboard->fetchAll(PDO::FETCH_ASSOC);
 
     // At-risk students (enrolled but inactive for 14+ days, or failing)
@@ -112,13 +120,13 @@ try {
         JOIN ld_course c ON c.id = e.course_id
         LEFT JOIN em_employees emp ON emp.employee_id = e.learner_id
         LEFT JOIN ld_grade g ON g.learner_id = e.learner_id AND g.course_id = e.course_id
-        WHERE c.instructor_id = :iid AND e.status IN ('enrolled','in_progress')
+        WHERE 1=1 $scopeSql AND e.status IN ('enrolled','in_progress')
         GROUP BY e.learner_id, emp.first_name, emp.last_name, c.title, e.status, e.last_accessed_at
         HAVING days_inactive > 14 OR avg_score < 60
         ORDER BY days_inactive DESC
         LIMIT 15
     ");
-    $atRiskStudents->execute([':iid' => $instructorId]);
+    $atRiskStudents->execute($scopeParams);
     $atRiskStudents = $atRiskStudents->fetchAll(PDO::FETCH_ASSOC);
 
     // Recent grades
@@ -128,20 +136,20 @@ try {
         FROM ld_grade g
         JOIN ld_course c ON c.id = g.course_id
         LEFT JOIN em_employees emp ON emp.employee_id = g.learner_id
-        WHERE c.instructor_id = :iid
+        WHERE 1=1 $scopeSql
         ORDER BY g.issued_at DESC LIMIT 15
     ");
-    $recentGrades->execute([':iid' => $instructorId]);
+    $recentGrades->execute($scopeParams);
     $recentGrades = $recentGrades->fetchAll(PDO::FETCH_ASSOC);
 
     // Monthly enrollments trend
     $monthlyEnrollments = $pdo->prepare("
         SELECT DATE_FORMAT(e.enrolled_at, '%Y-%m') AS month, COUNT(*) AS cnt
         FROM ld_enrollment e JOIN ld_course c ON c.id = e.course_id
-        WHERE c.instructor_id = :iid AND e.enrolled_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        WHERE 1=1 $scopeSql AND e.enrolled_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
         GROUP BY month ORDER BY month ASC
     ");
-    $monthlyEnrollments->execute([':iid' => $instructorId]);
+    $monthlyEnrollments->execute($scopeParams);
     $monthlyEnrollments = $monthlyEnrollments->fetchAll(PDO::FETCH_ASSOC);
 
     // Grade distribution
@@ -153,9 +161,9 @@ try {
             SUM(CASE WHEN g.final_score >= 60 AND g.final_score < 70 THEN 1 ELSE 0 END) AS grade_d,
             SUM(CASE WHEN g.final_score < 60 THEN 1 ELSE 0 END) AS grade_f,
             COUNT(*) AS total
-        FROM ld_grade g JOIN ld_course c ON c.id = g.course_id WHERE c.instructor_id = :iid
+        FROM ld_grade g JOIN ld_course c ON c.id = g.course_id WHERE 1=1 $scopeSql
     ");
-    $gradeDistribution->execute([':iid' => $instructorId]);
+    $gradeDistribution->execute($scopeParams);
     $gradeDistribution = $gradeDistribution->fetch(PDO::FETCH_ASSOC);
 
     // Course engagement (per-course breakdown)
@@ -167,10 +175,10 @@ try {
             (SELECT COUNT(*) FROM ld_quiz_session qs JOIN ld_enrollment e3 ON e3.course_id = c.id WHERE qs.learner_id = e3.learner_id AND qs.item_type = 'quiz' AND qs.status IN ('submitted','expired')) AS quizzes_taken,
             (SELECT ROUND(COALESCE(AVG(qs2.score),0),1) FROM ld_quiz_session qs2 JOIN ld_enrollment e4 ON e4.course_id = c.id WHERE qs2.learner_id = e4.learner_id AND qs2.item_type = 'quiz' AND qs2.status = 'submitted') AS avg_quiz_score
         FROM ld_course c
-        WHERE c.instructor_id = :iid AND c.status = 'active'
+        WHERE 1=1 $scopeSql AND c.status = 'active'
         ORDER BY c.title ASC
     ");
-    $courseEngagement->execute([':iid' => $instructorId]);
+    $courseEngagement->execute($scopeParams);
     $courseEngagement = $courseEngagement->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Throwable $e) {}
@@ -183,7 +191,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
         <section class="home-hero" aria-labelledby="ia-title">
             <div class="home-hero-main">
                 <h1 id="ia-title">Analytics</h1>
-                <p>How your courses, learners and grades are performing.</p>
+                <p><?= $isAdminScope ? 'How courses, learners and grades are performing across the platform.' : 'How your courses, learners and grades are performing.' ?></p>
             </div>
             <div class="home-hero-aside">
                 <div class="home-hero-chips">
@@ -302,7 +310,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                         <div class="an-empty">
                             <i class="fas fa-book-open"></i>
                             <strong>No courses yet</strong>
-                            <span>Courses you author will be ranked here.</span>
+                            <span><?= $isAdminScope ? 'Courses will be ranked here once learners enroll.' : 'Courses you author will be ranked here.' ?></span>
                         </div>
                         <?php else: ?>
                         <div class="an-table-wrap">
@@ -391,7 +399,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                         <div class="an-empty">
                             <i class="fas fa-users"></i>
                             <strong>No student data yet</strong>
-                            <span>Learners appear here once they enrol in your courses.</span>
+                            <span><?= $isAdminScope ? 'Learners appear here once they enrol in a course.' : 'Learners appear here once they enrol in your courses.' ?></span>
                         </div>
                         <?php else: ?>
                         <div class="an-table-wrap">
@@ -545,7 +553,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                         <div class="an-empty">
                             <i class="fas fa-book-open"></i>
                             <strong>No courses yet</strong>
-                            <span>Your courses and their enrolment figures appear here.</span>
+                            <span><?= $isAdminScope ? 'All courses and their enrolment figures appear here.' : 'Your courses and their enrolment figures appear here.' ?></span>
                         </div>
                         <?php else: ?>
                         <div class="an-table-wrap">
@@ -637,7 +645,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                             </div>
                             <?php endforeach; ?>
                         </div>
-                        <p class="an-note"><i class="fas fa-info-circle"></i> Based on the <?= $gdTotal ?> grade<?= $gdTotal === 1 ? '' : 's' ?> issued in your courses.</p>
+                        <p class="an-note"><i class="fas fa-info-circle"></i> Based on the <?= $gdTotal ?> grade<?= $gdTotal === 1 ? '' : 's' ?> issued <?= $isAdminScope ? 'across all courses' : 'in your courses' ?>.</p>
                         <?php endif; ?>
                     </div>
 

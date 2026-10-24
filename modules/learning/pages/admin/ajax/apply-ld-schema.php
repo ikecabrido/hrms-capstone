@@ -23,6 +23,7 @@ if (session_status() === PHP_SESSION_NONE) {
 header('Content-Type: application/json; charset=utf-8');
 require_once dirname(__FILE__, 6) . '/database/db.php';
 require_once dirname(__FILE__, 4) . '/classes/LearningRole.php';
+require_once dirname(__FILE__, 4) . '/classes/LearningDatabaseTools.php';
 require_once dirname(__FILE__, 4) . '/classes/CSRF.php';
 require_once dirname(__FILE__, 4) . '/classes/dberror.php';
 
@@ -400,13 +401,23 @@ if (!CSRF::validate(is_string($submittedToken) ? $submittedToken : '')) {
 }
 
 try {
-    $pdo = (new Database())->getConnection();
+    $appPdo = (new Database())->getConnection();
 } catch (Throwable $e) {
     DbError::json($e, 'admin/apply-ld-schema');
 }
 
-if (LearningRole::forEmployee($pdo, (int) $_SESSION['employee_id']) !== 'admin') {
+if (LearningRole::forEmployee($appPdo, (int) $_SESSION['employee_id']) !== 'admin') {
     ldSchemaResponse(403, ['success' => false, 'message' => 'Only administrators can change the Learning schema.']);
+}
+
+try {
+    $pdo = LearningDatabaseTools::connection();
+} catch (Throwable $e) {
+    error_log('Learning schema import could not open its database connection: ' . $e->getMessage());
+    ldSchemaResponse(500, [
+        'success' => false,
+        'message' => 'The import database connection could not be opened. Check the import database credentials.',
+    ]);
 }
 
 // ── Upload ───────────────────────────────────────────────────────────────────
