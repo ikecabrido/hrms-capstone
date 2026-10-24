@@ -62,11 +62,26 @@
 
 /* Table Card Container */
 .table-container {
-  background: #ffffff;
+  min-height: 500px;
+  max-height: 640px;
+  background: #fffefe;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 0.5rem;
+}
+
+.applications-table-container.is-empty {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.hired-applicants-scroll {
+  max-height: 500px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Filter Bar inside the Top of Table */
@@ -182,6 +197,43 @@
 
 .admin-table td {
   padding: 14px 16px;
+  vertical-align: middle;
+}
+
+.interview-results-search-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.interview-results-search {
+  width: 290px;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+}
+
+.hired-applicants-search-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.hired-applicants-search {
+  width: 290px;
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+}
+
+#applicationsTable tbody tr.applicant-row td {
+  padding: 18px;
   vertical-align: middle;
 }
 
@@ -399,6 +451,17 @@
   }
 }
 
+.interview-results-container {
+  max-height: none;
+  overflow: visible;
+}
+
+.interview-results-scroll {
+  max-height: 500px;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Table Data Elements */
 .cell-number {
   color: #64748b;
@@ -523,9 +586,19 @@
 
 /* Empty State */
 .empty-state-cell {
+  height: 450px;
   text-align: center;
-  padding: 48px 16px;
+  vertical-align: bottom;
+  padding: 48px 16px 24px;
   color: #94a3b8;
+}
+
+.interview-empty-state {
+  height: 400px;
+  padding: 40px;
+  color: #64748b;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .empty-state-icon {

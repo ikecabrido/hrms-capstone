@@ -18,9 +18,9 @@ try {
 
 </div>
 
-<div class="module-content">
+<div class="module-content schedule-tracker-content">
 
-    <div class="table-filter-bar" style="margin-bottom:16px;">
+    <div class="table-filter-bar">
         <button type="button" class="filter-pill active-all stage-filter" data-stage-filter="all">
             All
         </button>
@@ -36,10 +36,17 @@ try {
         <button type="button" class="filter-pill stage-filter" data-stage-filter="completed">
             Completed
         </button>
+        <input
+            type="search"
+            id="scheduleSearch"
+            class="schedule-search"
+            placeholder="Search by ID or applicant name"
+            aria-label="Search schedules by application ID or applicant name">
     </div>
 
-    <table class="admin-table schedule-table">
-        <thead>
+    <div class="schedule-table-scroll">
+        <table class="admin-table schedule-table">
+            <thead>
             <tr>
                 <th width="80">App ID</th>
                 <th>Applicant Name</th>
@@ -162,8 +169,7 @@ try {
             <?php else: ?>
 
                 <tr>
-                    <td colspan="8"
-                        style="text-align:center;padding:50px;color:#94a3b8;">
+                    <td colspan="10" class="empty-state-cell">
 
                         <?php if (!empty($error)): ?>
 
@@ -171,6 +177,7 @@ try {
 
                         <?php else: ?>
 
+                            <i class="fas fa-folder-open empty-state-icon"></i>
                             No schedules found.
 
                         <?php endif; ?>
@@ -180,8 +187,9 @@ try {
 
             <?php endif; ?>
 
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 </div>
 </div>
 

@@ -42,7 +42,17 @@ try {
     <?php endif; ?>
 
     <div class="table-container">
-        <table class="admin-table">
+        <div class="offered-search-wrap">
+            <input
+                type="search"
+                id="offeredListSearch"
+                class="offered-search"
+                placeholder="Search by ID, candidate, or position"
+                aria-label="Search offers by ID, candidate name, or position details">
+        </div>
+
+        <div class="offered-table-scroll">
+            <table class="admin-table" id="offeredListTable">
             <thead>
                 <tr>
                     <th>ID</th>
@@ -259,11 +269,15 @@ try {
 
                 <?php else: ?>
                     <tr>
-                        <td colspan="6" style="text-align:center; padding:30px;">No offers found.</td>
+                        <td colspan="6" class="offered-empty-state">
+                            <i class="fas fa-folder-open empty-state-icon"></i>
+                            No offers found.
+                        </td>
                     </tr>
                 <?php endif; ?>
             </tbody>
-        </table>
+            </table>
+        </div>
         <!-- Applicant Details Modal -->
         <div id="applicantDetailsModal" class="applicant-modal">
 
