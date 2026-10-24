@@ -68,7 +68,7 @@
   display: grid;
   grid-template-columns: minmax(300px, 0.9fr) minmax(360px, 1.1fr);
   gap: 1.25rem;
-  align-items: start;
+  align-items: stretch;
 }
 
 .posting-details-panel,
@@ -78,6 +78,11 @@
   border-radius: 10px;
   padding: 1.5rem;
   box-shadow: 0 8px 22px rgba(15, 42, 67, 0.07);
+}
+
+.posting-details-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 .posting-panel-heading {
@@ -114,13 +119,19 @@
 }
 
 .job-detail-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-start;
   margin: 0.35rem 0 0;
 }
 .job-detail-list div {
   display: flex;
+  flex: 1 1 0;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.95rem 0;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
   border-bottom: 1px solid #edf2f5;
 }
 .job-detail-list div:last-child {
@@ -235,15 +246,6 @@
   }
   .job-posting-layout {
     grid-template-columns: 1fr;
-  }
-  .job-detail-list div {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-  .job-detail-list dd {
-    max-width: 100%;
-    text-align: left;
   }
 }
 
