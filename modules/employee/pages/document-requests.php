@@ -79,12 +79,14 @@ $employees = $employeeClass->getEmployees();
                 <select id="dr-request-document-type" name="document_type" required>
                     <option value="">Select Document Type *</option>
                     <option value="Certificate of Employment">Certificate of Employment</option>
-                    <option value="Government ID">Government ID</option>
-                    <option value="Contract">Contract</option>
-                    <option value="NBI Clearance">NBI Clearance</option>
-                    <option value="Medical Certificate">Medical Certificate</option>
-                    <option value="Resume">Resume</option>
-                    <option value="Other">Other</option>
+                    <option value="Quitclaim and Release">Quitclaim and Release</option>
+                    <option value="Leave Agreement">Leave Agreement</option>
+                    <option value="Training Bond">Training Bond</option>
+                    <option value="Study Leave Agreement">Study Leave Agreement</option>
+                    <option value="Non-Compete Agreement">Non-Compete Agreement</option>
+                    <option value="Return-to-Work Agreement">Return-to-Work Agreement</option>
+                    <option value="Clearance Survey">Clearance Survey</option>
+                    <option value="Exit Clearance">Exit Clearance</option>
                 </select>
                 <input type="text" id="dr-request-other-type" placeholder="Document name *" style="display:none;">
                 <select name="priority" required>
