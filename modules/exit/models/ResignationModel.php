@@ -616,6 +616,8 @@ class ResignationModel extends ExitManagementModel
                     $res = $resStmt->fetch(PDO::FETCH_ASSOC);
                     if ($res) {
                         $this->createPendingInterviewForApprovedCase('resignation', (int)$resignationId, (string)($res['employee_id'] ?? ''), 'Auto-created on resignation approval');
+                        $surveyModel = new SurveyModel();
+                        $surveyModel->syncPendingSurveys();
                     }
 
                     return true;

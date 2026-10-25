@@ -97,6 +97,12 @@ class SettlementController extends ExitManagementController
             $settlementId = $this->settlementModel->createSettlement($data);
             if ($settlementId) {
                 $this->resignationModel->createPayrollClearanceRequest($settlementId, $_SESSION['employee_id'] ?? null, 'HR requested payroll settlement calculation');
+                try {
+                    $surveyModel = new SurveyModel();
+                    $surveyModel->syncPendingSurveys();
+                } catch (Throwable $e) {
+                    error_log('Settlement sync failed after create: ' . $e->getMessage());
+                }
             }
 
             return [
@@ -142,6 +148,13 @@ class SettlementController extends ExitManagementController
             $success = $this->settlementModel->updateSettlement($settlementId, $data);
 
             if ($success) {
+                try {
+                    $surveyModel = new SurveyModel();
+                    $surveyModel->syncPendingSurveys();
+                } catch (Throwable $e) {
+                    error_log('Settlement sync failed after update: ' . $e->getMessage());
+                }
+
                 return ['success' => true, 'message' => 'Settlement updated successfully'];
             }
 
@@ -312,6 +325,13 @@ class SettlementController extends ExitManagementController
             $success = $this->settlementModel->updateSettlementStatus($settlementId, 'approved', $approvedBy);
 
             if ($success) {
+                try {
+                    $surveyModel = new SurveyModel();
+                    $surveyModel->syncPendingSurveys();
+                } catch (Throwable $e) {
+                    error_log('Settlement sync failed after approval: ' . $e->getMessage());
+                }
+
                 return [
                     'success' => true,
                     'message' => 'Settlement approved successfully'

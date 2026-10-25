@@ -109,6 +109,13 @@ class TerminationController extends ExitManagementController
 
             $success = $this->terminationModel->updateTerminationStatus($terminationId, $targetStatus, $approvedBy, $comments);
             if ($success) {
+                try {
+                    $surveyModel = new SurveyModel();
+                    $surveyModel->syncPendingSurveys();
+                } catch (Throwable $e) {
+                    error_log('Survey sync failed after termination approval: ' . $e->getMessage());
+                }
+
                 return ['success' => true, 'message' => "Termination updated to $targetStatus successfully"];
             }
 

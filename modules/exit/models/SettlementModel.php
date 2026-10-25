@@ -328,7 +328,12 @@ class SettlementModel extends ExitManagementModel
             SET status = ?, updated_at = NOW()
             WHERE settlement_id = ?
         ");
-        return $stmt->execute([$status, $settlementId]);
+        $updated = $stmt->execute([$status, $settlementId]);
+        if ($updated && in_array($status, ['approved', 'paid'], true)) {
+            $surveyModel = new SurveyModel();
+            $surveyModel->syncPendingSurveys();
+        }
+        return $updated;
     }
 
     /**

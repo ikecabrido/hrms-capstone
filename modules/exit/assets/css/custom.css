@@ -4548,12 +4548,12 @@ body.dark-mode #survey-status-filter option {
 
 .survey-star:hover,
 .survey-star.preview {
-  color: #f4b400;
+  color: #f5b301;
   transform: scale(1.08);
 }
 
 .survey-star.selected {
-  color: #f4b400;
+  color: #f5b301;
 }
 
 .survey-rating-label {

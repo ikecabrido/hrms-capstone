@@ -3401,15 +3401,13 @@ function viewScheduledSurvey(surveyId) {
             $('body').removeClass('modal-open');
         });
 
-        $(document).off('click.surveyRating').on('click.surveyRating', '.rating-star, .rating-star-btn', function() {
+        $('#scheduledSurveyViewModal').off('click.surveyRating').on('click.surveyRating', '.rating-star, .rating-star-btn', function() {
             const $btn = $(this);
             const rating = $btn.data('rating');
             const $container = $btn.closest('.rating-row');
             if (!$container.length) return;
-            // reset stars within this question only
             $container.find('.rating-star, .rating-star-btn').removeClass('btn-warning').addClass('btn-outline-warning');
             $container.find('.rating-star[data-rating] i').removeClass('fas').addClass('far');
-            // set selected stars icon and button style
             $container.find('.rating-star').each(function() {
                 const val = $(this).data('rating');
                 if (val <= rating) {
@@ -6068,10 +6066,37 @@ function normalizeSurveyStatus(status) {
     if (['completed', 'completed_surveys', 'completed_survey'].includes(normalized)) {
         return 'completed';
     }
-    if (['scheduled', 'approved'].includes(normalized)) {
+    if (normalized === 'in_progress') {
+        return 'in_progress';
+    }
+    if (normalized === 'scheduled') {
         return 'scheduled';
     }
+    if (normalized === 'approved') {
+        return 'approved';
+    }
+    if (normalized === 'pending') {
+        return 'pending';
+    }
     return 'pending';
+}
+
+function canStartSurvey(survey) {
+    if (!survey || typeof survey !== 'object') {
+        return false;
+    }
+
+    const status = normalizeSurveyStatus(survey.approval_status || survey.status || '');
+    const scheduledDate = String(survey.scheduled_date || '').trim();
+    const scheduledTime = String(survey.scheduled_time || '').trim();
+    const exitCaseType = String(survey.exit_case_type || '').trim();
+    const exitCaseId = String(survey.exit_case_id || '').trim();
+
+    return status === 'scheduled'
+        && scheduledDate !== ''
+        && scheduledTime !== ''
+        && exitCaseType !== ''
+        && exitCaseId !== '';
 }
 
 function formatSurveyScheduledValue(survey) {
@@ -6081,6 +6106,23 @@ function formatSurveyScheduledValue(survey) {
         return 'Not yet scheduled';
     }
     return `${date || 'N/A'}${time ? ' ' + time : ''}`;
+}
+
+function getSurveyStatusText(status) {
+    const normalized = normalizeSurveyStatus(status);
+    if (normalized === 'pending') {
+        return 'Pending - waiting for scheduling';
+    }
+    if (normalized === 'scheduled') {
+        return 'Scheduled';
+    }
+    if (normalized === 'in_progress') {
+        return 'In progress';
+    }
+    if (normalized === 'completed') {
+        return 'Completed';
+    }
+    return 'Pending';
 }
 
 function getRatingLabel(value) {
@@ -6098,7 +6140,9 @@ function updateSurveyProgressBadge() {
     const total = $('#manageSurveyQuestions .survey-rating-control').length;
     const rated = $('#manageSurveyQuestions .survey-rating-control input[type="radio"]:checked').length;
     $('#manageSurveyProgressBadge').text(`${rated} / ${total} rated`);
-    $('#completeSurveyBtn').toggleClass('d-none', !(total > 0 && rated === total));
+    const surveyStatus = $('#manageSurveyModal').attr('data-status') || 'pending';
+    const canComplete = ['scheduled', 'in_progress'].includes(surveyStatus) && total > 0 && rated === total;
+    $('#completeSurveyBtn').toggleClass('d-none', !canComplete).prop('disabled', !canComplete);
     return { total, rated };
 }
 
@@ -6114,26 +6158,31 @@ function renderManageSurveyQuestions(questions, readOnlyMode) {
 
     questions.forEach((question, index) => {
         const questionId = question.id;
-        const currentValue = question.rating !== null && question.rating !== undefined && question.rating !== '' ? Number(question.rating) : null;
+        const currentValue = question.rating !== null && question.rating !== undefined && question.rating !== '' ? Number(question.rating) : 0;
 
         const $control = $(`
             <div class="survey-rating-control ${readOnlyMode ? 'readonly' : ''}" data-question-id="${questionId}">
                 <div class="survey-rating-header">
                     <strong>${index + 1}. ${question.question_text || 'Question'}</strong>
-                    <span class="survey-rating-badge">${currentValue ? currentValue : 'Unrated'}</span>
+                    <span class="survey-rating-badge">${currentValue > 0 ? currentValue : 'Unrated'}</span>
                 </div>
-                <div class="survey-rating-label">${currentValue ? getRatingLabel(currentValue) : 'No rating selected'}</div>
+                <div class="survey-rating-label">${currentValue > 0 ? getRatingLabel(currentValue) : 'No rating selected'}</div>
                 <div class="survey-rating-row" aria-label="Rate this question from 1 to 5">
                     ${[1, 2, 3, 4, 5].map(value => `
                         <button type="button"
-                            class="survey-star ${currentValue === value ? 'selected' : ''}"
+                            class="survey-star ${currentValue >= value ? 'selected' : ''}"
                             data-question-id="${questionId}"
                             data-value="${value}"
                             aria-label="${value} star${value > 1 ? 's' : ''}"
                             ${readOnlyMode ? 'disabled' : ''}>
-                            <i class="${currentValue === value ? 'fas' : 'far'} fa-star"></i>
+                            <i class="${currentValue >= value ? 'fas' : 'far'} fa-star"></i>
                         </button>
                     `).join('')}
+                    <div class="survey-rating-scale-label">Very poor</div>
+                    <div class="survey-rating-scale-label">Poor</div>
+                    <div class="survey-rating-scale-label">Average</div>
+                    <div class="survey-rating-scale-label">Good</div>
+                    <div class="survey-rating-scale-label">Excellent</div>
                     ${[1, 2, 3, 4, 5].map(value => `
                         <input type="radio"
                             class="survey-rating-radios"
@@ -6169,36 +6218,41 @@ function renderManageSurveyQuestions(questions, readOnlyMode) {
                 const selectedValue = Number($control.find('input[type="radio"]:checked').val()) || 0;
                 $control.find('.survey-star').removeClass('preview');
                 $control.find('.survey-star').each(function() {
-                    if (Number($(this).data('value')) <= selectedValue) {
-                        $(this).addClass('selected');
-                    } else {
-                        $(this).removeClass('selected');
-                    }
+                    const starValue = Number($(this).data('value'));
+                    $(this).toggleClass('selected', starValue <= selectedValue);
+                    $(this).find('i').toggleClass('fas', starValue <= selectedValue).toggleClass('far', starValue > selectedValue);
                 });
             });
 
         $container.off('click', '.survey-star')
             .on('click', '.survey-star', function() {
-                const value = Number($(this).data('value'));
+                const clickedValue = Number($(this).data('value'));
                 const $control = $(this).closest('.survey-rating-control');
-                $control.find('input[type="radio"]').prop('checked', false);
-                $control.find(`input[type="radio"][value="${value}"]`).prop('checked', true);
-                $control.find('.survey-star').removeClass('selected preview');
-                $control.find('.survey-star').each(function() {
-                    if (Number($(this).data('value')) <= value) {
-                        $(this).addClass('selected');
-                        $(this).find('i').removeClass('far').addClass('fas');
-                    } else {
-                        $(this).find('i').removeClass('fas').addClass('far');
-                    }
+                const $radios = $control.find('input[type="radio"]');
+                const selectedValue = Number($radios.filter(':checked').val()) || 0;
+                const nextValue = clickedValue === selectedValue ? 0 : clickedValue;
+
+                $radios.prop('checked', false);
+                if (nextValue > 0) {
+                    $radios.filter(`[value="${nextValue}"]`).prop('checked', true);
+                }
+
+                $control.find('.survey-star').removeClass('selected preview').each(function() {
+                    const starValue = Number($(this).data('value'));
+                    const isSelected = starValue <= nextValue;
+                    $(this).toggleClass('selected', isSelected);
+                    $(this).find('i').toggleClass('fas', isSelected).toggleClass('far', !isSelected);
                 });
-                $control.find('.survey-rating-label').text(getRatingLabel(value));
-                $control.find('.survey-rating-badge').text(value);
+
+                const labelValue = nextValue > 0 ? getRatingLabel(nextValue) : 'No rating selected';
+                const badgeValue = nextValue > 0 ? nextValue : 'Unrated';
+                $control.find('.survey-rating-label').text(labelValue);
+                $control.find('.survey-rating-badge').text(badgeValue);
                 updateSurveyProgressBadge();
             });
 
-        $container.on('keydown', '.survey-star', function(event) {
-            if (event.key === 'Enter' || event.key === ' ') {
+        $container.off('keydown', '.survey-star').on('keydown', '.survey-star', function(event) {
+            if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
                 event.preventDefault();
                 $(this).trigger('click');
             }
@@ -6206,19 +6260,52 @@ function renderManageSurveyQuestions(questions, readOnlyMode) {
     }
 }
 
-function setManageSurveyReadOnly(isReadOnly) {
-    const $modal = $('#manageSurveyModal');
-    $modal.find('#manageSurveyDate, #manageSurveyTime').prop('disabled', isReadOnly);
-    $modal.find('#saveManageSurveyBtn').toggle(!isReadOnly);
-    $modal.find('#completeSurveyBtn').toggle(!isReadOnly);
-    $('#manageSurveyQuestions').toggleClass('readonly', isReadOnly);
-    if (isReadOnly) {
-        $('#manageSurveyQuestions .survey-star').prop('disabled', true);
-        $('#manageSurveyQuestions input[type="radio"]').prop('disabled', true);
-    }
-}
-
 function openManageSurvey(surveyId) {
+    const $all = $('#manageSurveyModal');
+    if ($all.length > 1) {
+        $all.filter(function () { return this.parentNode === document.body; }).remove();
+    }
+    const $manageModal = $('#manageSurveyModal').appendTo('body');
+    $manageModal.off('hidden.bs.modal.manageSurvey').on('hidden.bs.modal.manageSurvey', function () {
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+    });
+
+    const $dateField = $('#manageSurveyDate');
+    const $timeField = $('#manageSurveyTime');
+    const updateSaveButtonState = function() {
+        const currentStatus = normalizeSurveyStatus($manageModal.attr('data-status') || '');
+        const hasDate = !!($dateField.val() || '').trim();
+        const hasTime = !!($timeField.val() || '').trim();
+        const $saveBtn = $manageModal.find('#saveManageSurveyBtn');
+        const $startBtn = $manageModal.find('#startSurveyBtn');
+
+        $dateField.prop('disabled', !['pending', 'scheduled'].includes(currentStatus));
+        $timeField.prop('disabled', !['pending', 'scheduled'].includes(currentStatus));
+
+        if (currentStatus === 'completed') {
+            $saveBtn.addClass('d-none').prop('disabled', true);
+        } else if (currentStatus === 'pending') {
+            $saveBtn.removeClass('d-none').prop('disabled', !(hasDate && hasTime)).html('<i class="fas fa-calendar-check"></i> Schedule Survey');
+        } else if (['scheduled', 'in_progress'].includes(currentStatus)) {
+            $saveBtn.removeClass('d-none').prop('disabled', false).html('<i class="fas fa-save"></i> Save');
+        } else {
+            $saveBtn.addClass('d-none').prop('disabled', true);
+        }
+
+        const startAllowed = canStartSurvey({
+            approval_status: currentStatus,
+            scheduled_date: $dateField.val() || $manageModal.attr('data-scheduled-date') || '',
+            scheduled_time: $timeField.val() || $manageModal.attr('data-scheduled-time') || '',
+            exit_case_type: $manageModal.attr('data-exit-case-type') || '',
+            exit_case_id: $manageModal.attr('data-exit-case-id') || ''
+        });
+        $startBtn.toggleClass('d-none', !(currentStatus === 'scheduled' && startAllowed)).prop('disabled', !(currentStatus === 'scheduled' && startAllowed));
+    };
+
+    $dateField.off('input.manageSurveySchedule change.manageSurveySchedule').on('input.manageSurveySchedule change.manageSurveySchedule', updateSaveButtonState);
+    $timeField.off('input.manageSurveySchedule change.manageSurveySchedule').on('input.manageSurveySchedule change.manageSurveySchedule', updateSaveButtonState);
+
     $.post('exit_management.php', {
         ajax_action: 'get_survey',
         controller: 'survey',
@@ -6233,28 +6320,64 @@ function openManageSurvey(surveyId) {
         const surveyStatus = normalizeSurveyStatus(survey.approval_status || survey.status);
         const allQuestions = Array.isArray(survey.questions) ? survey.questions : [];
         const hasCompleteStatus = surveyStatus === 'completed';
+        const isStarted = surveyStatus === 'in_progress' || hasCompleteStatus;
 
-        $('#manageSurveyModal').attr('data-survey-id', survey.id);
-        $('#manageSurveyModal').attr('data-status', surveyStatus);
+        $manageModal.attr('data-survey-id', survey.id);
+        $manageModal.attr('data-status', surveyStatus);
+        $manageModal.attr('data-scheduled-date', survey.scheduled_date || '');
+        $manageModal.attr('data-scheduled-time', survey.scheduled_time || '');
+        $manageModal.attr('data-exit-case-type', survey.exit_case_type || '');
+        $manageModal.attr('data-exit-case-id', survey.exit_case_id || '');
         $('#manageSurveyEmployee').text(survey.employee_name || 'Unknown Employee');
         $('#manageSurveyCaseLabel').text(`${survey.exit_case_type ? survey.exit_case_type.charAt(0).toUpperCase() + survey.exit_case_type.slice(1) : 'Case'} #${survey.exit_case_id || 'N/A'}`);
         $('#manageSurveyDate').val(survey.scheduled_date || '');
         $('#manageSurveyTime').val(survey.scheduled_time || '');
-        renderManageSurveyQuestions(allQuestions, hasCompleteStatus || surveyStatus === 'completed');
 
-        const allRated = allQuestions.length > 0 && allQuestions.every(question => Number(question.rating) >= 1 && Number(question.rating) <= 5);
-        const showComplete = surveyStatus === 'scheduled' && allRated;
-        $('#completeSurveyBtn').toggleClass('d-none', !showComplete).prop('disabled', !showComplete);
-        $('#saveManageSurveyBtn').prop('disabled', hasCompleteStatus);
+        const $modal = $('#manageSurveyModal');
+        $modal.find('#manageSurveyQuestions').toggle(isStarted || hasCompleteStatus);
+        $modal.find('#completeSurveyBtn').toggleClass('d-none', !(isStarted && allQuestions.length > 0 && allQuestions.every(question => Number(question.rating) >= 1 && Number(question.rating) <= 5))).prop('disabled', !(isStarted && allQuestions.length > 0 && allQuestions.every(question => Number(question.rating) >= 1 && Number(question.rating) <= 5)));
 
-        $('#manageSurveyModal').modal('show');
+        if (!isStarted && !hasCompleteStatus) {
+            $modal.find('#manageSurveyQuestions').empty().html('<div class="alert alert-info mb-0">The survey has not started yet. Schedule it, then click Start Survey to begin the rating flow.</div>');
+        } else {
+            renderManageSurveyQuestions(allQuestions, hasCompleteStatus || surveyStatus === 'completed');
+        }
+
+        $('#manageSurveyProgressBadge').text(isStarted ? `${allQuestions.filter(q => Number(q.rating) >= 1 && Number(q.rating) <= 5).length} / ${allQuestions.length} rated` : '0 / 0 rated');
+        updateSaveButtonState();
+
+        $manageModal.modal('show');
     }, 'json').fail(function() {
         showToast('error', 'Failed to open survey management modal.');
     });
 }
 
-$('#saveManageSurveyBtn').on('click', saveSurveyManagementChanges);
-$('#completeSurveyBtn').on('click', function() {
+$(document).off('click.manageSurvey', '#saveManageSurveyBtn').on('click.manageSurvey', '#saveManageSurveyBtn', saveSurveyManagementChanges);
+$(document).off('click.manageSurvey', '#startSurveyBtn').on('click.manageSurvey', '#startSurveyBtn', function() {
+    const surveyId = Number($('#manageSurveyModal').attr('data-survey-id'));
+    if (!surveyId) {
+        return;
+    }
+
+    $.post('exit_management.php', {
+        ajax_action: 'start_survey',
+        controller: 'survey',
+        survey_id: surveyId
+    }, function(response) {
+        if (response && response.success) {
+            $('#manageSurveyModal').attr('data-status', 'in_progress');
+            $('#manageSurveyModal').find('#startSurveyBtn').addClass('d-none');
+            $('#manageSurveyModal').find('#manageSurveyQuestions').show();
+            openManageSurvey(surveyId);
+            showToast('success', response.message || 'Survey started successfully.');
+        } else {
+            showToast('error', (response && response.message) || 'Unable to start the survey.');
+        }
+    }, 'json').fail(function() {
+        showToast('error', 'Failed to start the survey.');
+    });
+});
+$(document).off('click.manageSurvey', '#completeSurveyBtn').on('click.manageSurvey', '#completeSurveyBtn', function() {
     const surveyId = Number($('#manageSurveyModal').attr('data-survey-id'));
     if (surveyId) {
         confirmCompleteSurvey(surveyId);
@@ -6317,6 +6440,13 @@ function saveSurveyManagementChanges() {
             return $.Deferred().reject();
         }
 
+        if (surveyStatus === 'pending' && scheduledDate && scheduledTime) {
+            openManageSurvey(surveyId);
+            loadSurveysTable($('#survey-status-filter').val() || 'all', 1);
+            showToast('success', response && response.message ? response.message : 'Survey scheduled successfully.');
+            return $.Deferred().resolve({ success: true, message: 'Survey scheduled successfully.' });
+        }
+
         if (ratings.length > 0) {
             return $.post('exit_management.php', {
                 ajax_action: 'save_survey_ratings',
@@ -6330,6 +6460,10 @@ function saveSurveyManagementChanges() {
     }).then(function(response) {
         if (response && response.success === false) {
             showToast('error', response.message || 'Unable to save the ratings.');
+            return;
+        }
+
+        if (surveyStatus === 'pending' && scheduledDate && scheduledTime) {
             return;
         }
 
@@ -6365,7 +6499,7 @@ function loadSurveysTable(status = 'all', page = 1, limit = 10, searchTerm = '')
         const rows = Array.isArray(response && response.data) ? response.data : [];
 
         if (rows.length > 0) {
-            const statusOrder = { pending: 0, scheduled: 1, completed: 2 };
+            const statusOrder = { pending: 0, approved: 1, scheduled: 2, in_progress: 3, completed: 4 };
             rows.sort((a, b) => {
                 const aStatus = normalizeSurveyStatus(a.approval_status || a.status);
                 const bStatus = normalizeSurveyStatus(b.approval_status || b.status);
@@ -6430,6 +6564,7 @@ function getStatusBadge(status) {
         'rejected_by_legal': 'Rejected by Legal',
         'withdrawn': 'Withdrawn',
         'completed': 'Completed',
+        'in_progress': 'In Progress',
         'active': 'Active',
         'inactive': 'Inactive',
         'scheduled': 'Scheduled',
@@ -6452,6 +6587,7 @@ function getStatusBadge(status) {
         'rejected_by_legal': 'badge badge-danger',
         'withdrawn': 'badge badge-secondary',
         'completed': 'badge badge-success',
+        'in_progress': 'badge badge-primary',
         'active': 'badge badge-primary',
         'inactive': 'badge badge-secondary',
         'scheduled': 'badge badge-info',
@@ -7381,7 +7517,16 @@ function answerSurvey(surveyId) {
             initializeSurveyWizard(survey);
 
             loadEligiblePostExitFeedbackCases('#answerSurveyCaseSelect', function() {
-                $('#answerSurveyModal').modal('show');
+                const $all = $('#answerSurveyModal');
+                if ($all.length > 1) {
+                    $all.filter(function () { return this.parentNode === document.body; }).remove();
+                }
+                const $answerModal = $('#answerSurveyModal').appendTo('body');
+                $answerModal.off('hidden.bs.modal.answerSurvey').on('hidden.bs.modal.answerSurvey', function () {
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open');
+                });
+                $answerModal.modal('show');
                 updateAnswerSurveySubmitState();
             });
         } else {

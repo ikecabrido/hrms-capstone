@@ -173,6 +173,13 @@ class ResignationController extends ExitManagementController
             $success = $this->resignationModel->updateResignationStatus($resignationId, $targetStatus, $approvedBy, $comments);
 
             if ($success) {
+                try {
+                    $surveyModel = new SurveyModel();
+                    $surveyModel->syncPendingSurveys();
+                } catch (Throwable $e) {
+                    error_log('Survey sync failed after resignation approval: ' . $e->getMessage());
+                }
+
                 return [
                     'success' => true,
                     'message' => "Resignation updated to $targetStatus successfully"

@@ -314,6 +314,13 @@ class ExitInterviewController extends ExitManagementController
             $success = $this->interviewModel->updateInterviewStatus($interviewId, 'completed');
 
             if ($success) {
+                try {
+                    $surveyModel = new SurveyModel();
+                    $surveyModel->syncPendingSurveys();
+                } catch (Throwable $e) {
+                    error_log('Survey sync failed after interview approval: ' . $e->getMessage());
+                }
+
                 return [
                     'success' => true,
                     'message' => 'Interview approved successfully'

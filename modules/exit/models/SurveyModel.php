@@ -29,7 +29,7 @@ class SurveyModel extends ExitManagementModel
                 created_by INT NULL,
                 created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                approval_status ENUM('pending','draft','scheduled','approved','completed','archived') NOT NULL DEFAULT 'pending',
+                approval_status ENUM('pending','draft','scheduled','in_progress','approved','completed','archived') NOT NULL DEFAULT 'pending',
                 employee_status_updated TINYINT(1) NOT NULL DEFAULT 0
             )");
         }
@@ -40,7 +40,7 @@ class SurveyModel extends ExitManagementModel
             ['exit_case_id', 'int(11) NULL'],
             ['scheduled_date', 'date NULL'],
             ['scheduled_time', 'time NULL'],
-            ['approval_status', "enum('pending','draft','scheduled','approved','completed','archived') NOT NULL DEFAULT 'pending'"],
+            ['approval_status', "enum('pending','draft','scheduled','in_progress','approved','completed','archived') NOT NULL DEFAULT 'pending'"],
             ['employee_status_updated', 'tinyint(1) NOT NULL DEFAULT 0']
         ];
 
@@ -51,7 +51,13 @@ class SurveyModel extends ExitManagementModel
         }
 
         if ($this->columnExists('exit_surveys', 'approval_status')) {
-            $this->db->exec("ALTER TABLE exit_surveys MODIFY COLUMN approval_status ENUM('pending','draft','scheduled','approved','completed','archived') NOT NULL DEFAULT 'pending'");
+            $columnStmt = $this->db->query("SHOW COLUMNS FROM exit_surveys LIKE 'approval_status'");
+            $columnInfo = $columnStmt->fetch(PDO::FETCH_ASSOC);
+            $columnType = isset($columnInfo['Type']) ? (string)$columnInfo['Type'] : '';
+
+            if ($columnType !== '' && stripos($columnType, 'in_progress') === false) {
+                $this->db->exec("ALTER TABLE exit_surveys MODIFY COLUMN approval_status ENUM('pending','draft','scheduled','in_progress','approved','completed','archived') NOT NULL DEFAULT 'pending'");
+            }
         }
 
         if ($this->columnExists('exit_surveys', 'start_date')) {
@@ -107,12 +113,7 @@ class SurveyModel extends ExitManagementModel
             return;
         }
 
-        $countStmt = $this->db->query('SELECT COUNT(*) FROM exit_post_survey_question_bank');
-        if ((int)$countStmt->fetchColumn() > 0) {
-            return;
-        }
-
-        $rows = [
+        $activeRows = [
             ['How would you rate your overall satisfaction with the company?', 'overall', 1],
             ['How would you rate how well the role matched your expectations?', 'role', 2],
             ['How would you rate the support you received from your supervisor?', 'supervisor', 3],
@@ -127,16 +128,39 @@ class SurveyModel extends ExitManagementModel
             ['How would you rate your work-life balance?', 'work_life_balance', 12],
             ['How would you rate your working conditions and tools?', 'working_conditions', 13],
             ['How would you rate the company culture?', 'culture', 14],
-            ['How would you rate the clarity of company policies?', 'policies', 15],
-            ['How would you rate how the exit process was handled?', 'exit_process', 16],
-            ['How would you rate the final settlement process?', 'settlement', 17],
-            ['How would you rate the likelihood of recommending the company?', 'recommendation', 18],
+            ['How would you rate the exit process and final settlement handling?', 'exit_process_settlement', 15],
         ];
 
-        $stmt = $this->db->prepare('INSERT INTO exit_post_survey_question_bank (question_text, category, is_active, sort_order) VALUES (?, ?, 1, ?)');
-        foreach ($rows as $row) {
-            $stmt->execute([$row[0], $row[1], $row[2]]);
+        $inactiveRows = [
+            ['How would you rate the clarity of company policies?', 'policies', 16],
+            ['How would you rate the likelihood of recommending the company?', 'recommendation', 17],
+            ['How would you rate the final settlement process?', 'settlement', 18],
+        ];
+
+        $allRows = array_merge($activeRows, $inactiveRows);
+        $existing = $this->db->query('SELECT question_text FROM exit_post_survey_question_bank')->fetchAll(PDO::FETCH_COLUMN);
+        $existingSet = array_fill_keys(array_map('strval', $existing), true);
+
+        $insertStmt = $this->db->prepare('INSERT INTO exit_post_survey_question_bank (question_text, category, is_active, sort_order) VALUES (?, ?, ?, ?)');
+        foreach ($allRows as $row) {
+            $questionText = $row[0];
+            if (!isset($existingSet[$questionText])) {
+                $insertStmt->execute([$questionText, $row[1], in_array($questionText, array_map(fn ($item) => $item[0], $activeRows), true) ? 1 : 0, $row[2]]);
+            }
         }
+
+        $activeTexts = array_map(fn ($row) => $row[0], $activeRows);
+        $inactiveTexts = array_map(fn ($row) => $row[0], $inactiveRows);
+
+        if (!empty($activeTexts)) {
+            $this->db->prepare('UPDATE exit_post_survey_question_bank SET is_active = 1 WHERE question_text IN (' . implode(',', array_fill(0, count($activeTexts), '?')) . ')')->execute($activeTexts);
+        }
+
+        if (!empty($inactiveTexts)) {
+            $this->db->prepare('UPDATE exit_post_survey_question_bank SET is_active = 0 WHERE question_text IN (' . implode(',', array_fill(0, count($inactiveTexts), '?')) . ')')->execute($inactiveTexts);
+        }
+
+        $this->db->exec('UPDATE exit_post_survey_question_bank SET is_active = CASE WHEN sort_order <= 15 THEN 1 ELSE 0 END');
     }
 
     public function syncPendingSurveys(): int
@@ -237,12 +261,13 @@ class SurveyModel extends ExitManagementModel
         $exitCaseType = !empty($data['exit_case_type']) ? $data['exit_case_type'] : null;
         $exitCaseId = !empty($data['exit_case_id']) ? (int)$data['exit_case_id'] : null;
         $scheduledDate = !empty($data['scheduled_date']) ? $data['scheduled_date'] : ($data['start_date'] ?? null);
-        $scheduledTime = !empty($data['scheduled_time']) ? $data['scheduled_time'] : '09:00:00';
+        $scheduledTime = !empty($data['scheduled_time']) ? $data['scheduled_time'] : null;
+        $approvalStatus = (!empty($scheduledDate) && !empty($scheduledTime)) ? 'scheduled' : 'pending';
 
         $stmt = $this->db->prepare("
             INSERT INTO exit_surveys (title, description, target_audience, employee_id, exit_case_type, exit_case_id,
                                     start_date, end_date, scheduled_date, scheduled_time, status, created_by, created_at, approval_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, NOW(), 'scheduled')
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, NOW(), ?)
         ");
 
         $stmt->execute([
@@ -256,7 +281,8 @@ class SurveyModel extends ExitManagementModel
             $data['end_date'] ?? $scheduledDate,
             $scheduledDate,
             $scheduledTime,
-            $data['created_by'] ?? null
+            $data['created_by'] ?? null,
+            $approvalStatus
         ]);
 
         $surveyId = (int)$this->db->lastInsertId();
@@ -796,8 +822,14 @@ class SurveyModel extends ExitManagementModel
         $whereClause = "";
 
         if ($status && $status !== 'all') {
-            $whereClause = " WHERE s.status = :status";
-            $params['status'] = $status;
+            $validApprovalStatuses = ['pending', 'draft', 'scheduled', 'in_progress', 'completed', 'archived'];
+            if (in_array($status, $validApprovalStatuses, true)) {
+                $whereClause = " WHERE s.approval_status = :approval_status";
+                $params['approval_status'] = $status;
+            } else {
+                $whereClause = " WHERE s.status = :status";
+                $params['status'] = $status;
+            }
         }
 
         if (!empty($search)) {
@@ -845,7 +877,7 @@ class SurveyModel extends ExitManagementModel
         }
 
         $status = (string)($survey['approval_status'] ?? '');
-        if (!in_array($status, ['pending', 'scheduled'], true)) {
+        if (!in_array($status, ['pending', 'scheduled', 'in_progress'], true)) {
             return false;
         }
 
@@ -853,7 +885,7 @@ class SurveyModel extends ExitManagementModel
         try {
             $questionCount = (int)$this->db->query("SELECT COUNT(*) FROM exit_survey_questions WHERE survey_id = {$surveyId}")->fetchColumn();
             if ((int)$questionCount === 0) {
-                $bankRows = $this->db->prepare('SELECT question_text FROM exit_post_survey_question_bank WHERE is_active = 1 ORDER BY sort_order ASC, id ASC');
+                $bankRows = $this->db->prepare('SELECT question_text FROM exit_post_survey_question_bank WHERE is_active = 1 ORDER BY sort_order ASC, id ASC LIMIT 15');
                 $bankRows->execute();
                 $insertQuestion = $this->db->prepare('INSERT INTO exit_survey_questions (survey_id, question_text, question_type, required, order_num, created_at) VALUES (?, ?, "rating", 1, ?, NOW())');
                 $orderIndex = 1;
@@ -874,6 +906,49 @@ class SurveyModel extends ExitManagementModel
         }
     }
 
+    public function startSurvey(int $surveyId): array
+    {
+        $this->ensureSurveyScheduleColumns();
+
+        $survey = $this->getSurveyById($surveyId);
+        if (!$survey) {
+            return ['success' => false, 'message' => 'Survey not found'];
+        }
+
+        $status = (string)($survey['approval_status'] ?? '');
+        if ($status !== 'scheduled') {
+            return ['success' => false, 'message' => 'Survey is not scheduled yet.'];
+        }
+
+        if (empty($survey['scheduled_date']) || empty($survey['scheduled_time'])) {
+            return ['success' => false, 'message' => 'Survey is missing a scheduled date or time.'];
+        }
+
+        $caseType = $survey['exit_case_type'] ?? null;
+        $caseId = isset($survey['exit_case_id']) && $survey['exit_case_id'] !== null ? (int)$survey['exit_case_id'] : 0;
+        $employeeId = isset($survey['employee_id']) && $survey['employee_id'] !== null && $survey['employee_id'] !== '' ? (int)$survey['employee_id'] : 0;
+
+        if (empty($caseType) || $caseId <= 0) {
+            return ['success' => false, 'message' => 'Survey must be linked to an approved exit case before it can start.'];
+        }
+
+        if (!$this->isExitCaseEligibleForPostExitFeedback($caseType, $caseId, $employeeId)) {
+            return ['success' => false, 'message' => 'Survey cannot start because the linked exit case is not approved or required exit steps are not complete.'];
+        }
+
+        try {
+            $stmt = $this->db->prepare("UPDATE exit_surveys SET approval_status = 'in_progress', status = 'active', updated_at = NOW() WHERE id = ?");
+            if ($stmt->execute([$surveyId])) {
+                return ['success' => true, 'message' => 'Survey started successfully'];
+            }
+
+            return ['success' => false, 'message' => 'Database error: survey update failed'];
+        } catch (Exception $e) {
+            error_log('Survey start error: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        }
+    }
+
     public function saveSurveyRatings(int $surveyId, array $ratings): array
     {
         $survey = $this->getSurveyById($surveyId);
@@ -881,8 +956,8 @@ class SurveyModel extends ExitManagementModel
             return ['success' => false, 'message' => 'Survey not found'];
         }
 
-        if (($survey['approval_status'] ?? '') !== 'scheduled') {
-            return ['success' => false, 'message' => 'Ratings can only be saved while the survey is scheduled.'];
+        if (!in_array((string)($survey['approval_status'] ?? ''), ['scheduled', 'in_progress'], true)) {
+            return ['success' => false, 'message' => 'Ratings can only be saved while the survey is scheduled or in progress.'];
         }
 
         $questionMap = [];
@@ -934,20 +1009,25 @@ class SurveyModel extends ExitManagementModel
             return ['success' => false, 'message' => 'Survey not found'];
         }
 
-        if (($survey['approval_status'] ?? '') !== 'scheduled') {
-            return ['success' => false, 'message' => 'Only scheduled surveys can be completed.'];
+        if (!in_array((string)($survey['approval_status'] ?? ''), ['scheduled', 'in_progress'], true)) {
+            return ['success' => false, 'message' => 'Only scheduled or in-progress surveys can be completed.'];
         }
 
         $questions = $this->getSurveyQuestions($surveyId);
         $missing = [];
+        $ratedQuestionCount = 0;
+
         foreach ($questions as $question) {
             $rating = isset($question['rating']) && $question['rating'] !== null && $question['rating'] !== '' ? (int)$question['rating'] : null;
             if ($rating === null || $rating < 1 || $rating > 5) {
                 $missing[] = (int)$question['id'];
+                continue;
             }
+
+            $ratedQuestionCount++;
         }
 
-        if (!empty($missing)) {
+        if ($ratedQuestionCount !== count($questions) || !empty($missing)) {
             return ['success' => false, 'message' => 'All questions must be rated before completion.', 'missing' => $missing];
         }
 

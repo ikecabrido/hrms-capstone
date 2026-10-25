@@ -833,6 +833,11 @@ class KnowledgeTransferModel extends ExitManagementModel
         $updated = $this->setLdWorkflowState($planId, 'approved', $notes !== '' ? $notes : 'Approved by Exit staff.', $actorId > 0 ? $actorId : (int)($_SESSION['employee_id'] ?? 0));
         $this->db->prepare("UPDATE exit_knowledge_transfer_plans SET status = 'completed', completed_at = COALESCE(completed_at, NOW()), updated_at = NOW() WHERE id = ?")->execute([$planId]);
 
+        if ($updated) {
+            $surveyModel = new SurveyModel();
+            $surveyModel->syncPendingSurveys();
+        }
+
         return [
             'success' => $updated,
             'message' => $updated ? 'Knowledge transfer plan approved.' : 'Failed to approve the knowledge transfer plan.',

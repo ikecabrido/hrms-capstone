@@ -625,11 +625,20 @@ class KnowledgeTransferController extends ExitManagementController
                 return $this->transferModel->syncAllPendingLdProgress();
 
             case 'approve_kt_plan':
-                return $this->transferModel->approveKtPlan(
+                $result = $this->transferModel->approveKtPlan(
                     (int)($data['plan_id'] ?? 0),
                     (int)($data['actor_id'] ?? ($_SESSION['employee_id'] ?? 0)),
                     (string)($data['notes'] ?? '')
                 );
+
+                try {
+                    $surveyModel = new SurveyModel();
+                    $surveyModel->syncPendingSurveys();
+                } catch (Throwable $e) {
+                    error_log('Survey sync failed after knowledge transfer approval: ' . $e->getMessage());
+                }
+
+                return $result;
 
             case 'return_kt_to_ld':
                 return $this->transferModel->returnKtToLd(

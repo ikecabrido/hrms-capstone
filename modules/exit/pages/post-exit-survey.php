@@ -89,10 +89,13 @@ $currentRoleName = $_SESSION['role_name'] ?? 'Exit';
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
                     <div>
+                        <button type="button" class="btn btn-primary d-none" id="startSurveyBtn">
+                            <i class="fas fa-play mr-2"></i>Start Survey
+                        </button>
                         <button type="button" class="btn btn-success d-none" id="completeSurveyBtn">
                             <i class="fas fa-check-circle mr-2"></i>Complete Survey
                         </button>
-                        <button type="button" class="btn btn-primary" id="saveManageSurveyBtn">
+                        <button type="button" class="btn btn-primary d-none" id="saveManageSurveyBtn">
                             <i class="fas fa-save mr-2"></i>Save
                         </button>
                     </div>

@@ -723,7 +723,12 @@ class ExitInterviewModel extends ExitManagementModel
                 SET status = ?, completed_at = NOW(), approved_by = COALESCE(approved_by, ?), approved_at = COALESCE(approved_at, NOW()), updated_at = NOW()
                 WHERE id = ?
             ");
-            return $stmt->execute([$status, $_SESSION['employee_id'] ?? null, $interviewId]);
+            $updated = $stmt->execute([$status, $_SESSION['employee_id'] ?? null, $interviewId]);
+            if ($updated) {
+                $surveyModel = new SurveyModel();
+                $surveyModel->syncPendingSurveys();
+            }
+            return $updated;
         }
 
         $stmt = $this->db->prepare("

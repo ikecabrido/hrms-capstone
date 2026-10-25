@@ -312,7 +312,7 @@ class ExitManagementController
                 LEFT JOIN em_employees e ON e.employee_id = s.employee_id
                 LEFT JOIN exit_resignations r ON s.exit_case_type = 'resignation' AND s.exit_case_id = r.id
                 LEFT JOIN exit_terminations t ON s.exit_case_type = 'termination' AND s.exit_case_id = t.id
-                WHERE s.approval_status IN ('pending', 'draft', 'scheduled')
+                WHERE s.approval_status IN ('pending', 'draft', 'scheduled', 'in_progress')
                   AND s.scheduled_date IS NOT NULL
                   AND s.scheduled_date BETWEEN ? AND ?
                   AND (

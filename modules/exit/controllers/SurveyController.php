@@ -105,6 +105,19 @@ class SurveyController extends ExitManagementController
         }
     }
 
+    public function startSurvey(int $surveyId): array
+    {
+        try {
+            $result = $this->surveyModel->startSurvey($surveyId);
+            return [
+                'success' => !empty($result['success']) && $result['success'] === true,
+                'message' => $result['message'] ?? 'Unable to start survey'
+            ];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
     public function saveSurveyRatings(int $surveyId, array $ratings): array
     {
         try {
@@ -252,6 +265,9 @@ class SurveyController extends ExitManagementController
                     $data['scheduled_date'] ?? '',
                     $data['scheduled_time'] ?? '09:00:00'
                 );
+
+            case 'start_survey':
+                return $this->startSurvey($data['survey_id'] ?? 0);
 
             case 'save_survey_ratings':
                 return $this->saveSurveyRatings(

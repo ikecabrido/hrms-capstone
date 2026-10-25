@@ -597,6 +597,8 @@ class TerminationModel extends ExitManagementModel
                 $term = $termStmt->fetch(PDO::FETCH_ASSOC);
                 if ($term) {
                     $this->createPendingInterviewForApprovedCase('termination', (int)$terminationId, (string)($term['employee_id'] ?? ''), 'Auto-created on termination approval');
+                    $surveyModel = new SurveyModel();
+                    $surveyModel->syncPendingSurveys();
                 }
 
                 return true;
