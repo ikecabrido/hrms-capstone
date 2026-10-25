@@ -2483,4 +2483,456 @@ class ApplicationController
             exit;
         }
     }
+    /**
+     * Display details of a hired applicant.
+     *
+     * The ID passed in the URL is the original application ID.
+     */
+    public function showHiredApplicant()
+    {
+        $applicationId = isset($_GET['id'])
+            ? (int) $_GET['id']
+            : 0;
+
+        if ($applicationId <= 0) {
+            header('Location: index.php?page=hired-applicants');
+            exit;
+        }
+
+        try {
+            $db = $this->getDB();
+
+            $stmt = $db->prepare("
+            SELECT
+                h.id AS hired_id,
+                h.application_id,
+                h.position_id,
+                h.department_id,
+                h.first_name,
+                h.middle_name,
+                h.last_name,
+                h.email,
+                h.phone,
+                h.address,
+                h.position,
+                h.department,
+                h.base_job,
+                h.salary,
+                h.hired_at,
+
+                a.age,
+                a.gender,
+                a.birthplace,
+                a.birthdate,
+                a.civil_status,
+                a.citizenship,
+                a.religion,
+                a.permanent_address,
+                a.resume
+
+            FROM rao_hired h
+
+            LEFT JOIN rao_applications a
+                ON a.id = h.application_id
+
+            WHERE h.application_id = :application_id
+
+            LIMIT 1
+        ");
+
+            $stmt->execute([
+                ':application_id' => $applicationId
+            ]);
+
+            $application = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$application) {
+                $_SESSION['error'] = 'Hired applicant not found.';
+                header('Location: index.php?page=hired-applicants');
+                exit;
+            }
+
+            $stmt = $db->prepare("
+            SELECT *
+            FROM rao_education
+            WHERE application_id = :application_id
+        ");
+
+            $stmt->execute([
+                ':application_id' => $applicationId
+            ]);
+
+            $education = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmt = $db->prepare("
+            SELECT *
+            FROM rao_experience
+            WHERE application_id = :application_id
+        ");
+
+            $stmt->execute([
+                ':application_id' => $applicationId
+            ]);
+
+            $experience = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            /*
+         * Check whether the applicant has already been transferred
+         * to the employee table.
+         */
+            $stmt = $db->prepare("
+            SELECT employee_id, employee_code
+            FROM em_employees
+            WHERE email = :email
+            LIMIT 1
+        ");
+
+            $stmt->execute([
+                ':email' => $application['email']
+            ]);
+
+            $existingEmployee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            require __DIR__ . '/../pages/hired-applicant.php';
+        } catch (Throwable $e) {
+            error_log(
+                'ApplicationController::showHiredApplicant: ' .
+                    $e->getMessage()
+            );
+
+            $_SESSION['error'] = 'Unable to load hired applicant details.';
+            header('Location: index.php?page=hired-applicants');
+            exit;
+        }
+    }
+
+
+    /**
+     * Transfer a hired applicant into em_employees.
+     *
+     * This method deliberately does not delete the original hired record.
+     */
+
+    public function moveToEmployee()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: index.php?page=hired-applicants');
+            exit;
+        }
+
+        $applicationId = filter_input(
+            INPUT_POST,
+            'application_id',
+            FILTER_VALIDATE_INT
+        );
+
+        if (!$applicationId || $applicationId <= 0) {
+            $_SESSION['error'] = 'Invalid hired applicant ID.';
+            header('Location: index.php?page=hired-applicants');
+            exit;
+        }
+
+        $db = null;
+
+        try {
+            $db = $this->getDB();
+            $db->beginTransaction();
+
+            /*
+         * Retrieve the exact hired applicant and the original
+         * application details.
+         */
+            $stmt = $db->prepare("
+            SELECT
+                h.application_id,
+                h.position_id,
+                h.department_id,
+                h.first_name,
+                h.middle_name,
+                h.last_name,
+                h.email,
+                h.phone,
+                h.address,
+                h.position,
+                h.department,
+                h.salary,
+
+                a.gender,
+                a.birthdate,
+                a.birthplace,
+                a.civil_status,
+                a.citizenship,
+                a.religion,
+                a.current_address,
+                a.permanent_address,
+                a.address AS application_address
+
+            FROM rao_hired h
+
+            LEFT JOIN rao_applications a
+                ON a.id = h.application_id
+
+            WHERE h.application_id = :application_id
+
+            LIMIT 1
+            FOR UPDATE
+        ");
+
+            $stmt->execute([
+                ':application_id' => $applicationId
+            ]);
+
+            $hired = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$hired) {
+                throw new Exception(
+                    'Hired applicant record was not found.'
+                );
+            }
+
+            /*
+         * Validate the required employee information.
+         */
+            $email = trim($hired['email'] ?? '');
+
+            if (
+                $email === '' ||
+                !filter_var($email, FILTER_VALIDATE_EMAIL)
+            ) {
+                throw new Exception(
+                    'The hired applicant must have a valid email address.'
+                );
+            }
+
+            if (
+                empty($hired['position_id']) ||
+                empty($hired['department_id'])
+            ) {
+                throw new Exception(
+                    'The applicant must have a valid position and department.'
+                );
+            }
+
+            $firstName = trim($hired['first_name'] ?? '');
+            $middleName = trim($hired['middle_name'] ?? '');
+            $lastName = trim($hired['last_name'] ?? '');
+
+            if ($firstName === '' || $lastName === '') {
+                throw new Exception(
+                    'The applicant must have a first name and last name.'
+                );
+            }
+
+            /*
+         * Prevent duplicate employee records.
+         *
+         * Include archived records too, so an existing employee
+         * is not accidentally duplicated.
+         */
+            $stmt = $db->prepare("
+            SELECT employee_id, employee_code
+            FROM em_employees
+            WHERE LOWER(TRIM(email)) = LOWER(TRIM(:email))
+            LIMIT 1
+        ");
+
+            $stmt->execute([
+                ':email' => $email
+            ]);
+
+            $existingEmployee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($existingEmployee) {
+                throw new Exception(
+                    'This applicant already exists in Employees' .
+                        (!empty($existingEmployee['employee_code'])
+                            ? ' (' . $existingEmployee['employee_code'] . ')'
+                            : '') .
+                        '.'
+                );
+            }
+
+            /*
+         * Generate the next employee code.
+         * This query recognizes codes such as EMP-000029
+         * and EMP-001010.
+         */
+            $stmt = $db->query("
+            SELECT MAX(
+                CAST(SUBSTRING(employee_code, 5) AS UNSIGNED)
+            ) AS last_number
+            FROM em_employees
+            WHERE employee_code REGEXP '^EMP-[0-9]+$'
+            FOR UPDATE
+        ");
+
+            $lastNumber = (int) $stmt->fetchColumn();
+
+            $employeeCode = 'EMP-' . str_pad(
+                (string) ($lastNumber + 1),
+                6,
+                '0',
+                STR_PAD_LEFT
+            );
+
+            /*
+         * Map application fields to employee fields.
+         */
+            $phone = trim($hired['phone'] ?? '');
+            $currentAddress = trim(
+                $hired['current_address'] ??
+                    $hired['address'] ??
+                    $hired['application_address'] ??
+                    ''
+            );
+
+            $permanentAddress = trim(
+                $hired['permanent_address'] ??
+                    $hired['application_address'] ??
+                    $currentAddress
+            );
+
+            $gender = trim($hired['gender'] ?? '');
+            $birthDate = trim($hired['birthdate'] ?? '');
+            $birthPlace = trim($hired['birthplace'] ?? '');
+            $civilStatus = trim($hired['civil_status'] ?? '');
+            $citizenship = trim($hired['citizenship'] ?? '');
+            $religion = trim($hired['religion'] ?? '');
+
+            /*
+         * Insert the employee.
+         *
+         * user_id, role_id, and unit_id are intentionally omitted
+         * because they require values from the employee/user setup.
+         */
+            $stmt = $db->prepare("
+            INSERT INTO em_employees (
+                employee_code,
+                department_id,
+                position_id,
+                first_name,
+                middle_name,
+                last_name,
+                gender,
+                birth_date,
+                birth_place,
+                civil_status,
+                citizenship,
+                religion,
+                email,
+                mobile_no,
+                current_address,
+                permanent_address,
+                hire_date,
+                employment_status,
+                employment_type,
+                negotiated_salary,
+                created_at,
+                updated_at
+            ) VALUES (
+                :employee_code,
+                :department_id,
+                :position_id,
+                :first_name,
+                :middle_name,
+                :last_name,
+                :gender,
+                :birth_date,
+                :birth_place,
+                :civil_status,
+                :citizenship,
+                :religion,
+                :email,
+                :mobile_no,
+                :current_address,
+                :permanent_address,
+                CURDATE(),
+                'Active',
+                'Full-time',
+                :negotiated_salary,
+                NOW(),
+                NOW()
+            )
+        ");
+
+            $stmt->execute([
+                ':employee_code' => $employeeCode,
+                ':department_id' => (int) $hired['department_id'],
+                ':position_id' => (int) $hired['position_id'],
+                ':first_name' => $firstName,
+                ':middle_name' => $middleName !== '' ? $middleName : null,
+                ':last_name' => $lastName,
+                ':gender' => $gender !== '' ? $gender : null,
+                ':birth_date' => $birthDate !== '' ? $birthDate : null,
+                ':birth_place' => $birthPlace !== '' ? $birthPlace : null,
+                ':civil_status' => $civilStatus !== '' ? $civilStatus : null,
+                ':citizenship' => $citizenship !== '' ? $citizenship : null,
+                ':religion' => $religion !== '' ? $religion : null,
+                ':email' => $email,
+                ':mobile_no' => $phone !== '' ? $phone : null,
+                ':current_address' => $currentAddress !== '' ? $currentAddress : null,
+                ':permanent_address' => $permanentAddress !== '' ? $permanentAddress : null,
+                ':negotiated_salary' => (float) ($hired['salary'] ?? 0)
+            ]);
+
+            $employeeId = (int) $db->lastInsertId();
+
+            if ($employeeId <= 0) {
+                throw new Exception(
+                    'The employee record could not be created.'
+                );
+            }
+
+            /*
+         * Verify the employee record before committing.
+         */
+            $stmt = $db->prepare("
+            SELECT employee_id, employee_code
+            FROM em_employees
+            WHERE employee_id = :employee_id
+            LIMIT 1
+        ");
+
+            $stmt->execute([
+                ':employee_id' => $employeeId
+            ]);
+
+            $createdEmployee = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$createdEmployee) {
+                throw new Exception(
+                    'Employee record verification failed.'
+                );
+            }
+
+            $db->commit();
+
+            $_SESSION['success'] =
+                'Applicant successfully transferred to Employees. ' .
+                'Employee Code: ' . $employeeCode;
+
+            header(
+                'Location: index.php?page=hired-applicant&id=' .
+                    $applicationId
+            );
+            exit;
+        } catch (Throwable $e) {
+            if ($db instanceof PDO && $db->inTransaction()) {
+                $db->rollBack();
+            }
+
+            error_log(
+                'ApplicationController::moveToEmployee: ' .
+                    $e->getMessage()
+            );
+
+            $_SESSION['error'] = $e->getMessage();
+
+            header(
+                'Location: index.php?page=hired-applicant&id=' .
+                    $applicationId
+            );
+            exit;
+        }
+    }
 }
