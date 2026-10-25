@@ -4,15 +4,38 @@ namespace App\Controllers;
 require_once __DIR__ . '/../../../database/db.php';
 
 use App\Models\Recognition;
+use App\Models\RecognitionCycle;
 use Database;
 
 class RecognitionController
 {
     private $recognition;
+    private $recognitionCycle;
 
     public function __construct()
     {
         $this->recognition = new Recognition();
+        $this->recognitionCycle = new RecognitionCycle();
+    }
+
+    public function getMonthlyRecognitionCycle($monthYear, $includePrivate = false)
+    {
+        return $this->recognitionCycle->preview($monthYear, $includePrivate);
+    }
+
+    public function approveMonthlyRecognitionCycle(
+        $monthYear,
+        array $selectedEmployeeIds,
+        $employeeOfMonthId,
+        $approvedBy
+    )
+    {
+        return $this->recognitionCycle->approve(
+            $monthYear,
+            $selectedEmployeeIds,
+            $employeeOfMonthId,
+            $approvedBy
+        );
     }
 
     public function getRecognitions()
@@ -109,116 +132,15 @@ class RecognitionController
      */
     public function getRecognitionRecommendations($limit = 10)
     {
-        return $this->recognition->getRecognitionRecommendations($limit);
+        return $this->recognition->getRecognitionRecommendations(max(1, (int)$limit));
     }
 
     /**
-     * Get performance-based recognition leaderboard
-     * Combined view of recognition points + performance scores
+     * Get performance ratings from the latest finalized review period.
      */
     public function getPerformanceLeaderboard($limit = 20)
     {
-        $database = class_exists(Database::class) && method_exists(Database::class, 'getInstance')
-            ? Database::getInstance()
-            : new Database();
-        $db = $database->getConnection();
-
-        if (!$this->recognition->tableHasColumns('pm_performance_reports', ['report_id', 'employee_id', 'overall_rating', 'period_end'])
-            && !$this->recognition->tableHasColumns('pm_reports', ['report_id', 'employee_id', 'final_rating_percent', 'final_grade', 'period_end'])
-            && !$this->recognition->tableHasColumns('pm_appraisals', ['appraisal_id', 'employee_id', 'overall_rating'])) {
-            return [];
-        }
-
-        $subqueries = [];
-           if ($this->recognition->tableHasColumns('pm_performance_reports', ['report_id', 'employee_id', 'overall_rating', 'period_end'])) {
-              $subqueries[] = "SELECT
-                              pr.report_id,
-                              pr.employee_id,
-                              pr.overall_rating * 20 as final_rating_percent,
-                              CASE WHEN pr.overall_rating >= 4.5 THEN 5
-                                  WHEN pr.overall_rating >= 4.0 THEN 4
-                                  WHEN pr.overall_rating >= 3.5 THEN 3 ELSE 2 END as overall_rating_5,
-                              CASE WHEN pr.overall_rating >= 4.5 THEN 'Excellent'
-                                  WHEN pr.overall_rating >= 4.0 THEN 'Outstanding'
-                                  WHEN pr.overall_rating >= 3.5 THEN 'Very Satisfactory'
-                                  WHEN pr.overall_rating >= 3.0 THEN 'Satisfactory' ELSE 'Fair' END as final_grade,
-                              pr.period_end
-                           FROM pm_performance_reports pr
-                           WHERE pr.period_end >= DATE_SUB(NOW(), INTERVAL 6 MONTH)";
-           }
-        if ($this->recognition->tableHasColumns('pm_reports', ['report_id', 'employee_id', 'final_rating_percent', 'final_grade', 'period_end'])) {
-            $subqueries[] = "SELECT 
-                                pr.report_id,
-                                pr.employee_id,
-                                pr.final_rating_percent,
-                                CASE
-                                    WHEN pr.final_rating_percent >= 95 THEN 5
-                                    WHEN pr.final_rating_percent >= 80 THEN 4
-                                    WHEN pr.final_rating_percent >= 70 THEN 3
-                                    ELSE 2
-                                END as overall_rating_5,
-                                pr.final_grade,
-                                pr.period_end
-                            FROM pm_reports pr
-                            WHERE pr.period_end >= DATE_SUB(NOW(), INTERVAL 6 MONTH)";
-        }
-        if ($this->recognition->tableHasColumns('pm_appraisals', ['appraisal_id', 'employee_id', 'overall_rating'])) {
-            $subqueries[] = "SELECT 
-                                pa.appraisal_id as report_id,
-                                pa.employee_id,
-                                pa.overall_rating as final_rating_percent,
-                                CASE
-                                    WHEN pa.overall_rating >= 4.5 THEN 5
-                                    WHEN pa.overall_rating >= 4.0 THEN 4
-                                    WHEN pa.overall_rating >= 3.5 THEN 3
-                                    ELSE 2
-                                END as overall_rating_5,
-                                CASE
-                                    WHEN pa.overall_rating >= 4.5 THEN 'Excellent'
-                                    WHEN pa.overall_rating >= 4.0 THEN 'Outstanding'
-                                    WHEN pa.overall_rating >= 3.5 THEN 'Very Satisfactory'
-                                    WHEN pa.overall_rating >= 3.0 THEN 'Satisfactory'
-                                    ELSE 'Fair'
-                                END as final_grade,
-                                COALESCE(pa.due_date, pa.created_at) as period_end
-                            FROM pm_appraisals pa
-                            WHERE COALESCE(pa.due_date, pa.created_at) >= DATE_SUB(NOW(), INTERVAL 6 MONTH)";
-        }
-
-        $sql = "SELECT 
-                        e.employee_id,
-                        CONCAT_WS(' ', e.first_name, e.middle_name, e.last_name) as employee_name,
-                        AVG(pr.final_rating_percent) as performance_score,
-                        MAX(pr.final_grade) as final_grade,
-                        SUM(
-                            CASE
-                                WHEN pr.overall_rating_5 = 5 AND pr.final_rating_percent >= 95 THEN 100
-                                WHEN pr.overall_rating_5 >= 4 AND pr.final_rating_percent >= 80 THEN 50
-                                WHEN pr.overall_rating_5 >= 3 AND pr.final_rating_percent >= 70 THEN 25
-                                ELSE 0
-                            END
-                        ) as total_performance_points,
-                        COUNT(pr.report_id) as report_count,
-                        (SUM(
-                            CASE
-                                WHEN pr.overall_rating_5 = 5 AND pr.final_rating_percent >= 95 THEN 100
-                                WHEN pr.overall_rating_5 >= 4 AND pr.final_rating_percent >= 80 THEN 50
-                                WHEN pr.overall_rating_5 >= 3 AND pr.final_rating_percent >= 70 THEN 25
-                                ELSE 0
-                            END
-                        ) + (AVG(pr.final_rating_percent) / 10)) as combined_score
-                    FROM em_employees e
-                    LEFT JOIN (
-                        " . implode(' UNION ALL ', $subqueries) . "
-                    ) pr ON e.employee_id = pr.employee_id
-                    GROUP BY e.employee_id
-                    HAVING report_count > 0
-                    ORDER BY combined_score DESC
-                    LIMIT " . (int)$limit;
-
-        $stmt = $db->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->recognitionCycle->leaderboard($limit);
     }
 
     /**
@@ -423,4 +345,3 @@ class RecognitionController
         return $this->recognition->getDepartmentLeaderboard($department, $limit);
     }
 }
-

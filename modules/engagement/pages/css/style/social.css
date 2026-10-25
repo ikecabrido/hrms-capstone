@@ -828,6 +828,105 @@
   display: none;
 }
 
+.social-area #forums-section .social-forum-scroll-list {
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  touch-action: pan-y;
+}
+
+.social-area #forums-section .social-forum-item {
+  box-sizing: border-box;
+  height: 80px;
+  min-height: 80px;
+}
+
+.social-area #forums-section .social-forum-item .social-mini-text {
+  min-width: 0;
+  width: 100%;
+}
+
+.social-area #forums-section .social-forum-item h6 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-area #forums-section .social-forum-scroll-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.social-area #projects-section .social-project-scroll-list {
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  touch-action: pan-y;
+}
+
+.social-area #projects-section .social-project-item {
+  box-sizing: border-box;
+  height: 80px;
+  min-height: 80px;
+}
+
+.social-area #projects-section .social-project-item .social-mini-text {
+  min-width: 0;
+  width: 100%;
+}
+
+.social-area #projects-section .social-project-item h6 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-area #projects-section .social-project-scroll-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.social-area #groups-section .social-group-scroll-list {
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  touch-action: pan-y;
+}
+
+.social-area #groups-section .social-group-item {
+  box-sizing: border-box;
+  height: 80px;
+  min-height: 80px;
+}
+
+.social-area #groups-section .social-group-item .social-mini-text {
+  min-width: 0;
+  width: 100%;
+}
+
+.social-area #groups-section .social-group-item h6 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-area #groups-section .social-group-scroll-list::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .moderation-employee-list {
   display: grid;
   gap: 0.5rem;

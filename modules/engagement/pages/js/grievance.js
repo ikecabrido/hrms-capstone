@@ -358,6 +358,32 @@
     initReportEmployeeAutofill();
   }
 
+  function renderGrievanceReportCategories(grievances) {
+    const select = document.getElementById('report-category');
+    if (!select || !Array.isArray(grievances)) return;
+    const categories = Array.from(new Map(grievances
+      .map(function (grievance) { return String(grievance.category || '').trim(); })
+      .filter(Boolean)
+      .map(function (category) { return [category.toLowerCase(), category]; })).values())
+      .sort(function (left, right) { return left.localeCompare(right); });
+    select.innerHTML = '<option value="">All Categories</option>' + categories.map(function (category) {
+      return '<option value="' + htmlspecialchars(category) + '">' + htmlspecialchars(category) + '</option>';
+    }).join('');
+  }
+
+  function renderGrievanceReportStatuses(grievances) {
+    const select = document.getElementById('report-status');
+    if (!select || !Array.isArray(grievances)) return;
+    const statuses = Array.from(new Map(grievances
+      .map(function (grievance) { return String(grievance.status || '').trim(); })
+      .filter(Boolean)
+      .map(function (status) { return [status.toLowerCase(), status]; })).values())
+      .sort(function (left, right) { return left.localeCompare(right); });
+    select.innerHTML = '<option value="">All Status</option>' + statuses.map(function (status) {
+      return '<option value="' + htmlspecialchars(status) + '">' + htmlspecialchars(status) + '</option>';
+    }).join('');
+  }
+
   function renderGrievanceDepartments(departments) {
     if (!Array.isArray(departments)) return;
     ['#department-filter', '#report-department'].forEach(function (selector) {
@@ -389,6 +415,8 @@
         renderGrievanceTable(window.grievancesData);
         renderGrievanceManagementOptions(window.grievancesData);
         renderGrievanceReportEmployees(window.grievancesData);
+        renderGrievanceReportCategories(window.grievancesData);
+        renderGrievanceReportStatuses(window.grievancesData);
         renderGrievanceDepartments(data.departments || []);
         initGrievanceFilters();
         updateManagementFormState();
@@ -503,6 +531,12 @@
           }
           const grievanceId = form.querySelector('[name="grievance_id"]')?.value;
           const status = form.querySelector('[name="status"]')?.value;
+          const grievanceSelect = document.getElementById('management-grievance-select');
+          const selectedOption = grievanceSelect && grievanceSelect.options[grievanceSelect.selectedIndex];
+          if (selectedOption && String(selectedOption.value) === String(grievanceId)) {
+            selectedOption.dataset.status = String(status || '').toLowerCase().trim();
+            updateManagementFormState();
+          }
           if (grievanceId && status) {
             updateGrievanceRow(grievanceId, status);
             refreshGrievanceRow(grievanceId);
@@ -521,8 +555,14 @@
         .finally(function () {
           form.dataset.submitting = '0';
           if (submitButton) {
-            submitButton.disabled = false;
             submitButton.innerHTML = originalText;
+            if (form.id === 'management-update-form') {
+              const grievanceSelect = document.getElementById('management-grievance-select');
+              const selectedOption = grievanceSelect && grievanceSelect.options[grievanceSelect.selectedIndex];
+              submitButton.disabled = Boolean(selectedOption && isFinalizedStatus(selectedOption.dataset.status));
+            } else {
+              submitButton.disabled = false;
+            }
           }
         });
     }, true);
@@ -598,6 +638,8 @@ function updateGrievanceReportAvailability(message = '') {
   if (reportButton) reportButton.disabled = !hasRecords;
   if (emptyState) {
     emptyState.textContent = message;
+    emptyState.classList.remove('alert-danger');
+    emptyState.classList.add('alert-info');
     emptyState.classList.toggle('d-none', !message);
   }
 
@@ -778,9 +820,10 @@ function updateManagementFormState() {
   const hasSelection = Boolean(selectedOption && Number(selectedId) > 0);
   const statusSelect = document.getElementById('management-status-select');
   const status = String(statusSelect && statusSelect.value || selectedOption && selectedOption.dataset.status || '').toLowerCase().trim();
+  const savedStatus = String(selectedOption && selectedOption.dataset.status || '').toLowerCase().trim();
   const escalationLevel = selectedOption && selectedOption.dataset.escalationLevel || '';
   const escalationReason = selectedOption && selectedOption.dataset.escalationReason || '';
-  const finalized = isFinalizedStatus(status);
+  const finalized = isFinalizedStatus(savedStatus);
   const form = dom('#management-update-form');
   const inputs = form.find('select[name="status"], textarea[name="hr_remarks"], textarea[name="final_resolution"], input[name="supporting_document"], input[name="confidential"], button[type="submit"]');
   const escalationFields = dom('#escalation-fields');
@@ -1164,32 +1207,47 @@ function manageGrievance(id) {
 }
 
 function generateCustomReport(downloadFile = true) {
-  const type = document.getElementById('report-type').value;
-  const startDate = document.getElementById('report-start-date').value;
-  const endDate = document.getElementById('report-end-date').value;
-  const department = document.getElementById('report-department').value;
-  const category = document.getElementById('report-category').value;
-  const status = document.getElementById('report-status').value;
-  const employee = document.getElementById('report-employee').value.toLowerCase();
-  const format = document.getElementById('report-format').value;
+  const typeField = document.getElementById('report-type');
+  const startField = document.getElementById('report-start-date');
+  const endField = document.getElementById('report-end-date');
+  const departmentField = document.getElementById('report-department');
+  const categoryField = document.getElementById('report-category');
+  const statusField = document.getElementById('report-status');
+  const employeeField = document.getElementById('report-employee');
+  const formatField = document.getElementById('report-format');
+  if (![typeField, startField, endField, departmentField, categoryField, statusField, employeeField, formatField].every(Boolean)) {
+    console.error('Unable to generate grievance report: report form is incomplete.');
+    return;
+  }
+
+  const type = typeField.value;
+  const startDate = startField.value;
+  const endDate = endField.value;
+  const department = departmentField.value;
+  const category = categoryField.value;
+  const status = statusField.value;
+  const employee = employeeField.value;
+  const format = formatField.value;
   const outputCard = document.getElementById('generated-report');
   const summary = document.getElementById('generated-report-summary');
   const table = document.getElementById('generated-report-table');
   const data = Array.isArray(window.reportData) ? window.reportData : [];
   const normalize = value => String(value || '').trim().toLowerCase();
+  const emptyState = document.getElementById('grievance-report-empty-state');
 
   if (!updateGrievanceReportAvailability()) return;
-  const emptyState = document.getElementById('grievance-report-empty-state');
-  if (emptyState) emptyState.classList.add('d-none');
-
-  if (outputCard) {
-    outputCard.classList.add('hidden');
-    outputCard.style.display = 'none';
+  if (startDate && endDate && startDate > endDate) {
+    if (emptyState) {
+      emptyState.textContent = 'The start date must be on or before the end date.';
+      emptyState.classList.remove('d-none');
+    }
+    endField.focus();
+    return;
   }
-  if (summary) summary.innerHTML = '';
-  if (table) {
-    table.querySelector('thead').innerHTML = '';
-    table.querySelector('tbody').innerHTML = '';
+
+  if (emptyState) {
+    emptyState.textContent = '';
+    emptyState.classList.add('d-none');
   }
 
   let filtered = data.slice();
@@ -1209,7 +1267,7 @@ function generateCustomReport(downloadFile = true) {
     filtered = filtered.filter(item => normalize(item.status) === normalize(status));
   }
   if (employee) {
-    filtered = filtered.filter(item => normalize((item.employee_name || '') + ' ' + (item.subject || '')).includes(normalize(employee)));
+    filtered = filtered.filter(item => normalize(item.employee_name) === normalize(employee));
   }
 
   if (!filtered.length) {
@@ -1217,80 +1275,144 @@ function generateCustomReport(downloadFile = true) {
     return;
   }
 
-  const reportSummary = function (formatLabel) {
-    return `<strong>Matching Records:</strong> ${filtered.length} <span class="text-muted">of ${data.length} available</span><br /><strong>Format:</strong> ${formatLabel}`;
-  };
-
   let headers = [];
   let rows = [];
   let reportTitle = '';
+  const statusCounts = new Map();
+  const categoryCounts = new Map();
+  filtered.forEach(item => {
+    const statusName = item.status || 'Unknown';
+    const categoryName = item.category || 'Uncategorized';
+    const statusKey = normalize(statusName);
+    const categoryKey = normalize(categoryName);
+    const currentStatus = statusCounts.get(statusKey);
+    const currentCategory = categoryCounts.get(categoryKey);
+    statusCounts.set(statusKey, { label: currentStatus ? currentStatus.label : statusName, count: (currentStatus ? currentStatus.count : 0) + 1 });
+    categoryCounts.set(categoryKey, { label: currentCategory ? currentCategory.label : categoryName, count: (currentCategory ? currentCategory.count : 0) + 1 });
+  });
+  const resolvedRows = filtered.filter(item => ['resolved', 'closed'].includes(normalize(item.status)));
+  const filterDetails = [
+    ['Employee', employee || 'All Employees'],
+    ['Date Range', [startDate, endDate].filter(Boolean).join(' to ') || 'All Dates'],
+    ['Department', department || 'All Departments'],
+    ['Category', category || 'All Categories'],
+    ['Status', status || 'All Status']
+  ];
 
   switch (type) {
     case 'summary':
       reportTitle = 'Grievance Summary Report';
-      const statusCounts = {};
-      filtered.forEach(item => {
-        const key = item.status || 'Unknown';
-        statusCounts[key] = (statusCounts[key] || 0) + 1;
-      });
-      summary.innerHTML = `<strong>Report Summary</strong><br>${Object.entries(statusCounts).map(([status, count]) => `${status} | ${count}`).join('<br>') || 'No records found.'}`;
-      headers = [];
-      rows = Object.entries(statusCounts).map(([status, count]) => [status, count]);
+      headers = ['Status', 'Count'];
+      rows = Array.from(statusCounts.values()).map(({ label, count }) => [label, count]);
       break;
     case 'detailed':
       reportTitle = 'Detailed Grievance Report';
-      summary.innerHTML = reportSummary(format.toUpperCase());
-      headers = ['Subject', 'Employee', 'Category', 'Date Submitted', 'Status'];
-      rows = filtered.map(item => [item.subject || '', item.employee_name || 'Unknown', item.category || 'N/A', item.created_at ? item.created_at.split(' ')[0] : 'N/A', item.status || 'N/A']);
+      headers = ['Grievance ID', 'Subject', 'Employee', 'Department', 'Category', 'Date Submitted', 'Status', 'Priority', 'Resolution', 'Resolved At'];
+      rows = filtered.map(item => [
+        item.id || item.eer_grievance_id || '',
+        item.subject || '',
+        item.employee_name || 'Unknown',
+        item.department || 'N/A',
+        item.category || 'N/A',
+        item.created_at ? String(item.created_at).slice(0, 10) : 'N/A',
+        item.status || 'N/A',
+        item.priority || 'N/A',
+        item.resolution_of_complaint || 'N/A',
+        item.resolved_at ? String(item.resolved_at).slice(0, 10) : 'N/A'
+      ]);
       break;
     case 'category':
       reportTitle = 'Category Analysis Report';
-      const categoryCounts = {};
-      filtered.forEach(item => {
-        const categoryName = item.category || 'Uncategorized';
-        categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
-      });
-      summary.innerHTML = `<strong>Matching Records:</strong> ${filtered.length} <span class="text-muted">of ${data.length} available</span><br /><strong>Total Categories:</strong> ${Object.keys(categoryCounts).length}<br /><strong>Format:</strong> ${format.toUpperCase()}`;
       headers = ['Category', 'Count'];
-      rows = Object.keys(categoryCounts).map(cat => [cat, categoryCounts[cat]]);
+      rows = Array.from(categoryCounts.values()).map(({ label, count }) => [label, count]);
       break;
     case 'resolution':
       reportTitle = 'Resolution Report';
-      summary.innerHTML = `<strong>Matching Records:</strong> ${filtered.length} <span class="text-muted">of ${data.length} available</span><br /><strong>Total Resolved:</strong> ${filtered.filter(item => normalize(item.status) === 'resolved' || normalize(item.status) === 'closed').length}<br /><strong>Format:</strong> ${format.toUpperCase()}`;
-      headers = ['Subject', 'Status', 'Resolution', 'Resolved At'];
-      rows = filtered.filter(item => normalize(item.status) === 'resolved' || normalize(item.status) === 'closed').map(item => [item.subject || '', item.status || '', item.resolution_of_complaint || 'N/A', item.resolved_at ? item.resolved_at.split(' ')[0] : 'N/A']);
+      headers = ['Grievance ID', 'Subject', 'Employee', 'Category', 'Status', 'Resolution', 'Resolved At'];
+      rows = resolvedRows.map(item => [
+        item.id || item.eer_grievance_id || '',
+        item.subject || '',
+        item.employee_name || 'Unknown',
+        item.category || 'N/A',
+        item.status || 'N/A',
+        item.resolution_of_complaint || 'N/A',
+        item.resolved_at ? String(item.resolved_at).slice(0, 10) : 'N/A'
+      ]);
       break;
     default:
       reportTitle = 'Custom Grievance Report';
-      summary.innerHTML = reportSummary(format.toUpperCase());
-      headers = ['Subject', 'Status', 'Category', 'Date Submitted'];
-      rows = filtered.map(item => [item.subject || '', item.status || '', item.category || 'N/A', item.created_at ? item.created_at.split(' ')[0] : 'N/A']);
+      headers = ['Grievance ID', 'Subject', 'Employee', 'Department', 'Status', 'Category', 'Date Submitted'];
+      rows = filtered.map(item => [
+        item.id || item.eer_grievance_id || '',
+        item.subject || '',
+        item.employee_name || 'Unknown',
+        item.department || 'N/A',
+        item.status || 'N/A',
+        item.category || 'N/A',
+        item.created_at ? String(item.created_at).slice(0, 10) : 'N/A'
+      ]);
       break;
   }
 
-  const thead = table.querySelector('thead');
-  const tbody = table.querySelector('tbody');
-  thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
-  tbody.innerHTML = rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}" class="text-center text-muted">No records match the selected filters. Clear or adjust the filters to see the ${data.length} available grievance record(s).</td></tr>`;
-
-  if (outputCard) {
-    outputCard.classList.add('hidden');
-    outputCard.style.display = 'none';
+  if (type === 'resolution' && rows.length === 0) {
+    rows = [['', 'No resolved or closed grievances in this selection.', '', '', '', '', '']];
   }
-  if (summary) summary.innerHTML = '';
-  if (tbody) tbody.innerHTML = '';
-  if (thead) thead.innerHTML = '';
+
+  const reportTitleElement = document.querySelector('#generated-report .card-title');
+  if (reportTitleElement) reportTitleElement.textContent = reportTitle;
+  if (summary) {
+    summary.replaceChildren();
+    const summaryLine = document.createElement('p');
+    summaryLine.className = 'mb-2';
+    summaryLine.textContent = 'Matching records: ' + filtered.length + ' of ' + data.length + ' available. Resolved or closed: ' + resolvedRows.length + '.';
+    summary.appendChild(summaryLine);
+    const filtersLine = document.createElement('p');
+    filtersLine.className = 'mb-0';
+    filtersLine.textContent = 'Filters: ' + filterDetails.map(([label, value]) => label + ': ' + value).join(' | ');
+    summary.appendChild(filtersLine);
+  }
+
+  if (table) {
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+    const headerRow = document.createElement('tr');
+    headers.forEach(header => {
+      const cell = document.createElement('th');
+      cell.textContent = header;
+      headerRow.appendChild(cell);
+    });
+    thead.replaceChildren(headerRow);
+    const bodyRows = type === 'resolution' && resolvedRows.length === 0
+      ? []
+      : rows;
+    const displayRows = bodyRows.length ? bodyRows : [['No records available for this report.', ...Array(Math.max(headers.length - 1, 0)).fill('')]];
+    tbody.replaceChildren(...displayRows.map(row => {
+      const rowElement = document.createElement('tr');
+      row.forEach(value => {
+        const cell = document.createElement('td');
+        cell.textContent = String(value == null ? '' : value);
+        rowElement.appendChild(cell);
+      });
+      return rowElement;
+    }));
+  }
+  if (outputCard) {
+    outputCard.classList.remove('hidden');
+    outputCard.style.display = '';
+  }
 
   if (downloadFile) {
     const pdfFilters = {
       reportType: type,
-      employee: document.getElementById('report-employee')?.value || '',
+      employee: employee || '',
       startDate: startDate || '',
       endDate: endDate || '',
       department: department || '',
       category: category || '',
       status: status || '',
-      format: format
+      format: format,
+      matchingRecords: filtered.length,
+      resolvedRecords: resolvedRows.length
     };
     downloadReport(reportTitle, headers, rows, format, pdfFilters);
   }
@@ -1390,42 +1512,153 @@ function initReportEmployeeAutofill() {
   });
 }
 
+function setGrievanceReportMessage(message, isError = false) {
+  const emptyState = document.getElementById('grievance-report-empty-state');
+  if (!emptyState) return;
+  emptyState.textContent = message;
+  emptyState.classList.toggle('alert-danger', isError);
+  emptyState.classList.toggle('alert-info', !isError);
+  emptyState.classList.remove('d-none');
+}
+
+let grievanceXlsxLibraryPromise;
+
+function loadGrievanceXlsxLibrary() {
+  if (window.XLSX) return Promise.resolve(window.XLSX);
+  if (!grievanceXlsxLibraryPromise) {
+    grievanceXlsxLibraryPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      script.onload = () => {
+        if (window.XLSX) {
+          resolve(window.XLSX);
+        } else {
+          grievanceXlsxLibraryPromise = null;
+          reject(new Error('The Excel workbook library loaded without its expected API.'));
+        }
+      };
+      script.onerror = () => {
+        grievanceXlsxLibraryPromise = null;
+        reject(new Error('Unable to load the Excel workbook library. Check your connection and try again.'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+  return grievanceXlsxLibraryPromise;
+}
+
 function downloadReport(reportTitle, headers, rows, format, filters = {}) {
   const safeName = reportTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-  const filename = safeName + (format === 'excel' ? '.csv' : '.pdf');
+  const filename = safeName + (format === 'xlsx' ? '.xlsx' : format === 'csv' ? '.csv' : '.pdf');
 
-  if (format === 'excel') {
+  if (format === 'csv') {
     downloadCsv(filename, headers, rows);
     return;
   }
 
-  downloadPdf(filename, reportTitle, headers, rows, filters);
+  if (format === 'xlsx') {
+    setGrievanceReportMessage('Preparing the Excel workbook…');
+    loadGrievanceXlsxLibrary()
+      .then(XLSX => {
+        const generatedAt = new Date().toLocaleString();
+        const filterRows = [
+          ['Report', reportTitle],
+          ['Generated', generatedAt],
+          ['Matching Records', filters.matchingRecords || 0],
+          ['Resolved or Closed', filters.resolvedRecords || 0],
+          ['Format', 'Excel Workbook (.xlsx)'],
+          ...[
+            ['Employee', filters.employee || 'All Employees'],
+            ['Date Range', [filters.startDate, filters.endDate].filter(Boolean).join(' to ') || 'All Dates'],
+            ['Department', filters.department || 'All Departments'],
+            ['Category', filters.category || 'All Categories'],
+            ['Status', filters.status || 'All Status']
+          ]
+        ];
+        const worksheet = XLSX.utils.aoa_to_sheet([...filterRows, [], headers, ...rows]);
+        worksheet['!cols'] = headers.map((header, columnIndex) => {
+          const contentWidth = rows.reduce((width, row) => Math.max(width, String(row[columnIndex] == null ? '' : row[columnIndex]).length + 2), 0);
+          return { wch: Math.min(50, Math.max(String(header).length + 2, contentWidth)) };
+        });
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Grievance Report');
+        XLSX.writeFile(workbook, filename);
+        setGrievanceReportMessage('Excel workbook downloaded successfully.');
+      })
+      .catch(error => {
+        console.error('Unable to create grievance Excel report.', error);
+        setGrievanceReportMessage(error.message || 'Unable to create the Excel workbook.', true);
+      });
+    return;
+  }
+
+  setGrievanceReportMessage('Preparing the PDF report…');
+  loadGrievancePdfAutoTable()
+    .then(() => downloadPdf(filename, reportTitle, headers, rows, filters))
+    .then(() => setGrievanceReportMessage('PDF report downloaded successfully.'))
+    .catch(error => {
+      console.error('Unable to create grievance PDF report.', error);
+      setGrievanceReportMessage(error.message || 'Unable to create the PDF report.', true);
+    });
+}
+
+let grievancePdfAutoTablePromise;
+
+function loadGrievancePdfAutoTable() {
+  const jsPdfConstructor = window.jspdf?.jsPDF || window.jsPDF;
+  if (typeof jsPdfConstructor !== 'function') {
+    return Promise.reject(new Error('The PDF library is unavailable. Reload the page and try again.'));
+  }
+  if (typeof jsPdfConstructor.API?.autoTable === 'function') return Promise.resolve();
+  if (!grievancePdfAutoTablePromise) {
+    grievancePdfAutoTablePromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js';
+      script.onload = () => {
+        if (typeof jsPdfConstructor.API?.autoTable === 'function') {
+          resolve();
+        } else {
+          grievancePdfAutoTablePromise = null;
+          reject(new Error('The PDF table plugin loaded without its expected API.'));
+        }
+      };
+      script.onerror = () => {
+        grievancePdfAutoTablePromise = null;
+        reject(new Error('Unable to load the PDF table plugin. Check your connection and try again.'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+  return grievancePdfAutoTablePromise;
 }
 
 function downloadCsv(filename, headers, rows) {
-  const csvLines = [headers.map(h => `"${String(h).replace(/"/g, '""')}"`).join(',')];
+  const csvCell = value => {
+    let text = String(value == null ? '' : value);
+    if (/^[\s]*[=+\-@]/.test(text)) text = "'" + text;
+    return `"${text.replace(/"/g, '""')}"`;
+  };
+  const csvLines = [headers.map(csvCell).join(',')];
   rows.forEach(row => {
-    csvLines.push(row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','));
+    csvLines.push(row.map(csvCell).join(','));
   });
-  const blob = new Blob([csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\uFEFF' + csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.setAttribute('download', filename);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(link.href);
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
 function downloadPdf(filename, title, headers, rows, filters = {}) {
   const jsPdfConstructor = window.jspdf?.jsPDF || window.jsPDF;
   if (typeof jsPdfConstructor !== 'function') {
-    console.warn('jsPDF not loaded; falling back to CSV.');
-    downloadCsv(filename.replace(/\.pdf$/i, '.csv'), headers, rows);
-    return;
+    throw new Error('The PDF library is unavailable. Reload the page and try again.');
   }
 
-  const doc = new jsPdfConstructor();
+  const doc = new jsPdfConstructor({ orientation: headers.length > 7 ? 'landscape' : 'portrait' });
   const now = new Date();
   const generatedAt = now.toLocaleString([], {
     year: 'numeric',
@@ -1434,12 +1667,6 @@ function downloadPdf(filename, title, headers, rows, filters = {}) {
     hour: '2-digit',
     minute: '2-digit'
   });
-  const totalRecords = Array.isArray(rows) ? rows.length : 0;
-  const totalCount = rows.reduce((sum, row) => {
-    const value = Number(row[row.length - 1]);
-    return sum + (Number.isFinite(value) ? value : 0);
-  }, 0);
-
   const companyName = 'HRMS';
   const reportType = filters.reportType || 'Summary';
   const employee = filters.employee || 'All Employees';
@@ -1449,20 +1676,15 @@ function downloadPdf(filename, title, headers, rows, filters = {}) {
   const status = filters.status || 'All Status';
 
   const filterLines = [
-    ['Company', companyName],
-    ['Report Type', reportType],
     ['Employee', employee],
     ['Date Range', dateRange],
     ['Department', department],
     ['Category', category],
-    ['Status', status],
-    ['Format', (filters.format || 'PDF').toUpperCase()]
+    ['Status', status]
   ];
 
-  const isSummaryReport = String(reportType).toLowerCase() === 'summary';
-
   doc.setFillColor(9, 89, 133);
-  doc.rect(0, 0, 210, 36, 'F');
+  doc.rect(0, 0, doc.internal.pageSize.getWidth(), 36, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(20);
   doc.text(title, 14, 21);
@@ -1471,17 +1693,17 @@ function downloadPdf(filename, title, headers, rows, filters = {}) {
   doc.setFontSize(10);
   doc.text('Generated: ' + generatedAt, 14, 46);
   doc.text('Prepared by: ' + companyName, 14, 53);
-  doc.text('Total records: ' + totalRecords, 14, 60);
+  const reportRecordCount = reportType === 'resolution'
+    ? filters.resolvedRecords || 0
+    : filters.matchingRecords || 0;
+  doc.text('Report type: ' + reportType + ' | Records: ' + reportRecordCount, 14, 60);
 
-  if (totalCount > 0) {
-    doc.text('Total count: ' + totalCount, 110, 60);
-  }
-
+  const pageWidth = doc.internal.pageSize.getWidth();
   doc.setFillColor(232, 239, 244);
-  doc.roundedRect(14, 68, 182, 40, 2, 2, 'F');
+  doc.roundedRect(14, 68, pageWidth - 28, 54, 2, 2, 'F');
   doc.setDrawColor(171, 188, 202);
   doc.setLineWidth(0.3);
-  doc.roundedRect(14, 68, 182, 40, 2, 2, 'S');
+  doc.roundedRect(14, 68, pageWidth - 28, 54, 2, 2, 'S');
 
   doc.setFont(undefined, 'bold');
   doc.setFontSize(11);
@@ -1490,37 +1712,19 @@ function downloadPdf(filename, title, headers, rows, filters = {}) {
   doc.setFont(undefined, 'normal');
   doc.setFontSize(9);
 
-  let filterLineY = 88;
-  filterLines.forEach(([label, value]) => {
-    if (filterLineY > 104) return;
-    doc.text(label + ': ' + value, 20, filterLineY);
-    filterLineY += 6;
+  filterLines.forEach(([label, value], index) => {
+    const column = index % 2;
+    const row = Math.floor(index / 2);
+    const text = doc.splitTextToSize(label + ': ' + value, 83);
+    doc.text(text, column === 0 ? 20 : 108, 89 + row * 9);
   });
 
-  const summaryItems = Array.isArray(rows) ? rows.filter(row => Array.isArray(row) && row.length >= 2) : [];
-  const summaryY = 118;
-  if (summaryItems.length) {
-    doc.setFont(undefined, 'bold');
-    doc.setFontSize(12);
-    doc.text('Report Summary', 14, summaryY);
-    doc.setFont(undefined, 'normal');
+  const startY = 130;
+  const bodyRows = rows.length
+    ? rows.map(row => row.map(value => String(value == null ? '' : value)))
+    : [['No records found for this report.']];
 
-    let summaryLineY = summaryY + 8;
-    summaryItems.forEach((row) => {
-      const left = String(row[0] || '').trim();
-      const right = String(row[1] || '').trim();
-      if (left && right) {
-        doc.setFontSize(9.5);
-        doc.text(left + ' | ' + right, 18, summaryLineY);
-        summaryLineY += 7;
-      }
-    });
-  }
-
-  const startY = Math.max(150, summaryItems.length ? summaryY + summaryItems.length * 8 + 8 : 150);
-  const bodyRows = rows.length ? rows : [['No records found for this report.']];
-
-  if (!isSummaryReport && typeof doc.autoTable === 'function') {
+  if (typeof doc.autoTable === 'function') {
     doc.autoTable({
       head: [headers],
       body: bodyRows,
@@ -1530,45 +1734,28 @@ function downloadPdf(filename, title, headers, rows, filters = {}) {
       headStyles: { fillColor: [52, 90, 118], textColor: 255, fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [242, 246, 249] },
       margin: { top: 5, left: 14, right: 14, bottom: 30 },
+      horizontalPageBreak: true,
+      horizontalPageBreakRepeat: [0],
       didDrawPage: function (data) {
         const pageHeight = doc.internal.pageSize.getHeight();
+        const currentPageWidth = doc.internal.pageSize.getWidth();
         doc.setDrawColor(180, 180, 180);
         doc.setLineWidth(0.3);
-        doc.line(14, pageHeight - 18, 196, pageHeight - 18);
+        doc.line(14, pageHeight - 18, currentPageWidth - 14, pageHeight - 18);
         doc.setFontSize(8);
         doc.setTextColor(100, 100, 100);
         doc.text(companyName, data.settings.margin.left, pageHeight - 10);
-        doc.text(String(doc.internal.getCurrentPageInfo().pageNumber), 200, pageHeight - 10, { align: 'right' });
+        doc.text(String(doc.internal.getCurrentPageInfo().pageNumber), currentPageWidth - 10, pageHeight - 10, { align: 'right' });
 
         doc.setDrawColor(120, 140, 160);
-        doc.line(132, pageHeight - 42, 196, pageHeight - 42);
+        doc.line(currentPageWidth - 78, pageHeight - 42, currentPageWidth - 14, pageHeight - 42);
         doc.setTextColor(80, 80, 80);
         doc.setFontSize(8);
-        doc.text('Authorized Signature', 132, pageHeight - 46);
+        doc.text('Authorized Signature', currentPageWidth - 78, pageHeight - 46);
       }
     });
-  } else if (!isSummaryReport) {
-    doc.setFontSize(10);
-    let y = startY;
-    doc.text(headers.join(' | '), 14, y);
-    y += 8;
-    bodyRows.forEach(row => {
-      if (y > 270) {
-        doc.addPage();
-        y = 20;
-      }
-      doc.text(row.map(cell => String(cell)).join(' | '), 14, y);
-      y += 7;
-    });
-    doc.setDrawColor(120, 140, 160);
-    doc.line(145, 270, 196, 270);
-    doc.setFontSize(8);
-    doc.text('Authorized Signature', 145, 276);
   } else {
-    doc.setDrawColor(120, 140, 160);
-    doc.line(118, 260, 196, 260);
-    doc.setFontSize(8);
-    doc.text('Authorized Signature', 118, 266);
+    throw new Error('The PDF table plugin is not available.');
   }
 
   doc.save(filename);

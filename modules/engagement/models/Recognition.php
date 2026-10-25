@@ -27,12 +27,13 @@ class Recognition extends BaseModel
             er.message,
             er.points,
             er.created_at,
-            'manual' as source,
+            er.source,
             er.category
         FROM eer_recognitions er
         LEFT JOIN em_employees us ON er.sender_id = us.employee_id
         LEFT JOIN em_employees e ON er.receiver_id = e.employee_id
-        WHERE er.source IS NULL OR er.source != 'performance'
+        WHERE er.status = 'approved'
+          AND (er.source IS NULL OR er.source != 'performance')
         ORDER BY er.created_at DESC";
 
         return $this->execute($sql)->fetchAll();
@@ -427,6 +428,7 @@ class Recognition extends BaseModel
         FROM eer_recognitions er
         JOIN em_employees e ON er.receiver_id = e.employee_id
         WHERE er.points IS NOT NULL
+          AND er.status = 'approved'
           AND (er.source IS NULL OR er.source IN ('manual', 'achievement'))
         GROUP BY e.employee_id, e.first_name, e.middle_name, e.last_name
         ORDER BY total_points DESC, recognition_count DESC
@@ -441,6 +443,7 @@ class Recognition extends BaseModel
             FROM em_employees e
             JOIN eer_recognitions er ON e.employee_id = er.receiver_id
             WHERE (er.source IS NULL OR er.source != 'performance')
+              AND er.status = 'approved'
               AND er.created_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
             GROUP BY e.employee_id
             ORDER BY recognition_count DESC";
@@ -522,51 +525,71 @@ class Recognition extends BaseModel
     public function getComprehensiveLeaderboard($limit = 20)
     {
         $sql = "
-        SELECT
-            e.employee_id,
-            CONCAT_WS(' ', e.first_name, e.middle_name, e.last_name) as employee_name,
-            d.department_name as department,
-            p.position_name as position,
-            COALESCE(SUM(CASE WHEN er.source IS NULL OR er.source IN ('manual', 'achievement') THEN er.points ELSE 0 END), 0) as recognition_points,
-            COALESCE(
-                (SELECT pr.overall_rating * 20 FROM pm_performance_reports pr
-                 WHERE pr.employee_id = e.employee_id
-                 ORDER BY pr.period_end DESC, pr.report_id DESC LIMIT 1),
-                (SELECT pa.overall_rating * 20 FROM pm_appraisals pa
-                 WHERE pa.employee_id = e.employee_id
-                 ORDER BY COALESCE(pa.due_date, pa.created_at) DESC, pa.appraisal_id DESC LIMIT 1),
-                0
-            ) as performance_score,
-            COALESCE((
-                SELECT SUM(b.points_value)
+        SELECT monthly_points.*,
+               RANK() OVER (ORDER BY monthly_points.total_points DESC) AS rank_position
+        FROM (
+            SELECT e.employee_id,
+                   CONCAT_WS(' ', e.first_name, e.middle_name, e.last_name) AS employee_name,
+                   d.department_name AS department,
+                   p.position_name AS position,
+                   COALESCE(r.recognition_points, 0) AS recognition_points,
+                   COALESCE(b.badge_points, 0) AS badge_points,
+                   COALESCE(a.award_points, 0) AS award_points,
+                   COALESCE(r.recognition_points, 0)
+                     + COALESCE(b.badge_points, 0)
+                     + COALESCE(a.award_points, 0)
+                     - LEAST(COALESCE(a.award_points, 0), COALESCE(mrb.monthly_badge_points, 0)) AS total_points,
+                   COALESCE(r.recognition_count, 0) AS recognition_count
+            FROM em_employees e
+            LEFT JOIN em_departments d ON d.department_id = e.department_id
+            LEFT JOIN em_positions p ON p.position_id = e.position_id
+            LEFT JOIN (
+                SELECT receiver_id,
+                       SUM(points) AS recognition_points,
+                       COUNT(*) AS recognition_count
+                FROM eer_recognitions
+                WHERE points IS NOT NULL
+                  AND status = 'approved'
+                  AND (source IS NULL OR source IN ('manual', 'achievement'))
+                  AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                  AND created_at < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)
+                GROUP BY receiver_id
+            ) r ON r.receiver_id = e.employee_id
+            LEFT JOIN (
+                SELECT eb.employee_id, SUM(badge.points_value) AS badge_points
                 FROM eer_employee_badges eb
-                JOIN eer_badges b ON b.eer_badge_id = eb.badge_id
-                WHERE eb.employee_id = e.employee_id
-            ), 0) as badge_points,
-            COALESCE((
-                SELECT SUM(CASE WHEN ah.points > 0 THEN ah.points ELSE COALESCE(ah.vote_count * 5, 0) END)
-                FROM eer_award_history ah
-                WHERE ah.employee_id = e.employee_id
-            ), 0) as award_points,
-            COUNT(er.eer_recognition_id) as recognition_count,
-            ROW_NUMBER() OVER (ORDER BY (
-                COALESCE(SUM(CASE WHEN er.source IS NULL OR er.source IN ('manual', 'achievement') THEN er.points ELSE 0 END), 0)
-                + COALESCE((SELECT SUM(b.points_value) FROM eer_employee_badges eb JOIN eer_badges b ON b.eer_badge_id = eb.badge_id WHERE eb.employee_id = e.employee_id), 0)
-                + COALESCE((SELECT SUM(CASE WHEN ah.points > 0 THEN ah.points ELSE COALESCE(ah.vote_count * 5, 0) END) FROM eer_award_history ah WHERE ah.employee_id = e.employee_id), 0)
-            ) DESC) as rank_position,
-            (
-                COALESCE(SUM(CASE WHEN er.source IS NULL OR er.source IN ('manual', 'achievement') THEN er.points ELSE 0 END), 0)
-                + COALESCE((SELECT SUM(b.points_value) FROM eer_employee_badges eb JOIN eer_badges b ON b.eer_badge_id = eb.badge_id WHERE eb.employee_id = e.employee_id), 0)
-                + COALESCE((SELECT SUM(CASE WHEN ah.points > 0 THEN ah.points ELSE COALESCE(ah.vote_count * 5, 0) END) FROM eer_award_history ah WHERE ah.employee_id = e.employee_id), 0)
-            ) as total_points
-                FROM em_employees e
-                LEFT JOIN eer_recognitions er ON e.employee_id = er.receiver_id
-                        AND er.points IS NOT NULL
-        LEFT JOIN em_departments d ON e.department_id = d.department_id
-        LEFT JOIN em_positions p ON e.position_id = p.position_id
-        GROUP BY e.employee_id, e.first_name, e.middle_name, e.last_name, d.department_name, p.position_name
-                HAVING total_points > 0
-        ORDER BY total_points DESC, recognition_count DESC
+                INNER JOIN eer_badges badge ON badge.eer_badge_id = eb.badge_id
+                WHERE eb.awarded_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                  AND eb.awarded_at < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)
+                GROUP BY eb.employee_id
+            ) b ON b.employee_id = e.employee_id
+            LEFT JOIN (
+                SELECT ca.employee_id, SUM(badge.points_value) AS monthly_badge_points
+                FROM eer_recognition_cycle_awards ca
+                INNER JOIN eer_recognition_cycles cycle ON cycle.month_year = ca.month_year
+                INNER JOIN eer_award_history ah
+                    ON ah.eer_award_history_id = ca.award_history_id
+                   AND ah.award_type = 'employee_of_month'
+                INNER JOIN eer_employee_badges eb
+                    ON eb.eer_employee_badge_id = ca.employee_badge_id
+                INNER JOIN eer_badges badge
+                    ON badge.eer_badge_id = eb.badge_id
+                   AND badge.category = 'monthly_recognition'
+                WHERE ca.month_year = DATE_FORMAT(CURDATE(), '%Y-%m')
+                  AND cycle.status = 'approved'
+                GROUP BY ca.employee_id
+            ) mrb ON mrb.employee_id = e.employee_id
+            LEFT JOIN (
+                SELECT employee_id, SUM(points) AS award_points
+                FROM eer_award_history
+                WHERE points > 0 AND month_year = DATE_FORMAT(CURDATE(), '%Y-%m')
+                GROUP BY employee_id
+            ) a ON a.employee_id = e.employee_id
+        ) monthly_points
+        WHERE monthly_points.total_points > 0
+        ORDER BY monthly_points.total_points DESC,
+                 monthly_points.recognition_count DESC,
+                 monthly_points.employee_name ASC
         LIMIT " . (int)$limit;
 
         return $this->execute($sql)->fetchAll();
@@ -801,7 +824,7 @@ class Recognition extends BaseModel
         SELECT
             " . (int)$employeeId . " as employee_id,
             COALESCE(SUM(CASE WHEN source = 'recognition' THEN points ELSE 0 END), 0) as recognition_points,
-            COALESCE(SUM(CASE WHEN source = 'performance' THEN points ELSE 0 END), 0) as performance_points,
+            0 as performance_points,
             COALESCE(SUM(CASE WHEN source = 'badge' THEN points ELSE 0 END), 0) as badge_points,
             COALESCE(SUM(CASE WHEN source = 'award' THEN points ELSE 0 END), 0) as award_points,
             COALESCE(SUM(points), 0) as total_points
@@ -809,30 +832,8 @@ class Recognition extends BaseModel
             SELECT 'recognition' as source, er.points
             FROM eer_recognitions er
             WHERE er.receiver_id = :employeeId
-            
-            UNION ALL
-            
-            SELECT 'performance' as source,
-                CASE
-                    WHEN pr.overall_rating >= 4.5 THEN 100
-                    WHEN pr.overall_rating >= 4.0 THEN 50
-                    WHEN pr.overall_rating >= 3.5 THEN 25
-                    ELSE 0
-                END as points
-            FROM pm_performance_reports pr
-            WHERE pr.employee_id = :employeeId
-            
-            UNION ALL
-            
-            SELECT 'performance' as source,
-                CASE
-                    WHEN pa.overall_rating >= 4.5 THEN 100
-                    WHEN pa.overall_rating >= 4.0 THEN 50
-                    WHEN pa.overall_rating >= 3.5 THEN 25
-                    ELSE 0
-                END as points
-            FROM pm_appraisals pa
-            WHERE pa.employee_id = :employeeId
+              AND er.status = 'approved'
+              AND (er.source IS NULL OR er.source IN ('manual', 'achievement'))
             
             UNION ALL
             
@@ -840,14 +841,21 @@ class Recognition extends BaseModel
             FROM eer_employee_badges eb
             JOIN eer_badges b ON eb.badge_id = b.eer_badge_id
             WHERE eb.employee_id = :employeeId
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM eer_recognition_cycle_awards ca
+                  INNER JOIN eer_recognition_cycles cycle ON cycle.month_year = ca.month_year
+                  INNER JOIN eer_award_history ah
+                      ON ah.eer_award_history_id = ca.award_history_id
+                     AND ah.award_type = 'employee_of_month'
+                  WHERE ca.employee_badge_id = eb.eer_employee_badge_id
+                    AND cycle.status = 'approved'
+              )
             
             UNION ALL
             
             SELECT 'award' as source,
-                CASE
-                    WHEN ah.points > 0 THEN ah.points
-                    ELSE COALESCE(ah.vote_count * 5, 0)
-                END as points
+                COALESCE(ah.points, 0) as points
             FROM eer_award_history ah
             WHERE ah.employee_id = :employeeId
         ) all_points";
@@ -894,34 +902,64 @@ class Recognition extends BaseModel
      */
     public function getDepartmentLeaderboard($department = null, $limit = 10)
     {
-        $whereClauses = [
-            'er.points IS NOT NULL',
-            "(er.source IS NULL OR er.source IN ('manual', 'achievement'))"
-        ];
-        $params = [];
-
-        if ($department) {
-            $whereClauses[] = 'd.department_name = :department';
-            $params['department'] = $department;
-        }
-
         $sql = "
-        SELECT 
-            e.employee_id,
-            CONCAT_WS(' ', e.first_name, e.middle_name, e.last_name) as employee_name,
-            d.department_name as department,
-            p.position_name as position,
-            SUM(er.points) as total_points,
-            RANK() OVER (PARTITION BY d.department_name ORDER BY SUM(er.points) DESC) as dept_rank
-        FROM eer_recognitions er
-        JOIN em_employees e ON e.employee_id = er.receiver_id
-        LEFT JOIN em_departments d ON e.department_id = d.department_id
-        LEFT JOIN em_positions p ON e.position_id = p.position_id
-        WHERE " . implode(' AND ', $whereClauses) . "
-        GROUP BY e.employee_id, e.first_name, e.middle_name, e.last_name, d.department_name, p.position_name
-        ORDER BY total_points DESC
+        SELECT monthly_points.*,
+               RANK() OVER (PARTITION BY monthly_points.department ORDER BY monthly_points.total_points DESC) AS dept_rank
+        FROM (
+            SELECT e.employee_id,
+                   CONCAT_WS(' ', e.first_name, e.middle_name, e.last_name) AS employee_name,
+                   d.department_name AS department,
+                   p.position_name AS position,
+                   COALESCE(r.points, 0) + COALESCE(b.points, 0) + COALESCE(a.points, 0)
+                     - LEAST(COALESCE(a.points, 0), COALESCE(mrb.monthly_badge_points, 0)) AS total_points
+            FROM em_employees e
+            LEFT JOIN em_departments d ON d.department_id = e.department_id
+            LEFT JOIN em_positions p ON p.position_id = e.position_id
+            LEFT JOIN (
+                SELECT receiver_id, SUM(points) AS points
+                FROM eer_recognitions
+                WHERE points IS NOT NULL AND status = 'approved'
+                  AND (source IS NULL OR source IN ('manual', 'achievement'))
+                  AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                  AND created_at < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)
+                GROUP BY receiver_id
+            ) r ON r.receiver_id = e.employee_id
+            LEFT JOIN (
+                SELECT eb.employee_id, SUM(badge.points_value) AS points
+                FROM eer_employee_badges eb
+                INNER JOIN eer_badges badge ON badge.eer_badge_id = eb.badge_id
+                WHERE eb.awarded_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')
+                  AND eb.awarded_at < DATE_ADD(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH)
+                GROUP BY eb.employee_id
+            ) b ON b.employee_id = e.employee_id
+            LEFT JOIN (
+                SELECT ca.employee_id, SUM(badge.points_value) AS monthly_badge_points
+                FROM eer_recognition_cycle_awards ca
+                INNER JOIN eer_recognition_cycles cycle ON cycle.month_year = ca.month_year
+                INNER JOIN eer_award_history ah
+                    ON ah.eer_award_history_id = ca.award_history_id
+                   AND ah.award_type = 'employee_of_month'
+                INNER JOIN eer_employee_badges eb
+                    ON eb.eer_employee_badge_id = ca.employee_badge_id
+                INNER JOIN eer_badges badge
+                    ON badge.eer_badge_id = eb.badge_id
+                   AND badge.category = 'monthly_recognition'
+                WHERE ca.month_year = DATE_FORMAT(CURDATE(), '%Y-%m')
+                  AND cycle.status = 'approved'
+                GROUP BY ca.employee_id
+            ) mrb ON mrb.employee_id = e.employee_id
+            LEFT JOIN (
+                SELECT employee_id, SUM(points) AS points
+                FROM eer_award_history
+                WHERE points > 0 AND month_year = DATE_FORMAT(CURDATE(), '%Y-%m')
+                GROUP BY employee_id
+            ) a ON a.employee_id = e.employee_id
+        ) monthly_points
+        WHERE monthly_points.total_points > 0"
+        . ($department ? ' AND monthly_points.department = :department' : '') . "
+        ORDER BY monthly_points.total_points DESC, monthly_points.employee_name ASC
         LIMIT " . (int)$limit;
 
-        return $this->execute($sql, $params)->fetchAll();
+        return $this->execute($sql, $department ? ['department' => $department] : [])->fetchAll();
     }
 }

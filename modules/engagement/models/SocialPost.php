@@ -86,6 +86,14 @@ class SocialPost extends BaseModel
 
     public function resolvePost($post_id)
     {
+        if (!$this->hasColumn('eer_social_posts', 'moderation_status')) {
+            $this->execute(
+                "ALTER TABLE eer_social_posts
+                 ADD COLUMN moderation_status ENUM('open', 'resolved') NOT NULL DEFAULT 'open'
+                 AFTER description"
+            );
+        }
+
         $sql = "UPDATE eer_social_posts
                 SET moderation_status = 'resolved'
                 WHERE eer_social_post_id = :post_id";
@@ -97,4 +105,3 @@ class SocialPost extends BaseModel
         $this->execute($sql, ['post_id' => $post_id, 'content' => $content]);
     }
 }
-

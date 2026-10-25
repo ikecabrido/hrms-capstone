@@ -27,6 +27,9 @@ try {
             break;
         case 'create':
             if (empty($data['employee_id']) || empty($data['award_name'])) jsonResponse(['error' => 'employee_id and award_name required'], 400);
+            if (($data['award_type'] ?? '') === 'employee_of_month') {
+                jsonResponse(['error' => 'Employee of the Month awards are created only through HR-approved Top 5 selections.'], 410);
+            }
             $data['nominated_by'] = $_SESSION['employee_id']
                 ?? $_SESSION['user']['employee_id']
                 ?? null;

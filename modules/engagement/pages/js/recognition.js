@@ -153,17 +153,32 @@ function populateBadgeEmployeesFromNominations() {
   const select = document.getElementById('badge_employee_id');
   if (!select) return;
   const selectedEmployeeId = select.value;
-  select.innerHTML = '<option value="">Select nominated employee</option>';
+  select.innerHTML = '<option value="">Select employee</option>';
 
-  document.querySelectorAll('#employee-month-candidates-list .candidate-item').forEach(function(candidate) {
-    const employeeId = candidate.dataset.employeeId;
-    const nameElement = candidate.querySelector('strong');
-    if (!employeeId || !nameElement) return;
-    const option = document.createElement('option');
-    option.value = employeeId;
-    option.textContent = nameElement.textContent.trim();
-    select.appendChild(option);
-  });
+  const approvedEmployees = Array.isArray(window.approvedMonthlyRecognitionEmployees)
+    ? window.approvedMonthlyRecognitionEmployees
+    : [];
+  if (approvedEmployees.length) {
+    const approvedGroup = document.createElement('optgroup');
+    approvedGroup.label = 'Approved Employee of the Month';
+    approvedEmployees.forEach(function(employee) {
+      const employeeId = employee.employee_id;
+      if (!employeeId) return;
+      const option = document.createElement('option');
+      option.value = employeeId;
+      option.textContent = employee.employee_name || employee.full_name || employee.employee_id;
+      approvedGroup.appendChild(option);
+    });
+    if (approvedGroup.children.length) {
+      select.appendChild(approvedGroup);
+    }
+  } else {
+    const emptyOption = document.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = 'No approved Employee of the Month';
+    emptyOption.disabled = true;
+    select.appendChild(emptyOption);
+  }
 
   if (selectedEmployeeId) select.value = selectedEmployeeId;
 }
@@ -1323,11 +1338,11 @@ function renderTopPerformers(container, items) {
   items.forEach(function(tp){
     var li = document.createElement('li');
     li.className = 'list-group-item recognition-summary-item';
-    var score = (tp.final_rating_percent !== undefined) ? tp.final_rating_percent : (tp.performance_score !== undefined ? tp.performance_score : null);
-    var formattedScore = typeof score === 'number' ? Number(score.toFixed(1)) : score;
+    var score = tp.overall_rating !== undefined ? tp.overall_rating : null;
+    var formattedScore = score !== null ? Number(score).toFixed(2) : 'N/A';
     var left = '<div class="recognition-summary-content"><strong>' + escapeHtml(tp.employee_name || tp.employee_id) + '</strong>' +
-      '<div class="recognition-summary-meta">Score: ' + (score !== null ? escapeHtml(formattedScore) + '%' : 'N/A') + ' <span aria-hidden="true">•</span> Grade: ' + escapeHtml(tp.final_grade || 'N/A') + '</div></div>';
-    var right = '<span class="badge badge-success recognition-score-badge">+' + (score !== null ? escapeHtml(formattedScore) + '%' : 'N/A') + '</span>';
+      '<div class="recognition-summary-meta">Overall Rating: ' + escapeHtml(formattedScore) + '/5.00 <span aria-hidden="true">•</span> Review period: ' + escapeHtml(tp.review_period || 'N/A') + '</div></div>';
+    var right = '<span class="badge badge-success recognition-score-badge">' + escapeHtml(formattedScore) + '/5.00</span>';
     li.innerHTML = left + right;
     ul.appendChild(li);
   });
@@ -1338,14 +1353,14 @@ function renderComprehensiveLeaderboard(items) {
   const body = document.getElementById('comprehensive-leaderboard-list');
   if (!body) return;
   if (!Array.isArray(items) || !items.length) {
-    body.innerHTML = '<tr><td colspan="7" class="text-muted text-center">No leaderboard data available yet.</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" class="text-muted text-center">No monthly points have been earned yet.</td></tr>';
     return;
   }
   body.innerHTML = items.slice(0, 9).map(function(item, index) {
     const rank = Number(item.rank_position || index + 1);
     return '<tr><td><span class="badge ' + (rank <= 3 ? 'badge-warning' : 'badge-secondary') + '">' + rank + '</span></td>'
       + '<td><strong>' + escapeHtml(item.employee_name || 'Unknown') + '</strong><div class="text-muted small">' + escapeHtml(item.department || 'N/A') + '</div></td>'
-      + '<td>' + Number(item.recognition_points || 0) + '</td><td>' + Number(item.performance_score || 0) + '%</td>'
+      + '<td>' + Number(item.recognition_points || 0) + '</td>'
       + '<td>' + Number(item.badge_points || 0) + '</td><td>' + Number(item.award_points || 0) + '</td>'
       + '<td><span class="badge badge-success badge-pill">' + Number(item.total_points || 0) + ' pts</span></td></tr>';
   }).join('');
@@ -1367,26 +1382,16 @@ function renderDepartmentLeaderboard(items) {
     }).join('') + '</ul></div>';
 }
 
-function renderCurrentWinner(awardHistory, employees, candidates) {
+function renderCurrentWinner(awardHistory, employees, cycle) {
   const container = document.getElementById('current-winner-content');
   if (!container) return;
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const winnerCandidate = (Array.isArray(candidates) ? candidates : [])
-    .slice()
-    .sort(function(first, second) {
-      return Number(second.votes || 0) - Number(first.votes || 0)
-        || Number(second.performance_score || 0) - Number(first.performance_score || 0)
-        || Number(second.recognition_total || 0) - Number(first.recognition_total || 0);
-    })[0] || null;
-  const winnerAward = (Array.isArray(awardHistory) ? awardHistory : []).find(function(item) {
-    const isEmployeeMonth = String(item.award_type || '').toLowerCase() === 'employee_of_month'
-      || String(item.award_name || '').toLowerCase().indexOf('employee of the month') !== -1;
-    return isEmployeeMonth && String(item.month_year || item.created_at || '').slice(0, 7) === currentMonth
-      && (String(item.status || '').toLowerCase() === 'winner' || !winnerCandidate);
-  });
-  const winner = winnerCandidate || winnerAward;
+  const winner = cycle && cycle.status === 'approved'
+    ? (Array.isArray(cycle.candidates) ? cycle.candidates : []).find(function(item) {
+        return String(item.award_status || '').toLowerCase() === 'winner';
+      })
+    : null;
   if (!winner) {
-    container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-trophy fa-3x mb-3 text-warning"></i><p>No Employee of the Month selected yet.</p><small>Nominations will be announced soon!</small></div>';
+    container.innerHTML = '<div class="text-center text-muted py-4"><i class="fas fa-trophy fa-3x mb-3 text-warning"></i><p>No approved Employee of the Month yet.</p><small>HR will finalize the current monthly cycle.</small></div>';
     return;
   }
   const employee = (Array.isArray(employees) ? employees : []).find(function(item) {
@@ -1504,9 +1509,10 @@ function loadRecognitionPageData() {
       window.recognitionPageData = data;
       window.recognitionEmployees = data.employees || [];
       populateNominationEmployeesFromRecognitions(data.recognitions);
+      populateBadgeEmployeesFromNominations();
       renderComprehensiveLeaderboard(data.comprehensive_leaderboard);
       renderDepartmentLeaderboard(data.department_leaderboard);
-      renderCurrentWinner(data.award_history, data.employees, data.employee_of_month_candidates);
+      renderCurrentWinner(data.award_history, data.employees, data.current_employee_of_month);
 
       const recommendations = document.getElementById('performance-recommendations-list');
       if (recommendations && Array.isArray(data.recognition_recommendations)) {
@@ -1586,6 +1592,11 @@ function loadRecognitionFeed() {
           item.dataset.receiverId = r.receiver_id || '';
           item.dataset.receiverName = r.receiver_name || '';
           item.dataset.recognitionId = r.id || r.eer_recognition_id || '';
+          const isMonthlyAward = ['employee_of_month', 'outstanding_employee'].includes(String(r.category || '').toLowerCase());
+          const pointsLabel = isMonthlyAward ? 'Monthly Award' : '+' + escapeHtml(r.points || 0) + ' pts';
+          const awardLabel = r.category === 'employee_of_month'
+            ? '<span class="badge badge-warning mr-2">Employee of the Month</span>'
+            : (r.category === 'outstanding_employee' ? '<span class="badge badge-info mr-2">Outstanding Employee</span>' : '');
           item.innerHTML = `
             <div class="recognition-entry-header">
               <div class="recognition-entry-people">
@@ -1593,7 +1604,7 @@ function loadRecognitionFeed() {
                 <span class="recognition-entry-arrow" aria-hidden="true">&rarr;</span>
                 <strong>${escapeHtml(r.receiver_name || r.receiver_id)}</strong>
               </div>
-              <span class="badge badge-success recognition-entry-points">+${escapeHtml(r.points || 0)} pts</span>
+              ${awardLabel}<span class="badge ${isMonthlyAward ? 'badge-secondary' : 'badge-success'} recognition-entry-points">${pointsLabel}</span>
             </div>
             <p class="recognition-entry-message">${escapeHtml(r.message || 'No message provided.')}</p>
             <small class="text-muted recognition-entry-time"><i class="fas fa-clock mr-1"></i>${escapeHtml(r.created_at || '')}</small>
@@ -1945,47 +1956,296 @@ function buildNumberedList(data, pageIndex, pageSize) {
   return list;
 }
 
+function renderMonthlyRecognitionCycle(cycle) {
+  const container = document.getElementById('employee-month-candidates-list');
+  if (!container) return;
+  const candidates = cycle.status === 'approved' && Array.isArray(cycle.candidates)
+    ? cycle.candidates
+    : (Array.isArray(cycle.ranked_employees)
+    ? cycle.ranked_employees
+    : (Array.isArray(cycle.candidates) ? cycle.candidates : []));
+  window.approvedMonthlyRecognitionEmployees = cycle.status === 'approved'
+    ? candidates.filter(function(candidate) {
+        return candidate.award_status === 'winner' || candidate.award_status === 'shortlisted';
+      }).map(function(candidate) {
+        return {
+          employee_id: candidate.employee_id,
+          employee_name: candidate.employee_name || ('Employee #' + candidate.employee_id)
+        };
+      })
+    : [];
+  populateBadgeEmployeesFromNominations();
+  const title = document.querySelector('#employee-month .card-title');
+  const displayedCount = cycle.status === 'approved'
+    ? Number(cycle.required_count || candidates.length)
+    : Number(cycle.required_count || candidates.length);
+  if (title) {
+    title.innerHTML = '<i class="fas fa-star mr-2"></i>Top ' + displayedCount + ' Employees for Recognition';
+  }
+  if (cycle.status === 'unavailable' || cycle.status === 'no_reports' || cycle.status === 'no_recognitions') {
+    container.innerHTML = '<p class="text-muted text-center">' + escapeHtml(cycle.message || 'No approved Recognition Feed recipients are available to rank.') + '</p>';
+    return;
+  }
+
+  const periodLabel = cycle.review_period
+    ? cycle.review_period
+    : [cycle.period_start, cycle.period_end].filter(Boolean).join(' to ') || 'Recognition Feed recipients';
+  const periodDates = [cycle.period_start, cycle.period_end].filter(Boolean).join(' to ');
+  const reportSourceSummary = 'Finalized Overall Rating determines ranking; recipients without a finalized rating are listed afterward, not ranked by points';
+  const hasFinalizedRating = candidates.some(function(candidate) {
+    return candidate.overall_rating !== null && candidate.overall_rating !== undefined;
+  });
+  const periodHeading = cycle.status === 'approved'
+    ? 'APPROVED CYCLE PERIOD'
+    : 'RANKED FROM RECOGNITION FEED';
+  const periodDescription = cycle.status === 'approved' && !hasFinalizedRating
+    ? 'No finalized Overall Rating was available for this cycle; recipients are listed as ranked candidates, not ranked by points.'
+    : cycle.status === 'approved'
+      ? 'Approved recipients and available finalized ratings are shown below.'
+      : (periodDates ? 'Latest report period in this pool: ' + periodDates + ' · ' : '') + reportSourceSummary;
+  const periodSummary = '<div class="top-five-period"><span class="top-five-period-icon"><i class="far fa-calendar-alt"></i></span>'
+    + '<div><span class="top-five-period-label">' + periodHeading + '</span><strong>'
+    + escapeHtml(periodLabel) + '</strong><small>' + escapeHtml(periodDescription) + '</small></div></div>';
+
+  if (cycle.status === 'report_conflict' || cycle.status === 'pending_review') {
+    container.innerHTML = periodSummary + '<div class="alert alert-warning mb-0" role="alert">'
+      + escapeHtml(cycle.message || 'HR review is required before this cycle can be approved.') + '</div>';
+    return;
+  }
+
+  if (cycle.status === 'pending' && !cycle.can_approve && !candidates.length) {
+    container.innerHTML = periodSummary
+      + '<div class="top-five-pending-approval"><i class="fas fa-lock"></i><span><strong>Awaiting HR approval</strong><small>The monthly selection is pending. Performance ratings are visible only to authorized HR staff.</small></span></div>';
+    return;
+  }
+
+  if (cycle.status === 'approved') {
+    container.innerHTML = periodSummary
+      + '<div class="top-five-approved-banner"><i class="fas fa-check-circle"></i><span><strong>Selection approved</strong><small>Saved to award history. This monthly cycle is locked.</small></span></div>'
+      + (candidates.length < 5 ? '<p class="text-muted small">This cycle includes all ' + candidates.length + ' approved Recognition Feed recipients.</p>' : '')
+      + candidates.map(function(candidate, index) {
+        const isWinner = candidate.award_status === 'winner';
+        const wasSelected = Boolean(candidate.award_status);
+        const showPrivateRanking = Boolean(cycle.can_approve);
+        const hasRating = candidate.overall_rating !== null && candidate.overall_rating !== undefined;
+        const rating = hasRating
+          ? '<span class="top-five-rating">' + Number(candidate.overall_rating).toFixed(2) + '<small>/ 5.00</small></span>'
+          : '';
+        const awardPoints = Number(candidate.award_points || 0);
+        const badgePoints = Number(candidate.badge_points || 0);
+        const awardLabel = !hasRating
+          ? 'Ranked candidate'
+          : (isWinner ? 'Employee of the Month' : (wasSelected ? 'Outstanding Employee' : 'Ranked candidate'));
+        return '<div class="top-five-candidate top-five-approved-row' + (isWinner ? ' is-winner' : '') + '">'
+          + '<div class="top-five-rank">' + (showPrivateRanking ? '#' + (index + 1) : '<i class="fas ' + (isWinner ? 'fa-crown' : (wasSelected ? 'fa-medal' : 'fa-user')) + '"></i>') + '</div>'
+          + '<div class="top-five-employee"><strong>' + escapeHtml(candidate.employee_name || ('Employee #' + candidate.employee_id)) + '</strong>'
+          + '<small>' + escapeHtml(candidate.department || 'No department') + '</small>'
+          + '<span class="top-five-approved-meta">'
+          + '<span class="top-five-award-label ' + (hasRating && isWinner ? 'winner' : '') + '"><i class="fas '
+          + (hasRating ? (isWinner ? 'fa-crown' : (wasSelected ? 'fa-medal' : 'fa-user')) : 'fa-user') + '"></i>'
+          + awardLabel + '</span>'
+          + (candidate.badge_name || candidate.reward_name
+            ? '<small class="text-muted top-five-award-details">'
+              + escapeHtml(candidate.badge_name || '') + (candidate.badge_name && candidate.reward_name ? ' · ' : '')
+              + escapeHtml(candidate.reward_name || '') + '</small>'
+            : '')
+          + '</span></div>'
+          + '<div class="top-five-approved-points">'
+          + rating
+          + (awardPoints > 0 ? '<span class="badge badge-success">+' + awardPoints + ' EOM pts</span>' : '')
+          + (badgePoints > 0 ? '<span class="badge badge-info">+' + badgePoints + ' badge pts</span>' : '')
+          + '</div>'
+          + '</div>';
+      }).join('');
+    return;
+  }
+
+  if (!candidates.length) {
+    container.innerHTML = periodSummary + '<div class="top-five-empty"><i class="fas fa-user-clock"></i><strong>No recognized employees found</strong><span>There are no approved Recognition Feed recipients to rank.</span></div>';
+    return;
+  }
+
+  const requiredCount = Number(cycle.required_count || 0);
+  const canApprove = Boolean(cycle.can_approve);
+  const firstSelected = candidates.find(function(candidate) { return candidate.selected_by_default; });
+  const topRating = firstSelected && firstSelected.overall_rating !== null
+    ? Number(firstSelected.overall_rating)
+    : null;
+  const candidateRows = candidates.map(function(candidate) {
+    const employeeId = String(candidate.employee_id);
+    const selected = Boolean(candidate.selected_by_default);
+    const hasRating = candidate.overall_rating !== null && candidate.overall_rating !== undefined;
+    const ratingSource = canApprove && hasRating && candidate.review_period
+      ? '<small class="top-five-rating-period">Rating period: ' + escapeHtml(candidate.review_period)
+        + (candidate.performance_report_status ? ' · ' + escapeHtml(candidate.performance_report_status) : '') + '</small>'
+      : '';
+    const isTopRating = hasRating && Number(candidate.overall_rating) === topRating;
+    const selectionControl = canApprove
+      ? '<label class="top-five-selection-control"><input type="checkbox" class="top-five-employee-checkbox" value="' + escapeHtml(employeeId) + '"'
+        + (selected ? ' checked' : '') + (candidate.cutoff_tie ? '' : ' disabled')
+        + '> <span>' + (candidate.cutoff_tie ? 'Select for Top 5' : 'In Top 5') + '</span></label>'
+      : '';
+    const winnerControl = canApprove && candidate.winner_eligible
+      ? '<label class="top-five-winner-control"><input type="radio" name="employee_of_month_id" class="top-five-winner-radio" value="' + escapeHtml(employeeId) + '"'
+        + (selected && employeeId === String(firstSelected.employee_id) ? ' checked' : '')
+        + (selected ? '' : ' disabled') + '> <span><i class="fas fa-crown"></i> Set as Employee of the Month</span></label>'
+      : '';
+    const cutoffLabel = candidate.cutoff_tie ? '<span class="top-five-tie-label"><i class="fas fa-equals"></i> Tied at cutoff</span>' : '';
+    return '<div class="top-five-candidate' + (selected ? ' is-selected' : '') + (isTopRating ? ' is-top-rated' : '') + '" data-employee-id="' + escapeHtml(employeeId) + '" data-rating="' + Number(candidate.overall_rating) + '" data-winner-eligible="' + (candidate.winner_eligible ? 'true' : 'false') + '">'
+      + '<div class="top-five-rank">#' + Number(candidate.rank || 0) + '</div>'
+      + '<div class="top-five-employee"><strong>' + escapeHtml(candidate.employee_name || ('Employee #' + employeeId)) + '</strong>'
+      + '<small>' + escapeHtml(candidate.department || 'No department') + '</small>' + ratingSource + cutoffLabel + '</div>'
+      + (hasRating
+        ? '<span class="top-five-rating">' + Number(candidate.overall_rating).toFixed(2) + '<small>/ 5.00</small></span>'
+        : '<span class="badge badge-secondary">No finalized rating</span>')
+      + (canApprove ? '<div class="top-five-controls">' + selectionControl + winnerControl + '</div>' : '') + '</div>';
+  }).join('');
+  const approveForm = canApprove
+    ? '<form id="approve-monthly-top-five-form" class="top-five-approval"><div class="top-five-approval-copy"><span class="top-five-approval-icon"><i class="fas fa-clipboard-check"></i></span><span><strong>Ready to finalize?</strong><small>Top ' + requiredCount + ' selections are prechecked. No extra checkbox is needed unless there is a cutoff tie.</small></span></div>'
+      + '<div id="top-five-selection-error" class="alert alert-danger py-2 d-none" role="alert"></div>'
+      + '<button type="submit" class="btn btn-warning" id="approve-monthly-top-five-button" data-required-count="' + requiredCount + '"><i class="fas fa-check mr-1"></i>Approve monthly Top 5</button>'
+      + '</form>'
+    : '<div class="top-five-pending-approval"><i class="fas fa-lock"></i><span><strong>Awaiting HR approval</strong><small>The monthly selection has not been finalized yet.</small></span></div>';
+  container.innerHTML = periodSummary
+    + (candidates.length > requiredCount ? '<p class="text-muted small mb-2">All ' + Number(candidates.length) + ' approved Recognition Feed recipients are shown; only the top ' + requiredCount + ' (plus cutoff ties) can be selected.</p>' : '')
+    + '<div class="top-five-list-heading"><span>RANKED EMPLOYEES FROM RECOGNITION FEED</span><span>RATING / FEED POINTS</span></div>'
+    + (cycle.cutoff_tie ? '<div class="top-five-tie-notice"><i class="fas fa-info-circle"></i><span>May tabla sa cutoff ng Top ' + requiredCount + '. Piliin ng HR ang huling puwesto.</span></div>' : '')
+    + candidateRows + approveForm;
+}
+
+function bindMonthlyRecognitionApproval(container) {
+  if (!container || container.dataset.topFiveApprovalBound === '1') return;
+  container.dataset.topFiveApprovalBound = '1';
+
+  container.addEventListener('change', function(event) {
+    if (!event.target.classList.contains('top-five-employee-checkbox')) return;
+    const rows = Array.from(container.querySelectorAll('.top-five-candidate'));
+    const selectedRows = rows.filter(function(row) {
+      const checkbox = row.querySelector('.top-five-employee-checkbox');
+      return checkbox && checkbox.checked;
+    });
+    const highestRating = selectedRows.reduce(function(highest, row) {
+      return Math.max(highest, Number(row.dataset.rating || 0));
+    }, -Infinity);
+    let selectedWinner = false;
+    rows.forEach(function(row) {
+      const radio = row.querySelector('.top-five-winner-radio');
+      const checkbox = row.querySelector('.top-five-employee-checkbox');
+      row.classList.toggle('is-selected', Boolean(checkbox && checkbox.checked));
+      if (!radio) return;
+      radio.disabled = !checkbox.checked || row.dataset.winnerEligible !== 'true'
+        || Number(row.dataset.rating || 0) !== highestRating;
+      if (radio.checked && radio.disabled) radio.checked = false;
+      if (radio.checked) selectedWinner = true;
+    });
+    if (!selectedWinner) {
+      const nextWinner = rows.find(function(row) {
+        const radio = row.querySelector('.top-five-winner-radio');
+        return radio && !radio.disabled;
+      });
+      if (nextWinner) nextWinner.querySelector('.top-five-winner-radio').checked = true;
+    }
+  });
+
+  container.addEventListener('submit', function(event) {
+    if (!event.target.matches('#approve-monthly-top-five-form')) return;
+    event.preventDefault();
+    const form = event.target;
+    const checkboxes = Array.from(form.closest('#employee-month-candidates-list').querySelectorAll('.top-five-employee-checkbox'));
+    const selectedEmployeeIds = checkboxes.filter(function(input) { return input.checked; }).map(function(input) { return input.value; });
+    let employeeOfMonth = form.querySelector('input[name="employee_of_month_id"]:checked');
+    const button = form.querySelector('button[type="submit"]');
+    const errorBox = form.querySelector('#top-five-selection-error');
+    const monthSelect = document.getElementById('employee-of-month-month');
+    const yearSelect = document.getElementById('employee-of-month-year');
+    const requiredCount = Number(form.querySelector('button').dataset.requiredCount || checkboxes.filter(function(input) {
+      return input.defaultChecked;
+    }).length);
+    if (selectedEmployeeIds.length === requiredCount && !employeeOfMonth) {
+      const selectedWinnerRow = Array.from(container.querySelectorAll('.top-five-candidate')).find(function(row) {
+        const checkbox = row.querySelector('.top-five-employee-checkbox');
+        const radio = row.querySelector('.top-five-winner-radio');
+        return checkbox && checkbox.checked && radio && row.dataset.winnerEligible === 'true';
+      });
+      if (selectedWinnerRow) {
+        employeeOfMonth = selectedWinnerRow.querySelector('.top-five-winner-radio');
+        employeeOfMonth.disabled = false;
+        employeeOfMonth.checked = true;
+      }
+    }
+    if (selectedEmployeeIds.length !== requiredCount || !employeeOfMonth) {
+      errorBox.textContent = 'Select exactly ' + requiredCount + ' employees.'
+        + (selectedEmployeeIds.length === requiredCount ? ' Choose an eligible Employee of the Month.' : ' Resolve any cutoff tie, then approve.');
+      errorBox.classList.remove('d-none');
+      return;
+    }
+    if (!window.confirm('Approve and lock the Top 5 for this month? This action saves the awards to history.')) {
+      return;
+    }
+    errorBox.classList.add('d-none');
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Approving...';
+    }
+    fetch(recognitionApiBase + '?resource=recognition&action=approve_monthly_top_five', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        month_year: String(yearSelect ? yearSelect.value : new Date().getFullYear()) + '-'
+          + String(monthSelect ? monthSelect.value : new Date().getMonth() + 1).padStart(2, '0'),
+        selected_employee_ids: selectedEmployeeIds,
+        employee_of_month_id: employeeOfMonth.value
+      })
+    }).then(function(response) {
+      return response.json().then(function(result) {
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Could not approve the monthly recognition cycle.');
+        }
+        return result.data;
+      });
+    }).then(function(cycle) {
+      cycle.can_approve = true;
+      renderMonthlyRecognitionCycle(cycle);
+      loadAwardHistory();
+      loadRecognitionPageData();
+    }).catch(function(error) {
+      errorBox.textContent = error.message;
+      errorBox.classList.remove('d-none');
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-check mr-1"></i>Approve Top 5';
+      }
+    });
+  });
+}
+
 function loadEmployeeOfTheMonthCandidates() {
   const requestId = ++employeeMonthCandidatesRequestId;
   const monthSelect = document.getElementById('employee-of-month-month');
   const yearSelect = document.getElementById('employee-of-month-year');
   const month = monthSelect ? monthSelect.value : new Date().getMonth() + 1;
   const year = yearSelect ? yearSelect.value : new Date().getFullYear();
+  const monthYear = String(year) + '-' + String(month).padStart(2, '0');
+  const container = document.getElementById('employee-month-candidates-list');
+  if (container) bindMonthlyRecognitionApproval(container);
 
-  return fetch(`${recognitionApiBase}?resource=recognition&action=employee_of_month&month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}&t=${Date.now()}`, {
+  return fetch(`${recognitionApiBase}?resource=recognition&action=monthly_top_five&month_year=${encodeURIComponent(monthYear)}&t=${Date.now()}`, {
     cache: 'no-store'
   })
     .then(r => r.json())
     .then(res => {
       if (requestId !== employeeMonthCandidatesRequestId) return;
-      const container = document.getElementById('employee-month-candidates-list');
       if (!container) return;
-      if (!res || !res.data || !res.data.length) {
-        container.innerHTML = '<p class="text-muted text-center">No nominations yet.</p>';
-        appendPendingNomination();
-        populateBadgeEmployeesFromNominations();
-        return;
+      if (!res || !res.success || !res.data) {
+        throw new Error(res && res.error ? res.error : 'Unable to load finalized performance ratings.');
       }
-
-      container.innerHTML = '';
-      res.data.forEach(function(candidate) {
-        const hasVoted = Boolean(candidate.has_voted)
-          || (window.employeeMonthVotes || []).includes(String(candidate.eer_award_history_id));
-        const statusBadge = candidate.status === 'winner' ? 'badge-success' : (candidate.status === 'shortlisted' ? 'badge-info' : 'badge-warning');
-        const item = document.createElement('div');
-        item.className = 'list-group-item candidate-item nomination-candidate';
-        item.dataset.employeeId = candidate.employee_id || '';
-        item.dataset.awardHistoryId = candidate.eer_award_history_id || '';
-        const voteButton = candidate.eer_award_history_id && !hasVoted
-          ? '<form method="POST" action="" class="vote-form"><input type="hidden" name="action" value="vote_employee_month"><input type="hidden" name="award_history_id" value="' + escapeHtml(candidate.eer_award_history_id) + '"><button type="submit" class="btn btn-sm btn-outline-warning"><i class="fas fa-vote-yea"></i> Vote +5</button></form>'
-          : (candidate.eer_award_history_id ? '' : '<button type="button" class="btn btn-sm btn-outline-secondary" disabled>Not Nominated</button>');
-        const awardIcon = candidate.award_icon || 'fas fa-trophy';
-        const statusLabel = (candidate.status || 'nominated').charAt(0).toUpperCase() + (candidate.status || 'nominated').slice(1);
-        item.innerHTML = `<div class="nomination-candidate-main"><div class="employee-month-name"><span class="employee-month-icon" aria-hidden="true"><i class="${escapeHtml(awardIcon)}"></i></span><strong>${escapeHtml(candidate.employee_name || candidate.employee_id)}</strong><span class="badge nomination-status ${statusBadge}">${escapeHtml(statusLabel)}</span></div><div class="nomination-candidate-stats"><span><i class="fas fa-building" aria-hidden="true"></i>${escapeHtml(candidate.department || 'N/A')}</span><span><i class="fas fa-vote-yea" aria-hidden="true"></i>${escapeHtml(candidate.votes || 0)} votes</span><span><i class="fas fa-chart-line" aria-hidden="true"></i>${escapeHtml(candidate.performance_score || 0)}% performance</span><span><i class="fas fa-heart" aria-hidden="true"></i>${escapeHtml(candidate.recognition_total || 0)} recognition pts</span></div>${candidate.nomination_reason ? '<div class="nomination-reason"><span class="nomination-reason-label">Reason</span><span>' + escapeHtml(candidate.nomination_reason) + '</span></div>' : ''}</div><div class="candidate-actions">${voteButton}</div>`;
-        container.appendChild(item);
-      });
-      appendPendingNomination();
-      populateBadgeEmployeesFromNominations();
+      renderMonthlyRecognitionCycle(res.data);
+    })
+    .catch(function(error) {
+      if (requestId !== employeeMonthCandidatesRequestId || !container) return;
+      console.error('Unable to load monthly recognition candidates.', error);
+      container.innerHTML = '<p class="text-danger text-center">' + escapeHtml(error.message) + '</p>';
     });
 }
 
@@ -2001,7 +2261,15 @@ function loadEmployeeBadges() {
           const item = document.createElement('div');
           item.className = 'list-group-item employee-badge-item';
           const badgeIcon = eb.badge_icon || 'fas fa-medal';
-          item.innerHTML = `<div class="employee-badge-icon" aria-hidden="true"><i class="${escapeHtml(badgeIcon)}"></i></div><div class="employee-badge-content"><strong>${escapeHtml(eb.employee_name || eb.employee_id)}</strong><div class="employee-badge-earned">earned <b>${escapeHtml(eb.badge_name || eb.badge_id)}</b></div><small class="text-muted">${escapeHtml(eb.awarded_at || eb.earned_at || '')}</small></div><span class="badge badge-success employee-badge-points">+${Number(eb.badge_points || 0)} pts</span>`;
+          const cycleLabel = eb.recognition_month
+            ? `<span class="employee-badge-cycle"><i class="far fa-calendar-check" aria-hidden="true"></i>${escapeHtml(eb.award_level === 'employee_of_month' ? 'Employee of the Month' : 'Outstanding Employee')}<span aria-hidden="true">·</span>${escapeHtml(eb.recognition_month)}</span>`
+            : '';
+          const awardedAt = eb.awarded_at || eb.earned_at || '';
+          const badgePoints = Number(eb.badge_points || 0);
+          const badgePointsLabel = badgePoints > 0
+            ? `<span class="employee-badge-points"><i class="fas fa-plus" aria-hidden="true"></i>${badgePoints}<small>points</small></span>`
+            : '';
+          item.innerHTML = `<div class="employee-badge-icon" aria-hidden="true"><i class="${escapeHtml(badgeIcon)}"></i></div><div class="employee-badge-content"><strong>${escapeHtml(eb.employee_name || eb.employee_id)}</strong><div class="employee-badge-earned"><span>earned</span><b>${escapeHtml(eb.badge_name || eb.badge_id)}</b></div>${cycleLabel}${awardedAt ? `<small class="employee-badge-date"><i class="far fa-clock" aria-hidden="true"></i>${escapeHtml(awardedAt)}</small>` : ''}</div>${badgePointsLabel}`;
           feed.appendChild(item);
         });
       } else {

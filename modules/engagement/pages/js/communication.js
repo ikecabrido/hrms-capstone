@@ -409,7 +409,20 @@ function loadCommunicationPageData() {
   fetch('api/communication.php?action=page_data', {credentials: 'same-origin', cache: 'no-store'})
     .then(function (response) {
       if (!response.ok) throw new Error('Unable to load communication data.');
-      return response.json();
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.toLowerCase().includes('application/json')) {
+        throw new Error('Invalid API response format.');
+      }
+      return response.text().then(function (text) {
+        if (!text || !text.trim()) {
+          throw new Error('Empty JSON response from server.');
+        }
+        try {
+          return JSON.parse(text);
+        } catch (error) {
+          throw new Error('Malformed JSON response from server.');
+        }
+      });
     })
     .then(function (response) {
       const data = response.data || {};
@@ -469,7 +482,17 @@ function initCommunicationForms() {
         credentials: 'same-origin'
       })
         .then(function (response) {
-          return response.json().then(function (data) {
+          const contentType = response.headers.get('content-type') || '';
+          return response.text().then(function (text) {
+            if (!text || !text.trim()) {
+              throw new Error('Empty JSON response from server.');
+            }
+            let data;
+            try {
+              data = JSON.parse(text);
+            } catch (error) {
+              throw new Error('Malformed JSON response from server.');
+            }
             if (!response.ok || data.error) throw new Error(data.error || data.message || 'Unable to save.');
             return data;
           });
@@ -788,7 +811,16 @@ function initLcmPolicySharing() {
         credentials: 'same-origin'
       })
         .then(function (response) {
-          return response.json().then(function (data) {
+          return response.text().then(function (text) {
+            if (!text || !text.trim()) {
+              throw new Error('Empty JSON response from server.');
+            }
+            let data;
+            try {
+              data = JSON.parse(text);
+            } catch (error) {
+              throw new Error('Malformed JSON response from server.');
+            }
             if (!response.ok || data.error) {
               throw new Error(data.error || data.message || 'Unable to share policy.');
             }

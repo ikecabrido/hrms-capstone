@@ -2,7 +2,7 @@
 
 class Database2 {
     private $host = "localhost";
-    private $db = "payr_bcp";
+    private $db = " ";
     private $user = "root";
     private $pass = "";
     private $conn;

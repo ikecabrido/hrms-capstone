@@ -265,16 +265,16 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                           <?php if (!empty($payload['performance_leaderboard'])): ?>
                             <ul class="list-group list-group-flush">
                               <?php foreach ($payload['performance_leaderboard'] as $performer): ?>
-                                <?php $score = $performer['final_rating_percent'] ?? $performer['performance_score'] ?? 'N/A'; $displayScore = is_numeric($score) ? rtrim(rtrim(number_format((float)$score, 1, '.', ''), '0'), '.') : $score; ?>
+                              <?php $score = $performer['overall_rating'] ?? 'N/A'; $displayScore = is_numeric($score) ? number_format((float)$score, 2, '.', '') : $score; ?>
                                 <li class="list-group-item recognition-summary-item">
                                   <div class="recognition-summary-content">
                                     <strong><?= htmlspecialchars($performer['employee_name'] ?? $performer['employee_id'] ?? 'Unknown') ?></strong>
                                     <div class="recognition-summary-meta">
-                                      Score: <?= htmlspecialchars($displayScore) ?>%
-                                      &bull; Grade: <?= htmlspecialchars($performer['final_grade'] ?? 'N/A') ?>
+                                    Overall Rating: <?= htmlspecialchars($displayScore) ?>/5.00
+                                    &bull; Review period: <?= htmlspecialchars($performer['review_period'] ?? 'N/A') ?>
                                     </div>
                                   </div>
-                                  <span class="badge badge-success recognition-score-badge">+<?= htmlspecialchars($displayScore) ?>%</span>
+                                <span class="badge badge-success recognition-score-badge"><?= htmlspecialchars($displayScore) ?>/5.00</span>
                                 </li>
                               <?php endforeach; ?>
                             </ul>
@@ -294,12 +294,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                     <div class="col-md-8">
                       <div class="card card-warning card-outline">
                         <div class="card-header header-action-card-header">
-                          <h3 class="card-title"><i class="fas fa-star mr-2"></i>Employee of the Month Nominations</h3>
-                          <div class="card-tools">
-                            <button type="button" class="btn btn-warning btn-sm header-action-button" data-recognition-open="nominateEmployeeModal">
-                              <i class="fas fa-plus mr-1"></i> Add Nomination
-                            </button>
-                          </div>
+                          <h3 class="card-title"><i class="fas fa-star mr-2"></i>Top 5 Employees for Recognition</h3>
                         </div>
                         <div class="card-body">
                           <form id="employee-month-filter-form" method="GET" class="form-inline mb-3">
@@ -319,50 +314,7 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                           </form>
 
                           <div class="list-group" id="employee-month-candidates-list">
-                            <?php if (!empty($payload['employee_of_month_candidates'])): ?>
-                              <?php foreach ($payload['employee_of_month_candidates'] as $candidate): ?>
-                                <?php
-                                $hasVoted = isset($candidate['has_voted']) ? (bool)$candidate['has_voted'] : (isset($_SESSION['employee_month_votes']) && in_array($candidate['eer_award_history_id'] ?? null, $_SESSION['employee_month_votes']));
-                                $statusBadge = $candidate['status'] === 'winner' ? 'badge-success' : ($candidate['status'] === 'shortlisted' ? 'badge-info' : 'badge-warning');
-                                ?>
-                                <div class="list-group-item candidate-item nomination-candidate" data-award-history-id="<?= htmlspecialchars($candidate['eer_award_history_id']) ?>" data-employee-id="<?= htmlspecialchars($candidate['employee_id']) ?>">
-                                  <div class="nomination-candidate-main">
-                                    <div class="employee-month-name">
-                                      <span class="employee-month-icon" aria-hidden="true"><i class="<?= htmlspecialchars($candidate['award_icon'] ?? 'fas fa-trophy') ?>"></i></span>
-                                      <strong><?= htmlspecialchars($candidate['employee_name'] ?? 'Unknown') ?></strong>
-                                      <span class="badge nomination-status <?= $statusBadge ?>"><?= htmlspecialchars(ucfirst($candidate['status'] ?? 'nominated')) ?></span>
-                                    </div>
-                                    <div class="nomination-candidate-stats">
-                                      <span><i class="fas fa-building" aria-hidden="true"></i><?= htmlspecialchars($candidate['department'] ?? 'N/A') ?></span>
-                                      <span><i class="fas fa-vote-yea" aria-hidden="true"></i><?= htmlspecialchars($candidate['votes'] ?? 0) ?> votes</span>
-                                      <span><i class="fas fa-chart-line" aria-hidden="true"></i><?= htmlspecialchars($candidate['performance_score'] ?? 0) ?>% performance</span>
-                                      <span><i class="fas fa-heart" aria-hidden="true"></i><?= htmlspecialchars($candidate['recognition_total'] ?? 0) ?> recognition pts</span>
-                                    </div>
-                                    <?php if (!empty($candidate['nomination_reason'])): ?>
-                                      <div class="nomination-reason">
-                                        <span class="nomination-reason-label">Reason</span>
-                                        <span><?= htmlspecialchars($candidate['nomination_reason']) ?></span>
-                                      </div>
-                                    <?php endif; ?>
-                                  </div>
-                                  <div class="text-right candidate-actions">
-                                    <?php if (!empty($candidate['eer_award_history_id']) && !$hasVoted): ?>
-                                      <form method="POST" action="" class="vote-form">
-                                        <input type="hidden" name="action" value="vote_employee_month">
-                                        <input type="hidden" name="award_history_id" value="<?= htmlspecialchars($candidate['eer_award_history_id']) ?>">
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">
-                                          <i class="fas fa-vote-yea"></i> Vote +5
-                                        </button>
-                                      </form>
-                                    <?php elseif (empty($candidate['eer_award_history_id'])): ?>
-                                      <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Not Nominated</button>
-                                    <?php endif; ?>
-                                  </div>
-                                </div>
-                              <?php endforeach; ?>
-                            <?php else: ?>
-                              <p class="employee-month-empty">No nominations yet.</p>
-                            <?php endif; ?>
+                            <p class="text-muted text-center">Loading finalized performance ratings...</p>
                           </div>
                         </div>
                       </div>
@@ -375,80 +327,28 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                           <h3 class="card-title"><i class="fas fa-crown mr-2"></i>Current Winner</h3>
                         </div>
                         <div class="card-body text-center" id="current-winner-content">
-                          <?php
-                          // Get the current month's employee of the month
-                          $currentMonth = date('Y-m');
-                          $currentWinner = null;
-                          $winnerEmployee = null;
-                          
-                          // Search for Employee of the Month nominations for current month
-                          foreach ($payload['award_history'] ?? [] as $award) {
-                            if (strpos($award['award_name'], 'Employee of the Month') !== false) {
-                              $awardMonth = date('Y-m', strtotime($award['created_at'] ?? $award['awarded_at'] ?? date('Y-m-d')));
-                              if ($awardMonth === $currentMonth) {
-                                $currentWinner = $award;
-                                break;
-                              }
-                            }
-                          }
-                          
-                          // Get the employee details
-                          $winnerName = 'Unknown Employee';
-                          $winnerInitials = '??';
-                          if ($currentWinner) {
-                            $winnerEmployee = array_filter($payload['employees'] ?? [], function($emp) use ($currentWinner) {
-                              return ($emp['employee_id'] ?? null) == ($currentWinner['employee_id'] ?? null);
-                            });
-                            $winnerEmployee = reset($winnerEmployee);
-                            if ($winnerEmployee) {
-                              $winnerName = $winnerEmployee['full_name']
-                                  ?? $winnerEmployee['employee_name']
-                                  ?? trim(implode(' ', array_filter([
-                                      $winnerEmployee['first_name'] ?? null,
-                                      $winnerEmployee['middle_name'] ?? null,
-                                      $winnerEmployee['last_name'] ?? null,
-                                  ])))
-                                  ?: 'Unknown Employee';
-                                    $winnerNameParts = preg_split('/\s+/', trim($winnerName));
-                                    $winnerInitials = strtoupper(substr($winnerNameParts[0] ?? '?', 0, 1) . substr($winnerNameParts[count($winnerNameParts) - 1] ?? '?', 0, 1));
-                            }
-                          }
-                          ?>
-                          
-                          <?php if ($winnerEmployee): ?>
-                            <div class="current-winner-profile">
-                              <div class="current-winner-avatar" aria-hidden="true"><?= htmlspecialchars($winnerInitials) ?></div>
-                              <h5 class="current-winner-name"><?= htmlspecialchars($winnerName) ?></h5>
-                              <p class="current-winner-period"><?= date('F Y') ?></p>
-                              <span class="badge badge-warning current-winner-badge"><i class="fas fa-crown mr-1"></i>Employee of the Month</span>
-                            </div>
-                            <?php if ($currentWinner && !empty($currentWinner['reason'])): ?>
-                              <div class="current-winner-reason">
-                                <span class="current-winner-reason-label">Reason</span>
-                                <span><?= htmlspecialchars($currentWinner['reason']) ?></span>
-                              </div>
-                            <?php endif; ?>
-                          <?php else: ?>
-                            <div class="current-winner-empty">
-                              <i class="fas fa-trophy text-primary" aria-hidden="true"></i>
-                              <p>No Employee of the Month selected yet for <?= date('F Y') ?></p>
-                              <small>Nominations will be announced soon!</small>
-                            </div>
-                          <?php endif; ?>
+                          <div class="current-winner-empty">
+                            <i class="fas fa-trophy text-primary" aria-hidden="true"></i>
+                            <p>No approved Employee of the Month yet for <?= date('F Y') ?></p>
+                            <small>HR will finalize the selection after reviewing the latest finalized performance reports.</small>
+                          </div>
                         </div>
                       </div>
 
-                      <!-- Nomination Rules -->
+                      <!-- Monthly Recognition Rules -->
                       <div class="card card-info card-outline recognition-rules-card">
                         <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-info-circle mr-2"></i>Nomination Rules</h3>
+                          <h3 class="card-title"><i class="fas fa-info-circle mr-2"></i>Selection Rules</h3>
                         </div>
                         <div class="card-body">
                           <ul class="list-unstyled">
-                            <li><i class="fas fa-check text-success mr-2"></i> Any employee can nominate</li>
-                            <li><i class="fas fa-check text-success mr-2"></i> Must provide specific reason</li>
-                            <li><i class="fas fa-check text-success mr-2"></i> Voting period: 2 weeks</li>
-                            <li><i class="fas fa-check text-success mr-2"></i> Winner announced monthly</li>
+                            <li><i class="fas fa-check text-success mr-2"></i> Recognition Feed recipients lang ang niraranggo</li>
+                            <li><i class="fas fa-check text-success mr-2"></i> Finalized Overall Rating lang ang ginagamit; hindi isinasama ang Draft reports</li>
+                            <li><i class="fas fa-check text-success mr-2"></i> Kung walang finalized rating, ililista ang employee pagkatapos ng may rating; hindi Recognition Feed points ang batayan ng ranggo</li>
+                            <li><i class="fas fa-check text-success mr-2"></i> Employee of the Month ang may pinakamataas na rating</li>
+                            <li><i class="fas fa-check text-success mr-2"></i> Kapag approved: Top 1 hanggang Top 5 ay makakakuha ng 50 / 40 / 30 / 20 / 10 points ayon sa ranking; walang dagdag na points ang badges para maiwasan ang dobleng points</li>
+                            <li><i class="fas fa-check text-success mr-2"></i> HR ang mag-aapprove at magpapasya sa tie sa ika-5 puwesto</li>
+                            <li><i class="fas fa-check text-success mr-2"></i> Sa HR approval, matatala sa Recognition Feed at award history ang napiling employees</li>
                           </ul>
                         </div>
                       </div>
@@ -463,14 +363,6 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                       <div class="card card-info card-outline recognition-badges-card">
                         <div class="card-header header-action-card-header">
                           <h3 class="card-title"><i class="fas fa-medal mr-2"></i>Achievement Badges</h3>
-                          <div class="card-tools">
-                            <button type="button" class="btn btn-info btn-sm header-action-button mr-2" data-recognition-open="createBadgeModal">
-                              <i class="fas fa-plus mr-1"></i>Create Badge
-                            </button>
-                            <button type="button" class="btn btn-info btn-sm header-action-button" data-recognition-open="assignBadgeModal">
-                              <i class="fas fa-plus mr-1"></i>Assign Badge
-                            </button>
-                          </div>
                         </div>
                         <div class="card-body">
                           <div id="badges-feed"></div>
@@ -544,7 +436,8 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                     <div class="col-md-8">
                       <div class="card card-warning card-outline recognition-leaderboard-card">
                         <div class="card-header">
-                          <h3 class="card-title"><i class="fas fa-trophy mr-2"></i>Comprehensive Leaderboard</h3>
+                          <h3 class="card-title"><i class="fas fa-trophy mr-2"></i>Monthly Points Leaderboard</h3>
+                          <div class="text-muted small">Points come from approved recognitions, earned badges, and configured award points. Performance ratings do not add points.</div>
                         </div>
                         <div class="card-body">
                           <?php if (!empty($payload['comprehensive_leaderboard'])): ?>
@@ -555,7 +448,6 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                                     <th>Rank</th>
                                     <th>Employee</th>
                                     <th>Recognition</th>
-                                    <th>Performance</th>
                                     <th>Badges</th>
                                     <th>Awards</th>
                                     <th>Total</th>
@@ -574,7 +466,6 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                                         <div class="text-muted small"><?= htmlspecialchars($entry['department'] ?? 'N/A') ?></div>
                                       </td>
                                       <td><?= htmlspecialchars($entry['recognition_points'] ?? 0) ?></td>
-                                      <td><?= htmlspecialchars($entry['performance_points'] ?? 0) ?></td>
                                       <td><?= htmlspecialchars($entry['badge_points'] ?? 0) ?></td>
                                       <td><?= htmlspecialchars($entry['award_points'] ?? 0) ?></td>
                                       <td><span class="badge badge-success badge-pill"><?= htmlspecialchars($entry['total_points'] ?? 0) ?> pts</span></td>
@@ -591,14 +482,13 @@ $selectedYear = (int)($_GET['year'] ?? date('Y'));
                                     <th>Rank</th>
                                     <th>Employee</th>
                                     <th>Recognition</th>
-                                    <th>Performance</th>
                                     <th>Badges</th>
                                     <th>Awards</th>
                                     <th>Total</th>
                                   </tr>
                                 </thead>
                                 <tbody id="comprehensive-leaderboard-list">
-                                  <tr><td colspan="7" class="text-muted text-center">Loading leaderboard...</td></tr>
+                                  <tr><td colspan="6" class="text-muted text-center">Loading leaderboard...</td></tr>
                                 </tbody>
                               </table>
                             </div>

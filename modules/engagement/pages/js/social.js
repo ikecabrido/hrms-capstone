@@ -130,7 +130,7 @@ function escapeHtml(text) {
     if (membersList) {
       membersList.innerHTML = members.length
         ? members.map(function(member) {
-            var name = member.full_name || ('Employee ID: ' + (member.employee_id || 'N/A'));
+            var name = member.full_name || member.employee_name || ('Employee ID: ' + (member.employee_id || 'N/A'));
             return '<div class="group-member-row"><i class="fas fa-user mr-2"></i>' + escapeHtml(name) + '</div>';
           }).join('')
         : '<div class="group-member-empty">No members yet.</div>';
@@ -824,15 +824,27 @@ function escapeHtml(text) {
       document.querySelectorAll('.moderation-insights-trigger').forEach(function(otherTrigger) {
         otherTrigger.setAttribute('aria-expanded', otherTrigger === trigger && willOpen ? 'true' : 'false');
       });
+      if (willOpen && insightsFilter === 'needs-review') {
+        var reviewList = details.querySelector('[data-insights-section="needs-review"]');
+        if (reviewList) {
+          window.requestAnimationFrame(function() {
+            reviewList.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
+        }
+      }
     }
 
     document.addEventListener('click', function(event) {
-      var trigger = event.target.closest('.moderation-insights-trigger');
+      var trigger = event.target instanceof Element
+        ? event.target.closest('.moderation-insights-trigger')
+        : null;
       if (trigger) toggleInsights(trigger);
     });
 
     document.addEventListener('keydown', function(event) {
-      var trigger = event.target.closest('.moderation-insights-trigger');
+      var trigger = event.target instanceof Element
+        ? event.target.closest('.moderation-insights-trigger')
+        : null;
       if (!trigger || (event.key !== 'Enter' && event.key !== ' ')) return;
       event.preventDefault();
       toggleInsights(trigger);
@@ -843,7 +855,9 @@ function escapeHtml(text) {
     if (document.documentElement.dataset.resolvePostBound === '1') return;
     document.documentElement.dataset.resolvePostBound = '1';
     document.addEventListener('click', function(event) {
-      var button = event.target.closest('.resolve-post-btn');
+      var button = event.target instanceof Element
+        ? event.target.closest('.resolve-post-btn')
+        : null;
       if (!button || button.disabled) return;
       var postId = button.dataset.postId;
       if (!postId) return;
@@ -858,14 +872,54 @@ function escapeHtml(text) {
       })
         .then(function(response) {
           return response.json().then(function(data) {
-            if (!response.ok || data.success === false) {
+            if (!response.ok || data.success !== true) {
               throw new Error(data.message || data.error || 'Unable to resolve post.');
             }
             return data;
           });
         })
         .then(function() {
-          window.location.reload();
+          var reviewRow = button.closest('.moderation-review-row');
+          var details = document.getElementById('employeeModerationDetails');
+          var resolvedSection = details && details.querySelector('[data-insights-section="resolved"]');
+          if (!reviewRow || !resolvedSection) {
+            throw new Error('The moderation list could not be updated.');
+          }
+
+          var resolvedEmptyMessage = resolvedSection.querySelector('.moderation-empty-message');
+          if (resolvedEmptyMessage) resolvedEmptyMessage.remove();
+          button.remove();
+          reviewRow.classList.add('moderation-resolved-row');
+          var resolvedBadge = document.createElement('span');
+          resolvedBadge.className = 'badge badge-success';
+          resolvedBadge.textContent = 'Resolved';
+          reviewRow.appendChild(resolvedBadge);
+          resolvedSection.appendChild(reviewRow);
+
+          var needsReviewSection = details.querySelector('[data-insights-section="needs-review"]');
+          if (needsReviewSection) {
+            needsReviewSection.hidden = !needsReviewSection.querySelector('.moderation-review-row');
+          }
+
+          function updateCount(type, amount) {
+            var countElement = document.querySelector('[data-moderation-count="' + type + '"]');
+            var count = countElement
+              ? Math.max(0, (parseInt(countElement.textContent, 10) || 0) + amount)
+              : 0;
+            if (countElement) countElement.textContent = count;
+
+            document.querySelectorAll('.moderation-insights-trigger[data-moderation-type="' + type + '"]').forEach(function(trigger) {
+              var hasItems = count > 0;
+              trigger.dataset.disabled = hasItems ? 'false' : 'true';
+              trigger.setAttribute('aria-disabled', hasItems ? 'false' : 'true');
+              trigger.setAttribute('tabindex', hasItems ? '0' : '-1');
+              trigger.classList.toggle('is-disabled', !hasItems);
+              if (!hasItems) trigger.setAttribute('aria-expanded', 'false');
+            });
+          }
+
+          updateCount('negative', -1);
+          updateCount('resolved', 1);
         })
         .catch(function(error) {
           button.disabled = false;
@@ -1170,7 +1224,7 @@ function escapeHtml(text) {
         '<button type="button" class="btn btn-sm btn-outline-danger react-btn" data-post-id="' + postId + '" data-reaction="angry" title="Angry" aria-label="Angry"><i class="fas fa-angry"></i> <span class="reaction-count" data-reaction="angry">' + angryCount + '</span></button>' +
         '</div>';
 
-      return '<div class="card mb-3 social-post-card" style="border-left: 4px solid #007bff;">' +
+      return '<div id="social-post-' + postId + '" class="card mb-3 social-post-card" style="border-left: 4px solid #007bff;">' +
         '<div class="card-body">' +
           '<div class="post-header d-flex justify-content-between align-items-start mb-3">' +
             '<div>' +
@@ -1542,62 +1596,125 @@ function escapeHtml(text) {
 
     window.fetchSocialFeed = fetchSocialFeed;
 
-    function computeSentimentSummary(posts) {
-      if (!Array.isArray(posts) || posts.length === 0) {
-        return { positive: 0, neutral: 0, negative: 0 };
+    function getPostSentiment(post) {
+      var positiveWords = ['good','great','love','excellent','awesome','happy','nice','amazing','wonderful','fantastic','brilliant','outstanding','incredible','perfect','best','beautiful','enjoy','enjoyed','pleased','satisfied','thank you','thanks','thankful','grateful','appreciate','appreciated','appreciation','proud','well done','great job','helpful','useful','supportive','reliable','efficient','friendly','kind','success','successful','improved','improvement','progress','achievement','accomplished','inspiring','inspired','recommend','comfortable','hopeful','maganda','mahusay','masaya','salamat','salamat po sa inyo','maraming salamat','pasasalamat','galing','natutuwa','nakakatuwa','maayos','nakakatulong','nakatulong','sulit','magaling','masigla','maipagmamalaki','mabuti','mabait','matulungin','maasikaso','maaasahan','mabilis','malinaw','magaan','malikhain','kaaya-aya','kahanga-hanga','kapuri-puri','nakakabilib','napakaganda','napakahusay','napakagaling','napakasaya','matagumpay','tagumpay','panalo','pag-unlad','umuunlad','nagtagumpay','nagustuhan','gusto ko','masarap','kasiyahan','kasiya-siya','positibo','inspirasyon','nakaka-inspire','nakapagbibigay-inspirasyon','mahusay ang serbisyo','mapayapa','maginhawa','maaliwalas','maunlad','pinahahalagahan'];
+      var negativeWords = ['bad','sad','angry','terrible','hate','poor','worst','problem','unhappy','frustrated','frustrating','disappointed','disappointing','dissatisfied','upset','stressful','stress','concern','issue','issues','broken','failure','failed','difficult','confusing','confused','unacceptable','inefficient','unhelpful','useless','delay','delayed','error','errors','bullshit','bullsh*t','bullsh!t','bullcrap','crap','does not work',"doesn't work",'do not work',"don't work",'not working','not good','not happy','not satisfied','bad experience','poor service','putang','gago','tanga','bwisit','pangit','galit','inis','problema','ayaw','malungkot','nakakainis','nakakagalit','nakakabwisit','nakakadismaya','nakakabigo','nakakabahala','palpak','hindi maganda','hindi maayos','hindi gumagana'];
+      var profanityPattern = /(^|[^a-z0-9])(?:fuck(?:ing|ed|er)?|motherfucker|shit(?:ty)?|bullshit|bullsh[*!]t|bullcrap|crap|assholes?|bitches?|bastards?|damn|piss(?:ed)?|dick(?:head)?|prick|son of a bitch|piece of shit|putang\s*ina|tang\s*ina|puta|pucha|punyeta|puneta|leche|lintik|ulol|bobo|gago|tanga|tarantado|kupal|hinayupak|hayop ka|yawa|buang|bwes?it)(?=$|[^a-z0-9])/i;
+      var comments = Array.isArray(post.comments)
+        ? post.comments.map(function(comment) { return comment.comment || ''; }).join(' ')
+        : '';
+      var text = ((post.content || '') + ' ' + (post.description || '') + ' ' + comments).toLowerCase();
+      var hasPositive = positiveWords.some(function(word) { return text.indexOf(word) !== -1; });
+      var hasNegative = negativeWords.some(function(word) { return text.indexOf(word) !== -1; });
+      if (/\b(?:hindi|di)\s+(?:maganda|mahusay|masaya|maayos|magaling|nakakatuwa|nakakatulong|sulit)\b|\b(?:not|never)\s+(?:good|great|excellent|awesome|happy|nice|amazing|satisfied)\b|\b(?:doesn.t|don.t|do not|does not)\s+(?:work|help)\b/.test(text)) {
+        hasPositive = false;
+        hasNegative = true;
+      }
+      if (profanityPattern.test(text)) {
+        hasPositive = false;
+        hasNegative = true;
       }
 
-      var positiveWords = ['good','great','love','excellent','awesome','happy','nice','amazing'];
-      var negativeWords = ['bad','sad','angry','terrible','hate','poor','worst','problem','putang','gago','tanga','bwisit','pangit','galit','inis','problema','ayaw'];
-
-      var counts = { positive: 0, neutral: 0, negative: 0 };
-
-      posts.forEach(function(post) {
-        if (post.moderation_status === 'resolved') {
-          counts.neutral++;
-          return;
-        }
-        var content = (post.content || '') + ' ' + (Array.isArray(post.comments) ? post.comments.map(function(c){ return c.comment || ''; }).join(' ') : '');
-        var text = content.toLowerCase();
-
-        var foundPositive = positiveWords.some(function(word){ return text.indexOf(word) !== -1; });
-        var foundNegative = negativeWords.some(function(word){ return text.indexOf(word) !== -1; });
-
-        if (foundPositive && !foundNegative) {
-          counts.positive++;
-        } else if (foundNegative && !foundPositive) {
-          counts.negative++;
-        } else {
-          counts.neutral++;
-        }
-      });
-
-      return counts;
+      if (hasPositive && !hasNegative) return 'positive';
+      if (hasNegative && !hasPositive) return 'negative';
+      return 'neutral';
     }
 
     function updateModerationInsights(posts) {
-      var sentiment = computeSentimentSummary(posts);
-      var moderationCounts = {
-        negative: sentiment.negative,
-        positive: sentiment.positive,
-        resolved: 0
-      };
-
-      moderationCounts.negative = 0;
+      var moderationCounts = { negative: 0, positive: 0, resolved: 0 };
+      var needsReviewList = document.querySelector('[data-moderation-post-list]');
+      var needsReviewHeader = needsReviewList && needsReviewList.querySelector('.moderation-employee-header');
+      var positivePostList = document.querySelector('[data-positive-post-list]');
+      var positivePostHeader = positivePostList && positivePostList.querySelector('.moderation-employee-header');
+      var reviewPosts = [];
+      var positivePosts = [];
       if (Array.isArray(posts)) {
         posts.forEach(function(post) {
-          var moderationText = ((post.content || '') + ' ' + (Array.isArray(post.comments) ? post.comments.map(function(comment) { return comment.comment || ''; }).join(' ') : '')).toLowerCase();
-          var hasNegative = ['bad','sad','angry','terrible','hate','poor','worst','problem','putang','gago','tanga','bwisit','pangit','galit','inis','problema','ayaw'].some(function(word) {
-            return moderationText.indexOf(word) !== -1;
-          });
-          if (hasNegative) {
-            if (post.moderation_status === 'resolved') {
-              moderationCounts.resolved++;
-            } else {
-              moderationCounts.negative++;
-            }
+          if (post.moderation_status === 'resolved') {
+            moderationCounts.resolved++;
+            return;
           }
+          var sentiment = getPostSentiment(post);
+          if (sentiment === 'positive' || sentiment === 'negative') {
+            moderationCounts[sentiment]++;
+          }
+          if (sentiment === 'negative') reviewPosts.push(post);
+          if (sentiment === 'positive') positivePosts.push(post);
         });
+      }
+
+      if (needsReviewList) {
+        needsReviewList.replaceChildren();
+        if (needsReviewHeader) needsReviewList.appendChild(needsReviewHeader);
+        reviewPosts.forEach(function(post) {
+          var row = document.createElement('div');
+          row.className = 'moderation-review-row';
+
+          var author = document.createElement('strong');
+          author.textContent = post.author_name || 'Unknown';
+          row.appendChild(author);
+
+          var comments = Array.isArray(post.comments)
+            ? post.comments.map(function(comment) { return comment.comment || ''; }).join(' ')
+            : '';
+          var content = String(post.content || '').trim()
+            || String(post.description || '').trim()
+            || comments.trim()
+            || 'No content';
+          var postContent = document.createElement('span');
+          postContent.textContent = content;
+          row.appendChild(postContent);
+
+          if (post.created_at) {
+            var createdAt = document.createElement('small');
+            createdAt.textContent = post.created_at;
+            row.appendChild(createdAt);
+          }
+
+          var postId = Number(post.eer_social_post_id || 0);
+          if (postId > 0) {
+            var resolveButton = document.createElement('button');
+            resolveButton.type = 'button';
+            resolveButton.className = 'btn btn-sm btn-outline-success resolve-post-btn';
+            resolveButton.dataset.postId = String(postId);
+            resolveButton.innerHTML = '<i class="fas fa-check mr-1"></i>Mark resolved';
+            row.appendChild(resolveButton);
+          }
+          needsReviewList.appendChild(row);
+        });
+        needsReviewList.hidden = reviewPosts.length === 0;
+      }
+
+      if (positivePostList) {
+        positivePostList.replaceChildren();
+        if (positivePostHeader) positivePostList.appendChild(positivePostHeader);
+        positivePosts.forEach(function(post) {
+          var row = document.createElement('div');
+          row.className = 'moderation-review-row';
+
+          var author = document.createElement('strong');
+          author.textContent = post.author_name || 'Unknown';
+          row.appendChild(author);
+
+          var comments = Array.isArray(post.comments)
+            ? post.comments.map(function(comment) { return comment.comment || ''; }).join(' ')
+            : '';
+          var content = String(post.content || '').trim()
+            || String(post.description || '').trim()
+            || comments.trim()
+            || 'No content';
+          var postContent = document.createElement('span');
+          postContent.textContent = content;
+          row.appendChild(postContent);
+
+          if (post.created_at) {
+            var createdAt = document.createElement('small');
+            createdAt.textContent = post.created_at;
+            row.appendChild(createdAt);
+          }
+          positivePostList.appendChild(row);
+        });
+        positivePostList.hidden = positivePosts.length === 0;
       }
 
       document.querySelectorAll('[data-moderation-count]').forEach(function(countElement) {
@@ -1669,38 +1786,34 @@ function escapeHtml(text) {
       }
 
       membersList.innerHTML = members.map(function(member) {
-        var memberName = member.full_name || ('Employee ID: ' + (member.employee_id || 'N/A'));
+        var memberName = member.full_name || member.employee_name || ('Employee ID: ' + (member.employee_id || 'N/A'));
         return '<div class="group-member-row"><i class="fas fa-user mr-2"></i>' + escapeHtml(memberName) + '</div>';
       }).join('');
     }
 
     function refreshGroupMembers(groupId) {
-      fetch(SOCIAL_API_BASE + '?resource=group_member&action=list&group_id=' + encodeURIComponent(groupId), {
+      return fetch(SOCIAL_API_BASE + '?resource=group_member&action=list&group_id=' + encodeURIComponent(groupId), {
         method: 'GET',
         headers: {
           'Accept': 'application/json'
         }
       })
         .then(function(response) {
-          if (response.ok) {
-            return response.json();
-          }
-          if (response.status === 404) {
-            return { success: false, noMembers: true };
-          }
-          throw new Error('Failed to refresh group members.');
+          return response.json().then(function(data) {
+            if (response.status === 404) return [];
+            if (!response.ok || data.success !== true || !Array.isArray(data.data)) {
+              throw new Error(data.message || 'Failed to refresh group members.');
+            }
+            return data.data;
+          });
         })
-        .then(function(data) {
-          if (data.success && Array.isArray(data.data)) {
-            renderGroupMembers(groupId, data.data);
-          } else if (data.noMembers) {
-            renderGroupMembers(groupId, []);
-          }
-        })
-        .catch(function() {
-          console.warn('Unable to refresh group members for group', groupId);
+        .then(function(members) {
+          renderGroupMembers(groupId, members);
+          renderGroupMembersModalList(members);
+          return members;
         });
     }
+    window.refreshSocialGroupMembers = refreshGroupMembers;
 
     var shareStatus = document.getElementById('share-status');
     var shareForm = document.querySelector('.share-form');
@@ -1848,7 +1961,7 @@ function escapeHtml(text) {
           })
           .then(function(data) {
             if (data.success) {
-              refreshGroupMembers(groupId);
+              return refreshGroupMembers(groupId);
             } else {
               alert(data.message || 'Failed to add member.');
             }
@@ -2119,13 +2232,28 @@ function escapeHtml(text) {
       groupForm.addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(groupForm);
+        const submitButton = groupForm.querySelector('button[type="submit"]');
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.textContent = 'Creating...';
+        }
         fetch(new URL('../api/group.php', engagementScript.src).href, {
           method: 'POST',
           body: new URLSearchParams({name: formData.get('group_name') || ''}),
           credentials: 'same-origin'
         }).then(function(response) { return response.json().then(function(data) { if (!response.ok || !data.success) throw new Error(data.message || 'Unable to create group.'); return data; }); })
-          .then(function() { groupForm.reset(); loadSocialPageData(); })
-          .catch(function(error) { window.alert(error.message); });
+          .then(function() {
+            groupForm.reset();
+            window.closeSocialModal('createGroupModal');
+            loadSocialPageData();
+          })
+          .catch(function(error) { window.alert(error.message); })
+          .finally(function() {
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.textContent = 'Create Group';
+            }
+          });
       });
     }
 
@@ -2141,6 +2269,12 @@ function escapeHtml(text) {
           return;
         }
 
+        var submitButton = modalMemberForm.querySelector('button[type="submit"]');
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Adding...';
+        }
+
         fetch(new URL('../api/group_member.php', engagementScript.src).href, {
           method: 'POST',
           body: JSON.stringify({group_id: groupId, employee_id: employeeId}),
@@ -2148,12 +2282,23 @@ function escapeHtml(text) {
           credentials: 'same-origin'
         }).then(function(response) { return response.json().then(function(data) { if (!response.ok || !data.success) throw new Error(data.message || data.error || 'Unable to add group member.'); return data; }); })
           .then(function() {
-            modalMemberForm.reset();
-            refreshGroupMembers(groupId);
-            loadSocialPageData();
-            closeSocialModal('groupMembersModal');
+            if (typeof window.refreshSocialGroupMembers !== 'function') {
+              throw new Error('Unable to refresh the group member list.');
+            }
+            return window.refreshSocialGroupMembers(groupId);
           })
-          .catch(function(error) { window.alert(error.message); });
+          .then(function() {
+            var employeeSelect = document.getElementById('groupMembersModalEmployeeId');
+            if (employeeSelect) employeeSelect.value = '';
+            loadSocialPageData();
+          })
+          .catch(function(error) { window.alert(error.message || 'Unable to add group member.'); })
+          .finally(function() {
+            if (submitButton) {
+              submitButton.disabled = false;
+              submitButton.innerHTML = '<i class="fas fa-user-plus mr-1"></i>Add member';
+            }
+          });
       });
     }
 
@@ -2164,9 +2309,9 @@ function escapeHtml(text) {
     const apiUrl = window.location.pathname.split('/modules/engagement/')[0] + '/modules/engagement/api/social.php?action=page_data';
 
     function renderForums(forums) {
-      const forumsList = document.querySelector('#forums-section .social-scroll-list');
+      const forumsList = document.querySelector('#forums-section .social-forum-scroll-list');
       if (!forumsList || !Array.isArray(forums)) return;
-      forumsList.innerHTML = forums.length ? forums.slice(0, 3).map(function(forum) {
+      forumsList.innerHTML = forums.length ? forums.map(function(forum) {
         const title = forum.title || 'Untitled Forum';
         const category = forum.category || 'General';
         return '<div class="social-mini-item social-forum-item" data-social-item="forum" data-forum-title="' + escapeHtml(title) + '" data-forum-category="' + escapeHtml(category) + '" data-forum-description="' + escapeHtml(forum.description || '') + '" role="button" tabindex="0" onclick="window.openSocialForumDetails(this)" onkeydown="if (event.key === \'Enter\' || event.key === \' \') { event.preventDefault(); window.openSocialForumDetails(this); }"><div class="social-mini-text"><h6>' + escapeHtml(title) + '</h6><small>' + escapeHtml(category) + '</small></div></div>';
@@ -2174,10 +2319,10 @@ function escapeHtml(text) {
     }
 
     function renderGroups(groups, groupMembers) {
-      const groupsList = document.querySelector('#groups-section .social-scroll-list');
+      const groupsList = document.querySelector('#groups-section .social-group-scroll-list');
       if (!groupsList || !Array.isArray(groups)) return;
       const membersByGroup = groupMembers || {};
-      groupsList.innerHTML = groups.length ? groups.slice(0, 4).map(function(group) {
+      groupsList.innerHTML = groups.length ? groups.map(function(group) {
         const groupId = Number(group.eer_group_id || 0);
         const members = membersByGroup[groupId] || [];
         const groupName = group.name || 'Untitled Group';
@@ -2187,9 +2332,9 @@ function escapeHtml(text) {
     }
 
     function renderProjects(projects) {
-      const projectsList = document.querySelector('#projects-section .social-scroll-list');
+      const projectsList = document.querySelector('#projects-section .social-project-scroll-list');
       if (!projectsList || !Array.isArray(projects)) return;
-      projectsList.innerHTML = projects.length ? projects.slice(0, 3).map(function(project) {
+      projectsList.innerHTML = projects.length ? projects.map(function(project) {
         const name = project.name || 'Untitled Project';
         const status = project.status || 'planning';
         return '<div class="social-mini-item social-project-item" data-social-item="project" data-project-name="' + escapeHtml(name) + '" data-project-status="' + escapeHtml(status) + '" data-project-description="' + escapeHtml(project.description || '') + '" data-project-deadline="' + escapeHtml(project.deadline || '') + '" role="button" tabindex="0" onclick="window.openSocialProjectDetails(this)" onkeydown="if (event.key === \'Enter\' || event.key === \' \') { event.preventDefault(); window.openSocialProjectDetails(this); }"><div class="social-mini-text"><h6>' + escapeHtml(name) + '</h6><small>' + escapeHtml(status) + '</small></div></div>';

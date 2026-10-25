@@ -2,8 +2,15 @@
 function jsonResponse($data, $status = 200)
 {
     http_response_code($status);
-    header('Content-Type: application/json');
-    echo json_encode($data);
+    header('Content-Type: application/json; charset=utf-8');
+
+    $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    if ($json === false) {
+        $fallback = ['error' => 'Unable to encode JSON response.'];
+        $json = json_encode($fallback, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+    }
+
+    echo $json === false ? '{}' : $json;
     exit;
 }
 

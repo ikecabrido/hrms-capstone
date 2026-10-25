@@ -189,21 +189,40 @@
 .recognition-area #employee-badges-feed .employee-badge-item {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 1rem;
+  min-width: 0;
+  margin: 0 0 0.65rem;
   padding: 1rem 1.1rem;
+  border: 1px solid #e0eaf5 !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #fff 0%, #f7faff 100%);
+  box-shadow: 0 3px 12px rgba(29, 79, 140, 0.055);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.recognition-area #employee-badges-feed .employee-badge-item:last-child {
+  margin-bottom: 0;
+}
+
+.recognition-area #employee-badges-feed .employee-badge-item:hover {
+  transform: translateY(-1px);
+  border-color: #bfd5ed !important;
+  box-shadow: 0 7px 18px rgba(29, 79, 140, 0.1);
 }
 
 .recognition-area #employee-badges-feed .employee-badge-icon {
   display: inline-flex;
+  flex: 0 0 3rem;
   align-items: center;
   justify-content: center;
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 50%;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 15px;
   color: #fff;
-  background: linear-gradient(145deg, #1f8a70, #12604d);
-  box-shadow: 0 3px 8px rgba(18, 96, 77, 0.2);
-  flex: 0 0 auto;
+  background: linear-gradient(145deg, #258d73, #12604d);
+  box-shadow: 0 5px 12px rgba(18, 96, 77, 0.2);
+  font-size: 1.05rem;
 }
 
 .recognition-area #employee-badges-feed .employee-badge-content {
@@ -211,13 +230,103 @@
   flex: 1;
 }
 
+.recognition-area #employee-badges-feed .employee-badge-content > strong {
+  display: block;
+  overflow: hidden;
+  color: #183d62;
+  font-size: 0.98rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .recognition-area #employee-badges-feed .employee-badge-earned {
-  margin: 0.15rem 0 0.25rem;
-  color: #475569;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.28rem;
+  margin: 0.25rem 0 0.45rem;
+  color: #718198;
+  font-size: 0.8rem;
+}
+
+.recognition-area #employee-badges-feed .employee-badge-earned b {
+  color: #37536f;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.recognition-area #employee-badges-feed .employee-badge-cycle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.27rem 0.55rem;
+  border: 1px solid #dce9f7;
+  border-radius: 999px;
+  background: #f1f7ff;
+  color: #386a9b;
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.recognition-area #employee-badges-feed .employee-badge-cycle i {
+  color: #5785b1;
+}
+
+.recognition-area #employee-badges-feed .employee-badge-date {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+  color: #8997a8;
+  font-size: 0.7rem;
 }
 
 .recognition-area #employee-badges-feed .employee-badge-points {
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.48rem 0.72rem;
+  border: 1px solid #d2eadb;
+  border-radius: 999px;
+  background: #eef8f1;
+  color: #287345;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.recognition-area #employee-badges-feed .employee-badge-points small {
+  font-size: 0.66rem;
+  font-weight: 650;
+}
+
+@media (max-width: 575.98px) {
+  .recognition-area #employee-badges-feed .employee-badge-item {
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.8rem;
+  }
+
+  .recognition-area #employee-badges-feed .employee-badge-icon {
+    flex-basis: 2.55rem;
+    width: 2.55rem;
+    height: 2.55rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+  }
+
+  .recognition-area #employee-badges-feed .employee-badge-content > strong {
+    white-space: normal;
+  }
+
+  .recognition-area #employee-badges-feed .employee-badge-points {
+    gap: 0.2rem;
+    padding: 0.38rem 0.55rem;
+    font-size: 0.73rem;
+  }
 }
 
 .recognition-area #employee-month-candidates-list .employee-month-name {
@@ -2284,11 +2393,15 @@ body.modal-open {
 }
 
 .recognition-area .recognition-quick-stats .quick-stats-card {
+	display: flex;
+	flex: 1 1 auto;
 	padding: 0.75rem !important;
 }
 
 .recognition-area .recognition-quick-stats .quick-stats-row {
+	flex: 1 1 auto;
 	gap: 0.55rem;
+	align-items: stretch;
 }
 
 .recognition-area .recognition-quick-stats .quick-stats-item {
@@ -2840,13 +2953,102 @@ body.modal-open {
   }
 }
 
+.recognition-area #recognition-feed {
+  max-height: 430px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 1rem !important;
+  border-radius: 0 0 14px 14px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior: contain;
+}
+
+.recognition-area #recognition-feed::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.recognition-area #recognition-feed > .list-group,
+.recognition-area #recognition-feed > .list-group-flush {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.recognition-area #recognition-feed .recognition-entry,
+.recognition-area #recognition-feed > .list-group > .list-group-item {
+  margin: 0 !important;
+  padding: 1rem 1.1rem !important;
+  border: 1px solid #dce8f5 !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f7faff 100%) !important;
+  box-shadow: 0 3px 12px rgba(27, 79, 128, 0.055);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.recognition-area #recognition-feed .recognition-entry:hover,
+.recognition-area #recognition-feed > .list-group > .list-group-item:hover {
+  transform: translateY(-1px);
+  border-color: #bfd5ee !important;
+  box-shadow: 0 7px 18px rgba(27, 79, 128, 0.1);
+}
+
+.recognition-area #recognition-feed .recognition-entry-people {
+  row-gap: 0.25rem;
+  color: #174d7d;
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+
+.recognition-area #recognition-feed .recognition-entry-message,
+.recognition-area #recognition-feed .lh-relaxed {
+  margin-top: 0.65rem;
+  color: #52677e;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.recognition-area #recognition-feed .recognition-entry-points,
+.recognition-area #recognition-feed .badge-success {
+  padding: 0.38rem 0.72rem;
+  border: 1px solid #d6efdf;
+  border-radius: 999px;
+  background: #eaf7ee;
+  color: #247344;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.recognition-area #recognition-feed .recognition-entry-time {
+  display: inline-block;
+  margin-top: 0.15rem;
+  color: #8292a5 !important;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 767.98px) {
+  .recognition-area #recognition-feed {
+    max-height: 430px;
+    padding: 0.75rem !important;
+  }
+
+  .recognition-area #recognition-feed .recognition-entry,
+  .recognition-area #recognition-feed > .list-group > .list-group-item {
+    padding: 0.85rem !important;
+  }
+}
+
 #performance-recommendations-list {
   max-height: 220px;
   min-height: 220px;
   height: 220px;
   box-sizing: border-box;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-right: 4px;
@@ -3283,5 +3485,493 @@ body.modal-open {
   .recognition-area #employee-month .nomination-candidate .candidate-actions .btn {
     width: 100%;
     min-width: 0;
+  }
+}
+
+.recognition-area #employee-month #employee-month-candidates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  overflow: visible;
+}
+
+.recognition-area #employee-month .top-five-period {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.2rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #dbe8f6;
+  border-radius: 14px;
+  background: linear-gradient(120deg, #f3f8ff, #fbfdff);
+}
+
+.recognition-area #employee-month .top-five-period-icon,
+.recognition-area #employee-month .top-five-approval-icon {
+  display: inline-flex;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #e3efff;
+  color: #2168ad;
+  font-size: 1rem;
+}
+
+.recognition-area #employee-month .top-five-period > div,
+.recognition-area #employee-month .top-five-approval-copy > span:last-child,
+.recognition-area #employee-month .top-five-pending-approval > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.recognition-area #employee-month .top-five-period-label,
+.recognition-area #employee-month .top-five-list-heading {
+  color: #75869a;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.075em;
+}
+
+.recognition-area #employee-month .top-five-period strong {
+  color: #213d5a;
+  font-size: 0.94rem;
+  font-weight: 700;
+}
+
+.recognition-area #employee-month .top-five-period small {
+  color: #718198;
+  font-size: 0.76rem;
+}
+
+.recognition-area #employee-month .top-five-list-heading {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem 0.1rem;
+}
+
+.recognition-area #employee-month .top-five-candidate {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto minmax(180px, auto);
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 0.85rem 1rem !important;
+  border: 1px solid #e3eaf2 !important;
+  border-radius: 14px !important;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(35, 59, 84, 0.035);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.recognition-area #employee-month .top-five-candidate:hover {
+  border-color: #c8d9ed !important;
+  box-shadow: 0 5px 14px rgba(35, 59, 84, 0.08);
+}
+
+.recognition-area #employee-month .top-five-candidate.is-selected {
+  border-color: #b9d5f4 !important;
+  background: linear-gradient(105deg, #f7fbff, #fff);
+}
+
+.recognition-area #employee-month .top-five-candidate.is-top-rated .top-five-rank {
+  border-color: #f3d78a;
+  background: #fff7df;
+  color: #a77410;
+}
+
+.recognition-area #employee-month .top-five-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #e1e8f0;
+  border-radius: 12px;
+  background: #f3f6fa;
+  color: #64758a;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.recognition-area #employee-month .top-five-employee {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.16rem;
+}
+
+.recognition-area #employee-month .top-five-employee strong {
+  overflow: hidden;
+  color: #20364d;
+  font-size: 0.91rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recognition-area #employee-month .top-five-employee small {
+  overflow: hidden;
+  color: #74849a;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recognition-area #employee-month .top-five-rating {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.18rem;
+  padding: 0.4rem 0.62rem;
+  border: 1px solid #d9e7f5;
+  border-radius: 10px;
+  background: #f4f9ff;
+  color: #2164a4;
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.recognition-area #employee-month .top-five-rating small {
+  color: #8192a6;
+  font-size: 0.67rem;
+  font-weight: 600;
+}
+
+.recognition-area #employee-month .top-five-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.recognition-area #employee-month .top-five-selection-control,
+.recognition-area #employee-month .top-five-winner-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 32px;
+  margin: 0;
+  padding: 0.32rem 0.55rem;
+  border: 1px solid #e1e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #607187;
+  font-size: 0.69rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.recognition-area #employee-month .top-five-selection-control input,
+.recognition-area #employee-month .top-five-winner-control input {
+  accent-color: #2673bd;
+}
+
+.recognition-area #employee-month .top-five-selection-control:has(input:checked) {
+  border-color: #bdd7f2;
+  background: #f3f8ff;
+  color: #285b8d;
+}
+
+.recognition-area #employee-month .top-five-selection-control input:disabled {
+  opacity: 0.55;
+}
+
+.recognition-area #employee-month .top-five-winner-control {
+  border-color: #f0dfb6;
+  background: #fffbf0;
+  color: #916b1d;
+}
+
+.recognition-area #employee-month .top-five-winner-control i {
+  margin-right: 0.18rem;
+  color: #d39a20;
+}
+
+.recognition-area #employee-month .top-five-winner-control:has(input:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.recognition-area #employee-month .top-five-tie-label {
+  align-self: flex-start;
+  width: fit-content;
+  margin-top: 0.15rem;
+  padding: 0.17rem 0.42rem;
+  border-radius: 999px;
+  background: #fff5dc;
+  color: #956d1b;
+  font-size: 0.63rem;
+  font-weight: 700;
+}
+
+.recognition-area #employee-month .top-five-tie-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #f1dfb8;
+  border-radius: 10px;
+  background: #fffbf2;
+  color: #80621f;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.recognition-area #employee-month .top-five-tie-notice i {
+  margin-top: 0.12rem;
+}
+
+.recognition-area #employee-month .top-five-approval {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  margin-top: 0.3rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e0e8f1;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.recognition-area #employee-month .top-five-approval-copy {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 220px;
+}
+
+.recognition-area #employee-month .top-five-approval-copy strong,
+.recognition-area #employee-month .top-five-pending-approval strong {
+  color: #30465c;
+  font-size: 0.81rem;
+}
+
+.recognition-area #employee-month .top-five-approval-copy small,
+.recognition-area #employee-month .top-five-pending-approval small {
+  color: #7b899a;
+  font-size: 0.71rem;
+  line-height: 1.35;
+}
+
+.recognition-area #employee-month #approve-monthly-top-five-button {
+  min-height: 38px;
+  padding: 0.48rem 0.9rem;
+  border: 1px solid #1769ad !important;
+  border-radius: 9px;
+  background: #1769ad !important;
+  box-shadow: 0 3px 8px rgba(23, 105, 173, 0.16);
+  color: #fff !important;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.recognition-area #employee-month #approve-monthly-top-five-button:hover {
+  border-color: #10568e !important;
+  background: #10568e !important;
+}
+
+.recognition-area #employee-month .top-five-pending-approval,
+.recognition-area #employee-month .top-five-approved-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #e1e9f1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #758398;
+}
+
+.recognition-area #employee-month .top-five-pending-approval > i {
+  color: #8291a3;
+}
+
+.recognition-area #employee-month .top-five-approved-banner {
+  border-color: #cde8d7;
+  background: #f1fbf5;
+  color: #23804a;
+}
+
+.recognition-area #employee-month .top-five-approved-banner > i {
+  font-size: 1.1rem;
+}
+
+.recognition-area #employee-month .top-five-approved-banner strong {
+  color: #22643e;
+  font-size: 0.81rem;
+}
+
+.recognition-area #employee-month .top-five-approved-banner small {
+  color: #60836e;
+  font-size: 0.71rem;
+}
+
+.recognition-area #employee-month .top-five-approved-row {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+}
+
+.recognition-area #employee-month .top-five-approved-row .top-five-employee {
+  gap: 0.24rem;
+}
+
+.recognition-area #employee-month .top-five-approved-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  min-width: 0;
+  margin-top: 0.15rem;
+}
+
+.recognition-area #employee-month .top-five-approved-points {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  max-width: 260px;
+}
+
+.recognition-area #employee-month .top-five-approved-points .badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0.36rem 0.62rem;
+  border: 1px solid #d8e5f1;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.recognition-area #employee-month .top-five-approved-points .badge-success {
+  border-color: #d4eadb;
+  background: #edf8f0;
+  color: #277044;
+}
+
+.recognition-area #employee-month .top-five-approved-points .badge-info {
+  border-color: #d4e5f5;
+  background: #eef6ff;
+  color: #286394;
+}
+
+.recognition-area #employee-month .top-five-approved-points .top-five-rating {
+  min-height: 34px;
+}
+
+.recognition-area #employee-month .top-five-award-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.58rem;
+  border: 1px solid #dce6f0;
+  border-radius: 999px;
+  background: #f6f8fb;
+  color: #5d6f83;
+  font-size: 0.67rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.recognition-area #employee-month .top-five-award-label.winner {
+  border-color: #f1dfae;
+  background: #fff8e6;
+  color: #946a13;
+}
+
+.recognition-area #employee-month .top-five-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 2rem 1rem;
+  color: #8493a5;
+  text-align: center;
+}
+
+.recognition-area #employee-month .top-five-empty i {
+  margin-bottom: 0.25rem;
+  color: #a8b8ca;
+  font-size: 1.5rem;
+}
+
+.recognition-area #employee-month .top-five-empty strong {
+  color: #42566d;
+  font-size: 0.86rem;
+}
+
+.recognition-area #employee-month .top-five-empty span {
+  font-size: 0.75rem;
+}
+
+.recognition-area #employee-month #top-five-selection-error {
+  flex: 1 0 100%;
+  margin: 0;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 767.98px) {
+  .recognition-area #employee-month .top-five-candidate,
+  .recognition-area #employee-month .top-five-approved-row {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 0.65rem;
+  }
+
+  .recognition-area #employee-month .top-five-controls {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+  }
+
+  .recognition-area #employee-month .top-five-award-label {
+    justify-self: start;
+  }
+
+  .recognition-area #employee-month .top-five-approved-points {
+    grid-column: 2 / -1;
+    justify-content: flex-start;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .recognition-area #employee-month .top-five-period {
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+
+  .recognition-area #employee-month .top-five-candidate {
+    padding: 0.72rem !important;
+  }
+
+  .recognition-area #employee-month .top-five-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .recognition-area #employee-month .top-five-selection-control,
+  .recognition-area #employee-month .top-five-winner-control {
+    justify-content: flex-start;
+  }
+
+  .recognition-area #employee-month .top-five-approval {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .recognition-area #employee-month #approve-monthly-top-five-button {
+    width: 100%;
   }
 }

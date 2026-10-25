@@ -15,7 +15,7 @@ if (session_status() === PHP_SESSION_NONE) { session_start(); }
 engagementApiRequireLogin();
 $action = $_GET['action'] ?? 'list';
 $isHrAdmin = engagementApiIsHrAdmin();
-if (in_array($action, ['adjust_points', 'delete_employee_month', 'rewards', 'assign_badge'], true) && !$isHrAdmin) {
+if (in_array($action, ['adjust_points', 'delete_employee_month', 'rewards', 'assign_badge', 'approve_monthly_top_five'], true) && !$isHrAdmin) {
     jsonResponse(['error' => 'Unauthorized'], 403);
 }
 
@@ -75,12 +75,12 @@ try {
                 'recently_recognized' => $ctrl->getRecentlyRecognizedEmployees(30),
                 'comprehensive_leaderboard' => $ctrl->getComprehensiveLeaderboard(10),
                 'department_leaderboard' => $ctrl->getDepartmentLeaderboard(null, 10),
-                'recognition_recommendations' => $ctrl->getRecognitionRecommendations(10),
-                'performance_leaderboard' => $ctrl->getPerformanceLeaderboard(10),
-                'employees_without_reports' => $ctrl->getEmployeesWithoutPerformanceReports(),
-                'performance_candidates' => $optionalRewardData([$rewardCtrl, 'getPerformanceBasedCandidates']),
-                'top_performers' => $optionalRewardData([$rewardCtrl, 'getTopPerformers']),
-                'improvement_candidates' => $optionalRewardData([$rewardCtrl, 'getImprovementCandidates']),
+                'recognition_recommendations' => $isHrAdmin ? $ctrl->getRecognitionRecommendations(10) : [],
+                'performance_leaderboard' => $isHrAdmin ? $ctrl->getPerformanceLeaderboard(10) : [],
+                'employees_without_reports' => $isHrAdmin ? $ctrl->getEmployeesWithoutPerformanceReports() : [],
+                'performance_candidates' => $isHrAdmin ? $optionalRewardData([$rewardCtrl, 'getPerformanceBasedCandidates']) : [],
+                'top_performers' => $isHrAdmin ? $optionalRewardData([$rewardCtrl, 'getTopPerformers']) : [],
+                'improvement_candidates' => $isHrAdmin ? $optionalRewardData([$rewardCtrl, 'getImprovementCandidates']) : [],
             ];
 
             if ($currentEmployeeId) {
@@ -90,13 +90,18 @@ try {
 
             $selectedMonth = (int)($_GET['month'] ?? date('m'));
             $selectedYear = (int)($_GET['year'] ?? date('Y'));
-            $recognitionData['employee_of_month_candidates'] = $ctrl->getEmployeeOfTheMonthCandidates($selectedMonth, $selectedYear, $currentUserId);
-            $recognitionData['nominated_employee_ids'] = array_values(array_unique(array_map(
-                'intval',
-                array_filter(array_map(function ($award) {
-                    return strpos($award['award_name'] ?? '', 'Nomination') !== false ? ($award['employee_id'] ?? 0) : 0;
-                }, $recognitionData['award_history']))
-            )));
+            if ($selectedMonth < 1 || $selectedMonth > 12 || $selectedYear < 2000 || $selectedYear > 2200) {
+                jsonResponse(['error' => 'A valid month and year are required'], 400);
+            }
+            $recognitionData['employee_of_month_candidates'] = $ctrl->getMonthlyRecognitionCycle(
+                sprintf('%04d-%02d', $selectedYear, $selectedMonth),
+                $isHrAdmin
+            );
+            $recognitionData['employee_of_month_candidates']['can_approve'] = $isHrAdmin;
+            $recognitionData['current_employee_of_month'] = $ctrl->getMonthlyRecognitionCycle(
+                date('Y-m'),
+                $isHrAdmin
+            );
 
             jsonResponse(['success' => true, 'data' => $recognitionData]);
             break;
@@ -107,6 +112,7 @@ try {
 
         // Return performance-based recognition recommendations
         case 'recommendations':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
             $data = $ctrl->getRecognitionRecommendations($limit);
             jsonResponse(['success' => true, 'data' => $data]);
@@ -114,6 +120,7 @@ try {
 
         // Return performance-only leaderboard
         case 'performance_leaderboard':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
             $data = $ctrl->getPerformanceLeaderboard($limit);
             jsonResponse(['success' => true, 'data' => $data]);
@@ -121,6 +128,7 @@ try {
 
         // Return suggested awards for a specific performer
         case 'suggested_awards':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             $employeeId = $_GET['employee_id'] ?? $data['employee_id'] ?? null;
             if (!$employeeId) jsonResponse(['error' => 'employee_id is required'], 400);
             $data = $ctrl->getSuggestedAwardsForPerformer($employeeId);
@@ -167,30 +175,7 @@ try {
             break;
 
         case 'vote_employee_month':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') jsonResponse(['error' => 'POST required'], 405);
-            $awardHistoryId = $data['award_history_id'] ?? null;
-            if (!$awardHistoryId) jsonResponse(['error' => 'award_history_id is required'], 400);
-            $senderUserId = $currentUserId;
-            $senderEmployeeId = $currentEmployeeId;
-            if (!$senderEmployeeId && $senderUserId) {
-                $db = \Database::getInstance()->getConnection();
-                $stmt = $db->prepare(
-                    'SELECT employee_id FROM user_account WHERE user_id = :user_id LIMIT 1'
-                );
-                $stmt->execute(['user_id' => $senderUserId]);
-                $senderEmployeeId = $stmt->fetchColumn() ?: null;
-            }
-            if (!$senderUserId) jsonResponse(['error' => 'Unauthorized'], 401);
-            if (!$senderEmployeeId) jsonResponse(['error' => 'Employee profile not found'], 400);
-            if ($ctrl->hasVotedForEmployeeMonth((int)$senderUserId, (int)$awardHistoryId)) {
-                jsonResponse(['error' => 'You have already voted this month.'], 403);
-            }
-            $awardHistoryCtrl = new AwardHistoryController();
-            $nomineeEmployeeId = $ctrl->getEmployeeFromAwardHistory((int)$awardHistoryId);
-            if (!$nomineeEmployeeId) jsonResponse(['error' => 'Nominee not found'], 404);
-            $ctrl->addVotePoints($senderEmployeeId, $nomineeEmployeeId);
-            $ctrl->recordEmployeeMonthVote((int)$awardHistoryId, (int)$senderUserId, $nomineeEmployeeId);
-            jsonResponse(['success' => true, 'message' => 'Vote recorded']);
+            jsonResponse(['error' => 'Monthly recognition is based on finalized Overall Ratings and HR approval; voting is no longer used.'], 410);
             break;
 
         case 'delete_employee_month':
@@ -216,8 +201,20 @@ try {
         case 'assign_badge':
             if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
             if (!isset($data['employee_id'], $data['badge_id'])) jsonResponse(['error' => 'employee_id and badge_id are required'], 400);
+            $awardedByEmployeeId = $currentEmployeeId;
+            if (!$awardedByEmployeeId && $currentUserId) {
+                $db = \Database::getInstance()->getConnection();
+                $stmt = $db->prepare(
+                    'SELECT employee_id FROM user_account WHERE user_id = :user_id LIMIT 1'
+                );
+                $stmt->execute(['user_id' => $currentUserId]);
+                $awardedByEmployeeId = $stmt->fetchColumn() ?: null;
+            }
+            if (!$awardedByEmployeeId) {
+                jsonResponse(['error' => 'Admin employee profile not found'], 400);
+            }
             $performanceScore = $ctrl->getEmployeePerformanceScore((int)$data['employee_id']);
-            $result = $ctrl->assignAchievementBadge((int)$data['employee_id'], (int)$data['badge_id'], $currentUserId, $performanceScore);
+            $result = $ctrl->assignAchievementBadge((int)$data['employee_id'], (int)$data['badge_id'], (int)$awardedByEmployeeId, $performanceScore);
             jsonResponse(['success' => true, 'data' => $result]);
             break;
 
@@ -230,9 +227,59 @@ try {
 
         // Employee of the month candidates
         case 'employee_of_month':
-            $month = $_GET['month'] ?? null;
-            $year = $_GET['year'] ?? null;
-            $data = $ctrl->getEmployeeOfTheMonthCandidates($month, $year, $currentUserId);
+            $month = filter_var($_GET['month'] ?? date('m'), FILTER_VALIDATE_INT);
+            $year = filter_var($_GET['year'] ?? date('Y'), FILTER_VALIDATE_INT);
+            if ($month === false || $month < 1 || $month > 12 || $year === false || $year < 2000 || $year > 2200) {
+                jsonResponse(['error' => 'A valid month and year are required'], 400);
+            }
+            $data = $ctrl->getMonthlyRecognitionCycle(sprintf('%04d-%02d', $year, $month), $isHrAdmin);
+            $data['can_approve'] = $isHrAdmin;
+            jsonResponse(['success' => true, 'data' => $data]);
+            break;
+
+        case 'monthly_top_five':
+            $monthYear = $_GET['month_year'] ?? '';
+            if (!is_string($monthYear) || !preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $monthYear)) {
+                jsonResponse(['error' => 'A valid month_year in YYYY-MM format is required'], 400);
+            }
+            $data = $ctrl->getMonthlyRecognitionCycle($monthYear, $isHrAdmin);
+            $data['can_approve'] = $isHrAdmin;
+            jsonResponse(['success' => true, 'data' => $data]);
+            break;
+
+        case 'approve_monthly_top_five':
+            if (!$isHrAdmin) jsonResponse(['error' => 'Unauthorized'], 403);
+            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') jsonResponse(['error' => 'POST required'], 405);
+            $monthYear = $data['month_year'] ?? '';
+            $selectedEmployeeIds = $data['selected_employee_ids'] ?? null;
+            $employeeOfMonthId = filter_var($data['employee_of_month_id'] ?? null, FILTER_VALIDATE_INT);
+            if (!is_string($monthYear) || !preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $monthYear)
+                || !is_array($selectedEmployeeIds) || $employeeOfMonthId === false || $employeeOfMonthId <= 0) {
+                jsonResponse(['error' => 'A valid cycle, employee selections, and Employee of the Month are required'], 400);
+            }
+            $approverEmployeeId = $currentEmployeeId;
+            if (!$approverEmployeeId && $currentUserId) {
+                $db = \Database::getInstance()->getConnection();
+                $stmt = $db->prepare(
+                    'SELECT employee_id FROM user_account WHERE user_id = :user_id LIMIT 1'
+                );
+                $stmt->execute(['user_id' => $currentUserId]);
+                $approverEmployeeId = $stmt->fetchColumn() ?: null;
+            }
+            if (!$approverEmployeeId) {
+                jsonResponse(['error' => 'Admin employee profile not found'], 400);
+            }
+            try {
+                $data = $ctrl->approveMonthlyRecognitionCycle(
+                    $monthYear,
+                    $selectedEmployeeIds,
+                    $employeeOfMonthId,
+                    (int)$approverEmployeeId
+                );
+            } catch (\DomainException $error) {
+                jsonResponse(['error' => $error->getMessage()], $error->getCode() ?: 422);
+            }
+            $data['can_approve'] = true;
             jsonResponse(['success' => true, 'data' => $data]);
             break;
 

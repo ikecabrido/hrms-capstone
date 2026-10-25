@@ -6,7 +6,11 @@ class AwardHistory extends BaseModel
     public function all()
     {
         $employeeName = $this->getEmployeeNameSql('e', 'employee_name');
-        $sql = 'SELECT ah.*, ' . $employeeName . ' FROM eer_award_history ah 
+        $sql = 'SELECT ah.eer_award_history_id, ah.employee_id, ah.award_name, ah.created_at,
+                       CASE WHEN ah.performance_score IS NOT NULL THEN NULL ELSE ah.reason END AS reason,
+                       ah.nominated_by, ah.updated_at, ah.award_type, ah.points, ah.status,
+                       ah.vote_count, ah.month_year, ah.award_icon, ' . $employeeName . '
+                FROM eer_award_history ah
                 LEFT JOIN em_employees e ON ah.employee_id = e.employee_id 
                 ORDER BY ah.created_at DESC';
         return $this->execute($sql)->fetchAll();
@@ -14,7 +18,13 @@ class AwardHistory extends BaseModel
 
     public function find($id)
     {
-        return $this->execute('SELECT * FROM eer_award_history WHERE eer_award_history_id = :id', ['id' => $id])->fetch();
+        return $this->execute(
+            'SELECT eer_award_history_id, employee_id, award_name, created_at,
+                    CASE WHEN performance_score IS NOT NULL THEN NULL ELSE reason END AS reason,
+                    nominated_by, updated_at, award_type, points, status, vote_count, month_year, award_icon
+             FROM eer_award_history WHERE eer_award_history_id = :id',
+            ['id' => $id]
+        )->fetch();
     }
 
     public function findByEmployeeAndMonthYear($employeeId, $monthYear)
@@ -102,4 +112,3 @@ class AwardHistory extends BaseModel
     }
 
 }
-

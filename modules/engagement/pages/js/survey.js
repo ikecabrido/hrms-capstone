@@ -262,8 +262,7 @@
           submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
         }
 
-        const apiUrl = window.location.pathname.split('/modules/engagement/')[0]
-          + '/modules/engagement/api/survey.php?action=create';
+        const apiUrl = surveyApiUrl('create');
 
         fetch(apiUrl, {
           method: form.getAttribute('method') || 'POST',
@@ -271,7 +270,7 @@
           credentials: 'same-origin'
         })
           .then(function(response) {
-            return response.json().then(function(data) {
+            return parseSurveyJsonResponse(response, 'Survey submission failed.').then(function(data) {
               if (!response.ok || !data.success) {
                 throw new Error(data.error || 'Survey submission failed.');
               }
@@ -303,8 +302,28 @@
   }
 
   function surveyApiUrl(action) {
-    return window.location.pathname.split('/modules/engagement/')[0]
-      + '/modules/engagement/api/survey.php?action=' + action;
+    const url = new URL('../../api/survey.php', import.meta.url);
+    url.searchParams.set('action', action);
+    return url.toString();
+  }
+
+  function parseSurveyJsonResponse(response, fallbackErrorMessage) {
+    return response.text().then(function(text) {
+      if (!text || !text.trim()) {
+        throw new Error(fallbackErrorMessage);
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        throw new Error(fallbackErrorMessage);
+      }
+      if (!response.ok && data && data.error) {
+        throw new Error(data.error);
+      }
+      return data;
+    });
   }
 
   function renderSurveyEmployees(employees) {
@@ -388,11 +407,13 @@
   function loadSurveyPageData() {
     fetch(surveyApiUrl('page_data'), {credentials: 'same-origin', cache: 'no-store'})
       .then(function(response) {
-        if (!response.ok) throw new Error('Unable to load survey data.');
-        return response.json();
+        return parseSurveyJsonResponse(response, 'Unable to load survey data.').then(function(result) {
+          if (!response.ok) throw new Error(result && result.error ? result.error : 'Unable to load survey data.');
+          if (!result.success) throw new Error(result.error || 'Unable to load survey data.');
+          return result;
+        });
       })
       .then(function(result) {
-        if (!result.success) throw new Error(result.error || 'Unable to load survey data.');
         const data = result.data || {};
         window.surveyPageData = data;
         renderSurveyEmployees(data.employees);
@@ -420,11 +441,11 @@
           submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
         }
 
-        const data = Object.fromEntries(new FormData(form).entries());
-        data.comment = data.comments || data.comment || '';
-        data.evaluator_type = form.classList.contains('suggestion-form') ? 'Suggestion' : 'HR';
-        fetch(surveyApiUrl('feedback'), {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)})
-          .then(function(response) { return response.json().then(function(result) { if (!response.ok || !result.success) throw new Error(result.error || 'Unable to save feedback.'); return result; }); })
+        const data = new FormData(form);
+        data.set('comment', data.get('comments') || data.get('comment') || '');
+        data.set('evaluator_type', form.classList.contains('suggestion-form') ? 'Suggestion' : 'HR');
+        fetch(surveyApiUrl('feedback'), {method: 'POST', credentials: 'same-origin', cache: 'no-store', body: data})
+          .then(function(response) { return parseSurveyJsonResponse(response, 'Unable to save feedback.').then(function(result) { if (!response.ok || !result.success) throw new Error(result.error || 'Unable to save feedback.'); return result; }); })
           .then(function() { form.reset(); loadSurveyPageData(); })
           .catch(function(error) { window.alert(error.message); })
           .finally(function() {

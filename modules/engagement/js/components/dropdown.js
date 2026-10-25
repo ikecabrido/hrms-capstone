@@ -83,7 +83,16 @@ const bellBtn      = document.getElementById('bellBtn');
             })
                 .then(response => {
                     if (!response.ok) throw new Error('Unable to mark notifications as read.');
-                    return response.json();
+                    return response.text().then(text => {
+                        if (!text || !text.trim()) {
+                            throw new Error('Empty JSON response from server.');
+                        }
+                        try {
+                            return JSON.parse(text);
+                        } catch (error) {
+                            throw new Error('Malformed JSON response from server.');
+                        }
+                    });
                 })
                 .then(() => {
                     document.querySelectorAll('.notif-item.unread').forEach(item => {
@@ -120,7 +129,16 @@ const bellBtn      = document.getElementById('bellBtn');
             })
                 .then(response => {
                     if (!response.ok) throw new Error('Unable to mark notification as read.');
-                    return response.json();
+                    return response.text().then(text => {
+                        if (!text || !text.trim()) {
+                            throw new Error('Empty JSON response from server.');
+                        }
+                        try {
+                            return JSON.parse(text);
+                        } catch (error) {
+                            throw new Error('Malformed JSON response from server.');
+                        }
+                    });
                 })
                 .then(data => {
                     if (data.error) throw new Error(data.error);

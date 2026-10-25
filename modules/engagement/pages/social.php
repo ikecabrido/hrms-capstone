@@ -161,8 +161,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
         <?php
           $recentPosts = array_slice($payload['feed'] ?? [], 0, 3);
-          $recentForums = array_slice($payload['forums'] ?? [], 0, 3);
-          $recentProjects = array_slice($payload['projects'] ?? [], 0, 3);
+          $recentForums = $payload['forums'] ?? [];
+          $recentProjects = $payload['projects'] ?? [];
           $groupCount = count($payload['groups'] ?? []);
           $forumCount = count($payload['forums'] ?? []);
           $projectCount = count($payload['projects'] ?? []);
@@ -172,19 +172,48 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
           $moderationCounts = ['negative' => 0, 'resolved' => 0];
           $employeeSentimentSummary = [];
           $negativeReviewItems = [];
+          $positiveReviewItems = [];
           $resolvedReviewItems = [];
           $openNegativeEmployees = [];
-          $positiveWords = ['good', 'great', 'love', 'excellent', 'awesome', 'happy', 'nice', 'amazing'];
-          $negativeWords = ['bad', 'sad', 'angry', 'terrible', 'hate', 'poor', 'worst', 'problem', 'putang', 'gago', 'tanga', 'bwisit', 'pangit', 'galit', 'inis', 'problema', 'ayaw'];
+          $positiveWords = ['good', 'great', 'love', 'excellent', 'awesome', 'happy', 'nice', 'amazing', 'wonderful', 'fantastic', 'brilliant', 'outstanding', 'incredible', 'perfect', 'best', 'beautiful', 'enjoy', 'enjoyed', 'pleased', 'satisfied', 'thank you', 'thanks', 'thankful', 'grateful', 'appreciate', 'appreciated', 'appreciation', 'proud', 'well done', 'great job', 'helpful', 'useful', 'supportive', 'reliable', 'efficient', 'friendly', 'kind', 'success', 'successful', 'improved', 'improvement', 'progress', 'achievement', 'accomplished', 'inspiring', 'inspired', 'recommend', 'comfortable', 'hopeful', 'maganda', 'mahusay', 'masaya', 'salamat', 'salamat po sa inyo', 'maraming salamat', 'pasasalamat', 'galing', 'natutuwa', 'nakakatuwa', 'maayos', 'nakakatulong', 'nakatulong', 'sulit', 'magaling', 'masigla', 'maipagmamalaki', 'mabuti', 'mabait', 'matulungin', 'maasikaso', 'maaasahan', 'mabilis', 'malinaw', 'magaan', 'malikhain', 'kaaya-aya', 'kahanga-hanga', 'kapuri-puri', 'nakakabilib', 'napakaganda', 'napakahusay', 'napakagaling', 'napakasaya', 'matagumpay', 'tagumpay', 'panalo', 'pag-unlad', 'umuunlad', 'nagtagumpay', 'nagustuhan', 'gusto ko', 'masarap', 'kasiyahan', 'kasiya-siya', 'positibo', 'inspirasyon', 'nakaka-inspire', 'nakapagbibigay-inspirasyon', 'mahusay ang serbisyo', 'mapayapa', 'maginhawa', 'maaliwalas', 'maunlad', 'pinahahalagahan'];
+          $negativeWords = ['bad', 'sad', 'angry', 'terrible', 'hate', 'poor', 'worst', 'problem', 'unhappy', 'frustrated', 'frustrating', 'disappointed', 'disappointing', 'dissatisfied', 'upset', 'stressful', 'stress', 'concern', 'issue', 'issues', 'broken', 'failure', 'failed', 'difficult', 'confusing', 'confused', 'unacceptable', 'inefficient', 'unhelpful', 'useless', 'delay', 'delayed', 'error', 'errors', 'bullshit', 'bullsh*t', 'bullsh!t', 'bullcrap', 'crap', 'does not work', "doesn't work", 'do not work', "don't work", 'not working', 'not good', 'not happy', 'not satisfied', 'bad experience', 'poor service', 'putang', 'gago', 'tanga', 'bwisit', 'pangit', 'galit', 'inis', 'problema', 'ayaw', 'malungkot', 'nakakainis', 'nakakagalit', 'nakakabwisit', 'nakakadismaya', 'nakakabigo', 'nakakabahala', 'palpak', 'hindi maganda', 'hindi maayos', 'hindi gumagana'];
+          $profanityWords = ['fuck', 'fucking', 'fucked', 'fucker', 'motherfucker', 'shit', 'shitty', 'bullshit', 'bullsh*t', 'bullsh!t', 'bullcrap', 'crap', 'asshole', 'assholes', 'bitch', 'bitches', 'bastard', 'bastards', 'damn', 'piss', 'pissed', 'dick', 'dickhead', 'prick', 'son of a bitch', 'piece of shit', 'putangina', 'putang ina', 'tangina', 'tang ina', 'puta', 'pucha', 'punyeta', 'puneta', 'leche', 'lintik', 'ulol', 'bobo', 'gago', 'tanga', 'tarantado', 'kupal', 'hinayupak', 'hayop ka', 'yawa', 'buang', 'bwisit', 'bwesit'];
+          $profanityPattern = '/(?:^|[^\p{L}\p{N}])(?:' . implode('|', array_map(static function ($word) {
+            return preg_quote($word, '/');
+          }, $profanityWords)) . ')(?=$|[^\p{L}\p{N}])/iu';
 
           foreach ($analyticsPosts as $analyticsPost) {
-            $analyticsText = strtolower((string)($analyticsPost['content'] ?? '') . ' ' . implode(' ', array_column($analyticsPost['comments'] ?? [], 'comment')));
+            $analyticsText = strtolower(implode(' ', [
+              (string)($analyticsPost['content'] ?? ''),
+              (string)($analyticsPost['description'] ?? ''),
+              implode(' ', array_column($analyticsPost['comments'] ?? [], 'comment')),
+            ]));
             $employeeName = trim((string)($analyticsPost['author_name'] ?? 'Unknown'));
             if ($employeeName === '') {
               $employeeName = 'Unknown';
             }
             if (!isset($employeeSentimentSummary[$employeeName])) {
               $employeeSentimentSummary[$employeeName] = ['positive' => 0, 'neutral' => 0, 'negative' => 0];
+            }
+            $reviewContent = trim((string)($analyticsPost['content'] ?? ''));
+            if ($reviewContent === '') {
+              $reviewContent = trim((string)($analyticsPost['description'] ?? ''));
+            }
+            if ($reviewContent === '') {
+              $reviewContent = trim(implode(' ', array_column($analyticsPost['comments'] ?? [], 'comment')));
+            }
+
+            if (($analyticsPost['moderation_status'] ?? 'open') === 'resolved') {
+              $moderationCounts['resolved']++;
+              $resolvedReviewItems[] = [
+                'post_id' => (int)($analyticsPost['eer_social_post_id'] ?? 0),
+                'employee' => $employeeName,
+                'content' => $reviewContent,
+                'created_at' => (string)($analyticsPost['created_at'] ?? ''),
+              ];
+              $sentimentCounts['neutral']++;
+              $employeeSentimentSummary[$employeeName]['neutral']++;
+              continue;
             }
 
             $hasPositive = false;
@@ -195,32 +224,35 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             foreach ($negativeWords as $word) {
               $hasNegative = $hasNegative || strpos($analyticsText, $word) !== false;
             }
+            $hasProfanity = preg_match($profanityPattern, $analyticsText) === 1;
+            if (preg_match('/\b(?:hindi|di)\s+(?:maganda|mahusay|masaya|maayos|magaling|nakakatuwa|nakakatulong|sulit)\b|\b(?:not|never)\s+(?:good|great|excellent|awesome|happy|nice|amazing|satisfied)\b|\b(?:doesn.t|don.t|do not|does not)\s+(?:work|help)\b/', $analyticsText)) {
+              $hasPositive = false;
+              $hasNegative = true;
+            }
+            if ($hasProfanity) {
+              $hasPositive = false;
+              $hasNegative = true;
+            }
             if ($hasPositive && !$hasNegative) {
               $sentimentCounts['positive']++;
               $employeeSentimentSummary[$employeeName]['positive']++;
+              $positiveReviewItems[] = [
+                'post_id' => (int)($analyticsPost['eer_social_post_id'] ?? 0),
+                'employee' => $employeeName,
+                'content' => $reviewContent,
+                'created_at' => (string)($analyticsPost['created_at'] ?? ''),
+              ];
             } elseif ($hasNegative && !$hasPositive) {
-              if (($analyticsPost['moderation_status'] ?? 'open') === 'resolved') {
-                $moderationCounts['resolved']++;
-                $resolvedReviewItems[] = [
-                  'post_id' => (int)($analyticsPost['eer_social_post_id'] ?? 0),
-                  'employee' => $employeeName,
-                  'content' => trim((string)($analyticsPost['content'] ?? '')),
-                  'created_at' => (string)($analyticsPost['created_at'] ?? ''),
-                ];
-                $sentimentCounts['neutral']++;
-                continue;
-              } else {
-                $sentimentCounts['negative']++;
-                $employeeSentimentSummary[$employeeName]['negative']++;
-                $moderationCounts['negative']++;
-                $openNegativeEmployees[$employeeName] = ($openNegativeEmployees[$employeeName] ?? 0) + 1;
-                $negativeReviewItems[] = [
-                  'post_id' => (int)($analyticsPost['eer_social_post_id'] ?? 0),
-                  'employee' => $employeeName,
-                  'content' => trim((string)($analyticsPost['content'] ?? '')),
-                  'created_at' => (string)($analyticsPost['created_at'] ?? ''),
-                ];
-              }
+              $sentimentCounts['negative']++;
+              $employeeSentimentSummary[$employeeName]['negative']++;
+              $moderationCounts['negative']++;
+              $openNegativeEmployees[$employeeName] = ($openNegativeEmployees[$employeeName] ?? 0) + 1;
+              $negativeReviewItems[] = [
+                'post_id' => (int)($analyticsPost['eer_social_post_id'] ?? 0),
+                'employee' => $employeeName,
+                'content' => $reviewContent,
+                'created_at' => (string)($analyticsPost['created_at'] ?? ''),
+              ];
             } else {
               $sentimentCounts['neutral']++;
               $employeeSentimentSummary[$employeeName]['neutral']++;
@@ -363,7 +395,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
               </div>
               <div class="card-body">
                 <div id="social-feed" data-can-reply="true" data-employee-id=""><?php if (!empty($recentPosts)): foreach ($recentPosts as $post): ?>
-                  <div class="card mb-3 social-post-card" data-social-item="post" style="border-left: 4px solid #007bff;">
+                  <div id="social-post-<?= (int)($post['eer_social_post_id'] ?? 0) ?>" class="card mb-3 social-post-card" data-social-item="post" style="border-left: 4px solid #007bff;">
                     <div class="card-body">
                       <div class="post-header d-flex justify-content-between align-items-start mb-3">
                         <div>
@@ -436,7 +468,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
               </div>
             </div>
             <div class="card-body">
-              <div class="social-list-compact social-scroll-list">
+              <div class="social-list-compact social-scroll-list social-forum-scroll-list">
                 <?php if (!empty($recentForums)): ?>
                   <?php foreach ($recentForums as $forum): ?>
                     <div class="social-mini-item social-forum-item" data-social-item="forum" data-forum-title="<?= htmlspecialchars((string)($forum['title'] ?? 'Untitled Forum'), ENT_QUOTES, 'UTF-8') ?>" data-forum-category="<?= htmlspecialchars((string)($forum['category'] ?? 'General'), ENT_QUOTES, 'UTF-8') ?>" data-forum-description="<?= htmlspecialchars((string)($forum['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" role="button" tabindex="0" onclick="window.openSocialForumDetails(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.openSocialForumDetails(this); }">
@@ -463,9 +495,9 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
               </div>
             </div>
             <div class="card-body">
-              <div class="social-list-compact social-scroll-list">
+              <div class="social-list-compact social-scroll-list social-group-scroll-list">
                 <?php if (!empty($payload['groups'])): ?>
-                  <?php foreach (array_slice($payload['groups'], 0, 4) as $group): ?>
+                  <?php foreach ($payload['groups'] as $group): ?>
                     <?php $groupId = (int)($group['eer_group_id'] ?? 0); ?>
                     <?php $groupMembers = $payload['group_members'][$groupId] ?? []; ?>
                     <div class="social-mini-item social-group-item" data-social-item="group" data-group-id="<?= $groupId ?>" data-group-name="<?= htmlspecialchars((string)($group['name'] ?? 'Untitled Group'), ENT_QUOTES, 'UTF-8') ?>" data-group-members="<?= htmlspecialchars(json_encode($groupMembers), ENT_QUOTES, 'UTF-8') ?>" role="button" tabindex="0" onclick="window.openGroupMembersModal(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.openGroupMembersModal(this); }">
@@ -492,7 +524,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
               </div>
             </div>
             <div class="card-body">
-              <div class="social-list-compact social-scroll-list">
+              <div class="social-list-compact social-scroll-list social-project-scroll-list">
                 <?php if (!empty($recentProjects)): ?>
                   <?php foreach ($recentProjects as $project): ?>
                     <div class="social-mini-item social-project-item" data-social-item="project" data-project-name="<?= htmlspecialchars((string)($project['name'] ?? 'Untitled Project'), ENT_QUOTES, 'UTF-8') ?>" data-project-status="<?= htmlspecialchars((string)($project['status'] ?? 'planning'), ENT_QUOTES, 'UTF-8') ?>" data-project-description="<?= htmlspecialchars((string)($project['description'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-project-deadline="<?= htmlspecialchars((string)($project['deadline'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" role="button" tabindex="0" onclick="window.openSocialProjectDetails(this)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); window.openSocialProjectDetails(this); }">
@@ -535,25 +567,36 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
               <div id="employeeModerationDetails" class="moderation-insights-details" hidden>
 
-              <?php if (!empty($negativeReviewItems)): ?>
-                <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="needs-review">
-                  <div class="moderation-employee-header">Posts needing review</div>
-                  <?php foreach (array_slice($negativeReviewItems, 0, 5) as $reviewItem): ?>
-                    <div class="moderation-review-row">
-                      <strong><?= htmlspecialchars((string)($reviewItem['employee'] ?? 'Unknown')) ?></strong>
-                      <span><?= htmlspecialchars((string)($reviewItem['content'] ?? 'No content')) ?></span>
-                      <?php if (!empty($reviewItem['created_at'])): ?>
-                        <small><?= htmlspecialchars((string)$reviewItem['created_at']) ?></small>
-                      <?php endif; ?>
-                      <?php if ((int)($reviewItem['post_id'] ?? 0) > 0): ?>
-                        <button type="button" class="btn btn-sm btn-outline-success resolve-post-btn" data-post-id="<?= (int)$reviewItem['post_id'] ?>">
-                          <i class="fas fa-check mr-1"></i>Mark resolved
-                        </button>
-                      <?php endif; ?>
-                    </div>
-                  <?php endforeach; ?>
-                </div>
-              <?php endif; ?>
+              <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="needs-review" data-moderation-post-list<?= empty($negativeReviewItems) ? ' hidden' : '' ?>>
+                <div class="moderation-employee-header">Posts needing review</div>
+                <?php foreach ($negativeReviewItems as $reviewItem): ?>
+                  <div class="moderation-review-row">
+                    <strong><?= htmlspecialchars((string)($reviewItem['employee'] ?? 'Unknown')) ?></strong>
+                    <span><?= htmlspecialchars((string)($reviewItem['content'] ?? 'No content')) ?></span>
+                    <?php if (!empty($reviewItem['created_at'])): ?>
+                      <small><?= htmlspecialchars((string)$reviewItem['created_at']) ?></small>
+                    <?php endif; ?>
+                    <?php if ((int)($reviewItem['post_id'] ?? 0) > 0): ?>
+                      <button type="button" class="btn btn-sm btn-outline-success resolve-post-btn" data-post-id="<?= (int)$reviewItem['post_id'] ?>">
+                        <i class="fas fa-check mr-1"></i>Mark resolved
+                      </button>
+                    <?php endif; ?>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+
+              <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="positive-signals" data-positive-post-list<?= empty($positiveReviewItems) ? ' hidden' : '' ?>>
+                <div class="moderation-employee-header">Positive social posts</div>
+                <?php foreach ($positiveReviewItems as $positiveItem): ?>
+                  <div class="moderation-review-row">
+                    <strong><?= htmlspecialchars((string)($positiveItem['employee'] ?? 'Unknown')) ?></strong>
+                    <span><?= htmlspecialchars((string)($positiveItem['content'] ?? 'No content')) ?></span>
+                    <?php if (!empty($positiveItem['created_at'])): ?>
+                      <small><?= htmlspecialchars((string)$positiveItem['created_at']) ?></small>
+                    <?php endif; ?>
+                  </div>
+                <?php endforeach; ?>
+              </div>
 
               <?php if (!empty($flaggedEmployees)): ?>
                 <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="needs-review">
@@ -631,25 +674,22 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
                 </div>
               <?php endif; ?>
 
-              <?php if (!empty($resolvedReviewItems)): ?>
-                <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="resolved">
-                  <div class="moderation-employee-header">Resolved posts</div>
-                  <?php foreach (array_slice($resolvedReviewItems, 0, 5) as $resolvedItem): ?>
-                    <div class="moderation-review-row moderation-resolved-row">
-                      <strong><?= htmlspecialchars((string)($resolvedItem['employee'] ?? 'Unknown')) ?></strong>
-                      <span><?= htmlspecialchars((string)($resolvedItem['content'] ?? 'No content')) ?></span>
-                      <?php if (!empty($resolvedItem['created_at'])): ?>
-                        <small><?= htmlspecialchars((string)$resolvedItem['created_at']) ?></small>
-                      <?php endif; ?>
-                      <span class="badge badge-success">Resolved</span>
-                    </div>
-                  <?php endforeach; ?>
-                </div>
-              <?php else: ?>
-                <div class="moderation-empty-state mt-3 pt-3 border-top" data-insights-section="resolved">
-                  <span class="text-muted">No resolved items yet.</span>
-                </div>
-              <?php endif; ?>
+              <div class="moderation-employee-list mt-3 pt-3 border-top" data-insights-section="resolved">
+                <div class="moderation-employee-header">Resolved posts</div>
+                <?php foreach (array_slice($resolvedReviewItems, 0, 5) as $resolvedItem): ?>
+                  <div class="moderation-review-row moderation-resolved-row">
+                    <strong><?= htmlspecialchars((string)($resolvedItem['employee'] ?? 'Unknown')) ?></strong>
+                    <span><?= htmlspecialchars((string)($resolvedItem['content'] ?? 'No content')) ?></span>
+                    <?php if (!empty($resolvedItem['created_at'])): ?>
+                      <small><?= htmlspecialchars((string)$resolvedItem['created_at']) ?></small>
+                    <?php endif; ?>
+                    <span class="badge badge-success">Resolved</span>
+                  </div>
+                <?php endforeach; ?>
+                <?php if (empty($resolvedReviewItems)): ?>
+                  <span class="moderation-empty-message text-muted">No resolved items yet.</span>
+                <?php endif; ?>
+              </div>
 
               </div>
             </div>

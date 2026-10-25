@@ -334,6 +334,24 @@ INSERT INTO `eer_award_history` (`eer_award_history_id`, `employee_id`, `award_n
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `eer_recognition_cycles`
+--
+
+CREATE TABLE `eer_recognition_cycles` (
+  `month_year` varchar(7) NOT NULL,
+  `review_period` varchar(100) DEFAULT NULL,
+  `period_start` date DEFAULT NULL,
+  `period_end` date DEFAULT NULL,
+  `status` enum('pending','approved') NOT NULL DEFAULT 'pending',
+  `approved_by` int(11) DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`month_year`),
+  KEY `approved_by` (`approved_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `eer_award_votes`
 --
 
@@ -7964,7 +7982,8 @@ ALTER TABLE `eer_comments`
 ALTER TABLE `eer_employee_badges`
   ADD PRIMARY KEY (`eer_employee_badge_id`),
   ADD KEY `employee_id` (`employee_id`),
-  ADD KEY `badge_id` (`badge_id`);
+  ADD KEY `badge_id` (`badge_id`),
+  ADD KEY `awarded_by` (`awarded_by`);
 
 --
 -- Indexes for table `eer_forums`
@@ -10971,6 +10990,12 @@ ALTER TABLE `eer_award_history`
   ADD CONSTRAINT `fk_eer_award_history_nominator` FOREIGN KEY (`nominated_by`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
+-- Constraints for table `eer_recognition_cycles`
+--
+ALTER TABLE `eer_recognition_cycles`
+  ADD CONSTRAINT `fk_eer_recognition_cycles_approver` FOREIGN KEY (`approved_by`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
 -- Constraints for table `eer_award_votes`
 --
 ALTER TABLE `eer_award_votes`
@@ -10991,7 +11016,8 @@ ALTER TABLE `eer_comments`
 --
 ALTER TABLE `eer_employee_badges`
   ADD CONSTRAINT `fk_eer_employee_badges_badge` FOREIGN KEY (`badge_id`) REFERENCES `eer_badges` (`eer_badge_id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_eer_employee_badges_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_eer_employee_badges_employee` FOREIGN KEY (`employee_id`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_eer_employee_badges_awarded_by` FOREIGN KEY (`awarded_by`) REFERENCES `em_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Constraints for table `eer_forums`
