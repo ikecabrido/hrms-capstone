@@ -25,7 +25,21 @@ try {
                 <?= htmlspecialchars($error) ?>
             </div>
         <?php endif; ?>
-
+        <div style="margin-left:auto;">
+            <input
+                type="search"
+                id="applicationSearch"
+                placeholder="Search by ID, name, or job title"
+                style="
+                        width: 290px;
+                        max-width: 100%;
+                        padding: 10px 12px;
+                        border: 1px solid #dbe3ee;
+                        border-radius: 8px;
+                        font-size: 14px;
+                        background: #fff;
+                    ">
+        </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
