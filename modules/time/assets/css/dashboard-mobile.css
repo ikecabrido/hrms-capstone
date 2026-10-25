@@ -22,6 +22,10 @@
     display: none;
 }
 
+.mobile-stats {
+    display: none;
+}
+
 @media (max-width: 768px) {
     body,
     main.main-content,

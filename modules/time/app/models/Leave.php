@@ -355,7 +355,8 @@ class Leave
      */
     public function getHistory($employee_id = null, $limit = 50, $offset = 0, array $filters = [])
     {
-        $query = "SELECT lr.id, lr.employee_id, lr.leave_type_id, lr.start_date, lr.end_date, lr.details, lr.status, lr.updated_at,
+        $query = "SELECT lr.id, lr.employee_id, lr.leave_type_id, lr.start_date, lr.end_date, lr.details, lr.reason, lr.documents, lr.status,
+                         lr.date_submitted, lr.reject_reason, lr.supporting_document, lr.updated_at,
                          lt.leave_type_name, CONCAT(COALESCE(e.first_name,''),' ',COALESCE(e.last_name,'')) AS full_name,
                          DATEDIFF(lr.end_date, lr.start_date) + 1 AS total_days
                   FROM ta_leave_requests lr
@@ -404,6 +405,7 @@ class Leave
                 CONCAT(COALESCE(e.first_name,''), ' ', COALESCE(e.last_name,'')) LIKE :search ESCAPE '\\\\'
                 OR lt.leave_type_name LIKE :search ESCAPE '\\\\'
                 OR lr.details LIKE :search ESCAPE '\\\\'
+                OR lr.reject_reason LIKE :search ESCAPE '\\\\'
                 OR lr.employee_id LIKE :search ESCAPE '\\\\'
             )";
         }
@@ -490,6 +492,7 @@ class Leave
                 CONCAT(COALESCE(e.first_name,''), ' ', COALESCE(e.last_name,'')) LIKE :search ESCAPE '\\\\'
                 OR lt.leave_type_name LIKE :search ESCAPE '\\\\'
                 OR lr.details LIKE :search ESCAPE '\\\\'
+                OR lr.reject_reason LIKE :search ESCAPE '\\\\'
                 OR lr.employee_id LIKE :search ESCAPE '\\\\'
             )";
         }

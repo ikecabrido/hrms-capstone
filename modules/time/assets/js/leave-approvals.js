@@ -55,6 +55,35 @@ console.log('leave approvals script loaded');
         return num % 1 === 0 ? num.toString() : num.toFixed(2).replace(/\.0+$/, '');
     }
 
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function parseDocumentList(rawDocuments, fallbackDocument) {
+        var docs = [];
+        if (rawDocuments) {
+            try {
+                var parsed = JSON.parse(rawDocuments);
+                if (Array.isArray(parsed)) {
+                    docs = parsed.filter(function(entry) {
+                        return typeof entry === 'string' && entry.trim() !== '';
+                    });
+                }
+            } catch (e) {
+                docs = [];
+            }
+        }
+        if (!docs.length && fallbackDocument) {
+            docs = [fallbackDocument];
+        }
+        return docs;
+    }
+
     function openBalanceModal(employeeId, fullName) {
         const modal = document.getElementById('balanceModal');
         const body = document.getElementById('balanceModalBody');
@@ -161,6 +190,62 @@ console.log('leave approvals script loaded');
     }
 
     function bindLeaveApprovalsHandlers() {
+        var historyButtons = document.querySelectorAll('.view-history-btn');
+        historyButtons.forEach(function(button) {
+            button.onclick = function() {
+                const modal = document.getElementById('leaveHistoryModal');
+                const body = document.getElementById('leaveHistoryModalBody');
+                const title = document.getElementById('leaveHistoryModalTitle');
+                if (!modal || !body || !title) return;
+
+                const employee = this.dataset.employee || 'Employee';
+                const leaveType = this.dataset.leaveType || 'Leave';
+                const startDate = this.dataset.startDate || '—';
+                const endDate = this.dataset.endDate || '—';
+                const status = this.dataset.status || 'Pending';
+                const reason = this.dataset.reason || this.dataset.details || 'No details provided.';
+                const details = this.dataset.details || 'No details provided.';
+                const rejectReason = this.dataset.rejectReason || '';
+                const submitted = this.dataset.submitted || '';
+                const decided = this.dataset.decided || '';
+                const rawDocumentList = this.dataset.documents || '';
+                const fallbackDocument = this.dataset.document || '';
+                const supportingDocuments = parseDocumentList(rawDocumentList, fallbackDocument);
+
+                title.textContent = employee + ' — ' + leaveType;
+
+                const detailRows = [
+                    '<p><strong>Submitted:</strong> ' + escapeHtml(submitted || '—') + '</p>',
+                    '<p><strong>Status:</strong> ' + escapeHtml(status) + '</p>',
+                    '<p><strong>Start:</strong> ' + escapeHtml(startDate) + '</p>',
+                    '<p><strong>End:</strong> ' + escapeHtml(endDate) + '</p>',
+                    '<p><strong>Leave Type:</strong> ' + escapeHtml(leaveType) + '</p>',
+                    '<p><strong>Decided:</strong> ' + escapeHtml(decided || '—') + '</p>',
+                    '<p><strong>Reason:</strong> ' + escapeHtml(reason || details) + '</p>'
+                ];
+
+                if (String(status).toLowerCase() === 'rejected') {
+                    detailRows.push('<p><strong>Rejection reason:</strong> ' + escapeHtml(rejectReason || '—') + '</p>');
+                }
+
+                if (supportingDocuments.length) {
+                    const documentLinks = supportingDocuments.map(function(docPath) {
+                        const safePath = escapeHtml(docPath);
+                        const fileName = escapeHtml(docPath.split('/').pop() || docPath);
+                        return '<a href="' + safePath + '" target="_blank" rel="noopener">' + fileName + '</a>';
+                    }).join(', ');
+                    detailRows.push('<p><strong>Supporting documents:</strong> ' + documentLinks + '</p>');
+                } else {
+                    detailRows.push('<p><strong>Supporting documents:</strong> No supporting documents</p>');
+                }
+
+                body.innerHTML = '<div class="detail-grid">' + detailRows.join('') + '</div>';
+
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+            };
+        });
+
         var balanceButtons = document.querySelectorAll('.balance-button');
         balanceButtons.forEach(function(button) {
             button.onclick = function() {

@@ -97,12 +97,73 @@
     margin: 0;
 }
 
+.tab-content[data-tab="leave-history"] .toolbar-form {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+}
+
+.tab-content[data-tab="leave-history"] .toolbar-form input[type="date"],
+.tab-content[data-tab="leave-history"] .toolbar-form input[type="text"],
+.tab-content[data-tab="leave-history"] .toolbar-form select,
+.tab-content[data-tab="leave-history"] .toolbar-form .action-btn,
+.tab-content[data-tab="leave-history"] .toolbar-form a.action-btn {
+    height: 38px;
+    min-height: 38px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    border-radius: 12px;
+}
+
+.tab-content[data-tab="leave-history"] .toolbar-form input[name="history_search"] {
+    flex: 1 1 220px;
+    min-width: 220px;
+}
+
+.tab-content[data-tab="leave-history"] .toolbar-form input[type="date"],
+.tab-content[data-tab="leave-history"] .toolbar-form select {
+    min-width: 140px;
+}
+
 .toolbar-search,
 .toolbar-select {
     min-width: 220px;
     border-radius: 12px !important;
     border: 1px solid rgba(148, 163, 184, 0.45) !important;
     box-shadow: none !important;
+}
+
+.tab-content[data-tab="leave-history"] .quick-range-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+.tab-content[data-tab="leave-history"] .quick-range-links .action-btn {
+    padding: 8px 12px !important;
+    border-radius: 999px !important;
+    min-height: 32px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.tab-content[data-tab="leave-history"] .quick-range-links ~ .history-summary,
+.tab-content[data-tab="leave-history"] .quick-range-links ~ .alert,
+.tab-content[data-tab="leave-history"] .quick-range-links ~ .table-responsive {
+    margin-top: 16px;
+}
+
+.tab-content[data-tab="leave-history"] .quick-range-links ~ .history-summary + .alert,
+.tab-content[data-tab="leave-history"] .quick-range-links ~ .history-summary + .table-responsive {
+    margin-top: 16px;
 }
 
 .toolbar-search:focus,
@@ -140,9 +201,9 @@ textarea:focus {
 }
 
 .btn-approve {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    background: linear-gradient(135deg, #003d82 0%, #0066cc 100%) !important;
     color: #fff !important;
-    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+    box-shadow: 0 8px 18px rgba(0, 61, 130, 0.22);
 }
 
 .btn-reject {
@@ -272,12 +333,12 @@ textarea:focus {
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
         .btn-approve {
-            background: linear-gradient(135deg, #1e90ff 0%, #0066cc 100%);
+            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
             color: white;
-            border: 1px solid #005bb5;
+            border: 1px solid #002654;
         }
         .btn-approve:hover {
-            background: linear-gradient(135deg, #005bb5 0%, #004494 100%);
+            background: linear-gradient(135deg, #002654 0%, #005ba8 100%);
         }
         .btn-reject {
             background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
@@ -396,6 +457,29 @@ textarea:focus {
             .main-content {
                 margin-left: 0;
             }
+
+            .tab-content[data-tab="leave-history"] .toolbar-form {
+                display: flex;
+                align-items: stretch;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .tab-content[data-tab="leave-history"] .toolbar-form > * {
+                flex: 1 1 100%;
+                width: 100%;
+            }
+
+            .tab-content[data-tab="leave-history"] .toolbar-form input[name="history_from_date"],
+            .tab-content[data-tab="leave-history"] .toolbar-form input[name="history_to_date"] {
+                flex: 1 1 calc(50% - 5px);
+                width: calc(50% - 5px);
+                min-width: 0;
+            }
+
+            .tab-content[data-tab="leave-history"] .quick-range-links {
+                gap: 8px;
+            }
         }
 
         /* Tab styles (make tab buttons visually cohesive with page design) */
@@ -432,7 +516,7 @@ textarea:focus {
         }
 
         .tab-item.active {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
             color: #ffffff;
         }
 
@@ -467,16 +551,16 @@ textarea:focus {
 
         /* Active page shown as blue box with white text */
         .pagination.pagination--numeric .page-number.active {
-            background: linear-gradient(135deg, #1e90ff 0%, #0066cc 100%);
+            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
             color: #ffffff !important;
-            border-color: #005bb5;
+            border-color: #002654;
         }
 
         /* Prev/Next and Go buttons use same blue box */
         .pagination.pagination--numeric .page-btn {
-            background: linear-gradient(135deg, #1e90ff 0%, #0066cc 100%);
+            background: linear-gradient(135deg, #003d82 0%, #0066cc 100%);
             color: #ffffff !important;
-            border: 1px solid #005bb5;
+            border: 1px solid #002654;
         }
 
         .pagination.pagination--numeric .page-ellipsis {

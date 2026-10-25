@@ -475,7 +475,6 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-                        </table>
                     </div>
                     <?php render_pagination('leave_page', $leavePage, $totalLeavePages, ['employee_page' => $employeePage, 'employee_page_size' => $recordsPerPage, 'employee_search' => $employeeSearch]); ?>
                 <?php endif; ?>
@@ -526,21 +525,75 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                                     <tr>
                                         <th>Employee</th>
                                         <th>Leave Type</th>
-                                        <th>Start</th>
-                                        <th>End</th>
-                                        <th>Days</th>
+                                        <th>Submitted</th>
+                                        <th>Decided</th>
+                                        <th>Reason</th>
                                         <th>Status</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($historyRequests as $req): ?>
+                                        <?php
+                                            $reasonText = trim((string)($req['reason'] ?? ''));
+                                            if ($reasonText === '') {
+                                                $reasonText = trim((string)($req['details'] ?? ''));
+                                            }
+                                            $historyStatus = $req['status'] ?? 'Pending';
+                                            $historyDecisionDate = !empty($req['updated_at']) ? $req['updated_at'] : null;
+                                            $historyDetailText = !empty($reasonText) ? $reasonText : 'No details provided.';
+                                            $historyDocument = $req['supporting_document'] ?? '';
+                                            $historyDocumentsRaw = trim((string)($req['documents'] ?? ''));
+                                            $historyDocumentsJson = '';
+                                            if ($historyDocumentsRaw !== '') {
+                                                $decodedDocuments = json_decode($historyDocumentsRaw, true);
+                                                if (is_array($decodedDocuments)) {
+                                                    $cleanedDocuments = [];
+                                                    foreach ($decodedDocuments as $docPath) {
+                                                        if (is_string($docPath) && trim($docPath) !== '') {
+                                                            $cleanedDocuments[] = trim($docPath);
+                                                        }
+                                                    }
+                                                    if (!empty($cleanedDocuments)) {
+                                                        $historyDocumentsJson = json_encode($cleanedDocuments, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                                                    }
+                                                }
+                                            }
+                                            if ($historyDocumentsJson === '' && $historyDocument !== '') {
+                                                $historyDocumentsJson = json_encode([$historyDocument], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                                            }
+                                        ?>
                                         <tr>
                                             <td><?php echo htmlspecialchars($req['full_name'] ?? $req['employee_id']); ?></td>
                                             <td><?php echo htmlspecialchars($req['leave_type_name']); ?></td>
-                                            <td><?php echo Helper::formatDate($req['start_date']); ?></td>
-                                            <td><?php echo Helper::formatDate($req['end_date']); ?></td>
-                                            <td><?php echo rtrim(rtrim(number_format((isset($req['total_days']) ? $req['total_days'] : (strtotime($req['end_date'])-strtotime($req['start_date']))/86400+1), 2), '0'), '.'); ?></td>
-                                            <td><?php echo LeaveAbsenceHelper::getLeaveStatusBadge($req['status']); ?></td>
+                                            <td><?php echo Helper::formatDate($req['date_submitted'] ?? $req['start_date']); ?></td>
+                                            <td><?php echo !empty($historyDecisionDate) ? Helper::formatDate($historyDecisionDate) : '—'; ?></td>
+                                            <td><?php echo htmlspecialchars(mb_strimwidth($historyDetailText, 0, 80, '...')); ?></td>
+                                            <td>
+                                                <?php echo LeaveAbsenceHelper::getLeaveStatusBadge($historyStatus); ?>
+                                                <?php if (!empty($req['reject_reason'])): ?>
+                                                    <div class="small text-muted mt-1"><strong>Reason:</strong> <?php echo htmlspecialchars($req['reject_reason']); ?></div>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <button type="button"
+                                                        class="action-btn btn-approve view-history-btn"
+                                                        data-request-id="<?php echo (int)($req['id'] ?? 0); ?>"
+                                                        data-employee="<?php echo htmlspecialchars($req['full_name'] ?? $req['employee_id']); ?>"
+                                                        data-leave-type="<?php echo htmlspecialchars($req['leave_type_name']); ?>"
+                                                        data-start-date="<?php echo htmlspecialchars($req['start_date']); ?>"
+                                                        data-end-date="<?php echo htmlspecialchars($req['end_date']); ?>"
+                                                        data-status="<?php echo htmlspecialchars($historyStatus); ?>"
+                                                        data-reason="<?php echo htmlspecialchars($historyDetailText, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-details="<?php echo htmlspecialchars((string)($req['details'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-reject-reason="<?php echo htmlspecialchars((string)($req['reject_reason'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-document="<?php echo htmlspecialchars((string)$historyDocument, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-documents="<?php echo htmlspecialchars((string)$historyDocumentsJson, ENT_QUOTES, 'UTF-8'); ?>"
+                                                        data-submitted="<?php echo htmlspecialchars((string)($req['date_submitted'] ?? '')); ?>"
+                                                        data-decided="<?php echo htmlspecialchars((string)($historyDecisionDate ?? '')); ?>">
+                                                    View
+                                                </button>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
@@ -606,6 +659,20 @@ $current_role = $_SESSION['user']['role'] ?? $_SESSION['role'] ?? 'time';
                 <button type="submit" class="action-btn btn-reject">Reject</button>
                 <button type="button" class="action-btn" onclick="closeModal('rejectModal')" style="background: #95a5a6;">Cancel</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Leave History Modal -->
+    <div id="leaveHistoryModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal('leaveHistoryModal')">&times;</span>
+            <h3 id="leaveHistoryModalTitle">Leave Request Details</h3>
+            <div id="leaveHistoryModalBody">
+                <p>Loading leave details...</p>
+            </div>
+            <div class="modal-button-group">
+                <button type="button" class="action-btn" onclick="closeModal('leaveHistoryModal')" style="background: #95a5a6;">Close</button>
+            </div>
         </div>
     </div>
 

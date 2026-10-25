@@ -82,15 +82,16 @@ class LeaveAbsenceHelper
      */
     public static function getLeaveStatusBadge($status)
     {
+        $normalizedStatus = strtoupper(trim((string) $status));
         $badges = [
-            'Pending' => '<span class="badge badge-warning">Pending Approval</span>',
             'PENDING' => '<span class="badge badge-warning">Pending Approval</span>',
-            'Approved' => '<span class="badge badge-success">Approved</span>',
+            'APPROVED' => '<span class="badge badge-success">Approved</span>',
             'REJECTED' => '<span class="badge badge-danger">Rejected</span>',
             'CANCELLED' => '<span class="badge badge-secondary">Cancelled</span>',
+            'CANCELED' => '<span class="badge badge-secondary">Cancelled</span>',
         ];
 
-        return $badges[$status] ?? '<span class="badge badge-light">' . htmlspecialchars($status) . '</span>';
+        return $badges[$normalizedStatus] ?? '<span class="badge badge-light">' . htmlspecialchars((string) $status) . '</span>';
     }
 
     /**
