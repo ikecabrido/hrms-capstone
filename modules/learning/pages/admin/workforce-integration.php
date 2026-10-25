@@ -5,6 +5,11 @@ require_once __DIR__ . '/../../classes/CSRF.php';
 $pdo = (new Database())->getConnection();
 $inboxError = '';
 $inboxMessage = '';
+$trainingRequestColumns = $pdo->query('SHOW COLUMNS FROM ld_training_requests')->fetchAll(PDO::FETCH_COLUMN);
+$trainingRequestColumns = array_flip($trainingRequestColumns);
+$hasCourseLinkColumn = isset($trainingRequestColumns['course_id']);
+$hasPathLinkColumn = isset($trainingRequestColumns['learning_path_id']);
+$learningLinksAvailable = $hasCourseLinkColumn && $hasPathLinkColumn;
 $reviewTypes = [
     'competency' => [
         'label' => 'Competency requirement',
@@ -228,6 +233,9 @@ if ($postAction === 'update_status') {
     } elseif ($requestId === false || $requestId < 1 || !in_array($mode, ['link', 'create', 'unlink'], true)) {
         http_response_code(400);
         $inboxError = 'The requested learning link is invalid.';
+    } elseif (!$learningLinksAvailable) {
+        http_response_code(503);
+        $inboxError = 'Course and learning-path linking is unavailable until the ld_training_requests learning-link database update is applied.';
     } else {
         try {
             $lookup = $pdo->prepare(
@@ -342,6 +350,16 @@ $records = [
 $linkableCourses = [];
 $linkablePaths = [];
 $instructorOptions = [];
+$courseIdSelect = $hasCourseLinkColumn ? 'tr.course_id' : 'NULL AS course_id';
+$pathIdSelect = $hasPathLinkColumn ? 'tr.learning_path_id' : 'NULL AS learning_path_id';
+$courseJoin = $hasCourseLinkColumn
+    ? 'LEFT JOIN ld_course course ON course.id = tr.course_id'
+    : '';
+$pathJoin = $hasPathLinkColumn
+    ? 'LEFT JOIN ld_learning_path path ON path.id = tr.learning_path_id'
+    : '';
+$courseTitleSelect = $hasCourseLinkColumn ? 'course.title AS course_title' : 'NULL AS course_title';
+$pathTitleSelect = $hasPathLinkColumn ? 'path.title AS path_title' : 'NULL AS path_title';
 
 try {
     $records['competency'] = $pdo->query(
@@ -381,13 +399,13 @@ try {
     $records['training_request'] = $pdo->query(
         "SELECT tr.id, tr.learner_id, tr.skill_id, tr.skill_name, tr.message, tr.instructor_id,
                 tr.instructor_note, tr.target_department, tr.priority_level, tr.status,
-                tr.external_reference_id, tr.course_id, tr.learning_path_id,
+                tr.external_reference_id, {$courseIdSelect}, {$pathIdSelect},
                 tr.created_at, tr.updated_at,
-                course.title AS course_title, path.title AS path_title,
+                {$courseTitleSelect}, {$pathTitleSelect},
                 CONCAT_WS(' ', assigned.first_name, assigned.last_name) AS instructor_name
          FROM ld_training_requests tr
-         LEFT JOIN ld_course course ON course.id = tr.course_id
-         LEFT JOIN ld_learning_path path ON path.id = tr.learning_path_id
+         {$courseJoin}
+         {$pathJoin}
          LEFT JOIN em_employees assigned ON assigned.employee_id = tr.instructor_id
          WHERE tr.source_module = 'workforce'
          ORDER BY tr.created_at DESC, tr.id DESC"
@@ -518,12 +536,17 @@ $renderReviewActions = static function (string $type, array $record) use ($revie
  * here for the same reason as the status buttons: the shared form handler posts
  * new FormData(form), which would drop the clicked button's mode.
  */
-$renderLearningLink = static function (array $record) use ($linkableCourses, $linkablePaths, $escape): void {
+$renderLearningLink = static function (array $record) use ($linkableCourses, $linkablePaths, $escape, $learningLinksAvailable): void {
     $courseId = (int) ($record['course_id'] ?? 0);
     $pathId = (int) ($record['learning_path_id'] ?? 0);
     $courseTitle = (string) ($record['course_title'] ?? '');
     $pathTitle = (string) ($record['path_title'] ?? '');
     $isLinked = ($courseId > 0 && $courseTitle !== '') || ($pathId > 0 && $pathTitle !== '');
+
+    if (!$learningLinksAvailable) {
+        echo '<span class="wf-link-none" title="Apply the ld_training_requests learning-link database update to enable linking."><i class="fas fa-link-slash" aria-hidden="true"></i>Database update required</span>';
+        return;
+    }
 
     if ($courseId > 0 && $courseTitle !== '') {
         echo '<a class="wf-link-chip is-course" href="?page=instructor/elearning-subpage/course-structure&amp;course_id=' . $courseId . '" title="' . $escape($courseTitle) . ' — open in the course builder">';
@@ -665,6 +688,9 @@ $levelBadge = static function ($level) use ($escape): string {
         <?php endif; ?>
         <?php if ($inboxError !== ''): ?>
             <p class="wf-notice is-error" role="alert"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><span><?= $escape($inboxError) ?></span></p>
+        <?php endif; ?>
+        <?php if (!$learningLinksAvailable): ?>
+            <p class="wf-notice is-error" role="status"><i class="fas fa-database" aria-hidden="true"></i><span>Course and learning-path linking is unavailable because this database is missing required columns. Apply <code>modules/learning/sql/add_training_request_learning_link.sql</code> to enable it.</span></p>
         <?php endif; ?>
 
         <div class="tab-container">
