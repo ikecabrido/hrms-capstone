@@ -1,8 +1,8 @@
 document.addEventListener("DOMContentLoaded", function () {
   const applicantSelect = document.getElementById("applicantSelect");
 
-  // This script only applies to the applicant-selection form.
-  // Other recruitment pages may not contain these elements.
+  // This script is used on multiple pages.
+  // Exit quietly if the applicant-selection form is absent.
   if (!applicantSelect) {
     return;
   }
