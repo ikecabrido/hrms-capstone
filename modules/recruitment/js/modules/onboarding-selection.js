@@ -1,59 +1,60 @@
 document.addEventListener("DOMContentLoaded", function () {
   const applicantSelect = document.getElementById("applicantSelect");
 
-  const fullName = document.getElementById("full_name");
-  const baseJob = document.getElementById("base_job");
-  const position = document.getElementById("position");
-  const department = document.getElementById("department");
+  // This script only applies to the applicant-selection form.
+  // Other recruitment pages may not contain these elements.
+  if (!applicantSelect) {
+    return;
+  }
 
-  // Make sure all required elements exist
-  if (!applicantSelect || !fullName || !baseJob || !position || !department) {
-    console.error("Onboarding auto-fill: Required elements not found.");
+  const fields = {
+    fullName: document.getElementById("full_name"),
+    baseJob: document.getElementById("base_job"),
+    position: document.getElementById("position"),
+    department: document.getElementById("department"),
+  };
+
+  const missingFields = Object.entries(fields)
+    .filter(([, element]) => !element)
+    .map(([name]) => name);
+
+  if (missingFields.length > 0) {
+    console.error(
+      "Onboarding auto-fill: Missing HTML elements:",
+      missingFields,
+    );
     return;
   }
 
   applicantSelect.addEventListener("change", function () {
     const selectedOption = this.options[this.selectedIndex];
 
-    // No applicant selected
     if (!this.value) {
-      fullName.value = "";
-      baseJob.value = "";
-      position.value = "";
-      department.value = "";
-
+      Object.values(fields).forEach((field) => {
+        field.value = "";
+      });
       return;
     }
 
-    // Get data from selected option
-    const name = selectedOption.dataset.name || "";
-    const job = selectedOption.dataset.job || "";
-    const selectedPosition = selectedOption.dataset.position || "";
-    const selectedDepartment = selectedOption.dataset.department || "";
+    fields.fullName.value = selectedOption.dataset.name || "";
+    fields.baseJob.value = selectedOption.dataset.job || "";
+    fields.position.value = selectedOption.dataset.position || "";
+    fields.department.value = selectedOption.dataset.department || "";
 
-    // Auto-fill fields
-    fullName.value = name;
-    baseJob.value = job;
-    position.value = selectedPosition;
-    department.value = selectedDepartment;
-
-    // Highlight auto-filled fields
-    const fields = [fullName, baseJob, position, department];
-
-    fields.forEach(function (field) {
+    Object.values(fields).forEach((field) => {
       field.style.borderColor = "#93c5fd";
 
-      setTimeout(function () {
+      setTimeout(() => {
         field.style.borderColor = "#e2e8f0";
       }, 1000);
     });
 
     console.log("Applicant selected:", {
       applicationId: this.value,
-      name: name,
-      baseJob: job,
-      position: selectedPosition,
-      department: selectedDepartment,
+      name: fields.fullName.value,
+      baseJob: fields.baseJob.value,
+      position: fields.position.value,
+      department: fields.department.value,
     });
   });
 });
