@@ -23,47 +23,39 @@ $message = $_GET['message'] ?? '';
     <?php endif; ?>
 
     <div class="table-container">
-        <div class="hired-applicants-search-wrap">
-            <input
-                type="search"
-                id="hiredApplicantsSearch"
-                class="hired-applicants-search"
-                placeholder="Search by applicant name"
-                aria-label="Search hired applicants by name">
-        </div>
 
         <div class="hired-applicants-scroll">
             <table class="admin-table" id="hiredApplicantsTable">
                 <thead>
-                <tr>
-                    <th>Applicant Name</th>
-                    <th>Email</th>
-                    <th>Cellphone Number</th>
-                    <th>Position</th>
-                    <th>Department</th>
-                    <th>Salary</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($applications)): ?>
-                    <?php foreach ($applications as $application): ?>
-                        <tr class="hired-applicant-row">
-                            <td><strong><?= htmlspecialchars(trim(($application['first_name'] ?? '') . ' ' . ($application['last_name'] ?? ''), ' ') ?: 'N/A', ENT_QUOTES, 'UTF-8') ?></strong></td>
-                            <td><?= htmlspecialchars($application['email'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars($application['phone'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars($application['position'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars($application['department'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars(number_format((float)($application['salary'] ?? 0), 2), ENT_QUOTES, 'UTF-8') ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
                     <tr>
-                        <td colspan="6" class="empty-state-cell">
-                            <i class="fas fa-folder-open empty-state-icon"></i>
-                            No hired applicants found.
-                        </td>
+                        <th>Applicant Name</th>
+                        <th>Email</th>
+                        <th>Cellphone Number</th>
+                        <th>Position</th>
+                        <th>Department</th>
+                        <th>Salary</th>
                     </tr>
-                <?php endif; ?>
+                </thead>
+                <tbody>
+                    <?php if (!empty($applications)): ?>
+                        <?php foreach ($applications as $application): ?>
+                            <tr class="hired-applicant-row">
+                                <td><strong><?= htmlspecialchars(trim(($application['first_name'] ?? '') . ' ' . ($application['last_name'] ?? ''), ' ') ?: 'N/A', ENT_QUOTES, 'UTF-8') ?></strong></td>
+                                <td><?= htmlspecialchars($application['email'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars($application['phone'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars($application['position'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars($application['department'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td><?= htmlspecialchars(number_format((float)($application['salary'] ?? 0), 2), ENT_QUOTES, 'UTF-8') ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6" class="empty-state-cell">
+                                <i class="fas fa-folder-open empty-state-icon"></i>
+                                No hired applicants found.
+                            </td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
