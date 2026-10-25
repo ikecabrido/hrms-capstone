@@ -287,8 +287,8 @@ class AttendanceValidationService
         $query = "SELECT 
                         es.*,
                         s.shift_name,
-                        s.start_time,
-                        s.end_time,
+                        COALESCE(es.start_time, s.start_time) AS start_time,
+                        COALESCE(es.end_time, s.end_time) AS end_time,
                         s.break_duration,
                         s.shift_id
                 FROM {$this->employee_shifts_table} es
@@ -298,6 +298,7 @@ class AttendanceValidationService
                     AND es.is_active = 1
                     AND es.effective_from <= :date
                     AND (es.effective_to IS NULL OR es.effective_to >= :date)
+                ORDER BY es.effective_from DESC, es.employee_shift_id DESC
                 LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
@@ -309,11 +310,61 @@ class AttendanceValidationService
 
         // Regular shift found
         if ($shift) {
+            $assignedDays = $shift['assigned_days'] ?? null;
+            if (!empty($assignedDays) && !\App\Services\AttendanceValidationService::matchesAssignedDays($date, $assignedDays)) {
+                return null;
+            }
             return $shift;
         }
 
         // 2. No regular shift, so check flexible schedule
         return $this->getFlexibleScheduleShift($employee_id, $date);
+    }
+
+    public static function matchesAssignedDays($date, $assignedDays)
+    {
+        if (empty($assignedDays)) {
+            return true;
+        }
+
+        $dayOfWeek = (int) date('w', strtotime($date));
+        $days = \App\Services\AttendanceValidationService::normalizeAssignedDays($assignedDays);
+
+        if (empty($days)) {
+            return true;
+        }
+
+        return in_array($dayOfWeek, $days, true);
+    }
+
+    public static function normalizeAssignedDays($assignedDays)
+    {
+        if (empty($assignedDays)) {
+            return [];
+        }
+
+        if (is_array($assignedDays)) {
+            return array_values(array_unique(array_map('intval', $assignedDays)));
+        }
+
+        $raw = trim((string) $assignedDays);
+        if ($raw === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            return array_values(array_unique(array_map('intval', $decoded)));
+        }
+
+        $normalized = preg_replace('/[\[\]\\"\s]/', '', $raw);
+        $values = array_filter(explode(',', $normalized), static fn($value) => $value !== '');
+
+        if (empty($values)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $values)));
     }
 
     /**

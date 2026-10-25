@@ -40,7 +40,7 @@ try {
     $attendance_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Get employee shifts
-    $shifts_query = "SELECT es.*, s.shift_name, s.start_time, s.end_time, e.full_name
+    $shifts_query = "SELECT es.*, s.shift_name, COALESCE(es.start_time, s.start_time) AS start_time, COALESCE(es.end_time, s.end_time) AS end_time, e.full_name
                     FROM ta_employee_shifts es
                     JOIN ta_shifts s ON es.shift_id = s.shift_id
                     JOIN em_employees e ON es.employee_id = e.employee_id

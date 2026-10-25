@@ -121,7 +121,7 @@ try {
                 // Fixed schedules are represented by employee-shift assignments.
                 // Resolve the assignment for this date instead of reading a separate
                 // custom-shift table.
-                $day_shift_query = "SELECT es.*, s.*
+                $day_shift_query = "SELECT es.*, s.*, COALESCE(es.start_time, s.start_time) AS effective_start_time, COALESCE(es.end_time, s.end_time) AS effective_end_time
                                                         FROM ta_employee_shifts es
                                                         JOIN ta_shifts s ON es.shift_id = s.shift_id
                                                         WHERE es.employee_id = ?
@@ -133,6 +133,14 @@ try {
                 $day_shift_stmt = $conn->prepare($day_shift_query);
                 $day_shift_stmt->execute([$employee_id, $date_str, $date_str]);
                 $day_shift = $day_shift_stmt->fetch(PDO::FETCH_ASSOC);
+                if ($day_shift && !empty($day_shift['assigned_days'])) {
+                    $day_shift_day = (int) date('w', strtotime($date_str));
+                    $encodedDays = $day_shift['assigned_days'];
+                    $days = is_array($encodedDays) ? array_map('intval', $encodedDays) : array_map('intval', preg_split('/[\s,]+/', trim((string) preg_replace('/[\[\]\\"\s]/', '', $encodedDays))));
+                    if (!in_array($day_shift_day, $days, true)) {
+                        $day_shift = null;
+                    }
+                }
                 $day_data['shift'] = $day_shift ?: null;
 
         // Check if this employee has a shift exclusion for this date

@@ -40,7 +40,7 @@ class Attendance
                 COALESCE(p.position_name, '') AS position,
                 COALESCE(
                     (
-                        SELECT s.start_time
+                        SELECT COALESCE(es.start_time, s.start_time)
                         FROM ta_employee_shifts es
                         LEFT JOIN ta_shifts s ON s.shift_id = es.shift_id
                         WHERE es.employee_id = e.employee_id
@@ -69,7 +69,7 @@ class Attendance
                 ) AS shift_start,
                 COALESCE(
                     (
-                        SELECT s.end_time
+                        SELECT COALESCE(es.end_time, s.end_time)
                         FROM ta_employee_shifts es
                         LEFT JOIN ta_shifts s ON s.shift_id = es.shift_id
                         WHERE es.employee_id = e.employee_id

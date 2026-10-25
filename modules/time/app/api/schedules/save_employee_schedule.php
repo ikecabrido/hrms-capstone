@@ -25,6 +25,9 @@ try {
 
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
+    require_once __DIR__ . '/../../models/EmployeeShift.php';
+    $employeeShiftModel = new EmployeeShift($conn);
+    $employeeShiftModel->ensureSchema();
 
     // Verify employee exists in the Time module employee table
     $verify_query = "SELECT employee_id FROM em_employees WHERE employee_id = ? AND employment_status = 'Active'";
@@ -77,10 +80,11 @@ try {
                 $shift_id = $conn->lastInsertId();
             }
 
+            $assignedDay = (int) (new DateTime($date))->format('w');
             $deactivate = $conn->prepare("UPDATE ta_employee_shifts SET is_active = 0 WHERE employee_id = ? AND is_active = 1 AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?)");
             $deactivate->execute([$employee_id, $date, $date]);
-            $insert_assignment = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())");
-            $insert_assignment->execute([$employee_id, $shift_id, $date, $date]);
+            $insert_assignment = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, assigned_days, start_time, end_time, break_start, break_end, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())");
+            $insert_assignment->execute([$employee_id, $shift_id, $date, $date, (string) $assignedDay, $start_only, $end_only, $break_start_raw ? date('H:i:s', strtotime($break_start_raw)) : null, $break_end_raw ? date('H:i:s', strtotime($break_end_raw)) : null]);
         }
     }
 

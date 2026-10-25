@@ -21,6 +21,8 @@ try {
 
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
+    $employeeShiftModel = new EmployeeShift($conn);
+    $employeeShiftModel->ensureSchema();
 
     $shiftRowStmt = $conn->prepare("SELECT include_saturday FROM ta_shifts WHERE shift_id = ? LIMIT 1");
     $shiftRowStmt->execute([$shift_id]);
@@ -48,7 +50,7 @@ try {
     $deactStmt = $conn->prepare("UPDATE ta_employee_shifts SET is_active = 0 WHERE employee_id = ? AND is_active = 1 AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?)");
     $checkEmpShift = $conn->prepare("SELECT employee_shift_id, is_active FROM ta_employee_shifts WHERE employee_id = ? AND shift_id = ? AND effective_from = ? LIMIT 1");
     $reactivateStmt = $conn->prepare("UPDATE ta_employee_shifts SET is_active = 1, updated_at = NOW() WHERE employee_shift_id = ? LIMIT 1");
-    $insEmpShift = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())");
+    $insEmpShift = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, assigned_days, start_time, end_time, break_start, break_end, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())");
 
     $skippedDays = [
         'sunday' => 0,
@@ -96,7 +98,12 @@ try {
             }
 
             $deactStmt->execute([$empId, $dstr, $dstr]);
-            $insEmpShift->execute([$empId, $shift_id, $dstr, $dstr]);
+            $dayConfig = $weekdays[$w] ?? [];
+            $dayStart = $dayConfig['start'] ?? null;
+            $dayEnd = $dayConfig['end'] ?? null;
+            $dayBreakStart = $dayConfig['break_start'] ?? null;
+            $dayBreakEnd = $dayConfig['break_end'] ?? null;
+            $insEmpShift->execute([$empId, $shift_id, $dstr, $dstr, (string)$w, $dayStart, $dayEnd, $dayBreakStart, $dayBreakEnd]);
             $inserted++;
         }
     }

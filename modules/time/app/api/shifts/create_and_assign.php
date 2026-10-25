@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../../../../../database/db.php';
+require_once __DIR__ . '/../../models/EmployeeShift.php';
 
 try {
     $data = json_decode(file_get_contents('php://input'), true);
@@ -22,6 +23,8 @@ try {
 
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
+    $employeeShiftModel = new EmployeeShift($conn);
+    $employeeShiftModel->ensureSchema();
 
     $conn->beginTransaction();
 
@@ -76,7 +79,7 @@ try {
     $deactStmt = $conn->prepare("UPDATE ta_employee_shifts SET is_active = 0 WHERE employee_id = ? AND is_active = 1 AND effective_from <= ? AND (effective_to IS NULL OR effective_to >= ?)");
     $checkEmpShift = $conn->prepare("SELECT employee_shift_id, is_active FROM ta_employee_shifts WHERE employee_id = ? AND shift_id = ? AND effective_from = ? LIMIT 1");
     $reactivateStmt = $conn->prepare("UPDATE ta_employee_shifts SET is_active = 1, updated_at = NOW() WHERE employee_shift_id = ? LIMIT 1");
-    $insEmpShift = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())");
+    $insEmpShift = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, assigned_days, start_time, end_time, break_start, break_end, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())");
 
     $skippedDays = [
         'sunday' => 0,
@@ -124,7 +127,12 @@ try {
             }
 
             $deactStmt->execute([$empId, $dstr, $dstr]);
-            $insEmpShift->execute([$empId, $shift_id, $dstr, $dstr]);
+            $dayConfig = $weekdays[$w] ?? [];
+            $dayStart = isset($dayConfig['start']) && $dayConfig['start'] !== '' ? date('H:i:s', strtotime($dayConfig['start'])) : $rep_start;
+            $dayEnd = isset($dayConfig['end']) && $dayConfig['end'] !== '' ? date('H:i:s', strtotime($dayConfig['end'])) : $rep_end;
+            $breakStart = isset($dayConfig['break_start']) && $dayConfig['break_start'] !== '' ? date('H:i:s', strtotime($dayConfig['break_start'])) : null;
+            $breakEnd = isset($dayConfig['break_end']) && $dayConfig['break_end'] !== '' ? date('H:i:s', strtotime($dayConfig['break_end'])) : null;
+            $insEmpShift->execute([$empId, $shift_id, $dstr, $dstr, (string)$w, $dayStart, $dayEnd, $breakStart, $breakEnd]);
             $inserted++;
         }
     }

@@ -16,10 +16,90 @@ class EmployeeShift {
     public $shift_id;
     public $effective_from;
     public $effective_to;
+    public $assigned_days;
+    public $start_time;
+    public $end_time;
+    public $break_start;
+    public $break_end;
     public $is_active;
 
     public function __construct($db) {
         $this->conn = $db;
+        $this->ensureSchema();
+    }
+
+    public function ensureSchema() {
+        try {
+            $result = $this->conn->query("SHOW COLUMNS FROM {$this->table}");
+            if (!$result) {
+                return false;
+            }
+
+            $columns = array_map('strtolower', $result->fetchAll(PDO::FETCH_COLUMN, 0));
+            $additions = [
+                'assigned_days' => 'VARCHAR(255) NULL DEFAULT NULL',
+                'start_time' => 'TIME NULL DEFAULT NULL',
+                'end_time' => 'TIME NULL DEFAULT NULL',
+                'break_start' => 'TIME NULL DEFAULT NULL',
+                'break_end' => 'TIME NULL DEFAULT NULL'
+            ];
+
+            foreach ($additions as $column => $definition) {
+                if (in_array(strtolower($column), $columns, true)) {
+                    continue;
+                }
+
+                $this->conn->exec("ALTER TABLE {$this->table} ADD COLUMN {$column} {$definition}");
+            }
+
+            return true;
+        } catch (Throwable $e) {
+            error_log('EmployeeShift ensureSchema failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public static function normalizeAssignedDays($assignedDays) {
+        if (empty($assignedDays)) {
+            return [];
+        }
+
+        if (is_array($assignedDays)) {
+            return array_values(array_unique(array_map('intval', $assignedDays)));
+        }
+
+        $raw = trim((string) $assignedDays);
+        if ($raw === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            return array_values(array_unique(array_map('intval', $decoded)));
+        }
+
+        $normalized = preg_replace('/[\[\]\\"\s]/', '', $raw);
+        $values = array_filter(explode(',', $normalized), static fn($value) => $value !== '');
+        if (empty($values)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $values)));
+    }
+
+    public static function matchesAssignedDays($date, $assignedDays) {
+        if (empty($assignedDays)) {
+            return true;
+        }
+
+        $dayOfWeek = (int) date('w', strtotime($date));
+        $days = self::normalizeAssignedDays($assignedDays);
+
+        if (empty($days)) {
+            return true;
+        }
+
+        return in_array($dayOfWeek, $days, true);
     }
 
     /**

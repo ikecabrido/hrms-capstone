@@ -28,6 +28,9 @@ try {
 
     $db = TimeDatabase::getInstance();
     $conn = $db->getConnection();
+    require_once __DIR__ . '/../../models/EmployeeShift.php';
+    $employeeShiftModel = new EmployeeShift($conn);
+    $employeeShiftModel->ensureSchema();
 
     // Validate employee exists in the actual employee table used by the Time module.
     $emp_check = $conn->prepare("SELECT employee_id FROM em_employees WHERE employee_id = ? LIMIT 1");
@@ -126,9 +129,9 @@ try {
         $checkEmpShift->execute([$employee_id, $shift_id, $dstr]);
         $existsEmpShift = $checkEmpShift->fetch(PDO::FETCH_ASSOC);
         if (!$existsEmpShift) {
-            $insEmpShift = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, 1, NOW(), NOW())");
+            $insEmpShift = $conn->prepare("INSERT INTO ta_employee_shifts (employee_id, shift_id, effective_from, effective_to, assigned_days, start_time, end_time, break_start, break_end, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())");
             // For single-date custom schedules, set effective_to equal to the date
-            $insEmpShift->execute([$employee_id, $shift_id, $dstr, $dstr]);
+            $insEmpShift->execute([$employee_id, $shift_id, $dstr, $dstr, (string)$w, $shift_start_only, $shift_end_only, $break_start, $break_end]);
         }
 
         $insertCount++;
