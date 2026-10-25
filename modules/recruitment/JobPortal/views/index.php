@@ -215,10 +215,10 @@
                         <div class="form-row"><label class="req">Resume / CV</label>
                             <div class="file-row"><span class="fname" id="fn-resume">No file selected</span><label class="filebtn">Choose file<input type="file" id="apResume" onchange="onFilePicked('apResume','fn-resume')" required></label></div>
                         </div>
+                        <!--
                         <div class="form-row"><label class="req">Diploma</label>
                             <div class="file-row"><span class="fname" id="fn-diploma">No file selected</span><label class="filebtn">Choose file<input type="file" id="apDiploma" onchange="onFilePicked('apDiploma','fn-diploma')" required></label></div>
                         </div>
-                        <!-- ===================== APPLY MODAL ===================== 
                         <div class="form-row"><label class="req">Transcript of Records</label>
                             <div class="file-row"><span class="fname" id="fn-tor">No file selected</span><label class="filebtn">Choose file<input type="file" id="apTor" onchange="onFilePicked('apTor','fn-tor')" required></label></div>
                         </div>
