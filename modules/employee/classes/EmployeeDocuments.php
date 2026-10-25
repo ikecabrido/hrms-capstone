@@ -39,6 +39,56 @@ class EmployeeDocuments
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getAllDocuments(array $filters = [])
+    {
+        $sql = "SELECT
+                    d.*,
+                    e.employee_code,
+                    e.first_name,
+                    e.last_name
+                FROM em_documents AS d
+                INNER JOIN em_employees AS e ON e.employee_id = d.employee_id
+                WHERE 1 = 1";
+        $params = [];
+
+        if (isset($filters['search']) && trim((string) $filters['search']) !== '') {
+            $search = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], trim((string) $filters['search']));
+            $like = '%' . $search . '%';
+            $sql .= " AND (
+                        e.first_name LIKE :search_first_name ESCAPE '!'
+                        OR e.last_name LIKE :search_last_name ESCAPE '!'
+                        OR CONCAT_WS(' ', e.first_name, e.last_name) LIKE :search_full_name ESCAPE '!'
+                        OR e.employee_code LIKE :search_employee_code ESCAPE '!'
+                        OR d.document_name LIKE :search_document_name ESCAPE '!'
+                        OR d.document_type LIKE :search_document_type ESCAPE '!'
+                        OR d.file_name LIKE :search_file_name ESCAPE '!'
+                    )";
+            $params[':search_first_name'] = $like;
+            $params[':search_last_name'] = $like;
+            $params[':search_full_name'] = $like;
+            $params[':search_employee_code'] = $like;
+            $params[':search_document_name'] = $like;
+            $params[':search_document_type'] = $like;
+            $params[':search_file_name'] = $like;
+        }
+
+        foreach ([
+            'document_type' => 'd.document_type',
+            'category' => 'd.category',
+            'verification_status' => 'd.verification_status',
+        ] as $filter => $column) {
+            if (isset($filters[$filter]) && $filters[$filter] !== '') {
+                $sql .= " AND $column = :$filter";
+                $params[":$filter"] = $filters[$filter];
+            }
+        }
+
+        $sql .= " ORDER BY d.created_at DESC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getDocumentById($documentId)
     {
         $stmt = $this->conn->prepare(

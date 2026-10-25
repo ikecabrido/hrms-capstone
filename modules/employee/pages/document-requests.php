@@ -1,10 +1,24 @@
+<?php
+include_once __DIR__ . '/../../../auth/session.php';
+require_once __DIR__ . '/../classes/Employee.php';
+
+$employeeClass = new Employee();
+$employees = $employeeClass->getEmployees();
+?>
+
 <div class="module-header">
     <h1>Document Requests</h1>
     <p>Review and process employee document requests.</p>
 </div>
 
 <div class="module-content">
+    <div class="form-section-header">
+        <h3>Requests</h3>
+        <button type="button" data-modal-open="create-request-modal" class="btn-primary">+ Request Document</button>
+    </div>
+
     <div class="employee-filters">
+        <input type="search" id="dr-filter-search" placeholder="Search employee or request…">
         <select id="dr-filter-status">
             <option value="">All Statuses</option>
             <option value="Pending">Pending</option>
@@ -19,6 +33,8 @@
             <option value="">All</option>
         </select>
     </div>
+
+    <div id="document-requests-message" class="alert" style="display:none;"></div>
 
     <div class="table-wrapper">
         <table class="user-table">
@@ -39,6 +55,51 @@
                 <tr><td colspan="9">Loading…</td></tr>
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- ─────────────── Create Request Modal ─────────────── -->
+<div id="create-request-modal" class="modal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>Request Document</h3>
+            <button type="button" data-modal-close class="modal-close">&times;</button>
+        </div>
+        <div id="create-request-message" class="alert" style="display:none;"></div>
+        <form id="create-document-request-form" data-skip="true">
+            <div class="form-grid">
+                <select name="employee_id" required>
+                    <option value="">Select Employee *</option>
+                    <?php foreach ($employees as $employee): ?>
+                        <option value="<?= (int) $employee['employee_id'] ?>">
+                            <?= htmlspecialchars($employee['employee_code'] . ' — ' . $employee['first_name'] . ' ' . $employee['last_name'], ENT_QUOTES, 'UTF-8') ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <select id="dr-request-document-type" name="document_type" required>
+                    <option value="">Select Document Type *</option>
+                    <option value="Certificate of Employment">Certificate of Employment</option>
+                    <option value="Government ID">Government ID</option>
+                    <option value="Contract">Contract</option>
+                    <option value="NBI Clearance">NBI Clearance</option>
+                    <option value="Medical Certificate">Medical Certificate</option>
+                    <option value="Resume">Resume</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" id="dr-request-other-type" placeholder="Document name *" style="display:none;">
+                <select name="priority" required>
+                    <option value="Low">Low</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="High">High</option>
+                </select>
+                <label>
+                    Required By
+                    <input type="date" name="required_by">
+                </label>
+                <textarea name="notes" placeholder="Notes"></textarea>
+            </div>
+            <button type="submit" class="btn-primary">Create Request</button>
+        </form>
     </div>
 </div>
 

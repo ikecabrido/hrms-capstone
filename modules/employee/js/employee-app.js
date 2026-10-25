@@ -216,17 +216,6 @@ async function handleDepartmentChange(select) {
     }
 }
 
-async function submitAddEmployeeForm(form) {
-    const alertBox = qs('#add-employee-message', form.closest('.modal, body'));
-    const res = await api('create_employee', { method: 'POST', body: new FormData(form) });
-    showAlert(alertBox, res.message, res.success ? 'success' : 'error');
-    if (res.success) {
-        form.reset();
-        toggleModal(qs('#add-employee-modal'), false);
-        document.querySelector('.container')?._loadEmployeeTable?.();
-    }
-}
-
 async function openViewEmployeeModal(employeeId) {
     const modal = qs('#view-employee-modal');
     const body = qs('#view-employee-body', modal);
@@ -659,21 +648,110 @@ async function deleteSubItem(btn) {
 // ─────────────────────────── Documents Management page ───────────────────────────
 
 async function initDocumentsManagement(root) {
-    const picker = qs('#docs-employee-picker', root);
-    if (!picker) return;
+    const tbody = qs('#dm-documents-table-body', root);
+    if (!tbody) return;
 
-    picker.addEventListener('change', () => loadDocuments(root, picker.value));
+    const searchInput = qs('#dm-filter-search', root);
+    const typeFilter = qs('#dm-filter-type', root);
+    const statusFilter = qs('#dm-filter-status', root);
+    const alertBox = qs('#dm-message', root);
+    let filtersInitialized = false;
+    let latestRequest = 0;
 
-    // Cosmetic: show the chosen filename in the upload drop area
-    const fileInput = qs('#upload-document-file', root);
-    const fileLabel = qs('#upload-file-filename', root);
-    fileInput?.addEventListener('change', () => {
-        if (fileLabel) {
-            fileLabel.textContent = fileInput.files?.[0]?.name || 'Choose a file to upload (PDF, DOC, DOCX, JPG, PNG)';
+    async function loadAllDocuments() {
+        const requestNumber = ++latestRequest;
+        tbody.innerHTML = '<tr><td colspan="9">Loading…</td></tr>';
+
+        try {
+            const res = await api('get_all_documents', {
+                params: {
+                    search: searchInput?.value || '',
+                    document_type: typeFilter?.value || '',
+                    verification_status: statusFilter?.value || '',
+                },
+            });
+
+            if (requestNumber !== latestRequest) return;
+            if (!res.success) {
+                tbody.innerHTML = `<tr><td colspan="9">${esc(res.message || 'Failed to load documents.')}</td></tr>`;
+                showAlert(alertBox, res.message || 'Failed to load documents.', 'error');
+                return;
+            }
+
+            const documents = Array.isArray(res.data) ? res.data : [];
+            if (!filtersInitialized) {
+                populateDocumentFilter(typeFilter, documents, 'document_type', 'All Document Types');
+                populateDocumentFilter(statusFilter, documents, 'verification_status', 'All Statuses');
+                filtersInitialized = true;
+            }
+
+            if (!documents.length) {
+                tbody.innerHTML = '<tr><td colspan="9">No documents found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = documents.map(document => {
+                const employeeName = [document.first_name, document.last_name].filter(Boolean).join(' ');
+                const size = formatDocumentSize(document.file_size);
+                const filePath = document.file_path || '';
+                const fileName = document.file_name || '';
+                const fileLinks = filePath
+                    ? `<a href="${esc(filePath)}" target="_blank" rel="noopener" class="btn-secondary btn-small">View</a>
+                       <a href="${esc(filePath)}" download="${esc(fileName)}" class="btn-secondary btn-small">Download</a>`
+                    : '—';
+
+                return `<tr>
+                    <td>${esc(document.employee_code || '')}${employeeName ? ` — ${esc(employeeName)}` : ''}</td>
+                    <td>${esc(document.document_name || '—')}</td>
+                    <td>${esc(document.document_type || '—')}</td>
+                    <td>${esc(document.category || '—')}</td>
+                    <td>${esc(fmtDate(document.created_at))}</td>
+                    <td>${esc(fmtDate(document.expiry_date))}</td>
+                    <td>${esc(document.verification_status || '—')}</td>
+                    <td>${esc(size)}</td>
+                    <td>${fileLinks}</td>
+                </tr>`;
+            }).join('');
+        } catch (error) {
+            if (requestNumber === latestRequest) {
+                tbody.innerHTML = `<tr><td colspan="9">${esc(error.message || 'Failed to load documents.')}</td></tr>`;
+                showAlert(alertBox, error.message || 'Failed to load documents.', 'error');
+            }
+            throw error;
         }
-    });
+    }
 
-    if (picker.value) await loadDocuments(root, picker.value);
+    searchInput?.addEventListener('input', debounce(() => loadAllDocuments().catch(reportAsyncError), 300));
+    typeFilter?.addEventListener('change', () => loadAllDocuments().catch(reportAsyncError));
+    statusFilter?.addEventListener('change', () => loadAllDocuments().catch(reportAsyncError));
+    await loadAllDocuments();
+}
+
+function populateDocumentFilter(select, documents, field, defaultLabel) {
+    if (!select) return;
+    const values = [...new Set(documents.map(document => document[field]).filter(Boolean))].sort();
+    select.innerHTML = `<option value="">${esc(defaultLabel)}</option>`;
+    values.forEach(value => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+    });
+}
+
+function formatDocumentSize(fileSize) {
+    if (fileSize === null || fileSize === '') return '—';
+    const bytes = Number(fileSize);
+    if (!Number.isFinite(bytes) || bytes < 0) return '—';
+    if (bytes < 1024) return `${bytes} B`;
+    const units = ['KB', 'MB', 'GB'];
+    let size = bytes / 1024;
+    let unit = 0;
+    while (size >= 1024 && unit < units.length - 1) {
+        size /= 1024;
+        unit++;
+    }
+    return `${size.toFixed(1)} ${units[unit]}`;
 }
 
 async function loadDocuments(root, employeeId) {
@@ -1072,7 +1150,6 @@ document.body.addEventListener('submit', function (e) {
 
     e.preventDefault();
 
-    if (form.id === 'add-employee-form') return submitAddEmployeeForm(form).catch(reportAsyncError);
     if (form.id === 'edit-employee-form') return submitEditEmployeeForm(form).catch(reportAsyncError);
     if (form.id === 'add-department-form') return submitAddDepartmentForm(form).catch(reportAsyncError);
     if (form.id === 'edit-department-form') return submitEditDepartmentForm(form).catch(reportAsyncError);

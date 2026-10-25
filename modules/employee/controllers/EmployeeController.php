@@ -59,10 +59,6 @@ switch ($action) {
         getEmployeeDetails();
         break;
 
-    case 'create_employee':
-        createEmployee();
-        break;
-
     case 'update_employee':
         updateEmployee();
         break;
@@ -175,6 +171,10 @@ switch ($action) {
         getDocuments();
         break;
 
+    case 'get_all_documents':
+        getAllDocuments();
+        break;
+
     case 'upload_document':
         uploadDocument();
         break;
@@ -213,6 +213,10 @@ switch ($action) {
 
     case 'get_document_requests':
         getDocumentRequests();
+        break;
+
+    case 'create_document_request':
+        createDocumentRequest();
         break;
 
     case 'update_document_request':
@@ -275,49 +279,6 @@ function getEmployeeDetails()
         'profile'  => $profileClass->getFullProfile($employeeId),
         'records'  => $recordsClass->getFullRecords($employeeId),
     ]);
-}
-
-function createEmployee()
-{
-    global $conn, $currentUserId, $currentEmployeeName;
-
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
-        return;
-    }
-
-    $firstName = trim($_POST['first_name'] ?? '');
-    $lastName  = trim($_POST['last_name'] ?? '');
-    $email     = trim($_POST['email'] ?? '');
-
-    if ($firstName === '' || $lastName === '' || $email === '') {
-        echo json_encode(['success' => false, 'message' => 'First name, last name, and email are required.']);
-        return;
-    }
-
-    try {
-        $conn->beginTransaction();
-
-        $employeeClass = new Employee($conn);
-        $newId = $employeeClass->createEmployee($_POST);
-
-        $historyClass = new EmployeeHistory($conn);
-        $historyClass->logChange(
-            $newId, 'Employee Created', '', 'N/A', "$firstName $lastName",
-            $currentEmployeeName, $currentUserId, 'New employee record created.'
-        );
-
-        $conn->commit();
-        echo json_encode(['success' => true, 'message' => 'Employee created successfully.', 'employee_id' => $newId]);
-    } catch (Throwable $e) {
-        if ($conn->inTransaction()) {
-            $conn->rollBack();
-        }
-
-        error_log($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Server error']);
-    }
 }
 
 function updateEmployee()
@@ -840,6 +801,21 @@ function getDocuments()
     echo json_encode(['success' => true, 'data' => $docsClass->getDocuments($employeeId)]);
 }
 
+function getAllDocuments()
+{
+    global $conn;
+
+    $filters = [
+        'search' => is_string($_GET['search'] ?? null) ? trim($_GET['search']) : '',
+        'document_type' => is_string($_GET['document_type'] ?? null) ? trim($_GET['document_type']) : '',
+        'category' => is_string($_GET['category'] ?? null) ? trim($_GET['category']) : '',
+        'verification_status' => is_string($_GET['verification_status'] ?? null) ? trim($_GET['verification_status']) : '',
+    ];
+
+    $docsClass = new EmployeeDocuments($conn);
+    echo json_encode(['success' => true, 'data' => $docsClass->getAllDocuments($filters)]);
+}
+
 function uploadDocument()
 {
     global $conn, $currentUserId, $currentEmployeeName;
@@ -1241,12 +1217,54 @@ function getDocumentRequests()
     global $conn;
 
     $filters = [
-        'request_status' => trim($_GET['request_status'] ?? ''),
+        'request_status' => is_string($_GET['request_status'] ?? null) ? trim($_GET['request_status']) : '',
         'archived'        => $_GET['archived'] ?? '',
+        'search'          => is_string($_GET['search'] ?? null) ? trim($_GET['search']) : '',
     ];
 
     $docClass = new DocumentRequest($conn);
     echo json_encode(['success' => true, 'data' => $docClass->getAllRequests($filters)]);
+}
+
+function createDocumentRequest()
+{
+    global $conn;
+
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['success' => false, 'message' => 'Invalid request method.']);
+        return;
+    }
+
+    $data = [
+        'employee_id' => $_POST['employee_id'] ?? null,
+        'document_type' => $_POST['document_type'] ?? null,
+        'priority' => $_POST['priority'] ?? null,
+        'required_by' => $_POST['required_by'] ?? null,
+        'notes' => $_POST['notes'] ?? '',
+        'requires_signature' => $_POST['requires_signature'] ?? 0,
+    ];
+    $assignedTo = $_SESSION['employee_name'] ?? null;
+    if (!is_string($assignedTo) || trim($assignedTo) === '') {
+        $assignedTo = $_SESSION['user_id'] ?? null;
+    }
+
+    try {
+        $docClass = new DocumentRequest($conn);
+        $requestId = $docClass->createRequest($data, $assignedTo);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Document request created.',
+            'request_id' => $requestId,
+        ]);
+    } catch (InvalidArgumentException $e) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    } catch (Exception $e) {
+        error_log($e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Failed to create document request.']);
+    }
 }
 
 function updateDocumentRequest()
@@ -1270,6 +1288,25 @@ function updateDocumentRequest()
         return;
     }
 
+    if (isset($_POST['request_status']) && $_POST['request_status'] !== '') {
+        if (!is_string($_POST['request_status'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid document request status.']);
+            return;
+        }
+        $status = trim($_POST['request_status']);
+        if (!in_array($status, ['Pending', 'Processing', 'Approved', 'Released', 'Rejected'], true)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid document request status.']);
+            return;
+        }
+        if ($status === 'Rejected' && trim($_POST['notes'] ?? '') === '') {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Notes are required when rejecting a request.']);
+            return;
+        }
+    }
+
     // Only pull in whitelisted fields the caller actually sent — updateRequest()
     // also whitelists internally, this just avoids passing empty-string noise.
     $fields = [];
@@ -1277,12 +1314,24 @@ function updateDocumentRequest()
         $fields['request_status'] = trim($_POST['request_status']);
     }
     if (isset($_POST['assigned_to']) && $_POST['assigned_to'] !== '') {
+        if (!is_string($_POST['assigned_to'])) {
+            echo json_encode(['success' => false, 'message' => 'Invalid assignee.']);
+            return;
+        }
         $fields['assigned_to'] = trim($_POST['assigned_to']);
     }
     if (isset($_POST['signature_status']) && $_POST['signature_status'] !== '') {
+        if (!is_string($_POST['signature_status'])) {
+            echo json_encode(['success' => false, 'message' => 'Invalid signature status.']);
+            return;
+        }
         $fields['signature_status'] = trim($_POST['signature_status']);
     }
     if (isset($_POST['notes'])) {
+        if (!is_string($_POST['notes'])) {
+            echo json_encode(['success' => false, 'message' => 'Invalid notes.']);
+            return;
+        }
         $fields['notes'] = trim($_POST['notes']);
     }
     if (isset($_POST['verified'])) {

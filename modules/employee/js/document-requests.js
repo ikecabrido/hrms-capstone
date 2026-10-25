@@ -71,9 +71,10 @@ async function loadDocumentRequests(root) {
 
     const statusFilter = qs('#dr-filter-status', root)?.value || '';
     const archivedFilter = qs('#dr-filter-archived', root)?.value ?? '0';
+    const search = qs('#dr-filter-search', root)?.value || '';
 
     const res = await api('get_document_requests', {
-        params: { request_status: statusFilter, archived: archivedFilter },
+        params: { request_status: statusFilter, archived: archivedFilter, search },
     });
 
     if (!res.success) {
@@ -111,6 +112,7 @@ async function initDocumentRequests(root) {
 
     qs('#dr-filter-status', root)?.addEventListener('change', () => loadDocumentRequests(root).catch(reportAsyncError));
     qs('#dr-filter-archived', root)?.addEventListener('change', () => loadDocumentRequests(root).catch(reportAsyncError));
+    qs('#dr-filter-search', root)?.addEventListener('input', debounce(() => loadDocumentRequests(root).catch(reportAsyncError), 300));
 }
 
 function openProcessRequestModal(request) {
@@ -151,6 +153,43 @@ async function submitProcessRequestForm(form) {
     }
 }
 
+async function submitCreateRequestForm(form) {
+    const alertBox = qs('#create-request-message');
+    const formData = new FormData(form);
+    const documentType = qs('#dr-request-document-type', form);
+    const otherType = qs('#dr-request-other-type', form);
+
+    if (documentType.value === 'Other') {
+        const customType = otherType.value.trim();
+        if (!customType) {
+            showAlert(alertBox, 'Enter the document name.', 'error');
+            return;
+        }
+        formData.set('document_type', customType);
+    }
+    formData.delete('other_document_type');
+
+    const res = await api('create_document_request', { method: 'POST', body: formData });
+    showAlert(alertBox, res.message, res.success ? 'success' : 'error');
+    if (!res.success) return;
+
+    form.reset();
+    otherType.style.display = 'none';
+    otherType.required = false;
+    toggleModal(qs('#create-request-modal'), false);
+    showAlert(qs('#document-requests-message'), res.message, 'success');
+    const root = document.querySelector('.container');
+    if (root) await loadDocumentRequests(root);
+}
+
+function debounce(fn, delay) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
+
 // ─────────────────────────── Wiring ───────────────────────────
 
 window.addEventListener('page:loaded', function (e) {
@@ -174,11 +213,26 @@ document.body.addEventListener('click', function (e) {
     }
 });
 
+document.body.addEventListener('change', function (e) {
+    if (e.target.matches('#dr-request-document-type')) {
+        const otherType = qs('#dr-request-other-type');
+        const isOther = e.target.value === 'Other';
+        if (otherType) {
+            otherType.style.display = isOther ? '' : 'none';
+            otherType.required = isOther;
+            if (!isOther) otherType.value = '';
+        }
+    }
+});
+
 document.body.addEventListener('submit', function (e) {
     const form = e.target;
     if (!(form instanceof HTMLFormElement)) return;
-    if (form.id !== 'process-request-form') return;
-
-    e.preventDefault();
-    submitProcessRequestForm(form).catch(reportAsyncError);
+    if (form.id === 'process-request-form') {
+        e.preventDefault();
+        submitProcessRequestForm(form).catch(reportAsyncError);
+    } else if (form.id === 'create-document-request-form') {
+        e.preventDefault();
+        submitCreateRequestForm(form).catch(reportAsyncError);
+    }
 });

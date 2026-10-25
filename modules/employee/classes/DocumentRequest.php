@@ -41,7 +41,7 @@ class DocumentRequest
 
     /**
      * All requests, joined to the requesting employee's name, most recent
-     * first. Optional filters: request_status, archived (0/1).
+     * first. Optional filters: request_status, archived (0/1), search.
      */
     public function getAllRequests(array $filters = [])
     {
@@ -65,11 +65,82 @@ class DocumentRequest
             $params[':archived'] = (int) $filters['archived'];
         }
 
+        if (isset($filters['search']) && trim((string) $filters['search']) !== '') {
+            $search = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], trim((string) $filters['search']));
+            $like = '%' . $search . '%';
+            $sql .= " AND (
+                        e.first_name LIKE :search_first_name ESCAPE '!'
+                        OR e.last_name LIKE :search_last_name ESCAPE '!'
+                        OR CONCAT_WS(' ', e.first_name, e.last_name) LIKE :search_full_name ESCAPE '!'
+                        OR e.employee_code LIKE :search_employee_code ESCAPE '!'
+                        OR dr.document_type LIKE :search_document_type ESCAPE '!'
+                        OR dr.notes LIKE :search_notes ESCAPE '!'
+                    )";
+            $params[':search_first_name'] = $like;
+            $params[':search_last_name'] = $like;
+            $params[':search_full_name'] = $like;
+            $params[':search_employee_code'] = $like;
+            $params[':search_document_type'] = $like;
+            $params[':search_notes'] = $like;
+        }
+
         $sql .= " ORDER BY dr.created_at DESC";
 
         $stmt = $this->conn->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function createRequest(array $data, $assignedTo = null)
+    {
+        $employeeId = filter_var($data['employee_id'] ?? null, FILTER_VALIDATE_INT);
+        if (!$employeeId || $employeeId < 1) {
+            throw new InvalidArgumentException('A valid employee is required.');
+        }
+
+        $employeeStmt = $this->conn->prepare(
+            "SELECT employee_id FROM em_employees WHERE employee_id = :employee_id LIMIT 1"
+        );
+        $employeeStmt->execute([':employee_id' => $employeeId]);
+        if (!$employeeStmt->fetchColumn()) {
+            throw new InvalidArgumentException('The selected employee does not exist.');
+        }
+
+        $documentType = $data['document_type'] ?? null;
+        if (!is_string($documentType) || trim($documentType) === '') {
+            throw new InvalidArgumentException('Document type is required.');
+        }
+        $documentType = trim($documentType);
+
+        $priority = $data['priority'] ?? null;
+        $priority = is_string($priority) ? trim($priority) : '';
+        if (!in_array($priority, ['Low', 'Medium', 'High'], true)) {
+            throw new InvalidArgumentException('Priority must be Low, Medium, or High.');
+        }
+
+        $requiredBy = $data['required_by'] ?? null;
+        $notes = $data['notes'] ?? '';
+        if (($requiredBy !== null && $requiredBy !== '' && !is_string($requiredBy)) || !is_string($notes)) {
+            throw new InvalidArgumentException('Invalid request details.');
+        }
+
+        $stmt = $this->conn->prepare(
+            "INSERT INTO em_lc_document_requests
+                (employee_id, document_type, request_status, priority, required_by, notes, requires_signature, assigned_to)
+             VALUES
+                (:employee_id, :document_type, 'Pending', :priority, :required_by, :notes, :requires_signature, :assigned_to)"
+        );
+        $stmt->execute([
+            ':employee_id' => $employeeId,
+            ':document_type' => $documentType,
+            ':priority' => $priority,
+            ':required_by' => !empty($requiredBy) ? $requiredBy : null,
+            ':notes' => trim($notes) ?: null,
+            ':requires_signature' => !empty($data['requires_signature']) ? 1 : 0,
+            ':assigned_to' => $assignedTo,
+        ]);
+
+        return $this->conn->lastInsertId();
     }
 
     public function getRequestById($requestId)
@@ -87,6 +158,14 @@ class DocumentRequest
      */
     public function updateRequest($requestId, array $fields)
     {
+        if (isset($fields['request_status']) && !in_array(
+            $fields['request_status'],
+            ['Pending', 'Processing', 'Approved', 'Released', 'Rejected'],
+            true
+        )) {
+            throw new InvalidArgumentException('Invalid document request status.');
+        }
+
         $setClauses = [];
         $params = [':request_id' => $requestId];
 

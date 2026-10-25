@@ -25,7 +25,7 @@ $graduateLevels = ['None', 'LPT', 'Masteral', 'Doctoral'];
 
 <div class="module-header">
     <h1>Employee Database</h1>
-    <p>Search, add, and manage employee records.</p>
+    <p>Search and manage employee records.</p>
 </div>
 
 <div class="module-content">
@@ -63,7 +63,6 @@ $graduateLevels = ['None', 'LPT', 'Masteral', 'Doctoral'];
     <div class="form-section">
         <div class="form-section-header">
             <h3>Employee List</h3>
-            <button type="button" data-modal-open="add-employee-modal" class="btn-primary">+ Add Employee</button>
         </div>
 
         <div class="employee-filters">
@@ -116,72 +115,6 @@ $graduateLevels = ['None', 'LPT', 'Masteral', 'Doctoral'];
                 <button type="button" id="pagination-next" class="btn-secondary">Next &rarr;</button>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- ─────────────── Add Employee Modal ─────────────── -->
-<div id="add-employee-modal" class="modal">
-    <div class="modal-dialog">
-        <div class="modal-header">
-            <h3>Add Employee</h3>
-            <button type="button" data-modal-close class="modal-close">&times;</button>
-        </div>
-        <div id="add-employee-message" class="alert" style="display:none;"></div>
-        <form id="add-employee-form" data-skip="true">
-            <div class="form-grid">
-                <input type="text" name="first_name" placeholder="First Name *" required>
-                <input type="text" name="middle_name" placeholder="Middle Name">
-                <input type="text" name="last_name" placeholder="Last Name *" required>
-                <input type="text" name="suffix" placeholder="Suffix">
-
-                <select name="gender">
-                    <option value="">Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                </select>
-                <input type="date" name="birth_date" placeholder="Birth Date">
-                <select name="civil_status">
-                    <option value="">Civil Status</option>
-                    <?php foreach ($civilStatuses as $cs): ?>
-                        <option value="<?= htmlspecialchars($cs) ?>"><?= htmlspecialchars($cs) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <input type="text" name="citizenship" placeholder="Citizenship">
-
-                <input type="email" name="email" placeholder="Email *" required>
-                <input type="text" name="mobile_no" placeholder="Mobile Number">
-
-                <select name="department_id" required>
-                    <option value="">Select Department *</option>
-                    <?php foreach ($departments as $d): ?>
-                        <option value="<?= (int) $d['department_id'] ?>"><?= htmlspecialchars($d['department_name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <select name="position_id" disabled required>
-                    <option value="">Select Position *</option>
-                </select>
-
-                <input type="date" name="hire_date" placeholder="Hire Date">
-                <select name="employment_status">
-                    <?php foreach ($employmentStatuses as $s): ?>
-                        <option value="<?= htmlspecialchars($s) ?>" <?= $s === 'Probationary' ? 'selected' : '' ?>><?= htmlspecialchars($s) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <select name="employment_type">
-                    <option value="">Employment Type</option>
-                    <?php foreach ($employmentTypes as $t): ?>
-                        <option value="<?= htmlspecialchars($t) ?>"><?= htmlspecialchars($t) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <select name="graduate_level">
-                    <?php foreach ($graduateLevels as $g): ?>
-                        <option value="<?= htmlspecialchars($g) ?>"><?= htmlspecialchars($g) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <button type="submit" class="btn-primary">Save Employee</button>
-        </form>
     </div>
 </div>
 
