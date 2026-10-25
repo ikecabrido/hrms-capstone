@@ -10,7 +10,7 @@ class Database {
     private $conn;
 
     public function __construct() {
-        $configFile = dirname(__DIR__, 2) . '/db_config.php';
+        $configFile = dirname(_DIR_, 2) . '/db_config.php';
 
         if (file_exists($configFile)) {
             // Hosted database configuration
