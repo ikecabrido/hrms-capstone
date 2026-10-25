@@ -14,7 +14,7 @@ class Database {
 
         if (file_exists($configFile)) {
             // Hosted database configuration
-            $config = require $configFile;
+            $config = require $configFile;git 
 
             if (!is_array($config)) {
                 die("Invalid database configuration.");
