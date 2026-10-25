@@ -115,7 +115,7 @@ WHERE LOWER(TRIM(status)) = 'shortlisted'
 
  <div class="module-content">
 
-     <link rel="stylesheet" href="style.css">
+     <link rel="stylesheet" href="styles.css">
      <div class="dashboard-content">
 
 
