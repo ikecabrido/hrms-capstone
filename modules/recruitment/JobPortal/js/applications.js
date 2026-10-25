@@ -68,6 +68,10 @@ async function apiRequest(action, options) {
     method: options.method || "GET",
   };
 
+  /*
+   * For FormData, let the browser set the multipart
+   * Content-Type and boundary automatically.
+   */
   if (options.body instanceof FormData) {
     requestOptions.body = options.body;
   } else if (options.body !== undefined) {
@@ -111,7 +115,6 @@ async function apiRequest(action, options) {
  * =========================================================
  */
 function openApply(jobId) {
-  // Find the selected job using its ID.
   var job = jobs.find(function (j) {
     return String(j.id) === String(jobId);
   });
@@ -127,21 +130,15 @@ function openApply(jobId) {
     return;
   }
 
-  // Allow a new application submission.
   isSubmittingApplication = false;
-
-  // Preserve the selected database job ID.
   currentJobId = job.id;
 
   console.log("Selected job:", job);
   console.log("Selected database job ID:", currentJobId);
 
-  /**
-   * -------------------------------------------------------
+  /*
    * JOB INFORMATION
-   * -------------------------------------------------------
    */
-
   var titleElement = document.getElementById("applyModalTitle");
 
   if (titleElement) {
@@ -205,12 +202,9 @@ function openApply(jobId) {
     qualificationElement.textContent = job.qual || "—";
   }
 
-  /**
-   * -------------------------------------------------------
+  /*
    * RESET FORM
-   * -------------------------------------------------------
    */
-
   var applyForm = document.getElementById("applyForm");
 
   if (applyForm) {
@@ -230,28 +224,19 @@ function openApply(jobId) {
     }
   }
 
-  /**
-   * -------------------------------------------------------
-   * RESTORE JOB ID AFTER RESET
-   * -------------------------------------------------------
-   *
-   * form.reset() clears the hidden job ID.
-   * Restore it after resetting the form.
-   * -------------------------------------------------------
+  /*
+   * RESTORE SELECTED JOB ID AFTER RESET
    */
-
   var jobIdInput = document.getElementById("jobId");
 
   if (jobIdInput) {
     jobIdInput.value = String(currentJobId);
   }
 
-  /**
-   * -------------------------------------------------------
-   * RESET FILE LABELS
-   * -------------------------------------------------------
+  /*
+   * RESET FILE LABELS.
+   * Hidden document inputs are safely ignored.
    */
-
   ["fn-resume", "fn-diploma", "fn-tor", "fn-certs", "fn-other"].forEach(
     function (id) {
       var el = document.getElementById(id);
@@ -263,35 +248,23 @@ function openApply(jobId) {
     },
   );
 
-  /**
-   * -------------------------------------------------------
-   * SHOW FORM
-   * -------------------------------------------------------
+  /*
+   * SHOW APPLICATION FORM
    */
-
   var formWrap = document.getElementById("applyFormWrap");
 
   if (formWrap) {
     formWrap.style.display = "block";
   }
 
-  /**
-   * -------------------------------------------------------
+  /*
    * HIDE SUCCESS MESSAGE
-   * -------------------------------------------------------
    */
-
   var successWrap = document.getElementById("applySuccessWrap");
 
   if (successWrap) {
     successWrap.style.display = "none";
   }
-
-  /**
-   * -------------------------------------------------------
-   * OPEN MODAL
-   * -------------------------------------------------------
-   */
 
   openModal("applyModal");
 }
@@ -371,12 +344,9 @@ function restoreApplicationSubmitButton(button) {
 async function handleApplySubmit(e) {
   e.preventDefault();
 
-  /**
-   * -------------------------------------------------------
+  /*
    * PREVENT DUPLICATE SUBMISSION
-   * -------------------------------------------------------
    */
-
   if (isSubmittingApplication) {
     console.warn("Duplicate application submission blocked.");
     return;
@@ -393,17 +363,12 @@ async function handleApplySubmit(e) {
     'button[type="submit"], input[type="submit"]',
   );
 
-  /**
-   * -------------------------------------------------------
+  /*
    * VALIDATE SELECTED JOB
-   * -------------------------------------------------------
    */
-
   var jobIdInput = document.getElementById("jobId");
-
   var selectedJobId = jobIdInput ? jobIdInput.value.trim() : "";
 
-  // Use the preserved job ID if the hidden input is unavailable.
   if (!selectedJobId && currentJobId !== null && currentJobId !== undefined) {
     selectedJobId = String(currentJobId).trim();
   }
@@ -418,12 +383,9 @@ async function handleApplySubmit(e) {
     return;
   }
 
-  /**
-   * -------------------------------------------------------
+  /*
    * FIND CURRENT JOB
-   * -------------------------------------------------------
    */
-
   var job = jobs.find(function (j) {
     return String(j.id) === String(selectedJobId);
   });
@@ -432,16 +394,24 @@ async function handleApplySubmit(e) {
     console.error("Selected job was not found:", selectedJobId);
 
     alert("This job posting is no longer available. Please refresh the page.");
-
     return;
   }
 
-  /**
-   * -------------------------------------------------------
-   * LOCK SUBMISSION
-   * -------------------------------------------------------
+  /*
+   * VALIDATE RESUME BEFORE LOCKING SUBMISSION
+   *
+   * Resume / CV is the only required document.
    */
+  var resumeFile = getApplicationFile("apResume");
 
+  if (!resumeFile) {
+    alert("Please attach your resume / CV.");
+    return;
+  }
+
+  /*
+   * LOCK SUBMISSION
+   */
   isSubmittingApplication = true;
 
   if (submitButton) {
@@ -453,17 +423,14 @@ async function handleApplySubmit(e) {
     }
   }
 
-  /**
-   * -------------------------------------------------------
+  /*
    * PERSONAL INFORMATION
-   * -------------------------------------------------------
    */
-
   var firstName = getApplicationInputValue("apFirstName");
   var middleName = getApplicationInputValue("apMiddleName");
   var lastName = getApplicationInputValue("apLastName");
 
-  // Support older forms that use one name field.
+  // Support older forms that use a single name field.
   var legacyName = getApplicationInputValue("apName");
 
   if (!firstName && legacyName) {
@@ -486,60 +453,25 @@ async function handleApplySubmit(e) {
   var address = getApplicationInputValue("apAddress");
   var permanentAddress = getApplicationInputValue("apPermanentAddress");
 
-  /**
-   * -------------------------------------------------------
+  /*
    * EDUCATION
-   * -------------------------------------------------------
    */
-
   var school = getApplicationInputValue("apSchool");
   var degree = getApplicationInputValue("apDegree");
   var yearGraduated = getApplicationInputValue("apYear");
 
-  /**
-   * -------------------------------------------------------
+  /*
    * EXPERIENCE
-   * -------------------------------------------------------
    */
-
   var prevEmployer = getApplicationInputValue("apEmployer");
   var prevPosition = getApplicationInputValue("apPrevPosition");
   var expStart = getApplicationInputValue("apStart");
   var expEnd = getApplicationInputValue("apEnd");
   var expDesc = getApplicationInputValue("apExpDesc");
 
-  /**
-   * -------------------------------------------------------
-   * FILES
-   * -------------------------------------------------------
-   */
-
-  var resumeFile = getApplicationFile("apResume");
-  var diplomaFile = getApplicationFile("apDiploma");
-  var torFile = getApplicationFile("apTor");
-  var certsFile = getApplicationFile("apCerts");
-  var otherFile = getApplicationFile("apOther");
-
-  /**
-   * -------------------------------------------------------
-   * VALIDATE REQUIRED FILES
-   * -------------------------------------------------------
-   */
-
-  if (!resumeFile || !diplomaFile || !torFile) {
-    restoreApplicationSubmitButton(submitButton);
-
-    alert("Please attach your resume, diploma, and transcript of records.");
-
-    return;
-  }
-
-  /**
-   * -------------------------------------------------------
+  /*
    * APPLICATION DISPLAY INFORMATION
-   * -------------------------------------------------------
    */
-
   var app = {
     ref: refNumber(),
     jobId: selectedJobId,
@@ -572,21 +504,14 @@ async function handleApplySubmit(e) {
     expDesc: expDesc,
   };
 
-  /**
-   * =======================================================
+  /*
    * CREATE FORMDATA
-   * =======================================================
    */
-
   var formData = new FormData();
 
-  /**
-   * -------------------------------------------------------
+  /*
    * APPLICATION AND JOB INFORMATION
-   * -------------------------------------------------------
    */
-
-  // Send the selected database job ID exactly once.
   formData.set("jobId", selectedJobId);
 
   formData.set("firstName", firstName);
@@ -608,26 +533,19 @@ async function handleApplySubmit(e) {
   formData.set("currentAddress", address);
   formData.set("permanentAddress", permanentAddress);
 
-  /**
-   * -------------------------------------------------------
+  /*
    * EDUCATION
-   * -------------------------------------------------------
    */
-
   formData.set("school", school);
   formData.set("degree", degree);
   formData.set("yearGraduated", yearGraduated);
 
-  /**
-   * -------------------------------------------------------
+  /*
    * EXPERIENCE
-   * -------------------------------------------------------
    *
-   * Send both company and employer names for compatibility
+   * Send both company and employer for compatibility
    * with controllers using either field name.
-   * -------------------------------------------------------
    */
-
   formData.set("company", prevEmployer);
   formData.set("employer", prevEmployer);
   formData.set("position", prevPosition);
@@ -635,71 +553,43 @@ async function handleApplySubmit(e) {
   formData.set("endDate", expEnd);
   formData.set("experienceDescription", expDesc);
 
-  /**
-   * -------------------------------------------------------
+  /*
    * FILE UPLOADS
-   * -------------------------------------------------------
+   *
+   * TEMPORARY CONFIGURATION:
+   * Resume / CV only.
+   * Diploma, TOR, certificates, and other documents
+   * are intentionally not accessed or submitted.
    */
+  formData.set("resume", resumeFile);
 
-  if (resumeFile) {
-    formData.set("resume", resumeFile);
-  }
-
-  if (diplomaFile) {
-    formData.set("diploma", diplomaFile);
-  }
-
-  if (torFile) {
-    formData.set("tor", torFile);
-  }
-
-  if (certsFile) {
-    formData.set("certs", certsFile);
-  }
-
-  if (otherFile) {
-    formData.set("other", otherFile);
-  }
-
-  /**
-   * -------------------------------------------------------
+  /*
    * DEBUG REQUEST BEFORE SUBMISSION
-   * -------------------------------------------------------
    */
-
   console.log("Submitting application:", {
     jobId: formData.get("jobId"),
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     email: formData.get("email"),
     hasResume: formData.has("resume"),
-    hasDiploma: formData.has("diploma"),
-    hasTor: formData.has("tor"),
   });
 
-  /**
-   * =======================================================
+  /*
    * SUBMIT APPLICATION
-   * =======================================================
    */
-
   try {
     var submitResponse = await apiRequest("applications", {
       method: "POST",
       body: formData,
     });
 
-    /**
-     * -----------------------------------------------------
+    /*
      * REFRESH APPLICATION LIST
-     * -----------------------------------------------------
      *
-     * The application is already submitted at this point.
      * A failed refresh must not be reported as a failed
-     * submission, because that could cause duplicate posts.
-     * -----------------------------------------------------
+     * submission because the application may already
+     * have been saved.
      */
-
     if (submitResponse && submitResponse.application_id) {
       app.id = submitResponse.application_id;
     } else if (submitResponse && submitResponse.id) {
@@ -732,12 +622,9 @@ async function handleApplySubmit(e) {
     return;
   }
 
-  /**
-   * =======================================================
+  /*
    * SUCCESS SCREEN
-   * =======================================================
    */
-
   var formWrap = document.getElementById("applyFormWrap");
 
   if (formWrap) {
@@ -750,34 +637,25 @@ async function handleApplySubmit(e) {
     successWrap.style.display = "block";
   }
 
-  /**
-   * -------------------------------------------------------
+  /*
    * APPLICATION REFERENCE
-   * -------------------------------------------------------
    */
-
   var successRef = document.getElementById("successRef");
 
   if (successRef) {
     successRef.textContent = app.ref;
   }
 
-  /**
-   * -------------------------------------------------------
+  /*
    * APPLICANT NAME
-   * -------------------------------------------------------
    */
-
   var applicantName = [app.firstName, app.middleName, app.lastName]
     .filter(Boolean)
     .join(" ");
 
-  /**
-   * -------------------------------------------------------
+  /*
    * SUCCESS MESSAGE
-   * -------------------------------------------------------
    */
-
   var successText = document.getElementById("successText");
 
   if (successText) {
