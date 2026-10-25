@@ -42,240 +42,232 @@ try {
     <?php endif; ?>
 
     <div class="table-container">
-        <div class="offered-search-wrap">
-            <input
-                type="search"
-                id="offeredListSearch"
-                class="offered-search"
-                placeholder="Search by ID, candidate, or position"
-                aria-label="Search offers by ID, candidate name, or position details">
-        </div>
 
         <div class="offered-table-scroll">
             <table class="admin-table" id="offeredListTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Candidate</th>
-                    <th>Position Details</th>
-                    <th>Proposed Salary</th>
-                    <th>Current Status</th>
-                    <th style="text-align: center;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($offers)): ?>
-                    <?php foreach ($offers as $offer): ?>
-                        <tr
-                            class="candidate-row"
-                            data-offer='<?= htmlspecialchars(json_encode($offer), ENT_QUOTES, 'UTF-8') ?>'
-                            style="cursor:pointer;">
-
-                            <td>
-                                <span class="badge">
-                                    #<?= htmlspecialchars($offer['application_id']) ?>
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="candidate-name">
-                                    <?= htmlspecialchars($offer['first_name'] . ' ' . $offer['last_name']) ?>
-                                </span>
-                            </td>
-
-                            <td>
-                                <div style="font-size: 13px; color: #475569;">
-                                    <span style="font-weight: 600;">
-                                        <?= htmlspecialchars($offer['position']) ?>
-                                    </span>
-                                    <br>
-
-                                    <small style="opacity: 0.7;">
-                                        Base: <?= htmlspecialchars($offer['base_job']) ?>
-                                    </small>
-                                </div>
-                            </td>
-
-                            <td>
-                                <strong style="color: #1e293b;">
-                                    ₱<?= number_format($offer['salary'], 2) ?>
-                                </strong>
-                            </td>
-
-                            <td>
-                                <?php
-                                $statusStyle = "";
-                                $icon = "";
-
-                                switch ($offer['offer_status']) {
-
-                                    case 'Accepted':
-                                        $statusStyle = "background:#dcfce7; color:#166534;";
-                                        $icon = "fa-check";
-                                        break;
-
-                                    case 'Rejected':
-                                        $statusStyle = "background:#fee2e2; color:#991b1b;";
-                                        $icon = "fa-times";
-                                        break;
-
-                                    case 'Negotiating':
-                                        $statusStyle = "background:#ffedd5; color:#9a3412;";
-                                        $icon = "fa-comments";
-                                        break;
-
-                                    default:
-                                        $statusStyle = "background:#eff6ff; color:#1e40af;";
-                                        $icon = "fa-paper-plane";
-                                }
-                                ?>
-
-                                <span class="badge" style="<?= $statusStyle ?>">
-                                    <i class="fas <?= $icon ?>"></i>
-                                    <?= htmlspecialchars($offer['offer_status']) ?>
-                                </span>
-                            </td>
-
-                            <td
-                                style="text-align:center;"
-                                onclick="event.stopPropagation();">
-
-                                <div class="action-group">
-
-                                    <?php if (
-                                        $offer['offer_status'] === 'Accepted' ||
-                                        $offer['offer_status'] === 'Rejected'
-                                    ): ?>
-
-                                        <span
-                                            class="badge"
-                                            style="background:#111827; color:white;">
-                                            Closed
-                                        </span>
-
-                                    <?php elseif ($offer['offer_status'] === 'Negotiating'): ?>
-
-                                        <form
-                                            method="POST"
-                                            action="index.php?page=update-salary"
-                                            style="display:flex; gap:5px;">
-
-                                            <input
-                                                type="hidden"
-                                                name="offer_id"
-                                                value="<?= (int) $offer['offer_id'] ?>">
-
-                                            <input
-                                                type="number"
-                                                step="0.01"
-                                                name="new_salary"
-                                                placeholder="New Salary"
-                                                required
-                                                class="input-mini">
-
-                                            <button
-                                                type="submit"
-                                                class="btn-action"
-                                                style="background:#6366f1; color:white;"
-                                                title="Send Counter Offer">
-
-                                                <i class="fas fa-paper-plane"></i>
-
-                                            </button>
-
-                                        </form>
-
-                                    <?php else: ?>
-
-                                        <!-- ACCEPT -->
-                                        <form
-                                            method="POST"
-                                            action="index.php?page=accept-offer"
-                                            style="display:inline;">
-
-                                            <input
-                                                type="hidden"
-                                                name="offer_id"
-                                                value="<?= (int) $offer['offer_id'] ?>">
-
-                                            <button
-                                                type="submit"
-                                                class="btn-action"
-                                                style="background:#22c55e; color:white;"
-                                                onclick="return confirm('Accept this offer?')"
-                                                title="Accept Offer">
-
-                                                <i class="fas fa-check"></i>
-
-                                            </button>
-
-                                        </form>
-
-                                        <!-- REJECT -->
-                                        <form
-                                            method="POST"
-                                            action="index.php?page=reject-offer"
-                                            style="display:inline;">
-
-                                            <input
-                                                type="hidden"
-                                                name="offer_id"
-                                                value="<?= (int) $offer['offer_id'] ?>">
-
-                                            <button
-                                                type="submit"
-                                                class="btn-action"
-                                                style="background:#ef4444; color:white;"
-                                                onclick="return confirm('Reject this offer?')"
-                                                title="Reject Offer">
-
-                                                <i class="fas fa-times"></i>
-
-                                            </button>
-
-                                        </form>
-
-                                        <!-- NEGOTIATE -->
-                                        <form
-                                            method="POST"
-                                            action="index.php?page=negotiate-offer"
-                                            style="display:inline;">
-
-                                            <input
-                                                type="hidden"
-                                                name="offer_id"
-                                                value="<?= (int) $offer['offer_id'] ?>">
-
-                                            <button
-                                                type="submit"
-                                                class="btn-action"
-                                                style="background:#f59e0b; color:white;"
-                                                title="Move to Negotiation">
-
-                                                <i class="fas fa-comments"></i>
-
-                                            </button>
-
-                                        </form>
-
-                                    <?php endif; ?>
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-                    <?php endforeach; ?>
-
-                <?php else: ?>
+                <thead>
                     <tr>
-                        <td colspan="6" class="offered-empty-state">
-                            <i class="fas fa-folder-open empty-state-icon"></i>
-                            No offers found.
-                        </td>
+                        <th>ID</th>
+                        <th>Candidate</th>
+                        <th>Position Details</th>
+                        <th>Proposed Salary</th>
+                        <th>Current Status</th>
+                        <th style="text-align: center;">Actions</th>
                     </tr>
-                <?php endif; ?>
-            </tbody>
+                </thead>
+                <tbody>
+                    <?php if (!empty($offers)): ?>
+                        <?php foreach ($offers as $offer): ?>
+                            <tr
+                                class="candidate-row"
+                                data-offer='<?= htmlspecialchars(json_encode($offer), ENT_QUOTES, 'UTF-8') ?>'
+                                style="cursor:pointer;">
+
+                                <td>
+                                    <span class="badge">
+                                        #<?= htmlspecialchars($offer['application_id']) ?>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="candidate-name">
+                                        <?= htmlspecialchars($offer['first_name'] . ' ' . $offer['last_name']) ?>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div style="font-size: 13px; color: #475569;">
+                                        <span style="font-weight: 600;">
+                                            <?= htmlspecialchars($offer['position']) ?>
+                                        </span>
+                                        <br>
+
+                                        <small style="opacity: 0.7;">
+                                            Base: <?= htmlspecialchars($offer['base_job']) ?>
+                                        </small>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <strong style="color: #1e293b;">
+                                        ₱<?= number_format($offer['salary'], 2) ?>
+                                    </strong>
+                                </td>
+
+                                <td>
+                                    <?php
+                                    $statusStyle = "";
+                                    $icon = "";
+
+                                    switch ($offer['offer_status']) {
+
+                                        case 'Accepted':
+                                            $statusStyle = "background:#dcfce7; color:#166534;";
+                                            $icon = "fa-check";
+                                            break;
+
+                                        case 'Rejected':
+                                            $statusStyle = "background:#fee2e2; color:#991b1b;";
+                                            $icon = "fa-times";
+                                            break;
+
+                                        case 'Negotiating':
+                                            $statusStyle = "background:#ffedd5; color:#9a3412;";
+                                            $icon = "fa-comments";
+                                            break;
+
+                                        default:
+                                            $statusStyle = "background:#eff6ff; color:#1e40af;";
+                                            $icon = "fa-paper-plane";
+                                    }
+                                    ?>
+
+                                    <span class="badge" style="<?= $statusStyle ?>">
+                                        <i class="fas <?= $icon ?>"></i>
+                                        <?= htmlspecialchars($offer['offer_status']) ?>
+                                    </span>
+                                </td>
+
+                                <td
+                                    style="text-align:center;"
+                                    onclick="event.stopPropagation();">
+
+                                    <div class="action-group">
+
+                                        <?php if (
+                                            $offer['offer_status'] === 'Accepted' ||
+                                            $offer['offer_status'] === 'Rejected'
+                                        ): ?>
+
+                                            <span
+                                                class="badge"
+                                                style="background:#111827; color:white;">
+                                                Closed
+                                            </span>
+
+                                        <?php elseif ($offer['offer_status'] === 'Negotiating'): ?>
+
+                                            <form
+                                                method="POST"
+                                                action="index.php?page=update-salary"
+                                                style="display:flex; gap:5px;">
+
+                                                <input
+                                                    type="hidden"
+                                                    name="offer_id"
+                                                    value="<?= (int) $offer['offer_id'] ?>">
+
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    name="new_salary"
+                                                    placeholder="New Salary"
+                                                    required
+                                                    class="input-mini">
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn-action"
+                                                    style="background:#6366f1; color:white;"
+                                                    title="Send Counter Offer">
+
+                                                    <i class="fas fa-paper-plane"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                        <?php else: ?>
+
+                                            <!-- ACCEPT -->
+                                            <form
+                                                method="POST"
+                                                action="index.php?page=accept-offer"
+                                                style="display:inline;">
+
+                                                <input
+                                                    type="hidden"
+                                                    name="offer_id"
+                                                    value="<?= (int) $offer['offer_id'] ?>">
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn-action"
+                                                    style="background:#22c55e; color:white;"
+                                                    onclick="return confirm('Accept this offer?')"
+                                                    title="Accept Offer">
+
+                                                    <i class="fas fa-check"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                            <!-- REJECT -->
+                                            <form
+                                                method="POST"
+                                                action="index.php?page=reject-offer"
+                                                style="display:inline;">
+
+                                                <input
+                                                    type="hidden"
+                                                    name="offer_id"
+                                                    value="<?= (int) $offer['offer_id'] ?>">
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn-action"
+                                                    style="background:#ef4444; color:white;"
+                                                    onclick="return confirm('Reject this offer?')"
+                                                    title="Reject Offer">
+
+                                                    <i class="fas fa-times"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                            <!-- NEGOTIATE -->
+                                            <form
+                                                method="POST"
+                                                action="index.php?page=negotiate-offer"
+                                                style="display:inline;">
+
+                                                <input
+                                                    type="hidden"
+                                                    name="offer_id"
+                                                    value="<?= (int) $offer['offer_id'] ?>">
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn-action"
+                                                    style="background:#f59e0b; color:white;"
+                                                    title="Move to Negotiation">
+
+                                                    <i class="fas fa-comments"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                        <?php endif; ?>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        <?php endforeach; ?>
+
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6" class="offered-empty-state">
+                                <i class="fas fa-folder-open empty-state-icon"></i>
+                                No offers found.
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
             </table>
         </div>
         <!-- Applicant Details Modal -->

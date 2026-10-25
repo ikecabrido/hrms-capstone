@@ -16,73 +16,65 @@ $records = is_array($viewData['records'] ?? null) ? $viewData['records'] : [];
 
 <div class="module-content">
     <div class="table-container">
-        <div class="onboarding-search-wrap">
-            <input
-                type="search"
-                id="onboardingSearch"
-                class="onboarding-search"
-                placeholder="Search by ID, employee, position, or department"
-                aria-label="Search onboarding records by ID, employee name, position, or department">
-        </div>
 
         <div class="onboarding-table-scroll">
             <table class="admin-table" id="onboardingTable">
                 <thead>
-                <tr>
-                    <th width="80">ID</th>
-                    <th>Employee Name</th>
-                    <th>Position &amp; Dept.</th>
-                    <th width="250">Onboarding Progress</th>
-                    <th width="120" style="text-align:center;">Status</th>
-                    <th style="text-align:center;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($records)): ?>
-                    <?php foreach ($records as $record): ?>
-                        <?php $progress = (float)($record['progress'] ?? 0); ?>
-                        <tr class="onboarding-row">
-                            <td><span class="badge">#<?= (int)($record['id'] ?? 0) ?></span></td>
-                            <td><strong><?= htmlspecialchars($record['full_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong></td>
-                            <td>
-                                <strong><?= htmlspecialchars($record['position'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong><br>
-                                <small><?= htmlspecialchars($record['department'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></small>
-                            </td>
-                            <td>
-                                <div class="progress-track">
-                                    <div class="progress-fill" style="width:<?= min(100, max(0, $progress)) ?>%;"></div>
-                                </div>
-                                <small><?= htmlspecialchars((string)$progress, ENT_QUOTES, 'UTF-8') ?>%</small>
-                            </td>
-                            <td style="text-align:center;">
-                                <?php if ($progress >= 100): ?>
-                                    <span class="badge" style="background:#dcfce7;color:#166534;">Completed</span>
-                                <?php elseif ($progress > 0): ?>
-                                    <span class="badge" style="background:#dbeafe;color:#1e40af;">In Progress</span>
-                                <?php else: ?>
-                                    <span class="badge" style="background:#fef9c3;color:#854d0e;">Pending</span>
-                                <?php endif; ?>
-                            </td>
-                            <td style="text-align:center;">
-                                <button
-                                    type="button"
-                                    class="btn-action manage-onboarding"
-                                    data-id="<?= (int)($record['id'] ?? 0) ?>"
-                                    data-name="<?= htmlspecialchars($record['full_name'] ?? 'Employee', ENT_QUOTES, 'UTF-8') ?>"
-                                    data-position="<?= htmlspecialchars($record['position'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?>">
-                                    <i class="fas fa-tasks"></i> Manage
-                                </button>
+                    <tr>
+                        <th width="80">ID</th>
+                        <th>Employee Name</th>
+                        <th>Position &amp; Dept.</th>
+                        <th width="250">Onboarding Progress</th>
+                        <th width="120" style="text-align:center;">Status</th>
+                        <th style="text-align:center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($records)): ?>
+                        <?php foreach ($records as $record): ?>
+                            <?php $progress = (float)($record['progress'] ?? 0); ?>
+                            <tr class="onboarding-row">
+                                <td><span class="badge">#<?= (int)($record['id'] ?? 0) ?></span></td>
+                                <td><strong><?= htmlspecialchars($record['full_name'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong></td>
+                                <td>
+                                    <strong><?= htmlspecialchars($record['position'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></strong><br>
+                                    <small><?= htmlspecialchars($record['department'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?></small>
+                                </td>
+                                <td>
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width:<?= min(100, max(0, $progress)) ?>%;"></div>
+                                    </div>
+                                    <small><?= htmlspecialchars((string)$progress, ENT_QUOTES, 'UTF-8') ?>%</small>
+                                </td>
+                                <td style="text-align:center;">
+                                    <?php if ($progress >= 100): ?>
+                                        <span class="badge" style="background:#dcfce7;color:#166534;">Completed</span>
+                                    <?php elseif ($progress > 0): ?>
+                                        <span class="badge" style="background:#dbeafe;color:#1e40af;">In Progress</span>
+                                    <?php else: ?>
+                                        <span class="badge" style="background:#fef9c3;color:#854d0e;">Pending</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td style="text-align:center;">
+                                    <button
+                                        type="button"
+                                        class="btn-action manage-onboarding"
+                                        data-id="<?= (int)($record['id'] ?? 0) ?>"
+                                        data-name="<?= htmlspecialchars($record['full_name'] ?? 'Employee', ENT_QUOTES, 'UTF-8') ?>"
+                                        data-position="<?= htmlspecialchars($record['position'] ?? 'N/A', ENT_QUOTES, 'UTF-8') ?>">
+                                        <i class="fas fa-tasks"></i> Manage
+                                    </button>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6" class="onboarding-empty-state">
+                                <i class="fas fa-folder-open empty-state-icon"></i>
+                                No onboarding records found.
                             </td>
                         </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                    <td colspan="6" class="onboarding-empty-state">
-                        <i class="fas fa-folder-open empty-state-icon"></i>
-                        No onboarding records found.
-                    </td>
-                    </tr>
-                <?php endif; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

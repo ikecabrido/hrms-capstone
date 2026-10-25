@@ -36,21 +36,6 @@ try {
             <button type="button" class="filter-pill stage-filter" data-stage-filter="completed">
                 Completed
             </button>
-            <div style="margin-left:auto;">
-                <input
-                    type="search"
-                    id="applicationSearch"
-                    placeholder="Search by ID, name, or job title"
-                    style="
-                        width: 290px;
-                        max-width: 100%;
-                        padding: 10px 12px;
-                        border: 1px solid #dbe3ee;
-                        border-radius: 8px;
-                        font-size: 14px;
-                        background: #fff;
-                    ">
-            </div>
         </div>
 
         <div class="schedule-table-scroll">
