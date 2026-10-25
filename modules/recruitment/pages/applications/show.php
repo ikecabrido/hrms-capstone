@@ -72,15 +72,44 @@ $isProcessed = in_array($status, ['approved', 'rejected'], true);
             <div><span class="detail-label">Department</span><strong><?= $escape($departmentValue) ?></strong></div>
             <div><span class="detail-label">Source</span><strong><?= $escape($application['source'] ?? 'N/A') ?></strong></div>
             <div><span class="detail-label">Applied On</span><strong><?= !empty($application['created_at']) ? $escape(date('M d, Y', strtotime($application['created_at']))) : 'N/A' ?></strong></div>
-            <div><span class="detail-label">Resume</span>
-                <?php if (!empty($application['resume'])): ?>
-                    <a href="../recruitment/<?= $escape($application['resume']) ?>" target="_blank" class="detail-link">
+
+            <div>
+                <span class="detail-label">Resume</span>
+
+                <?php
+                $resumePath = trim((string)($application['resume'] ?? ''));
+                $resumePath = str_replace('\\', '/', $resumePath);
+                $resumePath = ltrim($resumePath, '/');
+
+                // Support both uploads/26/file.pdf and
+                // JobPortal/uploads/26/file.pdf database values.
+                if (strpos($resumePath, 'JobPortal/') === 0) {
+                    $resumePath = substr($resumePath, strlen('JobPortal/'));
+                }
+
+                $isValidResume = (
+                    $resumePath !== '' &&
+                    preg_match('#^uploads/[0-9]+/[^/]+$#', $resumePath)
+                );
+                ?>
+
+                <?php if ($isValidResume): ?>
+                    <a
+                        href="JobPortal/<?= htmlspecialchars(
+                                            $resumePath,
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="detail-link">
                         <i class="fas fa-file-pdf"></i> View Resume
                     </a>
                 <?php else: ?>
                     <strong>No resume uploaded</strong>
                 <?php endif; ?>
             </div>
+
             <div class="detail-wide"><span class="detail-label">Summary</span><strong><?= nl2br($escape($application['summary'] ?? 'N/A')) ?></strong></div>
         </div>
     </section>
