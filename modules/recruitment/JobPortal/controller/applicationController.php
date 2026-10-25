@@ -8,18 +8,16 @@ require_once __DIR__ . '/../classes/Education.php';
 require_once __DIR__ . '/../classes/Experience.php';
 require_once __DIR__ . '/../classes/Documents.php';
 
-
 /**
  * =========================================================
  * HRMS RECRUITMENT UPLOAD DIRECTORY
- * Works relative to the deployed project directory.
+ * Physical path: modules/recruitment/uploads/
  * =========================================================
  */
 define(
     'HRMS_RECRUITMENT_UPLOADS',
     dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads'
 );
-
 
 /**
  * =========================================================
@@ -43,7 +41,6 @@ function respond(array $data, int $status = 200): void
 /**
  * =========================================================
  * READ REQUEST DATA
- *
  * Supports JSON, multipart/form-data, and URL-encoded data.
  * =========================================================
  */
@@ -73,10 +70,6 @@ function requestData(): array
  */
 function normalizeRequestData(array $data): array
 {
-    /*
-     * Accept both jobId and job_id.
-     * The form should still send the actual selected job ID.
-     */
     if (
         !isset($data['jobId']) ||
         trim((string) $data['jobId']) === ''
@@ -90,19 +83,16 @@ function normalizeRequestData(array $data): array
             ?? '';
     }
 
-    /*
-     * Support alternate field names for applicant details.
-     */
     $aliases = [
-        'firstName'      => ['first_name'],
-        'middleName'     => ['middle_name'],
-        'lastName'       => ['last_name'],
-        'yearGraduated'  => ['year_graduated'],
-        'civilStatus'    => ['civil_status'],
-        'currentAddress' => ['current_address'],
-        'permanentAddress' => ['permanent_address'],
-        'birthplace'     => ['birthPlace'],
-        'birthdate'      => ['birthDate'],
+        'firstName'             => ['first_name'],
+        'middleName'            => ['middle_name'],
+        'lastName'              => ['last_name'],
+        'yearGraduated'         => ['year_graduated'],
+        'civilStatus'           => ['civil_status'],
+        'currentAddress'        => ['current_address'],
+        'permanentAddress'      => ['permanent_address'],
+        'birthplace'            => ['birthPlace'],
+        'birthdate'              => ['birthDate'],
         'experienceDescription' => ['experience_description']
     ];
 
@@ -185,9 +175,8 @@ function sanitizeFileName(string $fileName): string
  * =========================================================
  * CREATE APPLICANT UPLOAD DIRECTORY
  *
+ * Physical path:
  * uploads/{applicationId}/
- *
- * The directory is created only when a document is uploaded.
  * =========================================================
  */
 function createApplicantUploadDirectory(
@@ -233,7 +222,10 @@ function createApplicantUploadDirectory(
         }
     }
 
-    if (!is_dir($applicantDir) || !is_writable($applicantDir)) {
+    if (
+        !is_dir($applicantDir) ||
+        !is_writable($applicantDir)
+    ) {
         throw new RuntimeException(
             'Applicant upload directory is not writable.'
         );
@@ -246,11 +238,9 @@ function createApplicantUploadDirectory(
  * =========================================================
  * NORMALIZE UPLOADED FILES
  *
- * Supports both:
- *   resume / diploma / tor / certs / other
- *
- * and:
- *   apResume / apDiploma / apTor / apCerts / apOther
+ * Supports:
+ * resume / diploma / tor / certs / other
+ * apResume / apDiploma / apTor / apCerts / apOther
  * =========================================================
  */
 function getApplicantFile(string $documentType): ?array
@@ -274,13 +264,113 @@ function getApplicantFile(string $documentType): ?array
 
 /**
  * =========================================================
+ * VALIDATE REQUIRED RESUME / CV
+ *
+ * Resume is required.
+ * Diploma, TOR, certificates, and other documents are optional.
+ * =========================================================
+ */
+function validateRequiredResume(): void
+{
+    $file = getApplicantFile('resume');
+
+    if ($file === null) {
+        respond([
+            'success' => false,
+            'message' => 'Please attach your resume / CV.'
+        ], 400);
+    }
+
+    $errorCode = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+
+    if ($errorCode === UPLOAD_ERR_NO_FILE) {
+        respond([
+            'success' => false,
+            'message' => 'Please attach your resume / CV.'
+        ], 400);
+    }
+
+    $uploadErrors = [
+        UPLOAD_ERR_INI_SIZE =>
+        'Your resume exceeds the server upload limit.',
+        UPLOAD_ERR_FORM_SIZE =>
+        'Your resume exceeds the form upload limit.',
+        UPLOAD_ERR_PARTIAL =>
+        'Your resume was only partially uploaded. Please try again.',
+        UPLOAD_ERR_NO_TMP_DIR =>
+        'The server temporary upload directory is missing.',
+        UPLOAD_ERR_CANT_WRITE =>
+        'The server could not save your uploaded resume.',
+        UPLOAD_ERR_EXTENSION =>
+        'A server extension stopped the resume upload.'
+    ];
+
+    if ($errorCode !== UPLOAD_ERR_OK) {
+        respond([
+            'success' => false,
+            'message' => $uploadErrors[$errorCode]
+                ?? 'The resume upload failed. Please select your file again.'
+        ], 400);
+    }
+
+    $tmpName = $file['tmp_name'] ?? '';
+    $originalName = basename($file['name'] ?? '');
+    $fileSize = (int) ($file['size'] ?? 0);
+
+    if (
+        $tmpName === '' ||
+        !is_uploaded_file($tmpName)
+    ) {
+        respond([
+            'success' => false,
+            'message' => 'The uploaded resume is invalid. Please select it again.'
+        ], 400);
+    }
+
+    if ($originalName === '') {
+        respond([
+            'success' => false,
+            'message' => 'The resume file has no filename.'
+        ], 400);
+    }
+
+    if ($fileSize <= 0) {
+        respond([
+            'success' => false,
+            'message' => 'The uploaded resume is empty.'
+        ], 400);
+    }
+
+    $maxFileSize = 10 * 1024 * 1024;
+
+    if ($fileSize > $maxFileSize) {
+        respond([
+            'success' => false,
+            'message' => 'Resume / CV must not exceed 10 MB.'
+        ], 400);
+    }
+
+    $extension = strtolower(
+        pathinfo($originalName, PATHINFO_EXTENSION)
+    );
+
+    if (!in_array($extension, ['pdf', 'doc', 'docx'], true)) {
+        respond([
+            'success' => false,
+            'message' => 'Resume / CV must be a PDF, DOC, or DOCX file.'
+        ], 400);
+    }
+}
+
+/**
+ * =========================================================
  * UPLOAD DOCUMENT
  *
  * Physical path:
- *   HRMS_RECRUITMENT_UPLOADS/{applicationId}/{filename}
+ * uploads/{applicationId}/{filename}
  *
  * Database path:
- *   uploads/{applicationId}/{filename}
+ * uploads/{applicationId}/{filename}
  * =========================================================
  */
 function uploadDocument(
@@ -314,8 +404,8 @@ function uploadDocument(
         ];
 
         throw new RuntimeException(
-            $uploadErrors[$errorCode] ??
-                "Failed to upload {$documentType}. Error code: {$errorCode}"
+            $uploadErrors[$errorCode]
+                ?? "Failed to upload {$documentType}. Error code: {$errorCode}"
         );
     }
 
@@ -357,9 +447,7 @@ function uploadDocument(
         pathinfo($originalName, PATHINFO_EXTENSION)
     );
 
-    $allowedExtensions = ['pdf', 'doc', 'docx'];
-
-    if (!in_array($extension, $allowedExtensions, true)) {
+    if (!in_array($extension, ['pdf', 'doc', 'docx'], true)) {
         throw new RuntimeException(
             "Invalid {$documentType} file type. Only PDF, DOC, and DOCX are allowed."
         );
@@ -376,7 +464,7 @@ function uploadDocument(
         $newFileName;
 
     /*
-     * Prevent overwriting a file with the same name.
+     * Prevent overwriting an existing file.
      */
     if (file_exists($destination)) {
         $baseName = pathinfo(
@@ -517,6 +605,14 @@ try {
         }
 
         /**
+         * REQUIRED DOCUMENT VALIDATION.
+         *
+         * This runs BEFORE the application is created.
+         * Only Resume / CV is required.
+         */
+        validateRequiredResume();
+
+        /**
          * Validate job ID.
          */
         $jobId = filter_var(
@@ -614,10 +710,9 @@ try {
         }
 
         /**
-         * Create the application first to obtain its ID.
+         * Create the application to obtain its ID.
          *
-         * Keep this argument order synchronized with
-         * Application::create().
+         * Argument order is preserved from your original code.
          */
         $applicationId = $applicationModel->create(
             (int) $jobId,
@@ -680,13 +775,12 @@ try {
         }
 
         /**
-         * Upload documents.
+         * =================================================
+         * UPLOAD DOCUMENTS
          *
-         * Supports both regular field names and ap-prefixed
-         * field names from the application form.
-         *
-         * The applicant directory is created only when
-         * an actual file is uploaded.
+         * Resume is required.
+         * All other document types are optional.
+         * =================================================
          */
         $uploadedDocuments = [];
 
@@ -701,14 +795,32 @@ try {
         foreach ($documentTypes as $documentType) {
             $file = getApplicantFile($documentType);
 
+            /*
+             * Skip absent optional documents.
+             */
             if ($file === null) {
+                if ($documentType === 'resume') {
+                    throw new RuntimeException(
+                        'Please attach your resume / CV.'
+                    );
+                }
+
                 continue;
             }
 
-            if (
-                ($file['error'] ?? UPLOAD_ERR_NO_FILE)
-                === UPLOAD_ERR_NO_FILE
-            ) {
+            $fileError = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+
+            /*
+             * Skip optional documents that were not selected.
+             * Resume cannot be skipped.
+             */
+            if ($fileError === UPLOAD_ERR_NO_FILE) {
+                if ($documentType === 'resume') {
+                    throw new RuntimeException(
+                        'Please attach your resume / CV.'
+                    );
+                }
+
                 continue;
             }
 
@@ -722,7 +834,7 @@ try {
             $uploadedDocuments[$documentType] = $uploaded;
 
             /**
-             * Keep the application's resume column synchronized.
+             * Update the application's resume path.
              */
             if ($documentType === 'resume') {
                 $updated = $applicationModel->updateResumePath(
@@ -745,9 +857,7 @@ try {
             'success' => true,
             'message' => 'Application submitted successfully.',
             'application_id' => $applicationId,
-            'applicant_folder' => empty($uploadedDocuments)
-                ? null
-                : 'uploads/' . $applicationId . '/',
+            'applicant_folder' => 'uploads/' . $applicationId . '/',
             'documents' => $uploadedDocuments
         ], 201);
     }
