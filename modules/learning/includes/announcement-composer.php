@@ -23,9 +23,9 @@
                 <legend style="margin-bottom:0.35rem;font-weight:600;">Audience</legend>
                 <div class="announcement-audience-options">
                     <label class="announcement-audience-option"><input type="checkbox" name="audiences[]" value="all" checked><span>Everyone</span></label>
-                    <label class="announcement-audience-option"><input type="checkbox" name="audiences[]" value="learner"><span>Learners</span></label>
+                    <label class="announcement-audience-option"><input type="checkbox" name="audiences[]" value="learner"><span>Trainees</span></label>
                     <?php if ($announcementComposerRole === 'admin'): ?>
-                        <label class="announcement-audience-option"><input type="checkbox" name="audiences[]" value="instructor"><span>Instructors</span></label>
+                        <label class="announcement-audience-option"><input type="checkbox" name="audiences[]" value="instructor"><span>Trainers</span></label>
                         <label class="announcement-audience-option"><input type="checkbox" name="audiences[]" value="admin"><span>Admins</span></label>
                     <?php endif; ?>
                 </div>

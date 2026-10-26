@@ -171,7 +171,7 @@ function renderLearnerNotificationRows(array $items, array $certificates): void
 function renderLearnerAnnouncements(array $items): void
 {
     if (empty($items)) {
-        ntfEmptyState('fa-bullhorn', 'No announcements', 'When instructors or admins publish an update for learners it will appear here.');
+        ntfEmptyState('fa-bullhorn', 'No announcements', 'When trainers or admins publish an update for trainees it will appear here.');
         return;
     }
 
@@ -207,7 +207,7 @@ function renderLearnerAnnouncements(array $items): void
         <section class="home-hero">
             <div class="home-hero-main">
                 <h1>Notifications</h1>
-                <p>Enrollment, grading and certificate updates, plus every announcement published to learners.</p>
+                <p>Enrollment, grading and certificate updates, plus every announcement published to trainees.</p>
             </div>
         </section>
 

@@ -14,7 +14,7 @@ $employeeId = (int) ($_GET['id'] ?? 0);
 $profileViewKind = 'instructor';
 $profileReadOnly = true;
 $profileEmployeeId = $employeeId;
-$profileRoleLabel = 'Instructor';
+$profileRoleLabel = 'Trainer';
 
 require_once __DIR__ . '/../../shared/includes/profile-data.php';
 
@@ -22,7 +22,7 @@ $profile = $profileData['employee'];
 $profileFound = trim((string) ($profile['first_name'] ?? '')) !== ''
     || trim((string) ($profile['last_name'] ?? '')) !== '';
 $profileLearningRole = ($pdo && $profileFound) ? LearningRole::forEmployee($pdo, $employeeId) : 'learner';
-$profileData['role_label'] = ucfirst($profileLearningRole);
+$profileData['role_label'] = LearningRole::label($profileLearningRole);
 
 $courses = [];
 $learners = [];
@@ -199,7 +199,7 @@ if ($pdo && $profileFound) {
             ", [':eid' => $employeeId], 'admin/user-subpage/instructor documents');
         }
     } catch (Throwable $documentError) {
-        error_log('[learning] Instructor document lookup unavailable: ' . $documentError->getMessage());
+        error_log('[learning] Trainer document lookup unavailable: ' . $documentError->getMessage());
         $documents = [];
         $documentsAvailable = false;
     }
@@ -256,9 +256,9 @@ $gradebookLink = null;
 
     <?php if (!$profileFound): ?>
         <div class="mode-card">
-            <h3 class="pfl-section-title"><i class="fas fa-user-slash" aria-hidden="true"></i> Instructor not found</h3>
+            <h3 class="pfl-section-title"><i class="fas fa-user-slash" aria-hidden="true"></i> Trainer not found</h3>
             <p class="pfl-empty">
-                <?= $pdo ? 'The requested instructor could not be found.' : 'Profile data is unavailable while the database connection is down.' ?>
+                <?= $pdo ? 'The requested trainer could not be found.' : 'Profile data is unavailable while the database connection is down.' ?>
                 <a href="?page=admin/user">Go back to User Management</a>
             </p>
         </div>
@@ -281,7 +281,7 @@ $gradebookLink = null;
                     <div class="pfl-stat-sub">created</div>
                 </div>
                 <div class="pfl-stat">
-                    <div class="pfl-stat-label"><i class="fas fa-users" aria-hidden="true"></i> Learners</div>
+                    <div class="pfl-stat-label"><i class="fas fa-users" aria-hidden="true"></i> Trainees</div>
                     <div class="pfl-stat-value is-teal"><?= (int) $teaching['learners'] ?></div>
                     <div class="pfl-stat-sub"><?= (int) $teaching['completed'] ?> course<?= (int) $teaching['completed'] !== 1 ? 's' : '' ?> completed</div>
                 </div>
@@ -300,7 +300,7 @@ $gradebookLink = null;
             <div style="margin-top:1.25rem; padding-top:1.1rem; border-top:1px solid rgba(0,0,0,0.06);">
                 <div class="pfl-stat-label" style="margin-bottom:0.6rem;"><i class="fas fa-lightbulb" aria-hidden="true"></i> Areas of Expertise</div>
                 <?php if (empty($expertise)): ?>
-                    <p class="pfl-empty">Tag courses with skills to build this instructor's expertise profile.</p>
+                    <p class="pfl-empty">Tag courses with skills to build this trainer's expertise profile.</p>
                 <?php else: ?>
                     <div class="pfl-chips">
                         <?php foreach ($expertise as $skill): ?>
@@ -321,7 +321,7 @@ $gradebookLink = null;
             <?php if (empty($courses)): ?>
                 <div class="pfl-empty-state">
                     <i class="fas fa-chalkboard" aria-hidden="true"></i>
-                    <p>No courses are assigned to this instructor yet.</p>
+                    <p>No courses are assigned to this trainer yet.</p>
                 </div>
             <?php else: ?>
                 <div class="pfl-list">
@@ -350,14 +350,14 @@ $gradebookLink = null;
         <div class="mode-card" style="margin-bottom:1.5rem;">
             <div class="pfl-card-head">
                 <h3 class="pfl-section-title" style="margin:0;">
-                    <i class="fas fa-users" aria-hidden="true"></i> Assigned Learners
+                    <i class="fas fa-users" aria-hidden="true"></i> Assigned Trainees
                 </h3>
                 <span class="pfl-count-badge"><?= count($learners) ?></span>
             </div>
             <?php if (empty($learners)): ?>
                 <div class="pfl-empty-state">
                     <i class="fas fa-users" aria-hidden="true"></i>
-                    <p>No learners are enrolled in this instructor's courses yet.</p>
+                    <p>No trainees are enrolled in this trainer's courses yet.</p>
                 </div>
             <?php else: ?>
                 <div class="pfl-person-grid">
@@ -370,7 +370,7 @@ $gradebookLink = null;
                         <div class="pfl-person">
                             <div class="pfl-person-avatar"><?= htmlspecialchars($learnerInitials !== '' ? $learnerInitials : '??', ENT_QUOTES, 'UTF-8') ?></div>
                             <div class="pfl-person-main">
-                                <div class="pfl-person-name"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $learner['employee_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($learnerName !== '' ? $learnerName : 'Unknown learner', ENT_QUOTES, 'UTF-8') ?></a></div>
+                                <div class="pfl-person-name"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $learner['employee_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($learnerName !== '' ? $learnerName : 'Unknown trainee', ENT_QUOTES, 'UTF-8') ?></a></div>
                                 <div class="pfl-person-sub"><?= htmlspecialchars((string) ($learner['course_title'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
                             </div>
                             <span class="pfl-badge <?= $enrollmentClass ?>"><?= htmlspecialchars(ucfirst(str_replace('_', ' ', $enrollmentStatus !== '' ? $enrollmentStatus : 'unknown')), ENT_QUOTES, 'UTF-8') ?></span>

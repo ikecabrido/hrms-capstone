@@ -25,8 +25,8 @@ if ($roleControlCanManage) {
     <?php if ($roleControlCanManage): ?>
         <div class="learning-role-controls">
             <select id="profile-learning-role" class="learning-role-select" data-current-role="<?= htmlspecialchars($profileLearningRole, ENT_QUOTES, 'UTF-8') ?>">
-                <option value="learner" <?= $profileLearningRole === 'learner' ? 'selected' : '' ?>>Learner</option>
-                <option value="instructor" <?= $profileLearningRole === 'instructor' ? 'selected' : '' ?>>Instructor</option>
+                <option value="learner" <?= $profileLearningRole === 'learner' ? 'selected' : '' ?>>Trainee</option>
+                <option value="instructor" <?= $profileLearningRole === 'instructor' ? 'selected' : '' ?>>Trainer</option>
                 <option value="admin" <?= $profileLearningRole === 'admin' ? 'selected' : '' ?>>Admin</option>
             </select>
             <button type="button" id="save-profile-learning-role" class="learning-role-save" disabled>Save role</button>
@@ -38,6 +38,7 @@ if ($roleControlCanManage) {
             var button = document.getElementById('save-profile-learning-role');
             var status = document.getElementById('profile-learning-role-status');
             var previousRole = select.dataset.currentRole;
+            var roleLabels = { admin: 'Admin', instructor: 'Trainer', learner: 'Trainee' };
 
             select.addEventListener('change', function() {
                 button.disabled = select.value === previousRole;
@@ -47,7 +48,7 @@ if ($roleControlCanManage) {
             button.addEventListener('click', function() {
                 var nextRole = select.value;
                 if ((nextRole === 'admin' || previousRole === 'admin')
-                    && !window.confirm('Change this user\'s Learning role from ' + previousRole + ' to ' + nextRole + '?')) {
+                    && !window.confirm('Change this user\'s Learning role from ' + (roleLabels[previousRole] || previousRole) + ' to ' + (roleLabels[nextRole] || nextRole) + '?')) {
                     select.value = previousRole;
                     button.disabled = true;
                     return;
@@ -89,7 +90,7 @@ if ($roleControlCanManage) {
         })();
         </script>
     <?php else: ?>
-        <div style="color:var(--text); font-weight:700;"><?= htmlspecialchars(ucfirst($profileLearningRole), ENT_QUOTES, 'UTF-8') ?></div>
+        <div style="color:var(--text); font-weight:700;"><?= htmlspecialchars(LearningRole::label($profileLearningRole), ENT_QUOTES, 'UTF-8') ?></div>
     <?php endif; ?>
 </div>
 

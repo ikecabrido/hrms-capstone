@@ -70,7 +70,7 @@ try {
             http_response_code(409);
             echo json_encode([
                 'success' => false,
-                'message' => 'This course already has learner activity (progress or quiz attempts). Rebuilding content in bulk is disabled to protect learner records. Edit individual modules/quizzes instead, or create a new course.',
+                'message' => 'This course already has trainee activity (progress or quiz attempts). Rebuilding content in bulk is disabled to protect trainee records. Edit individual modules/quizzes instead, or create a new course.',
             ]);
             exit;
         }

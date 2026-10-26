@@ -5,7 +5,7 @@
 
     <div class="mode-card">
         <h2>Add Learning Path</h2>
-        <p>Learning paths group related course content into an ordered sequence that can be assigned to learners.</p>
+        <p>Learning paths group related course content into an ordered sequence that can be assigned to trainees.</p>
 
         <form id="add-learning-path-form" data-skip method="post" action="pages/instructor/ajax/add-learning-path.php">
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-top:1rem;">

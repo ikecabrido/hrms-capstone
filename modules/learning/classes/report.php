@@ -56,7 +56,7 @@ class Report
         $reason = trim((string) ($input['reason'] ?? ''));
 
         if ($learnerId <= 0) {
-            return ['success' => false, 'message' => 'Learner ID is required.'];
+            return ['success' => false, 'message' => 'Trainee ID is required.'];
         }
 
         if ($itemType === '') {

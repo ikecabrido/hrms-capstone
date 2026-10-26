@@ -46,7 +46,7 @@ $legalUpdated = date('F j, Y', filemtime(__FILE__));
                 <div class="legal-section-icon" aria-hidden="true"><i class="fa-solid fa-chart-line"></i></div>
                 <div>
                     <h2>How We Use Your Information</h2>
-                    <p>Your information is used to track learning progress, generate certificates, and provide analytics to instructors and administrators.</p>
+                    <p>Your information is used to track learning progress, generate certificates, and provide analytics to trainers and administrators.</p>
                 </div>
             </section>
 

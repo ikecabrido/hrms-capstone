@@ -96,9 +96,18 @@ class Skill
             $status = 'active';
         }
 
-        $sql = 'INSERT INTO ld_skill (name, description, suggested, status) VALUES (:name, :description, :suggested, :status)';
+        // ld_skill.id is not AUTO_INCREMENT on every deployment (the imported
+        // schema declares it as a plain primary key), so resolve the next id
+        // ourselves instead of trusting lastInsertId(), which would return 0.
+        $id = (int) ($input['id'] ?? 0);
+        if ($id <= 0) {
+            $id = ((int) $this->conn->query('SELECT COALESCE(MAX(id), 0) FROM ld_skill')->fetchColumn()) + 1;
+        }
+
+        $sql = 'INSERT INTO ld_skill (id, name, description, suggested, status) VALUES (:id, :name, :description, :suggested, :status)';
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([
+            ':id' => $id,
             ':name' => $name,
             ':description' => $description,
             ':suggested' => $suggested ? 1 : 0,
@@ -108,7 +117,7 @@ class Skill
         return [
             'success' => true,
             'message' => 'Skill created successfully.',
-            'id' => (int) $this->conn->lastInsertId(),
+            'id' => $id,
         ];
     }
 }

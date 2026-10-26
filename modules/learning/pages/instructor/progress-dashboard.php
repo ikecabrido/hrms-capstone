@@ -131,7 +131,7 @@ try {
         <div style="padding:1.25rem; background:linear-gradient(135deg, rgba(59,130,246,0.08), rgba(59,130,246,0.04)); border-radius:12px; border:1px solid rgba(59,130,246,0.1);">
             <div style="font-size:0.7rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.08em;">In Progress</div>
             <div style="font-size:2rem; font-weight:800; color:var(--text); margin-top:0.3rem;"><?= $stats['inProgress'] ?></div>
-            <div style="font-size:0.8rem; color:#666; margin-top:0.2rem;">active learners</div>
+            <div style="font-size:0.8rem; color:#666; margin-top:0.2rem;">active trainees</div>
         </div>
         <div style="padding:1.25rem; background:linear-gradient(135deg, rgba(245,158,11,0.08), rgba(245,158,11,0.04)); border-radius:12px; border:1px solid rgba(245,158,11,0.1);">
             <div style="font-size:0.7rem; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:0.08em;">Avg Score</div>
@@ -263,7 +263,7 @@ try {
             <div class="progress-activity-row" style="display:flex; align-items:center; gap:0.75rem; padding:0.6rem 0; border-bottom:1px solid rgba(32,0,130,0.05);">
                 <div style="width:8px; height:8px; border-radius:50%; background:<?= $color ?>; flex-shrink:0;"></div>
                 <div style="flex:1; min-width:0;">
-                    <span style="font-weight:600; color:var(--text); font-size:0.85rem;"><?= htmlspecialchars($act['name']) ?></span>
+                    <span style="font-weight:600; color:var(--text); font-size:0.85rem;"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $act['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($act['name']) ?></a></span>
                     <span style="color:#666; font-size:0.85rem;"> — <?= htmlspecialchars($act['course_title']) ?></span>
                 </div>
                 <span style="padding:0.2rem 0.5rem; background:<?= $color ?>15; color:<?= $color ?>; border-radius:999px; font-size:0.7rem; font-weight:700; white-space:nowrap;"><?= ucfirst(str_replace('_', ' ', $act['status'])) ?></span>

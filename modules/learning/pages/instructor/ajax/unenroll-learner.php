@@ -38,7 +38,7 @@ try {
 
     if ($stmt->rowCount() > 0) {
         http_response_code(200);
-        echo json_encode(['success' => true, 'message' => 'Learner withdrawn from course']);
+        echo json_encode(['success' => true, 'message' => 'Trainee withdrawn from course']);
     } else {
         http_response_code(200);
         echo json_encode(['success' => false, 'message' => 'Enrollment already withdrawn or not found']);

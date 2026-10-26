@@ -27,7 +27,7 @@ class Certificate
         $instructorId = (int) ($data['instructor_id'] ?? 0);
 
         if ($title === '' || $instructorId <= 0) {
-            return ['success' => false, 'message' => 'Title and instructor are required.'];
+            return ['success' => false, 'message' => 'Title and trainer are required.'];
         }
 
         $sql = 'INSERT INTO ld_certificate_template (instructor_id, course_id, title, description, template_file, is_active)
@@ -116,7 +116,7 @@ class Certificate
     public function issue(int $learnerId, int $courseId, int $completedEnrollmentId, ?int $templateId = null, ?string $validUntil = null): array
     {
         if ($learnerId <= 0 || $courseId <= 0 || $completedEnrollmentId <= 0) {
-            return ['success' => false, 'message' => 'Learner, Course, and Enrollment are required.'];
+            return ['success' => false, 'message' => 'Trainee, Course, and Enrollment are required.'];
         }
 
         $enrollmentCheck = $this->conn->prepare(

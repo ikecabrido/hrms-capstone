@@ -47,7 +47,7 @@ try {
     $learningRole = LearningRole::forEmployee($pdo, $actorId);
     if (!in_array($learningRole, ['admin', 'instructor'], true)) {
         http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Only admins and instructors can publish announcements.']);
+        echo json_encode(['success' => false, 'message' => 'Only admins and trainers can publish announcements.']);
         exit;
     }
 

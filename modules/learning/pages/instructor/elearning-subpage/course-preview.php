@@ -46,9 +46,9 @@ if ($courseId > 0) {
         <div class="toolbar-actions" style="display:flex; gap:0.5rem; align-items:center;">
             <a href="?page=instructor/elearning-subpage/course-structure&course_id=<?= $courseId ?>" class="toolbar-add-btn" title="Back to Structure Builder" aria-label="Back to Structure Builder" style="font-size:0.85em;"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Builder</a>
             <?php if ($course && $course['status'] === 'draft'): ?>
-            <span style="padding:0.4rem 0.8rem; background:rgba(245,158,11,0.1); color:#d97706; border-radius:999px; font-size:0.8rem; font-weight:700;">DRAFT — Not visible to learners</span>
+            <span style="padding:0.4rem 0.8rem; background:rgba(245,158,11,0.1); color:#d97706; border-radius:999px; font-size:0.8rem; font-weight:700;">DRAFT — Not visible to trainees</span>
             <?php elseif ($course && $course['status'] === 'active'): ?>
-            <span style="padding:0.4rem 0.8rem; background:rgba(16,185,129,0.1); color:#10b981; border-radius:999px; font-size:0.8rem; font-weight:700;">ACTIVE — Visible to learners</span>
+            <span style="padding:0.4rem 0.8rem; background:rgba(16,185,129,0.1); color:#10b981; border-radius:999px; font-size:0.8rem; font-weight:700;">ACTIVE — Visible to trainees</span>
             <?php endif; ?>
         </div>
     </div>
@@ -174,11 +174,11 @@ if ($courseId > 0) {
 
     <!-- Learner CTA Preview -->
     <div style="margin-top:2rem; padding:1.5rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; text-align:center;">
-        <p style="margin:0; color:#666; font-size:0.9rem;">This is how the course appears to learners.</p>
+        <p style="margin:0; color:#666; font-size:0.9rem;">This is how the course appears to trainees.</p>
         <div style="margin-top:1rem; display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
             <a href="?page=instructor/elearning-subpage/course-structure&course_id=<?= $courseId ?>" style="padding:0.7rem 1.5rem; background:var(--primary); color:var(--surface); border-radius:8px; font-weight:700; text-decoration:none;">️ Edit Structure</a>
             <?php if ($course['status'] === 'draft'): ?>
-            <button style="padding:0.7rem 1.5rem; background:#10b981; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;" onclick="if(confirm('Publish this course? Learners will be able to see and enroll in it.')){fetch('pages/instructor/elearning-subpage/ajax/publish-course.php',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({id:<?= $courseId ?>})}).then(r=>r.json()).then(d=>{if(d.success){if(window.showToast)window.showToast('Course published','success');setTimeout(function(){location.reload()},800);}else{if(window.showToast)window.showToast(d.message||'Failed','error');}}).catch(function(){if(window.showToast)window.showToast('Network error','error');});}"> Publish Course</button>
+            <button style="padding:0.7rem 1.5rem; background:#10b981; color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer;" onclick="if(confirm('Publish this course? Trainees will be able to see and enroll in it.')){fetch('pages/instructor/elearning-subpage/ajax/publish-course.php',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify({id:<?= $courseId ?>})}).then(r=>r.json()).then(d=>{if(d.success){if(window.showToast)window.showToast('Course published','success');setTimeout(function(){location.reload()},800);}else{if(window.showToast)window.showToast(d.message||'Failed','error');}}).catch(function(){if(window.showToast)window.showToast('Network error','error');});}"> Publish Course</button>
             <?php endif; ?>
         </div>
     </div>

@@ -158,8 +158,15 @@ if (!function_exists('ldNotifAudienceLabel')) {
             return 'Everyone';
         }
 
-        return implode(', ', array_map(static function ($part) {
-            return $part === 'all' ? 'Everyone' : ucfirst($part) . 's';
+        $labels = [
+            'all' => 'Everyone',
+            'admin' => 'Admins',
+            'instructor' => 'Trainers',
+            'learner' => 'Trainees',
+        ];
+
+        return implode(', ', array_map(static function ($part) use ($labels) {
+            return $labels[$part] ?? ucfirst($part) . 's';
         }, $parts));
     }
 }

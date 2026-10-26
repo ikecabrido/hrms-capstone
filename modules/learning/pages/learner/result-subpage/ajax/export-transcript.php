@@ -35,7 +35,7 @@ try {
 
     $lines = [];
     $lines[] = 'TRANSCRIPT';
-    $lines[] = 'Learner: ' . ($learner ? $learner['first_name'] . ' ' . $learner['last_name'] : 'Unknown');
+    $lines[] = 'Trainee: ' . ($learner ? $learner['first_name'] . ' ' . $learner['last_name'] : 'Unknown');
     $lines[] = 'ID: ' . $learnerId;
     $lines[] = 'Date Generated: ' . date('F j, Y');
     $lines[] = '';

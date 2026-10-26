@@ -40,14 +40,14 @@ $gradebookLink = null;
                 <div class="pfl-stat-sub">published or in draft</div>
             </div>
             <div class="pfl-stat">
-                <div class="pfl-stat-label"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Learners</div>
+                <div class="pfl-stat-label"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Trainees</div>
                 <div class="pfl-stat-value is-teal"><?= (int) $adminStats['learners'] ?></div>
-                <div class="pfl-stat-sub">with the learner role</div>
+                <div class="pfl-stat-sub">with the trainee role</div>
             </div>
             <div class="pfl-stat">
-                <div class="pfl-stat-label"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Instructors</div>
+                <div class="pfl-stat-label"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Trainers</div>
                 <div class="pfl-stat-value is-green"><?= (int) $adminStats['instructors'] ?></div>
-                <div class="pfl-stat-sub">with the instructor role</div>
+                <div class="pfl-stat-sub">with the trainer role</div>
             </div>
             <div class="pfl-stat">
                 <div class="pfl-stat-label"><i class="fas fa-lightbulb" aria-hidden="true"></i> Skills Tracked</div>
@@ -63,7 +63,7 @@ $gradebookLink = null;
             <div class="pfl-quick-links">
                 <a class="pfl-quick-link" href="?page=admin/user" data-page="admin/user">
                     <div class="pfl-quick-icon"><i class="fas fa-users" aria-hidden="true"></i></div>
-                    <div><strong>User Management</strong><span>Add and manage learners &amp; instructors</span></div>
+                    <div><strong>User Management</strong><span>Add and manage trainees &amp; trainers</span></div>
                 </a>
                 <a class="pfl-quick-link" href="?page=admin/gradebook" data-page="admin/gradebook">
                     <div class="pfl-quick-icon"><i class="fas fa-book-bookmark" aria-hidden="true"></i></div>

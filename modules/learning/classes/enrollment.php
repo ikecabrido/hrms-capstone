@@ -25,7 +25,7 @@ class Enrollment
     public function enroll(int $learnerId, int $courseId): array
     {
         if ($learnerId <= 0 || $courseId <= 0) {
-            return ['success' => false, 'message' => 'Learner ID and Course ID are required.'];
+            return ['success' => false, 'message' => 'Trainee ID and Course ID are required.'];
         }
 
         $existing = $this->getByLearnerAndCourse($learnerId, $courseId);
@@ -60,12 +60,12 @@ class Enrollment
     public function invite(int $learnerId, int $courseId, int $invitedBy = 0): array
     {
         if ($learnerId <= 0 || $courseId <= 0) {
-            return ['success' => false, 'message' => 'Learner ID and Course ID are required.'];
+            return ['success' => false, 'message' => 'Trainee ID and Course ID are required.'];
         }
 
         $existing = $this->getByLearnerAndCourse($learnerId, $courseId);
         if ($existing) {
-            return ['success' => false, 'message' => 'This learner already has an enrollment record for this course.'];
+            return ['success' => false, 'message' => 'This trainee already has an enrollment record for this course.'];
         }
 
         $versionId = $this->getCurrentCourseVersionId($courseId);

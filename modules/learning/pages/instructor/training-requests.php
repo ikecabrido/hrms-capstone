@@ -279,7 +279,7 @@ function trTimeAgo($dt) {
         <section class="home-hero" aria-labelledby="training-requests-title">
             <div class="home-hero-main">
                 <h1 id="training-requests-title">Training Requests</h1>
-                <p>Review learner requests and Workforce training needs, then decide what happens next.</p>
+                <p>Review trainee requests and Workforce training needs, then decide what happens next.</p>
             </div>
             <div class="home-hero-aside">
                 <div class="home-hero-chips">
@@ -314,7 +314,7 @@ function trTimeAgo($dt) {
         <div class="catalog-toolbar">
             <div class="catalog-search">
                 <i class="fas fa-search"></i>
-                <input type="search" id="tr-search" placeholder="Search by learner or skill..." aria-label="Search requests" />
+                <input type="search" id="tr-search" placeholder="Search by trainee or skill..." aria-label="Search requests" />
             </div>
             <div class="catalog-tab-select">
                 <select id="tr-status-filter">
@@ -333,7 +333,7 @@ function trTimeAgo($dt) {
             <div class="tr-empty">
                 <i class="fas fa-inbox"></i>
                 <h4>No Training Requests</h4>
-                <p>When learners request training for gap skills, or Workforce sends a training need, it appears here.</p>
+                <p>When trainees request training for gap skills, or Workforce sends a training need, it appears here.</p>
             </div>
         <?php else: ?>
             <div class="tr-list" id="tr-list">
@@ -344,7 +344,7 @@ function trTimeAgo($dt) {
 
             $isWorkforce = ($req['source_module'] ?? '') === 'workforce';
             $learnerName = trim((string) ($req['learner_name'] ?? ''));
-            $displayName = $learnerName !== '' ? $learnerName : ($isWorkforce ? 'Workforce training need' : 'Unknown learner');
+            $displayName = $learnerName !== '' ? $learnerName : ($isWorkforce ? 'Workforce training need' : 'Unknown trainee');
             $learnerId = (int) ($req['learner_id'] ?? 0);
             $assignedInstructorId = (int) ($req['instructor_id'] ?? 0);
             $learnerProfileUrl = $learnerId > 0
@@ -424,7 +424,7 @@ function trTimeAgo($dt) {
             <?php endif; ?>
 
             <?php if (!empty($req['instructor_note'])): ?>
-            <div class="tr-instructor-note"><strong>Instructor Note:</strong> <?= htmlspecialchars($req['instructor_note']) ?></div>
+            <div class="tr-instructor-note"><strong>Trainer Note:</strong> <?= htmlspecialchars($req['instructor_note']) ?></div>
             <?php endif; ?>
 
             <div class="tr-card-footer">
@@ -532,7 +532,7 @@ var instructorProfileUrl = <?= json_encode($instructorProfileUrl, JSON_HEX_TAG |
             var footer = card.querySelector('.tr-card-footer');
             var noteDiv = document.createElement('div');
             noteDiv.className = 'tr-instructor-note';
-            noteDiv.innerHTML = '<strong>Instructor Note:</strong> ' + note;
+            noteDiv.innerHTML = '<strong>Trainer Note:</strong> ' + note;
             card.insertBefore(noteDiv, footer);
         }
     }

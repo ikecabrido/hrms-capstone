@@ -30,7 +30,17 @@ try {
     } else {
         $learningPathRows = $runQuery($pdo, "SELECT id, title, description, status, created_at, type, is_public FROM ld_learning_path ORDER BY created_at DESC LIMIT 20");
     }
-    $programRows = $runQuery($pdo, "SELECT id, title, description, status, created_at FROM ld_program ORDER BY created_at DESC LIMIT 20");
+    $programRows = $runQuery($pdo, "SELECT p.id, p.title, p.description, p.status, p.created_at,
+            p.delivery_mode, p.starts_at, p.ends_at, p.expires_at, p.location, p.run_number,
+            (SELECT COUNT(*) FROM ld_program_participant pp WHERE pp.program_id = p.id AND pp.status <> 'withdrawn') AS participant_count,
+            (SELECT COUNT(*) FROM ld_program_trainer pt WHERE pt.program_id = p.id) AS trainer_count
+        FROM ld_program p
+        ORDER BY p.created_at DESC LIMIT 20");
+    if (!$programRows) {
+        // Older deployments without the program-delivery migration still get
+        // the simple program list instead of an empty Program tab.
+        $programRows = $runQuery($pdo, "SELECT id, title, description, status, created_at FROM ld_program ORDER BY created_at DESC LIMIT 20");
+    }
     $videoConferenceRows = $runQuery($pdo, "SELECT id, title, platform, status, scheduled_at, duration_minutes, created_at FROM ld_video_conference ORDER BY created_at DESC LIMIT 20");
 
     $skillRows = $runQuery($pdo, "SELECT id, name, description, status FROM ld_skill WHERE status = 'active' ORDER BY name ASC");
@@ -71,14 +81,34 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         $link = ($typeLinks[$label] ?? '#') . $id;
         $shortDesc = $description !== '' ? mb_substr(strip_tags($description), 0, 100) : 'No description available.';
         $footerInfo = '';
-        if ($label === 'Video Conference') {
-            if (!empty($item['scheduled_at'])) $footerInfo = date('M j, g:i A', strtotime($item['scheduled_at']));
-            if (!empty($item['duration_minutes'])) $footerInfo .= ($footerInfo ? ' . ' : '') . $item['duration_minutes'] . ' min';
+        $footerBits = [];
+        $displayStatus = $status;
+        if ($label === 'Program') {
+            $footerBits[] = ($item['delivery_mode'] ?? '') === 'online' ? 'Online' : 'Face-to-face';
+            if (!empty($item['starts_at'])) {
+                $footerBits[] = date('M j, g:i A', strtotime($item['starts_at']));
+            }
+            if (!empty($item['expires_at'])) {
+                $footerBits[] = 'Expires ' . date('M j, Y', strtotime($item['expires_at']));
+                if (strtotime($item['expires_at']) < time() && $status !== 'archived') {
+                    $displayStatus = 'expired';
+                }
+            }
+            if (!empty($item['trainer_count'])) {
+                $footerBits[] = (int) $item['trainer_count'] . ' trainer' . ((int) $item['trainer_count'] === 1 ? '' : 's');
+            }
+            if (!empty($item['participant_count'])) {
+                $footerBits[] = (int) $item['participant_count'] . ' trainee' . ((int) $item['participant_count'] === 1 ? '' : 's');
+            }
+        } elseif ($label === 'Video Conference') {
+            if (!empty($item['scheduled_at'])) $footerBits[] = date('M j, g:i A', strtotime($item['scheduled_at']));
+            if (!empty($item['duration_minutes'])) $footerBits[] = $item['duration_minutes'] . ' min';
         }
+        $footerInfo = implode(' · ', array_filter($footerBits));
         $createdDate = !empty($item['created_at']) ? date('M j, Y', strtotime($item['created_at'])) : '';
         $isKT = ($item['type'] ?? 'standard') === 'knowledge_transfer';
         $isPublic = !empty($item['is_public']);
-        echo '<article class="catalog-card" data-status="' . htmlspecialchars($status) . '" data-type="' . htmlspecialchars($label) . '" data-entity-id="' . $id . '"' . ($isKT ? ' data-kt="1" data-path-id="' . $id . '" data-is-public="' . ($isPublic ? '1' : '0') . '"' : '') . '>';
+        echo '<article class="catalog-card" data-status="' . htmlspecialchars($displayStatus) . '" data-type="' . htmlspecialchars($label) . '" data-entity-id="' . $id . '"' . ($isKT ? ' data-kt="1" data-path-id="' . $id . '" data-is-public="' . ($isPublic ? '1' : '0') . '"' : '') . '>';
         echo '<div class="catalog-card-thumb" data-tone="' . $tone . '">';
         echo '<i class="fas ' . $icon . ' thumb-icon"></i>';
         $badgeText = $isKT ? 'Knowledge Transfer' : $typeLabel;
@@ -94,7 +124,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             echo '</div>';
         }
         echo '<div class="catalog-card-footer">';
-        echo '<span class="cc-deadline">' . htmlspecialchars($status) . '</span>';
+        echo '<span class="cc-deadline">' . htmlspecialchars($displayStatus) . '</span>';
         echo '<div class="cat-card-actions">';
         if ($isKT) {
             echo '<button type="button" class="kt-toggle-public-btn ' . ($isPublic ? 'is-public' : 'is-private') . '" data-path-id="' . $id . '" title="Toggle who can see this path">' . ($isPublic ? 'Public' : 'Private') . '</button>';
@@ -261,9 +291,14 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         </div>
 
         <div class="tab-content" data-tab="tab-program">
-            <div class="cat-section-intro">
-                <h3>Program Management</h3>
-                <p>Manage training programs, schedule sessions, and assign program-level learning objectives.</p>
+            <div class="cat-section-intro cat-section-intro--action">
+                <div>
+                    <h3>Program Management</h3>
+                    <p>Manage training programs, schedule sessions, assign trainers and trainees, and evaluate every participant.</p>
+                </div>
+                <a class="cat-btn-primary" href="?page=instructor/training-subpage/program-evaluations">
+                    <i class="fas fa-clipboard-check" aria-hidden="true"></i> Trainee Evaluations
+                </a>
             </div>
             <div class="catalog-grid">
                 <?php renderTrainingCards($programRows, 'Program', '?page=instructor/training-subpage/program'); ?>
@@ -281,9 +316,14 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         </div>
 
         <div class="tab-content" data-tab="tab-skills">
-            <div class="cat-section-intro">
-                <h3>Skills</h3>
-                <p>Explore skills linked to e-learning courses and training modules.</p>
+            <div class="cat-section-intro cat-section-intro--action">
+                <div>
+                    <h3>Skills</h3>
+                    <p>Explore skills linked to e-learning courses and training modules.</p>
+                </div>
+                <button type="button" id="tr-add-skill-btn" class="cat-btn-primary tr-add-skill-btn">
+                    <i class="fas fa-plus" aria-hidden="true"></i> Add Skill
+                </button>
             </div>
             <div id="tr-skills-grid" class="catalog-grid">
                 <?php
@@ -349,6 +389,34 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
                 <button type="button" class="cat-modal-close" aria-label="Close skill details" onclick="document.getElementById('skill-modal-overlay').style.display='none'"><i class="fas fa-times" aria-hidden="true"></i></button>
             </div>
             <div id="skill-modal-body" class="ld-modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Add Skill Modal -->
+    <div id="tr-skill-add-overlay" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="tr-skill-add-title" style="display:none;">
+        <div class="ld-modal-panel">
+            <div class="ld-modal-header">
+                <div>
+                    <h3 id="tr-skill-add-title">Add Skill</h3>
+                    <p>Saved to the shared skill catalogue, then link it to courses and modules.</p>
+                </div>
+                <button type="button" id="tr-skill-add-close" class="cat-modal-close" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
+            </div>
+            <form id="tr-skill-add-form" class="ld-modal-body cat-form" data-skip>
+                <label class="cat-field">
+                    <span class="cat-field-label">Skill name</span>
+                    <input type="text" id="tr-skill-add-name" name="name" maxlength="150" required placeholder="e.g. Incident Investigation" autocomplete="off" />
+                </label>
+                <label class="cat-field">
+                    <span class="cat-field-label">Description <span class="cat-field-hint">(optional)</span></span>
+                    <textarea id="tr-skill-add-desc" name="description" rows="3" placeholder="What this skill covers and where it applies."></textarea>
+                </label>
+                <p class="tr-skill-add-error" id="tr-skill-add-error" role="alert" style="display:none;"></p>
+                <div class="ld-modal-actions">
+                    <button type="button" id="tr-skill-add-cancel" class="cat-btn-quiet">Cancel</button>
+                    <button type="submit" id="tr-skill-add-save" class="cat-btn-primary">Add Skill</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -527,8 +595,17 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         if (overviewStatus) overviewStatus.textContent = status || 'Active';
         
         if (type === 'Program') {
-            if (overviewParent) overviewParent.textContent = 'Training portfolio';
-            if (overviewChildren) overviewChildren.textContent = (data.enrollment_count || 0) + ' enrollments';
+            if (overviewParent) overviewParent.textContent = data.owner_name || 'Training portfolio';
+            if (overviewChildren) overviewChildren.textContent = (data.participant_count || 0) + ' trainee' + ((data.participant_count || 0) === 1 ? '' : 's');
+            if (modalDescription) {
+                const bits = [];
+                bits.push((data.delivery_mode || '') === 'online' ? 'Online' : 'Face-to-face');
+                if (data.starts_at) bits.push('Starts ' + new Date(String(data.starts_at).replace(' ', 'T')).toLocaleString());
+                if (data.expires_at) bits.push('Expires ' + new Date(String(data.expires_at).replace(' ', 'T')).toLocaleDateString());
+                if (data.trainer_count) bits.push(data.trainer_count + ' trainer' + (Number(data.trainer_count) === 1 ? '' : 's'));
+                modalDescription.textContent = (description || 'No description provided for this item yet.') + ' — ' + bits.join(' · ');
+                return;
+            }
         } else if (type === 'Video Conference') {
             if (overviewParent) overviewParent.textContent = 'Program-linked session';
             if (overviewChildren) overviewChildren.textContent = (data.attendance_count || 0) + ' attendees';
@@ -824,8 +901,9 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     var skillsPage = 1;
     var skillsGrid = document.getElementById('tr-skills-grid');
     if (skillsGrid) {
-        var skillCards = Array.from(skillsGrid.querySelectorAll('.skill-card-item'));
         function paginateSkills() {
+            // Read the cards fresh so a skill added from the modal is paginated too.
+            var skillCards = Array.from(skillsGrid.querySelectorAll('.skill-card-item'));
             var totalPages = Math.max(1, Math.ceil(skillCards.length / skillsPageSize));
             skillsPage = Math.min(skillsPage, totalPages);
             var start = (skillsPage - 1) * skillsPageSize;
@@ -838,6 +916,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
                 pg.style.display = totalPages <= 1 ? 'none' : '';
             }
         }
+        window.trRefreshSkills = paginateSkills;
         var skillsPg = document.getElementById('skills-pagination');
         if (skillsPg) {
             skillsPg.addEventListener('click', function(e) {
@@ -849,6 +928,156 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             });
         }
         paginateSkills();
+    }
+
+    // Add Skill (Skills tab)
+    var skillAddOverlay = document.getElementById('tr-skill-add-overlay');
+    var skillAddForm = document.getElementById('tr-skill-add-form');
+    var skillAddName = document.getElementById('tr-skill-add-name');
+    var skillAddDesc = document.getElementById('tr-skill-add-desc');
+    var skillAddError = document.getElementById('tr-skill-add-error');
+    var skillAddSave = document.getElementById('tr-skill-add-save');
+
+    function showSkillAddError(message) {
+        if (!skillAddError) return;
+        skillAddError.textContent = message || '';
+        skillAddError.style.display = message ? '' : 'none';
+    }
+
+    function openSkillAddModal() {
+        if (!skillAddOverlay) return;
+        showSkillAddError('');
+        if (skillAddForm) skillAddForm.reset();
+        skillAddOverlay.style.display = 'flex';
+        if (skillAddName) skillAddName.focus();
+    }
+
+    function closeSkillAddModal() {
+        if (skillAddOverlay) skillAddOverlay.style.display = 'none';
+    }
+
+    function appendSkillCard(skill) {
+        if (!skillsGrid) return;
+        var index = skillsGrid.querySelectorAll('.skill-card-item').length;
+        var icon = (_skillIcons && _skillIcons.length) ? _skillIcons[index % _skillIcons.length] : 'fas fa-star';
+        var color = (_skillColors && _skillColors.length) ? _skillColors[index % _skillColors.length] : '#320082';
+        var desc = skill.description || '';
+
+        var card = document.createElement('div');
+        card.className = 'skill-card-item catalog-skill';
+        card.setAttribute('data-skill-id', skill.id);
+
+        var head = document.createElement('div');
+        head.className = 'catalog-skill-head';
+
+        var iconBox = document.createElement('div');
+        iconBox.className = 'catalog-skill-icon';
+        iconBox.style.background = color;
+        var iconEl = document.createElement('i');
+        iconEl.className = icon;
+        iconEl.setAttribute('aria-hidden', 'true');
+        iconBox.appendChild(iconEl);
+
+        var textWrap = document.createElement('div');
+        textWrap.style.cssText = 'flex:1; min-width:0;';
+        var nameEl = document.createElement('h3');
+        nameEl.className = 'catalog-skill-name';
+        nameEl.textContent = skill.name;
+        var metaEl = document.createElement('span');
+        metaEl.className = 'catalog-skill-meta';
+        metaEl.textContent = '0 linked items';
+        textWrap.appendChild(nameEl);
+        textWrap.appendChild(metaEl);
+
+        head.appendChild(iconBox);
+        head.appendChild(textWrap);
+
+        var descEl = document.createElement('p');
+        descEl.className = 'catalog-skill-desc';
+        descEl.textContent = desc.length > 120 ? desc.slice(0, 120) + '\u2026' : desc;
+
+        var tagsEl = document.createElement('div');
+        tagsEl.className = 'catalog-skill-tags';
+
+        card.appendChild(head);
+        card.appendChild(descEl);
+        card.appendChild(tagsEl);
+        card.addEventListener('click', function () { openSkillModal(skill.id); });
+
+        skillsGrid.appendChild(card);
+    }
+
+    var skillAddTrigger = document.getElementById('tr-add-skill-btn');
+    if (skillAddTrigger) skillAddTrigger.addEventListener('click', openSkillAddModal);
+    var skillAddClose = document.getElementById('tr-skill-add-close');
+    if (skillAddClose) skillAddClose.addEventListener('click', closeSkillAddModal);
+    var skillAddCancel = document.getElementById('tr-skill-add-cancel');
+    if (skillAddCancel) skillAddCancel.addEventListener('click', closeSkillAddModal);
+    if (skillAddOverlay) {
+        skillAddOverlay.addEventListener('click', function (e) {
+            if (e.target === skillAddOverlay) closeSkillAddModal();
+        });
+    }
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && skillAddOverlay && skillAddOverlay.style.display === 'flex') closeSkillAddModal();
+    });
+
+    if (skillAddForm) {
+        skillAddForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var name = (skillAddName ? skillAddName.value : '').replace(/\s+/g, ' ').trim();
+            if (!name) {
+                showSkillAddError('Enter a skill name.');
+                if (skillAddName) skillAddName.focus();
+                return;
+            }
+
+            showSkillAddError('');
+            if (skillAddSave) { skillAddSave.disabled = true; skillAddSave.textContent = 'Adding\u2026'; }
+
+            var body = new FormData();
+            body.append('name', name);
+            body.append('description', skillAddDesc ? skillAddDesc.value : '');
+
+            fetch('pages/instructor/training-subpage/ajax/add-skill.php', {
+                method: 'POST',
+                body: body,
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(function (response) {
+                    return response.json().catch(function () {
+                        return { success: false, message: 'Unexpected server response.' };
+                    });
+                })
+                .then(function (data) {
+                    if (!data || !data.success) {
+                        throw new Error((data && data.message) || 'Could not add the skill.');
+                    }
+                    if (data.created) {
+                        if (window._skillData && _skillData.push) {
+                            _skillData.push({
+                                id: data.id,
+                                name: data.name,
+                                description: data.description || '',
+                                status: 'active',
+                                courses: [],
+                                modules: []
+                            });
+                        }
+                        appendSkillCard({ id: data.id, name: data.name, description: data.description || '' });
+                        if (typeof window.trRefreshSkills === 'function') window.trRefreshSkills();
+                    }
+                    closeSkillAddModal();
+                    if (window.showToast) window.showToast(data.message || 'Skill added.', 'success');
+                })
+                .catch(function (error) {
+                    showSkillAddError(error.message || 'Could not add the skill.');
+                })
+                .then(function () {
+                    if (skillAddSave) { skillAddSave.disabled = false; skillAddSave.textContent = 'Add Skill'; }
+                });
+        });
     }
 
     // Catalog navigation (tabs, search, view toggle, pagination)
@@ -866,7 +1095,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         'tab-learning-path': { label: 'Add Learning Path', url: '?page=instructor/learning-path' },
         'tab-program': { label: 'Add Program', url: '?page=instructor/training-subpage/program' },
         'tab-video-conference': { label: 'Add Online Training', url: '?page=instructor/training-subpage/video-conference' },
-        'tab-skills': null
+        'tab-skills': { label: 'Add Skill', action: 'add-skill' }
     };
     function syncAddBtn() {
         if (!addWrap) return;
@@ -879,6 +1108,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     if (addBtn) addBtn.addEventListener('click', function() {
         var cfg = addConfig[catalogActiveTab];
         if (!cfg) return;
+        if (cfg.action === 'add-skill') { openSkillAddModal(); return; }
         if (cfg.url) window.location.href = cfg.url;
     });
 
@@ -982,5 +1212,4 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     });
 })();
 </script>
-
 

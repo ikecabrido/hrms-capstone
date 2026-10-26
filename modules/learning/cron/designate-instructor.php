@@ -46,7 +46,7 @@ foreach ($args as $arg) {
 }
 
 function usage(): void {
-    echo "Instructor roster\n";
+    echo "Trainer roster\n";
     echo "  designate:  php cron/designate-instructor.php <employee_id> [--by=<id>] [--note=\"...\"]\n";
     echo "  remove:     php cron/designate-instructor.php <employee_id> --remove\n";
     echo "  list:       php cron/designate-instructor.php --list\n";
@@ -101,9 +101,9 @@ if ($list || ($employeeId === 0 && !$remove)) {
     $rows = rosterRows($pdo);
 
     if ($rows === []) {
-        echo "The instructor roster is empty.\n";
+        echo "The trainer roster is empty.\n";
     } else {
-        echo "Designated instructors (" . count($rows) . "):\n";
+        echo "Designated trainers (" . count($rows) . "):\n";
         foreach ($rows as $row) {
             $name = trim((string) ($row['full_name'] ?? '')) !== '' ? $row['full_name'] : 'Unknown employee';
             $suffix = trim((string) ($row['note'] ?? '')) !== '' ? ' — ' . $row['note'] : '';
@@ -127,12 +127,12 @@ if (!employeeExists($pdo, $employeeId)) {
 try {
     if ($remove) {
         Page::undesignateInstructor($pdo, $employeeId);
-        echo 'Removed employee ' . $employeeId . " from the instructor roster.\n";
-        echo 'They keep instructor access only if a course, path, program or conference names them.' . "\n";
+        echo 'Removed employee ' . $employeeId . " from the trainer roster.\n";
+        echo 'They keep trainer access only if a course, path, program or conference names them.' . "\n";
     } else {
         Page::designateInstructor($pdo, $employeeId, $designatedBy, $note);
-        echo 'Designated employee ' . $employeeId . " as an instructor.\n";
-        echo "They can sign in to the instructor tree now, before any class is assigned.\n";
+        echo 'Designated employee ' . $employeeId . " as a trainer.\n";
+        echo "They can sign in to the trainer pages now, before any class is assigned.\n";
     }
 } catch (Throwable $e) {
     fwrite(STDERR, 'Roster update failed: ' . $e->getMessage() . "\n");

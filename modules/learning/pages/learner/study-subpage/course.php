@@ -480,7 +480,7 @@ $currentPageId = $courseId;
                 <div class="course-meta-item">
                     <i class="fas fa-user-tie"></i>
                     <div>
-                        <div class="course-meta-label">Instructor</div>
+                        <div class="course-meta-label">Trainer</div>
                         <div class="course-meta-value"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $course['instructor_id'], 'instructor'), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($course['instructor_name']) ?></a></div>
                     </div>
                 </div>

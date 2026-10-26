@@ -61,7 +61,7 @@ class Comment
         $parentCommentId = isset($input['parent_comment_id']) && $input['parent_comment_id'] !== '' ? (int) $input['parent_comment_id'] : null;
 
         if ($learnerId <= 0) {
-            return ['success' => false, 'message' => 'Learner ID is required.'];
+            return ['success' => false, 'message' => 'Trainee ID is required.'];
         }
 
         if ($lessonId <= 0) {

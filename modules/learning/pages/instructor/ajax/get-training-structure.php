@@ -109,6 +109,26 @@ try {
             'title' => $row['title'],
         ];
 
+        try {
+            $courseStmt = $pdo->prepare('SELECT c.id, c.title
+                FROM ld_program_course pc
+                JOIN ld_course c ON c.id = pc.course_id
+                WHERE pc.program_id = :program_id
+                ORDER BY c.title ASC');
+            $courseStmt->execute([':program_id' => $id]);
+            while ($course = $courseStmt->fetch(PDO::FETCH_ASSOC)) {
+                $response['data']['children'][] = [
+                    'type' => 'Course',
+                    'id' => (int) $course['id'],
+                    'title' => (string) $course['title'],
+                    'children' => [],
+                ];
+            }
+        } catch (Throwable $e) {
+            // Programs created before the course-link table existed simply show
+            // their sessions until the database update is applied.
+        }
+
         $confStmt = $pdo->prepare('SELECT id, title FROM ld_video_conference WHERE program_id = :program_id ORDER BY scheduled_at DESC, id DESC');
         $confStmt->execute([':program_id' => $id]);
 

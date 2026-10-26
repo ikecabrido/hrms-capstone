@@ -13,7 +13,7 @@ $pathId = (int) ($_GET['learning_path_id'] ?? 0);
 
 if ($learnerId <= 0 || $pathId <= 0) {
     http_response_code($learnerId > 0 ? 422 : 401);
-    echo json_encode(['success' => false, 'message' => 'A valid learner and learning path are required.']);
+    echo json_encode(['success' => false, 'message' => 'A valid trainee and learning path are required.']);
     exit;
 }
 

@@ -97,7 +97,7 @@ $completionRate = ($stats['active_enrollments'] + $stats['completed']) > 0
                 <span class="home-stat-body">
                     <span class="home-stat-label">Total Users</span>
                     <span class="home-stat-value"><?= (int) $stats['users'] ?></span>
-                    <span class="home-stat-sub"><?= (int) $stats['instructors'] ?> instructors &middot; <?= (int) $stats['learners'] ?> learners</span>
+                    <span class="home-stat-sub"><?= (int) $stats['instructors'] ?> trainers &middot; <?= (int) $stats['learners'] ?> trainees</span>
                 </span>
             </a>
             <a class="home-stat" href="?page=admin/analytics">

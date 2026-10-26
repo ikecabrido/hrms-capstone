@@ -92,7 +92,7 @@ function renderCatalogCards($items, $type, $typeIcons) {
         <section class="home-hero">
             <div class="home-hero-main">
                 <h1>E-Learning</h1>
-                <p>Author the courses, modules, lessons, quizzes and evaluations that make up the curriculum your learners work through.</p>
+                <p>Author the courses, modules, lessons, quizzes and evaluations that make up the curriculum your trainees work through.</p>
             </div>
             <div class="home-hero-aside">
                 <div class="home-hero-chips">

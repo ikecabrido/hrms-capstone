@@ -42,9 +42,9 @@ try {
     <!-- Filters -->
     <div class="timeline-filters">
         <div class="timeline-filter-field">
-            <label for="learner-select"><i class="fas fa-user-graduate" aria-hidden="true"></i> Learner</label>
+            <label for="learner-select"><i class="fas fa-user-graduate" aria-hidden="true"></i> Trainee</label>
             <select id="learner-select">
-                <option value="">— Choose a learner —</option>
+                <option value="">— Choose a trainee —</option>
                 <?php foreach ($learners as $l): ?>
                     <option value="<?= $l['learner_id'] ?>" data-email="<?= htmlspecialchars($l['email']) ?>">
                         <?= htmlspecialchars($l['name']) ?> (<?= $l['course_count'] ?> courses)
@@ -73,8 +73,8 @@ try {
     <div id="timeline-container" style="position:relative;">
         <div id="timeline-empty" style="text-align:center; padding:4rem 1rem; color:#999;">
             <div style="font-size:3rem; margin-bottom:1rem;"></div>
-            <h3 style="color:#666; margin-bottom:0.5rem;">Select a Learner</h3>
-            <p>Choose a learner above to view their complete activity timeline across all courses.</p>
+            <h3 style="color:#666; margin-bottom:0.5rem;">Select a Trainee</h3>
+            <p>Choose a trainee above to view their complete activity timeline across all courses.</p>
         </div>
         <div id="timeline-line" style="display:none; position:absolute; left:28px; top:0; bottom:0; width:2px; background:linear-gradient(to bottom, var(--primary), var(--primary)); border-radius:1px;"></div>
         <div id="timeline-events"></div>

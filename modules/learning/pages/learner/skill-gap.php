@@ -139,7 +139,7 @@ try {
 <div class="lt-modal-overlay" id="sg-request-overlay">
     <div class="lt-modal" role="dialog" aria-modal="true" aria-labelledby="sg-rm-title">
         <h3 id="sg-rm-title"><i class="fas fa-paper-plane"></i> Request Training</h3>
-        <p>Request a new course for <strong id="sg-rm-skill-name"></strong>. An instructor will review and create training material.</p>
+        <p>Request a new course for <strong id="sg-rm-skill-name"></strong>. A trainer will review and create training material.</p>
         <textarea id="sg-rm-message" placeholder="Optional: Describe what you'd like to learn or why this skill is important..."></textarea>
         <div class="lt-modal-actions">
             <button type="button" class="lt-btn lt-btn-ghost" id="sg-rm-cancel">Cancel</button>

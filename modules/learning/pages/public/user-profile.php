@@ -54,7 +54,7 @@ try {
 $displayName = trim((string) ($profile['first_name'] ?? '') . ' ' . (string) ($profile['last_name'] ?? ''));
 $initials = strtoupper(substr((string) ($profile['first_name'] ?? ''), 0, 1) . substr((string) ($profile['last_name'] ?? ''), 0, 1));
 $initials = $initials !== '' ? $initials : '??';
-$roleLabel = ucfirst($profileRole);
+$roleLabel = LearningRole::label($profileRole);
 $backPage = [
     'admin' => 'admin/admin-home',
     'instructor' => 'instructor/instructor-home',

@@ -26,6 +26,67 @@ try {
     color: #fff;
     border-color: var(--primary);
 }
+/* ── Skills & tags multi-select dropdown ─────────────────────────────── */
+.sdd { position: relative; }
+.sdd-trigger {
+    display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap;
+    min-height: 46px; padding: 0.45rem 2.4rem 0.45rem 0.7rem;
+    border: 1.5px solid rgba(32,0,130,0.12); border-radius: 10px;
+    background: #fff; cursor: pointer; position: relative;
+    transition: border-color .15s, box-shadow .15s;
+}
+.sdd-trigger:hover { border-color: rgba(32,0,130,0.3); }
+.sdd-trigger.is-open,
+.sdd-trigger:focus-visible {
+    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(32,0,130,0.1); outline: none;
+}
+.sdd-placeholder { color: #9aa3ae; font-size: 0.85rem; padding: 0 0.15rem; }
+.sdd-trigger.has-selection .sdd-placeholder { display: none; }
+.sdd-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.sdd-chip {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.15rem 0.3rem 0.15rem 0.5rem; border-radius: 999px;
+    background: rgba(32,0,130,0.08); color: var(--primary);
+    font-size: 0.74rem; font-weight: 600; line-height: 1.6; max-width: 100%;
+}
+.sdd-chip-x {
+    border: none; background: transparent; color: var(--primary);
+    font-size: 0.9rem; line-height: 1; cursor: pointer; padding: 0 0.15rem;
+    opacity: 0.55; border-radius: 50%;
+}
+.sdd-chip-x:hover { opacity: 1; background: rgba(32,0,130,0.12); }
+.sdd-chevron {
+    position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%);
+    color: #9aa3ae; font-size: 0.72rem; transition: transform .18s; pointer-events: none;
+}
+.sdd-trigger.is-open .sdd-chevron { transform: translateY(-50%) rotate(180deg); }
+.sdd-panel {
+    display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    z-index: 60; background: #fff; border: 1px solid rgba(32,0,130,0.12);
+    border-radius: 12px; box-shadow: 0 16px 40px rgba(32,0,130,0.16); overflow: hidden;
+}
+.sdd-panel.is-open { display: block; }
+.sdd-list { max-height: 240px; overflow: auto; padding: 0.3rem 0; }
+.sdd-opt {
+    display: flex; align-items: center; gap: 0.55rem; margin: 0;
+    padding: 0.5rem 0.85rem; cursor: pointer; font-size: 0.85rem; color: var(--text);
+    transition: background .12s;
+}
+.sdd-opt:hover { background: rgba(32,0,130,0.04); }
+.sdd-opt input { accent-color: var(--primary); width: 16px; height: 16px; margin: 0; cursor: pointer; flex-shrink: 0; }
+.sdd-opt-name { flex: 1; color: var(--text); }
+.sdd-opt input:checked + .sdd-opt-name { color: var(--primary); font-weight: 600; }
+.sdd-empty { padding: 1rem; text-align: center; font-size: 0.8rem; color: #9aa3ae; }
+.sdd-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+    padding: 0.5rem 0.85rem; border-top: 1px solid rgba(32,0,130,0.08);
+    background: rgba(32,0,130,0.02); font-size: 0.78rem; color: #6c7a89;
+}
+.sdd-foot button {
+    border: none; background: none; color: var(--primary); font-weight: 700;
+    font-size: 0.78rem; cursor: pointer; padding: 0;
+}
+.sdd-foot button:hover { text-decoration: underline; }
 </style>
 <div class="module-content">
     <!-- Add Module Modal -->
@@ -211,15 +272,14 @@ try {
             <div>
                 <h2 style="margin:0;" id="form-title">Add Course</h2>
                 <p style="margin:0.3rem 0 0;" id="form-subtitle">Create a course with optional modules, lessons, and course evaluation.</p>
-            </div>
-            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
-                <span style="font-size:0.78rem; font-weight:600; color:var(--text); align-self:center;">Quick start:</span>
-                <button type="button" onclick="applyTemplate('programming')" class="course-template-btn">Programming</button>
-                <button type="button" onclick="applyTemplate('business')" class="course-template-btn">Business</button>
-                <button type="button" onclick="applyTemplate('creative')" class="course-template-btn">Creative</button>
-                <button type="button" onclick="applyTemplate('softskills')" class="course-template-btn">Soft Skills</button>
-                <button type="button" onclick="applyTemplate('compliance')" class="course-template-btn">Compliance</button>
-            </div>
+            </div>                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                    <span style="font-size:0.78rem; font-weight:600; color:var(--text); align-self:center;">Quick start:</span>
+                    <button type="button" onclick="applyTemplate('programming')" class="course-template-btn">Programming</button>
+                    <button type="button" onclick="applyTemplate('business')" class="course-template-btn">Business</button>
+                    <button type="button" onclick="applyTemplate('creative')" class="course-template-btn">Creative</button>
+                    <button type="button" onclick="applyTemplate('softskills')" class="course-template-btn">Soft Skills</button>
+                    <button type="button" onclick="applyTemplate('compliance')" class="course-template-btn">Compliance</button>
+                </div>
         </div>
 
         <form id="course-form" data-skip="true" method="post" enctype="multipart/form-data" action="pages/instructor/elearning-subpage/ajax/add-course.php">
@@ -278,7 +338,7 @@ try {
                     <label><span>Start date</span><input type="date" name="start_date" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border);" /></label>
                     <label><span>Enrollment deadline</span><input type="date" name="enrollment_deadline" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border);" /></label>
                     <label><span>Estimated hours</span><input type="number" name="estimated_hours" min="0" step="0.5" placeholder="e.g. 12" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border);" /></label>
-                    <label><span>Max learners</span><input type="number" name="max_learners" min="0" placeholder="0 = unlimited" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border);" /></label>
+                    <label><span>Max trainees</span><input type="number" name="max_learners" min="0" placeholder="0 = unlimited" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border);" /></label>
                 </div>
             </div>
 
@@ -302,16 +362,37 @@ try {
             <!-- Section 4: Skills -->
             <div style="margin-top:1rem; padding-bottom:1rem; border-bottom:1px solid rgba(32,0,130,0.08);">
                 <h3 style="margin:0 0 0.75rem 0; font-size:0.9rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; gap:0.5rem;">
-                    <i class="fas fa-cogs"></i> Skills & Tags
+                    <i class="fas fa-cogs"></i> Skills &amp; Tags
                 </h3>
                 <p style="color:#999; font-size:0.82rem; margin:0 0 0.75rem 0;">Select skill tags to make this course easier to find in the catalog.</p>
-                <div id="skill-selector" style="display:flex; flex-wrap:wrap; gap:0.4rem; padding:0.5rem; border:1px solid var(--border); border-radius:10px; min-height:42px; background:#fff;">
-                    <?php foreach ($allSkills as $sk): ?>
-                    <label style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.3rem 0.6rem; border:1px solid rgba(32,0,130,0.15); border-radius:999px; cursor:pointer; font-size:0.78rem; font-weight:600; background:rgba(32,0,130,0.04); color:var(--text); transition:all 0.15s;">
-                        <input type="checkbox" name="skill_ids[]" value="<?= (int)$sk['id'] ?>" style="accent-color:var(--primary);" />
-                        <?= htmlspecialchars($sk['name']) ?>
-                    </label>
-                    <?php endforeach; ?>
+                <div class="sdd" id="skill-dropdown-wrap">
+                    <div class="sdd-trigger" id="skill-dropdown-btn" role="button" tabindex="0"
+                         aria-haspopup="listbox" aria-expanded="false" aria-controls="skill-dropdown-panel">
+                        <span class="sdd-placeholder" id="skill-dropdown-placeholder">Select skills &amp; tags</span>
+                        <span class="sdd-chips" id="skill-dropdown-chips"></span>
+                        <span class="sdd-chevron" id="skill-dropdown-chevron"><i class="fas fa-chevron-down"></i></span>
+                    </div>
+                    <div class="sdd-panel" id="skill-dropdown-panel" role="listbox" aria-multiselectable="true" aria-label="Skills and tags">
+                        <div class="sdd-list" id="skill-dropdown-list">
+                            <?php foreach ($allSkills as $sk): ?>
+                            <label class="sdd-opt" for="skill-cb-<?= (int)$sk['id'] ?>">
+                                <input type="checkbox"
+                                       name="skill_ids[]"
+                                       value="<?= (int)$sk['id'] ?>"
+                                       id="skill-cb-<?= (int)$sk['id'] ?>"
+                                       data-name="<?= htmlspecialchars($sk['name'], ENT_QUOTES, 'UTF-8') ?>">
+                                <span class="sdd-opt-name"><?= htmlspecialchars($sk['name'], ENT_QUOTES, 'UTF-8') ?></span>
+                            </label>
+                            <?php endforeach; ?>
+                            <?php if (empty($allSkills)): ?>
+                            <div class="sdd-empty">No skills available yet.</div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="sdd-foot">
+                            <span id="skill-dropdown-count">0 selected</span>
+                            <button type="button" id="skill-select-all-btn">Select all</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -326,7 +407,7 @@ try {
                 </label>
                 <label style="display:block;">
                     <span>Prerequisites</span>
-                    <textarea name="prerequisites" rows="2" placeholder="What should learners know before taking this course? (optional)" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border); resize:vertical;"></textarea>
+                    <textarea name="prerequisites" rows="2" placeholder="What should trainees know before taking this course? (optional)" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border); resize:vertical;"></textarea>
                 </label>
             </div>
 
@@ -390,7 +471,7 @@ try {
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                     <div>
                         <h3 style="margin:0; font-size:1.1rem; color:var(--text);">Prerequisites</h3>
-                        <p style="margin:0.25rem 0 0; font-size:0.85rem; color:#999;">Learners must complete these before enrolling in this course.</p>
+                        <p style="margin:0.25rem 0 0; font-size:0.85rem; color:#999;">Trainees must complete these before enrolling in this course.</p>
                     </div>
                     <button type="button" id="add-prereq-btn" style="padding:0.5rem 1rem; background:var(--primary); color:var(--surface); border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem;"><i class="fas fa-plus" style="margin-right:0.3rem;"></i> Add</button>
                 </div>
@@ -466,6 +547,123 @@ try {
 </div>
 
 <script src="js/course-builder.js"></script>
+<script>
+(function(){
+    var wrap = document.getElementById('skill-dropdown-wrap');
+    if (!wrap) return;
+    var trigger = document.getElementById('skill-dropdown-btn');
+    var panel = document.getElementById('skill-dropdown-panel');
+    var chipsEl = document.getElementById('skill-dropdown-chips');
+    var countEl = document.getElementById('skill-dropdown-count');
+    var list = document.getElementById('skill-dropdown-list');
+    var selectAllBtn = document.getElementById('skill-select-all-btn');
+    if (!trigger || !panel || !list || !chipsEl || !countEl || !selectAllBtn) return;
+
+    var boxes = Array.prototype.slice.call(list.querySelectorAll('input[type="checkbox"]'));
+
+    function checkedBoxes() {
+        return boxes.filter(function (b) { return b.checked; });
+    }
+
+    function renderSelection() {
+        var sel = checkedBoxes();
+
+        chipsEl.innerHTML = '';
+        sel.forEach(function (box) {
+            var chip = document.createElement('span');
+            chip.className = 'sdd-chip';
+
+            var label = document.createElement('span');
+            label.textContent = box.getAttribute('data-name') || box.value;
+            chip.appendChild(label);
+
+            var x = document.createElement('button');
+            x.type = 'button';
+            x.className = 'sdd-chip-x';
+            x.setAttribute('aria-label', 'Remove ' + label.textContent);
+            x.innerHTML = '&times;';
+            x.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                box.checked = false;
+                renderSelection();
+            });
+            chip.appendChild(x);
+
+            chipsEl.appendChild(chip);
+        });
+
+        trigger.classList.toggle('has-selection', sel.length > 0);
+        countEl.textContent = sel.length + ' selected';
+
+        var allSelected = boxes.length > 0 && sel.length === boxes.length;
+        selectAllBtn.textContent = allSelected ? 'Deselect all' : 'Select all';
+    }
+
+    function isOpen() {
+        return panel.classList.contains('is-open');
+    }
+
+    function setOpen(open) {
+        panel.classList.toggle('is-open', open);
+        trigger.classList.toggle('is-open', open);
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open) {
+            var first = list.querySelector('input[type="checkbox"]');
+            if (first && first.focus) { /* keep focus on trigger */ }
+        }
+    }
+
+    trigger.addEventListener('click', function (e) {
+        if (e.target.closest && e.target.closest('.sdd-chip')) return;
+        setOpen(!isOpen());
+    });
+
+    trigger.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            setOpen(true);
+        } else if (e.key === 'Escape') {
+            setOpen(false);
+        }
+    });
+
+    boxes.forEach(function (box) {
+        box.addEventListener('change', renderSelection);
+    });
+
+    selectAllBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var allSelected = boxes.length > 0 && boxes.every(function (b) { return b.checked; });
+        boxes.forEach(function (b) { b.checked = !allSelected; });
+        renderSelection();
+    });
+
+    panel.addEventListener('click', function (e) {
+        e.stopPropagation();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!wrap.contains(e.target)) setOpen(false);
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') setOpen(false);
+    });
+
+    // Close the dropdown before submitting the course
+    var form = document.getElementById('course-form');
+    if (form) {
+        form.addEventListener('submit', function () {
+            setOpen(false);
+            // keep the count in sync (in case values were restored programmatically)
+            renderSelection();
+        });
+    }
+
+    renderSelection();
+})();
+</script>
 <script>
 var courseTemplates = {
     programming: { title:'Web Development Fundamentals', category:'Programming', difficulty:'beginner', estimated_hours:20, description:'Learn web development fundamentals including HTML, CSS, and JavaScript.', prerequisites:'Basic computer literacy.' },

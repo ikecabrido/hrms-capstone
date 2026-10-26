@@ -46,7 +46,7 @@ $legalUpdated = date('F j, Y', filemtime(__FILE__));
                 <div class="legal-section-icon" aria-hidden="true"><i class="fa-solid fa-copyright"></i></div>
                 <div>
                     <h2>Content Ownership</h2>
-                    <p>Course content is owned by the instructors and organization. Learners may not redistribute course materials.</p>
+                    <p>Course content is owned by the trainers and organization. Trainees may not redistribute course materials.</p>
                 </div>
             </section>
         </div>

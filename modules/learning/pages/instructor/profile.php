@@ -3,7 +3,7 @@
  * Instructor profile. Layout comes from the shared profile partials; this file
  * adds teaching stats and the areas-of-expertise chips.
  */
-$profileRoleLabel = 'Instructor';
+$profileRoleLabel = 'Trainer';
 require_once __DIR__ . '/../shared/includes/profile-data.php';
 
 $teaching = ['courses' => 0, 'learners' => 0, 'completed' => 0, 'avg_score' => 0.0, 'avg_rating' => 0.0];
@@ -70,7 +70,7 @@ $gradebookLink = null;
                 <div class="pfl-stat-sub">created</div>
             </div>
             <div class="pfl-stat">
-                <div class="pfl-stat-label"><i class="fas fa-users" aria-hidden="true"></i> Learners</div>
+                <div class="pfl-stat-label"><i class="fas fa-users" aria-hidden="true"></i> Trainees</div>
                 <div class="pfl-stat-value is-teal"><?= (int) $teaching['learners'] ?></div>
                 <div class="pfl-stat-sub"><?= (int) $teaching['completed'] ?> course<?= (int) $teaching['completed'] !== 1 ? 's' : '' ?> completed</div>
             </div>

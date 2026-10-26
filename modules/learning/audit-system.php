@@ -55,7 +55,7 @@ foreach ($lps as $lp) {
 
     echo "  lp.id={$lp['id']} \"{$lp['title']}\" type={$lp['type']} assigned_to={$lp['assigned_to']} (",
         ($assignee ? $assignee['first_name'] . " " . $assignee['last_name'] : 'NONE'),
-        ") instructor={$lp['instructor_id']} (",
+        ") trainer={$lp['instructor_id']} (",
         ($instructor ? $instructor['first_name'] . " " . $instructor['last_name'] : 'NONE'),
         ") items={$lp['item_count']} public=" . ($lp['is_public'] ? 'yes' : 'no') . " kt_plan_id=" . ($lp['kt_plan_id'] ?? 'none') . "\n";
 }
@@ -71,7 +71,7 @@ foreach ($items as $it) {
 }
 echo "\n";
 
-echo "=== Enrollment coverage by learner ===\n";
+echo "=== Enrollment coverage by trainee ===\n";
 $enr = $pdo->query("SELECT e.learner_id, emp.first_name, emp.last_name, emp.employee_code, COUNT(e.id) AS enrollment_count, SUM(CASE WHEN e.status='completed' THEN 1 ELSE 0 END) AS completed_count FROM ld_enrollment e JOIN em_employees emp ON emp.employee_id=e.learner_id GROUP BY e.learner_id ORDER BY e.learner_id")->fetchAll(PDO::FETCH_ASSOC);
 foreach ($enr as $e) {
     echo "  learner_id={$e['learner_id']} {$e['first_name']} {$e['last_name']} ({$e['employee_code']}) enrollments={$e['enrollment_count']} completed={$e['completed_count']}\n";
@@ -84,7 +84,7 @@ $instructorStmt2 = $pdo->prepare("SELECT first_name, last_name FROM em_employees
 
 foreach ($courses as $c) {
     $inst = auditLookup($instructorStmt2, ':eid', (int) ($c['instructor_id'] ?? 0));
-    echo "  c.id={$c['id']} \"{$c['title']}\" instructor={$c['instructor_id']} (",
+    echo "  c.id={$c['id']} \"{$c['title']}\" trainer={$c['instructor_id']} (",
         ($inst ? $inst['first_name'] . " " . $inst['last_name'] : 'NONE'),
         ") status={$c['status']} enrolled={$c['enrolled_count']}\n";
 }
@@ -93,14 +93,14 @@ echo "\n";
 echo "=== Quiz attempt coverage ===\n";
 $qa = $pdo->query("SELECT qa.learner_id, emp.first_name, emp.last_name, COUNT(qa.id) AS attempt_count, SUM(qa.passed) AS passed_count, ROUND(AVG(qa.score),1) AS avg_score FROM ld_quiz_attempt qa JOIN em_employees emp ON emp.employee_id=qa.learner_id GROUP BY qa.learner_id ORDER BY qa.learner_id")->fetchAll(PDO::FETCH_ASSOC);
 foreach ($qa as $q) {
-    echo "  learner={$q['learner_id']} {$q['first_name']} {$q['last_name']} attempts={$q['attempt_count']} passed={$q['passed_count']} avg_score={$q['avg_score']}%\n";
+    echo "  trainee={$q['learner_id']} {$q['first_name']} {$q['last_name']} attempts={$q['attempt_count']} passed={$q['passed_count']} avg_score={$q['avg_score']}%\n";
 }
 echo "\n";
 
 echo "=== Certificate coverage ===\n";
 $certs = $pdo->query("SELECT cert.learner_id, emp.first_name, emp.last_name, cert.course_id, c.title AS course_title, cert.status, cert.issued_at FROM ld_certificate cert JOIN em_employees emp ON emp.employee_id=cert.learner_id JOIN ld_course c ON c.id=cert.course_id ORDER BY cert.issued_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 foreach ($certs as $c) {
-    echo "  learner={$c['learner_id']} {$c['first_name']} {$c['last_name']} course={$c['course_title']} (id={$c['course_id']}) status={$c['status']} issued={$c['issued_at']}\n";
+    echo "  trainee={$c['learner_id']} {$c['first_name']} {$c['last_name']} course={$c['course_title']} (id={$c['course_id']}) status={$c['status']} issued={$c['issued_at']}\n";
 }
 echo "\n";
 

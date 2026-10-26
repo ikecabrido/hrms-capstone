@@ -85,7 +85,7 @@ class Bookmark
         $referenceId = (int) ($input['reference_id'] ?? 0);
 
         if ($learnerId <= 0) {
-            return ['success' => false, 'message' => 'Learner ID is required.'];
+            return ['success' => false, 'message' => 'Trainee ID is required.'];
         }
 
         if ($itemType === '') {
@@ -136,7 +136,7 @@ class Bookmark
     public function removeByReference(int $learnerId, string $itemType, int $referenceId): array
     {
         if ($learnerId <= 0) {
-            return ['success' => false, 'message' => 'Learner ID is required.'];
+            return ['success' => false, 'message' => 'Trainee ID is required.'];
         }
 
         if ($itemType === '') {

@@ -8,12 +8,12 @@ $instructorName = $employeeClass->getEmployeeName();
     <div class="home-dashboard">
         <section class="home-hero" aria-labelledby="isg-title">
             <div class="home-hero-main">
-                <h1 id="isg-title">Learner Skill Gaps</h1>
-                <p>See which skills your learners are missing most and identify at-risk students.</p>
+                <h1 id="isg-title">Trainee Skill Gaps</h1>
+                <p>See which skills your trainees are missing most and identify at-risk trainees.</p>
             </div>
             <div class="home-hero-aside">
                 <div class="home-hero-chips">
-                    <span class="home-hero-chip"><i class="fas fa-users"></i> Learners: <b id="isg-total-learners">&mdash;</b></span>
+                    <span class="home-hero-chip"><i class="fas fa-users"></i> Trainees: <b id="isg-total-learners">&mdash;</b></span>
                     <span class="home-hero-chip"><i class="fas fa-puzzle-piece"></i> Skills: <b id="isg-total-skills">&mdash;</b></span>
                     <span class="home-hero-chip"><i class="fas fa-triangle-exclamation"></i> Top gap rate: <b id="isg-top-gap-rate">&mdash;</b></span>
                     <span class="home-hero-chip"><i class="fas fa-user-slash"></i> Below 50%: <b id="isg-at-risk">&mdash;</b></span>
@@ -25,7 +25,7 @@ $instructorName = $employeeClass->getEmployeeName();
         <div class="isg-toolbar">
             <div class="isg-search">
                 <i class="fas fa-search"></i>
-                <input type="search" id="isg-search-input" placeholder="Search skills, learner names..." aria-label="Search skill gaps" />
+                <input type="search" id="isg-search-input" placeholder="Search skills, trainee names..." aria-label="Search skill gaps" />
             </div>
             <div class="isg-view-toggle">
                 <button type="button" class="active" data-view="grid" title="Grid view"><i class="fas fa-th"></i></button>
@@ -48,7 +48,7 @@ $instructorName = $employeeClass->getEmployeeName();
                 <span class="isg-filter-count" id="isg-skill-count">0</span>
             </button>
             <button type="button" class="isg-filter-tab" data-filter="learners">
-                <i class="fas fa-user-graduate"></i> By Learner
+                <i class="fas fa-user-graduate"></i> By Trainee
                 <span class="isg-filter-count" id="isg-learner-count">0</span>
             </button>
         </div>
@@ -131,14 +131,14 @@ $instructorName = $employeeClass->getEmployeeName();
     // ── Export CSV ─────────────────────────────────────────
     document.getElementById('isg-export-btn').addEventListener('click', function() {
         if (!rawData) return;
-        var rows = [['Type', 'Name', 'Details', 'Gap Rate %', 'Missing Count', 'Total Learners']];
+        var rows = [['Type', 'Name', 'Details', 'Gap Rate %', 'Missing Count', 'Total Trainees']];
         if (currentFilter === 'skills') {
             (rawData.skills || []).forEach(function(s) {
                 rows.push(['Skill', s.name, s.description || '', s.gap_rate, s.missing_count, s.total_learners]);
             });
         } else {
             (rawData.learners || []).forEach(function(l) {
-                rows.push(['Learner', l.name, l.acquired_count + ' acquired, ' + l.gap_count + ' gaps', l.percentage, l.gap_count, l.total_skills]);
+                rows.push(['Trainee', l.name, l.acquired_count + ' acquired, ' + l.gap_count + ' gaps', l.percentage, l.gap_count, l.total_skills]);
             });
         }
         var csv = rows.map(function(r) { return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
@@ -168,7 +168,10 @@ $instructorName = $employeeClass->getEmployeeName();
             skills = skills.filter(function(s) {
                 return s.name.toLowerCase().indexOf(q) > -1 ||
                        (s.description || '').toLowerCase().indexOf(q) > -1 ||
-                       (s.missing_learners || []).some(function(n) { return n.toLowerCase().indexOf(q) > -1; });
+                       (s.missing_learners || []).some(function(n) {
+                           var name = (n && typeof n === 'object') ? (n.name || '') : (n || '');
+                           return String(name).toLowerCase().indexOf(q) > -1;
+                       });
             });
         }
         return skills;
@@ -206,10 +209,16 @@ $instructorName = $employeeClass->getEmployeeName();
             html += '<div class="isg-skill-bar">';
             html += '<div class="isg-skill-top"><span class="isg-skill-name">' + esc(s.name) + '</span><span class="isg-skill-rate ' + rateClass + '">' + s.gap_rate + '% gap</span></div>';
             html += '<div class="isg-bar-track"><div class="isg-bar-fill ' + rateClass + '" style="width:' + s.gap_rate + '%;"></div></div>';
-            html += '<div style="font-size:0.78rem; color:var(--muted);">' + s.missing_count + ' of ' + s.total_learners + ' learners missing this skill</div>';
+            html += '<div style="font-size:0.78rem; color:var(--muted);">' + s.missing_count + ' of ' + s.total_learners + ' trainees missing this skill</div>';
             if (s.missing_learners && s.missing_learners.length) {
                 html += '<div class="isg-missing-list">';
-                s.missing_learners.forEach(function(name) { html += '<span class="isg-missing-tag">' + esc(name) + '</span>'; });
+                s.missing_learners.forEach(function(learner) {
+                    var missingName = esc(learner.name || learner);
+                    var missingTag = learner.profile_url
+                        ? '<a href="' + esc(learner.profile_url) + '">' + missingName + '</a>'
+                        : missingName;
+                    html += '<span class="isg-missing-tag">' + missingTag + '</span>';
+                });
                 if (s.more_missing > 0) html += '<span class="isg-missing-more">+' + s.more_missing + ' more</span>';
                 html += '</div>';
             }
@@ -226,20 +235,23 @@ $instructorName = $employeeClass->getEmployeeName();
         var start = (currentPage - 1) * PAGE_SIZE;
         var paged = filtered.slice(start, start + PAGE_SIZE);
 
-        countEl.textContent = filtered.length + ' learner' + (filtered.length !== 1 ? 's' : '');
+        countEl.textContent = filtered.length + ' trainee' + (filtered.length !== 1 ? 's' : '');
 
         if (!filtered.length) {
-            contentEl.innerHTML = '<div class="isg-empty"><i class="fas fa-users"></i><h4>No Learners Found</h4><p>' + (searchInput.value ? 'No learners match your search.' : 'No learners are enrolled in your courses yet.') + '</p></div>';
+            contentEl.innerHTML = '<div class="isg-empty"><i class="fas fa-users"></i><h4>No Trainees Found</h4><p>' + (searchInput.value ? 'No trainees match your search.' : 'No trainees are enrolled in your courses yet.') + '</p></div>';
             paginationEl.style.display = 'none';
             return;
         }
 
-        var html = '<div class="isg-section-title"><i class="fas fa-user-graduate" style="color:var(--primary);"></i> Learners by Skill Coverage</div>';
+        var html = '<div class="isg-section-title"><i class="fas fa-user-graduate" style="color:var(--primary);"></i> Trainees by Skill Coverage</div>';
         html += '<div class="isg-learner-grid' + (isListView ? ' list-view' : '') + '">';
         paged.forEach(function(l) {
             var pctColor = l.percentage >= 70 ? '#10b981' : l.percentage >= 40 ? '#f59e0b' : '#ef4444';
             html += '<div class="isg-learner-card">';
-            html += '<div class="isg-learner-top"><span class="isg-learner-name">' + esc(l.name) + '</span><span class="isg-learner-pct" style="color:' + pctColor + ';">' + l.percentage + '%</span></div>';
+            var learnerName = l.profile_url
+                ? '<a href="' + esc(l.profile_url) + '">' + esc(l.name) + '</a>'
+                : esc(l.name);
+            html += '<div class="isg-learner-top"><span class="isg-learner-name">' + learnerName + '</span><span class="isg-learner-pct" style="color:' + pctColor + ';">' + l.percentage + '%</span></div>';
             html += '<div class="isg-learner-bar"><div class="isg-learner-fill" style="width:' + l.percentage + '%;"></div></div>';
             html += '<div class="isg-learner-stats">' + l.acquired_count + ' acquired &bull; ' + l.gap_count + ' gaps &bull; ' + l.total_skills + ' total</div>';
             html += '</div>';

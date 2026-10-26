@@ -278,8 +278,8 @@ function gbTimeAgo($datetime) {
                 <i class="fas fa-chevron-down" aria-hidden="true"></i>
             </label>
             <label class="gb-select">
-                <select id="gb-instructor-filter" aria-label="Filter by instructor">
-                    <option value="all">All Instructors</option>
+                <select id="gb-instructor-filter" aria-label="Filter by trainer">
+                    <option value="all">All Trainers</option>
                     <?php foreach ($instructors as $iid => $iname): ?>
                     <option value="<?= $iid ?>"><?= htmlspecialchars($iname) ?></option>
                     <?php endforeach; ?>
@@ -315,7 +315,7 @@ function gbTimeAgo($datetime) {
                         <tr>
                             <th data-sort="name">Student <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
                             <th data-sort="course">Course <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
-                            <th data-sort="instructor">Instructor <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
+                            <th data-sort="instructor">Trainer <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
                             <th data-sort="quizzes">Quizzes <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
                             <th data-sort="score">Avg Score <span class="gb-sort"><i class="fas fa-sort"></i></span></th>
                             <th data-sort="grade">Grade <span class="gb-sort"><i class="fas fa-sort"></i></span></th>

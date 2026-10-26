@@ -24,7 +24,7 @@ $profilePage = $learningRole . '/profile';
 
 <aside class="sidebar">
     <div class="school-logo">
-        <img src="assets/bcp-logo.png" alt="School logo">
+        <img src="assets/bcp-logo-transparent.png" alt="School logo">
         <button type="button" class="sidebar-close" aria-label="Close navigation">
             <i class="fas fa-xmark" aria-hidden="true"></i>
         </button>

@@ -27,7 +27,7 @@ try {
     $stmt = $pdo->prepare("SELECT c.title, c.start_date FROM ld_course c WHERE c.instructor_id = :iid AND c.status = 'active' AND c.start_date IS NOT NULL AND c.start_date >= CURDATE() ORDER BY c.start_date ASC LIMIT 50");
     $stmt->execute([':iid' => $instructorId]);
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $d) {
-        $events[] = ['date'=>date('Y-m-d',strtotime($d['start_date'])),'time'=>'12:00 AM','title'=>$d['title'].' — Course Start','type'=>'Course Start','color'=>'#059669','icon'=>'fa-play-circle','meta'=>'Course opens for learners','datetime'=>$d['start_date'].' 00:00:00'];
+        $events[] = ['date'=>date('Y-m-d',strtotime($d['start_date'])),'time'=>'12:00 AM','title'=>$d['title'].' — Course Start','type'=>'Course Start','color'=>'#059669','icon'=>'fa-play-circle','meta'=>'Course opens for trainees','datetime'=>$d['start_date'].' 00:00:00'];
     }
 
     // My user-created calendar events

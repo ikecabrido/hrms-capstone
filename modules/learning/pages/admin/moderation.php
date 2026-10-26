@@ -87,7 +87,7 @@ function renderReportCards($items, $emptyTitle, $emptyText) {
         $learner = trim((string) ($item['learner_name'] ?? ''));
         $learnerId = (int) ($item['learner_id'] ?? 0);
         if ($learner === '') {
-            $learner = 'Unknown learner';
+            $learner = 'Unknown trainee';
         }
         $date = !empty($item['created_at']) ? date('M d, Y', strtotime((string) $item['created_at'])) : 'Recently';
         $initials = strtoupper(substr($type, 0, 2)) ?: 'RP';
@@ -122,7 +122,7 @@ function renderReportCards($items, $emptyTitle, $emptyText) {
             <section class="home-hero">
                 <div class="home-hero-main">
                     <h1>Moderation</h1>
-                    <p>Review flagged content and learner reports that still need an instructor or admin decision.</p>
+                    <p>Review flagged content and trainee reports that still need a trainer or admin decision.</p>
                 </div>
             </section>
 
@@ -173,7 +173,7 @@ function renderReportCards($items, $emptyTitle, $emptyText) {
                             <h2 class="mod-panel-title"><i class="fas fa-hourglass-half"></i> Pending moderation</h2>
                             <span class="mod-badge"><?= (int) $reportCounts['pending'] ?></span>
                         </div>
-                        <p class="mod-panel-sub">Review flagged content and learner reports that still require an instructor or admin response.</p>
+                        <p class="mod-panel-sub">Review flagged content and trainee reports that still require a trainer or admin response.</p>
                         <?php renderReportCards($pendingReports, 'No pending reports', 'There are no pending moderation reports at the moment.'); ?>
                     </div>
                 </div>

@@ -3,7 +3,7 @@
  * Learner profile. Layout comes from the shared profile partials; this file
  * adds the learning overview and the learner's complete course record.
  */
-$profileRoleLabel = 'Learner';
+$profileRoleLabel = 'Trainee';
 require_once __DIR__ . '/../shared/includes/profile-data.php';
 
 $learning = [
@@ -97,7 +97,7 @@ if ($pdo && $profileId > 0) {
         $stmt->execute([':lid' => $profileId]);
         $certificates = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (Throwable $e) {
-        error_log('[learning] Learner profile details failed: ' . $e->getMessage());
+        error_log('[learning] Trainee profile details failed: ' . $e->getMessage());
         $learningRecordsUnavailable = true;
     }
 }

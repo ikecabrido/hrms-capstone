@@ -2,6 +2,7 @@
 $employeeClass = new Employee();
 
 $learningPathRows = [];
+$pdo = null;
 
 try {
     require_once dirname(__DIR__, 4) . '/database/db.php';
@@ -41,12 +42,19 @@ function userInitials($first, $last) {
     return strtoupper(substr($f, 0, 1) . substr($l, 0, 1));
 }
 
-function userBadge($name, $empId) {
+function userBadge($name, $empId, $targetRole = 'learner') {
     if (!$name) return '<span style="font-size:0.78rem; color:rgba(32,0,130,0.4);">Unassigned</span>';
     $initials = userInitials(explode(' ', $name)[0] ?? '', explode(' ', $name)[1] ?? '');
+    $nameHtml = htmlspecialchars($name);
+    if ((int) $empId > 0) {
+        $profileUrl = LearningProfileLink::url((int) $empId, $targetRole);
+        if ($profileUrl !== '') {
+            $nameHtml = '<a href="' . htmlspecialchars($profileUrl, ENT_QUOTES, 'UTF-8') . '">' . $nameHtml . '</a>';
+        }
+    }
     return '<div style="display:flex; align-items:center; gap:0.5rem;">
         <div style="width:26px; height:26px; min-width:26px; border-radius:50%; background:linear-gradient(135deg, rgba(32,0,130,0.8), rgba(91,85,255,0.6)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.65rem; font-weight:700;">' . $initials . '</div>
-        <div><span style="font-size:0.82rem; font-weight:600; color:var(--text);">' . htmlspecialchars($name) . '</span>
+        <div><span style="font-size:0.82rem; font-weight:600; color:var(--text);">' . $nameHtml . '</span>
         <span style="font-size:0.7rem; color:rgba(32,0,130,0.4);">#'.$empId.'</span></div>
     </div>';
 }
@@ -62,7 +70,7 @@ function userBadge($name, $empId) {
 
     <div class="mode-card">
         <h2>Learning Path Management</h2>
-        <p>View and manage all learning paths. Create and edit paths using the instructor learning path editor.</p>
+        <p>View and manage all learning paths. Create and edit paths using the trainer learning path editor.</p>
         <div style="overflow-x:auto;">
             <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
                 <thead>
@@ -70,7 +78,7 @@ function userBadge($name, $empId) {
                         <th style="padding:0.8rem 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; width:36px;">ID</th>
                         <th style="padding:0.8rem 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Title</th>
                         <th style="padding:0.8rem 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; width:140px;">Assigned To</th>
-                        <th style="padding:0.8rem 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; width:140px;">Instructor</th>
+                        <th style="padding:0.8rem 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; width:140px;">Trainer</th>
                         <th style="padding:0.8rem 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; text-align:center; width:70px;">Items</th>
                         <th style="padding:0.8rem 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; text-align:center; width:80px;">Status</th>
                         <th style="padding:0.8rem 1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; text-align:center; width:80px;">Visibility</th>
@@ -89,6 +97,9 @@ function userBadge($name, $empId) {
                         <?php foreach ($learningPathRows as $lp): 
                             $initials = userInitials($lp['i_first_name'] ?? '', $lp['i_last_name'] ?? '');
                             $instructorName = ($lp['i_first_name'] ?? '') . ' ' . ($lp['i_last_name'] ?? '');
+                            $assignedRole = ($pdo && (int) ($lp['assigned_to'] ?? 0) > 0)
+                                ? LearningRole::forEmployee($pdo, (int) $lp['assigned_to'])
+                                : 'learner';
                             $statusColor = $lp['status'] === 'active' ? '#10b981' : ($lp['status'] === 'archived' ? '#9ca3af' : '#f59e0b');
                             $statusLabel = ucfirst($lp['status'] ?? 'active');
                         ?>
@@ -108,10 +119,10 @@ function userBadge($name, $empId) {
                                     </div>
                                 </td>
                                 <td style="padding:0.8rem 1rem;">
-                                    <?= userBadge($lp['assigned_to_name'] ?? '', (int)($lp['assigned_to'] ?? 0)) ?>
+                                    <?= userBadge($lp['assigned_to_name'] ?? '', (int)($lp['assigned_to'] ?? 0), $assignedRole) ?>
                                 </td>
                                 <td style="padding:0.8rem 1rem;">
-                                    <?= userBadge($instructorName, (int)($lp['instructor_id'] ?? 0)) ?>
+                                    <?= userBadge($instructorName, (int)($lp['instructor_id'] ?? 0), 'instructor') ?>
                                 </td>
                                 <td style="padding:0.8rem 1rem; text-align:center;">
                                     <span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.25rem 0.6rem; border-radius:999px; font-size:0.75rem; font-weight:700; background:rgba(32,0,130,0.08); color:var(--primary);">

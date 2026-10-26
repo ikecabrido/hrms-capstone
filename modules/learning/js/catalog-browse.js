@@ -354,7 +354,7 @@
             overviewHtml += '<div class="ec-field"><span class="ec-field-label">Type</span><p class="ec-field-value">' + label + '</p></div>';
             overviewHtml += '<div class="ec-field"><span class="ec-field-label">Status</span><p class="ec-field-value"><span class="ec-pill ' + (enrolled ? 'is-success' : 'is-primary') + '">' + (enrolled ? 'Enrolled' : 'Available') + '</span></p></div>';
             overviewHtml += '<div class="ec-field"><span class="ec-field-label">Category</span><p class="ec-field-value">' + cat + '</p></div>';
-            if (instructorName) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Instructor</span><p class="ec-field-value">' + instructorValue + '</p></div>';
+            if (instructorName) overviewHtml += '<div class="ec-field"><span class="ec-field-label">Trainer</span><p class="ec-field-value">' + instructorValue + '</p></div>';
         }
         emOverviewGrid.innerHTML = overviewHtml;
         emDescription.textContent = desc;

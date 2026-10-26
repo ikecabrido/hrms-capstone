@@ -50,7 +50,7 @@ logMsg('=== Engagement snapshot cron started ===');
 $learners = $pdo->query('SELECT DISTINCT learner_id FROM ld_enrollment')->fetchAll(PDO::FETCH_COLUMN);
 
 if (empty($learners)) {
-    logMsg('No learners with enrollment activity — nothing to snapshot.');
+    logMsg('No trainees with enrollment activity — nothing to snapshot.');
     exit(0);
 }
 
@@ -230,5 +230,5 @@ foreach ($learners as $learnerId) {
     $processed++;
 }
 
-logMsg("Upserted engagement snapshots for $processed learners on $today");
+logMsg("Upserted engagement snapshots for $processed trainees on $today");
 logMsg('=== Engagement snapshot cron complete ===');

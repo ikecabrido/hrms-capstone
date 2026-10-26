@@ -105,7 +105,7 @@ include __DIR__ . '/profile-gradebook.php';
                 $progress = $totalItems > 0 ? (int) round(($completedItems / $totalItems) * 100) : 0;
                 $instructorName = trim((string) ($enrollment['inst_first'] ?? '') . ' ' . (string) ($enrollment['inst_last'] ?? ''));
                 if ($instructorName === '') {
-                    $instructorName = 'Unassigned instructor';
+                    $instructorName = 'Unassigned trainer';
                 }
             ?>
                 <div class="pfl-list-item">

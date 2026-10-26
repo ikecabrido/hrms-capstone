@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="css/pages/moderation.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/moderation.css') ?>">
     <link rel="stylesheet" href="css/pages/notifications.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/notifications.css') ?>">
     <link rel="stylesheet" href="css/pages/catalog.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/catalog.css') ?>">
+    <link rel="stylesheet" href="css/pages/program.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/program.css') ?>">
     <link rel="stylesheet" href="css/pages/certificates.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/certificates.css') ?>">
     <link rel="stylesheet" href="css/pages/skill-gaps.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/skill-gaps.css') ?>">
     <link rel="stylesheet" href="css/pages/certificate-verify.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/certificate-verify.css') ?>">

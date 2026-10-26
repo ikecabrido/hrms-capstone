@@ -97,7 +97,7 @@ class Employee
     public function getGreeting()
     {
         $firstName = $this->getEmployeeFirstName();
-        $hour = (int) date('G');
+        $hour = (int) (new DateTimeImmutable('now', new DateTimeZone('Asia/Manila')))->format('G');
         if ($hour < 12) {
             $greeting = 'Good morning';
         } elseif ($hour < 18) {

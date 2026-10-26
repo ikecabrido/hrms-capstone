@@ -29,7 +29,7 @@ try {
     $stmt->execute([':lid' => $learnerId]);
     if (!$stmt->fetch()) {
         http_response_code(404);
-        die(json_encode(['error' => 'Learner not found']));
+        die(json_encode(['error' => 'Trainee not found']));
     }
 
     // Get learner info

@@ -233,7 +233,7 @@ $totalSteps = count($items);
                 <?php if (empty($items)): ?>
                     <div class="home-empty">
                         <i class="fas fa-route"></i>
-                        <p>Your learning path has no steps yet. Check back later or contact your instructor.</p>
+                        <p>Your learning path has no steps yet. Check back later or contact your trainer.</p>
                     </div>
                 <?php else: ?>
                     <ol class="lt-steps">
@@ -269,7 +269,7 @@ $totalSteps = count($items);
             <div class="home-card">
                 <div class="home-empty">
                     <i class="fas fa-route"></i>
-                    <p>You don't have a learning path assigned yet. Your instructor or admin can assign one to guide your learning journey.</p>
+                    <p>You don't have a learning path assigned yet. Your trainer or admin can assign one to guide your learning journey.</p>
                     <a class="home-cta" href="?page=learner/catalog"><i class="fas fa-compass"></i> Browse catalog</a>
                 </div>
             </div>

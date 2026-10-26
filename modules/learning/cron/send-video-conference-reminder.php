@@ -95,14 +95,14 @@ foreach ($firstConferences as $conf) {
     $platform = ucfirst(str_replace('_', ' ', $conf['platform']));
     $meetingLink = $conf['meeting_link'];
     $duration = $conf['duration_minutes'] ?? 60;
-    $instructorName = $conf['instructor_name'] ?? 'Instructor';
+    $instructorName = $conf['instructor_name'] ?? 'Trainer';
     $courseId = $conf['course_id'] ? (int)$conf['course_id'] : null;
 
     $title = "Upcoming: $confTitle (starts in {$firstMinutes} min)";
     $message = "A video conference is starting soon!\n\n"
              . "Conference: $confTitle\n"
              . "Course: $courseTitle\n"
-             . "Instructor: $instructorName\n"
+             . "Trainer: $instructorName\n"
              . "Platform: $platform\n"
              . "Scheduled: $scheduledAt\n"
              . "Duration: {$duration} minutes\n"
@@ -197,14 +197,14 @@ foreach ($secondConferences as $conf) {
     $platform = ucfirst(str_replace('_', ' ', $conf['platform']));
     $meetingLink = $conf['meeting_link'];
     $duration = $conf['duration_minutes'] ?? 60;
-    $instructorName = $conf['instructor_name'] ?? 'Instructor';
+    $instructorName = $conf['instructor_name'] ?? 'Trainer';
     $courseId = $conf['course_id'] ? (int)$conf['course_id'] : null;
 
     $title = "Starting NOW: $confTitle ({$secondMinutes} min)";
     $message = "Your video conference is about to begin!\n\n"
              . "Conference: $confTitle\n"
              . "Course: $courseTitle\n"
-             . "Instructor: $instructorName\n"
+             . "Trainer: $instructorName\n"
              . "Platform: $platform\n"
              . "Duration: {$duration} minutes\n"
              . "Link: $meetingLink\n\n"

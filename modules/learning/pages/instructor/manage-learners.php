@@ -50,13 +50,13 @@ try {
     <!-- Tab Switcher -->
     <?php if ($showLearnerImport): ?>
         <div id="ml-tabs" style="display:none; gap:0; margin-bottom:0; border-bottom:2px solid #eee;">
-            <button class="ml-tab active" onclick="switchTab('import')" aria-label="Import learners" title="Import learners"><i class="fas fa-file-import" aria-hidden="true"></i> Import Learners</button>
+            <button class="ml-tab active" onclick="switchTab('import')" aria-label="Import trainees" title="Import trainees"><i class="fas fa-file-import" aria-hidden="true"></i> Import Trainees</button>
             <button class="ml-tab" onclick="switchTab('roster')" aria-label="Course roster" title="Course roster"><i class="fas fa-clipboard-list" aria-hidden="true"></i> Course Roster</button>
         </div>
 
         <div id="ml-tab-import" class="ml-tab-content" style="display:none;">
         <div style="background:var(--surface, #fff); border-radius:12px; padding:1.5rem; box-shadow:0 1px 4px rgba(0,0,0,0.06); margin-top:1rem;">
-            <h3 style="margin:0 0 0.5rem; color:var(--text); font-size:1rem;">Import Learners</h3>
+            <h3 style="margin:0 0 0.5rem; color:var(--text); font-size:1rem;">Import Trainees</h3>
             <p style="font-size:0.8rem; color:#666; margin:0 0 1rem;">Drop a CSV file below, or paste emails/IDs/names manually.</p>
             
             <div id="ml-csv-dropzone"></div>
@@ -72,7 +72,7 @@ try {
             <!-- Parsed Results -->
             <div id="ml-parsed-results" style="display:none; margin-top:1.5rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                    <h4 style="margin:0; color:var(--text);">Found <span id="ml-found-count">0</span> Learners</h4>
+                    <h4 style="margin:0; color:var(--text);">Found <span id="ml-found-count">0</span> Trainees</h4>
                     <div style="display:flex; gap:0.5rem;">
                         <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.8rem; cursor:pointer;">
                             <input type="checkbox" id="ml-select-all" onchange="toggleSelectAll(this.checked)" checked> Select All
@@ -91,7 +91,7 @@ try {
     <div id="ml-tab-roster" class="ml-tab-content" style="display:<?= $showLearnerImport ? 'none' : 'block' ?>;">
         <div id="ml-roster-empty" style="text-align:center; padding:3rem; color:#999; display:none;">
             <div style="font-size:2rem; margin-bottom:0.5rem;"></div>
-            <p>No learners enrolled yet.</p>
+            <p>No trainees enrolled yet.</p>
         </div>
         <div id="ml-roster-list"></div>
     </div>
@@ -324,7 +324,7 @@ async function parseImport() {
     const courseId = document.getElementById('ml-course-select').value;
     
     if (!text) {
-        document.getElementById('ml-parse-status').textContent = 'Please paste some learner emails, IDs, or names.';
+        document.getElementById('ml-parse-status').textContent = 'Please paste some trainee emails, IDs, or names.';
         return;
     }
     if (!courseId) {
@@ -352,7 +352,7 @@ async function parseImport() {
         parsedLearners = data.found || [];
         document.getElementById('ml-found-count').textContent = parsedLearners.length;
         document.getElementById('ml-parse-status').innerHTML = 
-            `Found <strong>${data.total_found}</strong> learners` +
+            `Found <strong>${data.total_found}</strong> trainees` +
             (data.total_not_found > 0 ? ` · <span style="color:#ef4444;">${data.total_not_found} not found</span>` : '');
 
         renderParsedList();
@@ -398,7 +398,7 @@ async function bulkEnroll(mode) {
     const selected = Array.from(document.querySelectorAll('.ml-check:checked')).map(cb => parseInt(cb.value));
 
     if (selected.length === 0) {
-        if (window.showToast) window.showToast('Please select at least one learner', 'error');
+        if (window.showToast) window.showToast('Please select at least one trainee', 'error');
         return;
     }
 
@@ -416,7 +416,7 @@ async function bulkEnroll(mode) {
         const data = await resp.json();
 
         if (data.success) {
-            if (window.showToast) window.showToast(data.message || 'Learners enrolled', 'success');
+            if (window.showToast) window.showToast(data.message || 'Trainees enrolled', 'success');
             loadRoster();
             document.querySelectorAll('.ml-tab')[0].classList.remove('active');
             document.querySelectorAll('.ml-tab')[1].classList.add('active');
@@ -516,13 +516,13 @@ function renderRoster() {
             <span style="font-size:0.75rem; color:#666; min-width:35px; text-align:right;">${pct}%</span>
             <span class="ml-badge" style="background:${statusColor}20; color:${statusColor};">${r.status.replace('_', ' ')}</span>
             <span style="font-size:0.75rem; color:#666; min-width:35px; text-align:right;" title="Final score">${score}</span>
-            <button onclick="removeLearner(${r.enrollment_id})" title="Withdraw learner" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:1rem; padding:0.25rem;"></button>
+            <button onclick="removeLearner(${r.enrollment_id})" title="Withdraw trainee" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:1rem; padding:0.25rem;"></button>
         </div>`;
     }).join('');
 }
 
 async function removeLearner(enrollmentId) {
-    if (!confirm('Are you sure you want to withdraw this learner from the course?')) return;
+    if (!confirm('Are you sure you want to withdraw this trainee from the course?')) return;
 
     try {
         const resp = await fetch(MANAGE_LEARNERS_AJAX_BASE + 'unenroll-learner.php', {

@@ -73,7 +73,7 @@ try {
 function renderInstructorAnnouncements(array $items): void
 {
     if (empty($items)) {
-        ntfEmptyState('fa-bullhorn', 'No announcements', 'Policy updates and platform notices addressed to instructors will be listed here.');
+        ntfEmptyState('fa-bullhorn', 'No announcements', 'Policy updates and platform notices addressed to trainers will be listed here.');
         return;
     }
 
@@ -104,10 +104,10 @@ function renderInstructorAnnouncements(array $items): void
 }
 
 /** Inbox rows. The unread state is read-only here: messages are opened from the inbox. */
-function renderInstructorMessages(array $items): void
+function renderInstructorMessages(array $items, ?PDO $pdo = null): void
 {
     if (empty($items)) {
-        ntfEmptyState('fa-envelope', 'Inbox is clear', 'Messages from learners, admins and system contacts will arrive here.');
+        ntfEmptyState('fa-envelope', 'Inbox is clear', 'Messages from trainees, admins and system contacts will arrive here.');
         return;
     }
 
@@ -115,6 +115,14 @@ function renderInstructorMessages(array $items): void
     foreach ($items as $item) {
         $isRead = (int) ($item['is_read'] ?? 0) === 1;
         $sender = trim((string) ($item['sender_name'] ?? '')) ?: 'Unknown sender';
+        $senderId = (int) ($item['sender_id'] ?? 0);
+        $senderRole = $pdo instanceof PDO && $senderId > 0
+            ? LearningRole::forEmployee($pdo, $senderId)
+            : 'learner';
+        $senderUrl = $senderId > 0 ? LearningProfileLink::url($senderId, $senderRole) : '';
+        $senderHtml = $senderUrl !== ''
+            ? '<a href="' . htmlspecialchars($senderUrl, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($sender) . '</a>'
+            : htmlspecialchars($sender);
         $subject = trim((string) ($item['subject'] ?? '')) ?: 'No subject';
 
         echo '<article class="content-card-item ntf-item ' . ($isRead ? 'is-read' : 'is-unread') . '"'
@@ -128,7 +136,7 @@ function renderInstructorMessages(array $items): void
         echo '<h3>' . htmlspecialchars($subject) . '</h3>';
         echo '<p>' . htmlspecialchars((string) ($item['body'] ?? '')) . '</p>';
         echo '<div class="content-card-footer">'
-            . '<span><i class="fas fa-user" aria-hidden="true"></i> ' . htmlspecialchars($sender) . '</span>'
+            . '<span><i class="fas fa-user" aria-hidden="true"></i> ' . $senderHtml . '</span>'
             . '<span class="ntf-state ' . ($isRead ? 'is-read' : 'is-unread') . '">' . ($isRead ? 'Read' : 'Unread') . '</span>'
             . '</div>';
         echo '</div>';
@@ -144,7 +152,7 @@ function renderInstructorMessages(array $items): void
         <section class="home-hero">
             <div class="home-hero-main">
                 <h1>Notification</h1>
-                <p>Announcements addressed to instructors and every message waiting in your inbox, in one place.</p>
+                <p>Announcements addressed to trainers and every message waiting in your inbox, in one place.</p>
             </div>
         </section>
 
@@ -202,7 +210,7 @@ function renderInstructorMessages(array $items): void
             </div>
 
             <div class="tab-content" data-tab="tab-notif-messages" id="tab-notif-messages">
-                <?php renderInstructorMessages($messages); ?>
+                <?php renderInstructorMessages($messages, $pdo ?? null); ?>
             </div>
         </div>
     </div>

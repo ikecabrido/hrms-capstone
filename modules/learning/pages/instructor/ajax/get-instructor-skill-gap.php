@@ -3,6 +3,7 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 require_once dirname(__FILE__, 6) . '/database/db.php';
+require_once dirname(__FILE__, 4) . '/classes/ProfileLink.php';
 
 try {
     $instructorId = isset($_SESSION['employee_id']) ? (int) $_SESSION['employee_id'] : 0;
@@ -101,7 +102,11 @@ try {
                 $acquiredCount++;
             } else {
                 $missingCount++;
-                $missingLearners[] = $learnerNames[$lid] ?? 'Unknown';
+                $missingLearners[] = [
+                    'id' => $lid,
+                    'name' => $learnerNames[$lid] ?? 'Unknown',
+                    'profile_url' => LearningProfileLink::url($lid, 'learner'),
+                ];
             }
         }
 
@@ -139,6 +144,7 @@ try {
         $learnerSummaries[] = [
             'id' => $lid,
             'name' => $learnerNames[$lid] ?? 'Unknown',
+            'profile_url' => LearningProfileLink::url($lid, 'learner'),
             'acquired_count' => $acquiredCount,
             'gap_count' => $gapCount,
             'total_skills' => $totalSkills,
@@ -163,7 +169,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Failed to load instructor skill gap data.',
+        'message' => 'Failed to load trainer skill gap data.',
         'error' => $e->getMessage(),
     ]);
 }

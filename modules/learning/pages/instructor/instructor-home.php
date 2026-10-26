@@ -62,7 +62,7 @@ function instrTimeAgo($dt) {
             <div class="home-hero-aside">
                 <div class="home-hero-chips">
                     <span class="home-hero-chip"><i class="fas fa-book"></i> <?= (int) $stats['my_courses'] ?> course<?= $stats['my_courses'] !== 1 ? 's' : '' ?></span>
-                    <span class="home-hero-chip"><i class="fas fa-users"></i> <?= (int) $stats['my_learners'] ?> learner<?= $stats['my_learners'] !== 1 ? 's' : '' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-users"></i> <?= (int) $stats['my_learners'] ?> trainee<?= $stats['my_learners'] !== 1 ? 's' : '' ?></span>
                     <span class="home-hero-chip"><i class="fas fa-star"></i> <?= $stats['avg_score'] ?>% avg score</span>
                 </div>
             </div>
@@ -81,7 +81,7 @@ function instrTimeAgo($dt) {
             <a class="home-stat" href="?page=instructor/analytics">
                 <span class="home-stat-icon tone-indigo"><i class="fas fa-users"></i></span>
                 <span class="home-stat-body">
-                    <span class="home-stat-label">My Learners</span>
+                    <span class="home-stat-label">My Trainees</span>
                     <span class="home-stat-value"><?= (int) $stats['my_learners'] ?></span>
                     <span class="home-stat-sub"><?= (int) $stats['completed'] ?> completed</span>
                 </span>
@@ -200,7 +200,7 @@ function instrTimeAgo($dt) {
                         <h3 class="home-card-title"><span class="home-card-icon"><i class="fas fa-chart-pie"></i></span> Summary</h3>
                     </div>
                     <div class="home-kv"><span class="home-kv-label"><i class="fas fa-book"></i> Active Courses</span><span class="home-kv-value"><?= (int) $stats['my_courses'] ?></span></div>
-                    <div class="home-kv"><span class="home-kv-label"><i class="fas fa-users"></i> Total Learners</span><span class="home-kv-value"><?= (int) $stats['my_learners'] ?></span></div>
+                    <div class="home-kv"><span class="home-kv-label"><i class="fas fa-users"></i> Total Trainees</span><span class="home-kv-value"><?= (int) $stats['my_learners'] ?></span></div>
                     <div class="home-kv"><span class="home-kv-label"><i class="fas fa-check-circle"></i> Completed</span><span class="home-kv-value"><?= (int) $stats['completed'] ?></span></div>
                     <div class="home-kv"><span class="home-kv-label"><i class="fas fa-star"></i> Avg Score</span><span class="home-kv-value"><?= $stats['avg_score'] ?>%</span></div>
                     <div class="home-kv"><span class="home-kv-label"><i class="fas fa-project-diagram"></i> Programs</span><span class="home-kv-value"><?= (int) $stats['my_programs'] ?></span></div>

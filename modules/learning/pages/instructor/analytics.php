@@ -194,12 +194,12 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
         <section class="home-hero" aria-labelledby="ia-title">
             <div class="home-hero-main">
                 <h1 id="ia-title">Analytics</h1>
-                <p><?= $isAdminScope ? 'How courses, learners and grades are performing across the platform.' : 'How your courses, learners and grades are performing.' ?></p>
+                <p><?= $isAdminScope ? 'How courses, trainees and grades are performing across the platform.' : 'How your courses, trainees and grades are performing.' ?></p>
             </div>
             <div class="home-hero-aside">
                 <div class="home-hero-chips">
                     <span class="home-hero-chip"><i class="fas fa-graduation-cap"></i> <?= (int) $stats['my_courses'] ?> course<?= (int) $stats['my_courses'] === 1 ? '' : 's' ?></span>
-                    <span class="home-hero-chip"><i class="fas fa-users"></i> <?= (int) $stats['my_learners'] ?> learner<?= (int) $stats['my_learners'] === 1 ? '' : 's' ?></span>
+                    <span class="home-hero-chip"><i class="fas fa-users"></i> <?= (int) $stats['my_learners'] ?> trainee<?= (int) $stats['my_learners'] === 1 ? '' : 's' ?></span>
                     <span class="home-hero-chip"><i class="fas fa-star"></i> <?= $stats['avg_score'] ?>% avg score</span>
                 </div>
             </div>
@@ -217,7 +217,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
             <div class="home-stat is-link" title="Show the students tab" onclick="document.querySelector('.tab-item[data-tab=tab-students]').click()">
                 <span class="home-stat-icon tone-indigo"><i class="fas fa-users"></i></span>
                 <span class="home-stat-body">
-                    <span class="home-stat-label">Learners</span>
+                    <span class="home-stat-label">Trainees</span>
                     <span class="home-stat-value"><?= (int) $stats['my_learners'] ?></span>
                     <span class="home-stat-sub"><?= (int) $stats['completed'] ?> completed &middot; <?= (int) $stats['in_progress'] ?> active</span>
                 </span>
@@ -313,7 +313,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                         <div class="an-empty">
                             <i class="fas fa-book-open"></i>
                             <strong>No courses yet</strong>
-                            <span><?= $isAdminScope ? 'Courses will be ranked here once learners enroll.' : 'Courses you author will be ranked here.' ?></span>
+                            <span><?= $isAdminScope ? 'Courses will be ranked here once trainees enroll.' : 'Courses you author will be ranked here.' ?></span>
                         </div>
                         <?php else: ?>
                         <div class="an-table-wrap">
@@ -402,7 +402,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                         <div class="an-empty">
                             <i class="fas fa-users"></i>
                             <strong>No student data yet</strong>
-                            <span><?= $isAdminScope ? 'Learners appear here once they enrol in a course.' : 'Learners appear here once they enrol in your courses.' ?></span>
+                            <span><?= $isAdminScope ? 'Trainees appear here once they enrol in a course.' : 'Trainees appear here once they enrol in your courses.' ?></span>
                         </div>
                         <?php else: ?>
                         <div class="an-table-wrap">
@@ -455,7 +455,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                         <div class="an-empty">
                             <i class="fas fa-circle-check"></i>
                             <strong>No students flagged as at-risk</strong>
-                            <span>Inactive or failing learners will be listed here.</span>
+                            <span>Inactive or failing trainees will be listed here.</span>
                         </div>
                         <?php else: ?>
                         <div class="an-table-wrap">
@@ -502,7 +502,7 @@ $completionRate = $totalEnroll > 0 ? round(($stats['completed'] / $totalEnroll) 
                         <div class="an-empty">
                             <i class="fas fa-book-open"></i>
                             <strong>No active courses</strong>
-                            <span>Engagement appears once a published course has learners.</span>
+                            <span>Engagement appears once a published course has trainees.</span>
                         </div>
                         <?php else: ?>
                         <div class="an-table-wrap">

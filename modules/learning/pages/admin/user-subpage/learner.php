@@ -14,7 +14,7 @@ $employeeId = (int) ($_GET['id'] ?? 0);
 $profileViewKind = 'learner';
 $profileReadOnly = true;
 $profileEmployeeId = $employeeId;
-$profileRoleLabel = 'Learner';
+$profileRoleLabel = 'Trainee';
 
 require_once __DIR__ . '/../../shared/includes/profile-data.php';
 
@@ -22,7 +22,7 @@ $profile = $profileData['employee'];
 $profileFound = trim((string) ($profile['first_name'] ?? '')) !== ''
     || trim((string) ($profile['last_name'] ?? '')) !== '';
 $profileLearningRole = ($pdo && $profileFound) ? LearningRole::forEmployee($pdo, $employeeId) : 'learner';
-$profileData['role_label'] = ucfirst($profileLearningRole);
+$profileData['role_label'] = LearningRole::label($profileLearningRole);
 
 $enrollments = [];
 $quizAttempts = [];
@@ -176,9 +176,9 @@ $gradebookLink = null;
 
     <?php if (!$profileFound): ?>
         <div class="mode-card">
-            <h3 class="pfl-section-title"><i class="fas fa-user-slash" aria-hidden="true"></i> Learner not found</h3>
+            <h3 class="pfl-section-title"><i class="fas fa-user-slash" aria-hidden="true"></i> Trainee not found</h3>
             <p class="pfl-empty">
-                <?= $pdo ? 'The requested learner could not be found.' : 'Profile data is unavailable while the database connection is down.' ?>
+                <?= $pdo ? 'The requested trainee could not be found.' : 'Profile data is unavailable while the database connection is down.' ?>
                 <a href="?page=admin/user">Go back to User Management</a>
             </p>
         </div>

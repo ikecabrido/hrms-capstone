@@ -46,7 +46,7 @@ logMsg('=== Skill snapshot cron started ===');
 $learners = $pdo->query('SELECT DISTINCT learner_id FROM ld_enrollment')->fetchAll(PDO::FETCH_COLUMN);
 
 if (empty($learners)) {
-    logMsg('No learners with enrollment activity — nothing to snapshot.');
+    logMsg('No trainees with enrollment activity — nothing to snapshot.');
     exit(0);
 }
 

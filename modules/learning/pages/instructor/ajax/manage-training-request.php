@@ -61,7 +61,7 @@ try {
     // Notify the learner
     $instructorLabel = '';
     try {
-        $instrName = 'An instructor';
+        $instrName = 'A trainer';
         $empStmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) AS name FROM em_employees WHERE employee_id = :eid");
         $empStmt->execute([':eid' => $instructorId]);
         $empRow = $empStmt->fetch(PDO::FETCH_ASSOC);

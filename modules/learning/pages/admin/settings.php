@@ -153,7 +153,7 @@ if ($pdo instanceof PDO) {
                         <div class="settings-row">
                             <div class="settings-row-label">
                                 <label for="set-quiz-minutes">Default time limit</label>
-                                <span class="settings-hint">Countdown given to learners when they start an assessment.</span>
+                                <span class="settings-hint">Countdown given to trainees when they start an assessment.</span>
                             </div>
                             <div class="settings-row-control">
                                 <input type="number" id="set-quiz-minutes" name="default_quiz_duration_minutes" class="settings-field" value="<?= htmlspecialchars($quizMinutesLabel, ENT_QUOTES) ?>" min="1" step="0.5" required>
@@ -164,7 +164,7 @@ if ($pdo instanceof PDO) {
                         <div class="settings-row">
                             <div class="settings-row-label">
                                 <label for="set-max-attempts">Default attempts allowed</label>
-                                <span class="settings-hint">How many times a learner may retake an assessment.</span>
+                                <span class="settings-hint">How many times a trainee may retake an assessment.</span>
                             </div>
                             <div class="settings-row-control">
                                 <input type="number" id="set-max-attempts" name="default_max_quiz_attempts" class="settings-field" value="<?= $val('default_max_quiz_attempts', '2') ?>" min="1" required>
@@ -175,7 +175,7 @@ if ($pdo instanceof PDO) {
                         <div class="settings-row">
                             <div class="settings-row-label">
                                 <label for="set-passing-score">Default passing score</label>
-                                <span class="settings-hint">Score a learner must reach for an assessment to count as passed.</span>
+                                <span class="settings-hint">Score a trainee must reach for an assessment to count as passed.</span>
                             </div>
                             <div class="settings-row-control">
                                 <input type="number" id="set-passing-score" name="default_passing_score" class="settings-field" value="<?= $val('default_passing_score', '70') ?>" min="0" max="100" required>
@@ -213,7 +213,7 @@ if ($pdo instanceof PDO) {
                         <div class="settings-row">
                             <div class="settings-row-label">
                                 <label for="set-upload-mb">Maximum upload size</label>
-                                <span class="settings-hint">Largest file a learner or instructor may attach.</span>
+                                <span class="settings-hint">Largest file a trainee or trainer may attach.</span>
                             </div>
                             <div class="settings-row-control">
                                 <input type="number" id="set-upload-mb" name="file_upload_max_mb" class="settings-field" value="<?= $val('file_upload_max_mb', '25') ?>" min="1" required>
@@ -226,7 +226,7 @@ if ($pdo instanceof PDO) {
                 <section class="settings-group">
                     <div class="settings-group-head">
                         <h2><i class="fas fa-shield-halved"></i> Moderation</h2>
-                        <p>Housekeeping for learner reports.</p>
+                        <p>Housekeeping for trainee reports.</p>
                     </div>
                     <div class="settings-rows">
                         <div class="settings-row">
@@ -254,7 +254,7 @@ if ($pdo instanceof PDO) {
                 <section class="settings-group">
                     <div class="settings-group-head">
                         <h2><i class="fas fa-envelope-open-text"></i> Enrollments</h2>
-                        <p>How long a learner has to accept an enrollment invitation.</p>
+                        <p>How long a trainee has to accept an enrollment invitation.</p>
                     </div>
                     <div class="settings-rows">
                         <div class="settings-row">

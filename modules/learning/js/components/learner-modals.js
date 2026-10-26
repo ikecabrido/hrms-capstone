@@ -71,10 +71,10 @@
                     const startDate = this.dataset.startDate || '';
                     const deadline = this.dataset.deadline || '';
                     let detailsHtml = '';
-                    if (instructor) detailsHtml += '<p style="margin:0; color:#666;"><strong>Instructor:</strong> ' + instructor + '</p>';
+                    if (instructor) detailsHtml += '<p style="margin:0; color:#666;"><strong>Trainer:</strong> ' + instructor + '</p>';
                     detailsHtml += '<p style="margin:0.3rem 0 0 0; color:#666;"><strong>Duration:</strong> Self-paced</p>';
                     if (parseInt(modules) > 0) detailsHtml += '<p style="margin:0.3rem 0 0 0; color:#666;"><strong>Modules:</strong> ' + modules + '</p>';
-                    if (parseInt(enrollments) > 0) detailsHtml += '<p style="margin:0.3rem 0 0 0; color:#666;"><strong>Enrolled:</strong> ' + enrollments + ' learner(s)</p>';
+                    if (parseInt(enrollments) > 0) detailsHtml += '<p style="margin:0.3rem 0 0 0; color:#666;"><strong>Enrolled:</strong> ' + enrollments + (parseInt(enrollments) === 1 ? ' trainee' : ' trainees') + '</p>';
                     if (startDate) detailsHtml += '<p style="margin:0.3rem 0 0 0; color:#666;"><strong>Start Date:</strong> ' + new Date(startDate).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) + '</p>';
                     if (deadline) detailsHtml += '<p style="margin:0.3rem 0 0 0; color:#666;"><strong>Enrollment Deadline:</strong> ' + new Date(deadline).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) + '</p>';
                     contentHtml = '<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">' +

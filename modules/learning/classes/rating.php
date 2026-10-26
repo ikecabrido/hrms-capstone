@@ -87,7 +87,7 @@ class Rating
         $comment = isset($input['comment']) ? trim((string) $input['comment']) : null;
 
         if ($learnerId <= 0) {
-            return ['success' => false, 'message' => 'Learner ID is required.'];
+            return ['success' => false, 'message' => 'Trainee ID is required.'];
         }
 
         if ($courseId <= 0) {

@@ -46,7 +46,7 @@ try {
             ['label' => 'Lessons', 'value' => $lessonCount],
             ['label' => 'Quizzes', 'value' => $quizCount],
             ['label' => 'Evaluations', 'value' => $evaluationCount],
-            ['label' => 'Enrolled learners', 'value' => $enrollmentCount],
+            ['label' => 'Enrolled trainees', 'value' => $enrollmentCount],
             ['label' => 'Assessment attempts', 'value' => $sessionCount],
         ];
     } elseif ($type === 'Module') {
@@ -60,7 +60,7 @@ try {
             ['label' => 'Parent course', 'value' => $courseId ? 'Course #' . $courseId : 'N/A'],
             ['label' => 'Lessons', 'value' => $lessonCount],
             ['label' => 'Quizzes', 'value' => $quizCount],
-            ['label' => 'Learners', 'value' => $enrollmentCount],
+            ['label' => 'Trainees', 'value' => $enrollmentCount],
             ['label' => 'Status', 'value' => $courseRes['status'] ?? 'active'],
         ];
     } elseif ($type === 'Lesson') {
@@ -108,7 +108,7 @@ try {
         $assignedVal = fetchOne($pdo, 'SELECT assigned_to, status FROM ld_learning_path WHERE id = :id', [':id' => $id]);
         $data['summary'] = [
             ['label' => 'Items', 'value' => $itemCount],
-            ['label' => 'Assigned to', 'value' => !empty($assignedVal['assigned_to']) ? 'Learner #' . (int) $assignedVal['assigned_to'] : 'General'],
+            ['label' => 'Assigned to', 'value' => !empty($assignedVal['assigned_to']) ? 'Trainee #' . (int) $assignedVal['assigned_to'] : 'General'],
             ['label' => 'Status', 'value' => $assignedVal['status'] ?? 'active'],
         ];
     } elseif ($type === 'Program') {

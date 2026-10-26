@@ -28,7 +28,7 @@ class Grade
     public function calculateAndStore(int $learnerId, int $courseId): array
     {
         if ($learnerId <= 0 || $courseId <= 0) {
-            return ['success' => false, 'message' => 'Learner ID and Course ID are required.'];
+            return ['success' => false, 'message' => 'Trainee ID and Course ID are required.'];
         }
 
         $existing = $this->getByLearnerAndCourse($learnerId, $courseId);

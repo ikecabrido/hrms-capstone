@@ -142,7 +142,7 @@ function renderAdminAnnouncements(array $items): void
         <section class="home-hero">
             <div class="home-hero-main">
                 <h1>Notifications</h1>
-                <p>System alerts, enrollment and grading activity, plus the announcements you publish to learners and instructors.</p>
+                <p>System alerts, enrollment and grading activity, plus the announcements you publish to trainees and trainers.</p>
             </div>
         </section>
 

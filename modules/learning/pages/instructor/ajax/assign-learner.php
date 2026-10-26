@@ -29,7 +29,7 @@ try {
 
     if ($learnerId <= 0 || $courseId <= 0) {
         http_response_code(422);
-        echo json_encode(['success' => false, 'message' => 'Learner and Course are required.']);
+        echo json_encode(['success' => false, 'message' => 'Trainee and Course are required.']);
         exit;
     }
 

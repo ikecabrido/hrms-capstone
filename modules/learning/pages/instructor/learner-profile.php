@@ -42,12 +42,12 @@ try {
         }
     }
 } catch (Throwable $e) {
-    error_log('[learning] Instructor learner profile lookup failed: ' . $e->getMessage());
+    error_log('[learning] Trainer trainee profile lookup failed: ' . $e->getMessage());
     $profileLoadFailed = true;
 }
 
 if ($profileAuthorized) {
-    $profileRoleLabel = 'Learner';
+    $profileRoleLabel = 'Trainee';
     require __DIR__ . '/../shared/includes/profile-data.php';
 
     try {
@@ -68,7 +68,7 @@ if ($profileAuthorized) {
         ]);
         $courseActivity = $activityQuery->fetchAll(PDO::FETCH_ASSOC);
     } catch (Throwable $e) {
-        error_log('[learning] Instructor learner profile activity lookup failed: ' . $e->getMessage());
+        error_log('[learning] Trainer trainee profile activity lookup failed: ' . $e->getMessage());
         $profileLoadFailed = true;
     }
 }
@@ -122,11 +122,11 @@ if ($profileAuthorized) {
 <?php else: ?>
     <div class="module-content">
         <div class="mode-card">
-            <h2 class="pfl-section-title"><i class="fas fa-user-slash" aria-hidden="true"></i> Learner profile unavailable</h2>
+            <h2 class="pfl-section-title"><i class="fas fa-user-slash" aria-hidden="true"></i> Trainee profile unavailable</h2>
             <p class="pfl-empty">
                 <?= $profileLoadFailed
-                    ? 'The learner profile could not be loaded. Please try again later.'
-                    : 'This learner is not enrolled in one of your courses, or the profile could not be found.' ?>
+                    ? 'The trainee profile could not be loaded. Please try again later.'
+                    : 'This trainee is not enrolled in one of your courses, or the profile could not be found.' ?>
                 <a href="?page=instructor/gradebook">Return to Grade Book</a>
             </p>
         </div>

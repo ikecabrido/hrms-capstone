@@ -104,7 +104,7 @@ try {
         if ($enrollmentCount >= 10) $score += 10;
         elseif ($enrollmentCount >= 5) $score += 5;
         if ($enrollmentCount > 0) {
-            $matchReasons[] = $enrollmentCount . ' learner' . ($enrollmentCount !== 1 ? 's' : '') . ' enrolled';
+            $matchReasons[] = $enrollmentCount . ' trainee' . ($enrollmentCount !== 1 ? 's' : '') . ' enrolled';
         }
 
         // 4. Newness bonus (created in last 30 days)

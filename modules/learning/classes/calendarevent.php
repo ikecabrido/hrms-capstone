@@ -91,7 +91,7 @@ class CalendarEvent
         $durationMinutes = isset($input['duration_minutes']) ? (int) $input['duration_minutes'] : null;
 
         if ($instructorId <= 0) {
-            return ['success' => false, 'message' => 'Instructor ID is required.'];
+            return ['success' => false, 'message' => 'Trainer ID is required.'];
         }
 
         if (!in_array($type, ['program', 'training', 'video-conference'], true)) {

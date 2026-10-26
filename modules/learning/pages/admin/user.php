@@ -160,8 +160,8 @@ function userEmailCell(array $row): string {
         <div class="tab-list">
             <button type="button" class="tab-item active" data-tab="tab-all-users" aria-label="All users" title="All users"><i class="fas fa-users" aria-hidden="true"></i> All Users (<?= count($allUsers) ?>)</button>
             <button type="button" class="tab-item" data-tab="tab-admins" aria-label="Admins" title="Admins"><i class="fas fa-user-shield" aria-hidden="true"></i> Admins (<?= count($admins) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-instructors" aria-label="Instructors" title="Instructors"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Instructors (<?= count($instructors) ?>)</button>
-            <button type="button" class="tab-item" data-tab="tab-learners" aria-label="Learners" title="Learners"><i class="fas fa-user-graduate" aria-hidden="true"></i> Learners (<?= count($learners) ?>)</button>
+            <button type="button" class="tab-item" data-tab="tab-instructors" aria-label="Trainers" title="Trainers"><i class="fas fa-chalkboard-user" aria-hidden="true"></i> Trainers (<?= count($instructors) ?>)</button>
+            <button type="button" class="tab-item" data-tab="tab-learners" aria-label="Trainees" title="Trainees"><i class="fas fa-user-graduate" aria-hidden="true"></i> Trainees (<?= count($learners) ?>)</button>
         </div>
 
         <!-- All users -->
@@ -199,7 +199,7 @@ function userEmailCell(array $row): string {
                                         </div>
                                     </td>
                                     <td class="user-cell-email"><?= userEmailCell($user) ?></td>
-                                    <td><span class="user-role is-<?= $roleClass ?>"><?= htmlspecialchars(ucfirst($roleClass)) ?></span></td>
+                                    <td><span class="user-role is-<?= $roleClass ?>"><?= htmlspecialchars(LearningRole::label($roleClass)) ?></span></td>
                                     <td class="is-center">
                                         <a class="user-view-btn" href="<?= htmlspecialchars(LearningProfileLink::url((int) $user['employee_id'], $roleClass), ENT_QUOTES, 'UTF-8') ?>">View</a>
                                     </td>
@@ -260,8 +260,8 @@ function userEmailCell(array $row): string {
             <?php if (empty($instructors)): ?>
                 <div class="user-empty">
                     <i class="fas fa-chalkboard-user" aria-hidden="true"></i>
-                    <h3>No instructors found</h3>
-                    <p>Active users with the Instructor Learning role will appear here.</p>
+                    <h3>No trainers found</h3>
+                    <p>Active users with the Trainer Learning role will appear here.</p>
                 </div>
             <?php else: ?>
                 <div class="user-table-wrap">
@@ -272,7 +272,7 @@ function userEmailCell(array $row): string {
                                 <th>Email</th>
                                 <th>Learning Role</th>
                                 <th class="is-center">Courses</th>
-                                <th class="is-center">Learners</th>
+                                <th class="is-center">Trainees</th>
                                 <th class="is-center">Completed</th>
                                 <th class="is-center">Actions</th>
                             </tr>
@@ -293,7 +293,7 @@ function userEmailCell(array $row): string {
                                         </div>
                                     </td>
                                     <td class="user-cell-email"><?= userEmailCell($inst) ?></td>
-                                    <td><span class="user-role is-instructor">Instructor</span></td>
+                                    <td><span class="user-role is-instructor">Trainer</span></td>
                                     <td class="is-center user-stat"><?= (int) $inst['course_count'] ?></td>
                                     <td class="is-center user-stat"><?= (int) $inst['learner_count'] ?></td>
                                     <td class="is-center"><span class="user-rate <?= $rateClass ?>"><?= $completionRate ?>%</span></td>
@@ -313,8 +313,8 @@ function userEmailCell(array $row): string {
             <?php if (empty($learners)): ?>
                 <div class="user-empty">
                     <i class="fas fa-user-graduate" aria-hidden="true"></i>
-                    <h3>No learners found</h3>
-                    <p>Active employee accounts with the Learner role will appear here.</p>
+                    <h3>No trainees found</h3>
+                    <p>Active employee accounts with the Trainee role will appear here.</p>
                 </div>
             <?php else: ?>
                 <div class="user-table-wrap">

@@ -24,7 +24,7 @@ try {
     $stmt = $pdo->prepare("SELECT employee_id, first_name, last_name, email FROM em_employees WHERE employee_id = :eid");
     $stmt->execute([':eid' => $learnerId]);
     $learner = $stmt->fetch();
-    if (!$learner) { echo 'Learner not found'; exit; }
+    if (!$learner) { echo 'Trainee not found'; exit; }
 
     // Get all enrollments with grades
     $stmt = $pdo->prepare("

@@ -73,7 +73,7 @@ try {
     $requestId = (int) $pdo->lastInsertId();
 
     // Create notification for all instructors
-    $learnerName = 'A learner';
+    $learnerName = 'A trainee';
     try {
         $empStmt = $pdo->prepare("SELECT CONCAT(first_name, ' ', last_name) AS name FROM em_employees WHERE employee_id = :eid");
         $empStmt->execute([':eid' => $learnerId]);

@@ -115,7 +115,7 @@ $expiryStatusLabels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' =>
         <section class="home-hero" aria-labelledby="cert-title">
             <div class="home-hero-main">
                 <h1 id="cert-title">Certificates</h1>
-                <p>Issue, verify and monitor the certificates your learners have earned, and manage the templates behind them.</p>
+                <p>Issue, verify and monitor the certificates your trainees have earned, and manage the templates behind them.</p>
             </div>
             <div class="home-hero-aside">
                 <div class="home-hero-chips">
@@ -158,7 +158,7 @@ $expiryStatusLabels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' =>
                     <div class="cert-empty">
                         <i class="fas fa-award" aria-hidden="true"></i>
                         <strong>No certificates issued</strong>
-                        <p>Certificates will appear here once learners complete their courses.</p>
+                        <p>Certificates will appear here once trainees complete their courses.</p>
                     </div>
                 <?php else: ?>
                     <div class="cert-grid">
@@ -208,7 +208,7 @@ $expiryStatusLabels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' =>
                                 <div class="cert-person">
                                     <span class="cert-avatar" aria-hidden="true"><?= htmlspecialchars($initials) ?></span>
                                     <div class="cert-person-text">
-                                        <div class="cert-person-name"><?= $name ?></div>
+                                        <div class="cert-person-name"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $cert['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>" onclick="event.stopPropagation();"><?= $name ?></a></div>
                                         <div class="cert-person-mail"><?= htmlspecialchars($cert['email']) ?></div>
                                     </div>
                                 </div>
@@ -264,7 +264,7 @@ $expiryStatusLabels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' =>
                         <table class="cert-table" id="expiry-table">
                             <thead>
                                 <tr>
-                                    <th>Learner</th>
+                                    <th>Trainee</th>
                                     <th>Course</th>
                                     <th>Issued</th>
                                     <th>Valid Until</th>
@@ -281,7 +281,7 @@ $expiryStatusLabels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' =>
                                 ?>
                                 <tr class="expiry-row" data-expiry="<?= htmlspecialchars($cert['expiry_status']) ?>" data-search="<?= strtolower($name . ' ' . htmlspecialchars($cert['course_title'])) ?>">
                                     <td>
-                                        <div class="cert-cell-name"><?= $name ?></div>
+                                        <div class="cert-cell-name"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $cert['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= $name ?></a></div>
                                         <div class="cert-cell-sub"><?= htmlspecialchars($cert['email']) ?></div>
                                     </td>
                                     <td><?= htmlspecialchars($cert['course_title']) ?></td>
@@ -363,7 +363,7 @@ $expiryStatusLabels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' =>
                                         <div class="cert-person">
                                             <span class="cert-avatar" aria-hidden="true"><?= $initials ?></span>
                                             <div class="cert-person-text">
-                                                <div class="cert-person-name"><?= $name ?></div>
+                                                <div class="cert-person-name"><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $uc['employee_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= $name ?></a></div>
                                                 <div class="cert-person-mail"><?= htmlspecialchars($uc['email']) ?></div>
                                             </div>
                                         </div>
@@ -503,7 +503,7 @@ $expiryStatusLabels = ['valid' => 'Valid', 'warning' => 'Warning', 'critical' =>
         <div class="cert-modal-body is-center">
             <div class="cert-modal-icon is-danger"><i class="fas fa-ban" aria-hidden="true"></i></div>
             <h3 id="revoke-modal-title" class="cert-modal-lead">Revoke certificate?</h3>
-            <p class="cert-modal-text">This will revoke the certificate for <strong id="revoke-course-name"></strong>. The learner will lose access to this credential.</p>
+            <p class="cert-modal-text">This will revoke the certificate for <strong id="revoke-course-name"></strong>. The trainee will lose access to this credential.</p>
             <div id="revoke-error" class="cert-inline-error is-left is-last"></div>
         </div>
         <div class="cert-modal-foot is-center">

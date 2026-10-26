@@ -305,7 +305,7 @@ if ($postAction === 'update_status') {
         $inboxError = 'Your session token expired. Reload this page and try again.';
     } elseif ($requestId === false || $requestId < 1 || !in_array($mode, ['assign', 'clear'], true)) {
         http_response_code(400);
-        $inboxError = 'The requested instructor update is invalid.';
+        $inboxError = 'The requested trainer update is invalid.';
     } else {
         try {
             $lookup = $pdo->prepare(
@@ -319,10 +319,10 @@ if ($postAction === 'update_status') {
             } elseif ($mode === 'clear') {
                 $pdo->prepare('UPDATE ld_training_requests SET instructor_id = NULL WHERE id = :id')
                     ->execute([':id' => $requestId]);
-                $inboxMessage = 'Instructor unassigned from this training action.';
+                $inboxMessage = 'Trainer unassigned from this training action.';
             } elseif (!$isDesignatedInstructor($pdo, $instructorId)) {
                 http_response_code(400);
-                $inboxError = 'Choose an instructor who is currently designated.';
+                $inboxError = 'Choose a trainer who is currently designated.';
             } else {
                 $pdo->prepare('UPDATE ld_training_requests SET instructor_id = :iid WHERE id = :id')
                     ->execute([':iid' => $instructorId, ':id' => $requestId]);
@@ -332,7 +332,7 @@ if ($postAction === 'update_status') {
             }
         } catch (Throwable $exception) {
             DbError::capture($exception, 'admin/workforce-integration');
-            $inboxError = 'The instructor assignment could not be saved.';
+            $inboxError = 'The trainer assignment could not be saved.';
         }
     }
 }
@@ -613,7 +613,7 @@ $renderInstructorControl = static function (array $record) use ($instructorOptio
     $assignedName = trim((string) ($record['instructor_name'] ?? ''));
 
     echo '<div class="wf-assign">';
-    echo '<span class="wf-assign-label"><i class="fas fa-user-tie" aria-hidden="true"></i>Instructor</span>';
+    echo '<span class="wf-assign-label"><i class="fas fa-user-tie" aria-hidden="true"></i>Trainer</span>';
     echo '<span class="wf-assign-name' . ($assignedName === '' ? ' is-empty' : '') . '">';
     if ($assignedId > 0 && $assignedName !== '') {
         echo '<a href="' . htmlspecialchars(LearningProfileLink::url($assignedId, 'instructor'), ENT_QUOTES, 'UTF-8') . '">'
@@ -624,7 +624,7 @@ $renderInstructorControl = static function (array $record) use ($instructorOptio
     echo '</span>';
 
     if (!$instructorOptions) {
-        echo '<span class="wf-link-none">No instructors are designated yet.</span>';
+        echo '<span class="wf-link-none">No trainers are designated yet.</span>';
         echo '</div>';
         return;
     }
@@ -634,8 +634,8 @@ $renderInstructorControl = static function (array $record) use ($instructorOptio
     echo '<input type="hidden" name="action" value="assign_instructor">';
     echo '<input type="hidden" name="record_type" value="training_request">';
     echo '<input type="hidden" name="record_id" value="' . (int) $record['id'] . '">';
-    echo '<select name="instructor_id" class="wf-link-select" aria-label="Designated instructor to assign">';
-    echo '<option value="">Choose an instructor…</option>';
+    echo '<select name="instructor_id" class="wf-link-select" aria-label="Designated trainer to assign">';
+    echo '<option value="">Choose a trainer…</option>';
     foreach ($instructorOptions as $option) {
         $value = (int) $option['employee_id'];
         echo '<option value="' . $value . '"' . ($value === $assignedId ? ' selected' : '') . '>'
@@ -724,7 +724,7 @@ $levelBadge = static function ($level) use ($escape): string {
                         <div class="wf-table-wrap">
                             <table class="wf-table">
                                 <thead>
-                                    <tr><th>Need</th><th>Department</th><th>Priority</th><th>Learners</th><th>Expected output</th><th>Received</th><th>Actions</th></tr>
+                                    <tr><th>Need</th><th>Department</th><th>Priority</th><th>Trainees</th><th>Expected output</th><th>Received</th><th>Actions</th></tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($records['competency'] as $record): ?>
@@ -840,12 +840,12 @@ $levelBadge = static function ($level) use ($escape): string {
                         <div class="wf-table-wrap">
                             <table class="wf-table">
                                 <thead>
-                                    <tr><th>Learner / group</th><th>Department</th><th>Activity</th><th>Engagement</th><th>Recommended action</th><th>Received</th><th>Actions</th></tr>
+                                    <tr><th>Trainee / group</th><th>Department</th><th>Activity</th><th>Engagement</th><th>Recommended action</th><th>Received</th><th>Actions</th></tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($records['engagement'] as $record): ?>
                                         <tr>
-                                            <td><span class="wf-cell-title"><?php if ((int) $record['learner_id'] > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $record['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= $escape($record['learner_name'] ?: 'Employee #' . $record['learner_id']) ?></a><?php else: ?><?= $escape($record['learner_name'] ?: ucwords(str_replace('-', ' ', $record['learner_team_type']))) ?><?php endif; ?></span></td>
+                                            <td><span class="wf-cell-title"><?php if ((int) $record['learner_id'] > 0): ?><a href="<?= htmlspecialchars(LearningProfileLink::url((int) $record['learner_id'], 'learner'), ENT_QUOTES, 'UTF-8') ?>"><?= $escape($record['learner_name'] ?: 'Employee #' . $record['learner_id']) ?></a><?php else: ?><?= $escape($record['learner_name'] ?: str_replace('Learner', 'Trainee', ucwords(str_replace('-', ' ', $record['learner_team_type'])))) ?><?php endif; ?></span></td>
                                             <td><?= $escape($record['department']) ?></td>
                                             <td><?= $escape(ucwords(str_replace('-', ' ', $record['training_activity']))) ?></td>
                                             <td>

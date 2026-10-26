@@ -223,7 +223,7 @@ function instrGradeBookTimeAgo($datetime) {
         <section class="home-hero" aria-labelledby="gb-title">
             <div class="home-hero-main">
                 <h1 id="gb-title">Grade Book</h1>
-                <p>Quiz scores, averages, and letter grades for the learners enrolled in the courses you teach.</p>
+                <p>Quiz scores, averages, and letter grades for the trainees enrolled in the courses you teach.</p>
             </div>
             <div class="home-hero-aside">
                 <div class="home-hero-chips">
@@ -302,7 +302,7 @@ function instrGradeBookTimeAgo($datetime) {
         <div class="gb-empty">
             <i class="fas fa-clipboard-list"></i>
             <strong>No grade data yet</strong>
-            <span>Learners in your courses will appear here once they start taking quizzes.</span>
+            <span>Trainees in your courses will appear here once they start taking quizzes.</span>
         </div>
         <?php else: ?>
         <div class="gb-card">

@@ -38,6 +38,24 @@ class LearningRole
         return 'learner';
     }
 
+    public static function label(?string $role): string
+    {
+        return [
+            'admin' => 'Admin',
+            'instructor' => 'Trainer',
+            'learner' => 'Trainee',
+        ][$role] ?? 'Trainee';
+    }
+
+    public static function pluralLabel(?string $role): string
+    {
+        return [
+            'admin' => 'Admins',
+            'instructor' => 'Trainers',
+            'learner' => 'Trainees',
+        ][$role] ?? 'Trainees';
+    }
+
     public static function forEmployee(PDO $pdo, int $employeeId): string
     {
         $stmt = $pdo->prepare("SELECT e.employee_id, e.role_id, r.role_name, d.department_name,
