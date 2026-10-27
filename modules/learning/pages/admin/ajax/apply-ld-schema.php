@@ -27,9 +27,6 @@ require_once dirname(__FILE__, 4) . '/classes/LearningDatabaseTools.php';
 require_once dirname(__FILE__, 4) . '/classes/CSRF.php';
 require_once dirname(__FILE__, 4) . '/classes/dberror.php';
 
-/** Statements a file may contain beyond this are treated as a runaway script. */
-const LD_SCHEMA_MAX_STATEMENTS = 300;
-
 function ldSchemaResponse(int $status, array $body): void
 {
     http_response_code($status);
@@ -422,11 +419,21 @@ try {
 
 // ── Upload ───────────────────────────────────────────────────────────────────
 $file = $_FILES['sql_file'] ?? null;
-if (!$file || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'] ?? '')) {
+if (!$file) {
     ldSchemaResponse(400, ['success' => false, 'message' => 'Choose a valid .sql file.']);
 }
-if (($file['size'] ?? 0) <= 0 || $file['size'] > 10 * 1024 * 1024) {
-    ldSchemaResponse(413, ['success' => false, 'message' => 'The schema file must be smaller than 10 MB.']);
+$uploadError = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+if ($uploadError !== UPLOAD_ERR_OK) {
+    if ($uploadError === UPLOAD_ERR_INI_SIZE || $uploadError === UPLOAD_ERR_FORM_SIZE) {
+        ldSchemaResponse(413, [
+            'success' => false,
+            'message' => 'The SQL file exceeds the upload limit configured by the server. Increase PHP upload_max_filesize and post_max_size to accept a larger file.',
+        ]);
+    }
+    ldSchemaResponse(400, ['success' => false, 'message' => 'The SQL file upload failed. Choose the file again and retry.']);
+}
+if (!is_uploaded_file($file['tmp_name'] ?? '') || ($file['size'] ?? 0) <= 0) {
+    ldSchemaResponse(400, ['success' => false, 'message' => 'Choose a valid, non-empty .sql file.']);
 }
 if (strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION)) !== 'sql') {
     ldSchemaResponse(415, ['success' => false, 'message' => 'Upload a file with a .sql extension.']);
@@ -445,13 +452,6 @@ $database = (string) $pdo->query('SELECT DATABASE()')->fetchColumn();
 $statements = ldSchemaSplit($contents);
 if (!$statements) {
     ldSchemaResponse(422, ['success' => false, 'message' => 'No SQL statements were found in the file.']);
-}
-if (count($statements) > LD_SCHEMA_MAX_STATEMENTS) {
-    ldSchemaResponse(413, [
-        'success' => false,
-        'message' => 'The file contains ' . number_format(count($statements)) . ' statements; this tool accepts up to '
-            . LD_SCHEMA_MAX_STATEMENTS . '. Split it into smaller files.',
-    ]);
 }
 
 $plan = [];

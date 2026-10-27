@@ -213,6 +213,14 @@ check(
         && strpos($courseAuthoringSource, "BackLink::anchor('instructor/training'") !== false
         && strpos($courseAuthoringSource, "BackLink::anchor('instructor/elearning'") === false
 );
+$schemaImportSource = file_get_contents($moduleRoot . '/pages/admin/ajax/apply-ld-schema.php');
+check(
+    'schema import has no fixed statement or file-size ceiling',
+    is_string($schemaImportSource)
+        && strpos($schemaImportSource, 'LD_SCHEMA_MAX_STATEMENTS') === false
+        && strpos($schemaImportSource, '10 * 1024 * 1024') === false
+        && strpos($schemaImportSource, 'upload_max_filesize and post_max_size') !== false
+);
 
 request('learner', null);
 same('no page requested serves the dashboard', 'dashboard-overview', $pageController->getPage());

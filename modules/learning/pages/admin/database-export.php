@@ -96,6 +96,7 @@ try {
                                 <i class="fas fa-download" aria-hidden="true"></i> Download pre-change definitions
                             </button>
                         </div>
+                        <p class="ldx-text">There is no fixed statement-count limit. Maximum file size is determined by the server's PHP upload settings.</p>
                     </form>
                     <p class="ldx-note">
                         <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
