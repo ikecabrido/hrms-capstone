@@ -98,6 +98,63 @@
     opacity: 0.9;
 }
 
+/* Shared shell for Training entity create/edit pages. */
+.training-authoring-header {
+    margin-bottom: 1.25rem;
+}
+
+.training-authoring-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.training-authoring-back:hover {
+    color: #fff;
+    filter: brightness(1.08);
+}
+
+.training-authoring-hero {
+    min-height: 0;
+    margin-top: 0.75rem;
+}
+
+.training-authoring-form-card {
+    margin-top: 0;
+}
+
+.training-authoring-form-card form {
+    display: grid;
+    gap: 1rem;
+}
+
+.training-authoring-form-card .mode-actions {
+    margin-top: 0.25rem;
+}
+
+.training-template-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
+}
+
+.training-template-actions .cc-enroll-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    width: auto;
+    text-decoration: none;
+}
+
 /* Activity heatmap that lives inside the hero */
 .home-heatmap {
     display: flex;
@@ -612,6 +669,12 @@ a.home-row:hover .home-row-title {
 
     .home-hero-main h1 {
         font-size: 1.25rem;
+    }
+
+    .training-authoring-hero {
+        gap: 0.5rem;
+        padding: 1rem;
+        border-radius: 14px;
     }
 
     .home-hero-aside {

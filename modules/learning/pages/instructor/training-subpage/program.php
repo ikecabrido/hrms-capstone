@@ -1,6 +1,7 @@
 <?php
 require_once dirname(__DIR__, 3) . '/classes/program.php';
 require_once dirname(__DIR__, 3) . '/classes/ProfileLink.php';
+require_once dirname(__DIR__, 3) . '/classes/TrainingAuthoring.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 
 function pm_h($value): string
@@ -145,12 +146,11 @@ $deliveryMode = (string) ($program['delivery_mode'] ?? 'face_to_face');
 $formAction = $isEdit ? 'pages/instructor/training-subpage/ajax/edit-program.php' : 'pages/instructor/training-subpage/ajax/add-program.php';
 $evaluationUrl = '?page=instructor/training-subpage/program-evaluations' . ($isEdit ? '&id=' . $programId : '');
 $listingUrl = '?page=instructor/training-subpage/program-evaluations';
-$backUrl = '?page=instructor/training';
+$backUrl = '?page=instructor/training&tab=program';
 ?>
 
 <div class="module-content program-page">
     <div class="pm-topbar">
-        <a class="pm-back" href="<?= pm_h($backUrl) ?>"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Trainings</a>
         <div class="pm-topbar-actions">
             <?php if ($isEdit): ?>
                 <a class="pm-btn pm-btn-quiet" href="<?= pm_h($evaluationUrl) ?>"><i class="fas fa-clipboard-check" aria-hidden="true"></i> Evaluate Trainees <span class="pm-count"><?= (int) $summary['total'] ?></span></a>
@@ -158,6 +158,12 @@ $backUrl = '?page=instructor/training';
             <a class="pm-btn pm-btn-quiet" href="<?= pm_h($listingUrl) ?>"><i class="fas fa-list-check" aria-hidden="true"></i> All Evaluations</a>
         </div>
     </div>
+
+    <?= TrainingAuthoring::renderHero(
+        $isEdit ? 'Edit Program' : 'Add Program',
+        'Set up the program schedule and connect courses, skills, trainers, and trainees.',
+        '?page=instructor/training&tab=program'
+    ) ?>
 
     <?php if (!$schemaReady): ?>
         <div class="pm-notice is-warning" role="alert">
@@ -189,7 +195,7 @@ $backUrl = '?page=instructor/training';
             </div>
         <?php endif; ?>
 
-        <form id="program-form" class="pm-form" method="post" action="<?= pm_h($formAction) ?>" data-disabled="<?= $formDisabled ? '1' : '0' ?>" data-skip>
+        <form id="program-form" class="pm-form training-authoring-form" method="post" action="<?= pm_h($formAction) ?>" data-disabled="<?= $formDisabled ? '1' : '0' ?>" data-skip>
             <input type="hidden" name="id" value="<?= $programId > 0 ? $programId : '' ?>" />
             <?= class_exists('CSRF') ? CSRF::field() : '' ?>
 
@@ -198,7 +204,7 @@ $backUrl = '?page=instructor/training';
                     <div class="pm-card-head">
                         <div>
                             <span class="pm-eyebrow"><?= $isEdit ? 'Program run' : 'New program' ?></span>
-                            <h1><?= $isEdit ? 'Edit Program' : 'Create Program' ?></h1>
+                            <h2>Program setup</h2>
                             <p>Build the program, choose its delivery format, and connect courses, skills, trainers and trainees.</p>
                         </div>
                         <span class="pm-status <?= pm_h($statusClass) ?>"><?= pm_h($statusText) ?></span>

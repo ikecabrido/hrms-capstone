@@ -1,13 +1,17 @@
+<?php
+require_once dirname(__DIR__, 2) . '/classes/TrainingAuthoring.php';
+$learningPathEditing = (int) ($_GET['id'] ?? 0) > 0;
+?>
 <div class="module-content">
-    <div style="margin-bottom:1rem;">
-        <a href="?page=instructor/training" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-left"></i> Back to Trainings</a>
-    </div>
+    <?= TrainingAuthoring::renderHero(
+        $learningPathEditing ? 'Edit Learning Path' : 'Add Learning Path',
+        'Build an ordered learning path, set its visibility, and connect skills and course content.',
+        '?page=instructor/training&tab=learning-path'
+    ) ?>
 
     <?= AIAuthoring::callout('learning-path') ?>
 
-    <div class="mode-card">
-        <h2>Add Learning Path</h2>
-        <p>Learning paths group related course content into an ordered sequence that can be assigned to trainees.</p>
+    <div class="mode-card training-authoring-form-card">
 
         <form id="add-learning-path-form" data-skip method="post" action="pages/instructor/ajax/add-learning-path.php">
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-top:1rem;">
@@ -56,7 +60,7 @@
             </div>
 
             <div class="mode-actions" style="margin-top:1.5rem;">
-                <button type="submit" class="mode-button">Save Learning Path</button>
+                <button type="submit" class="mode-button" id="lp-save-button"><?= $learningPathEditing ? 'Update Learning Path' : 'Save Learning Path' ?></button>
             </div>
             <p id="lp-create-hint" style="margin:0.75rem 0 0; color:var(--muted); font-size:0.82rem;">After saving, the path editor opens with controls to add and arrange course items.</p>
         </form>
@@ -185,7 +189,7 @@
             const path = data.data;
             const form = document.getElementById('add-learning-path-form');
             
-            const heading = form.parentElement.querySelector('h2');
+            const heading = document.querySelector('.training-authoring-hero h1');
             if (heading) heading.textContent = 'Edit Learning Path';
 
             form.querySelector('input[name="title"]').value = path.title || '';

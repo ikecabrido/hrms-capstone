@@ -1,9 +1,10 @@
 <?php
 /**
- * Shared bootstrap for AI admin AJAX endpoints.
+ * Shared bootstrap for AI AJAX endpoints.
  *
- * Returns [pdo, employeeId, audit]. Every state-changing endpoint must also
- * call CSRF::requireValid() before reading or writing input.
+ * Admin access is the default. A single endpoint may explicitly opt into
+ * instructor access before including this file. Returns [pdo, employeeId,
+ * audit]. State-changing endpoints must call CSRF::requireValid().
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -54,8 +55,12 @@ require_once dirname(__DIR__, 4) . '/classes/OpenRouterClient.php';
 try {
     $pdo = (new Database())->getConnection();
     $employeeId = (int) $_SESSION['employee_id'];
-    if (LearningRole::forEmployee($pdo, $employeeId) !== 'admin') {
-        aiEndpointError(403, 'Admin access is required.');
+    $role = LearningRole::forEmployee($pdo, $employeeId);
+    $instructorChatAllowed = defined('AI_ENDPOINT_ALLOW_INSTRUCTOR')
+        && AI_ENDPOINT_ALLOW_INSTRUCTOR
+        && $role === 'instructor';
+    if ($role !== 'admin' && !$instructorChatAllowed) {
+        aiEndpointError(403, 'Admin or trainer access is required.');
     }
 
     $schema = AIConfig::schemaStatus($pdo);

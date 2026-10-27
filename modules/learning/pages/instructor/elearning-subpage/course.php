@@ -9,53 +9,50 @@ try {
 }
 ?>
 <style>
-.course-template-btn {
-    padding: 0.35rem 0.75rem;
-    border: 1.5px solid rgba(32, 0, 130, 0.18);
-    border-radius: 999px;
-    background: rgba(32, 0, 130, 0.05);
-    color: var(--primary);
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
-.course-template-btn:hover {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-}
-.course-wizard { margin-top:1.5rem; }
+.course-wizard { margin-top:0; }
 .course-wizard-steps {
-    display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:0.55rem;
-    margin-bottom:1rem;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-end;
+    gap:.45rem;
+    width:auto;
+    margin:0 0 0 auto;
 }
 .course-wizard-step-button {
-    display:flex; align-items:center; gap:0.65rem; min-width:0;
-    padding:0.75rem; border:1px solid var(--border); border-radius:12px;
-    background:var(--surface, #fff); color:var(--muted); text-align:left;
+    display:flex; align-items:center; justify-content:center; min-width:0;
+    gap:.35rem; padding:0.35rem 0.7rem; border:1px solid rgba(255,255,255,.32); border-radius:999px;
+    background:rgba(255,255,255,.16); color:#fff; text-align:center;
+    font-size:.74rem; font-weight:600; white-space:nowrap;
     cursor:pointer; transition:border-color .15s, background .15s, color .15s;
 }
-.course-wizard-step-button:disabled { cursor:not-allowed; opacity:.55; }
+.course-wizard-step-button:disabled { cursor:not-allowed; opacity:1; }
 .course-wizard-step-button.is-current {
-    border-color:var(--primary); background:rgba(32,0,130,.07); color:var(--primary);
+    border-color:#fff; background:#fff; color:#200082;
 }
-.course-wizard-step-button.is-complete { color:var(--primary); }
-.course-wizard-step-number {
-    display:grid; place-items:center; flex:0 0 1.8rem; height:1.8rem;
-    border-radius:50%; background:rgba(32,0,130,.08); font-weight:800;
+.course-wizard-step-button.is-complete { color:#fff; border-color:rgba(255,255,255,.42); }
+.course-creation-hero {
+    flex-direction:row;
+    align-items:center;
+    justify-content:space-between;
+    gap:1rem;
+    margin-bottom:1.25rem;
 }
-.course-wizard-step-button.is-current .course-wizard-step-number,
-.course-wizard-step-button.is-complete .course-wizard-step-number {
-    background:var(--primary); color:#fff;
+.course-creation-hero .home-hero-main h1 {
+    margin:0;
 }
-.course-wizard-step-copy { min-width:0; }
-.course-wizard-step-copy strong, .course-wizard-step-copy small {
-    display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+.course-creation-hero .home-hero-main p {
+    margin:.35rem 0 0;
 }
-.course-wizard-step-copy strong { font-size:.8rem; }
-.course-wizard-step-copy small { margin-top:.15rem; font-size:.68rem; }
+.course-creation-hero .home-hero-main { flex:1 1 270px; }
+.course-creation-hero .course-wizard-steps {
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex:0 1 auto;
+    width:auto;
+    margin:0 0 0 auto;
+}
 .course-wizard-progress {
     height:5px; margin-bottom:1.25rem; overflow:hidden;
     border-radius:999px; background:rgba(32,0,130,.08);
@@ -91,11 +88,34 @@ try {
 .course-wizard-navigation button:disabled { cursor:not-allowed; opacity:.5; }
 .course-wizard-navigation .course-wizard-next { border-color:var(--primary); background:var(--primary); color:#fff; }
 @media (max-width: 1100px) {
-    .course-wizard-steps { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .course-wizard-steps { justify-content:flex-start; }
 }
 @media (max-width: 420px) {
-    .course-wizard-step-button { padding:.6rem; }
-    .course-wizard-step-copy small { display:none; }
+    .course-wizard-step-button { gap:.3rem; padding:.4rem; border-radius:14px; font-size:.72rem; }
+}
+@media (max-width: 700px) {
+    .course-creation-hero {
+        height:auto;
+        min-height:0;
+        flex-direction:column;
+        align-items:stretch;
+        justify-content:flex-start;
+        gap:.65rem;
+        padding:1rem;
+    }
+    .course-creation-hero .course-wizard-steps {
+        width:100%;
+        margin:0;
+        gap:.35rem;
+    }
+    .course-creation-hero .home-hero-main {
+        flex:0 1 auto;
+    }
+    .course-creation-hero .course-wizard-step-button {
+        gap:.25rem;
+        padding:.3rem .45rem;
+        font-size:.68rem;
+    }
 }
 /* ── Skills & tags multi-select dropdown ─────────────────────────────── */
 .sdd { position: relative; }
@@ -333,28 +353,7 @@ try {
         </div>
     </div>
 
-    <div style="margin-bottom:1rem;">
-        <?= BackLink::anchor('instructor/elearning', 'style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"') ?>
-    </div>
-
-    <div class="mode-card" style="margin-top:1.5rem;">
-        <!-- Header with template presets -->
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
-            <div>
-                <h2 style="margin:0;" id="form-title">Add Course</h2>
-                <p style="margin:0.3rem 0 0;" id="form-subtitle">Create a course, add its modules and lessons, and optionally configure a final evaluation.</p>
-            </div>                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
-                    <span style="font-size:0.78rem; font-weight:600; color:var(--text); align-self:center;">Quick start:</span>
-                    <button type="button" onclick="applyTemplate('programming')" class="course-template-btn">Programming</button>
-                    <button type="button" onclick="applyTemplate('business')" class="course-template-btn">Business</button>
-                    <button type="button" onclick="applyTemplate('creative')" class="course-template-btn">Creative</button>
-                    <button type="button" onclick="applyTemplate('softskills')" class="course-template-btn">Soft Skills</button>
-                    <button type="button" onclick="applyTemplate('compliance')" class="course-template-btn">Compliance</button>
-                </div>
-        </div>
-
-        <?= AIAuthoring::callout('course') ?>
-        <?php if (AIAuthoring::isAdmin()): ?>
+    <?php if (AIAuthoring::canUseCourseChat()): ?>
             <button type="button" class="course-ai-chat-launcher" data-course-ai-chat-open aria-controls="course-ai-chat" aria-expanded="false">
                 <i class="fas fa-comments" aria-hidden="true"></i>
                 <span>Chat for suggestions</span>
@@ -378,24 +377,34 @@ try {
                 </form>
                 <p class="course-ai-chat-notice">Your current course details and messages are sent to the configured AI provider. Chat is not saved with the course; do not include sensitive or personal information.</p>
             </section>
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <form id="course-form" data-skip="true" method="post" enctype="multipart/form-data" novalidate action="pages/instructor/elearning-subpage/ajax/add-course.php">
-            <div class="course-wizard" id="course-wizard">
-                <div class="course-wizard-steps" role="tablist" aria-label="Course creation steps">
-                    <button type="button" class="course-wizard-step-button is-current" role="tab" id="course-step-tab-0" aria-controls="course-step-panel-0" aria-selected="true" data-course-step-target="0">
-                        <span class="course-wizard-step-number">1</span><span class="course-wizard-step-copy"><strong>Course details</strong><small>Basics, schedule, and outcomes</small></span>
-                    </button>
-                    <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-1" aria-controls="course-step-panel-1" aria-selected="false" data-course-step-target="1" disabled>
-                        <span class="course-wizard-step-number">2</span><span class="course-wizard-step-copy"><strong>Course content</strong><small>Modules and lessons</small></span>
-                    </button>
-                    <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-2" aria-controls="course-step-panel-2" aria-selected="false" data-course-step-target="2" disabled>
-                        <span class="course-wizard-step-number">3</span><span class="course-wizard-step-copy"><strong>Evaluation</strong><small>Optional final assessment</small></span>
-                    </button>
-                    <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-3" aria-controls="course-step-panel-3" aria-selected="false" data-course-step-target="3" disabled>
-                        <span class="course-wizard-step-number">4</span><span class="course-wizard-step-copy"><strong>Review &amp; save</strong><small>Check your course setup</small></span>
-                    </button>
-                </div>
+    <form id="course-form" data-skip="true" method="post" enctype="multipart/form-data" novalidate action="pages/instructor/elearning-subpage/ajax/add-course.php">
+        <div class="course-wizard" id="course-wizard">
+            <div style="margin-bottom:1rem;">
+                <?= BackLink::anchor('instructor/training', 'style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"') ?>
+            </div>
+            <section class="home-hero course-creation-hero" aria-label="Course creation steps">
+                    <div class="home-hero-main">
+                        <h1 id="form-title">Add Course</h1>
+                        <p>Create a course through four guided steps, from the basics to final review.</p>
+                    </div>
+                    <div class="course-wizard-steps" role="tablist" aria-label="Course creation steps">
+                        <button type="button" class="course-wizard-step-button is-current" role="tab" id="course-step-tab-0" aria-label="1. Details" aria-controls="course-step-panel-0" aria-selected="true" data-course-step-target="0">
+                            <i class="fas fa-circle-info" aria-hidden="true"></i> Details
+                        </button>
+                        <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-1" aria-label="2. Content" aria-controls="course-step-panel-1" aria-selected="false" data-course-step-target="1" disabled>
+                            <i class="fas fa-cubes" aria-hidden="true"></i> Content
+                        </button>
+                        <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-2" aria-label="3. Evaluation" aria-controls="course-step-panel-2" aria-selected="false" data-course-step-target="2" disabled>
+                            <i class="fas fa-clipboard-check" aria-hidden="true"></i> Evaluation
+                        </button>
+                        <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-3" aria-label="4. Review" aria-controls="course-step-panel-3" aria-selected="false" data-course-step-target="3" disabled>
+                            <i class="fas fa-eye" aria-hidden="true"></i> Review
+                        </button>
+                    </div>
+            </section>
+            <div class="mode-card course-creation-card" style="margin-top:0;">
                 <div class="course-wizard-progress" role="progressbar" aria-label="Course creation progress" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
                     <span id="course-wizard-progress-fill"></span>
                 </div>
@@ -664,8 +673,8 @@ try {
                     <button type="button" id="course-wizard-next" class="course-wizard-next">Next: Course content <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
                 </div>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 </div>
 
 <!-- Course Detail Modal -->
@@ -979,24 +988,6 @@ try {
 })();
 </script>
 <script>
-var courseTemplates = {
-    programming: { title:'Web Development Fundamentals', category:'Programming', difficulty:'beginner', estimated_hours:20, description:'Learn web development fundamentals including HTML, CSS, and JavaScript.', prerequisites:'Basic computer literacy.' },
-    business: { title:'Project Management Essentials', category:'Business', difficulty:'intermediate', estimated_hours:15, description:'Master core project management principles.', prerequisites:'Some team experience.' },
-    creative: { title:'Digital Design & Visual Communication', category:'Design & Creative', difficulty:'beginner', estimated_hours:12, description:'Explore visual design principles for digital media.', prerequisites:'No prior design experience.' },
-    softskills: { title:'Effective Communication & Leadership', category:'Soft Skills', difficulty:'beginner', estimated_hours:8, description:'Develop essential communication and leadership skills.', prerequisites:'Open to all levels.' },
-    compliance: { title:'Workplace Safety & Compliance', category:'Compliance & Safety', difficulty:'beginner', estimated_hours:5, description:'Ensure a safe and compliant workplace.', prerequisites:'None. Mandatory for all.' }
-};
-function applyTemplate(key) {
-    var t = courseTemplates[key]; if (!t) return;
-    var f = document.getElementById('course-form'); if (!f) return;
-    ['title','category','difficulty','estimated_hours','description','prerequisites'].forEach(function(k) {
-        var sel = k==='title'?'input[name="title"]':k==='category'?'input[name="category"]':k==='difficulty'?'select[name="difficulty"]':k==='estimated_hours'?'input[name="estimated_hours"]':'textarea[name="'+k+'"]';
-        var el = f.querySelector(sel);
-        if (el && t[k] !== undefined) el.value = t[k];
-    });
-    f.style.transition='background 0.3s'; f.style.background='rgba(32,0,130,0.03)'; setTimeout(function(){f.style.background='';},600);
-    showNotif(key.charAt(0).toUpperCase()+key.slice(1)+' template applied!','success');
-}
 function showCoverPreview(input) {
     if (!input.files || !input.files[0]) return;
     var file = input.files[0];
@@ -1052,7 +1043,6 @@ function previewCourse() {
     var courseId = params.get('id');
     if (!courseId) return;
     document.getElementById('form-title').textContent = 'Edit Course';
-    document.getElementById('form-subtitle').textContent = 'Update course details, modules, and content.';
     document.getElementById('save-btn-text').textContent = 'Update Course';
     document.querySelector('form#course-form').action = 'pages/instructor/elearning-subpage/ajax/edit-course.php';
     fetch('pages/instructor/elearning-subpage/ajax/get-course-by-id.php?id='+courseId, {credentials:'same-origin', headers:{'X-Requested-With':'XMLHttpRequest'}})

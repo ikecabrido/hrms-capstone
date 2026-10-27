@@ -199,27 +199,6 @@ class CourseBuilder {
     }
 
     /**
-     * Duplicate a module with all its lessons and quizzes
-     */
-    duplicateModule(moduleId) {
-        const idx = this.courseData.modules.findIndex(m => m.id === moduleId);
-        if (idx === -1) return;
-        const src = this.courseData.modules[idx];
-        const deepCopy = JSON.parse(JSON.stringify(src));
-        // Assign new temp IDs
-        deepCopy.id = 'temp_' + Date.now();
-        deepCopy.title = (deepCopy.title || 'Module') + ' (Copy)';
-        deepCopy.lessons.forEach(l => {
-            l.id = 'temp_' + Date.now() + Math.random().toString(36).slice(2,6);
-            l.quizzes.forEach(q => { q.id = 'temp_' + Date.now() + Math.random().toString(36).slice(2,6); });
-        });
-        deepCopy.quizzes = [];
-        this.courseData.modules.splice(idx + 1, 0, deepCopy);
-        this.renderModulesList();
-        this.autoSaveToStorage();
-    }
-
-    /**
      * Move module up or down
      */
     moveModule(moduleId, direction) {
@@ -464,7 +443,6 @@ class CourseBuilder {
                     <button type="button" class="move-module-btn" data-module-id="${moduleId}" data-dir="down" title="Move down" style="padding:0.2rem 0.5rem; background:rgba(32,0,130,0.08); color:var(--color1); border:1px solid rgba(32,0,130,0.15); border-radius:6px; cursor:pointer; font-size:0.75rem;">&#9660;</button>
                 </div>
                 <div style="display:flex; gap:0.4rem;">
-                    <button type="button" class="duplicate-module-btn" data-module-id="${moduleId}" title="Duplicate module" style="padding:0.4rem 0.8rem; background:rgba(32,0,130,0.08); color:var(--color1); border:1px solid rgba(32,0,130,0.15); border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600;"><i class="fas fa-copy"></i> Duplicate</button>
                     <button type="button" class="remove-module-btn" data-module-id="${moduleId}" style="padding:0.4rem 0.8rem; background:#ff6b6b; color:white; border:none; border-radius:8px; cursor:pointer; font-size:0.8rem; font-weight:600;">Remove</button>
                 </div>
             </div>
@@ -923,14 +901,6 @@ class CourseBuilder {
                 if (confirm('Remove this module and all its content?')) {
                     this.removeModule(btn.dataset.moduleId);
                 }
-            });
-        });
-
-        // Duplicate module buttons
-        document.querySelectorAll('.duplicate-module-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.duplicateModule(btn.dataset.moduleId);
             });
         });
 

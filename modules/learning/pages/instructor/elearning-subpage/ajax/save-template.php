@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once dirname(__FILE__, 7) . '/database/db.php';
+require_once dirname(__FILE__, 5) . '/classes/CourseTemplateSnapshot.php';
 
 try {
     $database = new Database();
@@ -32,50 +33,18 @@ try {
         exit;
     }
 
-    // Fetch full course structure
-    $courseStmt = $pdo->prepare("SELECT id, title, description, category FROM ld_course WHERE id = :id");
-    $courseStmt->execute([':id' => $courseId]);
-    $course = $courseStmt->fetch(PDO::FETCH_ASSOC);
-    if (!$course) {
+    $snapshot = CourseTemplateSnapshot::fromCourse($pdo, $courseId);
+    if (!$snapshot) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Course not found.']);
         exit;
     }
 
-    // Fetch modules
-    $modStmt = $pdo->prepare("SELECT id, title, description, order_index, status FROM ld_module WHERE course_id = :cid ORDER BY order_index ASC");
-    $modStmt->execute([':cid' => $courseId]);
-    $modules = $modStmt->fetchAll(PDO::FETCH_ASSOC);
-
-    $structure = ['modules' => []];
-    $totalLessons = 0;
-    $totalQuizzes = 0;
-
-    foreach ($modules as &$mod) {
-        // Fetch lessons for this module
-        $lesStmt = $pdo->prepare("SELECT id, title, content_type, content_body, video_url, order_index, status FROM ld_lesson WHERE module_id = :mid ORDER BY order_index ASC");
-        $lesStmt->execute([':mid' => $mod['id']]);
-        $lessons = $lesStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $mod['lessons'] = [];
-        foreach ($lessons as &$les) {
-            // Fetch quiz questions for this lesson (if any quiz is linked)
-            $les['quizzes'] = [];
-            $totalLessons++;
-
-            // Fetch files
-            $fileStmt = $pdo->prepare("SELECT file_path, title FROM ld_lesson_file WHERE lesson_id = :lid");
-            $fileStmt->execute([':lid' => $les['id']]);
-            $les['files'] = $fileStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            $mod['lessons'][] = $les;
-        }
-        unset($les);
-
-        $structure['modules'][] = $mod;
-        unset($mod);
-    }
-    unset($mod);
+    $course = $snapshot['course'];
+    $structure = $snapshot['structure'];
+    $moduleCount = $snapshot['module_count'];
+    $lessonCount = $snapshot['lesson_count'];
+    $quizCount = $snapshot['quiz_count'];
 
     if ($templateTitle === '') {
         $templateTitle = ($course['title'] ?? 'Untitled') . ' — Template';
@@ -88,9 +57,9 @@ try {
         ':cat' => $course['category'] ?? null,
         ':creator' => $employeeId,
         ':json' => json_encode($structure),
-        ':mc' => count($modules),
-        ':lc' => $totalLessons,
-        ':qc' => $totalQuizzes,
+        ':mc' => $moduleCount,
+        ':lc' => $lessonCount,
+        ':qc' => $quizCount,
     ]);
 
     $templateId = (int) $pdo->lastInsertId();
@@ -98,7 +67,7 @@ try {
     echo json_encode([
         'success' => true,
         'id' => $templateId,
-        'message' => 'Template saved with ' . count($modules) . ' modules, ' . $totalLessons . ' lessons, ' . $totalQuizzes . ' quizzes.',
+        'message' => 'Template saved with ' . $moduleCount . ' modules, ' . $lessonCount . ' lessons, ' . $quizCount . ' quizzes.',
     ]);
 } catch (Throwable $e) {
     http_response_code(500);

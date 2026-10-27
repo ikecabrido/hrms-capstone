@@ -1,11 +1,15 @@
+<?php
+require_once dirname(__DIR__, 3) . '/classes/TrainingAuthoring.php';
+$videoConferenceEditing = (int) ($_GET['id'] ?? 0) > 0;
+?>
 <div class="module-content">
-    <div style="margin-bottom:1rem;">
-        <a href="?page=instructor/training" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-left"></i> Back to Trainings</a>
-    </div>
+    <?= TrainingAuthoring::renderHero(
+        $videoConferenceEditing ? 'Edit Online Training' : 'Add Online Training',
+        'Schedule an online session, connect it to a course or program, and add its meeting details.',
+        '?page=instructor/training&tab=video-conference'
+    ) ?>
 
-    <div class="mode-card">
-        <h2>Add Online Training</h2>
-        <p>Schedule an online training session with a meeting link, platform, and date/time as described in the MD schema.</p>
+    <div class="mode-card training-authoring-form-card">
 
         <form id="add-video-conference-form" data-skip method="post" action="pages/instructor/training-subpage/ajax/add-video-conference.php">
             <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem; margin-top:1rem;">
@@ -163,7 +167,8 @@
             }
 
             const video = result.data;
-            form.parentElement.querySelector('h2').textContent = 'Edit Online Training';
+            const heading = document.querySelector('.training-authoring-hero h1');
+            if (heading) heading.textContent = 'Edit Online Training';
             form.querySelector('input[name="title"]').value = video.title || '';
             form.querySelector('select[name="platform"]').value = video.platform || 'google_meet';
             const scheduledAt = video.scheduled_at || '';
@@ -245,7 +250,7 @@
             }
 
             toast(isEdit ? 'Online training updated successfully.' : 'Online training added successfully.', 'success');
-            setTimeout(() => { window.location.href = '?page=instructor/training'; }, 1000);
+            setTimeout(() => { window.location.href = '?page=instructor/training&tab=video-conference'; }, 1000);
         })
         .catch(error => {
             toast(error.message || 'Network error while saving online training.', 'error');

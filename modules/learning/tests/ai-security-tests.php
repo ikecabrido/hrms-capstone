@@ -13,6 +13,7 @@ require_once dirname(__DIR__, 3) . '/database/db.php';
 require_once dirname(__DIR__) . '/classes/AICoursePrompts.php';
 require_once dirname(__DIR__) . '/classes/AIApiKeyStore.php';
 require_once dirname(__DIR__) . '/classes/AIAudit.php';
+require_once dirname(__DIR__) . '/classes/LearningRole.php';
 
 $passed = 0;
 $failed = 0;
@@ -141,10 +142,15 @@ try {
     check('trainee context rejects anonymous POST', $contextResponse['status'] === 401, 'status=' . $contextResponse['status']);
     check('trainee context anonymous body is safe', !preg_match('/@|phone|address|salary|sk-or-/i', $contextResponse['body']));
 
-    $roleSessions = [
-        'instructor' => makeRoleSession(1001),
-        'learner' => makeRoleSession(1005),
-    ];
+    $roleSessions = ['learner' => makeRoleSession(1005)];
+    $activeEmployees = $pdo->query("SELECT employee_id FROM em_employees WHERE employment_status = 'Active'")->fetchAll(PDO::FETCH_COLUMN);
+    foreach ($activeEmployees as $employeeId) {
+        if (LearningRole::forEmployee($pdo, (int) $employeeId) === 'instructor') {
+            $roleSessions['instructor'] = makeRoleSession((int) $employeeId);
+            break;
+        }
+    }
+
     foreach ($roleSessions as $role => $sessionId) {
         check($role . ' session file was created', is_file(roleSessionFile($sessionId)));
 
@@ -162,6 +168,18 @@ try {
 
         $coursePage = httpRequest($moduleUrl . 'index.php?page=instructor/elearning-subpage/course', [], $sessionId);
         check($role . ' course authoring page hides the AI launcher', !str_contains($coursePage['body'], 'ai-authoring-callout'), 'status=' . $coursePage['status']);
+        if ($role === 'instructor') {
+            $courseChatVisible = str_contains($coursePage['body'], 'data-course-ai-chat-open');
+            check('trainer course page shows the course chat launcher', $courseChatVisible, 'status=' . $coursePage['status']);
+
+            $courseChat = httpRequest($base . 'course-chat.php', [], $sessionId);
+            check('trainer course chat endpoint accepts the role before method validation', $courseChat['status'] === 405, 'status=' . $courseChat['status']);
+        } else {
+            check('learner course page hides the course chat launcher', !str_contains($coursePage['body'], 'data-course-ai-chat-open'), 'status=' . $coursePage['status']);
+
+            $courseChat = httpRequest($base . 'course-chat.php', [], $sessionId);
+            check('learner course chat endpoint rejects the role', $courseChat['status'] === 403, 'status=' . $courseChat['status']);
+        }
 
         $pathPage = httpRequest($moduleUrl . 'index.php?page=instructor/learning-path', [], $sessionId);
         check($role . ' learning-path authoring page hides the AI launcher', !str_contains($pathPage['body'], 'ai-authoring-callout'), 'status=' . $pathPage['status']);

@@ -146,7 +146,17 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
 ?>
 
 <div class="module-content catalog-page catalog-manager">
-    <?php $initialTrainingTab = isset($_GET['tab']) && $_GET['tab'] === 'course' ? 'tab-course' : 'tab-learning-path'; ?>
+    <?php
+    $trainingTabMap = [
+        'course' => 'tab-course',
+        'template' => 'tab-template',
+        'learning-path' => 'tab-learning-path',
+        'program' => 'tab-program',
+        'video-conference' => 'tab-video-conference',
+        'skills' => 'tab-skills',
+    ];
+    $initialTrainingTab = $trainingTabMap[(string) ($_GET['tab'] ?? '')] ?? 'tab-course';
+    ?>
     <!-- Entity Detail Modal -->
     <div id="tr-entity-content" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="tr-modal-title" style="display:none;">
         <div id="tr-entity-content-panel" class="entity-content-box ld-modal-panel" data-size="standard">
@@ -284,19 +294,19 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             <button type="button" class="catalog-tab-btn<?= $initialTrainingTab === 'tab-course' ? ' active' : '' ?>" data-tab="tab-course">
                 <i class="fas fa-graduation-cap" aria-hidden="true"></i> Courses
             </button>
-            <button type="button" class="catalog-tab-btn" data-tab="tab-template">
+            <button type="button" class="catalog-tab-btn<?= $initialTrainingTab === 'tab-template' ? ' active' : '' ?>" data-tab="tab-template">
                 <i class="fas fa-layer-group" aria-hidden="true"></i> Templates
             </button>
-            <button type="button" class="catalog-tab-btn active" data-tab="tab-learning-path">
+            <button type="button" class="catalog-tab-btn<?= $initialTrainingTab === 'tab-learning-path' ? ' active' : '' ?>" data-tab="tab-learning-path">
                 <i class="fas fa-route" aria-hidden="true"></i> Learning Path
             </button>
-            <button type="button" class="catalog-tab-btn" data-tab="tab-program">
+            <button type="button" class="catalog-tab-btn<?= $initialTrainingTab === 'tab-program' ? ' active' : '' ?>" data-tab="tab-program">
                 <i class="fas fa-briefcase" aria-hidden="true"></i> Program
             </button>
-            <button type="button" class="catalog-tab-btn" data-tab="tab-video-conference">
+            <button type="button" class="catalog-tab-btn<?= $initialTrainingTab === 'tab-video-conference' ? ' active' : '' ?>" data-tab="tab-video-conference">
                 <i class="fas fa-video" aria-hidden="true"></i> Online Training
             </button>
-            <button type="button" class="catalog-tab-btn" data-tab="tab-skills">
+            <button type="button" class="catalog-tab-btn<?= $initialTrainingTab === 'tab-skills' ? ' active' : '' ?>" data-tab="tab-skills">
                 <i class="fas fa-star" aria-hidden="true"></i> Skills
             </button>
         </div>
@@ -311,10 +321,10 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             </div>
         </div>
 
-        <div class="tab-content" data-tab="tab-template">
+        <div class="tab-content<?= $initialTrainingTab === 'tab-template' ? ' active' : '' ?>" data-tab="tab-template">
             <div class="cat-section-intro">
                 <h3>Course templates</h3>
-                <p>Reuse a proven course outline. Save one from the Structure Builder, then clone it into a new course.</p>
+                <p>Reuse a proven course outline. Create templates from courses, update template details, or clone a template into a new course.</p>
             </div>
             <div class="catalog-grid" id="tr-templates-grid">
                 <div class="catalog-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><p>Loading templates...</p></div>
@@ -331,7 +341,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             </div>
         </div>
 
-        <div class="tab-content" data-tab="tab-program">
+        <div class="tab-content<?= $initialTrainingTab === 'tab-program' ? ' active' : '' ?>" data-tab="tab-program">
             <div class="cat-section-intro">
                 <h3>Program Management</h3>
                 <p>Manage training programs, schedule sessions, assign trainers and trainees, and evaluate every participant.</p>
@@ -341,7 +351,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             </div>
         </div>
 
-        <div class="tab-content" data-tab="tab-video-conference">
+        <div class="tab-content<?= $initialTrainingTab === 'tab-video-conference' ? ' active' : '' ?>" data-tab="tab-video-conference">
             <div class="cat-section-intro">
                 <h3>Online Training Management</h3>
                 <p>Set up online training sessions, host virtual training, and manage attendance links.</p>
@@ -351,7 +361,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             </div>
         </div>
 
-        <div class="tab-content" data-tab="tab-skills">
+        <div class="tab-content<?= $initialTrainingTab === 'tab-skills' ? ' active' : '' ?>" data-tab="tab-skills">
             <div class="cat-section-intro">
                 <h3>Skills</h3>
                 <p>Explore skills linked to e-learning courses and training modules.</p>
@@ -548,6 +558,7 @@ function openSkillModal(skillId) {
     if (courses.length === 0 && modules.length === 0) {
         body += '<div class="cat-empty-note"><i class="fas fa-link" aria-hidden="true"></i>No courses or modules linked to this skill yet.</div>';
     }
+    body += '<div class="ld-modal-actions"><a class="cat-btn-primary" href="?page=instructor/training-subpage/skill&id=' + Number(skill.id) + '"><i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit Skill</a></div>';
     document.getElementById('skill-modal-body').innerHTML = body;
     document.getElementById('skill-modal-overlay').style.display = 'flex';
 }
@@ -1253,7 +1264,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     var catalogEmptyEl = document.getElementById('tr-catalog-empty');
     var catalogPaginationEl = document.getElementById('tr-catalog-pagination');
     var initialCatalogTab = document.querySelector('#tr-catalog-tabs .catalog-tab-btn.active');
-    var catalogActiveTab = initialCatalogTab ? initialCatalogTab.dataset.tab : 'tab-learning-path';
+    var catalogActiveTab = initialCatalogTab ? initialCatalogTab.dataset.tab : 'tab-course';
     var catalogPageSize = 12;
     var catalogPage = 1;
     var addWrap = document.getElementById('tr-catalog-add-wrap');
@@ -1261,11 +1272,11 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     var addTip = document.getElementById('tr-catalog-add-tip');
     var addConfig = {
         'tab-course': { label: 'Add Course', url: '?page=instructor/elearning-subpage/course' },
-        'tab-template': { label: 'Add Template', url: '?page=instructor/elearning-subpage/course-structure' },
+        'tab-template': { label: 'Add Template', url: '?page=instructor/training-subpage/template' },
         'tab-learning-path': { label: 'Add Learning Path', url: '?page=instructor/learning-path' },
         'tab-program': { label: 'Add Program', url: '?page=instructor/training-subpage/program' },
         'tab-video-conference': { label: 'Add Online Training', url: '?page=instructor/training-subpage/video-conference' },
-        'tab-skills': { label: 'Add Skill', action: 'add-skill' }
+        'tab-skills': { label: 'Add Skill', url: '?page=instructor/training-subpage/skill' }
     };
     function syncAddBtn() {
         if (!addWrap) return;
@@ -1278,7 +1289,6 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     if (addBtn) addBtn.addEventListener('click', function() {
         var cfg = addConfig[catalogActiveTab];
         if (!cfg) return;
-        if (cfg.action === 'add-skill') { openSkillAddModal(); return; }
         if (cfg.url) window.location.href = cfg.url;
     });
 
@@ -1413,7 +1423,7 @@ function loadTrainingTemplates() {
 
         trainingTemplatesLoaded = true;
         if (data.items.length === 0) {
-            grid.innerHTML = '<div class="catalog-empty"><i class="fas fa-layer-group" aria-hidden="true"></i><h4>No templates yet</h4><p>Open the Course Structure Builder and save a course as a template to reuse it here.</p></div>';
+            grid.innerHTML = '<div class="catalog-empty"><i class="fas fa-layer-group" aria-hidden="true"></i><h4>No templates yet</h4><p>Choose Add Template to save an existing course structure for reuse.</p></div>';
             return;
         }
 
@@ -1428,13 +1438,18 @@ function loadTrainingTemplates() {
                 '<div class="catalog-card-stats"><span><i class="fas fa-cube" aria-hidden="true"></i> ' + Number(template.module_count || 0) + ' modules</span>' +
                 '<span><i class="fas fa-book-open" aria-hidden="true"></i> ' + Number(template.lesson_count || 0) + ' lessons</span></div>' +
                 '<div class="catalog-card-footer"><span class="cc-deadline is-meta">Created ' + escapeTrainingTemplateHtml(createdAt) + '</span>' +
-                '<button type="button" class="cc-enroll-btn enroll" data-clone-template="' + id + '"><i class="fas fa-copy" aria-hidden="true"></i> Clone</button></div></article>';
+                '<span class="training-template-actions"><a class="cc-enroll-btn" href="?page=instructor/training-subpage/template&id=' + id + '"><i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit</a>' +
+                '<button type="button" class="cc-enroll-btn enroll" data-clone-template="' + id + '"><i class="fas fa-copy" aria-hidden="true"></i> Clone</button></span></div></article>';
         }).join('');
         if (typeof window.trRefreshTrainingCatalog === 'function') window.trRefreshTrainingCatalog();
     })
     .catch(function () {
         grid.innerHTML = '<div class="catalog-empty is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><h4>Could not load templates</h4><p>Check your connection and try again.</p></div>';
     });
+}
+
+if (document.querySelector('#tr-catalog-tabs .catalog-tab-btn.active[data-tab="tab-template"]')) {
+    loadTrainingTemplates();
 }
 
 function closeTrainingTemplateModal() {

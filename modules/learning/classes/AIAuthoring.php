@@ -1,10 +1,9 @@
 <?php
 /**
- * AIAuthoring - role-aware entry points into the admin AI Assistant.
+ * Role-aware AI entry points for the Learning module.
  *
- * The AI Assistant remains administrator-only. These helpers only render a
- * launcher when the current Learning session is an administrator, so trainers
- * and trainees never see a link that would end in a 403 response.
+ * Full AI Assistant links remain administrator-only. The course suggestion
+ * chat is available to administrators and trainers.
  */
 class AIAuthoring
 {
@@ -34,6 +33,12 @@ class AIAuthoring
         return $role === 'admin'
             || !empty($_SESSION['is_admin'])
             || !empty($_SESSION['admin_access']);
+    }
+
+    public static function canUseCourseChat(): bool
+    {
+        return self::isAdmin()
+            || strtolower((string) ($_SESSION['learning_role'] ?? '')) === 'instructor';
     }
 
     public static function callout(string $context): string

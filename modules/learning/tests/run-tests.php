@@ -206,6 +206,13 @@ check(
         && strpos($trainingSource, 'data-tab="tab-course"') !== false
         && strpos($trainingSource, 'data-tab="tab-template"') !== false
 );
+$courseAuthoringSource = file_get_contents($moduleRoot . '/pages/instructor/elearning-subpage/course.php');
+check(
+    'Add Course back link points to unified Training page',
+    is_string($courseAuthoringSource)
+        && strpos($courseAuthoringSource, "BackLink::anchor('instructor/training'") !== false
+        && strpos($courseAuthoringSource, "BackLink::anchor('instructor/elearning'") === false
+);
 
 request('learner', null);
 same('no page requested serves the dashboard', 'dashboard-overview', $pageController->getPage());

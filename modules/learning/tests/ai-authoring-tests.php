@@ -31,12 +31,15 @@ check('non-admin sees no course button', AIAuthoring::button('course') === '');
 $_SESSION['learning_role'] = 'instructor';
 check('instructor sees no course callout', AIAuthoring::callout('course') === '');
 check('instructor sees no learning-path callout', AIAuthoring::callout('learning-path') === '');
+check('trainer can use the course chat', AIAuthoring::canUseCourseChat());
 
 $_SESSION['learning_role'] = 'learner';
 check('learner sees no course callout', AIAuthoring::callout('course') === '');
 check('learner sees no course button', AIAuthoring::button('course') === '');
+check('learner cannot use the course chat', !AIAuthoring::canUseCourseChat());
 
 $_SESSION['learning_role'] = 'admin';
+check('admin can use the course chat', AIAuthoring::canUseCourseChat());
 $courseCallout = AIAuthoring::callout('course');
 $pathCallout = AIAuthoring::callout('learning-path');
 $courseButton = AIAuthoring::button('course');
