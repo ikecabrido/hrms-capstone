@@ -86,8 +86,20 @@ class AIConfig
             $candidates[] = $configured;
         }
 
-        // App layout: <webroot>/<project>/modules/learning/classes. Moving five
-        // levels up reaches the directory beside htdocs/public_html.
+        // Find the webroot instead of assuming the application is nested one
+        // level below it: deployments commonly install this app directly in
+        // public_html, while local XAMPP checkouts may be under htdocs/project.
+        $directory = __DIR__;
+        while ($directory !== dirname($directory)) {
+            if (in_array(strtolower(basename($directory)), ['public_html', 'htdocs'], true)) {
+                $candidates[] = dirname($directory) . DIRECTORY_SEPARATOR . 'hrms-capzy-ai-config.php';
+                break;
+            }
+            $directory = dirname($directory);
+        }
+
+        // Preserve the previous layout fallback for installations with a
+        // differently named webroot.
         $candidates[] = dirname(__DIR__, 5) . DIRECTORY_SEPARATOR . 'hrms-capzy-ai-config.php';
 
         foreach ($candidates as $file) {
