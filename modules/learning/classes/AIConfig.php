@@ -65,7 +65,9 @@ class AIConfig
     }
 
     /**
-     * Local config is optional and deliberately outside the webroot.
+     * Local config is optional and deliberately outside the webroot. The
+     * default candidate is the directory above the deployment's webroot (for
+     * example, beside public_html).
      *
      * @return array<string, mixed>
      */
@@ -84,9 +86,8 @@ class AIConfig
             $candidates[] = $configured;
         }
 
-        // XAMPP/local layout: C:\xampp\hrms-capzy-ai-config.php. On other
-        // layouts this is simply absent; deployments should set
-        // LD_AI_CONFIG_FILE instead.
+        // App layout: <webroot>/<project>/modules/learning/classes. Moving five
+        // levels up reaches the directory beside htdocs/public_html.
         $candidates[] = dirname(__DIR__, 5) . DIRECTORY_SEPARATOR . 'hrms-capzy-ai-config.php';
 
         foreach ($candidates as $file) {
