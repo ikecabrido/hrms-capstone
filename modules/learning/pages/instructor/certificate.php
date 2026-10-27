@@ -90,6 +90,7 @@ try {
     )->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/certificate');
     $templates = [];
     $issuedCertificates = [];
     $userCerts = [];
@@ -193,18 +194,20 @@ function certTimeAgo($dt) {
                             }
                         }
                     ?>
-                        <div class="cert-card-item" data-search="<?= strtolower($name . ' ' . $cert['email'] . ' ' . $cert['course_title']) ?>" data-status="<?= $cert['status'] ?>" data-expiry="<?= $cert['expiry_status'] ?>" style="border:2px solid rgba(16,185,129,0.15); border-radius:14px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
-                            <div style="background:linear-gradient(135deg, rgba(16,185,129,0.1), rgba(52,211,153,0.06)); padding:1.25rem; text-align:center; border-bottom:1px solid rgba(16,185,129,0.12);">
-                                <div style="font-size:2rem; color:#10b981; margin-bottom:0.4rem;"><i class="fas fa-award"></i></div>
-                                <div style="font-weight:700; color:var(--text); font-size:1rem;"><?= htmlspecialchars($cert['course_title']) ?></div>
-                                <div style="display:flex; flex-direction:column; align-items:center;">
-                                    <span style="display:inline-block; margin-top:0.4rem; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.7rem; font-weight:700; background:<?= $statusColor ?>15; color:<?= $statusColor ?>;"><?= $statusLabel ?></span>
-                                    <?= $expiryBadge ?>
+                        <div class="cert-card-item" data-search="<?= strtolower($name . ' ' . $cert['email'] . ' ' . $cert['course_title']) ?>" data-status="<?= $cert['status'] ?>" data-expiry="<?= $cert['expiry_status'] ?>" style="border:2px solid rgba(32,0,130,0.08); border-radius:14px; overflow:hidden; transition:transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)'" onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                            <div style="background:linear-gradient(135deg, #320082, #5b21b6); padding:1.25rem; text-align:center; color:#fff; position:relative; overflow:hidden;">
+                                <div style="position:absolute; top:-15px; right:-15px; width:60px; height:60px; background:rgba(255,255,255,0.06); border-radius:50%;"></div>
+                                <div style="position:absolute; bottom:-20px; left:-10px; width:50px; height:50px; background:rgba(255,255,255,0.04); border-radius:50%;"></div>
+                                <div style="font-size:2rem; margin-bottom:0.4rem; position:relative;"><i class="fas fa-award"></i></div>
+                                <div style="font-weight:800; font-size:1rem; position:relative;"><?= htmlspecialchars($cert['course_title']) ?></div>
+                                <div style="display:flex; flex-direction:column; align-items:center; position:relative;">
+                                    <span style="display:inline-block; margin-top:0.4rem; padding:0.2rem 0.6rem; border-radius:999px; font-size:0.7rem; font-weight:700; background:rgba(255,255,255,0.2); color:#fff;"><?= $statusLabel ?></span>
+                                    <?= $expiryBadge ? str_replace('background:rgba(220,53,69,0.1)', 'background:rgba(220,53,69,0.3)', str_replace('background:rgba(245,158,11,0.1)', 'background:rgba(245,158,11,0.3)', str_replace('color:#dc3545', 'color:#fff', str_replace('color:#d97706', 'color:#fff', $expiryBadge)))) : '' ?>
                                 </div>
                             </div>
                             <div style="padding:1rem 1.25rem;">
                                 <div style="display:flex; align-items:center; gap:0.65rem; margin-bottom:0.75rem;">
-                                    <div style="width:36px; height:36px; min-width:36px; border-radius:50%; background:linear-gradient(135deg, rgba(16,185,129,0.9), rgba(52,211,153,0.75)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.75rem;"><?= $initials ?></div>
+                                    <div style="width:36px; height:36px; min-width:36px; border-radius:50%; background:linear-gradient(135deg, #320082, #5b21b6); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.75rem;"><?= $initials ?></div>
                                     <div>
                                         <div style="font-weight:700; color:var(--text); font-size:0.9rem;"><?= $name ?></div>
                                         <div style="font-size:0.75rem; color:rgba(32,0,130,0.45);"><?= htmlspecialchars($cert['email']) ?></div>
@@ -221,10 +224,10 @@ function certTimeAgo($dt) {
                                     </div>
                                 </div>
                                 <div style="font-family:monospace; font-size:0.72rem; color:rgba(32,0,130,0.5); background:rgba(32,0,130,0.04); padding:0.5rem 0.7rem; border-radius:6px; margin-bottom:0.75rem; word-break:break-all;">
-                                    <?= htmlspecialchars($cert['verification_code']) ?>
+                                    <i class="fas fa-fingerprint" style="color:var(--primary); margin-right:0.2rem;"></i><?= htmlspecialchars($cert['verification_code']) ?>
                                 </div>
                                 <div style="display:flex; gap:0.5rem;">
-                                    <a href="?page=public/verify-certificate&code=<?= htmlspecialchars($cert['verification_code']) ?>" target="_blank" style="flex:1; text-align:center; padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:var(--primary); color:var(--surface); text-decoration:none;">View</a>
+                                    <a href="?page=public/verify-certificate&back=instructor/certificate&code=<?= htmlspecialchars($cert['verification_code']) ?>" style="flex:1; text-align:center; padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:var(--primary); color:var(--surface); text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;"><i class="fas fa-eye"></i> View</a>
                                     <?php if ($cert['status'] === 'active'): ?>
                                     <button class="cert-extend-btn" data-id="<?= $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" data-current="<?= $cert['valid_until'] ?? '' ?>" onclick="openExtendModal(this)" style="padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:rgba(16,185,129,0.1); color:#10b981; border:none; cursor:pointer;"><i class="fas fa-clock"></i></button>
                                     <button class="cert-revoke-btn" data-id="<?= $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" onclick="confirmRevoke(this)" style="padding:0.5rem; border-radius:8px; font-size:0.8rem; font-weight:700; background:rgba(239,68,68,0.1); color:#ef4444; border:none; cursor:pointer;"><i class="fas fa-ban"></i></button>
@@ -299,7 +302,7 @@ function certTimeAgo($dt) {
                                     </td>
                                     <td>
                                         <div style="display:flex; gap:0.3rem; flex-wrap:nowrap;">
-                                            <a href="?page=public/verify-certificate&code=<?= htmlspecialchars($cert['verification_code']) ?>" target="_blank" style="padding:0.3rem 0.6rem; background:rgba(32,0,130,0.08); color:var(--primary); border-radius:6px; font-size:0.72rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.2rem; white-space:nowrap;"><i class="fas fa-external-link-alt"></i> View</a>
+                                            <a href="?page=public/verify-certificate&back=instructor/certificate&code=<?= htmlspecialchars($cert['verification_code']) ?>" style="padding:0.3rem 0.6rem; background:rgba(32,0,130,0.08); color:var(--primary); border-radius:6px; font-size:0.72rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:0.2rem; white-space:nowrap;"><i class="fas fa-eye"></i> View</a>
                                             <?php if ($cert['status'] === 'active'): ?>
                                             <button type="button" class="expiry-extend-btn" data-id="<?= $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" data-current="<?= $validUntilRaw ?>" onclick="openExtendModal(this)" style="padding:0.3rem 0.6rem; background:rgba(16,185,129,0.08); color:#16a34a; border:none; border-radius:6px; font-size:0.72rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:0.2rem; white-space:nowrap;"><i class="fas fa-calendar-plus"></i> Extend</button>
                                             <button type="button" class="expiry-revoke-btn" data-id="<?= $cert['id'] ?>" data-course="<?= htmlspecialchars($cert['course_title'], ENT_QUOTES) ?>" onclick="confirmRevoke(this)" style="padding:0.3rem 0.6rem; background:rgba(220,53,69,0.08); color:#dc3545; border:none; border-radius:6px; font-size:0.72rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:0.2rem; white-space:nowrap;"><i class="fas fa-ban"></i> Revoke</button>
@@ -449,7 +452,7 @@ function certTimeAgo($dt) {
             <h3 id="template-modal-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text, #222);">New Certificate Template</h3>
             <button id="close-template-modal" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:rgba(32,0,130,0.4); padding:0.25rem;"><i class="fas fa-times"></i></button>
         </div>
-        <form id="template-form" style="padding:1.5rem;">
+        <form id="template-form" data-skip style="padding:1.5rem;">
             <input type="hidden" name="template_id" id="template-form-id" value="" />
             <div style="margin-bottom:1rem;">
                 <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--primary, #320082); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem;">Template Title *</label>
@@ -539,7 +542,7 @@ function certTimeAgo($dt) {
                 <div id="cert-detail-code" style="font-family:monospace; font-size:0.82rem; color:rgba(32,0,130,0.6); background:rgba(32,0,130,0.04); padding:0.6rem 0.85rem; border-radius:8px; word-break:break-all;"></div>
             </div>
             <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-                <a id="cert-detail-view" href="#" target="_blank" style="flex:1; text-align:center; padding:0.6rem; border-radius:8px; font-size:0.85rem; font-weight:700; background:var(--primary); color:var(--surface); text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem;"><i class="fas fa-external-link-alt"></i> Verify</a>
+                <a id="cert-detail-view" href="#" style="flex:1; text-align:center; padding:0.6rem; border-radius:8px; font-size:0.85rem; font-weight:700; background:var(--primary); color:var(--surface); text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem;"><i class="fas fa-eye"></i> Verify</a>
                 <button id="cert-detail-extend" style="flex:1; padding:0.6rem; border-radius:8px; font-size:0.85rem; font-weight:700; background:rgba(16,185,129,0.1); color:#10b981; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem;"><i class="fas fa-clock"></i> Extend</button>
                 <button id="cert-detail-revoke" style="flex:1; padding:0.6rem; border-radius:8px; font-size:0.85rem; font-weight:700; background:rgba(239,68,68,0.1); color:#ef4444; border:none; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:0.4rem;"><i class="fas fa-ban"></i> Revoke</button>
             </div>

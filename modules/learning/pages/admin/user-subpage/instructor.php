@@ -6,6 +6,7 @@ $employeeId = (int)($_GET['id'] ?? 0);
 $profile = null;
 $courses = [];
 $recentActivity = [];
+$documents = [];
 
 try {
     $pdo = (new Database())->getConnection();
@@ -58,11 +59,18 @@ try {
     $actStmt->execute([':eid' => $employeeId]);
     $recentActivity = $actStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Fetch documents for this employee
+    $docStmt = $pdo->prepare("SELECT ed.*, CONCAT(up.first_name, ' ', IFNULL(CONCAT(up.middle_name, ' '), ''), up.last_name) AS uploaded_by_name FROM employee_documents ed LEFT JOIN em_employees up ON up.employee_id = ed.uploaded_by WHERE ed.employee_id = :eid ORDER BY ed.created_at DESC");
+    $docStmt->execute([':eid' => $employeeId]);
+    $documents = $docStmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (Throwable $e) {
+    DbError::capture($e, 'admin/user-subpage/instructor');
     $profile = null;
     $courses = [];
     $learners = [];
     $recentActivity = [];
+    $documents = [];
 }
 
 function instTimeAgo($dt) {
@@ -205,6 +213,72 @@ $fullName = $profile ? htmlspecialchars($profile['first_name'] . ' ' . ($profile
                             </span>
                         </div>
                     <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Documents Section -->
+        <div class="mode-card" style="margin-top:1.5rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                <h3 style="margin:0; color:var(--text);"><i class="fas fa-folder" style="margin-right:0.5rem; color:var(--primary);"></i> Documents (<?= count($documents ?? []) ?>)</h3>
+                <a href="?page=admin/user-subpage/documents&id=<?= $employeeId ?>" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:var(--surface); border:none; border-radius:999px; font-size:0.85rem; font-weight:700; text-decoration:none; white-space:nowrap;">
+                    <i class="fas fa-upload" style="font-size:0.8rem;"></i> Manage Documents
+                </a>
+            </div>
+            <?php if (empty($documents ?? [])): ?>
+                <p style="color:rgba(32,0,130,0.5);">No documents uploaded yet.</p>
+            <?php else: ?>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.92rem;">
+                        <thead>
+                            <tr style="border-bottom:2px solid rgba(32,0,130,0.12); text-align:left;">
+                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Document</th>
+                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Type</th>
+                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Category</th>
+                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Uploaded</th>
+                                <th style="padding:0.8rem 1rem; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700; text-align:center;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($documents as $doc): 
+                                $docIcon = 'fa-file'; $docColor = 'rgba(32,0,130,0.5)';
+                                $dt = strtolower($doc['document_type'] ?? '');
+                                if ($dt === 'resume/cv' || $dt === 'resume' || $dt === 'cv') { $docIcon = 'fa-file-lines'; $docColor = '#6366f1'; }
+                                elseif ($dt === 'contract') { $docIcon = 'fa-file-signature'; $docColor = '#f59e0b'; }
+                                elseif ($dt === 'certificate' || $dt === 'certification') { $docIcon = 'fa-certificate'; $docColor = '#10b981'; }
+                                elseif ($dt === 'identification' || $dt === 'id') { $docIcon = 'fa-id-card'; $docColor = '#3b82f6'; }
+                                elseif ($dt === 'medical') { $docIcon = 'fa-heart-pulse'; $docColor = '#ef4444'; }
+                                elseif ($dt === 'legal') { $docIcon = 'fa-scale-balanced'; $docColor = '#8b5cf6'; }
+                            ?>
+                                <tr style="border-bottom:1px solid rgba(32,0,130,0.06);" onmouseover="this.style.background='rgba(32,0,130,0.03)'" onmouseout="this.style.background='transparent'">
+                                    <td style="padding:0.75rem 1rem;">
+                                        <div style="display:flex; align-items:center; gap:0.6rem;">
+                                            <div style="width:32px; height:32px; min-width:32px; border-radius:8px; background:rgba(32,0,130,0.06); display:flex; align-items:center; justify-content:center;">
+                                                <i class="fas <?= $docIcon ?>" style="color:<?= $docColor ?>; font-size:0.85rem;"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-weight:600; color:var(--text); font-size:0.88rem;"><?= htmlspecialchars($doc['document_name']) ?></div>
+                                                <div style="font-size:0.72rem; color:rgba(32,0,130,0.4);"><?= htmlspecialchars($doc['file_name']) ?></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="padding:0.75rem 1rem; font-size:0.82rem;">
+                                        <span style="display:inline-block; padding:0.1rem 0.45rem; border-radius:4px; background:rgba(32,0,130,0.04); font-size:0.72rem; font-weight:600; color:<?= $docColor ?>;">
+                                            <?= htmlspecialchars($doc['document_type'] ?? 'Other') ?>
+                                        </span>
+                                    </td>
+                                    <td style="padding:0.75rem 1rem; font-size:0.82rem; color:rgba(32,0,130,0.5);"><?= htmlspecialchars($doc['category'] ?? 'Other') ?></td>
+                                    <td style="padding:0.75rem 1rem; font-size:0.82rem; color:rgba(32,0,130,0.5);"><?= $doc['created_at'] ? date('M j, Y', strtotime($doc['created_at'])) : 'N/A' ?></td>
+                                    <td style="padding:0.75rem 1rem; text-align:center;">
+                                        <a href="pages/admin/ajax/download-document.php?doc_id=<?= $doc['document_id'] ?>" download="<?= htmlspecialchars($doc['file_name']) ?>"
+                                           style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.35rem 0.6rem; border-radius:999px; font-size:0.72rem; font-weight:700; border:1px solid rgba(32,0,130,0.15); color:var(--primary); text-decoration:none; background:transparent; white-space:nowrap;">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
             <?php endif; ?>
         </div>

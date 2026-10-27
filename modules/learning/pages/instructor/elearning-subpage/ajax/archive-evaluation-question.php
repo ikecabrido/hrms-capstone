@@ -6,6 +6,6 @@ require_once dirname(__FILE__, 7) . '/database/db.php';
 try {
 
 $id = (int)($_POST['id']??0);
-$pdo->prepare('UPDATE ld_quiz_question SET status=' . ' . 'archived' . ' . ' WHERE id=:id')->execute(['id'=>$id]);
+$pdo->prepare('UPDATE ld_quiz_question SET status=' . chr(39) . 'archived' . chr(39) . ' WHERE id=:id')->execute(['id'=>$id]);
 echo json_encode(['success'=>true]);
 } catch (Throwable $e) { echo json_encode(['success'=>false,'message'=>$e->getMessage()]); }

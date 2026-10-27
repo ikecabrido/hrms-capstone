@@ -2,9 +2,13 @@
 header('Content-Type: application/json');
 session_start();
 
-include_once dirname(__DIR__, 3) . '/classes/employee.php';
+require_once dirname(__DIR__, 3) . '/classes/employee.php';
+require_once dirname(__DIR__, 3) . '/classes/csrf.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
 require_once dirname(__DIR__, 3) . '/classes/enrollment.php';
+
+// CSRF validation for state-changing request
+CSRF::requireValid();
 
 try {
     $employeeClass = new Employee();

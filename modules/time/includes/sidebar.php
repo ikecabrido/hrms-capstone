@@ -1,8 +1,15 @@
 <?php
-include_once __DIR__ . '/../../../auth/session.php';
-include __DIR__ . '/../classes/Employee.php';
-$employeeClass = new Employee();
+/**
+ * Time sidebar — nav data only.
+ *
+ * The markup is shared by every module: see includes/sidebar.php at the app root.
+ */
+$sidebar = [
+    'dir'   => dirname(__DIR__),
+    'title' => 'Time Dashboard',
+];
 
+<<<<<<< HEAD
 ?>
 
 <aside class="sidebar">
@@ -123,3 +130,6 @@ $employeeClass = new Employee();
         <?php $pageController->renderNav(); ?>
     </ul>
 </aside>
+=======
+require dirname(__DIR__, 3) . '/includes/sidebar.php';
+>>>>>>> cbdd24063e3b5b4c56e67cc986bb378c4807b777

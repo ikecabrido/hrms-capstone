@@ -254,6 +254,25 @@ try {
                                 ':show_answers_after_submit' => $showAnswers ? 1 : 0,
                                 ':status' => $quizStatus,
                             ]);
+
+                            // Persist quiz questions and options (if any)
+                            $newQuizId = (int) $pdo->lastInsertId();
+                            $qIdx = 0;
+                            foreach (($quizData['questions'] ?? []) as $qData) {
+                                $qText = trim((string) ($qData['question_text'] ?? ''));
+                                if ($qText === '') { continue; }
+                                $qType = in_array($qData['question_type'] ?? '', ['single_choice', 'multiple_choice', 'true_false'], true) ? $qData['question_type'] : 'single_choice';
+                                $qStmt = $pdo->prepare("INSERT INTO ld_quiz_question (item_type, reference_id, question_text, question_type, order_index, status) VALUES ('quiz', :rid, :text, :type, :idx, 'active')");
+                                $qStmt->execute([':rid' => $newQuizId, ':text' => $qText, ':type' => $qType, ':idx' => $qIdx++]);
+                                $newQuestionId = (int) $pdo->lastInsertId();
+                                $oIdx = 0;
+                                foreach (($qData['options'] ?? []) as $opt) {
+                                    $oText = trim((string) ($opt['option_text'] ?? ''));
+                                    if ($oText === '') { continue; }
+                                    $oStmt = $pdo->prepare("INSERT INTO ld_quiz_question_option (question_id, option_text, is_correct, order_index) VALUES (:qid, :text, :correct, :idx)");
+                                    $oStmt->execute([':qid' => $newQuestionId, ':text' => $oText, ':correct' => !empty($opt['is_correct']) ? 1 : 0, ':idx' => $oIdx++]);
+                                }
+                            }
                         }
                     }
 
@@ -314,6 +333,25 @@ try {
                         ':status' => $quizStatus,
                     ]);
 
+                    // Persist quiz questions and options (if any)
+                    $newQuizId = (int) $pdo->lastInsertId();
+                    $qIdx = 0;
+                    foreach (($quizData['questions'] ?? []) as $qData) {
+                        $qText = trim((string) ($qData['question_text'] ?? ''));
+                        if ($qText === '') { continue; }
+                        $qType = in_array($qData['question_type'] ?? '', ['single_choice', 'multiple_choice', 'true_false'], true) ? $qData['question_type'] : 'single_choice';
+                        $qStmt = $pdo->prepare("INSERT INTO ld_quiz_question (item_type, reference_id, question_text, question_type, order_index, status) VALUES ('quiz', :rid, :text, :type, :idx, 'active')");
+                        $qStmt->execute([':rid' => $newQuizId, ':text' => $qText, ':type' => $qType, ':idx' => $qIdx++]);
+                        $newQuestionId = (int) $pdo->lastInsertId();
+                        $oIdx = 0;
+                        foreach (($qData['options'] ?? []) as $opt) {
+                            $oText = trim((string) ($opt['option_text'] ?? ''));
+                            if ($oText === '') { continue; }
+                            $oStmt = $pdo->prepare("INSERT INTO ld_quiz_question_option (question_id, option_text, is_correct, order_index) VALUES (:qid, :text, :correct, :idx)");
+                            $oStmt->execute([':qid' => $newQuestionId, ':text' => $oText, ':correct' => !empty($opt['is_correct']) ? 1 : 0, ':idx' => $oIdx++]);
+                        }
+                    }
+
                     $createdModules[$moduleOrderIndex - 1]['quizzes'][] = [
                         'id' => (int) $pdo->lastInsertId(),
                         'title' => $quizTitle
@@ -369,6 +407,25 @@ try {
                 ':show_answers_after_submit' => $showAnswers ? 1 : 0,
                 ':status' => $evalStatus,
             ]);
+
+            // Persist evaluation questions and options (if any)
+            $newEvalId = (int) $pdo->lastInsertId();
+            $qIdx = 0;
+            foreach (($evaluationData['questions'] ?? []) as $qData) {
+                $qText = trim((string) ($qData['question_text'] ?? ''));
+                if ($qText === '') { continue; }
+                $qType = in_array($qData['question_type'] ?? '', ['single_choice', 'multiple_choice', 'true_false'], true) ? $qData['question_type'] : 'single_choice';
+                $qStmt = $pdo->prepare("INSERT INTO ld_quiz_question (item_type, reference_id, question_text, question_type, order_index, status) VALUES ('evaluation', :rid, :text, :type, :idx, 'active')");
+                $qStmt->execute([':rid' => $newEvalId, ':text' => $qText, ':type' => $qType, ':idx' => $qIdx++]);
+                $newQuestionId = (int) $pdo->lastInsertId();
+                $oIdx = 0;
+                foreach (($qData['options'] ?? []) as $opt) {
+                    $oText = trim((string) ($opt['option_text'] ?? ''));
+                    if ($oText === '') { continue; }
+                    $oStmt = $pdo->prepare("INSERT INTO ld_quiz_question_option (question_id, option_text, is_correct, order_index) VALUES (:qid, :text, :correct, :idx)");
+                    $oStmt->execute([':qid' => $newQuestionId, ':text' => $oText, ':correct' => !empty($opt['is_correct']) ? 1 : 0, ':idx' => $oIdx++]);
+                }
+            }
         }
     }
 

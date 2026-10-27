@@ -1,6 +1,7 @@
 <?php
 include_once __DIR__ . '/../../../classes/Employee.php';
 require_once dirname(__DIR__, 5) . '/database/db.php';
+require_once dirname(__DIR__, 5) . '/classes/progress.php';
 
 $employeeClass = new Employee();
 $learnerId = (int) ($employeeClass->getEmployeeId() ?? 0);
@@ -29,16 +30,21 @@ try {
 
     $totalSkills = count($skills);
 
-    // Also get skills from module progress
+    // Also get skills from module progress.
+    //
+    // A module counts as completed when all of its active lessons/quizzes are complete
+    // (Progress::sqlModuleCompleted). The previous version joined ld_progress on
+    // item_type = 'module', a row that is never written, so module-derived skills never
+    // appeared as completed.
+    $moduleCompletedSql = Progress::sqlModuleCompleted('m', 'e.id');
     $modSkills = $pdo->prepare("
         SELECT DISTINCT s.id, s.name, s.description,
                COUNT(DISTINCT m.course_id) AS course_count,
-               SUM(CASE WHEN p.status = 'completed' THEN 1 ELSE 0 END) AS completed_courses
+               COUNT(DISTINCT CASE WHEN " . $moduleCompletedSql . " THEN m.id END) AS completed_courses
         FROM ld_skill s
         INNER JOIN ld_module_skill ms ON ms.skill_id = s.id
-        INNER JOIN ld_module m ON m.id = ms.module_id
+        INNER JOIN ld_module m ON m.id = ms.module_id AND m.status = 'active'
         INNER JOIN ld_enrollment e ON e.course_id = m.course_id AND e.learner_id = :learner_id
-        LEFT JOIN ld_progress p ON p.enrollment_id = e.id AND p.item_type = 'module' AND p.reference_id = m.id
         GROUP BY s.id, s.name, s.description
         HAVING completed_courses > 0
     ");
@@ -59,6 +65,7 @@ try {
     $skills = array_values($skillMap);
 
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study-subpage/skill');
     $skills = [];
 }
 ?>

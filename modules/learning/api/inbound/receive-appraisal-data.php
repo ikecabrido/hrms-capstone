@@ -78,6 +78,20 @@ try {
     $enrollmentResults = [];
     $enrollment = new Enrollment($pdo);
 
+    // Normalize priority ('High'/'Medium'/'Low' from PM -> table enum lowercase)
+    $priority = strtolower((string)($priorityLevel));
+    if (!in_array($priority, ['low', 'medium', 'high'], true)) {
+        $priority = 'medium';
+    }
+
+    // Record each course as a recommendation trail row (ld_training_recommendation)
+    $recoStmt = $pdo->prepare(
+        'INSERT INTO ld_training_recommendation
+            (employee_id, course_id, development_area, priority_level, source, external_reference_id, status)
+         VALUES
+            (:employee_id, :course_id, :development_area, :priority_level, :source, :external_reference_id, :status)'
+    );
+
     foreach ($courses as $course) {
         $result = $enrollment->invite($employeeId, (int)$course['course_id'], 0); // invitedBy=0 (system)
         $enrollmentResults[] = [
@@ -86,6 +100,16 @@ try {
             'result' => $result,
         ];
         if ($result['success']) $enrolled++;
+
+        $recoStmt->execute([
+            ':employee_id'         => $employeeId,
+            ':course_id'           => (int)$course['course_id'],
+            ':development_area'    => $developmentArea,
+            ':priority_level'      => $priority,
+            ':source'              => 'appraisal',
+            ':external_reference_id' => $extRefId,
+            ':status'              => $result['success'] ? 'invited' : 'recommended',
+        ]);
     }
 
     // 7. Mark as processed

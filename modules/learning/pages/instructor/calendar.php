@@ -13,7 +13,7 @@ try {
     $stmt = $pdo->prepare("SELECT vc.id, vc.title, vc.platform, vc.scheduled_at, vc.duration_minutes, 'video-conference' AS event_type FROM ld_video_conference vc WHERE vc.instructor_id = :iid AND vc.status = 'scheduled' AND vc.scheduled_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) ORDER BY vc.scheduled_at ASC LIMIT 50");
     $stmt->execute([':iid' => $instructorId]);
     foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $s) {
-        $events[] = ['date'=>date('Y-m-d',strtotime($s['scheduled_at'])),'time'=>date('g:i A',strtotime($s['scheduled_at'])),'title'=>$s['title'],'type'=>'Live Session','color'=>'#2D8CFF','icon'=>'fa-video','meta'=>ucfirst(str_replace('_',' ',$s['platform'])).' &bull; '.$s['duration_minutes'].' min','datetime'=>$s['scheduled_at']];
+        $events[] = ['date'=>date('Y-m-d',strtotime($s['scheduled_at'])),'time'=>date('g:i A',strtotime($s['scheduled_at'])),'title'=>$s['title'],'type'=>'Online Training','color'=>'#2D8CFF','icon'=>'fa-video','meta'=>ucfirst(str_replace('_',' ',$s['platform'])).' &bull; '.$s['duration_minutes'].' min','datetime'=>$s['scheduled_at']];
     }
 
     // Enrollment deadlines for my courses
@@ -50,7 +50,7 @@ try {
     }
 
     usort($events, fn($a,$b) => strtotime($a['datetime']) - strtotime($b['datetime']));
-} catch (Throwable $e) { $events = []; }
+} catch (Throwable $e) { DbError::capture($e, 'instructor/calendar'); $events = []; }
 
 $now = new DateTime();
 $year = (int) ($_GET['year'] ?? $now->format('Y'));
@@ -136,7 +136,7 @@ $monthNames = ['', 'January','February','March','April','May','June','July','Aug
             <h3 id="event-modal-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text, #222);">New Event</h3>
             <button onclick="document.getElementById('event-modal-overlay').style.display='none'" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:rgba(32,0,130,0.4); padding:0.25rem;"><i class="fas fa-times"></i></button>
         </div>
-        <form id="event-form" style="padding:1.5rem;">
+        <form id="event-form" data-skip style="padding:1.5rem;">
             <input type="hidden" name="event_id" id="event-form-id" value="" />
             <div style="margin-bottom:1rem;">
                 <label style="display:block; font-size:0.78rem; font-weight:700; color:var(--primary, #320082); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.4rem;">Title *</label>

@@ -33,12 +33,12 @@ try {
         FROM em_employees emp
         LEFT JOIN ld_enrollment e ON e.learner_id = emp.employee_id
         LEFT JOIN ld_grade g ON g.learner_id = emp.employee_id
-        WHERE emp.employee_id IN (SELECT DISTINCT learner_id FROM ld_enrollment)
         GROUP BY emp.employee_id, emp.first_name, emp.last_name, emp.email
-        ORDER BY last_active DESC
+        ORDER BY last_active DESC, emp.employee_id ASC
     ")->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Throwable $e) {
+    DbError::capture($e, 'admin/user');
     $instructors = [];
     $learners = [];
 }
@@ -144,7 +144,7 @@ function userTimeAgo($dt) {
                 <div class="mode-card">
                     <div class="content-card-body">
                         <h3>No learners found</h3>
-                        <p>There are no enrolled learners yet. Enroll one to get started.</p>
+                        <p>No employee records found. Employees synced from Employee Management will appear here automatically.</p>
                     </div>
                 </div>
             <?php else: ?>

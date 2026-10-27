@@ -14,6 +14,7 @@ try {
     $settingClass = new Setting($pdo);
     $settings = $settingClass->getAll();
 } catch (Throwable $e) {
+    DbError::capture($e, 'admin/settings');
     $settings = [];
 }
 

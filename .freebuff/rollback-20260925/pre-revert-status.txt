@@ -1,0 +1,247 @@
+ M includes/Notification.php
+ M includes/sidebar.php
+ M modules/exit/classes/Page.php
+ M modules/exit/pages/ajax/save-knowledge-transfer.php
+ M modules/learning/classes/Page.php
+ M modules/learning/cron/engagement-snapshot.log
+ M modules/learning/cron/materialize-engagement-snapshots.php
+ D modules/learning/pages/admin/ajax/add-announcement.php
+ D modules/learning/pages/admin/ajax/archive-announcement.php
+ D modules/learning/pages/admin/ajax/assign-learning-path.php
+ D modules/learning/pages/admin/ajax/delete-kt-plan.php
+ D modules/learning/pages/admin/ajax/edit-analytics.php
+ D modules/learning/pages/admin/ajax/edit-announcement.php
+ D modules/learning/pages/admin/ajax/edit-archive.php
+ D modules/learning/pages/admin/ajax/edit-audit.php
+ D modules/learning/pages/admin/ajax/edit-employee.php
+ D modules/learning/pages/admin/ajax/edit-enrollment.php
+ D modules/learning/pages/admin/ajax/edit-moderation.php
+ D modules/learning/pages/admin/ajax/edit-progress.php
+ D modules/learning/pages/admin/ajax/edit-report.php
+ D modules/learning/pages/admin/ajax/edit-setting.php
+ D modules/learning/pages/admin/ajax/edit-user.php
+ D modules/learning/pages/admin/ajax/employee-profile-get.php
+ D modules/learning/pages/admin/ajax/employee-profile-save.php
+ D modules/learning/pages/admin/ajax/export-data.php
+ D modules/learning/pages/admin/ajax/get-admin-learning-paths.php
+ D modules/learning/pages/admin/ajax/get-analytics-overview.php
+ D modules/learning/pages/admin/ajax/get-announcement.php
+ D modules/learning/pages/admin/ajax/get-archive-count.php
+ D modules/learning/pages/admin/ajax/get-archive.php
+ D modules/learning/pages/admin/ajax/get-backup-list.php
+ D modules/learning/pages/admin/ajax/get-documents.php
+ D modules/learning/pages/admin/ajax/get-instructor-analytics.php
+ D modules/learning/pages/admin/ajax/get-learner-analytics.php
+ D modules/learning/pages/admin/ajax/get-learning-path-assignments.php
+ D modules/learning/pages/admin/ajax/get-overview-notification.php
+ D modules/learning/pages/admin/ajax/get-settings.php
+ D modules/learning/pages/admin/ajax/get-system-analytics.php
+ D modules/learning/pages/admin/ajax/get-timeline.php
+ D modules/learning/pages/admin/ajax/get-user-analytics.php
+ D modules/learning/pages/admin/ajax/restore-archive.php
+ M modules/learning/pages/admin/ajax/save-kt-plan.php
+ D modules/learning/pages/admin/ajax/search-global.php
+ D modules/learning/pages/admin/audit-subpage/ajax/get-audit-log.php
+ D modules/learning/pages/admin/audit-subpage/ajax/get-integration-log.php
+ M modules/learning/pages/admin/knowledge-transfer.php
+ D modules/learning/pages/admin/moderation-subpage/ajax/archive-report.php
+ D modules/learning/pages/admin/moderation-subpage/ajax/escalate-report.php
+ D modules/learning/pages/admin/moderation-subpage/ajax/get-report.php
+ D modules/learning/pages/admin/moderation-subpage/ajax/review-report.php
+ M modules/learning/pages/admin/moderation.php
+ M modules/learning/pages/admin/notification.php
+ M modules/learning/pages/admin/settings.php
+ D modules/learning/pages/admin/user-subpage/ajax/add-user.php
+ D modules/learning/pages/admin/user-subpage/ajax/archive-user.php
+ D modules/learning/pages/admin/user-subpage/ajax/edit-user.php
+ D modules/learning/pages/admin/user-subpage/ajax/get-user-schedule.php
+ D modules/learning/pages/admin/user-subpage/ajax/get-user.php
+ D modules/learning/pages/admin/user-subpage/ajax/import-user.php
+ M modules/learning/pages/admin/user-subpage/learner.php
+ D modules/learning/pages/instructor/ajax/add-certificate.php
+ D modules/learning/pages/instructor/ajax/archive-certificate.php
+ D modules/learning/pages/instructor/ajax/download-certificate.php
+ D modules/learning/pages/instructor/ajax/edit-announcement.php
+ D modules/learning/pages/instructor/ajax/edit-certificate.php
+ D modules/learning/pages/instructor/ajax/edit-comment.php
+ D modules/learning/pages/instructor/ajax/edit-evaluation-option.php
+ D modules/learning/pages/instructor/ajax/edit-evaluation-question.php
+ D modules/learning/pages/instructor/ajax/edit-learning-path-item.php
+ D modules/learning/pages/instructor/ajax/edit-message.php
+ D modules/learning/pages/instructor/ajax/edit-prerequisite.php
+ D modules/learning/pages/instructor/ajax/edit-rating.php
+ D modules/learning/pages/instructor/ajax/edit-skill.php
+ D modules/learning/pages/instructor/ajax/get-announcement.php
+ D modules/learning/pages/instructor/ajax/get-certificate.php
+ D modules/learning/pages/instructor/ajax/get-history-notification.php
+ D modules/learning/pages/instructor/ajax/get-learning-path.php
+ D modules/learning/pages/instructor/ajax/get-message.php
+ D modules/learning/pages/instructor/ajax/get-monitor-summary.php
+ D modules/learning/pages/instructor/ajax/get-overview-notification.php
+ D modules/learning/pages/instructor/ajax/get-system-notification.php
+ D modules/learning/pages/instructor/ajax/get-timeline.php
+ D modules/learning/pages/instructor/ajax/import-enrollment.php
+ D modules/learning/pages/instructor/ajax/mark-all-notification-read.php
+ D modules/learning/pages/instructor/ajax/mark-message-read.php
+ D modules/learning/pages/instructor/ajax/mark-notification-read.php
+ D modules/learning/pages/instructor/ajax/reorder-learning-path.php
+ D modules/learning/pages/instructor/ajax/search-employees.php
+ D modules/learning/pages/instructor/ajax/search-global.php
+ D modules/learning/pages/instructor/ajax/send-message.php
+ D modules/learning/pages/instructor/analytics-subpage/ajax/export-analytics.php
+ D modules/learning/pages/instructor/analytics-subpage/ajax/get-certificate-report-analytics.php
+ D modules/learning/pages/instructor/analytics-subpage/ajax/get-enrollment-analytics.php
+ D modules/learning/pages/instructor/analytics-subpage/ajax/get-instructor-report-analytics.php
+ D modules/learning/pages/instructor/analytics-subpage/ajax/get-learner-report-analytics.php
+ D modules/learning/pages/instructor/analytics-subpage/ajax/get-learning-report-analytics.php
+ D modules/learning/pages/instructor/analytics-subpage/ajax/get-progress-report-analytics.php
+ D modules/learning/pages/instructor/archive-subpage/ajax/get-archive-count.php
+ D modules/learning/pages/instructor/archive-subpage/ajax/get-archive.php
+ D modules/learning/pages/instructor/archive-subpage/ajax/restore-archive.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/add-evaluation-option.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/add-evaluation-question.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/archive-evaluation-option.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/archive-evaluation-question.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/duplicate-course.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/edit-evaluation-option.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/edit-evaluation-question.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-course-preview.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-evaluation-question.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-evaluation-questions.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-evaluation.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-lesson.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-module.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-quiz-question.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-quiz.php
+ D modules/learning/pages/instructor/elearning-subpage/ajax/get-quizzes-by-course.php
+ D modules/learning/pages/instructor/moderation-subpage/ajax/get-report.php
+ D modules/learning/pages/instructor/moderation-subpage/ajax/respond-report.php
+ M modules/learning/pages/instructor/notification.php
+ M modules/learning/pages/instructor/training-requests.php
+ D modules/learning/pages/instructor/training-subpage/ajax/add-skill.php
+ D modules/learning/pages/instructor/training-subpage/ajax/archive-calendar-event.php
+ D modules/learning/pages/instructor/training-subpage/ajax/archive-skill.php
+ D modules/learning/pages/instructor/training-subpage/ajax/edit-skill.php
+ D modules/learning/pages/instructor/training-subpage/ajax/get-calendar-event.php
+ D modules/learning/pages/instructor/training-subpage/ajax/get-instructor-schedule.php
+ D modules/learning/pages/instructor/training-subpage/ajax/get-video-conference.php
+ M modules/learning/pages/instructor/training.php
+ D modules/learning/pages/learner/ajax/check-certificate.php
+ D modules/learning/pages/learner/ajax/edit-bookmark.php
+ D modules/learning/pages/learner/ajax/edit-display-preference.php
+ D modules/learning/pages/learner/ajax/edit-favorite.php
+ D modules/learning/pages/learner/ajax/edit-notification-preference.php
+ D modules/learning/pages/learner/ajax/get-announcement.php
+ D modules/learning/pages/learner/ajax/get-categories.php
+ D modules/learning/pages/learner/ajax/get-certificate-status.php
+ D modules/learning/pages/learner/ajax/get-display-preference.php
+ D modules/learning/pages/learner/ajax/get-history-notification.php
+ D modules/learning/pages/learner/ajax/get-learning-path.php
+ D modules/learning/pages/learner/ajax/get-message.php
+ D modules/learning/pages/learner/ajax/get-notification-preference.php
+ D modules/learning/pages/learner/ajax/get-overview-notification.php
+ D modules/learning/pages/learner/ajax/get-schedule-detail.php
+ D modules/learning/pages/learner/ajax/get-schedule.php
+ D modules/learning/pages/learner/ajax/get-skill-snapshots.php
+ D modules/learning/pages/learner/ajax/mark-all-notification-read.php
+ D modules/learning/pages/learner/ajax/mark-message-read.php
+ D modules/learning/pages/learner/ajax/mark-notification-read.php
+ D modules/learning/pages/learner/ajax/save-skill-snapshot.php
+ D modules/learning/pages/learner/ajax/search-global.php
+ D modules/learning/pages/learner/ajax/send-message.php
+ M modules/learning/pages/learner/calendar.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/check-prerequisite.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/get-course-review.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/get-evaluation.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/get-learning-path.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/get-lesson.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/get-module.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/get-quiz.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/get-recommended.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/discover/get-video-conference.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/engagement/delete-comment.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/engagement/get-comment.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/engagement/rate-course.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/engagement/share-content.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/enrollment/accept-invitation.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/enrollment/decline-invitation.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/enrollment/get-enrollment.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/moderation/report-content.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/personal/remove-bookmark.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/personal/remove-favorite.php
+ D modules/learning/pages/learner/catalog-subpage/ajax/progress/get-quiz-attempt.php
+ M modules/learning/pages/learner/notification.php
+ M modules/learning/pages/learner/profile.php
+ D modules/learning/pages/learner/result-subpage/ajax/download-certificate.php
+ D modules/learning/pages/learner/result-subpage/ajax/export-transcript.php
+ D modules/learning/pages/learner/result-subpage/ajax/get-certificate.php
+ D modules/learning/pages/learner/result-subpage/ajax/get-evaluation-feedback.php
+ D modules/learning/pages/learner/result-subpage/ajax/get-grade.php
+ D modules/learning/pages/learner/result-subpage/ajax/get-quiz-attempt.php
+ D modules/learning/pages/learner/result-subpage/ajax/get-skill-summary.php
+ D modules/learning/pages/learner/result-subpage/ajax/get-transcript.php
+ D modules/learning/pages/learner/study-subpage/ajax/browse/get-enrolled-course.php
+ D modules/learning/pages/learner/study-subpage/ajax/browse/get-resume-point.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-course.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-evaluation.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-learning-path.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-lesson.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-module.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-program.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-quiz.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-skill.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-enrolled-video-conference.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-learning-path-item.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-learning-path.php
+ D modules/learning/pages/learner/study-subpage/ajax/discover/get-resume-point.php
+ D modules/learning/pages/learner/study-subpage/ajax/engagement/delete-note.php
+ D modules/learning/pages/learner/study-subpage/ajax/engagement/get-comment.php
+ D modules/learning/pages/learner/study-subpage/ajax/engagement/get-note.php
+ D modules/learning/pages/learner/study-subpage/ajax/engagement/take-note.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/auto-submit-evaluation.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/get-evaluation-result.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/get-evaluation-status.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/get-quiz-attempt.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/get-quiz-status.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/mark-evaluation-question.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/mark-quiz-question.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/save-evaluation-answer.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/start-quiz.php
+ D modules/learning/pages/learner/study-subpage/ajax/progress/submit-evaluation-answer.php
+ M modules/learning/pages/learner/study-subpage/course.php
+ M modules/learning/pages/learner/study-subpage/discussion.php
+ M modules/learning/pages/learner/study-subpage/evaluation.php
+ M modules/learning/pages/learner/study-subpage/lesson.php
+ M modules/learning/pages/learner/study-subpage/module.php
+ M modules/learning/pages/learner/study-subpage/quiz-review.php
+ M modules/learning/pages/learner/study-subpage/quiz-taker.php
+ M modules/learning/pages/learner/study-subpage/quiz.php
+ M modules/learning/pages/learner/study-subpage/skill.php
+ M modules/learning/pages/learner/study.php
+ D modules/learning/pages/shared/ajax/get-faq.php
+ M modules/learning/rainz/documention/ld-system-architecture.md
+ M "modules/learning/rainz/integration mds/INTEGRATION_WORKFORCE_ANALYTICS.md"
+ M modules/learning/tests/run-tests.php
+?? .freebuff/
+?? modules/exit/classes/knowledgetransfer.php
+?? modules/exit/pages/ajax/update-knowledge-transfer-item.php
+?? modules/exit/pages/knowledge-transfer.php
+?? modules/learning/api/inbound/receive-competency-requirement.php
+?? modules/learning/api/inbound/receive-reporting-requirement.php
+?? modules/learning/api/inbound/receive-training-engagement.php
+?? modules/learning/api/inbound/receive-turnover-risk.php
+?? modules/learning/api/outbound/get-workforce-integration-status.php
+?? modules/learning/classes/cron.php
+?? modules/learning/classes/engagementsnapshot.php
+?? modules/learning/classes/notificationinbox.php
+?? modules/learning/classes/workforceintegration.php
+?? modules/learning/classes/workforceintegrationview.php
+?? modules/learning/cron/run-due.php
+?? modules/learning/pages/admin/ajax/workforce-integration-create-request.php
+?? modules/learning/pages/admin/ajax/workforce-integration-run-cron.php
+?? modules/learning/pages/admin/ajax/workforce-integration-update-status.php
+?? modules/learning/pages/admin/workforce-integration.php
+?? modules/learning/pages/instructor/workforce-integration.php
+?? modules/learning/pages/shared/ajax/mark-notification.php
+?? modules/learning/rainz/sql/
+?? modules/learning/sql/workforce_integration.sql

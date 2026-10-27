@@ -5,7 +5,12 @@ require_once dirname(__DIR__, 4) . '/database/db.php';
 $employeeClass = new Employee();
 $learnerId = (int)($employeeClass->getEmployeeId() ?? 0);
 
+// Pagination parameters
+$page = max(1, (int)($_GET['p'] ?? 1));
+$pageSize = min(50, max(1, (int)($_GET['ps'] ?? 12)));
+
 $enrolledCourses = [];
+$totalCourses = 0;
 $lastCourse = null;
 $lastModules = [];
 $lastEnrollment = null;
@@ -14,6 +19,18 @@ $lastProgress = 0;
 try {
     $database = new Database();
     $pdo = $database->getConnection();
+
+    // Get total count for pagination
+    $countStmt = $pdo->prepare("
+        SELECT COUNT(*)
+        FROM ld_enrollment e
+        JOIN ld_course c ON c.id = e.course_id
+        WHERE e.learner_id = :learner_id
+    ");
+    $countStmt->execute([':learner_id' => $learnerId]);
+    $totalCourses = (int)$countStmt->fetchColumn();
+
+    $offset = ($page - 1) * $pageSize;
 
     $stmt = $pdo->prepare("
         SELECT e.id AS enrollment_id, e.status AS enrollment_status, e.enrolled_at, e.last_accessed_at,
@@ -27,8 +44,12 @@ try {
         LEFT JOIN em_employees emp ON emp.employee_id = c.instructor_id
         WHERE e.learner_id = :learner_id
         ORDER BY e.last_accessed_at DESC, e.enrolled_at DESC
+        LIMIT :limit OFFSET :offset
     ");
-    $stmt->execute([':learner_id' => $learnerId]);
+    $stmt->bindValue(':learner_id', $learnerId, PDO::PARAM_INT);
+    $stmt->bindValue(':limit', $pageSize, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
     $enrolledCourses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($enrolledCourses as &$course) {
@@ -135,6 +156,7 @@ try {
     $studyTimeDisplay = $studyHours > 0 ? $studyHours . 'h ' . $studyMins . 'm' : $studyMins . 'm';
 
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study');
     $enrolledCourses = [];
     $studyStreak = 0;
     $studyTimeDisplay = '0m';
@@ -344,6 +366,14 @@ function getStudyGradient($category, $gradients) {
                             <option value="progress">Progress</option>
                         </select>
                     </div>
+                    <div class="study-sort">
+                        <label for="study-page-size" style="font-size:0.78rem; color:var(--muted,#888); white-space:nowrap;">Show</label>
+                        <select id="study-page-size" style="padding:0.55rem 0.75rem; border:1.5px solid rgba(32,0,130,0.12); border-radius:8px; font-size:0.82rem; background:var(--surface,#fff); color:var(--text,#333); cursor:pointer;">
+                            <option value="12">12 / page</option>
+                            <option value="24">24 / page</option>
+                            <option value="36">36 / page</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -394,13 +424,24 @@ function getStudyGradient($category, $gradients) {
                         <div class="study-card-quiz-score"><span class="study-card-quiz-label"><i class="fas fa-check-circle" style="margin-right:0.3rem;"></i>Quiz Score</span><span class="study-card-quiz-value <?= $quizScore >= 70 ? 'passed' : 'failed' ?>"><?= $quizScore > 0 ? $quizScore . '% (' . $quizzesPassed . '/' . $quizzesTotal . ')' : 'No attempts' ?></span></div>
                         <?php endif; ?>
                         <?php if ($hasCert): $certCode = htmlspecialchars($course['certificate']['verification_code'] ?? ''); ?>
-                        <div class="study-card-cert"><span class="study-card-cert-label"><i class="fas fa-award"></i> Certificate earned</span><a href="?page=public/verify-certificate&code=<?= $certCode ?>" target="_blank" class="study-card-cert-btn" onclick="event.stopPropagation();"><i class="fas fa-external-link-alt"></i> View</a></div>
+                        <div class="study-card-cert"><span class="study-card-cert-label"><i class="fas fa-award"></i> Certificate earned</span><a href="?page=public/verify-certificate&back=learner/study&code=<?= $certCode ?>" target="_blank" class="study-card-cert-btn" onclick="event.stopPropagation();"><i class="fas fa-external-link-alt"></i> View</a></div>
                         <?php endif; ?>
                     </div>
                     <div class="study-card-footer"><span class="study-card-time"><?= $timeAgo ? '<i class="fas fa-clock" style="margin-right:0.25rem;"></i>' . $timeAgo : '' ?></span><span class="study-card-action"><?= $status === 'completed' ? 'View Results <i class="fas fa-arrow-right"></i>' : 'Continue <i class="fas fa-arrow-right"></i>' ?></span></div>
                 </article>
             <?php endforeach; ?>
             </div>
+
+            <?php
+$totalPages = max(1, (int)ceil($totalCourses / $pageSize));
+if ($totalPages > 1):
+?>
+            <div class="pagination-row" id="study-pagination">
+                <button type="button" class="page-btn" data-action="prev" <?= $page <= 1 ? 'disabled' : '' ?>>Prev</button>
+                <span class="page-indicator" id="study-page-indicator">Page <?= $page ?> of <?= $totalPages ?></span>
+                <button type="button" class="page-btn" data-action="next" <?= $page >= $totalPages ? 'disabled' : '' ?>>Next</button>
+            </div>
+            <?php endif; ?>
 
             <?php if (empty($enrolledCourses)): ?>
             <div class="study-empty"><i class="fas fa-book-open"></i><h3>No courses yet</h3><p>Visit the <a href="?page=learner/catalog" style="color:var(--primary);font-weight:600;">catalog</a> to find courses to take.</p></div>
@@ -412,14 +453,148 @@ function getStudyGradient($category, $gradients) {
 <script>
 (function() {
     'use strict';
-    var currentTab = 'all', searchQuery = '';
+    var currentTab = 'all', searchQuery = '', currentPage = <?= $page ?>, pageSize = <?= $pageSize ?>, totalPages = <?= $totalPages ?>;
     var grid = document.getElementById('study-grid');
-    var allCards = Array.from(grid.querySelectorAll('.study-card'));
-    function filterCards() { allCards.forEach(function(card) { var tabMatch = currentTab === 'all' || card.dataset.status === currentTab; var searchMatch = !searchQuery || card.dataset.search.indexOf(searchQuery) !== -1; card.style.display = tabMatch && searchMatch ? '' : 'none'; }); }
-    document.querySelectorAll('.study-tab').forEach(function(btn) { btn.addEventListener('click', function() { document.querySelectorAll('.study-tab').forEach(function(b) { b.classList.remove('active'); }); btn.classList.add('active'); currentTab = btn.dataset.tab; filterCards(); }); });
-    var st; document.getElementById('study-search-input').addEventListener('input', function() { clearTimeout(st); st = setTimeout(function() { searchQuery = document.getElementById('study-search-input').value.trim().toLowerCase(); filterCards(); }, 200); });
-    document.getElementById('study-sort-select').addEventListener('change', function() { var v = this.value; allCards.sort(function(a, b) { if (v === 'alpha') return a.dataset.sortAlpha.localeCompare(b.dataset.sortAlpha); if (v === 'progress') return parseInt(b.dataset.sortProgress) - parseInt(a.dataset.sortProgress); return parseInt(b.dataset.sortTime) - parseInt(a.dataset.sortTime); }); allCards.forEach(function(c) { grid.appendChild(c); }); });
-    allCards.forEach(function(card) { card.addEventListener('click', function() { window.location.href = card.dataset.status === 'completed' ? '?page=learner/result' : '?page=learner/study-subpage/course&course_id=' + card.dataset.courseId; }); });
+    var pagination = document.getElementById('study-pagination');
+    var indicator = pagination ? pagination.querySelector('.page-indicator') : null;
+    var pageSizeSelect = document.getElementById('study-page-size');
+    var searchInput = document.getElementById('study-search-input');
+    var sortSelect = document.getElementById('study-sort-select');
+    var tabs = document.querySelectorAll('.study-tab');
+    var isLoading = false;
+
+    function buildUrl(page) {
+        var params = new URLSearchParams();
+        params.set('page', 'learner/study');
+        params.set('p', page);
+        params.set('ps', pageSize);
+        if (currentTab !== 'all') params.set('tab', currentTab);
+        if (searchQuery) params.set('q', searchQuery);
+        var sortVal = sortSelect ? sortSelect.value : 'last_accessed';
+        if (sortVal !== 'last_accessed') params.set('sort', sortVal);
+        return 'page-loader.php?' + params.toString();
+    }
+
+    function showLoading() {
+        isLoading = true;
+        if (grid) grid.style.opacity = '0.5';
+        if (pagination) pagination.style.opacity = '0.5';
+    }
+
+    function hideLoading() {
+        isLoading = false;
+        if (grid) grid.style.opacity = '';
+        if (pagination) pagination.style.opacity = '';
+    }
+
+    function updatePagination(page, total) {
+        currentPage = page;
+        totalPages = total;
+        if (indicator) indicator.textContent = 'Page ' + currentPage + ' of ' + totalPages;
+        if (pagination) {
+            var prevBtn = pagination.querySelector('[data-action="prev"]');
+            var nextBtn = pagination.querySelector('[data-action="next"]');
+            if (prevBtn) prevBtn.disabled = currentPage <= 1;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+            pagination.style.display = totalPages <= 1 ? 'none' : '';
+        }
+    }
+
+    function fetchPage(page) {
+        if (isLoading) return;
+        showLoading();
+        fetch(buildUrl(page), { credentials: 'same-origin' })
+            .then(function(r) {
+                if (r.status === 401) return r.json().then(function(d) { window.location.href = d.redirect; });
+                if (!r.ok) throw new Error('Network error');
+                var rendered = r.headers.get('X-Rendered-Page') || 'learner/study';
+                return r.text().then(function(html) { return { html: html, rendered: rendered }; });
+            })
+            .then(function(result) {
+                if (!result) return;
+                var container = document.querySelector('.container');
+                if (!container) { window.location.href = buildUrl(page); return; }
+                while (container.firstChild) container.removeChild(container.firstChild);
+                container.innerHTML = result.html;
+                container.setAttribute('data-page', result.rendered);
+                container.querySelectorAll('script').forEach(function(old) {
+                    var s = document.createElement('script');
+                    Array.from(old.attributes).forEach(function(attr) { s.setAttribute(attr.name, attr.value); });
+                    s.textContent = old.textContent;
+                    old.parentNode.replaceChild(s, old);
+                });
+                document.querySelectorAll('.menu-link, .active-menu-link').forEach(function(el) { el.className = 'menu-link'; });
+                var active = document.querySelector('a[data-page="' + result.rendered + '"]');
+                if (active) active.className = 'active-menu-link';
+                history.pushState({ page: result.rendered }, '', '?page=' + encodeURIComponent(result.rendered) + '&p=' + page + '&ps=' + pageSize + (currentTab !== 'all' ? '&tab=' + currentTab : '') + (searchQuery ? '&q=' + encodeURIComponent(searchQuery) : '') + (sortSelect && sortSelect.value !== 'last_accessed' ? '&sort=' + sortSelect.value : ''));
+                window.dispatchEvent(new CustomEvent('page:loaded', { detail: { page: result.rendered } }));
+                var newPagination = document.getElementById('study-pagination');
+                var newIndicator = newPagination ? newPagination.querySelector('.page-indicator') : null;
+                if (newIndicator) {
+                    var match = newIndicator.textContent.match(/Page (\d+) of (\d+)/);
+                    if (match) updatePagination(parseInt(match[1]), parseInt(match[2]));
+                }
+            })
+            .catch(function(err) {
+                console.error('Pagination failed', err);
+            })
+            .finally(hideLoading);
+    }
+
+    if (pageSizeSelect) {
+        pageSizeSelect.value = String(pageSize);
+        pageSizeSelect.addEventListener('change', function() {
+            pageSize = parseInt(this.value, 10) || 12;
+            currentPage = 1;
+            fetchPage(1);
+        });
+    }
+
+    tabs.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            tabs.forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            currentTab = btn.dataset.tab;
+            currentPage = 1;
+            fetchPage(1);
+        });
+    });
+
+    var st;
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(st);
+            st = setTimeout(function() {
+                searchQuery = searchInput.value.trim().toLowerCase();
+                currentPage = 1;
+                fetchPage(1);
+            }, 200);
+        });
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            currentPage = 1;
+            fetchPage(1);
+        });
+    }
+
+    if (pagination) {
+        pagination.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-action]');
+            if (!btn || btn.disabled || isLoading) return;
+            var nextPage = currentPage + (btn.dataset.action === 'next' ? 1 : -1);
+            if (nextPage < 1 || nextPage > totalPages) return;
+            fetchPage(nextPage);
+        });
+    }
+
+    grid.addEventListener('click', function(e) {
+        var card = e.target.closest('.study-card');
+        if (card) {
+            window.location.href = card.dataset.status === 'completed' ? '?page=learner/result' : '?page=learner/study-subpage/course&course_id=' + card.dataset.courseId;
+        }
+    });
 })();
 
 function studyToggleMod(h) { var items = h.nextElementSibling; var ch = h.querySelector('.sp-chevron'); if (!items) return; if (items.classList.contains('expanded')) { items.classList.remove('expanded'); if (ch) ch.classList.remove('open'); } else { items.classList.add('expanded'); if (ch) ch.classList.add('open'); } }

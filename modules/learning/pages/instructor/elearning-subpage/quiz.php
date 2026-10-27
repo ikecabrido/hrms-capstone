@@ -50,6 +50,7 @@ if ($isQuizEditMode) {
             $quizEditData = $quiz;
         }
     } catch (Throwable $e) {
+        DbError::capture($e, 'instructor/elearning-subpage/quiz');
         $quizEditData = null;
     }
 }
@@ -64,12 +65,14 @@ try {
     $quizModObj = new Module($quizModPdo);
     $quizModules = $quizModObj->getList();
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/elearning-subpage/quiz');
     $quizModules = [];
 }
 ?>
 <div class="module-content">
-    <div class="toolbar">
-        <div class="toolbar-search">
+    <div class="toolbar" style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+        <?= BackLink::anchor('instructor/elearning', 'style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"') ?>
+        <div class="toolbar-search" style="flex:1;">
             <input type="search" placeholder="Search quiz form..." aria-label="Search quiz form" />
         </div>
         
@@ -79,7 +82,7 @@ try {
         <h2 id="quiz-form-title"><?php echo $isQuizEditMode ? 'Edit Quiz' : 'Add Quiz'; ?></h2>
         <p id="quiz-form-desc"><?php echo $isQuizEditMode ? 'Update quiz details, configuration, and question bank.' : 'A quiz belongs to a module. It can assess knowledge and track attempts, passing score, and timing.'; ?></p>
 
-        <form id="add-quiz-form" method="post" action="pages/instructor/elearning-subpage/ajax/add-quiz.php">
+        <form id="add-quiz-form" data-skip method="post" action="pages/instructor/elearning-subpage/ajax/add-quiz.php">
             <?php if ($isQuizEditMode): ?>
                 <input type="hidden" name="id" value="<?php echo htmlspecialchars((string) $quizEditId); ?>" />
             <?php endif; ?>
@@ -160,8 +163,7 @@ try {
     if (isEditMode) {
         document.getElementById('quiz-form-title').textContent = 'Edit Quiz';
         document.getElementById('quiz-form-desc').textContent = 'Update quiz details, configuration, and question bank.';
-        const moduleLabel = moduleSelect ? moduleSelect.closest('label') : null;
-        if (moduleLabel) moduleLabel.style.display = 'none';
+        // Parent Module selector stays visible in edit mode so the parent can be changed
     }
 
     const questionTypeOptions = {
@@ -424,14 +426,38 @@ try {
             submitButton.textContent = 'Saving...';
         }
 
-        const formData = new FormData(form);
         const action = isEditMode ? 'pages/instructor/elearning-subpage/ajax/edit-quiz.php' : form.action;
+        let fetchOptions;
+        if (isEditMode) {
+            // Edit endpoint expects JSON (and persists the parent module via module_id)
+            const questionsJson = (form.querySelector('input[name="questions"]') || {}).value || '[]';
+            const payload = {
+                id: parseInt(quizId, 10),
+                module_id: moduleSelect && moduleSelect.value ? parseInt(moduleSelect.value, 10) : null,
+                title: form.querySelector('input[name="title"]').value,
+                duration_seconds: form.querySelector('input[name="duration_seconds"]').value,
+                passing_score: form.querySelector('input[name="passing_score"]').value,
+                max_attempts: form.querySelector('input[name="max_attempts"]').value,
+                question_count: form.querySelector('input[name="question_count"]').value,
+                show_answers_after_submit: form.querySelector('input[name="show_answers_after_submit"]').checked,
+                status: form.querySelector('select[name="status"]').value,
+                questions: questionsJson
+            };
+            fetchOptions = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify(payload)
+            };
+        } else {
+            const formData = new FormData(form);
+            fetchOptions = {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            };
+        }
 
-        fetch(action, {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
+        fetch(action, fetchOptions)
         .then(async function (response) {
             const data = await response.json().catch(function () {
                 return { success: false, message: 'Request failed.' };

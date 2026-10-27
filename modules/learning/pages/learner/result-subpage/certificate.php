@@ -29,8 +29,16 @@ try {
     $completedCourses = (int)($statsRow['completed'] ?? 0);
 
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/result-subpage/certificate');
     $certificates = [];
 }
+
+// Absolute, shareable verification URL. Built from SCRIPT_NAME because REQUEST_URI
+// carries the ?page=… query string, whose slashes corrupt dirname().
+$scheme = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') ? 'https' : 'http';
+$scriptDir = rtrim(str_replace('\\', '/', dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '/'))), '/');
+$verifyUrlBase = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . $scriptDir
+    . '/index.php?page=public/verify-certificate&code=';
 
 function certTimeAgo($dt) {
     if (!$dt) return 'N/A';
@@ -81,14 +89,16 @@ function certTimeAgo($dt) {
                 $isExpired = $certItem['valid_until'] && strtotime($certItem['valid_until']) < time();
                 $statusColor = $isExpired ? '#ef4444' : '#10b981';
                 $statusLabel = $isExpired ? 'Expired' : 'Active';
-                $verifyUrl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . dirname($_SERVER['REQUEST_URI']) . '/../../index.php?page=verify-certificate&code=' . urlencode($certItem['verification_code']);
+                $verifyUrl = $verifyUrlBase . urlencode($certItem['verification_code']);
             ?>
-                <div class="mode-card" style="padding:0; overflow:hidden; border:2px solid rgba(16,185,129,0.15);">
+                <div class="mode-card" style="padding:0; overflow:hidden; border:2px solid rgba(32,0,130,0.08);">
                     <!-- Certificate Header -->
-                    <div style="background:linear-gradient(135deg, rgba(16,185,129,0.12), rgba(52,211,153,0.08)); padding:1.5rem; text-align:center; border-bottom:2px solid rgba(16,185,129,0.15);">
-                        <div style="font-size:2.5rem; margin-bottom:0.5rem; color:#10b981;"><i class="fas fa-award"></i></div>
-                        <h3 style="margin:0; color:var(--text); font-size:1.1rem;"><?= htmlspecialchars($certItem['course_title'] ?? 'Course') ?></h3>
-                        <p style="margin:0.3rem 0 0; color:rgba(32,0,130,0.5); font-size:0.85rem;">Certificate of Completion</p>
+                    <div style="background:linear-gradient(135deg, #320082, #5b21b6); padding:1.5rem; text-align:center; color:#fff; position:relative; overflow:hidden;">
+                        <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; background:rgba(255,255,255,0.06); border-radius:50%;"></div>
+                        <div style="position:absolute; bottom:-25px; left:-15px; width:65px; height:65px; background:rgba(255,255,255,0.04); border-radius:50%;"></div>
+                        <div style="font-size:2.5rem; margin-bottom:0.5rem; position:relative;"><i class="fas fa-award"></i></div>
+                        <h3 style="margin:0; font-size:1.1rem; font-weight:800; position:relative;"><?= htmlspecialchars($certItem['course_title'] ?? 'Course') ?></h3>
+                        <p style="margin:0.3rem 0 0; opacity:0.8; font-size:0.85rem; position:relative;">Certificate of Completion</p>
                     </div>
 
                     <!-- Certificate Body -->
@@ -117,18 +127,19 @@ function certTimeAgo($dt) {
                             <div>
                                 <div style="font-size:0.65rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--primary); font-weight:700;">Verification</div>
                                 <div style="margin-top:0.2rem; color:var(--text); font-size:0.75rem; font-family:monospace; word-break:break-all;">
-                                    <?= htmlspecialchars($certItem['verification_code']) ?>
+                                    <i class="fas fa-fingerprint" style="color:var(--primary); margin-right:0.2rem;"></i><?= htmlspecialchars($certItem['verification_code']) ?>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Actions -->
                         <div style="display:flex; gap:0.5rem; flex-wrap:wrap; border-top:1px solid rgba(32,0,130,0.08); padding-top:1rem;">
-                            <button type="button" onclick="copyVerifyCode('<?= htmlspecialchars($certItem['verification_code']) ?>')" style="flex:1; padding:0.5rem 0.75rem; border:1px solid rgba(32,0,130,0.2); background:transparent; color:var(--primary); border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap;">
-                                Copy Code
+                            <a href="?page=learner/result-subpage/certificate-print&certificate_id=<?= (int)$certItem['id'] ?>" style="flex:1; padding:0.55rem 0.75rem; border:none; background:var(--primary); color:var(--surface); border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap; text-decoration:none; text-align:center; display:inline-flex; align-items:center; justify-content:center; gap:0.3rem;"><i class="fas fa-external-link-alt"></i> View Certificate</a>
+                            <button type="button" onclick="copyVerifyCode('<?= htmlspecialchars($certItem['verification_code']) ?>')" style="padding:0.55rem 0.75rem; border:1px solid rgba(32,0,130,0.2); background:transparent; color:var(--primary); border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap;">
+                                <i class="fas fa-copy"></i>
                             </button>
-                            <button type="button" onclick="shareCertificate('<?= htmlspecialchars($certItem['verification_code']) ?>', '<?= htmlspecialchars($certItem['course_title'] ?? '') ?>')" style="flex:1; padding:0.5rem 0.75rem; border:none; background:var(--primary); color:var(--surface); border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap;">
-                                Share
+                            <button type="button" onclick="shareCertificate('<?= htmlspecialchars($certItem['verification_code']) ?>', '<?= htmlspecialchars($certItem['course_title'] ?? '') ?>', '<?= htmlspecialchars($verifyUrl) ?>')" style="padding:0.55rem 0.75rem; border:1px solid rgba(32,0,130,0.2); background:transparent; color:var(--primary); border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer; white-space:nowrap;">
+                                <i class="fas fa-share-alt"></i>
                             </button>
                         </div>
                     </div>
@@ -155,8 +166,8 @@ function copyVerifyCode(code) {
     }
 }
 
-function shareCertificate(code, courseTitle) {
-    var text = 'I completed "' + courseTitle + '"! Verify my certificate: ' + code;
+function shareCertificate(code, courseTitle, verifyUrl) {
+    var text = 'I completed "' + courseTitle + '"! Verify my certificate: ' + (verifyUrl || code);
     if (navigator.share) {
         navigator.share({ title: 'Course Certificate', text: text });
     } else if (navigator.clipboard) {

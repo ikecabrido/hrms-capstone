@@ -278,6 +278,63 @@ case 'evaluation':
     }
 
     /**
+     * Canonical definition of "this module is complete".
+     *
+     * Progress is recorded per Lesson and per Quiz (see markComplete()) — a Module is
+     * a container and never gets a ld_progress row of its own. Its completion is
+     * therefore *derived*: the module must contain at least one active lesson or quiz,
+     * and every one of them must be complete.
+     *
+     * Every reader that needs module-level completion must use this predicate, so the
+     * units counted here stay in step with the units the writer records.
+     *
+     * $enrollmentExpr is either an integer literal (single-enrollment queries) or a
+     * column reference such as "e.id" (correlated subqueries). Do not pass a named
+     * placeholder — it would appear twice in the generated SQL.
+     */
+    public static function sqlModuleCompleted(string $moduleAlias, string $enrollmentExpr): string
+    {
+        $m = $moduleAlias;
+        $e = $enrollmentExpr;
+
+        $total = "(SELECT COUNT(*) FROM ld_lesson l WHERE l.module_id = {$m}.id AND l.status = 'active')"
+               . " + (SELECT COUNT(*) FROM ld_quiz q WHERE q.module_id = {$m}.id AND q.status = 'active')";
+
+        $completed = "(SELECT COUNT(*) FROM ld_progress p"
+                   . " JOIN ld_lesson l2 ON l2.id = p.reference_id AND l2.module_id = {$m}.id AND l2.status = 'active'"
+                   . " WHERE p.item_type = 'lesson' AND p.status = 'completed' AND p.enrollment_id = {$e})"
+                   . " + (SELECT COUNT(*) FROM ld_progress p"
+                   . " JOIN ld_quiz q2 ON q2.id = p.reference_id AND q2.module_id = {$m}.id AND q2.status = 'active'"
+                   . " WHERE p.item_type = 'quiz' AND p.status = 'completed' AND p.enrollment_id = {$e})";
+
+        return "({$total} > 0 AND {$completed} >= {$total})";
+    }
+
+    /**
+     * Ids of the modules that are complete for one enrollment.
+     */
+    public function getCompletedModuleIds(int $enrollmentId, int $courseId): array
+    {
+        $sql = 'SELECT m.id FROM ld_module m'
+             . " WHERE m.course_id = :course_id AND m.status = 'active'"
+             . ' AND ' . self::sqlModuleCompleted('m', (string) (int) $enrollmentId)
+             . ' ORDER BY m.order_index ASC, m.id ASC';
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([':course_id' => $courseId]);
+
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /**
+     * Number of modules currently complete for one enrollment.
+     */
+    public function countCompletedModules(int $enrollmentId, int $courseId): int
+    {
+        return count($this->getCompletedModuleIds($enrollmentId, $courseId));
+    }
+
+    /**
      * Percent complete for one enrollment — counts Lessons + Quizzes as the trackable units.
      * (Modules are containers, not individually "completed" — their completion is implied
      * once all their lessons/quizzes are done.)

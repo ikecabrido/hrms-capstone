@@ -9,13 +9,33 @@ if (!isset($_SESSION['employee_id'])) {
 }
 
 require_once 'classes/Page.php';
+require_once 'classes/CSRF.php';
 
 $pageController = new Page();
 $currentPage = $pageController->getPage();
 
+// Ensure CSRF token exists
+$csrfToken = CSRF::getToken();
+
+// Default items-per-page, configurable from Admin > Settings > General.
+$ldDefaultPageSize = 12;
+try {
+    require_once 'classes/Setting.php';
+    $ldSettingClass = new Setting();
+    $ldDefaultPageSize = (int) ($ldSettingClass->get('default_page_size') ?: 12);
+    if (!in_array($ldDefaultPageSize, [12, 24, 36], true)) {
+        $ldDefaultPageSize = 12;
+    }
+} catch (Throwable $e) {
+    $ldDefaultPageSize = 12;
+}
+
 include 'includes/sidebar.php';
 include 'includes/header.php';
 ?>
+
+<meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">
+<script>window.LD_DEFAULT_PAGE_SIZE = <?= (int) $ldDefaultPageSize ?>; window.CSRF_TOKEN = <?= json_encode($csrfToken) ?>;</script>
 
 <main class="main-content">
     <div class="container" data-page="<?= htmlspecialchars($currentPage) ?>">
@@ -27,6 +47,15 @@ include 'includes/header.php';
 
 <script>
 (function() {
+    var csrfToken = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    function getFetchOptions(extraHeaders = {}) {
+        var headers = { 'X-Requested-With': 'XMLHttpRequest' };
+        if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
+        Object.assign(headers, extraHeaders);
+        return { credentials: 'same-origin', headers: headers };
+    }
+
     // ─── Sidebar Navigation Fallback ──────────────────────────────────────────
     // Ensures sidebar links navigate via AJAX even if the ES module fails to load.
     document.body.addEventListener('click', function(e) {
@@ -37,7 +66,7 @@ include 'includes/header.php';
         var page = a.getAttribute('data-page');
         var container = document.querySelector('.container');
         if (!container) { window.location.href = a.href; return; }
-        fetch('page-loader.php?page=' + encodeURIComponent(page), { credentials: 'same-origin' })
+        fetch('page-loader.php?page=' + encodeURIComponent(page), getFetchOptions())
             .then(function(r) {
                 if (r.status === 401) return r.json().then(function(d) { window.location.href = d.redirect; });
                 if (!r.ok) throw new Error('Network error');
@@ -76,7 +105,7 @@ include 'includes/header.php';
         var page = (e.state && e.state.page) || new URL(location).searchParams.get('page') || 'dashboard-overview';
         var container = document.querySelector('.container');
         if (!container) return;
-        fetch('page-loader.php?page=' + encodeURIComponent(page), { credentials: 'same-origin' })
+        fetch('page-loader.php?page=' + encodeURIComponent(page), getFetchOptions())
             .then(function(r) { return r.text().then(function(html) { return html; }); })
             .then(function(html) {
                 while (container.firstChild) container.removeChild(container.firstChild);
@@ -106,7 +135,7 @@ include 'includes/header.php';
     }
 
     // Notification badge
-    fetch('pages/learner/ajax/get-pending-notification.php')
+    fetch('pages/learner/ajax/get-pending-notification.php', getFetchOptions())
         .then(function(r) { return r.json(); })
         .then(function(data) {
             var count = data.total || 0;

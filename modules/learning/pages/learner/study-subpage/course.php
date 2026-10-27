@@ -13,6 +13,9 @@ $modules = [];
 $enrollment = null;
 $progressPercent = 0;
 $skills = [];
+$enrollmentCount = 0;
+$moduleCount = 0;
+$evaluations = [];
 
 try {
     $database = new Database();
@@ -50,10 +53,12 @@ try {
             $modStmt->execute([':cid' => $courseId]);
             $modules = $modStmt->fetchAll(PDO::FETCH_ASSOC);
 
+            // Modules are containers and never get their own ld_progress row, so module
+            // completion is derived from the lesson/quiz rows the writer records.
+            $completedModuleIds = $progressObj->getCompletedModuleIds((int) $enrollment['id'], $courseId);
+
             foreach ($modules as &$mod) {
-                $pStmt = $pdo->prepare("SELECT status FROM ld_progress WHERE enrollment_id = :eid AND item_type = 'module' AND reference_id = :rid LIMIT 1");
-                $pStmt->execute([':eid' => $enrollment['id'], ':rid' => $mod['id']]);
-                $mod['completed'] = ($pStmt->fetchColumn() === 'completed');
+                $mod['completed'] = in_array((int) $mod['id'], $completedModuleIds, true);
 
                 // Fetch lessons with progress
                 $lStmt = $pdo->prepare("
@@ -82,8 +87,26 @@ try {
         $skillsStmt = $pdo->prepare("SELECT s.name FROM ld_course_skill cs JOIN ld_skill s ON s.id = cs.skill_id WHERE cs.course_id = :cid");
         $skillsStmt->execute([':cid' => $courseId]);
         $skills = $skillsStmt->fetchAll(PDO::FETCH_COLUMN);
+
+        // Course-level figures for the header. These used to come from the separate
+        // catalog course detail page, which this page now replaces; the module list is
+        // only loaded for enrolled learners, so count modules independently of it.
+        $modCountStmt = $pdo->prepare("SELECT COUNT(*) FROM ld_module WHERE course_id = :cid AND status = 'active'");
+        $modCountStmt->execute([':cid' => $courseId]);
+        $moduleCount = (int) $modCountStmt->fetchColumn();
+
+        $enrollCountStmt = $pdo->prepare("SELECT COUNT(*) FROM ld_enrollment WHERE course_id = :cid");
+        $enrollCountStmt->execute([':cid' => $courseId]);
+        $enrollmentCount = (int) $enrollCountStmt->fetchColumn();
+
+        // Course evaluations. This page is their entry point now; the orphaned
+        // evaluation page had no inbound link from anywhere in the module.
+        $evalStmt = $pdo->prepare("SELECT id, title FROM ld_evaluation WHERE course_id = :cid AND status = 'active' ORDER BY id ASC");
+        $evalStmt->execute([':cid' => $courseId]);
+        $evaluations = $evalStmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study-subpage/course');
     $course = null;
 }
 
@@ -436,6 +459,7 @@ $currentPageId = $courseId;
             <?php else: ?>
                 <span class="study-pill study-pill-muted">Not Enrolled</span>
             <?php endif; ?>
+            <a href="?page=learner/study-subpage/discussion&course_id=<?= (int) $course['id'] ?>" class="study-pill study-pill-outline" style="text-decoration:none;"><i class="fas fa-comments" style="margin-right:0.25rem;"></i> Discussion</a>
         </div>
 
         <h1 class="course-title"><?= htmlspecialchars($course['title']) ?></h1>
@@ -457,9 +481,34 @@ $currentPageId = $courseId;
                 <i class="fas fa-cubes"></i>
                 <div>
                     <div class="course-meta-label">Modules</div>
-                    <div class="course-meta-value"><?= count($modules) ?></div>
+                    <div class="course-meta-value"><?= $moduleCount ?></div>
                 </div>
             </div>
+            <div class="course-meta-item">
+                <i class="fas fa-users"></i>
+                <div>
+                    <div class="course-meta-label">Enrolled</div>
+                    <div class="course-meta-value"><?= $enrollmentCount ?></div>
+                </div>
+            </div>
+            <?php if (!empty($course['start_date'])): ?>
+                <div class="course-meta-item">
+                    <i class="fas fa-calendar-check"></i>
+                    <div>
+                        <div class="course-meta-label">Start Date</div>
+                        <div class="course-meta-value"><?= date('M j, Y', strtotime($course['start_date'])) ?></div>
+                    </div>
+                </div>
+            <?php endif; ?>
+            <?php if (!empty($course['enrollment_deadline'])): ?>
+                <div class="course-meta-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <div class="course-meta-label">Deadline</div>
+                        <div class="course-meta-value"><?= date('M j, Y', strtotime($course['enrollment_deadline'])) ?></div>
+                    </div>
+                </div>
+            <?php endif; ?>
             <?php if ($isEnrolled && count($modules) > 0): ?>
                 <div class="course-meta-item">
                     <i class="fas fa-tasks"></i>
@@ -578,9 +627,28 @@ $currentPageId = $courseId;
             <i class="fas fa-lock" style="font-size:2.5rem; color:var(--primary); opacity:0.4; margin-bottom:1rem; display:block;"></i>
             <h2>Not Enrolled</h2>
             <p>Enroll in this course to access its content and track your progress.</p>
-            <a href="?page=learner/catalog-subpage/course&course_id=<?= $courseId ?>" class="study-module-action" style="display:inline-flex;">
-                <i class="fas fa-graduation-cap"></i> View in Catalog
-            </a>
+            <button id="enroll-btn" onclick="handleEnroll()" class="study-module-action" style="display:inline-flex; border:none; cursor:pointer; font-weight:600;">
+                <i class="fas fa-plus-circle"></i> Enroll Now
+            </button>
+            <span id="enroll-status" style="display:none; padding:0.5rem 1rem; background:#d4edda; color:#155724; border-radius:6px; font-weight:500;">
+                <i class="fas fa-check-circle"></i> Enrolled!
+            </span>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($evaluations)): ?>
+        <!-- Course Evaluations -->
+        <div class="course-content-card">
+            <div class="study-modules-header">
+                <h2><i class="fas fa-clipboard-check" style="color:var(--primary); margin-right:0.4rem;"></i>Course Evaluations</h2>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                <?php foreach ($evaluations as $ev): ?>
+                    <a href="?page=learner/study-subpage/evaluation&evaluation_id=<?= (int) $ev['id'] ?>&course_id=<?= (int) $courseId ?>" class="study-module-action" style="display:inline-flex; align-self:flex-start;">
+                        <i class="fas fa-clipboard-list"></i> <?= htmlspecialchars($ev['title']) ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
         </div>
     <?php endif; ?>
 
@@ -597,3 +665,35 @@ $currentPageId = $courseId;
 
 <?php require_once __DIR__ . '/includes/course-sidebar-footer.php'; ?>
 </div><!-- /.module-content -->
+
+<script>
+// Enrollment lives here now: this page is the single course view, so the not-enrolled
+// state offers the enrollment action instead of handing off to a separate detail page.
+function handleEnroll() {
+    var btn = document.getElementById('enroll-btn');
+    var status = document.getElementById('enroll-status');
+    if (btn) { btn.disabled = true; }
+
+    fetch('pages/learner/ajax/enroll-course.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ course_id: <?= (int) $courseId ?> })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+        if (d.success) {
+            if (btn) { btn.style.display = 'none'; }
+            if (status) { status.style.display = 'inline-flex'; }
+            // Reload into the enrolled view so the module list and progress render.
+            setTimeout(function () { window.location.reload(); }, 600);
+        } else {
+            alert('Error: ' + (d.error || 'Failed to enroll'));
+            if (btn) { btn.disabled = false; }
+        }
+    })
+    .catch(function (err) {
+        alert('Error enrolling: ' + err.message);
+        if (btn) { btn.disabled = false; }
+    });
+}
+</script>

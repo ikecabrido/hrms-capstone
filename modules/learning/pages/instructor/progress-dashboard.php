@@ -91,6 +91,7 @@ try {
         $weeklyTrend = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/progress-dashboard');
     $courses = [];
 }
 ?>

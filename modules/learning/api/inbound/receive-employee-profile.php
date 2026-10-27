@@ -63,7 +63,7 @@ try {
         $stmt2->execute([':eid' => $employeeId]);
         $enrollments = $stmt2->fetchAll();
 
-        // Get their skills
+        // Get their skills (L&D-side, from completed courses)
         $stmt3 = $pdo->prepare("
             SELECT DISTINCT s.id, s.name
             FROM ld_skill s
@@ -74,6 +74,36 @@ try {
         $stmt3->execute([':eid' => $employeeId]);
         $skills = $stmt3->fetchAll();
 
+        // External skills from Employee Management (proficiency-tagged) — baseline for gap analysis
+        $stmt4 = $pdo->prepare("
+            SELECT skill_name, proficiency
+            FROM employee_skills
+            WHERE employee_id = :eid
+            ORDER BY skill_name ASC
+        ");
+        $stmt4->execute([':eid' => $employeeId]);
+        $externalSkills = $stmt4->fetchAll();
+
+        // External certifications (with expiry) from Employee Management
+        $stmt5 = $pdo->prepare("
+            SELECT cert_name, issuing_organization, date_issued, expiry_date
+            FROM employee_certifications
+            WHERE employee_id = :eid
+            ORDER BY date_issued DESC
+        ");
+        $stmt5->execute([':eid' => $employeeId]);
+        $externalCertifications = $stmt5->fetchAll();
+
+        // Employee documents / credentials metadata
+        $stmt6 = $pdo->prepare("
+            SELECT document_name, document_type, category, expiry_date
+            FROM employee_documents
+            WHERE employee_id = :eid
+            ORDER BY created_at DESC
+        ");
+        $stmt6->execute([':eid' => $employeeId]);
+        $documents = $stmt6->fetchAll();
+
         $log->logCall('inbound', 'employee-management', 'receive-employee-profile', 'success', ['employee_id' => $employeeId, 'action' => 'read']);
 
         echo json_encode([
@@ -81,6 +111,9 @@ try {
             'employee' => $employee,
             'enrollments' => $enrollments,
             'completed_skills' => $skills,
+            'external_skills' => $externalSkills,
+            'external_certifications' => $externalCertifications,
+            'documents' => $documents,
         ]);
     } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Receive profile snapshot (stored as-is for caching/validation)

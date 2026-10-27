@@ -2,7 +2,7 @@
 /**
  * Cron: send-video-conference-reminder.php
  * Sends reminders for upcoming video conferences.
- * Runs via OS cron (every 5 min): php C:/xampp/htdocs/itsar/modules/learning/cron/send-video-conference-reminder.php
+ * Runs via OS cron (every 5 min): php <app root>/modules/learning/cron/send-video-conference-reminder.php
  *
  * Dual reminder system:
  *   - First reminder:  configurable minutes before (default: 30)

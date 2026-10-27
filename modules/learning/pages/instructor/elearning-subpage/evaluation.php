@@ -58,6 +58,7 @@ if ($isEvaluationEditMode) {
             $evaluationEditData = $evaluation;
         }
     } catch (Throwable $e) {
+        DbError::capture($e, 'instructor/elearning-subpage/evaluation');
         $evaluationEditData = null;
     }
 }
@@ -72,12 +73,14 @@ try {
     $evalPageCourseObj = new Course($evalPagePdo);
     $evalPageCourses = $evalPageCourseObj->getList();
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/elearning-subpage/evaluation');
     $evalPageCourses = [];
 }
 ?>
 <div class="module-content">
-    <div class="toolbar">
-        <div class="toolbar-search">
+    <div class="toolbar" style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+        <?= BackLink::anchor('instructor/elearning', 'style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"') ?>
+        <div class="toolbar-search" style="flex:1;">
             <input type="search" placeholder="Search evaluation form..." aria-label="Search evaluation form" />
         </div>
         
@@ -87,7 +90,7 @@ try {
         <h2 id="evaluation-form-title"><?php echo $isEvaluationEditMode ? 'Edit Evaluation' : 'Add Evaluation'; ?></h2>
         <p id="evaluation-form-desc"><?php echo $isEvaluationEditMode ? 'Update evaluation details and question bank.' : 'Per the MD, evaluation attaches directly to a course, not to a module or lesson.'; ?></p>
 
-        <form id="add-evaluation-form" method="post" action="pages/instructor/elearning-subpage/ajax/add-evaluation.php">
+        <form id="add-evaluation-form" data-skip method="post" action="pages/instructor/elearning-subpage/ajax/add-evaluation.php">
             <?php if ($isEvaluationEditMode): ?>
                 <input type="hidden" name="id" value="<?php echo htmlspecialchars((string) $evaluationEditId); ?>" />
             <?php endif; ?>

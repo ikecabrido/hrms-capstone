@@ -56,6 +56,7 @@ try {
         $recentAttempt = $recentStmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study-subpage/quiz');
     $quiz = null;
 }
 

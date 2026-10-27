@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once dirname(__FILE__, 7) . '/database/db.php';
+require_once dirname(__FILE__, 5) . '/classes/dberror.php';
 try {
     $pdo = (new Database())->getConnection();
     $type = $_GET['type'] ?? 'all';
@@ -14,4 +15,4 @@ try {
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) { $r['type']=$t; $items[]=$r; }
     }
     echo json_encode(['success'=>true,'items'=>$items]);
-} catch (Throwable $e) { echo json_encode(['success'=>false]); }
+} catch (Throwable $e) { DbError::json($e, 'instructor/get-archive'); }

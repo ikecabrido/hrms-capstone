@@ -53,13 +53,24 @@ try {
             CASE WHEN cert.id IS NOT NULL THEN 'Issued' ELSE 'Not Issued' END AS certificate_status,
             COALESCE(avg_score.avg_score, 0) AS final_score
         FROM ld_enrollment e
-        LEFT JOIN ld_certificate cert ON cert.learner_id = e.learner_id AND cert.course_id = e.course_id
+        /*
+         * Certificates correlate to the enrollment that produced them (issuance is
+         * guarded per completed_enrollment_id), so this cannot duplicate a row.
+         */
+        LEFT JOIN ld_certificate cert ON cert.completed_enrollment_id = e.id
+        /*
+         * The score must belong to this enrollment's course. The previous version
+         * grouped by (learner_id, module_id) and joined on learner_id alone, which both
+         * multiplied each enrollment by the number of modules the learner had attempted
+         * and reported their average score across every course instead of this one.
+         */
         LEFT JOIN (
-            SELECT qa.learner_id, q.module_id, ROUND(AVG(qa.score), 2) AS avg_score
+            SELECT qa.learner_id, m.course_id, ROUND(AVG(qa.score), 2) AS avg_score
             FROM ld_quiz_attempt qa
             JOIN ld_quiz q ON q.id = qa.quiz_id
-            GROUP BY qa.learner_id, q.module_id
-        ) avg_score ON avg_score.learner_id = e.learner_id
+            JOIN ld_module m ON m.id = q.module_id
+            GROUP BY qa.learner_id, m.course_id
+        ) avg_score ON avg_score.learner_id = e.learner_id AND avg_score.course_id = e.course_id
         $where
         ORDER BY e.enrolled_at DESC
     ");

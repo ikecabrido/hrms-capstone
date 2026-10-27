@@ -49,6 +49,7 @@ class Module
     public function update(array $input): array
     {
         $moduleId = (int) ($input['id'] ?? 0);
+        $courseId = isset($input['course_id']) ? (int) $input['course_id'] : 0;
         $title = trim((string) ($input['title'] ?? ''));
         $description = $input['description'] ?? null;
         $status = trim((string) ($input['status'] ?? 'active'));
@@ -66,14 +67,26 @@ class Module
             $status = 'active';
         }
 
-        $stmt = $this->conn->prepare('UPDATE ld_module SET title = ?, description = ?, status = ?, order_index = ?, updated_at = NOW() WHERE id = ?');
-        $stmt->execute([
-            $title,
-            $description,
-            $status,
-            $orderIndex,
-            $moduleId,
-        ]);
+        if ($courseId > 0) {
+            $stmt = $this->conn->prepare('UPDATE ld_module SET course_id = ?, title = ?, description = ?, status = ?, order_index = ?, updated_at = NOW() WHERE id = ?');
+            $stmt->execute([
+                $courseId,
+                $title,
+                $description,
+                $status,
+                $orderIndex,
+                $moduleId,
+            ]);
+        } else {
+            $stmt = $this->conn->prepare('UPDATE ld_module SET title = ?, description = ?, status = ?, order_index = ?, updated_at = NOW() WHERE id = ?');
+            $stmt->execute([
+                $title,
+                $description,
+                $status,
+                $orderIndex,
+                $moduleId,
+            ]);
+        }
 
         return [
             'success' => true,

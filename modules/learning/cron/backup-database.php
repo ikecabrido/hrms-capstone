@@ -2,7 +2,7 @@
 /**
  * Cron: backup-database.php
  * Full database backup using mysqldump.
- * Runs via OS cron (every 30 min): php C:/xampp/htdocs/itsar/modules/learning/cron/backup-database.php
+ * Runs via OS cron (every 30 min): php <app root>/modules/learning/cron/backup-database.php
  *
  * - Creates timestamped SQL dumps in cron/backups/
  * - Keeps the last 30 backups, auto-deletes older ones

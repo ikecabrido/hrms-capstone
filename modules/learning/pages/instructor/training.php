@@ -24,7 +24,7 @@ try {
         }
     };
 
-    $learningPathRows = $runQuery($pdo, "SELECT id, title, description, status, created_at FROM ld_learning_path ORDER BY created_at DESC LIMIT 20");
+    $learningPathRows = $runQuery($pdo, "SELECT id, title, description, status, created_at, type, is_public FROM ld_learning_path ORDER BY created_at DESC LIMIT 20");
     $programRows = $runQuery($pdo, "SELECT id, title, description, status, created_at FROM ld_program ORDER BY created_at DESC LIMIT 20");
     $videoConferenceRows = $runQuery($pdo, "SELECT id, title, platform, status, scheduled_at, duration_minutes, created_at FROM ld_video_conference ORDER BY created_at DESC LIMIT 20");
 
@@ -40,7 +40,7 @@ try {
 
 function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
     if (empty($items)) return;
-    $typeLabels = ['Learning Path' => 'Learning Path', 'Program' => 'Program', 'Video Conference' => 'Live Session'];
+    $typeLabels = ['Learning Path' => 'Learning Path', 'Program' => 'Program', 'Video Conference' => 'Online Training'];
     $typeLinks = [
         'Learning Path' => '?page=instructor/learning-path&id=',
         'Program' => '?page=instructor/training-subpage/program&id=',
@@ -70,11 +70,14 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             if (!empty($item['duration_minutes'])) $footerInfo .= ($footerInfo ? ' . ' : '') . $item['duration_minutes'] . ' min';
         }
         $createdDate = !empty($item['created_at']) ? date('M j, Y', strtotime($item['created_at'])) : '';
-        echo '<article class="catalog-card" data-status="' . htmlspecialchars($status) . '" data-type="' . htmlspecialchars($label) . '" data-entity-id="' . $id . '">';
+        $isKT = ($item['type'] ?? 'standard') === 'knowledge_transfer';
+        $isPublic = !empty($item['is_public']);
+        echo '<article class="catalog-card" data-status="' . htmlspecialchars($status) . '" data-type="' . htmlspecialchars($label) . '" data-entity-id="' . $id . '"' . ($isKT ? ' data-kt="1" data-path-id="' . $id . '" data-is-public="' . ($isPublic ? '1' : '0') . '"' : '') . '>';
         echo '<div class="catalog-card-thumb" style="background:' . $gradient . ';">';
         echo '<i class="fas ' . $icon . ' thumb-icon"></i>';
         echo '<div class="thumb-overlay"></div>';
-        echo '<span class="catalog-card-type-badge">' . htmlspecialchars($typeLabel) . '</span>';
+        $badgeText = $isKT ? 'Knowledge Transfer' : $typeLabel;
+        echo '<span class="catalog-card-type-badge">' . htmlspecialchars($badgeText) . '</span>';
         echo '</div>';
         echo '<div class="catalog-card-body">';
         echo '<h4>' . htmlspecialchars($title) . '</h4>';
@@ -87,51 +90,53 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         }
         echo '<div class="catalog-card-footer">';
         echo '<span class="cc-deadline" style="font-size:0.72rem;color:var(--muted);text-transform:capitalize;">' . htmlspecialchars($status) . '</span>';
-        echo '<button class="cc-enroll-btn enroll" style="background:rgba(32,0,130,0.08);color:var(--primary);" onclick="event.stopPropagation();window.location.href=\'' . htmlspecialchars($link) . '\';"><i class="fas fa-eye"></i> View</button>';
+        echo '<div style="display:flex;align-items:center;gap:0.4rem;">';
+        if ($isKT) {
+            $pubColor = $isPublic ? '#059669' : '#666';
+            $pubBg = $isPublic ? 'rgba(5,150,105,0.1)' : 'rgba(100,100,100,0.1)';
+            echo '<button class="kt-toggle-public-btn" data-path-id="' . $id . '" style="padding:0.25rem 0.5rem;border-radius:999px;font-size:0.65rem;font-weight:700;background:' . $pubBg . ';color:' . $pubColor . ';border:1px solid ' . $pubColor . '22;cursor:pointer;">' . ($isPublic ? 'Public' : 'Private') . '</button>';
+        }
+        echo '<button class="cc-enroll-btn enroll" style="background:rgba(32,0,130,0.08);color:var(--primary);"><i class="fas fa-eye"></i> View</button>';
         echo '</div>';
         echo '</article>';
     }
 }
 ?>
 
-<div id="tr-entity-content" style="display:none;">
-    <div id="tr-entity-content-panel" class="entity-content-box" data-size="standard">
-        <div class="entity-content-header">
-            <h2 id="tr-modal-title"></h2>
-            <div class="entity-content-actions">
-                <button id="tr-modal-edit-btn" style="padding:0.6rem 0.95rem; background:var(--primary); color:var(--surface); border:none; border-radius:999px; cursor:pointer; font-weight:700; box-shadow:0 8px 22px rgba(32, 0, 130, 0.12);">Edit</button>
-                <button id="tr-modal-close-btn" style="padding:0.6rem 0.95rem; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; cursor:pointer; font-weight:700;">Close</button>
+<div id="tr-entity-content" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10000; align-items:center; justify-content:center;">
+    <div id="tr-entity-content-panel" class="entity-content-box" data-size="standard" style="background:var(--surface, #fff); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.18); overflow:hidden; width:92vw; max-width:560px; max-height:88vh; display:flex; flex-direction:column;">
+        <div class="entity-content-header" style="padding:1.25rem 1.5rem; border-bottom:1px solid rgba(32,0,130,0.08); display:flex; align-items:center; justify-content:space-between;">
+            <h2 id="tr-modal-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text);"></h2>
+            <div class="entity-content-actions" style="display:flex; gap:0.5rem;">
+                <button id="tr-modal-edit-btn" style="padding:0.5rem 0.85rem; background:var(--primary); color:var(--surface,#fff); border:none; border-radius:999px; cursor:pointer; font-weight:700; font-size:0.82rem;">Edit</button>
+                <button id="tr-modal-archive-btn" style="padding:0.5rem 0.85rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.18); border-radius:999px; cursor:pointer; font-weight:700; font-size:0.82rem;">Archive</button>
+                <button id="tr-modal-close-btn" style="padding:0.5rem 0.85rem; background:transparent; color:var(--text); border:1px solid var(--border); border-radius:999px; cursor:pointer; font-weight:700; font-size:0.82rem;">Close</button>
             </div>
         </div>
-        <div class="entity-content-tabs">
-                <button type="button" class="entity-content-tab active" data-content-tab="overview" data-label="Overview" data-icon="<i class='fas fa-eye'></i>" style="padding:0.7rem 1rem; border:none; background:rgba(32,0,130,0.08); color:var(--primary); border-radius:999px; font-weight:700; cursor:pointer;"><i class="fas fa-eye" style="margin-right:0.45rem;"></i>Overview</button>
-                <button type="button" class="entity-content-tab" data-content-tab="structure" data-label="Structure" data-icon="<i class='fas fa-sitemap'></i>" style="padding:0.7rem 1rem; border:1px solid rgba(32,0,130,0.12); background:#fff; color:var(--text); border-radius:999px; font-weight:700; cursor:pointer;"><i class="fas fa-sitemap" style="margin-right:0.45rem;"></i>Structure</button>
-                <button type="button" class="entity-content-tab" data-content-tab="monitor" data-label="Monitor" data-icon="<i class='fas fa-chart-line'></i>" style="padding:0.7rem 1rem; border:1px solid rgba(32,0,130,0.12); background:#fff; color:var(--text); border-radius:999px; font-weight:700; cursor:pointer;"><i class="fas fa-chart-line" style="margin-right:0.45rem;"></i>Monitor</button>
+        <div class="entity-content-tabs" style="display:flex; gap:0.5rem; padding:0.75rem 1.5rem; border-bottom:1px solid rgba(32,0,130,0.06);">
+                <button type="button" class="entity-content-tab active" data-content-tab="overview" data-label="Overview" data-icon="<i class='fas fa-eye'></i>" style="padding:0.55rem 1rem; border:none; background:rgba(32,0,130,0.08); color:var(--primary); border-radius:999px; font-weight:700; cursor:pointer; font-size:0.82rem;"><i class="fas fa-eye" style="margin-right:0.35rem;"></i>Overview</button>
+                <button type="button" class="entity-content-tab" data-content-tab="structure" data-label="Structure" data-icon="<i class='fas fa-sitemap'></i>" style="padding:0.55rem 1rem; border:1px solid rgba(32,0,130,0.12); background:var(--surface, #fff); color:var(--text); border-radius:999px; font-weight:700; cursor:pointer; font-size:0.82rem;"><i class="fas fa-sitemap" style="margin-right:0.35rem;"></i>Structure</button>
+                <button type="button" class="entity-content-tab" data-content-tab="monitor" data-label="Monitor" data-icon="<i class='fas fa-chart-line'></i>" style="padding:0.55rem 1rem; border:1px solid rgba(32,0,130,0.12); background:var(--surface, #fff); color:var(--text); border-radius:999px; font-weight:700; cursor:pointer; font-size:0.82rem;"><i class="fas fa-chart-line" style="margin-right:0.35rem;"></i>Monitor</button>
             </div>
-        </div>
-        <div class="entity-content-body">
+        <div class="entity-content-body" style="padding:1.25rem 1.5rem; overflow-y:auto; flex:1 1 auto; min-height:0;">
             <div id="tr-entity-content-overview" class="entity-content-panel" style="display:none;">
-                <div id="tr-modal-content-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+                <div id="tr-modal-content-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1.25rem; margin-bottom:1.5rem;">
                     <div>
-                        <label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Status</label>
-                        <p id="tr-modal-overview-status" style="margin:0.55rem 0 0 0; font-size:1rem; color:var(--text);">Active</p>
+                        <label style="display:block; color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">STATUS</label>
+                        <p id="tr-modal-overview-status" style="margin:0; font-size:0.95rem; color:var(--text); font-weight:600;">Active</p>
                     </div>
                     <div>
-                        <label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Parent</label>
-                        <p id="tr-modal-overview-parent" style="margin:0.55rem 0 0 0; font-size:1rem; color:var(--text);">Program</p>
+                        <label style="display:block; color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">PARENT</label>
+                        <p id="tr-modal-overview-parent" style="margin:0; font-size:0.95rem; color:var(--text);">-</p>
                     </div>
                     <div>
-                        <label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Children</label>
-                        <p id="tr-modal-overview-children" style="margin:0.55rem 0 0 0; font-size:1rem; color:var(--text);">0 child items</p>
+                        <label style="display:block; color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">CHILDREN</label>
+                        <p id="tr-modal-overview-children" style="margin:0; font-size:0.95rem; color:var(--text);">0</p>
                     </div>
-                    <div>
-                        <label style="color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase;">Enrollment</label>
-                        <p id="tr-modal-overview-enrollment" style="margin:0.55rem 0 0 0; font-size:1rem; color:var(--text);">Group</p>
+                    <div style="grid-column:1/-1;">
+                        <label style="display:block; color:var(--primary); font-weight:700; font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.4rem;">DESCRIPTION</label>
+                        <p id="tr-modal-description" style="margin:0; font-size:0.92rem; line-height:1.6; color:var(--text);">No description</p>
                     </div>
-                </div>
-                <div id="tr-modal-description-section">
-                    <label style="color:var(--primary); font-weight:700; font-size:0.74rem; letter-spacing:0.08em; text-transform:uppercase;">Description</label>
-                    <p id="tr-modal-description" style="margin:0.75rem 0 0 0; font-size:1rem; line-height:1.7; color:var(--text);">No description</p>
                 </div>
             </div>
             <div id="tr-entity-content-structure" class="entity-content-panel" style="display:block;">
@@ -140,6 +145,18 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             <div id="tr-entity-content-monitor" class="entity-content-panel" style="display:none;">
                 <div id="tr-entity-content-monitor-content"></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Archive Confirm Overlay -->
+<div id="archive-confirm-overlay" class="modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10001; align-items:center; justify-content:center;">
+    <div style="background:var(--surface, #fff); border-radius:16px; width:90%; max-width:420px; box-shadow:0 20px 60px rgba(0,0,0,0.25); padding:1.5rem;">
+        <h3 style="margin:0 0 0.5rem; font-size:1.1rem; font-weight:800; color:var(--text);">Confirm Archive</h3>
+        <p id="archive-confirm-message" style="margin:0 0 1.25rem; font-size:0.92rem; color:rgba(32,0,130,0.55); line-height:1.5;">Are you sure you want to archive this item?</p>
+        <div style="display:flex; gap:0.6rem; justify-content:flex-end;">
+            <button id="archive-confirm-cancel" style="padding:0.5rem 1rem; background:transparent; color:var(--text); border:1.5px solid var(--border); border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Cancel</button>
+            <button id="archive-confirm-ok" style="padding:0.5rem 1rem; background:#dc3545; color:#fff; border:none; border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Archive</button>
         </div>
     </div>
 </div>
@@ -230,7 +247,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             <span class="catalog-tab-count"><?= count($programRows) ?></span>
         </button>
         <button type="button" class="catalog-tab-btn" data-tab="tab-video-conference">
-            <i class="fas fa-video"></i> Live Sessions
+            <i class="fas fa-video"></i> Online Training
             <span class="catalog-tab-count"><?= count($videoConferenceRows) ?></span>
         </button>
         <button type="button" class="catalog-tab-btn" data-tab="tab-skills">
@@ -261,7 +278,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         <div class="tab-content" data-tab="tab-video-conference">
             <div class="mode-card">
                 <h2>Video Conference Management</h2>
-                <p>Set up live sessions, host virtual training, and manage attendance links.</p>
+                <p>Set up online training sessions, host virtual training, and manage attendance links.</p>
                 <div class="catalog-grid">
                 <?php renderTrainingCards($videoConferenceRows, 'Video Conference', '?page=instructor/training-subpage/video-conference'); ?>
                 </div>
@@ -402,11 +419,21 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         modalDescription: document.getElementById('tr-modal-description'),
         overviewStatus: document.getElementById('tr-modal-overview-status'),
         overviewParent: document.getElementById('tr-modal-overview-parent'),
-        overviewChildren: document.getElementById('tr-modal-overview-children'),
-        overviewEnrollment: document.getElementById('tr-modal-overview-enrollment')
+        overviewChildren: document.getElementById('tr-modal-overview-children')
     });
 
     const state = { type: null, id: null, activeTab: 'overview' };
+
+    const entityConfig = {
+        'Learning Path': { editUrl: '?page=instructor/learning-path&id=', archiveEndpoint: 'pages/instructor/ajax/archive-learning-path.php' },
+        'Program': { editUrl: '?page=instructor/training-subpage/program&id=', archiveEndpoint: 'elearning-subpage/ajax/archive-program.php' },
+        'Video Conference': { editUrl: '?page=instructor/training-subpage/video-conference&id=', archiveEndpoint: 'elearning-subpage/ajax/archive-video-conference.php' },
+        'Course': { editUrl: '?page=instructor/elearning-subpage/course&back=instructor/training&id=', archiveEndpoint: 'elearning-subpage/ajax/archive-course.php' },
+        'Module': { editUrl: '?page=instructor/elearning-subpage/module&back=instructor/training&id=', archiveEndpoint: 'elearning-subpage/ajax/archive-module.php' },
+        'Lesson': { editUrl: '?page=instructor/elearning-subpage/lesson&back=instructor/training&id=', archiveEndpoint: 'elearning-subpage/ajax/archive-lesson.php' },
+        'Quiz': { editUrl: '?page=instructor/elearning-subpage/quiz&back=instructor/training&id=', archiveEndpoint: 'elearning-subpage/ajax/archive-quiz.php' },
+        'Evaluation': { editUrl: '?page=instructor/elearning-subpage/evaluation&back=instructor/training&id=', archiveEndpoint: 'elearning-subpage/ajax/archive-evaluation.php' }
+    };
 
     function getEntityIcon(type) {
         const iconMap = {
@@ -418,19 +445,19 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     }
 
     function openModal() {
-        const { entityModal } = getElements();
-        if (entityModal) {
-            entityContent.style.display = 'flex';
+        const el = getElements().entityContent;
+        if (el) {
+            el.style.display = 'flex';
             if (typeof window.sizeEntityModal === 'function') {
-                window.sizeEntityModal(entityModal, state.type);
+                window.sizeEntityModal(el, state.type);
             }
         }
     }
 
     function closeModal() {
-        const { entityModal } = getElements();
-        if (entityModal) {
-            entityContent.style.display = 'none';
+        const el = getElements().entityContent;
+        if (el) {
+            el.style.display = 'none';
         }
     }
 
@@ -439,9 +466,8 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             const isActive = state.activeTab === btn.dataset.contentTab;
             const label = btn.dataset.label || btn.textContent.trim();
             const icon = btn.dataset.icon || '';
-            btn.classList.toggle('active', isActive);
             btn.innerHTML = `${icon} ${label}`;
-            btn.style.background = isActive ? 'rgba(32,0,130,0.08)' : '#fff';
+            btn.style.background = isActive ? 'rgba(32,0,130,0.08)' : 'var(--surface, #fff)';
             btn.style.border = isActive ? 'none' : '1px solid rgba(32,0,130,0.12)';
             btn.style.color = isActive ? 'var(--primary)' : 'var(--text)';
         });
@@ -450,23 +476,22 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         });
     }
 
-    function renderOverviewDetails(type, data, description, status) {
-        const { modalDescription, overviewStatus, overviewParent, overviewChildren, overviewEnrollment } = getElements();
+    function renderOverviewDetails(type, data, description, status, items) {
+        const { modalDescription, overviewStatus, overviewParent, overviewChildren } = getElements();
         if (overviewStatus) overviewStatus.textContent = status || 'Active';
         
-        // Use real data from AJAX response
         if (type === 'Program') {
             if (overviewParent) overviewParent.textContent = 'Training portfolio';
             if (overviewChildren) overviewChildren.textContent = (data.enrollment_count || 0) + ' enrollments';
-            if (overviewEnrollment) overviewEnrollment.textContent = (data.completion_count || 0) + ' completed';
         } else if (type === 'Video Conference') {
             if (overviewParent) overviewParent.textContent = 'Program-linked session';
             if (overviewChildren) overviewChildren.textContent = (data.attendance_count || 0) + ' attendees';
-            if (overviewEnrollment) overviewEnrollment.textContent = 'Scheduled attendance';
         } else {
-            if (overviewParent) overviewParent.textContent = 'Learning path sequence';
-            if (overviewChildren) overviewChildren.textContent = '0 child items';
-            if (overviewEnrollment) overviewEnrollment.textContent = 'Assigned group';
+            if (overviewChildren) {
+                const count = Array.isArray(items) ? items.length : 0;
+                overviewChildren.textContent = count || '0';
+            }
+            if (overviewParent) overviewParent.textContent = '-';
         }
         
         if (modalDescription) modalDescription.textContent = description || 'No description provided for this item yet.';
@@ -565,7 +590,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
                             state.id = Number(entityId);
                             state.activeTab = 'structure';
                             if (document.getElementById('tr-modal-title')) document.getElementById('tr-modal-title').innerHTML = `${getEntityIcon(entityType)} ${entity.title || 'Untitled'}`;
-                            renderOverviewDetails(entityType, entity, entity.description || 'No description', entity.status || 'Active');
+                            renderOverviewDetails(entityType, entity, entity.description || 'No description', entity.status || 'Active', []);
                             loadTrainingTree(entityType, Number(entityId), document.getElementById('tr-entity-content-structure-content'));
                             syncContentTabs();
                             openModal();
@@ -606,34 +631,73 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         fetch(ajaxMap[type] || '', { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.json())
             .then(data => {
-                if (data.success && data.data) {
-                    renderOverviewDetails(type, data.data, description, status);
-                } else {
-                    renderOverviewDetails(type, {}, description, status);
-                }
+                const pathData = data.success && data.data ? data.data : {};
+                const items = data.success && Array.isArray(data.items) ? data.items : [];
+                renderOverviewDetails(type, pathData, description, status, items);
                 loadTrainingTree(type, id, document.getElementById('tr-entity-content-structure-content'));
                 syncContentTabs();
                 openModal();
             })
             .catch(() => {
-                renderOverviewDetails(type, {}, description, status);
+                renderOverviewDetails(type, {}, description, status, []);
                 loadTrainingTree(type, id, document.getElementById('tr-entity-content-structure-content'));
                 syncContentTabs();
                 openModal();
             });
     });
 
-    const { modalEditBtn, modalCloseBtn, entityModal } = getElements();
+    const { modalEditBtn, modalCloseBtn, entityContent: trEntityEl } = getElements();
     if (modalEditBtn) {
         modalEditBtn.onclick = () => {
             if (!state.type || !state.id) return;
-            window.location.href = getEditUrl(state.type, state.id);
+            // Build edit URL directly to avoid map key mismatches
+            let editUrl = '';
+            if (state.type === 'Learning Path') editUrl = '?page=instructor/learning-path&id=' + state.id;
+            else if (state.type === 'Program') editUrl = '?page=instructor/training-subpage/program&id=' + state.id;
+            else if (state.type === 'Video Conference') editUrl = '?page=instructor/training-subpage/video-conference&id=' + state.id;
+            else if (state.type === 'Course') editUrl = '?page=instructor/elearning-subpage/course&back=instructor/training&id=' + state.id;
+            else if (state.type === 'Module') editUrl = '?page=instructor/elearning-subpage/module&back=instructor/training&id=' + state.id;
+            else if (state.type === 'Lesson') editUrl = '?page=instructor/elearning-subpage/lesson&back=instructor/training&id=' + state.id;
+            else if (state.type === 'Quiz') editUrl = '?page=instructor/elearning-subpage/quiz&back=instructor/training&id=' + state.id;
+            else if (state.type === 'Evaluation') editUrl = '?page=instructor/elearning-subpage/evaluation&back=instructor/training&id=' + state.id;
+            if (editUrl) window.location.href = editUrl;
+        };
+    }
+    if (document.getElementById('tr-modal-archive-btn')) {
+        document.getElementById('tr-modal-archive-btn').onclick = () => {
+            if (!state.type || !state.id) return;
+            const cfg = entityConfig[state.type];
+            if (!cfg) { if (window.showToast) window.showToast('Archive not available', 'error'); return; }
+            document.getElementById('archive-confirm-message').textContent = 'Are you sure you want to archive this ' + state.type.toLowerCase() + '?';
+            document.getElementById('archive-confirm-overlay').style.display = 'flex';
+        };
+    }
+    if (document.getElementById('archive-confirm-ok')) {
+        document.getElementById('archive-confirm-ok').onclick = () => {
+            document.getElementById('archive-confirm-overlay').style.display = 'none';
+            if (!state.type || !state.id) return;
+            const cfg = entityConfig[state.type];
+            if (!cfg) return;
+            fetch(cfg.archiveEndpoint, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify({ id: state.id }) })
+                .then(r => r.json())
+                .then(d => { if (d.success) { if (window.showToast) window.showToast('Archived successfully', 'success'); setTimeout(() => location.reload(), 800); } else { if (window.showToast) window.showToast(d.error || 'Failed', 'error'); } })
+                .catch(() => { if (window.showToast) window.showToast('Network error', 'error'); });
+        };
+    }
+    if (document.getElementById('archive-confirm-cancel')) {
+        document.getElementById('archive-confirm-cancel').onclick = () => {
+            document.getElementById('archive-confirm-overlay').style.display = 'none';
+        };
+    }
+    if (document.getElementById('archive-confirm-overlay')) {
+        document.getElementById('archive-confirm-overlay').onclick = (e) => {
+            if (e.target.id === 'archive-confirm-overlay') document.getElementById('archive-confirm-overlay').style.display = 'none';
         };
     }
     if (modalCloseBtn) modalCloseBtn.onclick = closeModal;
-    if (entityModal) {
-        entityContent.onclick = (event) => {
-            if (event.target === entityModal) closeModal();
+    if (trEntityEl) {
+        trEntityEl.onclick = (event) => {
+            if (event.target === trEntityEl) closeModal();
         };
     }
     document.querySelectorAll('.entity-content-tab').forEach((button) => {
@@ -688,7 +752,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     var addConfig = {
         'tab-learning-path': { label: 'Add Learning Path', url: '?page=instructor/learning-path' },
         'tab-program': { label: 'Add Program', url: '?page=instructor/training-subpage/program' },
-        'tab-video-conference': { label: 'Add Live Session', url: '?page=instructor/training-subpage/video-conference' },
+        'tab-video-conference': { label: 'Add Online Training', url: '?page=instructor/training-subpage/video-conference' },
         'tab-skills': null
     };
     function syncAddBtn() {
@@ -740,8 +804,6 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             catalogActiveTab = tabId;
             catalogPage = 1;    updateCatalogGrid();
     syncAddBtn();
-    var trPageSizeSelect = document.getElementById('tr-catalog-page-size');
-    if (trPageSizeSelect) { trPageSizeSelect.addEventListener('change', function() { catalogPageSize = parseInt(this.value, 10) || 12; catalogPage = 1; updateCatalogGrid(); }); }
 
 
         });
@@ -764,8 +826,39 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             updateCatalogGrid();
         });
     }
+    var trPageSizeSelect = document.getElementById('tr-catalog-page-size');
+    if (trPageSizeSelect) {
+        var ldps = parseInt(window.LD_DEFAULT_PAGE_SIZE, 10) || 12;
+        trPageSizeSelect.value = String(ldps);
+        catalogPageSize = ldps;
+        trPageSizeSelect.addEventListener('change', function() { catalogPageSize = parseInt(this.value, 10) || 12; catalogPage = 1; updateCatalogGrid(); });
+    }
     updateCatalogGrid();
     syncAddBtn();
+
+    // KT Public Toggle
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.kt-toggle-public-btn');
+        if (!btn) return;
+        e.stopPropagation();
+        btn.disabled = true;
+        fetch('../../modules/exit/pages/ajax/toggle-kt-path-public.php', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify({ path_id: btn.dataset.pathId })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                btn.textContent = data.is_public ? 'Public' : 'Private';
+                btn.style.background = data.is_public ? 'rgba(5,150,105,0.1)' : 'rgba(100,100,100,0.1)';
+                btn.style.color = data.is_public ? '#059669' : '#666';
+            }
+            btn.disabled = false;
+        })
+        .catch(function() { btn.disabled = false; });
+    });
 })();
 </script>
 

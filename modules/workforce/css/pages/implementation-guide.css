@@ -1,0 +1,137 @@
+.wf-io-flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: .8rem;
+    margin: 1.25rem 0;
+    padding: .8rem;
+    border: 1px solid #d9e9e2;
+    border-radius: 9px;
+    background: linear-gradient(105deg, #f1fbf6, #f7fbff);
+    box-sizing: border-box;
+}
+
+.wf-io-flow-step {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    min-height: 3rem;
+    padding: .65rem .75rem;
+    border-radius: 7px;
+    box-sizing: border-box;
+}
+
+.wf-io-flow-input { background: #e6f7ef; color: #126b5f; }
+.wf-io-flow-output { background: #eef3ff; color: #34528d; }
+.wf-io-flow-number {
+    display: grid;
+    place-items: center;
+    flex: 0 0 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    background: #168477;
+    color: #fff;
+    font-size: .75rem;
+    font-weight: 800;
+}
+.wf-io-flow-output .wf-io-flow-number { background: #526bb4; }
+.wf-io-flow-step strong,
+.wf-io-flow-step small { display: block; }
+.wf-io-flow-step strong { font-size: .78rem; }
+.wf-io-flow-step small {
+    margin-top: .15rem;
+    color: #687779;
+    font-size: .7rem;
+    line-height: 1.35;
+}
+.wf-io-flow-arrow { color: #168477; font-size: 1.45rem; font-weight: 800; }
+
+.wf-io-input-field,
+.wf-io-output-field {
+    position: relative;
+    padding: .65rem .75rem .75rem;
+    border: 1px solid #dbe8e2;
+    border-radius: 7px;
+    background: #fbfdfc;
+    box-sizing: border-box;
+}
+.wf-io-input-field:before,
+.wf-io-output-field:before {
+    display: block;
+    margin-bottom: .35rem;
+    font-size: .62rem;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+.wf-io-input-field:before { content: "Workforce input"; color: #168477; }
+.wf-io-output-field:before { content: "Learning output"; color: #526bb4; }
+.wf-io-input-field select,
+.wf-io-input-field input,
+.wf-io-output-field select,
+.wf-io-output-field textarea { background: #fff; }
+.wf-resource-send-grid .wf-io-input-field input,
+.wf-resource-send-grid .wf-io-input-field select,
+.wf-resource-send-grid .wf-io-output-field input,
+.wf-resource-send-grid .wf-io-output-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 2.55rem;
+    padding: .62rem .7rem;
+    border: 1px solid #c7d5cf;
+    border-radius: 5px;
+    color: #26383b;
+    font: inherit;
+}
+.wf-resource-send-grid .wf-io-input-field input:focus,
+.wf-resource-send-grid .wf-io-input-field select:focus,
+.wf-resource-send-grid .wf-io-output-field input:focus,
+.wf-resource-send-grid .wf-io-output-field textarea:focus {
+    border-color: #168477;
+    outline: 3px solid rgba(22, 132, 119, .14);
+}
+.wf-competency-flow { margin-top: 1.25rem; }
+.wf-resource-send-grid .wf-io-input-field,
+.wf-resource-send-grid .wf-io-output-field { gap: .3rem; }
+.wf-resource-send-button span { margin-right: .3rem; font-size: 1rem; }
+
+.wf-io-results { border-top: 3px solid #168477; }
+.wf-io-results-count {
+    padding: .35rem .65rem;
+    border: 1px solid #cce8dd;
+    border-radius: 999px;
+    background: #effaf4;
+    color: #167568;
+    font-size: .7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.wf-io-results .wa-table th { background: #f2f8f5; }
+.wf-io-results .wa-table tbody tr:hover { background: #f7fbf9; }
+.wf-training-results { border-top-color: #526bb4; }
+.wf-training-results .wa-table th { background: #f3f5fd; }
+
+@media (max-width: 650px) {
+    .wf-io-flow { grid-template-columns: 1fr; gap: .45rem; }
+    .wf-io-flow-arrow { justify-self: center; transform: rotate(90deg); }
+    .wf-io-results .wf-engagement-review-heading { align-items: stretch; }
+    .wf-io-results-count { align-self: flex-start; }
+}
+
+.wf-resource-send-grid input[type="date"],
+.wf-resource-send-grid input[type="number"] {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 2.55rem;
+    padding: .62rem .7rem;
+    border: 1px solid #c7d5cf;
+    border-radius: 5px;
+    color: #26383b;
+    font: inherit;
+}
+
+.wf-resource-send-grid input[type="date"]:focus,
+.wf-resource-send-grid input[type="number"]:focus {
+    border-color: #168477;
+    outline: 3px solid rgba(22, 132, 119, .14);
+}

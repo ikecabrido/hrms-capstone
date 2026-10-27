@@ -25,6 +25,16 @@ try {
         exit;
     }
 
+    // Include the parent course name for display (the parent course selector)
+    if (!empty($moduleData['course_id'])) {
+        $courseStmt = $pdo->prepare('SELECT title FROM ld_course WHERE id = :cid LIMIT 1');
+        $courseStmt->execute([':cid' => (int) $moduleData['course_id']]);
+        $courseTitle = $courseStmt->fetchColumn();
+        $moduleData['course_name'] = $courseTitle ?: '';
+    } else {
+        $moduleData['course_name'] = '';
+    }
+
     // Get real counts from database
     $lessonCount = (int) $pdo->query("SELECT COUNT(*) FROM ld_lesson WHERE module_id = {$id}")->fetchColumn();
     $quizCount = (int) $pdo->query("SELECT COUNT(*) FROM ld_quiz WHERE module_id = {$id}")->fetchColumn();

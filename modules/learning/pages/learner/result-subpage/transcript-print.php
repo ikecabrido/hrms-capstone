@@ -6,9 +6,13 @@
  */
 session_start();
 $learnerId = isset($_SESSION['employee_id']) ? (int)$_SESSION['employee_id'] : 0;
-if ($learnerId <= 0) { header('Location: /itsar/modules/learning/index.php'); exit; }
+if ($learnerId <= 0) {
+    require_once dirname(__DIR__, 5) . '/includes/app-base.php';
+    header('Location: ' . AppBase::pathFor('modules/learning/index.php'));
+    exit;
+}
 
-require_once dirname(__DIR__, 8) . '/database/db.php';
+require_once dirname(__DIR__, 5) . '/database/db.php';
 
 try {
     $db = new Database();
@@ -94,6 +98,7 @@ try {
 </head>
 <body>
     <div class="no-print" style="text-align:center;margin-bottom:1rem;">
+        <?= BackLink::anchor('learner/result', 'style="padding:0.5rem 1.25rem;background:rgba(32,0,130,0.08);color:var(--primary);border:1px solid rgba(32,0,130,0.15);border-radius:8px;text-decoration:none;font-weight:600;display:inline-block;margin-right:0.5rem;"') ?>
         <button onclick="window.print()" style="padding:0.5rem 1.5rem;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Print Transcript</button>
     </div>
     <div class="transcript">

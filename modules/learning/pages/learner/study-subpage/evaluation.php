@@ -17,7 +17,9 @@ try {
     $pdo = $database->getConnection();
 
     $stmt = $pdo->prepare("
-        SELECT e.id, e.title, e.description, e.course_id,
+        /* ld_evaluation has no description column; the markup guards on it, so supply an
+           empty value rather than letting the missing key warn. */
+        SELECT e.id, e.title, '' AS description, e.course_id,
                c.title AS course_title
         FROM ld_evaluation e
         JOIN ld_course c ON c.id = e.course_id
@@ -37,15 +39,19 @@ try {
         $checkStmt->execute([':lid' => $learnerId, ':eid' => $evaluationId]);
         $hasSubmitted = (bool) $checkStmt->fetch();
 
+        // Evaluation questions live in ld_quiz_question keyed by
+        // (item_type = 'evaluation', reference_id = <evaluation id>).
         $qStmt = $pdo->prepare("
             SELECT qq.id, qq.question_text, qq.question_type
             FROM ld_quiz_question qq
-            WHERE qq.quiz_id = 0 AND qq.module_id = 0
-            LIMIT 0
+            WHERE qq.item_type = 'evaluation' AND qq.reference_id = :eid AND qq.status = 'active'
+            ORDER BY qq.order_index ASC, qq.id ASC
         ");
-        $qStmt->execute();
+        $qStmt->execute([':eid' => $evaluationId]);
+        $questions = $qStmt->fetchAll(PDO::FETCH_ASSOC);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study-subpage/evaluation');
     $evaluation = null;
 }
 

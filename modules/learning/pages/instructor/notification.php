@@ -36,6 +36,7 @@ try {
         $unreadCount = (new Message($pdo))->getUnreadCount($employeeId);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/notification');
     $announcements = [];
     $messages = [];
     $unreadCount = 0;

@@ -973,6 +973,7 @@
     /* ──────────────── Load & Reload ──────────────── */
     async function loadStructure(courseId) {
         currentCourseId = courseId;
+        if (window.__csResetToggle) window.__csResetToggle();
         const header = $('#course-header');
         const empty = $('#empty-state');
         const tree = $('#structure-tree');
@@ -1375,20 +1376,89 @@
         // Safeguard: reset body overflow in case it was left hidden
         document.body.style.overflow = '';
 
-        // Load course list
+        // Load course list (with skill / category / status filters)
         const selector = $('#course-selector');
-        try {
-            const data = await API.getCourses();
-            const courses = data.items || [];
-            courses.forEach(c => {
+        let allCourses = [];
+        const filterIds = ['#filter-skill', '#filter-category', '#filter-status', '#filter-type'];
+
+        function fillSelect(sel, values, labelMap) {
+            if (!sel) return;
+            sel.innerHTML = '';
+            const allOpt = document.createElement('option');
+            allOpt.value = '';
+            allOpt.textContent = 'All';
+            sel.appendChild(allOpt);
+            values.forEach(v => {
+                const o = document.createElement('option');
+                o.value = v;
+                o.textContent = (labelMap && labelMap[v]) || v;
+                sel.appendChild(o);
+            });
+        }
+
+        function renderCourseOptions(list) {
+            selector.innerHTML = '<option value="">— Select a Course to Build —</option>';
+            list.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c.id;
                 opt.textContent = c.title || c.name || ('Course #' + c.id);
                 selector.appendChild(opt);
             });
+        }
+
+        function currentFilters() {
+            return {
+                skill: $('#filter-skill')?.value || '',
+                category: $('#filter-category')?.value || '',
+                status: $('#filter-status')?.value || '',
+                type: $('#filter-type')?.value || ''
+            };
+        }
+
+        function applyFilters() {
+            const f = currentFilters();
+            const filtered = allCourses.filter(c => {
+                if (f.skill && !(c.skills || []).some(s => s.toLowerCase() === f.skill.toLowerCase())) return false;
+                if (f.category && (c.category || '') !== f.category) return false;
+                if (f.status && (c.status || '') !== f.status) return false;
+                if (f.type && (c.delivery_mode || 'online') !== f.type) return false;
+                return true;
+            });
+            renderCourseOptions(filtered);
+            const params = new URLSearchParams(window.location.search);
+            const preselected = params.get('course_id');
+            if (preselected && filtered.some(c => String(c.id) === preselected)) {
+                selector.value = preselected;
+            }
+        }
+
+        try {
+            const data = await API.getCourses();
+            allCourses = data.items || [];
+
+            const skills = [...new Set(allCourses.flatMap(c => (c.skills || []).map(s => s.trim()).filter(Boolean)))].sort((a, b) => a.localeCompare(b));
+            const categories = [...new Set(allCourses.map(c => (c.category || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            const statuses = [...new Set(allCourses.map(c => (c.status || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+            const typeLabels = { online: 'Online', face_to_face: 'Face-to-Face', hybrid: 'Hybrid' };
+            const types = [...new Set(allCourses.map(c => (c.delivery_mode || 'online').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+            fillSelect($('#filter-skill'), skills);
+            fillSelect($('#filter-category'), categories);
+            fillSelect($('#filter-status'), statuses);
+            fillSelect($('#filter-type'), types, typeLabels);
+
+            applyFilters();
         } catch (e) {
             console.error('Failed to load courses', e);
         }
+
+        filterIds.forEach(id => {
+            $(id)?.addEventListener('change', applyFilters);
+        });
+        $('#filter-clear')?.addEventListener('click', () => {
+            filterIds.forEach(id => { if ($(id)) $(id).value = ''; });
+            applyFilters();
+        });
 
         // Check URL params
         const params = new URLSearchParams(window.location.search);
@@ -1434,13 +1504,23 @@
             if (e.key === 'Escape') closeTemplateModal();
         });
 
-        // Collapse / Expand all
-        $('#btn-collapse-all')?.addEventListener('click', () => {
-            $$('.cs-mod-body').forEach(b => b.style.display = 'none');
+        // Toggle all (collapse / expand)
+        let allCollapsed = false;
+        function setToggleAllIcon() {
+            const btn = $('#btn-toggle-all');
+            if (!btn) return;
+            btn.innerHTML = allCollapsed ? '<i class="fas fa-expand-alt"></i>' : '<i class="fas fa-compress-alt"></i>';
+            btn.title = allCollapsed ? 'Expand All' : 'Collapse All';
+        }
+        $('#btn-toggle-all')?.addEventListener('click', () => {
+            allCollapsed = !allCollapsed;
+            $$('.cs-mod-body').forEach(b => b.style.display = allCollapsed ? 'none' : '');
+            setToggleAllIcon();
         });
-        $('#btn-expand-all')?.addEventListener('click', () => {
-            $$('.cs-mod-body').forEach(b => b.style.display = '');
-        });
+        window.__csResetToggle = () => {
+            allCollapsed = false;
+            setToggleAllIcon();
+        };
 
         // Preview drawer close
         $('#cs-preview-close')?.addEventListener('click', closePreviewDrawer);

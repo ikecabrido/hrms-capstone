@@ -12,6 +12,7 @@ $courseId = (int) ($_GET['course_id'] ?? 0);
 $module = null;
 $lessons = [];
 $quizzes = [];
+$moduleSkills = [];
 $enrollment = null;
 $currentPageType = 'module';
 $currentPageId = $moduleId;
@@ -60,8 +61,15 @@ try {
         ");
         $quizStmt->execute([':mid' => $moduleId, ':lid' => $learnerId]);
         $quizzes = $quizStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Module-level skills. Carried over from the deleted catalog module preview,
+        // which was the only page that surfaced ld_module_skill to learners.
+        $skillStmt = $pdo->prepare("SELECT s.name FROM ld_module_skill ms JOIN ld_skill s ON s.id = ms.skill_id WHERE ms.module_id = :mid ORDER BY s.name ASC");
+        $skillStmt->execute([':mid' => $moduleId]);
+        $moduleSkills = $skillStmt->fetchAll(PDO::FETCH_COLUMN);
     }
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/study-subpage/module');
     $module = null;
 }
 
@@ -112,6 +120,18 @@ if (!$module) {
             <p style="color:var(--muted, #555); line-height:1.7; margin:0;"><?= nl2br(htmlspecialchars($module['description'])) ?></p>
         <?php endif; ?>
     </div>
+
+    <?php if (!empty($moduleSkills)): ?>
+        <!-- Skills Covered -->
+        <div class="mode-card" style="margin-bottom:1.5rem;">
+            <h2 style="margin-bottom:0.75rem; font-size:1.1rem;"><i class="fas fa-award" style="color:var(--primary); margin-right:0.4rem;"></i>Skills Covered</h2>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                <?php foreach ($moduleSkills as $skillName): ?>
+                    <span style="padding:0.35rem 0.85rem; background:#f0f0f0; border-radius:20px; font-size:0.85rem; color:#555;"><?= htmlspecialchars($skillName) ?></span>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <!-- Lessons -->
     <div class="mode-card" style="margin-bottom:1.5rem;">

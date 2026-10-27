@@ -58,12 +58,14 @@ try {
         ORDER BY q.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
     $catalogItems = array_merge($catalogItems, $quizzes);
 
-    // Learning Paths
-    $learningPaths = $pdo->query("SELECT lp.id, lp.title, lp.description, 'Learning Path' AS category, lp.status, NULL AS thumbnail_path, lp.created_at, 'learning-path' AS item_type,
+    // Learning Paths (standard paths + public knowledge transfer paths)
+    $learningPaths = $pdo->query("SELECT lp.id, lp.title, lp.description, CASE WHEN lp.type = 'knowledge_transfer' THEN 'Knowledge Transfer' ELSE 'Learning Path' END AS category, lp.status, NULL AS thumbnail_path, lp.created_at, 'learning-path' AS item_type,
         CONCAT(emp.first_name, ' ', emp.last_name) AS instructor_name,
+        lp.type, lp.is_public,
         (SELECT COUNT(*) FROM ld_learning_path_item lpi WHERE lpi.learning_path_id = lp.id) AS item_count
         FROM ld_learning_path lp LEFT JOIN em_employees emp ON emp.employee_id = lp.instructor_id
-        WHERE lp.status = 'active' ORDER BY lp.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+        WHERE lp.status = 'active' AND (lp.type = 'standard' OR (lp.type = 'knowledge_transfer' AND lp.is_public = 1))
+        ORDER BY lp.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
     $catalogItems = array_merge($catalogItems, $learningPaths);
 
     // Video Conferences
@@ -79,6 +81,7 @@ try {
     $stmt->execute([':learner_id' => $learnerId]);
     $enrolledCourseIds = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'course_id');
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/catalog');
     $catalogItems = [];
     $enrolledCourseIds = [];
 }
@@ -308,6 +311,21 @@ foreach ($catalogItems as $item) {
     color: var(--muted);
     white-space: nowrap;
 }
+.catalog-sort-select {
+    padding: 0.45rem 0.7rem;
+    border: 1.5px solid rgba(32,0,130,0.1);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    color: var(--text, #333);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.catalog-sort-select:focus {
+    border-color: var(--primary);
+}
 
 /* ---- Rich Course Cards ---- */
 .catalog-grid {
@@ -518,6 +536,12 @@ foreach ($catalogItems as $item) {
             <button type="button" class="active" data-view="grid" title="Grid view"><i class="fas fa-th"></i></button>
             <button type="button" data-view="list" title="List view"><i class="fas fa-list"></i></button>
         </div>
+        <select id="catalog-sort-select" class="catalog-sort-select" title="Sort catalog">
+            <option value="default">Sort: Default</option>
+            <option value="name-asc">Sort: Name A–Z</option>
+            <option value="name-desc">Sort: Name Z–A</option>
+            <option value="newest">Sort: Newest First</option>
+        </select>
         <span class="catalog-count" id="catalog-count"></span>
         <button type="button" class="catalog-request-btn" id="request-course-btn">
             <i class="fas fa-plus"></i> Request Course
@@ -529,6 +553,10 @@ foreach ($catalogItems as $item) {
         <button type="button" class="catalog-tab-btn active" data-tab="all">
             All
             <span class="catalog-tab-count"><?= $typeCounts['all'] ?? 0 ?></span>
+        </button>
+        <button type="button" class="catalog-tab-btn" data-tab="enrolled">
+            <i class="fas fa-check-circle"></i> Enrolled
+            <span class="catalog-tab-count"><?= count($enrolledCourseIds) ?></span>
         </button>
         <button type="button" class="catalog-tab-btn" data-tab="course">
             Course
@@ -551,7 +579,7 @@ foreach ($catalogItems as $item) {
             <span class="catalog-tab-count"><?= $typeCounts['learning-path'] ?? 0 ?></span>
         </button>
         <button type="button" class="catalog-tab-btn" data-tab="video-conference">
-            Live Sessions
+            Online Training
             <span class="catalog-tab-count"><?= $typeCounts['video-conference'] ?? 0 ?></span>
         </button>
     </div>
@@ -575,7 +603,7 @@ foreach ($catalogItems as $item) {
         $typeIcons = ['course' => 'fa-graduation-cap', 'program' => 'fa-layer-group', 'learning-path' => 'fa-route',
             'video-conference' => 'fa-video', 'module' => 'fa-cube', 'lesson' => 'fa-book-open', 'quiz' => 'fa-question-circle'];
         $typeLabels = ['course' => 'Course', 'program' => 'Program', 'learning-path' => 'Learning Path',
-            'video-conference' => 'Live Session', 'module' => 'Module', 'lesson' => 'Lesson', 'quiz' => 'Quiz'];
+            'video-conference' => 'Online Training', 'module' => 'Module', 'lesson' => 'Lesson', 'quiz' => 'Quiz'];
 
         foreach ($catalogItems as $item):
             $id = (int) ($item['id'] ?? 0);
@@ -600,10 +628,10 @@ foreach ($catalogItems as $item) {
             $lessonCount = (int) ($item['lesson_count'] ?? 0);
 
             $link = '';
-            if ($itemType === 'course') $link = '?page=learner/catalog-subpage/course&course_id=' . $id;
-            elseif ($itemType === 'module' && !empty($item['course_id'])) $link = '?page=learner/catalog-subpage/course&course_id=' . $item['course_id'];
-            elseif ($itemType === 'lesson' && !empty($item['course_id'])) $link = '?page=learner/catalog-subpage/course&course_id=' . $item['course_id'];
-            elseif ($itemType === 'quiz' && !empty($item['course_id'])) $link = '?page=learner/catalog-subpage/course&course_id=' . $item['course_id'];
+            if ($itemType === 'course') $link = '?page=learner/study-subpage/course&course_id=' . $id;
+            elseif ($itemType === 'module' && !empty($item['course_id'])) $link = '?page=learner/study-subpage/course&course_id=' . $item['course_id'];
+            elseif ($itemType === 'lesson' && !empty($item['course_id'])) $link = '?page=learner/study-subpage/course&course_id=' . $item['course_id'];
+            elseif ($itemType === 'quiz' && !empty($item['course_id'])) $link = '?page=learner/study-subpage/course&course_id=' . $item['course_id'];
             elseif ($itemType === 'program') $link = '?page=learner/catalog-subpage/program&program_id=' . $id;
             elseif ($itemType === 'learning-path') $link = '?page=learner/catalog-subpage/learning-path&learning_path_id=' . $id;
             elseif ($itemType === 'video-conference') $link = '?page=learner/catalog-subpage/video-conference&video_conference_id=' . $id;

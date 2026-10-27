@@ -61,6 +61,22 @@ try {
 
     $actions = [];
 
+    // Record the assessment outcome (ld_assessment_result) regardless of pass/fail
+    $assessStmt = $pdo->prepare(
+        'INSERT INTO ld_assessment_result
+            (learner_id, source, assessment_name, score, result, taken_at)
+         VALUES
+            (:learner_id, :source, :assessment_name, :score, :result, :taken_at)'
+    );
+    $assessStmt->execute([
+        ':learner_id'      => $employeeId,
+        ':source'          => 'recruitment_job_test',
+        ':assessment_name' => $testName,
+        ':score'           => $score,
+        ':result'          => $passed ? 'passed' : 'failed',
+        ':taken_at'        => date('Y-m-d H:i:s'),
+    ]);
+
     // If a learning path is recommended, enroll the employee in its courses
     if ($recommendedPathId && $passed) {
         $stmt = $pdo->prepare("

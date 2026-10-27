@@ -24,6 +24,7 @@ try {
     $stmt->execute([':learner_id' => $learnerId]);
     $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
+    DbError::capture($e, 'learner/notes');
     $notes = [];
 }
 

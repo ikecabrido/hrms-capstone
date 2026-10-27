@@ -60,11 +60,29 @@ try {
     $certStmt->execute([':eid' => $employeeId]);
     $certificates = $certStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Fetch knowledge transfer plans for this employee
+    $ktStmt = $pdo->prepare("
+        SELECT p.id, p.employee_id, p.successor_id, p.start_date, p.end_date, p.status, p.created_at,
+               CONCAT(e.first_name, ' ', IFNULL(CONCAT(e.middle_name, ' '), ''), e.last_name) AS employee_name,
+               CONCAT(s.first_name, ' ', IFNULL(CONCAT(s.middle_name, ' '), ''), s.last_name) AS successor_name,
+               (SELECT COUNT(*) FROM exit_knowledge_transfer_items WHERE plan_id = p.id) AS item_count,
+               (SELECT COUNT(*) FROM exit_knowledge_transfer_items WHERE plan_id = p.id AND status = 'completed') AS items_done
+        FROM exit_knowledge_transfer_plans p
+        LEFT JOIN em_employees e ON p.employee_id = e.employee_id
+        LEFT JOIN em_employees s ON p.successor_id = s.employee_id
+        WHERE p.employee_id = :eid
+        ORDER BY p.created_at DESC
+    ");
+    $ktStmt->execute([':eid' => $employeeId]);
+    $ktPlans = $ktStmt->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (Throwable $e) {
+    DbError::capture($e, 'admin/user-subpage/learner');
     $profile = null;
     $enrollments = [];
     $quizAttempts = [];
     $certificates = [];
+    $ktPlans = [];
 }
 
 function lrnTimeAgo($dt) {
@@ -267,5 +285,229 @@ $quizPassed = count(array_filter($quizAttempts, fn($q) => $q['passed']));
                 </div>
             <?php endif; ?>
         </div>
+
+
+        <!-- Knowledge Transfer Section -->
+        <div class="mode-card" style="margin-top:1.5rem;">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+                <h3 style="margin:0; color:var(--text);"><i class="fas fa-exchange-alt" style="color:var(--primary); margin-right:0.4rem;"></i>Knowledge Transfer</h3>
+                <button id="kt-create-btn" style="padding:0.45rem 0.9rem; background:var(--primary); color:#fff; border:none; border-radius:999px; font-size:0.8rem; font-weight:700; cursor:pointer;">
+                    <i class="fas fa-plus" style="margin-right:0.3rem;"></i>Create KT Plan
+                </button>
+            </div>
+            <?php if (empty($ktPlans)): ?>
+                <div style="text-align:center; padding:2rem; color:rgba(32,0,130,0.4);">
+                    <i class="fas fa-exchange-alt" style="font-size:1.5rem; display:block; margin-bottom:0.5rem; opacity:0.5;"></i>
+                    <p style="margin:0; font-size:0.88rem;">No knowledge transfer plans for this employee yet.</p>
+                </div>
+            <?php else: ?>
+                <div style="display:grid; gap:0.75rem;">
+                    <?php foreach ($ktPlans as $ktp): 
+                        $ktStatusColor = $ktp['status'] === 'active' ? '#059669' : ($ktp['status'] === 'completed' ? '#2563eb' : '#dc3545');
+                        $ktEmpName = $ktp['employee_name'] ?? 'N/A';
+                        $ktSuccessorName = $ktp['successor_name'] ?? '—';
+                        $ktItemsDone = (int) ($ktp['items_done'] ?? 0);
+                        $ktItemsTotal = (int) ($ktp['item_count'] ?? 0);
+                    ?>
+                        <div style="display:flex; align-items:center; gap:1rem; padding:1rem; background:rgba(32,0,130,0.03); border:1px solid rgba(32,0,130,0.08); border-radius:10px;">
+                            <div style="width:40px; height:40px; border-radius:10px; background:linear-gradient(135deg, rgba(32,0,130,0.8), rgba(91,85,255,0.6)); color:#fff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                <i class="fas fa-exchange-alt" style="font-size:1rem;"></i>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight:700; color:var(--text); font-size:0.92rem;"><?= htmlspecialchars($ktEmpName) ?></div>
+                                <div style="font-size:0.8rem; color:rgba(32,0,130,0.5); margin-top:0.2rem;">
+                                    Successor: <?= htmlspecialchars($ktSuccessorName) ?> &bull; 
+                                    <?= date('M j, Y', strtotime($ktp['start_date'])) ?> – <?= date('M j, Y', strtotime($ktp['end_date'])) ?> &bull; 
+                                    <?= $ktItemsDone ?>/<?= $ktItemsTotal ?> items done
+                                </div>
+                            </div>
+                            <span style="padding:0.25rem 0.6rem; border-radius:999px; font-size:0.7rem; font-weight:700; background:<?= $ktStatusColor ?>15; color:<?= $ktStatusColor ?>; white-space:nowrap;">
+                                <?= ucfirst($ktp['status']) ?>
+                            </span>
+                            <button class="kt-view-btn" data-id="<?= $ktp['id'] ?>" style="padding:0.35rem 0.7rem; font-size:0.72rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.15); border-radius:999px; cursor:pointer; font-weight:600; white-space:nowrap;">
+                                <i class="fas fa-eye" style="margin-right:0.2rem;"></i>View
+                            </button>
+                            <button class="kt-edit-btn" data-id="<?= $ktp['id'] ?>" style="padding:0.35rem 0.7rem; font-size:0.72rem; background:rgba(245,158,11,0.1); color:#d97706; border:1px solid rgba(245,158,11,0.2); border-radius:999px; cursor:pointer; font-weight:600; white-space:nowrap;">
+                                <i class="fas fa-pen" style="margin-right:0.2rem;"></i>Edit
+                            </button>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
     <?php endif; ?>
 </div>
+
+<!-- KT Create/Edit Modal -->
+<div id="kt-modal-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); backdrop-filter:blur(3px); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:var(--surface); border-radius:18px; width:90%; max-width:520px; box-shadow:0 20px 60px rgba(0,0,0,0.25); padding:1.5rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem;">
+            <h3 id="kt-modal-title" style="margin:0; font-size:1.1rem; font-weight:800; color:var(--text);">Create Knowledge Transfer Plan</h3>
+            <button id="kt-modal-close" style="background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--muted);"><i class="fas fa-times"></i></button>
+        </div>
+        <div style="display:grid; gap:1rem;">
+            <div>
+                <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Employee</label>
+                <input type="text" id="kt-employee-name" readonly style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; background:rgba(32,0,130,0.03); outline:none;" />
+            </div>
+            <div>
+                <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Successor (person receiving the transfer)</label>
+                <select id="kt-successor" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none; background:#fff;">
+                    <option value="">Select successor...</option>
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div>
+                    <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Start Date</label>
+                    <input type="date" id="kt-start-date" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none;" />
+                </div>
+                <div>
+                    <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">End Date</label>
+                    <input type="date" id="kt-end-date" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none;" />
+                </div>
+            </div>
+            <div>
+                <label style="display:block; font-size:0.72rem; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:0.35rem;">Status</label>
+                <select id="kt-status" style="width:100%; padding:0.6rem 0.75rem; border:1.5px solid rgba(32,0,130,0.1); border-radius:8px; font-size:0.88rem; outline:none; background:#fff;">
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:flex; gap:0.6rem; justify-content:flex-end; margin-top:1.5rem;">
+            <button type="button" id="kt-modal-cancel" style="padding:0.5rem 1rem; background:transparent; color:var(--text); border:1.5px solid rgba(32,0,130,0.15); border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Cancel</button>
+            <button type="button" id="kt-modal-save" style="padding:0.5rem 1rem; background:var(--primary); color:var(--surface); border:none; border-radius:999px; font-weight:700; font-size:0.82rem; cursor:pointer;">Save Plan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var employeeId = <?= $employeeId ?>;
+    var employeeName = '<?= addslashes($fullName) ?>';
+    var editingPlanId = null;
+
+    var successorSelect = document.getElementById('kt-successor');
+    var startDateInput = document.getElementById('kt-start-date');
+    var endDateInput = document.getElementById('kt-end-date');
+    var statusInput = document.getElementById('kt-status');
+    var modalOverlay = document.getElementById('kt-modal-overlay');
+    var modalTitle = document.getElementById('kt-modal-title');
+    var saveBtn = document.getElementById('kt-modal-save');
+    var cancelBtn = document.getElementById('kt-modal-cancel');
+    var closeBtn = document.getElementById('kt-modal-close');
+    var empNameInput = document.getElementById('kt-employee-name');
+
+    fetch('../../modules/exit/pages/ajax/get-employees.php')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) return;
+            data.employees.forEach(function(emp) {
+                if (emp.employee_id == employeeId) return;
+                var opt = document.createElement('option');
+                opt.value = emp.employee_id;
+                opt.textContent = emp.full_name;
+                successorSelect.appendChild(opt);
+            });
+        })
+        .catch(function() { console.error('Failed to load employee list.'); });
+
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.kt-view-btn');
+        if (btn) {
+            e.preventDefault();
+            var planId = btn.dataset.id;
+            fetch('../../modules/exit/pages/ajax/get-knowledge-transfer.php?id=' + planId, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.plan) { alert('Unable to load plan details.'); return; }
+                modalTitle.textContent = 'Knowledge Transfer Plan #' + planId;
+                empNameInput.value = data.plan.employee_name || 'N/A';
+                successorSelect.value = data.plan.successor_id || '';
+                startDateInput.value = data.plan.start_date || '';
+                endDateInput.value = data.plan.end_date || '';
+                statusInput.value = data.plan.status || 'active';
+                editingPlanId = planId;
+                modalOverlay.style.display = 'flex';
+            })
+            .catch(function() { alert('Failed to load plan.'); });
+            return;
+        }
+
+        var editBtn = e.target.closest('.kt-edit-btn');
+        if (editBtn) {
+            e.preventDefault();
+            var planId = editBtn.dataset.id;
+            fetch('../../modules/exit/pages/ajax/get-knowledge-transfer.php?id=' + planId, {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success || !data.plan) { alert('Unable to load plan details.'); return; }
+                modalTitle.textContent = 'Edit Knowledge Transfer Plan #' + planId;
+                empNameInput.value = data.plan.employee_name || 'N/A';
+                successorSelect.value = data.plan.successor_id || '';
+                startDateInput.value = data.plan.start_date || '';
+                endDateInput.value = data.plan.end_date || '';
+                statusInput.value = data.plan.status || 'active';
+                editingPlanId = planId;
+                modalOverlay.style.display = 'flex';
+            })
+            .catch(function() { alert('Failed to load plan.'); });
+            return;
+        }
+
+        var createBtn = e.target.closest('#kt-create-btn');
+        if (createBtn && !createBtn.classList.contains('kt-view-btn') && !createBtn.classList.contains('kt-edit-btn')) {
+            e.preventDefault();
+            editingPlanId = null;
+            modalTitle.textContent = 'Create Knowledge Transfer Plan';
+            empNameInput.value = employeeName;
+            successorSelect.value = '';
+            startDateInput.value = '';
+            endDateInput.value = '';
+            statusInput.value = 'active';
+            modalOverlay.style.display = 'flex';
+        }
+    });
+
+    function closeModal() { modalOverlay.style.display = 'none'; editingPlanId = null; }
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', function(e) { if (e.target === modalOverlay) closeModal(); });
+
+    saveBtn.addEventListener('click', function() {
+        var successorId = parseInt(successorSelect.value) || null;
+        var startDate = startDateInput.value;
+        var endDate = endDateInput.value;
+        var status = statusInput.value;
+
+        if (!successorId) { alert('Please select a successor.'); return; }
+        if (!startDate) { alert('Please select a start date.'); return; }
+        if (!endDate) { alert('Please select an end date.'); return; }
+
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        var payload = { employee_id: employeeId, successor_id: successorId, start_date: startDate, end_date: endDate, status: status };
+        if (editingPlanId) payload.id = editingPlanId;
+
+        fetch('../../modules/learning/pages/admin/ajax/save-kt-plan.php', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            body: JSON.stringify(payload)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) { alert('KT plan ' + (editingPlanId ? 'updated' : 'created') + ' successfully.'); window.location.reload(); }
+            else { alert('Error: ' + (data.error || 'Unknown error')); saveBtn.disabled = false; saveBtn.textContent = 'Save Plan'; }
+        })
+        .catch(function() { alert('Network error.'); saveBtn.disabled = false; saveBtn.textContent = 'Save Plan'; });
+    });
+})();
+</script>

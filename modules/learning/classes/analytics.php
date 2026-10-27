@@ -1,6 +1,7 @@
 <?php
 
 include_once __DIR__ . '/../../../database/db.php';
+include_once __DIR__ . '/progress.php';
 
 class Analytics
 {
@@ -167,18 +168,20 @@ class Analytics
             return ['success' => false, 'message' => 'Enrollment not found.'];
         }
 
-        // Get modules completed
-        $sql = 'SELECT COUNT(DISTINCT p.reference_id) FROM ld_progress p WHERE p.enrollment_id = :enrollment_id AND p.item_type = :item_type AND p.status = :status';
-        $stmt = $this->conn->prepare($sql);
-        $stmt->execute([
-            ':enrollment_id' => $enrollment['id'],
-            ':item_type' => 'module',
-            ':status' => 'completed',
-        ]);
-        $modulesCompleted = (int) $stmt->fetchColumn();
+        // Modules completed.
+        //
+        // A module never gets its own ld_progress row — progress is written per lesson
+        // and per quiz — so module completion has to be derived, not looked up. This
+        // used to query ld_progress for item_type = 'module', which nothing ever writes,
+        // so the count was permanently 0.
+        $modulesCompleted = (new Progress($this->conn))->countCompletedModules(
+            (int) $enrollment['id'],
+            $courseId
+        );
 
-        // Get total modules
-        $sql = 'SELECT COUNT(*) FROM ld_module WHERE course_id = :course_id';
+        // Get total modules — same universe as modules_completed above (active only),
+        // otherwise the two halves of the percentage count different things.
+        $sql = 'SELECT COUNT(*) FROM ld_module WHERE course_id = :course_id AND status = \'active\'';
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([':course_id' => $courseId]);
         $totalModules = (int) $stmt->fetchColumn();
@@ -287,5 +290,145 @@ class Analytics
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // ------------------------------------------------------------------
+    // WORKFORCE ANALYTICS AGGREGATES (Gap 9 — ld-tables-gaps-improvements.md)
+    // Aggregate queries grouped by month / department / position so the
+    // Workforce Analytics module gets summaries, not raw unbounded rows.
+    // ------------------------------------------------------------------
+
+    /**
+     * Enrollments per department (with completed counts).
+     * learner_id maps to em_employees.employee_id.
+     */
+    public function getEnrollmentsByDepartment(): array
+    {
+        $sql = 'SELECT d.department_id, d.department_name,
+                       COUNT(e.id) AS enrollment_count,
+                       SUM(CASE WHEN e.status = \'completed\' THEN 1 ELSE 0 END) AS completed_count
+                FROM ld_enrollment e
+                LEFT JOIN em_employees emp ON emp.employee_id = e.learner_id
+                LEFT JOIN em_departments d ON d.department_id = emp.department_id
+                GROUP BY d.department_id, d.department_name
+                ORDER BY enrollment_count DESC';
+        $stmt = $this->conn->query($sql);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Enrollments per position (with completed counts).
+     */
+    public function getEnrollmentsByPosition(): array
+    {
+        $sql = 'SELECT p.position_id, p.position_name,
+                       COUNT(e.id) AS enrollment_count,
+                       SUM(CASE WHEN e.status = \'completed\' THEN 1 ELSE 0 END) AS completed_count
+                FROM ld_enrollment e
+                LEFT JOIN em_employees emp ON emp.employee_id = e.learner_id
+                LEFT JOIN em_positions p ON p.position_id = emp.position_id
+                GROUP BY p.position_id, p.position_name
+                ORDER BY enrollment_count DESC';
+        $stmt = $this->conn->query($sql);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Completed enrollments per month (trend for HR Dashboard metrics).
+     */
+    public function getCompletionsByMonth(int $months = 12): array
+    {
+        $sql = 'SELECT DATE_FORMAT(e.completed_at, \'%Y-%m\') AS month, COUNT(*) AS count
+                FROM ld_enrollment e
+                WHERE e.status = \'completed\' AND e.completed_at IS NOT NULL
+                  AND e.completed_at >= DATE_SUB(NOW(), INTERVAL :months MONTH)
+                GROUP BY DATE_FORMAT(e.completed_at, \'%Y-%m\')
+                ORDER BY month ASC';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':months', $months, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Certificates expiring within the next N days (certification status & expiry feed).
+     */
+    public function getCertificationExpiryOverview(int $days = 90): array
+    {
+        $sql = 'SELECT c.learner_id, c.issued_at, c.valid_until, c.status,
+                       co.title AS course_title
+                FROM ld_certificate c
+                JOIN ld_course co ON co.id = c.course_id
+                WHERE c.status = \'active\' AND c.valid_until IS NOT NULL
+                  AND c.valid_until BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL :days DAY)
+                ORDER BY c.valid_until ASC';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * System-wide skill gap overview (same shape as get-skill-gap-analysis.php,
+     * but across all instructors — feeds wfa_skill_gap_analysis).
+     */
+    public function getSkillGapOverview(): array
+    {
+        $sql = 'SELECT s.id, s.name,
+                       COUNT(DISTINCT cs.course_id) AS course_count,
+                       COUNT(DISTINCT e2.learner_id) AS learner_count,
+                       ROUND(AVG(CASE WHEN e2.status = \'completed\' THEN 100 ELSE 0 END), 1) AS avg_completion
+                FROM ld_skill s
+                JOIN ld_course_skill cs ON cs.skill_id = s.id
+                JOIN ld_course c ON c.id = cs.course_id
+                LEFT JOIN ld_enrollment e2 ON e2.course_id = c.id
+                GROUP BY s.id, s.name
+                ORDER BY avg_completion ASC';
+        $stmt = $this->conn->query($sql);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Latest engagement/risk snapshot summary per risk band (feeds wfa_risk_assessment
+     * / wfa_at_risk_employees_summary). Uses the most recent snapshot date available.
+     */
+    public function getRiskSummary(?string $snapshotDate = null): array
+    {
+        $date = $snapshotDate ?: $this->latestEngagementSnapshotDate();
+        if ($date === null) {
+            return ['snapshot_date' => null, 'bands' => []];
+        }
+
+        $sql = 'SELECT CASE
+                        WHEN es.risk_score >= 70 THEN \'high\'
+                        WHEN es.risk_score >= 40 THEN \'medium\'
+                        ELSE \'low\'
+                    END AS band,
+                    COUNT(*) AS employee_count,
+                    ROUND(AVG(es.risk_score), 2) AS avg_risk_score
+                FROM ld_engagement_snapshot es
+                WHERE es.snapshot_date = :date
+                GROUP BY band
+                ORDER BY band';
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute([':date' => $date]);
+
+        return ['snapshot_date' => $date, 'bands' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+    }
+
+    /**
+     * Most recent snapshot_date present in ld_engagement_snapshot, or null.
+     */
+    private function latestEngagementSnapshotDate(): ?string
+    {
+        $stmt = $this->conn->query('SELECT MAX(snapshot_date) FROM ld_engagement_snapshot');
+        $date = $stmt->fetchColumn();
+
+        return $date ?: null;
     }
 }

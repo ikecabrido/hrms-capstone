@@ -4,6 +4,7 @@ try {
     $pdo = (new Database())->getConnection();
     $allSkills = $pdo->query("SELECT id, name FROM ld_skill WHERE status = 'active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 } catch (Throwable $e) {
+    DbError::capture($e, 'instructor/elearning-subpage/course');
     $allSkills = [];
 }
 ?>
@@ -201,7 +202,7 @@ try {
     </div>
 
     <div class="toolbar" style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-        <a href="?page=instructor/elearning" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-left"></i> Back to E-Learning</a>
+        <?= BackLink::anchor('instructor/elearning', 'style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"') ?>
         <div class="toolbar-search" style="flex:1;">
             <input type="search" placeholder="Search courses..." aria-label="Search courses" id="course-search" />
         </div>
@@ -258,6 +259,14 @@ try {
                             <option value="draft">Draft</option>
                             <option value="active" selected>Active</option>
                             <option value="archived">Archived</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Delivery Mode</span>
+                        <select name="delivery_mode" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border);">
+                            <option value="online" selected>Online</option>
+                            <option value="face_to_face">Face-to-Face</option>
+                            <option value="hybrid">Hybrid</option>
                         </select>
                     </label>
                 </div>
@@ -362,6 +371,20 @@ try {
                     <span>Evaluation description</span>
                     <textarea name="eval_description" data-eval-field="description" rows="3" placeholder="Evaluation purpose and instructions..." style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border); resize:vertical;"></textarea>
                 </label>
+
+                <div style="margin-top:0.9rem; padding-top:0.9rem; border-top:1px dashed rgba(32,0,130,0.15);">
+                    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.4rem;">
+                        <span style="font-size:0.82rem; font-weight:600; color:var(--primary);"><i class="fas fa-question-circle"></i> Evaluation Questions</span>
+                        <span style="font-size:0.75rem; color:#999;">question, type, correct answer</span>
+                    </div>
+                    <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                        <button type="button" class="qq-toggle" data-quiz-id="_eval_" style="padding:0.35rem 0.7rem; background:rgba(32,0,130,0.08); color:var(--primary); border:1px solid rgba(32,0,130,0.18); border-radius:999px; cursor:pointer; font-size:0.78rem; font-weight:600;"><i class="fas fa-question-circle" style="margin-right:0.25rem;"></i>Questions (<span class="qq-count" id="eval-qq-count">0</span>)</button>
+                        <button type="button" class="qq-add" data-quiz-id="_eval_" style="padding:0.35rem 0.7rem; background:#f59e0b; color:#fff; border:none; border-radius:999px; cursor:pointer; font-size:0.78rem; font-weight:600;"><i class="fas fa-plus" style="margin-right:0.25rem;"></i>Add Question</button>
+                    </div>
+                    <div class="qq-area" data-quiz-id="_eval_" id="eval-questions-area" style="display:none; margin-top:0.5rem; border:1.5px dashed rgba(245,158,11,0.5); background:#fffdf7; border-radius:10px; padding:0.75rem;">
+                        <p style="margin:0; color:#999; font-size:0.8rem; text-align:center; padding:0.5rem;">No questions yet &mdash; click &quot;Add Question&quot;.</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Prerequisites Section (only in edit mode) -->
@@ -531,6 +554,7 @@ function previewCourse() {
         form.querySelector('input[name="category"]').value = course.category||'';
         form.querySelector('select[name="difficulty"]').value = course.difficulty||'beginner';
         form.querySelector('select[name="status"]').value = course.status||'active';
+        form.querySelector('select[name="delivery_mode"]').value = course.delivery_mode||'online';
         form.querySelector('input[name="start_date"]').value = course.start_date?course.start_date.split(' ')[0]:'';
         form.querySelector('input[name="enrollment_deadline"]').value = course.enrollment_deadline?course.enrollment_deadline.split(' ')[0]:'';
         form.querySelector('input[name="estimated_hours"]').value = course.estimated_hours||'';
@@ -541,6 +565,40 @@ function previewCourse() {
         form.querySelectorAll('input[name="skill_ids[]"]').forEach(function(cb){ cb.checked = skillIds.indexOf(parseInt(cb.value))!==-1; });
         var idInput = document.createElement('input'); idInput.type='hidden'; idInput.name='id'; idInput.value=course.id;
         form.appendChild(idInput);
+
+        // Load the course's existing modules / lessons / quizzes / questions into the builder
+        fetch('pages/instructor/elearning-subpage/ajax/get-course-builder-content.php?course_id=' + courseId, {credentials:'same-origin', headers:{'X-Requested-With':'XMLHttpRequest'}})
+        .then(function(r){return r.json()})
+        .then(function(content){
+            if (!content || !content.success) return;
+            var attempts = 0;
+            function applyContent() {
+                if (!window.courseBuilder) {
+                    if (attempts++ < 200) { setTimeout(applyContent, 50); return; }
+                    return;
+                }
+                var cb = window.courseBuilder;
+                // Ignore any leftover localStorage draft from a previous Add session
+                cb.courseData.course = cb.courseData.course || {};
+                cb.courseData.modules = content.modules || [];
+                cb.courseData.evaluation = content.evaluation || null;
+                var evalFields = {
+                    eval_title: content.evaluation ? (content.evaluation.title || '') : '',
+                    eval_duration_seconds: content.evaluation && content.evaluation.duration_seconds ? content.evaluation.duration_seconds : '',
+                    eval_passing_score: content.evaluation && content.evaluation.passing_score != null ? content.evaluation.passing_score : '',
+                    eval_max_attempts: content.evaluation && content.evaluation.max_attempts ? content.evaluation.max_attempts : 2,
+                    eval_question_count: content.evaluation && content.evaluation.question_count ? content.evaluation.question_count : '',
+                    eval_status: content.evaluation && content.evaluation.status ? content.evaluation.status : 'active'
+                };
+                Object.keys(evalFields).forEach(function(n){ var el = form.querySelector('[name="' + n + '"]'); if (el) el.value = evalFields[n]; });
+                var showAns = form.querySelector('[name="eval_show_answers"]');
+                if (showAns) showAns.checked = !!(content.evaluation && content.evaluation.show_answers_after_submit);
+                cb.renderModulesList();
+                cb.renderEvaluationQuestions();
+            }
+            applyContent();
+        })
+        .catch(function(){});
     });
 })();
 function showNotif(msg,type){var el=document.createElement('div');el.style.cssText='position:fixed;top:20px;right:20px;padding:0.8rem 1.2rem;border-radius:8px;font-weight:600;font-size:0.85rem;z-index:10000;box-shadow:0 4px 12px rgba(0,0,0,0.15);';el.style.background=type==='success'?'#10b981':type==='error'?'#ef4444':'#3b82f6';el.style.color='#fff';el.textContent=msg;document.body.appendChild(el);setTimeout(function(){el.remove();},3000);}

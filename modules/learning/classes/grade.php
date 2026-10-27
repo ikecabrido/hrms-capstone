@@ -86,7 +86,7 @@ class Grade
     }
 
     /**
-     * All of a learner's grades — powers result-subpage/grade.php.
+     * All of a learner's grades.
      */
     public function getByLearner(int $learnerId): array
     {
