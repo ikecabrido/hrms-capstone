@@ -5,7 +5,7 @@
  * Several pages are reachable from more than one section, so a hardcoded back link
  * sends half their visitors somewhere they never were: the certificate viewer is
  * opened from Results, Skill Gap and My Certificates, and the course builder pages
- * are opened from both E-Learning and the Trainings manager.
+ * are opened from course authoring and the Training manager.
  *
  * A linking page appends ?back=<page>; the target page calls BackLink::resolve()
  * with its own default and renders the result. The requested value is matched
@@ -25,10 +25,10 @@ class BackLink
         'admin/user'                         => 'Users',
         'admin/learning-path'                => 'Learning Paths',
         'instructor/instructor-home'         => 'Home',
-        'instructor/elearning'               => 'E-Learning',
+        'instructor/elearning'               => 'Training',
         'instructor/elearning-subpage/module' => 'Module',
         'instructor/elearning-subpage/lesson' => 'Lesson',
-        'instructor/training'                => 'Trainings',
+        'instructor/training'                => 'Training',
         'instructor/certificate'             => 'Certificates',
         'instructor/analytics'               => 'Analytics',
         'instructor/notification'            => 'Notifications',

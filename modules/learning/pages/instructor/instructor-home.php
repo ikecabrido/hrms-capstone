@@ -70,7 +70,7 @@ function instrTimeAgo($dt) {
 
         <!-- Key stats -->
         <div class="home-stats">
-            <a class="home-stat" href="?page=instructor/elearning">
+            <a class="home-stat" href="?page=instructor/training&tab=course">
                 <span class="home-stat-icon tone-violet"><i class="fas fa-book"></i></span>
                 <span class="home-stat-body">
                     <span class="home-stat-label">My Courses</span>
@@ -167,8 +167,7 @@ function instrTimeAgo($dt) {
                     </div>
                     <div class="home-quick">
                         <?php $links = [
-                            ['icon'=>'fa-book','label'=>'E-Learning','url'=>'?page=instructor/elearning','tone'=>'indigo'],
-                            ['icon'=>'fa-person-hiking','label'=>'Trainings','url'=>'?page=instructor/training','tone'=>'amber'],
+                            ['icon'=>'fa-person-hiking','label'=>'Training','url'=>'?page=instructor/training','tone'=>'amber'],
                             ['icon'=>'fa-chart-line','label'=>'Analytics','url'=>'?page=instructor/analytics','tone'=>'indigo'],
                             ['icon'=>'fa-award','label'=>'Certificates','url'=>'?page=instructor/certificate','tone'=>'amber'],
                             ['icon'=>'fa-bell','label'=>'Notifications','url'=>'?page=instructor/notification','tone'=>'indigo'],

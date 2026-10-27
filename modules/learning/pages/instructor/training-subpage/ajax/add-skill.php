@@ -27,6 +27,7 @@ if (empty($_SESSION['employee_id'])) {
 $name = trim((string) ($_POST['name'] ?? ''));
 $name = preg_replace('/\s+/', ' ', $name);
 $description = trim((string) ($_POST['description'] ?? ''));
+$icon = trim((string) ($_POST['icon'] ?? Skill::DEFAULT_ICON));
 
 if ($name === '') {
     http_response_code(422);
@@ -39,12 +40,17 @@ if (strlen($name) > 150) {
     echo json_encode(['success' => false, 'message' => 'Skill name is too long (150 characters max).']);
     exit;
 }
+if (!Skill::isValidIcon($icon)) {
+    http_response_code(422);
+    echo json_encode(['success' => false, 'message' => 'Choose an icon from the available list.']);
+    exit;
+}
 
 try {
     $pdo = (new Database())->getConnection();
 
     // ld_skill has no unique index on name, so guard against duplicates here.
-    $lookup = $pdo->prepare('SELECT id, name, status FROM ld_skill WHERE LOWER(name) = LOWER(:name) LIMIT 1');
+    $lookup = $pdo->prepare('SELECT id, name, status, icon FROM ld_skill WHERE LOWER(name) = LOWER(:name) LIMIT 1');
     $lookup->execute([':name' => $name]);
     $existing = $lookup->fetch(PDO::FETCH_ASSOC);
 
@@ -60,6 +66,7 @@ try {
             'id' => (int) $existing['id'],
             'name' => $existing['name'],
             'description' => '',
+            'icon' => Skill::isValidIcon((string) ($existing['icon'] ?? '')) ? $existing['icon'] : Skill::DEFAULT_ICON,
             'message' => 'That skill already exists, so it was reused.',
         ]);
         exit;
@@ -69,6 +76,7 @@ try {
     $result = $skill->create([
         'name' => $name,
         'description' => $description,
+        'icon' => $icon,
         'status' => 'active',
     ]);
 
@@ -84,6 +92,7 @@ try {
         'id' => (int) $result['id'],
         'name' => $name,
         'description' => $description,
+        'icon' => $icon,
         'message' => 'Skill added.',
     ]);
 } catch (Throwable $e) {

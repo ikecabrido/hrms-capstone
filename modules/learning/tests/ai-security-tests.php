@@ -127,7 +127,8 @@ try {
     check('key list omits ciphertext and nonce', !$keyLeak);
     check('active key metadata omits ciphertext and nonce', $active === null || !array_key_exists('key_ciphertext', $active));
 
-    $base = 'http://localhost/hrms-capzy/modules/learning/pages/admin/ai-assistant/ajax/';
+    $moduleUrl = 'http://localhost/' . rawurlencode(basename(dirname(__DIR__, 3))) . '/modules/learning/';
+    $base = $moduleUrl . 'pages/admin/ai-assistant/ajax/';
     $job = httpRequest($base . 'job.php', ['action' => 'get', 'job_id' => '1']);
     check('job endpoint rejects anonymous POST', $job['status'] === 401, 'status=' . $job['status']);
     check('job endpoint anonymous body is safe', !preg_match('/sk-or-|ciphertext|nonce/i', $job['body']));
@@ -159,10 +160,10 @@ try {
         check($role . ' trainee context rejects non-admin', $roleContext['status'] === 403, 'status=' . $roleContext['status']);
         check($role . ' trainee context body is safe', !preg_match('/@|phone|address|salary|sk-or-/i', $roleContext['body']));
 
-        $coursePage = httpRequest('http://localhost/hrms-capzy/modules/learning/index.php?page=instructor/elearning-subpage/course', [], $sessionId);
+        $coursePage = httpRequest($moduleUrl . 'index.php?page=instructor/elearning-subpage/course', [], $sessionId);
         check($role . ' course authoring page hides the AI launcher', !str_contains($coursePage['body'], 'ai-authoring-callout'), 'status=' . $coursePage['status']);
 
-        $pathPage = httpRequest('http://localhost/hrms-capzy/modules/learning/index.php?page=instructor/learning-path', [], $sessionId);
+        $pathPage = httpRequest($moduleUrl . 'index.php?page=instructor/learning-path', [], $sessionId);
         check($role . ' learning-path authoring page hides the AI launcher', !str_contains($pathPage['body'], 'ai-authoring-callout'), 'status=' . $pathPage['status']);
     }
 } catch (Throwable $e) {

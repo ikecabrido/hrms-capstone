@@ -26,6 +26,77 @@ try {
     color: #fff;
     border-color: var(--primary);
 }
+.course-wizard { margin-top:1.5rem; }
+.course-wizard-steps {
+    display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:0.55rem;
+    margin-bottom:1rem;
+}
+.course-wizard-step-button {
+    display:flex; align-items:center; gap:0.65rem; min-width:0;
+    padding:0.75rem; border:1px solid var(--border); border-radius:12px;
+    background:var(--surface, #fff); color:var(--muted); text-align:left;
+    cursor:pointer; transition:border-color .15s, background .15s, color .15s;
+}
+.course-wizard-step-button:disabled { cursor:not-allowed; opacity:.55; }
+.course-wizard-step-button.is-current {
+    border-color:var(--primary); background:rgba(32,0,130,.07); color:var(--primary);
+}
+.course-wizard-step-button.is-complete { color:var(--primary); }
+.course-wizard-step-number {
+    display:grid; place-items:center; flex:0 0 1.8rem; height:1.8rem;
+    border-radius:50%; background:rgba(32,0,130,.08); font-weight:800;
+}
+.course-wizard-step-button.is-current .course-wizard-step-number,
+.course-wizard-step-button.is-complete .course-wizard-step-number {
+    background:var(--primary); color:#fff;
+}
+.course-wizard-step-copy { min-width:0; }
+.course-wizard-step-copy strong, .course-wizard-step-copy small {
+    display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.course-wizard-step-copy strong { font-size:.8rem; }
+.course-wizard-step-copy small { margin-top:.15rem; font-size:.68rem; }
+.course-wizard-progress {
+    height:5px; margin-bottom:1.25rem; overflow:hidden;
+    border-radius:999px; background:rgba(32,0,130,.08);
+}
+.course-wizard-progress span {
+    display:block; width:25%; height:100%; border-radius:inherit;
+    background:var(--primary); transition:width .2s ease;
+}
+.course-wizard-panel { display:none; }
+.course-wizard-panel.is-active { display:block; }
+.course-wizard-panel > h3 { margin:0 0 .35rem; color:var(--text); font-size:1.15rem; }
+.course-wizard-panel > .course-wizard-help { margin:0 0 1rem; color:var(--muted); font-size:.86rem; line-height:1.5; }
+.course-wizard-review {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:.75rem;
+    margin:1rem 0; padding:1rem; border:1px solid rgba(32,0,130,.1);
+    border-radius:12px; background:rgba(32,0,130,.025);
+}
+.course-wizard-review div { min-width:0; }
+.course-wizard-review span { display:block; color:var(--muted); font-size:.74rem; }
+.course-wizard-review strong { display:block; margin-top:.2rem; color:var(--text); font-size:.9rem; overflow-wrap:anywhere; }
+.course-wizard-error {
+    display:none; margin:0 0 1rem; padding:.75rem 1rem; border-radius:10px;
+    background:rgba(239,68,68,.08); color:#b91c1c; font-size:.84rem;
+}
+.course-wizard-navigation {
+    display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+    margin-top:1.25rem; padding-top:1rem; border-top:1px solid rgba(32,0,130,.1);
+}
+.course-wizard-navigation button {
+    padding:.7rem 1.15rem; border:1px solid rgba(32,0,130,.2); border-radius:10px;
+    background:var(--surface, #fff); color:var(--primary); font:inherit; font-weight:700; cursor:pointer;
+}
+.course-wizard-navigation button:disabled { cursor:not-allowed; opacity:.5; }
+.course-wizard-navigation .course-wizard-next { border-color:var(--primary); background:var(--primary); color:#fff; }
+@media (max-width: 1100px) {
+    .course-wizard-steps { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+    .course-wizard-step-button { padding:.6rem; }
+    .course-wizard-step-copy small { display:none; }
+}
 /* ── Skills & tags multi-select dropdown ─────────────────────────────── */
 .sdd { position: relative; }
 .sdd-trigger {
@@ -271,7 +342,7 @@ try {
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
             <div>
                 <h2 style="margin:0;" id="form-title">Add Course</h2>
-                <p style="margin:0.3rem 0 0;" id="form-subtitle">Create a course with optional modules, lessons, and course evaluation.</p>
+                <p style="margin:0.3rem 0 0;" id="form-subtitle">Create a course, add its modules and lessons, and optionally configure a final evaluation.</p>
             </div>                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
                     <span style="font-size:0.78rem; font-weight:600; color:var(--text); align-self:center;">Quick start:</span>
                     <button type="button" onclick="applyTemplate('programming')" class="course-template-btn">Programming</button>
@@ -284,9 +355,31 @@ try {
 
         <?= AIAuthoring::callout('course') ?>
 
-        <form id="course-form" data-skip="true" method="post" enctype="multipart/form-data" action="pages/instructor/elearning-subpage/ajax/add-course.php">
+        <form id="course-form" data-skip="true" method="post" enctype="multipart/form-data" novalidate action="pages/instructor/elearning-subpage/ajax/add-course.php">
+            <div class="course-wizard" id="course-wizard">
+                <div class="course-wizard-steps" role="tablist" aria-label="Course creation steps">
+                    <button type="button" class="course-wizard-step-button is-current" role="tab" id="course-step-tab-0" aria-controls="course-step-panel-0" aria-selected="true" data-course-step-target="0">
+                        <span class="course-wizard-step-number">1</span><span class="course-wizard-step-copy"><strong>Course details</strong><small>Basics, schedule, and outcomes</small></span>
+                    </button>
+                    <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-1" aria-controls="course-step-panel-1" aria-selected="false" data-course-step-target="1" disabled>
+                        <span class="course-wizard-step-number">2</span><span class="course-wizard-step-copy"><strong>Course content</strong><small>Modules and lessons</small></span>
+                    </button>
+                    <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-2" aria-controls="course-step-panel-2" aria-selected="false" data-course-step-target="2" disabled>
+                        <span class="course-wizard-step-number">3</span><span class="course-wizard-step-copy"><strong>Evaluation</strong><small>Optional final assessment</small></span>
+                    </button>
+                    <button type="button" class="course-wizard-step-button" role="tab" id="course-step-tab-3" aria-controls="course-step-panel-3" aria-selected="false" data-course-step-target="3" disabled>
+                        <span class="course-wizard-step-number">4</span><span class="course-wizard-step-copy"><strong>Review &amp; save</strong><small>Check your course setup</small></span>
+                    </button>
+                </div>
+                <div class="course-wizard-progress" role="progressbar" aria-label="Course creation progress" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
+                    <span id="course-wizard-progress-fill"></span>
+                </div>
+                <p id="course-wizard-error" class="course-wizard-error" role="alert"></p>
 
             <!-- Section 1: Basic Info -->
+            <section class="course-wizard-panel is-active" id="course-step-panel-0" role="tabpanel" aria-labelledby="course-step-tab-0" tabindex="-1" data-course-step-panel="0">
+                <h3>Course details</h3>
+                <p class="course-wizard-help">Start with the course identity and settings. The title is required; the remaining details can be filled in now or later.</p>
             <div style="margin-top:1.5rem; padding-bottom:1rem; border-bottom:1px solid rgba(32,0,130,0.08);">
                 <h3 style="margin:0 0 0.75rem 0; font-size:0.9rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; gap:0.5rem;">
                     <i class="fas fa-info-circle"></i> Basic Information
@@ -412,12 +505,16 @@ try {
                     <textarea name="prerequisites" rows="2" placeholder="What should trainees know before taking this course? (optional)" style="width:100%; margin-top:0.35rem; padding:0.8rem; border-radius:10px; border:1px solid var(--border); resize:vertical;"></textarea>
                 </label>
             </div>
+            </section>
 
             <!-- Section 6: Modules (Optional) -->
+            <section class="course-wizard-panel" id="course-step-panel-1" role="tabpanel" aria-labelledby="course-step-tab-1" tabindex="-1" data-course-step-panel="1">
+                <h3>Build the course content</h3>
+                <p class="course-wizard-help">Add at least one module with a title and at least one lesson or quiz before moving on. You can add or edit the lesson details in the module builder.</p>
             <div style="margin-top:1rem; padding-bottom:1rem; border-bottom:1px solid rgba(32,0,130,0.08);">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
                     <h3 style="margin:0; font-size:0.9rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; gap:0.5rem;">
-                        <i class="fas fa-cubes"></i> Modules & Content <span style="font-size:0.75rem; font-weight:400; color:var(--muted); text-transform:none; letter-spacing:0;">(optional)</span>
+                        <i class="fas fa-cubes"></i> Modules & Content
                     </h3>
                     <button type="button" id="add-module-btn" style="padding:0.6rem 1.2rem; background:var(--primary); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.85rem; white-space:nowrap;"><i class="fas fa-plus" style="margin-right:0.3rem;"></i> Add Module</button>
                 </div>
@@ -429,8 +526,12 @@ try {
                     </div>
                 </div>
             </div>
+            </section>
 
             <!-- Section 7: Evaluation (Optional) -->
+            <section class="course-wizard-panel" id="course-step-panel-2" role="tabpanel" aria-labelledby="course-step-tab-2" tabindex="-1" data-course-step-panel="2">
+                <h3>Set up an evaluation</h3>
+                <p class="course-wizard-help">A final evaluation is optional. Add one now, or continue to review and save your course without it.</p>
             <div style="margin-top:1rem; padding-bottom:1rem;">
                 <h3 style="margin:0 0 0.75rem 0; font-size:0.9rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.05em; display:flex; align-items:center; gap:0.5rem;">
                     <i class="fas fa-clipboard-check"></i> Course Evaluation <span style="font-size:0.75rem; font-weight:400; color:var(--muted); text-transform:none; letter-spacing:0;">(optional)</span>
@@ -509,8 +610,18 @@ try {
                     </div>
                 </div>
             </div>
+            </section>
 
             <!-- Form Summary -->
+            <section class="course-wizard-panel" id="course-step-panel-3" role="tabpanel" aria-labelledby="course-step-tab-3" tabindex="-1" data-course-step-panel="3">
+                <h3>Review &amp; save</h3>
+                <p class="course-wizard-help">Check the course summary below before saving. You can return to the course structure builder to make further changes afterward.</p>
+                <div class="course-wizard-review" aria-live="polite">
+                    <div><span>Course title</span><strong id="course-review-title">Untitled</strong></div>
+                    <div><span>Category</span><strong id="course-review-category">Not set</strong></div>
+                    <div><span>Modules</span><strong id="course-review-modules">0</strong></div>
+                    <div><span>Final evaluation</span><strong id="course-review-evaluation">Not added</strong></div>
+                </div>
             <div id="form-summary" style="display:none; padding:0.75rem 1rem; background:rgba(32,0,130,0.03); border:1px solid rgba(32,0,130,0.08); border-radius:10px; margin-top:0.5rem; font-size:0.82rem; color:var(--text);">
                 <span id="summary-text"></span>
             </div>
@@ -520,6 +631,13 @@ try {
                 <button type="button" onclick="previewCourse()" style="padding:0.7rem 1.5rem; background:transparent; color:var(--primary); border:1.5px solid rgba(32,0,130,0.2); border-radius:10px; cursor:pointer; font-weight:600; font-size:0.9rem;"><i class="fas fa-eye" style="margin-right:0.4rem;"></i> Preview</button>
                 <button type="submit" class="mode-button" id="save-course-btn"><i class="fas fa-save" style="margin-right:0.4rem;"></i> <span id="save-btn-text">Save Course</span></button>
                 <span id="form-status" style="font-size:0.78rem; color:#999; margin-left:0.5rem;"></span>
+            </div>
+            </section>
+                <div class="course-wizard-navigation">
+                    <button type="button" id="course-wizard-back" hidden><i class="fas fa-arrow-left" aria-hidden="true"></i> Back</button>
+                    <span id="course-wizard-step-label" aria-live="polite">Step 1 of 4</span>
+                    <button type="button" id="course-wizard-next" class="course-wizard-next">Next: Course content <i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+                </div>
             </div>
         </form>
     </div>
@@ -664,6 +782,174 @@ try {
     }
 
     renderSelection();
+})();
+</script>
+<script>
+(function () {
+    var form = document.getElementById('course-form');
+    var wizard = document.getElementById('course-wizard');
+    if (!form || !wizard) return;
+
+    var panels = Array.from(wizard.querySelectorAll('[data-course-step-panel]'));
+    var tabs = Array.from(wizard.querySelectorAll('[data-course-step-target]'));
+    var backButton = document.getElementById('course-wizard-back');
+    var nextButton = document.getElementById('course-wizard-next');
+    var stepLabel = document.getElementById('course-wizard-step-label');
+    var errorMessage = document.getElementById('course-wizard-error');
+    var progress = wizard.querySelector('.course-wizard-progress');
+    var progressFill = document.getElementById('course-wizard-progress-fill');
+    var nextLabels = ['Course content', 'Evaluation', 'Review & save'];
+    var currentStep = 0;
+    var unlockedStep = 0;
+
+    function showError(message) {
+        errorMessage.textContent = message || '';
+        errorMessage.style.display = message ? 'block' : 'none';
+    }
+
+    function updateReview() {
+        var title = form.querySelector('[name="title"]').value.trim();
+        var category = form.querySelector('[name="category"]').value.trim();
+        var evaluationTitle = form.querySelector('[name="eval_title"]').value.trim();
+        var modules = window.courseBuilder && window.courseBuilder.courseData
+            ? window.courseBuilder.courseData.modules || []
+            : [];
+        document.getElementById('course-review-title').textContent = title || 'Untitled';
+        document.getElementById('course-review-category').textContent = category || 'Not set';
+        document.getElementById('course-review-modules').textContent = String(modules.length);
+        document.getElementById('course-review-evaluation').textContent = evaluationTitle || 'Not added';
+    }
+
+    function renderStep(focusPanel) {
+        panels.forEach(function (panel, index) {
+            var isCurrent = index === currentStep;
+            panel.classList.toggle('is-active', isCurrent);
+            panel.hidden = !isCurrent;
+        });
+        tabs.forEach(function (tab, index) {
+            var isCurrent = index === currentStep;
+            tab.classList.toggle('is-current', isCurrent);
+            tab.classList.toggle('is-complete', index < currentStep);
+            tab.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
+            tab.disabled = index > unlockedStep;
+        });
+        backButton.hidden = currentStep === 0;
+        nextButton.hidden = currentStep === panels.length - 1;
+        stepLabel.textContent = 'Step ' + (currentStep + 1) + ' of ' + panels.length;
+        nextButton.innerHTML = 'Next: ' + nextLabels[currentStep] + ' <i class="fas fa-arrow-right" aria-hidden="true"></i>';
+        progress.setAttribute('aria-valuenow', String(currentStep + 1));
+        progressFill.style.width = (((currentStep + 1) / panels.length) * 100) + '%';
+        if (currentStep === panels.length - 1) updateReview();
+        if (focusPanel) {
+            panels[currentStep].focus();
+            panels[currentStep].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function validateVisibleFields() {
+        var fields = panels[currentStep].querySelectorAll('input, select, textarea');
+        for (var i = 0; i < fields.length; i++) {
+            if (!fields[i].checkValidity()) {
+                fields[i].reportValidity();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function validateStep() {
+        showError('');
+        if (!validateVisibleFields()) return false;
+
+        if (currentStep === 0) {
+            var title = form.querySelector('[name="title"]');
+            if (!title.value.trim()) {
+                title.setCustomValidity('Enter a course title to continue.');
+                title.reportValidity();
+                title.addEventListener('input', function clearTitleError() {
+                    title.setCustomValidity('');
+                    title.removeEventListener('input', clearTitleError);
+                });
+                return false;
+            }
+        }
+
+        if (currentStep === 1) {
+            var modules = window.courseBuilder && window.courseBuilder.courseData
+                ? window.courseBuilder.courseData.modules || []
+                : [];
+            if (modules.length === 0) {
+                showError('Add at least one module before continuing.');
+                return false;
+            }
+            for (var index = 0; index < modules.length; index++) {
+                var module = modules[index];
+                if (!String(module.title || '').trim()) {
+                    showError('Add a title to every module before continuing.');
+                    return false;
+                }
+                var lessons = module.lessons || [];
+                var quizzes = module.quizzes || [];
+                if (lessons.length === 0 && quizzes.length === 0) {
+                    showError('Add at least one lesson or quiz to each module before continuing.');
+                    return false;
+                }
+                for (var lessonIndex = 0; lessonIndex < lessons.length; lessonIndex++) {
+                    var lesson = lessons[lessonIndex];
+                    if (!String(lesson.title || '').trim()) {
+                        showError('Add a title to every lesson before continuing.');
+                        return false;
+                    }
+                    var lessonQuizzes = lesson.quizzes || [];
+                    for (var quizIndex = 0; quizIndex < lessonQuizzes.length; quizIndex++) {
+                        if (!String(lessonQuizzes[quizIndex].title || '').trim()) {
+                            showError('Add a title to every quiz before continuing.');
+                            return false;
+                        }
+                    }
+                }
+                for (var moduleQuizIndex = 0; moduleQuizIndex < quizzes.length; moduleQuizIndex++) {
+                    if (!String(quizzes[moduleQuizIndex].title || '').trim()) {
+                        showError('Add a title to every quiz before continuing.');
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    nextButton.addEventListener('click', function () {
+        if (!validateStep()) return;
+        unlockedStep = Math.max(unlockedStep, currentStep + 1);
+        currentStep++;
+        renderStep(true);
+    });
+
+    backButton.addEventListener('click', function () {
+        if (currentStep === 0) return;
+        showError('');
+        currentStep--;
+        renderStep(true);
+    });
+
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var targetStep = Number(tab.dataset.courseStepTarget);
+            if (targetStep > unlockedStep) return;
+            showError('');
+            currentStep = targetStep;
+            renderStep(true);
+        });
+    });
+
+    form.addEventListener('input', function () {
+        if (currentStep === panels.length - 1) updateReview();
+    });
+    form.addEventListener('change', function () {
+        if (currentStep === panels.length - 1) updateReview();
+    });
+    renderStep(false);
 })();
 </script>
 <script>

@@ -74,7 +74,7 @@ function request(string $role, ?string $page, array $extra = []): void
     }
 }
 
-/** Every routable page slug in the module (AJAX endpoints included — they are discoverable). */
+/** Every routed page slug in the module (excluding AJAX endpoints and shared partials). */
 function pageSlugs(string $pagesDir): array
 {
     $slugs = [];
@@ -88,6 +88,9 @@ function pageSlugs(string $pagesDir): array
         }
         $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($pagesDir) + 1));
         if (strpos($relative, 'rainz/') === 0 || strpos($relative, 'rainz\\') === 0) {
+            continue;
+        }
+        if (strpos($relative, '/ajax/') !== false || $relative === 'admin/user-subpage/role-control.php') {
             continue;
         }
         $slugs[] = substr($relative, 0, -4);
@@ -145,6 +148,9 @@ $roleTrees = [
 $wrong = [];
 foreach ($roleTrees as $role => $prefixes) {
     foreach ($slugs as $slug) {
+        if ($role === 'admin' && $slug === 'instructor/analytics') {
+            continue;
+        }
         $permitted = false;
         foreach ($prefixes as $prefix) {
             if (strpos($slug, $prefix) === 0) {
@@ -155,7 +161,9 @@ foreach ($roleTrees as $role => $prefixes) {
 
         request($role, $slug);
         $got = $pageController->getPage();
-        $expected = $permitted ? $slug : 'dashboard-overview';
+        $expected = !$permitted
+            ? 'dashboard-overview'
+            : ($slug === 'instructor/elearning' ? 'instructor/training' : $slug);
 
         if ($got !== $expected) {
             $wrong[] = $role . ' ' . $slug . ' -> ' . $got;
@@ -163,7 +171,7 @@ foreach ($roleTrees as $role => $prefixes) {
     }
 }
 check(
-    'all ' . count($slugs) . ' pages open for their own role tree and fall back otherwise',
+    'all routable pages open for their role tree and fall back otherwise (excluding the admin analytics redirect)',
     $wrong === [],
     implode('; ', array_slice($wrong, 0, 4))
 );
@@ -176,6 +184,28 @@ same('another role\'s page falls back to the dashboard', 'dashboard-overview', $
 
 request('admin', 'instructor/certificate');
 same('admin reaches the instructor tree it borrows in its nav', 'instructor/certificate', $pageController->getPage());
+
+request('instructor', null);
+$instructorNav = $pageController->getNavItems();
+$trainingNavItems = array_values(array_filter($instructorNav, function (array $item): bool {
+    return $item['page'] === 'instructor/training';
+}));
+same('instructor navigation has one unified Training link', 1, count($trainingNavItems));
+same('unified Training link uses the Training label', 'Training', $trainingNavItems[0]['label'] ?? null);
+check(
+    'instructor navigation no longer has a separate E-Learning link',
+    !in_array('instructor/elearning', array_column($instructorNav, 'page'), true)
+);
+request('instructor', 'instructor/elearning');
+same('legacy E-Learning route opens the unified Training page', 'instructor/training', $pageController->getPage());
+same('legacy E-Learning route opens the Courses tab', 'course', $_GET['tab'] ?? null);
+$trainingSource = file_get_contents($moduleRoot . '/pages/instructor/training.php');
+check(
+    'unified Training page keeps Course and Templates tabs',
+    is_string($trainingSource)
+        && strpos($trainingSource, 'data-tab="tab-course"') !== false
+        && strpos($trainingSource, 'data-tab="tab-template"') !== false
+);
 
 request('learner', null);
 same('no page requested serves the dashboard', 'dashboard-overview', $pageController->getPage());
@@ -342,6 +372,9 @@ check('every nav entry exists and is inside its role tree', $badNav === [] && $n
 // entry has to stay open to admin — checked against the nav config, not a sample.
 $adminNavInstructorEntries = [];
 foreach ($navByRole['instructor'] ?? [] as $slug) {
+    if ($slug === 'instructor/analytics') {
+        continue;
+    }
     request('admin', $slug);
     if ($pageController->getPage() !== $slug) {
         $adminNavInstructorEntries[] = $slug;

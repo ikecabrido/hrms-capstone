@@ -1,11 +1,15 @@
 <?php
 include_once __DIR__ . '/../../classes/Employee.php';
+require_once __DIR__ . '/../../classes/skill.php';
 $employeeClass = new Employee();
+$skillIconOptions = Skill::ICON_OPTIONS;
+$defaultSkillIcon = Skill::DEFAULT_ICON;
 
 $learningPathRows = [];
 $programRows = [];
 $videoConferenceRows = [];
 $skillRows = [];
+$courseRows = [];
 
 try {
     require_once dirname(__DIR__, 4) . '/database/db.php';
@@ -30,6 +34,7 @@ try {
     } else {
         $learningPathRows = $runQuery($pdo, "SELECT id, title, description, status, created_at, type, is_public FROM ld_learning_path ORDER BY created_at DESC LIMIT 20");
     }
+    $courseRows = $runQuery($pdo, "SELECT id, title, description, category, status, created_at FROM ld_course WHERE status IN ('active','draft') ORDER BY created_at DESC");
     $programRows = $runQuery($pdo, "SELECT p.id, p.title, p.description, p.status, p.created_at,
             p.delivery_mode, p.starts_at, p.ends_at, p.expires_at, p.location, p.run_number,
             (SELECT COUNT(*) FROM ld_program_participant pp WHERE pp.program_id = p.id AND pp.status <> 'withdrawn') AS participant_count,
@@ -43,7 +48,7 @@ try {
     }
     $videoConferenceRows = $runQuery($pdo, "SELECT id, title, platform, status, scheduled_at, duration_minutes, created_at FROM ld_video_conference ORDER BY created_at DESC LIMIT 20");
 
-    $skillRows = $runQuery($pdo, "SELECT id, name, description, status FROM ld_skill WHERE status = 'active' ORDER BY name ASC");
+    $skillRows = $runQuery($pdo, "SELECT id, name, description, icon, status FROM ld_skill WHERE status = 'active' ORDER BY name ASC");
     foreach ($skillRows as &$skill) {
         $skill['courses'] = $runQuery($pdo, "SELECT c.id, c.title FROM ld_course_skill cs JOIN ld_course c ON c.id = cs.course_id WHERE cs.skill_id = :sid", [':sid' => (int)$skill['id']]);
         $skill['modules'] = $runQuery($pdo, "SELECT m.id, m.title, c.title AS course_title FROM ld_module_skill ms JOIN ld_module m ON m.id = ms.module_id JOIN ld_course c ON c.id = m.course_id WHERE ms.skill_id = :sid", [':sid' => (int)$skill['id']]);
@@ -55,8 +60,9 @@ try {
 
 function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
     if (empty($items)) return;
-    $typeLabels = ['Learning Path' => 'Learning Path', 'Program' => 'Program', 'Video Conference' => 'Online Training'];
+    $typeLabels = ['Course' => 'Course', 'Learning Path' => 'Learning Path', 'Program' => 'Program', 'Video Conference' => 'Online Training'];
     $typeLinks = [
+        'Course' => '?page=instructor/elearning-subpage/course-structure&course_id=',
         'Learning Path' => '?page=instructor/learning-path&id=',
         'Program' => '?page=instructor/training-subpage/program&id=',
         'Video Conference' => '?page=instructor/training-subpage/video-conference&id=',
@@ -68,7 +74,9 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         $status = trim((string) ($item['status'] ?? 'active'));
         // Card thumbnail tone: color encodes the training type, so the grid
         // reads as one family instead of four unrelated gradients.
-        if ($label === 'Learning Path') {
+        if ($label === 'Course') {
+            $tone = 'course';
+        } elseif ($label === 'Learning Path') {
             $tone = 'learning-path';
         } elseif ($label === 'Program') {
             $tone = 'program';
@@ -77,7 +85,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             $tone = $platform === 'zoom' ? 'zoom' : ($platform === 'google_meet' ? 'meet' : 'video');
         }
         $typeLabel = $typeLabels[$label] ?? $label;
-        $icon = $typeIcons[$label] ?? 'fa-layer-group';
+        $icon = $typeIcons[$label] ?? ($label === 'Course' ? 'fa-graduation-cap' : 'fa-layer-group');
         $link = ($typeLinks[$label] ?? '#') . $id;
         $shortDesc = $description !== '' ? mb_substr(strip_tags($description), 0, 100) : 'No description available.';
         $footerInfo = '';
@@ -138,6 +146,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
 ?>
 
 <div class="module-content catalog-page catalog-manager">
+    <?php $initialTrainingTab = isset($_GET['tab']) && $_GET['tab'] === 'course' ? 'tab-course' : 'tab-learning-path'; ?>
     <!-- Entity Detail Modal -->
     <div id="tr-entity-content" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="tr-modal-title" style="display:none;">
         <div id="tr-entity-content-panel" class="entity-content-box ld-modal-panel" data-size="standard">
@@ -229,11 +238,12 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
     <div class="home-dashboard">
         <section class="home-hero">
             <div class="home-hero-main">
-                <h1>Trainings</h1>
-                <p>Assemble learning paths, programs and live online sessions, and see which skills your training content builds.</p>
+                <h1>Training</h1>
+                <p>Manage courses, reusable templates, learning paths, programs, online sessions, and the skills they build.</p>
             </div>
             <div class="home-hero-aside">
                 <div class="home-hero-chips">
+                    <span class="home-hero-chip"><i class="fas fa-graduation-cap" aria-hidden="true"></i> <?= count($courseRows) ?> course<?= count($courseRows) === 1 ? '' : 's' ?></span>
                     <span class="home-hero-chip"><i class="fas fa-route" aria-hidden="true"></i> <?= count($learningPathRows) ?> learning path<?= count($learningPathRows) === 1 ? '' : 's' ?></span>
                     <span class="home-hero-chip"><i class="fas fa-briefcase" aria-hidden="true"></i> <?= count($programRows) ?> program<?= count($programRows) === 1 ? '' : 's' ?></span>
                     <span class="home-hero-chip"><i class="fas fa-video" aria-hidden="true"></i> <?= count($videoConferenceRows) ?> online training<?= count($videoConferenceRows) === 1 ? '' : 's' ?></span>
@@ -245,7 +255,7 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         <div class="catalog-toolbar" id="browse-training">
             <div class="catalog-search">
                 <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
-                <input type="search" id="tr-catalog-search-input" placeholder="Search programs, learning paths, sessions..." aria-label="Search training" />
+                <input type="search" id="tr-catalog-search-input" placeholder="Search courses, templates, programs, learning paths..." aria-label="Search training" />
             </div>
             <div class="catalog-view-toggle" role="group" aria-label="Result layout">
                 <button type="button" class="active" data-view="grid" title="Grid view" aria-label="Grid view"><i class="fas fa-th-large" aria-hidden="true"></i></button>
@@ -257,15 +267,26 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
                 <option value="24">24</option>
                 <option value="36">36</option>
             </select>
-            <div class="catalog-add-wrap" id="tr-catalog-add-wrap">
-                <button type="button" id="tr-catalog-add-btn" class="cat-add-btn" aria-label="Add learning path" title="Add learning path">
-                    <i class="fas fa-plus" aria-hidden="true"></i>
-                    <span class="catalog-add-tip" id="tr-catalog-add-tip">Add Learning Path</span>
-                </button>
+            <div class="catalog-toolbar-actions">
+                <a class="catalog-evaluations-link" href="?page=instructor/training-subpage/program-evaluations">
+                    <i class="fas fa-clipboard-check" aria-hidden="true"></i> Trainee Evaluations
+                </a>
+                <div class="catalog-add-wrap" id="tr-catalog-add-wrap">
+                    <button type="button" id="tr-catalog-add-btn" class="cat-add-btn" aria-label="Add learning path" title="Add learning path">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <span class="catalog-add-tip" id="tr-catalog-add-tip">Add Learning Path</span>
+                    </button>
+                </div>
             </div>
         </div>
 
         <div class="catalog-tabs" id="tr-catalog-tabs">
+            <button type="button" class="catalog-tab-btn<?= $initialTrainingTab === 'tab-course' ? ' active' : '' ?>" data-tab="tab-course">
+                <i class="fas fa-graduation-cap" aria-hidden="true"></i> Courses
+            </button>
+            <button type="button" class="catalog-tab-btn" data-tab="tab-template">
+                <i class="fas fa-layer-group" aria-hidden="true"></i> Templates
+            </button>
             <button type="button" class="catalog-tab-btn active" data-tab="tab-learning-path">
                 <i class="fas fa-route" aria-hidden="true"></i> Learning Path
             </button>
@@ -280,7 +301,27 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
             </button>
         </div>
 
-        <div class="tab-content active" data-tab="tab-learning-path">
+        <div class="tab-content<?= $initialTrainingTab === 'tab-course' ? ' active' : '' ?>" data-tab="tab-course">
+            <div class="cat-section-intro">
+                <h3>Courses</h3>
+                <p>Open a course to review its structure or continue editing it in the Course Structure Builder.</p>
+            </div>
+            <div class="catalog-grid">
+                <?php renderTrainingCards($courseRows, 'Course', '?page=instructor/elearning-subpage/course-structure', ['Course' => 'fa-graduation-cap']); ?>
+            </div>
+        </div>
+
+        <div class="tab-content" data-tab="tab-template">
+            <div class="cat-section-intro">
+                <h3>Course templates</h3>
+                <p>Reuse a proven course outline. Save one from the Structure Builder, then clone it into a new course.</p>
+            </div>
+            <div class="catalog-grid" id="tr-templates-grid">
+                <div class="catalog-empty"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><p>Loading templates...</p></div>
+            </div>
+        </div>
+
+        <div class="tab-content<?= $initialTrainingTab === 'tab-learning-path' ? ' active' : '' ?>" data-tab="tab-learning-path">
             <div class="cat-section-intro">
                 <h3>Learning Path Management</h3>
                 <p>Compose ordered learning paths from courses, quizzes, evaluations, and programs.</p>
@@ -291,14 +332,9 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         </div>
 
         <div class="tab-content" data-tab="tab-program">
-            <div class="cat-section-intro cat-section-intro--action">
-                <div>
-                    <h3>Program Management</h3>
-                    <p>Manage training programs, schedule sessions, assign trainers and trainees, and evaluate every participant.</p>
-                </div>
-                <a class="cat-btn-primary" href="?page=instructor/training-subpage/program-evaluations">
-                    <i class="fas fa-clipboard-check" aria-hidden="true"></i> Trainee Evaluations
-                </a>
+            <div class="cat-section-intro">
+                <h3>Program Management</h3>
+                <p>Manage training programs, schedule sessions, assign trainers and trainees, and evaluate every participant.</p>
             </div>
             <div class="catalog-grid">
                 <?php renderTrainingCards($programRows, 'Program', '?page=instructor/training-subpage/program'); ?>
@@ -316,21 +352,15 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         </div>
 
         <div class="tab-content" data-tab="tab-skills">
-            <div class="cat-section-intro cat-section-intro--action">
-                <div>
-                    <h3>Skills</h3>
-                    <p>Explore skills linked to e-learning courses and training modules.</p>
-                </div>
-                <button type="button" id="tr-add-skill-btn" class="cat-btn-primary tr-add-skill-btn">
-                    <i class="fas fa-plus" aria-hidden="true"></i> Add Skill
-                </button>
+            <div class="cat-section-intro">
+                <h3>Skills</h3>
+                <p>Explore skills linked to e-learning courses and training modules.</p>
             </div>
             <div id="tr-skills-grid" class="catalog-grid">
                 <?php
-                $skillIcons = ['fas fa-tasks','fas fa-users','fas fa-comments','fas fa-pen','fas fa-chart-bar','fas fa-shield-alt','fas fa-code','fas fa-headset','fas fa-clock','fas fa-lightbulb','fas fa-dollar-sign','fas fa-handshake','fas fa-sync-alt','fas fa-check-double','fas fa-user-tie','fas fa-chess','fas fa-boxes','fas fa-gavel'];
                 $skillColors = ['#320082','#5146b7','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#4f46e5','#0d9488','#7c2d12','#1d4ed8','#9333ea','#16a34a','#ca8a04','#e11d48','#0284c7','#7c3aed'];
                 foreach ($skillRows as $idx => $skill):
-                    $icon = $skillIcons[$idx % count($skillIcons)];
+                    $icon = Skill::isValidIcon((string) ($skill['icon'] ?? '')) ? $skill['icon'] : $defaultSkillIcon;
                     $color = $skillColors[$idx % count($skillColors)];
                     $courseCount = count($skill['courses']);
                     $moduleCount = count($skill['modules']);
@@ -375,6 +405,25 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
         </div>
     </div>
 
+    <div id="tr-clone-template-modal" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="tr-clone-template-title" style="display:none;">
+        <div class="ld-modal-panel cat-modal-panel">
+            <div class="ld-modal-header">
+                <h2 id="tr-clone-template-title"><i class="fas fa-copy" aria-hidden="true"></i> Clone Template</h2>
+                <button type="button" id="tr-clone-modal-close" class="cat-modal-close" aria-label="Close">✕</button>
+            </div>
+            <div class="ld-modal-body">
+                <label class="cat-field">
+                    <span class="cat-field-label">New course title</span>
+                    <input type="text" id="tr-clone-title-input" placeholder="Enter a title for the new course" />
+                </label>
+                <div class="ld-modal-actions">
+                    <button type="button" id="tr-clone-modal-confirm" class="cat-btn-primary">Clone</button>
+                    <button type="button" id="tr-clone-modal-cancel" class="cat-btn-quiet">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Skill Detail Modal -->
     <div id="skill-modal-overlay" class="modal-overlay ld-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="skill-modal-name" style="display:none;">
         <div class="ld-modal-panel">
@@ -411,6 +460,29 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
                     <span class="cat-field-label">Description <span class="cat-field-hint">(optional)</span></span>
                     <textarea id="tr-skill-add-desc" name="description" rows="3" placeholder="What this skill covers and where it applies."></textarea>
                 </label>
+                <fieldset class="cat-field skill-icon-field">
+                    <legend class="cat-field-label">Choose an icon</legend>
+                    <p class="skill-icon-source">Choose a suggested icon or <a href="https://fontawesome.com/search?ic=free-collection&s=solid&o=r" target="_blank" rel="noopener noreferrer">browse Font Awesome Free icons</a> and paste its solid class below.</p>
+                    <label class="cat-field skill-icon-custom-field">
+                        <span class="cat-field-label">Font Awesome class <span class="cat-field-hint">(optional)</span></span>
+                        <input type="text" id="tr-skill-icon-custom" maxlength="64" pattern="fas fa-[a-z0-9]+(-[a-z0-9]+)*" placeholder="e.g. fas fa-award" autocomplete="off" />
+                    </label>
+                    <div class="skill-icon-preview" aria-live="polite">
+                        <i id="tr-skill-icon-preview" class="<?= htmlspecialchars($defaultSkillIcon, ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true"></i>
+                        <span id="tr-skill-icon-preview-label">Star</span>
+                    </div>
+                    <input type="search" id="tr-skill-icon-search" placeholder="Search icons (e.g. teamwork, learning)" aria-label="Search skill icons" autocomplete="off" />
+                    <input type="hidden" id="tr-skill-add-icon" name="icon" value="<?= htmlspecialchars($defaultSkillIcon, ENT_QUOTES, 'UTF-8') ?>" />
+                    <div class="skill-icon-picker" id="tr-skill-icon-picker" role="radiogroup" aria-label="Available skill icons">
+                        <?php foreach ($skillIconOptions as $iconClass => $iconLabel): ?>
+                            <button type="button" class="skill-icon-option<?= $iconClass === $defaultSkillIcon ? ' is-selected' : '' ?>" data-icon="<?= htmlspecialchars($iconClass, ENT_QUOTES, 'UTF-8') ?>" data-icon-label="<?= htmlspecialchars($iconLabel, ENT_QUOTES, 'UTF-8') ?>" role="radio" aria-checked="<?= $iconClass === $defaultSkillIcon ? 'true' : 'false' ?>" aria-label="<?= htmlspecialchars($iconLabel, ENT_QUOTES, 'UTF-8') ?>" title="<?= htmlspecialchars($iconLabel, ENT_QUOTES, 'UTF-8') ?>">
+                                <i class="<?= htmlspecialchars($iconClass, ENT_QUOTES, 'UTF-8') ?>" aria-hidden="true"></i>
+                                <span><?= htmlspecialchars($iconLabel, ENT_QUOTES, 'UTF-8') ?></span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                    <p id="tr-skill-icon-empty" class="skill-icon-empty" style="display:none;">No matching icons. Try another search.</p>
+                </fieldset>
                 <p class="tr-skill-add-error" id="tr-skill-add-error" role="alert" style="display:none;"></p>
                 <div class="ld-modal-actions">
                     <button type="button" id="tr-skill-add-cancel" class="cat-btn-quiet">Cancel</button>
@@ -423,18 +495,23 @@ function renderTrainingCards($items, $label, $pageUrl, $typeIcons = []) {
 
 <script>
 var _skillData = <?= json_encode($skillRows, JSON_HEX_APOS | JSON_HEX_TAG) ?>;
-var _skillIcons = ['fas fa-tasks','fas fa-users','fas fa-comments','fas fa-pen','fas fa-chart-bar','fas fa-shield-alt','fas fa-code','fas fa-headset','fas fa-clock','fas fa-lightbulb','fas fa-dollar-sign','fas fa-handshake','fas fa-sync-alt','fas fa-check-double','fas fa-user-tie','fas fa-chess','fas fa-boxes','fas fa-gavel'];
+var _skillIcons = <?= json_encode(array_keys($skillIconOptions), JSON_HEX_APOS | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+var _skillIconLabels = <?= json_encode($skillIconOptions, JSON_HEX_APOS | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+var _defaultSkillIcon = <?= json_encode($defaultSkillIcon, JSON_HEX_APOS | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 var _skillColors = ['#320082','#5146b7','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#4f46e5','#0d9488','#7c2d12','#1d4ed8','#9333ea','#16a34a','#ca8a04','#e11d48','#0284c7','#7c3aed'];
 function escSkill(value) {
     return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
     });
 }
+function isValidSkillIconClass(icon) {
+    return typeof icon === 'string' && icon.length <= 64 && /^fas fa-[a-z0-9]+(?:-[a-z0-9]+)*$/.test(icon);
+}
 function openSkillModal(skillId) {
     var skill = _skillData.find(function(s) { return s.id == skillId; });
     if (!skill) return;
     var idx = _skillData.indexOf(skill);
-    var icon = _skillIcons[idx % _skillIcons.length];
+    var icon = isValidSkillIconClass(skill.icon) ? skill.icon : _defaultSkillIcon;
     var color = _skillColors[idx % _skillColors.length];
     document.getElementById('skill-modal-icon').innerHTML = '<i class="fas ' + icon + '"></i>';
     document.getElementById('skill-modal-icon').style.background = color;
@@ -732,6 +809,11 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         if (!card) return;
 
         const type = card.dataset.type;
+        if (type === 'Template') return;
+        if (type === 'Course') {
+            window.location.href = '?page=instructor/elearning-subpage/course-structure&course_id=' + encodeURIComponent(card.dataset.entityId);
+            return;
+        }
         const id = Number(card.dataset.entityId);
         const title = (card.querySelector('h4') || card.querySelector('h3'))?.textContent || 'Untitled';
         const description = (card.querySelector('.cc-desc') || card.querySelector('p'))?.textContent || 'No description';
@@ -935,8 +1017,68 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     var skillAddForm = document.getElementById('tr-skill-add-form');
     var skillAddName = document.getElementById('tr-skill-add-name');
     var skillAddDesc = document.getElementById('tr-skill-add-desc');
+    var skillAddIcon = document.getElementById('tr-skill-add-icon');
+    var skillCustomIcon = document.getElementById('tr-skill-icon-custom');
+    var skillIconPreview = document.getElementById('tr-skill-icon-preview');
+    var skillIconPreviewLabel = document.getElementById('tr-skill-icon-preview-label');
+    var skillIconPicker = document.getElementById('tr-skill-icon-picker');
+    var skillIconSearch = document.getElementById('tr-skill-icon-search');
+    var skillIconEmpty = document.getElementById('tr-skill-icon-empty');
     var skillAddError = document.getElementById('tr-skill-add-error');
     var skillAddSave = document.getElementById('tr-skill-add-save');
+
+    function selectSkillIcon(icon) {
+        if (!skillAddIcon || _skillIcons.indexOf(icon) === -1) return;
+        skillAddIcon.value = icon;
+        if (skillCustomIcon) {
+            skillCustomIcon.value = '';
+            skillCustomIcon.setCustomValidity('');
+        }
+        if (skillIconPreview) skillIconPreview.className = icon;
+        if (skillIconPreviewLabel) skillIconPreviewLabel.textContent = _skillIconLabels[icon] || 'Selected icon';
+        if (!skillIconPicker) return;
+        skillIconPicker.querySelectorAll('.skill-icon-option').forEach(function (button) {
+            var selected = button.dataset.icon === icon;
+            button.classList.toggle('is-selected', selected);
+            button.setAttribute('aria-checked', selected ? 'true' : 'false');
+        });
+    }
+
+    function applyCustomSkillIcon() {
+        if (!skillCustomIcon || !skillAddIcon) return;
+        var icon = skillCustomIcon.value.trim();
+        if (!icon) {
+            selectSkillIcon(_defaultSkillIcon);
+            return;
+        }
+        if (!isValidSkillIconClass(icon)) {
+            skillCustomIcon.setCustomValidity('Use a Font Awesome solid class such as “fas fa-award”.');
+            return;
+        }
+        skillCustomIcon.setCustomValidity('');
+        skillAddIcon.value = icon;
+        if (skillIconPreview) skillIconPreview.className = icon;
+        if (skillIconPreviewLabel) skillIconPreviewLabel.textContent = icon;
+        if (skillIconPicker) {
+            skillIconPicker.querySelectorAll('.skill-icon-option').forEach(function (button) {
+                button.classList.remove('is-selected');
+                button.setAttribute('aria-checked', 'false');
+            });
+        }
+    }
+
+    function filterSkillIcons(query) {
+        if (!skillIconPicker) return;
+        var term = String(query || '').trim().toLowerCase();
+        var visibleCount = 0;
+        skillIconPicker.querySelectorAll('.skill-icon-option').forEach(function (button) {
+            var searchable = (button.dataset.iconLabel + ' ' + button.dataset.icon).toLowerCase();
+            var visible = term === '' || searchable.indexOf(term) !== -1;
+            button.hidden = !visible;
+            if (visible) visibleCount++;
+        });
+        if (skillIconEmpty) skillIconEmpty.style.display = visibleCount === 0 ? '' : 'none';
+    }
 
     function showSkillAddError(message) {
         if (!skillAddError) return;
@@ -948,6 +1090,9 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         if (!skillAddOverlay) return;
         showSkillAddError('');
         if (skillAddForm) skillAddForm.reset();
+        if (skillCustomIcon) skillCustomIcon.setCustomValidity('');
+        selectSkillIcon(_defaultSkillIcon);
+        filterSkillIcons('');
         skillAddOverlay.style.display = 'flex';
         if (skillAddName) skillAddName.focus();
     }
@@ -959,7 +1104,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     function appendSkillCard(skill) {
         if (!skillsGrid) return;
         var index = skillsGrid.querySelectorAll('.skill-card-item').length;
-        var icon = (_skillIcons && _skillIcons.length) ? _skillIcons[index % _skillIcons.length] : 'fas fa-star';
+        var icon = isValidSkillIconClass(skill.icon) ? skill.icon : _defaultSkillIcon;
         var color = (_skillColors && _skillColors.length) ? _skillColors[index % _skillColors.length] : '#320082';
         var desc = skill.description || '';
 
@@ -1007,8 +1152,21 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         skillsGrid.appendChild(card);
     }
 
-    var skillAddTrigger = document.getElementById('tr-add-skill-btn');
-    if (skillAddTrigger) skillAddTrigger.addEventListener('click', openSkillAddModal);
+    if (skillIconPicker) {
+        skillIconPicker.addEventListener('click', function (event) {
+            var button = event.target.closest('.skill-icon-option');
+            if (button) selectSkillIcon(button.dataset.icon);
+        });
+    }
+    if (skillIconSearch) {
+        skillIconSearch.addEventListener('input', function () {
+            filterSkillIcons(skillIconSearch.value);
+        });
+    }
+    if (skillCustomIcon) {
+        skillCustomIcon.addEventListener('input', applyCustomSkillIcon);
+        skillCustomIcon.addEventListener('change', applyCustomSkillIcon);
+    }
     var skillAddClose = document.getElementById('tr-skill-add-close');
     if (skillAddClose) skillAddClose.addEventListener('click', closeSkillAddModal);
     var skillAddCancel = document.getElementById('tr-skill-add-cancel');
@@ -1025,6 +1183,13 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     if (skillAddForm) {
         skillAddForm.addEventListener('submit', function (e) {
             e.preventDefault();
+            if (skillCustomIcon && skillCustomIcon.value.trim() !== '') {
+                applyCustomSkillIcon();
+                if (!skillCustomIcon.checkValidity()) {
+                    skillCustomIcon.reportValidity();
+                    return;
+                }
+            }
             var name = (skillAddName ? skillAddName.value : '').replace(/\s+/g, ' ').trim();
             if (!name) {
                 showSkillAddError('Enter a skill name.');
@@ -1038,6 +1203,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             var body = new FormData();
             body.append('name', name);
             body.append('description', skillAddDesc ? skillAddDesc.value : '');
+            body.append('icon', skillAddIcon ? skillAddIcon.value : _defaultSkillIcon);
 
             fetch('pages/instructor/training-subpage/ajax/add-skill.php', {
                 method: 'POST',
@@ -1060,12 +1226,13 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
                                 id: data.id,
                                 name: data.name,
                                 description: data.description || '',
+                                icon: data.icon || _defaultSkillIcon,
                                 status: 'active',
                                 courses: [],
                                 modules: []
                             });
                         }
-                        appendSkillCard({ id: data.id, name: data.name, description: data.description || '' });
+                        appendSkillCard({ id: data.id, name: data.name, description: data.description || '', icon: data.icon || _defaultSkillIcon });
                         if (typeof window.trRefreshSkills === 'function') window.trRefreshSkills();
                     }
                     closeSkillAddModal();
@@ -1085,13 +1252,16 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     var catalogCountEl = document.getElementById('tr-catalog-count');
     var catalogEmptyEl = document.getElementById('tr-catalog-empty');
     var catalogPaginationEl = document.getElementById('tr-catalog-pagination');
-    var catalogActiveTab = 'tab-learning-path';
+    var initialCatalogTab = document.querySelector('#tr-catalog-tabs .catalog-tab-btn.active');
+    var catalogActiveTab = initialCatalogTab ? initialCatalogTab.dataset.tab : 'tab-learning-path';
     var catalogPageSize = 12;
     var catalogPage = 1;
     var addWrap = document.getElementById('tr-catalog-add-wrap');
     var addBtn = document.getElementById('tr-catalog-add-btn');
     var addTip = document.getElementById('tr-catalog-add-tip');
     var addConfig = {
+        'tab-course': { label: 'Add Course', url: '?page=instructor/elearning-subpage/course' },
+        'tab-template': { label: 'Add Template', url: '?page=instructor/elearning-subpage/course-structure' },
         'tab-learning-path': { label: 'Add Learning Path', url: '?page=instructor/learning-path' },
         'tab-program': { label: 'Add Program', url: '?page=instructor/training-subpage/program' },
         'tab-video-conference': { label: 'Add Online Training', url: '?page=instructor/training-subpage/video-conference' },
@@ -1130,7 +1300,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
         cards.forEach(function(c) { c.style.display = 'none'; });
         visible.forEach(function(c, i) { c.style.display = (i >= start && i < start + catalogPageSize) ? '' : 'none'; });
         if (catalogCountEl) catalogCountEl.textContent = visible.length + ' items';
-        if (catalogEmptyEl) catalogEmptyEl.style.display = (catalogActiveTab !== 'tab-skills' && visible.length === 0) ? '' : 'none';
+        if (catalogEmptyEl) catalogEmptyEl.style.display = (!['tab-skills', 'tab-template'].includes(catalogActiveTab) && visible.length === 0) ? '' : 'none';
         if (catalogPaginationEl) {
             catalogPaginationEl.querySelector('.page-indicator').textContent = 'Page ' + catalogPage + ' of ' + totalPages;
             catalogPaginationEl.querySelector('[data-action="prev"]').disabled = catalogPage <= 1;
@@ -1138,6 +1308,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             catalogPaginationEl.style.display = totalPages <= 1 ? 'none' : '';
         }
     }
+    window.trRefreshTrainingCatalog = updateCatalogGrid;
     document.querySelectorAll('.catalog-tab-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.catalog-tab-btn').forEach(function(b) { b.classList.remove('active'); });
@@ -1149,7 +1320,7 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
             catalogActiveTab = tabId;
             catalogPage = 1;    updateCatalogGrid();
     syncAddBtn();
-
+            if (tabId === 'tab-template') loadTrainingTemplates();
 
         });
     });
@@ -1212,4 +1383,126 @@ document.getElementById('skill-modal-overlay').addEventListener('click', functio
     });
 })();
 </script>
+<script>
+function escapeTrainingTemplateHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
+}
 
+var trainingTemplatesLoaded = false;
+var trainingTemplateToClone = null;
+
+function loadTrainingTemplates() {
+    if (trainingTemplatesLoaded) return;
+    var grid = document.getElementById('tr-templates-grid');
+    if (!grid) return;
+
+    fetch('pages/instructor/elearning-subpage/ajax/get-templates.php', {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(function (response) {
+        if (!response.ok) throw new Error('Could not load templates.');
+        return response.json();
+    })
+    .then(function (data) {
+        if (!data || !data.success || !Array.isArray(data.items)) {
+            throw new Error((data && data.message) || 'Could not load templates.');
+        }
+
+        trainingTemplatesLoaded = true;
+        if (data.items.length === 0) {
+            grid.innerHTML = '<div class="catalog-empty"><i class="fas fa-layer-group" aria-hidden="true"></i><h4>No templates yet</h4><p>Open the Course Structure Builder and save a course as a template to reuse it here.</p></div>';
+            return;
+        }
+
+        grid.innerHTML = data.items.map(function (template) {
+            var id = Number(template.id);
+            var description = String(template.description || '').substring(0, 100);
+            var createdAt = template.created_at ? new Date(template.created_at).toLocaleDateString() : '';
+            return '<article class="catalog-card" data-type="Template" data-status="template">' +
+                '<div class="catalog-card-thumb" data-tone="template"><i class="fas fa-layer-group thumb-icon" aria-hidden="true"></i><span class="catalog-card-type-badge">Template</span></div>' +
+                '<div class="catalog-card-body"><h4>' + escapeTrainingTemplateHtml(template.title || 'Untitled template') + '</h4>' +
+                (description ? '<p class="cc-desc">' + escapeTrainingTemplateHtml(description) + '</p>' : '') + '</div>' +
+                '<div class="catalog-card-stats"><span><i class="fas fa-cube" aria-hidden="true"></i> ' + Number(template.module_count || 0) + ' modules</span>' +
+                '<span><i class="fas fa-book-open" aria-hidden="true"></i> ' + Number(template.lesson_count || 0) + ' lessons</span></div>' +
+                '<div class="catalog-card-footer"><span class="cc-deadline is-meta">Created ' + escapeTrainingTemplateHtml(createdAt) + '</span>' +
+                '<button type="button" class="cc-enroll-btn enroll" data-clone-template="' + id + '"><i class="fas fa-copy" aria-hidden="true"></i> Clone</button></div></article>';
+        }).join('');
+        if (typeof window.trRefreshTrainingCatalog === 'function') window.trRefreshTrainingCatalog();
+    })
+    .catch(function () {
+        grid.innerHTML = '<div class="catalog-empty is-error"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><h4>Could not load templates</h4><p>Check your connection and try again.</p></div>';
+    });
+}
+
+function closeTrainingTemplateModal() {
+    var modal = document.getElementById('tr-clone-template-modal');
+    if (modal) modal.style.display = 'none';
+    trainingTemplateToClone = null;
+}
+
+function cloneTrainingTemplate() {
+    var input = document.getElementById('tr-clone-title-input');
+    var title = input ? input.value.trim() : '';
+    if (!title || !trainingTemplateToClone) {
+        if (input) input.focus();
+        return;
+    }
+
+    var templateId = trainingTemplateToClone;
+    var confirmButton = document.getElementById('tr-clone-modal-confirm');
+    if (confirmButton) confirmButton.disabled = true;
+    fetch('pages/instructor/elearning-subpage/ajax/clone-template.php', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ template_id: templateId, title: title })
+    })
+    .then(function (response) {
+        return response.json().then(function (data) {
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Could not clone the template.');
+            }
+            return data;
+        });
+    })
+    .then(function (data) {
+        closeTrainingTemplateModal();
+        if (window.showToast) window.showToast(data.message || 'Course created.', 'success');
+        window.location.href = '?page=instructor/elearning-subpage/course-structure&course_id=' + Number(data.course_id);
+    })
+    .catch(function (error) {
+        if (window.showToast) window.showToast(error.message || 'Could not clone the template.', 'error');
+    })
+    .then(function () {
+        if (confirmButton) confirmButton.disabled = false;
+    });
+}
+
+document.addEventListener('click', function (event) {
+    var cloneButton = event.target.closest('[data-clone-template]');
+    if (!cloneButton) return;
+    event.preventDefault();
+    event.stopPropagation();
+    trainingTemplateToClone = Number(cloneButton.dataset.cloneTemplate);
+    var input = document.getElementById('tr-clone-title-input');
+    if (input) {
+        input.value = '(Copy)';
+        document.getElementById('tr-clone-template-modal').style.display = 'flex';
+        setTimeout(function () { input.focus(); input.select(); }, 50);
+    }
+});
+
+document.getElementById('tr-clone-modal-confirm').addEventListener('click', cloneTrainingTemplate);
+document.getElementById('tr-clone-modal-cancel').addEventListener('click', closeTrainingTemplateModal);
+document.getElementById('tr-clone-modal-close').addEventListener('click', closeTrainingTemplateModal);
+document.getElementById('tr-clone-template-modal').addEventListener('click', function (event) {
+    if (event.target.id === 'tr-clone-template-modal') closeTrainingTemplateModal();
+});
+document.getElementById('tr-clone-title-input').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') cloneTrainingTemplate();
+    if (event.key === 'Escape') closeTrainingTemplateModal();
+});
+</script>

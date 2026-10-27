@@ -103,7 +103,7 @@ $avg = $summary['average_score'] !== null ? number_format((float) $summary['aver
 
 <div class="module-content program-eval-page">
     <div class="pm-topbar">
-        <a class="pm-back" href="<?= pm_h($trainingUrl) ?>"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Trainings</a>
+        <a class="pm-back" href="<?= pm_h($trainingUrl) ?>"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back to Training</a>
         <div class="pm-topbar-actions">
             <?php if ($programId > 0 && $program && $allowed): ?>
                 <a class="pm-btn pm-btn-quiet" href="?page=instructor/training-subpage/program&id=<?= (int) $programId ?>"><i class="fas fa-pen-to-square" aria-hidden="true"></i> Edit Program</a>

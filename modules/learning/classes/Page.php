@@ -52,11 +52,10 @@ class Page {
         ],
         'instructor' => [
             ['label' => 'Home', 'page' => 'instructor/instructor-home'],
-            ['label' => 'E-Learning', 'page' => 'instructor/elearning'],
+            ['label' => 'Training', 'page' => 'instructor/training'],
             ['label' => 'Analytics', 'page' => 'instructor/analytics'],
             ['label' => 'Grade Book', 'page' => 'instructor/gradebook'],
             ['label' => 'Calendar', 'page' => 'instructor/calendar'],
-            ['label' => 'Trainings', 'page' => 'instructor/training'],
             ['label' => 'Training Requests', 'page' => 'instructor/training-requests'],
             ['label' => 'Certificates', 'page' => 'instructor/certificate'],
             ['label' => 'Skill Gaps', 'page' => 'instructor/instructor-skill-gap'],
@@ -114,6 +113,10 @@ class Page {
             }
 
             if ($this->isPageAllowedForRole($requested)) {
+                if ($requested === 'instructor/elearning') {
+                    $_GET['tab'] = 'course';
+                    return 'instructor/training';
+                }
                 return $requested;
             }
             error_log('[learning] blocked ' . $requested . ' for role ' . $this->getLearningRole());

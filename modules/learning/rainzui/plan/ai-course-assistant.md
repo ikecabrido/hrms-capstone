@@ -976,9 +976,11 @@ If you want hashing for a separate API token issued by this module to other syst
 
 **Weight:** 3%
 **Progress:** 0%
-**Status:** Blocked — remote deployment access is unavailable and the remote target still serves the previous build. Local free-model generation, apply, analytics, audit, and access-control verification are complete.
+**Status:** Blocked — remote deployment access is unavailable from this workspace. Local free-model generation, apply, analytics, audit, and access-control verification are complete.
 
 **Local pre-deployment verification (2026-10-27):** the local database has the seven AI tables, the optional analytics index, a 452-model catalog, and two eligible enabled free models. `model_cost_mode=free_only`; primary `poolside/laguna-s-2.1:free` (#119) and fallback `dots-studio/dots-3-note-preview:free` (#95) passed live tests. A two-module course was generated, reviewed, quality-checked, and applied as draft #900129; the builder showed 2 modules, 4 lessons, 2 quizzes, and 1 evaluation; analytics/audit recorded the job; no key appeared in HTML, JSON, or browser storage; non-admin checks returned 403 and hid the launcher. The test job/course were removed. The remaining P12 work is the remote backup, migration, master-key/key configuration, deployment, and live remote verification.
+
+**Local regression recheck (2026-10-27):** fixed the security test harness's stale hardcoded application-folder URL by deriving the local base path from the repository folder. All 291 AI assertions pass (analytics 21, authoring 18, context 57, generator 81, writer 43, model mode 37, security 34), and `tests/run-tests.php` passes. These local checks do not complete any remote P12 tasks.
 
 ### P12 tasks
 
@@ -1870,7 +1872,7 @@ The MVP is admin-only. The trainer column is a future configuration option, not 
 
 ### 30.2 Still open
 
-- Actual OpenRouter API key (needed for a successful live provider test and generation).
+- Remote deployment access and remote-side key/master-key configuration for P12.
 - Final audit retention value before deployment.
 
 ---
@@ -1899,6 +1901,7 @@ Every session must add a row.
 | 2026-10-27 | P4 / P5 live check | Inspected the live admin key state and ran the model-test action for both enabled models. The key passed `/key` validation, but GPT-4.1 Mini and Gemini 2.5 Flash both returned provider HTTP 403. Split the 401 and 403 messages so a 403 now points to inference permission, credits, and model access instead of incorrectly saying the key is invalid. | P4 100%; P5 95%; overall 97% | Active key stored server-side with masked last4/fingerprint; `/key` returned 200; audit recorded `key.created`, `key.tested`, and `models.synced` (452 models); both live model tests returned HTTP 403, logged metadata only, and created no jobs/courses; 29/29 client tests pass with the new 403 mapping; no key or raw provider body appeared in the response | P5 live inference blocked on a key with inference permission/credits; P12 deployment |
 | 2026-10-27 | P4 / P5 model cost mode | Added the `model_cost_mode` setting with `free_only`, `paid_only`, and `mixed` values, defaulting to `free_only`. Free detection requires zero prompt/completion prices and a `:free` slug or the exact `openrouter/free` router. Blocked paid models from testing, enabling, default/fallback selection, and generation; added explicit manual pricing fields, mode-aware catalog/job/client filters, a defense-in-depth enabled-and-allowed check in `OpenRouterClient::chat()`, mode reload behavior, Free/Paid/Blocked badges, and 37 model-cost tests. | P4 100%; P5 100%; overall 97% | `free_only` persisted; 2 eligible free models; primary `poolside/laguna-s-2.1:free` and fallback `dots-studio/dots-3-note-preview:free` passed live tests; paid rows show Paid and Blocked with no test action; direct paid test endpoint returned 422 before any provider request; settings save/reload and manual price fields verified; 37/37 model-mode tests pass; no key in HTML or browser storage | Paid testing intentionally disabled by requirement; P12 deployment |
 | 2026-10-27 | P5 / P6 / P7 / P9 live verification | Fixed the trainee skill catalog to expose `{skill_id, name}` for current gaps and explicitly selected skills only; added allowed-skill validation to `AICourseBlueprint`; made context quiz expectations derive from live rows; deduplicated module quiz counts in the course-structure summary. Ran two live free-model generations. The first exposed wrong skill links; the second produced job #117 and draft course #900129 with correct Coaching #26 and Leadership #2 links, 2 modules, 4 lessons, 2 quizzes with 16 questions, 1 evaluation with 5 questions, quality passed with one non-blocking assumptions warning, zero cost, and a clean audit trail. Removed both live test jobs and courses. | P5 100%; P6 100%; P7 100%; P9 100%; overall 97% | 320 assertions pass (29 client + 57 context + 81 generator + 43 writer + 21 analytics + 18 authoring + 37 model mode + 34 security); 40 AI-related PHP files lint clean; AI page 0 console errors and 0 failed network requests; course structure showed 2 modules, 4 lessons, 2 quizzes, 1 evaluation; 0 jobs and 0 test courses after cleanup; 18 audit rows retained; no key material; paid models blocked; non-admin checks passed | P12 remote deployment access |
+| 2026-10-27 | P11 / P12 local regression recheck | Fixed the security test harness's stale hardcoded application-folder URL by deriving the local base path from the repository folder. | P11 100%; P12 remains blocked; overall 97% | All 291 AI assertions pass (21 analytics + 18 authoring + 57 context + 81 generator + 43 writer + 37 model mode + 34 security); `tests/run-tests.php` passes; live local Apache endpoints return expected 401/403 guards | P12 remote backup, migration, configuration, deployment, and live verification require remote access |
 
 ---
 
