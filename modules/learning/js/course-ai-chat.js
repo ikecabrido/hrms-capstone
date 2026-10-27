@@ -99,9 +99,17 @@
             })
         })
         .then(function (response) {
-            return response.json().catch(function () {
-                throw new Error('The assistant returned an unreadable response.');
-            }).then(function (data) {
+            return response.text().then(function (body) {
+                var data;
+                try {
+                    data = JSON.parse(body);
+                } catch (error) {
+                    var message = 'The server returned an unexpected response (HTTP ' + response.status + ').';
+                    if (response.status >= 500) {
+                        message += ' Check the server PHP error log.';
+                    }
+                    throw new Error(message);
+                }
                 if (!response.ok || !data.success || typeof data.reply !== 'string') {
                     throw new Error(data.error || data.message || 'The assistant could not answer. Try again.');
                 }

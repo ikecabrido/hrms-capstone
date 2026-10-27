@@ -21,7 +21,16 @@ if (session_status() === PHP_SESSION_NONE) {
 function aiEndpointJson(int $status, array $payload): never
 {
     http_response_code($status);
-    echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    $json = json_encode(
+        $payload,
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE
+    );
+    if ($json === false) {
+        error_log('Learning AI endpoint could not encode its JSON response: ' . json_last_error_msg());
+        http_response_code(500);
+        $json = '{"success":false,"error":"The server could not encode the assistant response."}';
+    }
+    echo $json;
     exit;
 }
 

@@ -8,6 +8,8 @@
 require_once dirname(__DIR__) . '/classes/AIAuthoring.php';
 
 $coursePage = file_get_contents(dirname(__DIR__) . '/pages/instructor/elearning-subpage/course.php');
+$courseChatScript = file_get_contents(dirname(__DIR__) . '/js/course-ai-chat.js');
+$aiAjaxBootstrap = file_get_contents(dirname(__DIR__) . '/pages/admin/ai-assistant/ajax/_bootstrap.php');
 $passed = 0;
 $failed = 0;
 
@@ -48,6 +50,8 @@ check('admin sees course callout', str_contains($courseCallout, 'ai-authoring-ca
 check('course callout names the new course', str_contains($courseCallout, 'Create a new course with AI'));
 check('course callout remains focused on full AI authoring', !str_contains($courseCallout, 'data-course-ai-chat-open'));
 check('course page has a separate floating chat launcher', str_contains($coursePage, 'class="course-ai-chat-launcher" data-course-ai-chat-open'));
+check('course chat reports non-JSON server responses with HTTP status', str_contains($courseChatScript, 'The server returned an unexpected response (HTTP ') && str_contains($courseChatScript, 'response.text()'));
+check('AI endpoint substitutes invalid UTF-8 in JSON responses', str_contains($aiAjaxBootstrap, 'JSON_INVALID_UTF8_SUBSTITUTE'));
 check('course callout links to AI assistant', str_contains($courseCallout, 'page=admin/ai-assistant'));
 check('course callout carries course origin', str_contains($courseCallout, 'ai_from=course'));
 check('course callout opens a safe new tab', str_contains($courseCallout, 'target="_blank"') && str_contains($courseCallout, 'rel="noopener"'));
