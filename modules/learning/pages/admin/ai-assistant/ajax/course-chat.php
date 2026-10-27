@@ -142,7 +142,11 @@ try {
 }
 
 if (empty($result['success']) || !is_string($result['content'] ?? null)) {
-    aiEndpointError(502, (string) ($result['message'] ?? 'The course assistant is unavailable. Try again shortly.'));
+    aiEndpointError(
+        502,
+        (string) ($result['message'] ?? 'The course assistant is unavailable. Try again shortly.'),
+        ['provider_http_status' => (int) ($result['http_status'] ?? 0)]
+    );
 }
 
 aiEndpointJson(200, [

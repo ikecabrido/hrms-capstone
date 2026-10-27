@@ -111,7 +111,13 @@
                     throw new Error(message);
                 }
                 if (!response.ok || !data.success || typeof data.reply !== 'string') {
-                    throw new Error(data.error || data.message || 'The assistant could not answer. Try again.');
+                    var message = data.error || data.message || 'The assistant could not answer. Try again.';
+                    if (Number.isInteger(data.provider_http_status)) {
+                        message += data.provider_http_status > 0
+                            ? ' (AI provider HTTP ' + data.provider_http_status + ').'
+                            : ' (No HTTP response from the AI provider.)';
+                    }
+                    throw new Error(message);
                 }
                 return data;
             });
