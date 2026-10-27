@@ -7,6 +7,7 @@
 
 require_once dirname(__DIR__) . '/classes/AIAuthoring.php';
 
+$coursePage = file_get_contents(dirname(__DIR__) . '/pages/instructor/elearning-subpage/course.php');
 $passed = 0;
 $failed = 0;
 
@@ -42,10 +43,13 @@ $courseButton = AIAuthoring::button('course');
 
 check('admin sees course callout', str_contains($courseCallout, 'ai-authoring-callout'));
 check('course callout names the new course', str_contains($courseCallout, 'Create a new course with AI'));
+check('course callout remains focused on full AI authoring', !str_contains($courseCallout, 'data-course-ai-chat-open'));
+check('course page has a separate floating chat launcher', str_contains($coursePage, 'class="course-ai-chat-launcher" data-course-ai-chat-open'));
 check('course callout links to AI assistant', str_contains($courseCallout, 'page=admin/ai-assistant'));
 check('course callout carries course origin', str_contains($courseCallout, 'ai_from=course'));
 check('course callout opens a safe new tab', str_contains($courseCallout, 'target="_blank"') && str_contains($courseCallout, 'rel="noopener"'));
 check('admin sees learning-path callout', str_contains($pathCallout, 'Create courses for this learning path with AI'));
+check('learning-path callout does not show the course chat', !str_contains($pathCallout, 'data-course-ai-chat-open'));
 check('learning-path callout carries path origin', str_contains($pathCallout, 'ai_from=learning-path'));
 check('admin sees compact course button', str_contains($courseButton, 'cs-circ-btn-ai'));
 check('compact button carries course origin', str_contains($courseButton, 'ai_from=course'));

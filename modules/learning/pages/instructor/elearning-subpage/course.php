@@ -354,6 +354,31 @@ try {
         </div>
 
         <?= AIAuthoring::callout('course') ?>
+        <?php if (AIAuthoring::isAdmin()): ?>
+            <button type="button" class="course-ai-chat-launcher" data-course-ai-chat-open aria-controls="course-ai-chat" aria-expanded="false">
+                <i class="fas fa-comments" aria-hidden="true"></i>
+                <span>Chat for suggestions</span>
+            </button>
+            <section class="course-ai-chat" id="course-ai-chat" aria-label="Course suggestion chat" data-endpoint="pages/admin/ai-assistant/ajax/course-chat.php" hidden>
+                <header class="course-ai-chat-header">
+                    <div>
+                        <strong><i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i> Course assistant</strong>
+                        <p>Ask for suggestions as you build your course.</p>
+                    </div>
+                    <button type="button" class="course-ai-chat-close" data-course-ai-chat-close aria-label="Close course assistant"><i class="fas fa-times" aria-hidden="true"></i></button>
+                </header>
+                <div class="course-ai-chat-messages" data-course-ai-chat-messages role="log" aria-live="polite" aria-relevant="additions text">
+                    <div class="course-ai-chat-message is-assistant">Hi! I can suggest course titles, learning outcomes, module ideas, lesson activities, and assessment questions. What would you like help with?</div>
+                </div>
+                <p class="course-ai-chat-status" data-course-ai-chat-status role="status" aria-live="polite"></p>
+                <form class="course-ai-chat-form" data-course-ai-chat-form data-skip="true">
+                    <label class="course-ai-chat-sr-only" for="course-ai-chat-input">Ask the course assistant</label>
+                    <textarea id="course-ai-chat-input" name="question" rows="2" maxlength="1200" placeholder="Ask for a suggestion..." required></textarea>
+                    <button type="submit" class="course-ai-chat-send" aria-label="Send message"><i class="fas fa-paper-plane" aria-hidden="true"></i></button>
+                </form>
+                <p class="course-ai-chat-notice">Your current course details and messages are sent to the configured AI provider. Chat is not saved with the course; do not include sensitive or personal information.</p>
+            </section>
+        <?php endif; ?>
 
         <form id="course-form" data-skip="true" method="post" enctype="multipart/form-data" novalidate action="pages/instructor/elearning-subpage/ajax/add-course.php">
             <div class="course-wizard" id="course-wizard">
@@ -667,6 +692,7 @@ try {
 </div>
 
 <script src="js/course-builder.js"></script>
+<script src="js/course-ai-chat.js?v=<?= (int) filemtime(dirname(__DIR__, 3) . '/js/course-ai-chat.js') ?>"></script>
 <script>
 (function(){
     var wrap = document.getElementById('skill-dropdown-wrap');
