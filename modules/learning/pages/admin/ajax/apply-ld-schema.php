@@ -313,7 +313,7 @@ function ldSchemaClassify(string $statement, string $database): array
         throw new InvalidArgumentException('TRUNCATE removes rows rather than schema, so it is not accepted.');
     }
     if (preg_match('/^(?:INSERT|UPDATE|DELETE|REPLACE|LOAD|CALL|DO)\b/i', $sql)) {
-        throw new InvalidArgumentException('This tool only changes structure. Use Import row data for INSERT statements.');
+        throw new InvalidArgumentException('This tool only changes structure. Choose a Schema only export here; import a Data only export with Import row data. For a full backup, apply schema first, then import its rows.');
     }
     if (preg_match('/^(?:CREATE|ALTER|DROP|GRANT|REVOKE|FLUSH|USE|LOCK|UNLOCK)\s+(?:DATABASE|SCHEMA|USER|SERVER|VIEW|EVENT|TRIGGER|FUNCTION|PROCEDURE|TABLESPACE)\b/i', $sql)
         || preg_match('/^USE\b/i', $sql)) {

@@ -221,6 +221,27 @@ check(
         && strpos($schemaImportSource, '10 * 1024 * 1024') === false
         && strpos($schemaImportSource, 'upload_max_filesize and post_max_size') !== false
 );
+$exportSource = file_get_contents($moduleRoot . '/pages/admin/ajax/export-ld-database.php');
+$exportPageSource = file_get_contents($moduleRoot . '/pages/admin/database-export.php');
+check(
+    'database export supports schema, data, and full backup modes',
+    is_string($exportSource)
+        && strpos($exportSource, "['schema', 'data', 'full']") !== false
+        && strpos($exportSource, '$exportType !== \'data\'') !== false
+        && strpos($exportSource, '$exportType === \'schema\'') !== false
+        && is_string($exportPageSource)
+        && strpos($exportPageSource, 'Schema only') !== false
+        && strpos($exportPageSource, 'Data only') !== false
+        && strpos($exportPageSource, 'Full backup') !== false
+);
+check(
+    'database restore UI keeps schema and data forms separate',
+    is_string($exportPageSource)
+        && substr_count($exportPageSource, 'id="ld-schema-form"') === 1
+        && substr_count($exportPageSource, 'id="ld-data-import-form"') === 1
+        && strpos($exportPageSource, 'id="ld-schema-file"') !== false
+        && strpos($exportPageSource, 'id="ld-data-import-file"') !== false
+);
 
 request('learner', null);
 same('no page requested serves the dashboard', 'dashboard-overview', $pageController->getPage());

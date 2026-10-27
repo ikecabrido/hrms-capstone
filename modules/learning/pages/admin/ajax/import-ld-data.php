@@ -161,7 +161,7 @@ try {
         $line = trim($line);
         if (preg_match('/^(?:CREATE|ALTER|DROP|RENAME)\s+(?:TEMPORARY\s+)?TABLE\b/i', $line)) {
             throw new InvalidArgumentException(
-                'This file contains table definitions. Use Apply schema file to create or change the tables, then import a file containing only INSERT statements.'
+                'This file contains table definitions. Choose a Data only export here; apply the matching Schema only export with Apply schema file first. A full backup must be restored in those two steps.'
             );
         }
         if (strpos($line, 'INSERT INTO ') !== 0) {

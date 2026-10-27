@@ -18,37 +18,88 @@ try {
     <?php include __DIR__ . '/../../includes/admin-moderation-navigation.php'; ?>
     <main class="module-content export-page">
         <div class="home-dashboard">
-            <section class="home-hero">
+            <section class="home-hero ldx-page-hero">
                 <div class="home-hero-main">
                     <h1>Export LD Database</h1>
-                    <p>Download the Learning module's tables and records as a portable SQL file, restore row data from an earlier export, or apply a schema file that creates, changes and drops <code>ld_</code> tables.</p>
+                    <p>Back up or migrate Learning data. Choose an export, then restore its structure and rows in the right order.</p>
                 </div>
             </section>
 
             <div class="ldx-grid">
-                <section class="ldx-card">
+                <section class="ldx-card is-wide ldx-export-card">
                     <h2 class="ldx-card-head"><i class="fas fa-database" aria-hidden="true"></i> Download export</h2>
-                    <p class="ldx-text">Every <code>ld_</code> table is written to one SQL file with its schema and rows, so the file can be restored on another installation.</p>
-                    <p class="ldx-metric">
-                        <span class="ldx-metric-value"><?= (int) $learningTableCount ?></span>
-                        <span class="ldx-metric-label">Learning table<?= $learningTableCount === 1 ? '' : 's' ?> in this database</span>
-                    </p>
-                    <div class="ldx-actions">
-                        <a class="ldx-btn" href="pages/admin/ajax/export-ld-database.php" download>
-                            <i class="fas fa-download" aria-hidden="true"></i> Download SQL export
-                        </a>
+                    <div class="ldx-export-overview">
+                        <p class="ldx-text">Choose the contents for your backup or migration file.</p>
+                        <p class="ldx-metric">
+                            <span class="ldx-metric-value"><?= (int) $learningTableCount ?></span>
+                            <span class="ldx-metric-label">Learning table<?= $learningTableCount === 1 ? '' : 's' ?></span>
+                        </p>
                     </div>
+                    <form class="ldx-form" method="get" action="pages/admin/ajax/export-ld-database.php">
+                        <div class="ldx-export-controls">
+                            <label class="ldx-export-type-field">
+                                <span class="ldx-label">Export type</span>
+                                <select id="ld-export-type" name="type" required>
+                                    <option value="full">Full backup — structure and rows</option>
+                                    <option value="schema">Schema only — table structure</option>
+                                    <option value="data">Data only — table rows</option>
+                                </select>
+                            </label>
+                            <button class="ldx-btn" type="submit">
+                                <i class="fas fa-download" aria-hidden="true"></i> Download SQL
+                            </button>
+                        </div>
+                    </form>
+                    <div class="ldx-export-notes">
+                        <p class="ldx-note">
+                        <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                            <span>Exports may contain personal information. Store files securely.</span>
+                        </p>
+                        <p class="ldx-note is-info">
+                        <i class="fas fa-circle-info" aria-hidden="true"></i>
+                            <span>For a full restore, apply a <strong>Schema only</strong> file first, then import a <strong>Data only</strong> file. A combined full backup cannot be used directly in either importer.</span>
+                        </p>
+                    </div>
+                </section>
+
+                <section class="ldx-card">
+                    <h2 class="ldx-card-head"><span class="ldx-step-number">1</span><i class="fas fa-table-cells-large" aria-hidden="true"></i> Apply table structure</h2>
+                    <p class="ldx-text">Use a <strong>Schema only</strong> file to create or change <code>ld_</code> tables. Validate before applying.</p>
+                    <form id="ld-schema-form" class="ldx-form" data-skip enctype="multipart/form-data">
+                        <label class="ldx-label" for="ld-schema-file">Learning schema SQL file</label>
+                        <input id="ld-schema-file" type="file" name="sql_file" accept=".sql,application/sql" required>
+                        <label class="ldx-confirm" for="ld-schema-confirm">
+                            <input id="ld-schema-confirm" type="checkbox" name="confirm" value="1">
+                            <span>Confirm destructive schema changes. Dropped or rewritten table rows cannot be recovered here.</span>
+                        </label>
+                        <div class="ldx-actions">
+                            <button type="submit" value="validate" class="ldx-btn ghost">
+                                <i class="fas fa-circle-check" aria-hidden="true"></i> Validate file
+                            </button>
+                            <button type="submit" value="apply" class="ldx-btn danger">
+                                <i class="fas fa-code" aria-hidden="true"></i> Apply structure
+                            </button>
+                        </div>
+                        <p id="ld-schema-status" class="ldx-status" role="status" aria-live="polite"></p>
+                        <ul id="ld-schema-log" class="ldx-log" hidden></ul>
+                        <div class="ldx-actions" id="ld-schema-rollback-wrap" hidden>
+                            <button type="button" id="ld-schema-rollback" class="ldx-btn ghost">
+                                <i class="fas fa-download" aria-hidden="true"></i> Download pre-change definitions
+                            </button>
+                        </div>
+                        <p class="ldx-text ldx-limit-note">No fixed statement-count cap. File size is bounded by the server's PHP upload settings.</p>
+                    </form>
                     <p class="ldx-note">
                         <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
-                        <span>The export contains Learning records that may include personal information. Store the downloaded file securely.</span>
+                        <span>DDL changes take effect immediately and cannot be rolled back. Download a full backup before applying destructive changes.</span>
                     </p>
                 </section>
 
                 <section class="ldx-card">
-                    <h2 class="ldx-card-head"><i class="fas fa-file-import" aria-hidden="true"></i> Import row data</h2>
-                    <p class="ldx-text">Load rows from an earlier export back into the existing Learning tables. Table definitions are never created, altered, or dropped.</p>
+                    <h2 class="ldx-card-head"><span class="ldx-step-number">2</span><i class="fas fa-file-import" aria-hidden="true"></i> Import row data</h2>
+                    <p class="ldx-text">After the tables are ready, use a <strong>Data only</strong> file to load rows into existing <code>ld_</code> tables.</p>
                     <form id="ld-data-import-form" class="ldx-form" data-skip enctype="multipart/form-data">
-                        <label class="ldx-label" for="ld-data-import-file">Learning SQL export</label>
+                        <label class="ldx-label" for="ld-data-import-file">Learning data SQL file</label>
                         <input id="ld-data-import-file" type="file" name="sql_file" accept=".sql,application/sql" required>
                         <div class="ldx-actions">
                             <button type="submit" value="validate" class="ldx-btn ghost">
@@ -62,50 +113,7 @@ try {
                     </form>
                     <p class="ldx-note is-info">
                         <i class="fas fa-circle-info" aria-hidden="true"></i>
-                        <span>Only literal INSERT statements for existing <code>ld_</code> tables are processed. To create new tables, use <strong>Apply schema file</strong> below. Duplicate keys or any other error roll back the entire import.</span>
-                    </p>
-                </section>
-
-                <section class="ldx-card is-wide">
-                    <h2 class="ldx-card-head"><i class="fas fa-code" aria-hidden="true"></i> Apply schema file</h2>
-                    <p class="ldx-text">
-                        Run a <code>.sql</code> file against the Learning schema: create new <code>ld_</code> tables, change their
-                        columns and indexes, rename them, or drop them. Every statement is authorised before anything runs, and a
-                        statement that touches a table without the <code>ld_</code> prefix is refused — as are data changes, which
-                        belong in the import above.
-                    </p>
-                    <form id="ld-schema-form" class="ldx-form" data-skip enctype="multipart/form-data">
-                        <label class="ldx-label" for="ld-schema-file">Learning schema SQL file</label>
-                        <input id="ld-schema-file" type="file" name="sql_file" accept=".sql,application/sql" required>
-                        <label class="ldx-confirm" for="ld-schema-confirm">
-                            <input id="ld-schema-confirm" type="checkbox" name="confirm" value="1">
-                            <span>I understand this file can drop or rewrite existing Learning tables, and that the rows of a dropped table cannot be recovered here.</span>
-                        </label>
-                        <div class="ldx-actions">
-                            <button type="submit" value="validate" class="ldx-btn ghost">
-                                <i class="fas fa-circle-check" aria-hidden="true"></i> Validate file
-                            </button>
-                            <button type="submit" value="apply" class="ldx-btn danger">
-                                <i class="fas fa-code" aria-hidden="true"></i> Apply to database
-                            </button>
-                        </div>
-                        <p id="ld-schema-status" class="ldx-status" role="status" aria-live="polite"></p>
-                        <ul id="ld-schema-log" class="ldx-log" hidden></ul>
-                        <div class="ldx-actions" id="ld-schema-rollback-wrap" hidden>
-                            <button type="button" id="ld-schema-rollback" class="ldx-btn ghost">
-                                <i class="fas fa-download" aria-hidden="true"></i> Download pre-change definitions
-                            </button>
-                        </div>
-                        <p class="ldx-text">There is no fixed statement-count limit. Maximum file size is determined by the server's PHP upload settings.</p>
-                    </form>
-                    <p class="ldx-note">
-                        <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
-                        <span>
-                            Table definitions cannot be rolled back — each statement takes effect immediately. Validate first, and keep a
-                            fresh SQL export before applying anything that drops or rewrites a table. Only <code>CREATE TABLE</code>,
-                            <code>ALTER TABLE</code>, <code>RENAME TABLE</code>, <code>DROP TABLE</code>, <code>CREATE INDEX</code> and
-                            <code>DROP INDEX</code> are accepted.
-                        </span>
+                        <span>Only row insert statements are accepted. Duplicate keys or any other error roll back the entire data import.</span>
                     </p>
                 </section>
             </div>

@@ -7,16 +7,26 @@ require_once dirname(__FILE__, 6) . '/database/db.php';
 require_once dirname(__FILE__, 4) . '/classes/LearningRole.php';
 require_once dirname(__FILE__, 4) . '/classes/LearningDatabaseTools.php';
 
+function ldExportResponse(int $status, string $message): void
+{
+    http_response_code($status);
+    header('Content-Type: text/plain; charset=utf-8');
+    exit($message);
+}
+
 if (empty($_SESSION['employee_id'])) {
-    http_response_code(401);
-    exit('Unauthorized.');
+    ldExportResponse(401, 'Unauthorized.');
 }
 
 try {
     $appPdo = (new Database())->getConnection();
     if (LearningRole::forEmployee($appPdo, (int) $_SESSION['employee_id']) !== 'admin') {
-        http_response_code(403);
-        exit('Forbidden.');
+        ldExportResponse(403, 'Forbidden.');
+    }
+
+    $exportType = $_GET['type'] ?? 'full';
+    if (!is_string($exportType) || !in_array($exportType, ['schema', 'data', 'full'], true)) {
+        ldExportResponse(400, 'Choose a supported export type: schema, data, or full.');
     }
 
     $pdo = LearningDatabaseTools::connection();
@@ -38,16 +48,31 @@ try {
         throw new RuntimeException('Unable to prepare the export file.');
     }
 
-    fwrite($stream, "-- Learning database export\n-- Generated: " . date('Y-m-d H:i:s') . "\n\nSET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS=0;\n\n");
+    $exportLabel = [
+        'schema' => 'Schema only',
+        'data' => 'Data only',
+        'full' => 'Full backup (schema and data)',
+    ][$exportType];
+    fwrite($stream, "-- Learning database export: {$exportLabel}\n-- Generated: " . date('Y-m-d H:i:s') . "\n\n");
+
+    if ($exportType !== 'data') {
+        fwrite($stream, "SET NAMES utf8mb4;\nSET FOREIGN_KEY_CHECKS=0;\n\n");
+    }
 
     foreach ($tables as $table) {
         $quotedTable = '`' . str_replace('`', '``', $table) . '`';
-        $createRow = $pdo->query('SHOW CREATE TABLE ' . $quotedTable)->fetch(PDO::FETCH_NUM);
-        if (!$createRow || empty($createRow[1])) {
-            continue;
+        if ($exportType !== 'data') {
+            $createRow = $pdo->query('SHOW CREATE TABLE ' . $quotedTable)->fetch(PDO::FETCH_NUM);
+            if (!$createRow || empty($createRow[1])) {
+                continue;
+            }
+
+            fwrite($stream, "DROP TABLE IF EXISTS {$quotedTable};\n{$createRow[1]};\n\n");
         }
 
-        fwrite($stream, "DROP TABLE IF EXISTS {$quotedTable};\n{$createRow[1]};\n\n");
+        if ($exportType === 'schema') {
+            continue;
+        }
 
         $columnStmt = $pdo->prepare('SELECT COLUMN_NAME, DATA_TYPE
             FROM information_schema.COLUMNS
@@ -86,19 +111,20 @@ try {
         fwrite($stream, "\n");
     }
 
-    fwrite($stream, "SET FOREIGN_KEY_CHECKS=1;\n");
+    if ($exportType !== 'data') {
+        fwrite($stream, "SET FOREIGN_KEY_CHECKS=1;\n");
+    }
     rewind($stream);
 
     header('Content-Type: application/sql; charset=utf-8');
-    header('Content-Disposition: attachment; filename="ld_database_' . date('Y-m-d_His') . '.sql"');
+    header('Content-Disposition: attachment; filename="ld_' . $exportType . '_' . date('Y-m-d_His') . '.sql"');
     header('Cache-Control: private, no-store, max-age=0');
     fpassthru($stream);
     fclose($stream);
 } catch (Throwable $e) {
     error_log('Learning database export failed: ' . $e->getMessage());
     if (!headers_sent()) {
-        http_response_code(500);
-        header('Content-Type: text/plain; charset=utf-8');
+        ldExportResponse(500, 'Learning database export failed. Check the application error log.');
     }
-    exit('Learning database export failed. Check the application error log.');
+    exit;
 }
