@@ -331,7 +331,7 @@ $aiCsrfToken = CSRF::getToken();
             <button type="button" class="tab-item" data-tab="ai-audit"><i class="fas fa-shield-halved"></i> Audit Log</button>
         </div>
 
-        <div class="tab-content active" id="ai-overview" data-tab="ai-overview">
+        <div class="tab-content ai-tab-content active" id="ai-overview" data-tab="ai-overview">
             <div class="ai-stat-grid">
                 <article class="ai-stat-card">
                     <span class="ai-stat-icon"><i class="fas fa-layer-group"></i></span>
@@ -656,7 +656,7 @@ $aiCsrfToken = CSRF::getToken();
             </section>
         </div>
 
-        <div class="tab-content" id="ai-generate" data-tab="ai-generate">
+        <div class="tab-content ai-tab-content" id="ai-generate" data-tab="ai-generate">
             <section class="ai-panel ai-context-panel"
                      data-ai-context-panel
                      data-ai-search-endpoint="pages/admin/ai-assistant/ajax/trainee-search.php"
@@ -869,7 +869,7 @@ $aiCsrfToken = CSRF::getToken();
             </section>
         </div>
 
-        <div class="tab-content" id="ai-jobs" data-tab="ai-jobs">
+        <div class="tab-content ai-tab-content" id="ai-jobs" data-tab="ai-jobs">
             <section class="ai-panel" data-ai-jobs-panel
                      data-ai-job-endpoint="pages/admin/ai-assistant/ajax/job.php">
                 <div class="ai-panel-head">
@@ -942,7 +942,7 @@ $aiCsrfToken = CSRF::getToken();
             </section>
         </div>
 
-        <div class="tab-content" id="ai-settings" data-tab="ai-settings">
+        <div class="tab-content ai-tab-content" id="ai-settings" data-tab="ai-settings">
             <section class="ai-panel">
                 <div class="ai-panel-head">
                     <div>
@@ -1100,7 +1100,7 @@ $aiCsrfToken = CSRF::getToken();
             </section>
         </div>
 
-        <div class="tab-content" id="ai-keys" data-tab="ai-keys">
+        <div class="tab-content ai-tab-content" id="ai-keys" data-tab="ai-keys">
             <div class="ai-split-grid ai-split-grid--keys">
                 <section class="ai-panel">
                     <div class="ai-panel-head">
@@ -1452,7 +1452,7 @@ $aiCsrfToken = CSRF::getToken();
             </div>
         </div>
 
-        <div class="tab-content" id="ai-prompts" data-tab="ai-prompts">
+        <div class="tab-content ai-tab-content" id="ai-prompts" data-tab="ai-prompts">
             <section class="ai-panel">
                 <div class="ai-panel-head">
                     <div>
@@ -1468,7 +1468,7 @@ $aiCsrfToken = CSRF::getToken();
             </section>
         </div>
 
-        <div class="tab-content" id="ai-audit" data-tab="ai-audit">
+        <div class="tab-content ai-tab-content" id="ai-audit" data-tab="ai-audit">
             <section class="ai-panel">
                 <div class="ai-panel-head">
                     <div>
