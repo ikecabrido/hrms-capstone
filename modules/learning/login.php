@@ -149,7 +149,7 @@ $loginSkillsJson = json_encode(
             <div class="brand-copy">
                 <p class="brand-eyebrow">Learning &amp; Development</p>
                 <h1 id="brand-title">Your learning,<br><span>all in one place.</span></h1>
-                <p class="brand-lede">Learn <span class="skill-cycle" id="skillCycle" data-skills="<?= htmlspecialchars($loginSkillsJson, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($initialLoginSkill, ENT_QUOTES, 'UTF-8') ?></span><br>Track your progress and pick up where you left off.</p>
+                <p class="brand-lede"><span class="skill-cycle" id="skillCycle" data-skills="<?= htmlspecialchars($loginSkillsJson, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($initialLoginSkill, ENT_QUOTES, 'UTF-8') ?></span><br>Track your progress and pick up where you left off.</p>
             </div>
 
             <footer class="brand-foot">

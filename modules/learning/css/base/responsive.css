@@ -69,7 +69,6 @@
     /* Page-specific tab controls (catalog, study, skill gaps, roster, legal)
        follow the same icon-only rule as the shared .tab-list. */
     .catalog-tab-btn,
-    .catalog-master-tab,
     .isg-filter-tab,
     .ml-tab,
     .study-tab,
@@ -85,7 +84,6 @@
     }
 
     .catalog-tab-btn i,
-    .catalog-master-tab i,
     .isg-filter-tab i,
     .ml-tab i,
     .study-tab i,
@@ -353,23 +351,6 @@
     .kt-page .kt-grid,
     .skill-page .isg-learner-grid {
         grid-template-columns: minmax(0, 1fr);
-    }
-}
-
-/* ---- Learner catalog: master tabs -------------------------------------- */
-@media (max-width: 480px) {
-    .catalog-master-tabs {
-        flex-wrap: wrap;
-        gap: 0.35rem;
-    }
-
-    .catalog-master-tab {
-        flex: 1 1 0 !important;
-        min-width: 0 !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        font-size: 0.8rem !important;
-        gap: 0.3rem;
     }
 }
 

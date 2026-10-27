@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/pages/tools.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/tools.css') ?>">
     <link rel="stylesheet" href="css/pages/calendar.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/calendar.css') ?>">
     <link rel="stylesheet" href="css/pages/settings.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/settings.css') ?>">
+    <link rel="stylesheet" href="css/pages/ai-assistant.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/ai-assistant.css') ?>">
     <link rel="stylesheet" href="css/pages/user.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/user.css') ?>">
     <link rel="stylesheet" href="css/pages/knowledge-transfer.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/knowledge-transfer.css') ?>">
 <link rel="stylesheet" href="css/pages/gradebook.css?v=<?= (int) filemtime(dirname(__DIR__) . '/css/pages/gradebook.css') ?>">

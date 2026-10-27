@@ -114,6 +114,7 @@
 .cs-circ-btn:hover { transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,0.2); }
 .cs-circ-btn-primary { background:var(--primary, #320082); color:#fff; }
 .cs-circ-btn-success { background:var(--accent, #10b981); color:#fff; }
+.cs-circ-btn-ai { background:linear-gradient(135deg, #200082, #5146b7); color:#fff; }
 
 .cs-circ-btn .cs-tooltip {
     position:absolute; bottom:calc(100% + 0.5rem); left:50%; transform:translateX(-50%);
@@ -568,6 +569,7 @@
                     <div id="course-stats" class="cs-stats-row"></div>
                 </div>
                 <div class="cs-header-actions">
+                    <?= AIAuthoring::button('course') ?>
                     <button type="button" id="btn-save-template" class="cs-circ-btn cs-circ-btn-success" title="Save as Template"><i class="fas fa-bookmark"></i><span class="cs-tooltip">Save as Template</span></button>
                     <button type="button" id="btn-add-module" class="cs-circ-btn cs-circ-btn-primary" title="Add Module"><i class="fas fa-plus"></i><span class="cs-tooltip">Add Module</span></button>
                 </div>

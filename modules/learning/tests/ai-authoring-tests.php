@@ -1,0 +1,62 @@
+<?php
+/**
+ * Role and markup checks for the AI authoring entry points.
+ *
+ *     php modules/learning/tests/ai-authoring-tests.php
+ */
+
+require_once dirname(__DIR__) . '/classes/AIAuthoring.php';
+
+$passed = 0;
+$failed = 0;
+
+function check(string $name, bool $condition, string $detail = ''): void
+{
+    global $passed, $failed;
+    if ($condition) {
+        $passed++;
+        echo "PASS  {$name}\n";
+        return;
+    }
+    $failed++;
+    echo "FAIL  {$name}" . ($detail !== '' ? " - {$detail}" : '') . "\n";
+}
+
+$_SESSION = [];
+
+check('non-admin sees no course callout', AIAuthoring::callout('course') === '');
+check('non-admin sees no course button', AIAuthoring::button('course') === '');
+
+$_SESSION['learning_role'] = 'instructor';
+check('instructor sees no course callout', AIAuthoring::callout('course') === '');
+check('instructor sees no learning-path callout', AIAuthoring::callout('learning-path') === '');
+
+$_SESSION['learning_role'] = 'learner';
+check('learner sees no course callout', AIAuthoring::callout('course') === '');
+check('learner sees no course button', AIAuthoring::button('course') === '');
+
+$_SESSION['learning_role'] = 'admin';
+$courseCallout = AIAuthoring::callout('course');
+$pathCallout = AIAuthoring::callout('learning-path');
+$courseButton = AIAuthoring::button('course');
+
+check('admin sees course callout', str_contains($courseCallout, 'ai-authoring-callout'));
+check('course callout names the new course', str_contains($courseCallout, 'Create a new course with AI'));
+check('course callout links to AI assistant', str_contains($courseCallout, 'page=admin/ai-assistant'));
+check('course callout carries course origin', str_contains($courseCallout, 'ai_from=course'));
+check('course callout opens a safe new tab', str_contains($courseCallout, 'target="_blank"') && str_contains($courseCallout, 'rel="noopener"'));
+check('admin sees learning-path callout', str_contains($pathCallout, 'Create courses for this learning path with AI'));
+check('learning-path callout carries path origin', str_contains($pathCallout, 'ai_from=learning-path'));
+check('admin sees compact course button', str_contains($courseButton, 'cs-circ-btn-ai'));
+check('compact button carries course origin', str_contains($courseButton, 'ai_from=course'));
+check('unknown context is ignored', AIAuthoring::callout('unknown') === '' && AIAuthoring::button('unknown') === '');
+
+$_SESSION = ['is_admin' => 1];
+check('admin flag alone enables the callout', AIAuthoring::callout('course') !== '');
+$_SESSION = ['admin_access' => 1];
+check('admin access flag alone enables the callout', AIAuthoring::callout('course') !== '');
+
+$_SESSION = [];
+
+echo "\n{$passed} passed, {$failed} failed\n";
+exit($failed === 0 ? 0 : 1);

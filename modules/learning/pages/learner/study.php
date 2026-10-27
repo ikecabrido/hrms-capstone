@@ -34,7 +34,10 @@ if (!in_array($sort, ['last_accessed', 'alpha', 'progress'], true)) {
     $sort = 'last_accessed';
 }
 $studyOrderBy = [
-    'last_accessed' => 'e.last_accessed_at DESC, e.enrolled_at DESC',
+    // Completed courses sink below the ones still being worked through, however
+    // recently they were opened: finishing a course must not push it back to the
+    // top of "My Learning" just because it was the last one visited.
+    'last_accessed' => "(e.status = 'completed') ASC, e.last_accessed_at DESC, e.enrolled_at DESC",
     'alpha' => 'c.title ASC, c.id ASC',
     'progress' => "(CASE WHEN (SELECT COUNT(*) FROM ld_module m WHERE m.course_id = c.id AND m.status = 'active') = 0"
         . " THEN 0 ELSE (SELECT COUNT(DISTINCT p.item_type, p.reference_id) FROM ld_progress p WHERE p.enrollment_id = e.id AND p.status = 'completed')"

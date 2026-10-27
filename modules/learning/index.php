@@ -56,8 +56,8 @@ try {
 }
 $ldDefaultPageSize = (int) $ldDisplayPrefs['page_size'];
 
-include 'includes/sidebar.php';
 include 'includes/header.php';
+include 'includes/sidebar.php';
 ?>
 
 <meta name="csrf-token" content="<?= htmlspecialchars($csrfToken) ?>">

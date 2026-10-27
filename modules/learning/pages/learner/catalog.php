@@ -198,43 +198,15 @@ foreach ($catalogItems as $item) {
     $typeCounts[$t] = ($typeCounts[$t] ?? 0) + 1;
 }
     $enrolledCatalogCount = count($enrolledCourseIds) + count(array_unique($enrolledLearningPathIds));
-    $elearningCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$type] ?? 0, ['course', 'module', 'lesson', 'quiz']));
-$trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$type] ?? 0, ['learning-path', 'program', 'video-conference']));
+    // One badge per tab. The Course tab also counts the modules, lessons and
+    // quizzes it lists alongside the courses they belong to.
+    $courseTabCount = array_sum(array_map(static fn($type) => $typeCounts[$type] ?? 0, ['course', 'module', 'lesson', 'quiz']));
+    $learningPathTabCount = $typeCounts['learning-path'] ?? 0;
+    $programTabCount = $typeCounts['program'] ?? 0;
+    $onlineTrainingTabCount = $typeCounts['video-conference'] ?? 0;
 ?>
 <style>
 /* ---- Catalog Tab Navigation ---- */
-.catalog-master-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.55rem;
-}
-.catalog-master-tab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-    padding: 0.7rem 1rem;
-    border: 1px solid rgba(32,0,130,0.14);
-    border-radius: 8px;
-    background: var(--surface,#fff);
-    color: var(--text);
-    font-size: 0.88rem;
-    font-weight: 700;
-    cursor: pointer;
-}
-.catalog-master-tab.active {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
-}
-.catalog-master-tab .catalog-tab-count {
-    background: rgba(32,0,130,0.1);
-}
-.catalog-master-tab.active .catalog-tab-count {
-    background: rgba(255,255,255,0.22);
-    color: #fff;
-}
 .catalog-tabs {
     display: flex;
     gap: 6px;
@@ -726,27 +698,6 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
     .catalog-count { margin-left: auto; }
 }
 
-/* ---- Master tabs -------------------------------------------------------- */
-.catalog-master-tabs { gap: 0.6rem; margin-bottom: 0.6rem; }
-.catalog-master-tab {
-    padding: 0.8rem 1rem;
-    background: var(--surface, #fff);
-    border: 1px solid rgba(32, 0, 130, 0.12);
-    border-radius: 13px;
-    color: var(--text);
-    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.2s ease;
-}
-.catalog-master-tab:hover { border-color: rgba(32, 0, 130, 0.28); }
-.catalog-master-tab.active {
-    background: linear-gradient(135deg, rgba(32, 0, 130, 0.98), rgba(81, 70, 183, 0.92));
-    border-color: transparent;
-    color: #fff;
-    box-shadow: 0 12px 24px rgba(32, 0, 130, 0.22);
-}
-.catalog-master-tab .catalog-tab-count { background: rgba(32, 0, 130, 0.08); color: var(--primary); }
-.catalog-master-tab.active .catalog-tab-count { background: rgba(255, 255, 255, 0.22); color: #fff; }
-
 /* ---- Type tabs (segmented control) -------------------------------------- */
 .catalog-tabs {
     padding: 4px;
@@ -801,7 +752,6 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
 
 /* ---- Dark mode ---------------------------------------------------------- */
 [data-theme="dark"] .catalog-toolbar,
-[data-theme="dark"] .catalog-master-tab:not(.active),
 [data-theme="dark"] .catalog-card {
     background: rgba(30, 41, 59, 1);
     border-color: rgba(51, 65, 85, 0.75);
@@ -819,8 +769,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
 [data-theme="dark"] .catalog-tabs { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.07); }
 [data-theme="dark"] .catalog-tab-btn { color: var(--muted); }
 [data-theme="dark"] .catalog-tab-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--text); }
-[data-theme="dark"] .catalog-tab-btn .catalog-tab-count,
-[data-theme="dark"] .catalog-master-tab .catalog-tab-count { background: rgba(255, 255, 255, 0.10); color: var(--text); }
+[data-theme="dark"] .catalog-tab-btn .catalog-tab-count { background: rgba(255, 255, 255, 0.10); color: var(--text); }
 [data-theme="dark"] .catalog-card-stats,
 [data-theme="dark"] .catalog-card-footer { border-top-color: rgba(255, 255, 255, 0.08); }
 [data-theme="dark"] .catalog-card:hover { border-color: rgba(99, 102, 241, 0.55); box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45); }
@@ -833,12 +782,14 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
     <section class="home-hero" aria-labelledby="catalog-hero-title">
         <div class="home-hero-main">
             <h1 id="catalog-hero-title">Course Catalog</h1>
-            <p>Browse courses, modules, lessons and quizzes — plus trainings, learning paths and live sessions.</p>
+            <p>Browse courses, learning paths, programs and online training — all in one catalog.</p>
         </div>
         <div class="home-hero-aside">
             <div class="home-hero-chips">
-                <span class="home-hero-chip"><i class="fas fa-graduation-cap"></i> <?= $elearningCatalogCount ?> e-learning</span>
-                <span class="home-hero-chip"><i class="fas fa-chalkboard-teacher"></i> <?= $trainingCatalogCount ?> trainings</span>
+                <span class="home-hero-chip"><i class="fas fa-graduation-cap"></i> <?= $courseTabCount ?> courses</span>
+                <span class="home-hero-chip"><i class="fas fa-route"></i> <?= $learningPathTabCount ?> learning paths</span>
+                <span class="home-hero-chip"><i class="fas fa-briefcase"></i> <?= $programTabCount ?> programs</span>
+                <span class="home-hero-chip"><i class="fas fa-video"></i> <?= $onlineTrainingTabCount ?> online training</span>
                 <span class="home-hero-chip"><i class="fas fa-check-circle"></i> <?= $enrolledCatalogCount ?> enrolled</span>
             </div>
         </div>
@@ -848,7 +799,7 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
     <div class="catalog-toolbar" id="browse-courses">
         <div class="catalog-search">
             <i class="fas fa-search"></i>
-            <input type="search" id="catalog-search-input" placeholder="Search courses, modules, lessons..." aria-label="Search catalog" />
+            <input type="search" id="catalog-search-input" placeholder="Search the catalog..." aria-label="Search catalog" />
         </div>
         <div class="catalog-view-toggle">
             <button type="button" class="active" data-view="grid" title="Grid view"><i class="fas fa-th"></i></button>
@@ -906,28 +857,12 @@ $trainingCatalogCount = array_sum(array_map(static fn($type) => $typeCounts[$typ
     </section>
     <?php endif; ?>
 
-    <!-- Tab Buttons -->
-    <div class="catalog-master-tabs" id="catalog-master-tabs" role="tablist" aria-label="Catalog areas">
-        <button type="button" class="catalog-master-tab active" data-master-tab="elearning" role="tab" aria-selected="true">
-            <i class="fas fa-graduation-cap" aria-hidden="true"></i> E-Learning
-            <span class="catalog-tab-count"><?= $elearningCatalogCount ?></span>
-        </button>
-        <button type="button" class="catalog-master-tab" data-master-tab="trainings" role="tab" aria-selected="false">
-            <i class="fas fa-chalkboard-teacher" aria-hidden="true"></i> Trainings
-            <span class="catalog-tab-count"><?= $trainingCatalogCount ?></span>
-        </button>
-    </div>
-    <div class="catalog-tabs" data-subtab-group="elearning" role="tablist" aria-label="E-Learning types">
-        <button type="button" class="catalog-tab-btn active" data-tab="course" aria-label="Courses" title="Courses"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Courses <span class="catalog-tab-count"><?= $typeCounts['course'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="module" aria-label="Modules" title="Modules"><i class="fas fa-cube" aria-hidden="true"></i> Modules <span class="catalog-tab-count"><?= $typeCounts['module'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="lesson" aria-label="Lessons" title="Lessons"><i class="fas fa-book-open" aria-hidden="true"></i> Lessons <span class="catalog-tab-count"><?= $typeCounts['lesson'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="quiz" aria-label="Quizzes" title="Quizzes"><i class="fas fa-circle-question" aria-hidden="true"></i> Quizzes <span class="catalog-tab-count"><?= $typeCounts['quiz'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="enrolled" aria-label="Enrolled" title="Enrolled"><i class="fas fa-check-circle" aria-hidden="true"></i> Enrolled <span class="catalog-tab-count"><?= $enrolledCatalogCount ?></span></button>
-    </div>
-    <div class="catalog-tabs" data-subtab-group="trainings" role="tablist" aria-label="Training types" style="display:none;">
-        <button type="button" class="catalog-tab-btn" data-tab="learning-path" aria-label="Learning paths" title="Learning paths"><i class="fas fa-route" aria-hidden="true"></i> Learning Paths <span class="catalog-tab-count"><?= $typeCounts['learning-path'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="program" aria-label="Programs" title="Programs"><i class="fas fa-briefcase" aria-hidden="true"></i> Programs <span class="catalog-tab-count"><?= $typeCounts['program'] ?? 0 ?></span></button>
-        <button type="button" class="catalog-tab-btn" data-tab="video-conference" aria-label="Online training" title="Online training"><i class="fas fa-video" aria-hidden="true"></i> Online Training <span class="catalog-tab-count"><?= $typeCounts['video-conference'] ?? 0 ?></span></button>
+    <!-- Type Tabs -->
+    <div class="catalog-tabs" id="catalog-type-tabs" role="tablist" aria-label="Catalog types">
+        <button type="button" class="catalog-tab-btn active" data-tab="course" aria-label="Courses" title="Courses"><i class="fas fa-graduation-cap" aria-hidden="true"></i> Courses <span class="catalog-tab-count"><?= $courseTabCount ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="learning-path" aria-label="Learning paths" title="Learning paths"><i class="fas fa-route" aria-hidden="true"></i> Learning Paths <span class="catalog-tab-count"><?= $learningPathTabCount ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="program" aria-label="Programs" title="Programs"><i class="fas fa-briefcase" aria-hidden="true"></i> Programs <span class="catalog-tab-count"><?= $programTabCount ?></span></button>
+        <button type="button" class="catalog-tab-btn" data-tab="video-conference" aria-label="Online training" title="Online training"><i class="fas fa-video" aria-hidden="true"></i> Online Training <span class="catalog-tab-count"><?= $onlineTrainingTabCount ?></span></button>
     </div>
 
     <!-- Recommendations (filtered by selected tab) -->

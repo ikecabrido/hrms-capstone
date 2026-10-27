@@ -11,7 +11,6 @@
 
     var PAGE_SIZE = parseInt(window.LD_DEFAULT_PAGE_SIZE, 10) || 12;
     var currentPage = 1;
-    var currentMasterTab = 'elearning';
     var currentTab = 'course';
     var currentSort = 'default';
     var searchQuery = '';
@@ -26,23 +25,21 @@
     var searchInput = document.getElementById('catalog-search-input');
     var allCards = Array.from(grid.querySelectorAll('.catalog-card'));
 
+    // One tab per catalog family. The Course tab owns the e-learning items a
+    // course is built from, so its modules, lessons and quizzes stay reachable
+    // from it rather than losing their own tab in the merge.
+    var tabTypes = {
+        'course': ['course', 'module', 'lesson', 'quiz'],
+        'learning-path': ['learning-path'],
+        'program': ['program'],
+        'video-conference': ['video-conference']
+    };
+
     function getFilteredCards() {
         var filtered = allCards.filter(function(card) {
-            var elearningTypes = ['course', 'module', 'lesson', 'quiz'];
-            var trainingTypes = ['learning-path', 'program', 'video-conference'];
-            var masterMatch = currentMasterTab === 'elearning'
-                ? elearningTypes.indexOf(card.dataset.type) !== -1
-                : trainingTypes.indexOf(card.dataset.type) !== -1;
-            var typeMatch;
-            if (currentTab === 'all') {
-                typeMatch = true;
-            } else if (currentTab === 'enrolled') {
-                typeMatch = card.dataset.enrolled === 'true';
-            } else {
-                typeMatch = card.dataset.type === currentTab;
-            }
+            var typeMatch = (tabTypes[currentTab] || [currentTab]).indexOf(card.dataset.type) !== -1;
             var searchMatch = !searchQuery || (card.dataset.title + ' ' + card.dataset.desc + ' ' + card.dataset.category).toLowerCase().indexOf(searchQuery) !== -1;
-            return masterMatch && typeMatch && searchMatch;
+            return typeMatch && searchMatch;
         });
 
         // Sort
@@ -125,7 +122,8 @@
     if (!recTrack || !recSection) return;
 
     function renderRecommendations() {
-        if (currentMasterTab !== 'elearning') {
+        // Recommendations are always courses, so the rail belongs to the Course tab.
+        if (currentTab !== 'course') {
             recSection.style.display = 'none';
             return;
         }
@@ -133,10 +131,7 @@
             recSection.style.display = 'none';
             return;
         }
-        var filtered = allRecommendations;
-        if (currentTab !== 'all') {
-            filtered = allRecommendations.filter(function(rec) { return rec.type === currentTab; });
-        }
+        var filtered = allRecommendations.filter(function(rec) { return rec.type === currentTab; });
         if (filtered.length === 0) {
             recSection.style.display = 'none';
             return;
@@ -194,32 +189,7 @@
         }
     });
 
-    // ---- Master and type tabs ----
-    var requestCourseButton = document.getElementById('request-course-btn');
-    document.querySelectorAll('.catalog-master-tab').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            currentMasterTab = btn.dataset.masterTab;
-            document.querySelectorAll('.catalog-master-tab').forEach(function(masterButton) {
-                var active = masterButton === btn;
-                masterButton.classList.toggle('active', active);
-                masterButton.setAttribute('aria-selected', String(active));
-            });
-            document.querySelectorAll('[data-subtab-group]').forEach(function(group) {
-                group.style.display = group.dataset.subtabGroup === currentMasterTab ? '' : 'none';
-            });
-            currentTab = currentMasterTab === 'elearning' ? 'course' : 'learning-path';
-            document.querySelectorAll('.catalog-tab-btn').forEach(function(tabButton) {
-                var isActive = tabButton.closest('[data-subtab-group]')?.dataset.subtabGroup === currentMasterTab
-                    && tabButton.dataset.tab === currentTab;
-                tabButton.classList.toggle('active', isActive);
-            });
-            currentPage = 1;
-            if (requestCourseButton) requestCourseButton.style.display = currentMasterTab === 'elearning' ? '' : 'none';
-            renderCards();
-            renderRecommendations();
-        });
-    });
-
+    // ---- Type tabs ----
     document.querySelectorAll('.catalog-tab-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.catalog-tab-btn').forEach(function(b) { b.classList.remove('active'); });

@@ -282,6 +282,8 @@ try {
                 </div>
         </div>
 
+        <?= AIAuthoring::callout('course') ?>
+
         <form id="course-form" data-skip="true" method="post" enctype="multipart/form-data" action="pages/instructor/elearning-subpage/ajax/add-course.php">
 
             <!-- Section 1: Basic Info -->

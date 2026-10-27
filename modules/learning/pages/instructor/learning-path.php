@@ -3,6 +3,8 @@
         <a href="?page=instructor/training" style="display:inline-flex; align-items:center; gap:0.4rem; padding:0.5rem 1rem; background:var(--primary); color:#fff; border:none; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-left"></i> Back to Trainings</a>
     </div>
 
+    <?= AIAuthoring::callout('learning-path') ?>
+
     <div class="mode-card">
         <h2>Add Learning Path</h2>
         <p>Learning paths group related course content into an ordered sequence that can be assigned to trainees.</p>

@@ -2,6 +2,7 @@
 require_once __DIR__ . '/dberror.php';
 require_once __DIR__ . '/backlink.php';
 require_once __DIR__ . '/LearningRole.php';
+require_once __DIR__ . '/AIAuthoring.php';
 require_once __DIR__ . '/ProfileLink.php';
 
 class Page {
@@ -42,6 +43,7 @@ class Page {
             ['label' => 'User', 'page' => 'admin/user'],
             ['label' => 'Grade Book', 'page' => 'admin/gradebook'],
             ['label' => 'Analytics', 'page' => 'admin/analytics'],
+            ['label' => 'AI Assistant', 'page' => 'admin/ai-assistant'],
             ['label' => 'Workforce Inbox', 'page' => 'admin/workforce-integration'],
             ['label' => 'Calendar', 'page' => 'admin/calendar'],
             ['label' => 'Moderation', 'page' => 'admin/moderation'],
@@ -250,9 +252,9 @@ class Page {
             echo '</aside>';
             echo '</div>';
             // The panel opens on arrival so the tools stay discoverable, then tucks
-            // itself away so it stops covering the page content. Reaching for it
-            // (pointer or keyboard) cancels that. Small screens keep the old
-            // behaviour: closed until asked.
+            // itself away one second later so it stops covering the page content.
+            // Reaching for it (pointer or keyboard) cancels that. Small screens keep
+            // the old behaviour: closed until asked.
             echo '<script>(function () {
                 var drawer = document.getElementById("learner-tools-drawer");
                 if (!drawer) return;
@@ -268,7 +270,7 @@ class Page {
                 var autoHide = setTimeout(function () {
                     autoHide = null;
                     if (drawer.classList.contains("is-open")) hideTools();
-                }, 6000);
+                }, 1000);
                 function keepOpen() { if (autoHide) { clearTimeout(autoHide); autoHide = null; } }
                 drawer.addEventListener("pointerdown", keepOpen, true);
                 drawer.addEventListener("click", keepOpen, true);

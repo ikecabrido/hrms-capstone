@@ -363,18 +363,37 @@
 
     function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
+    // Module quizzes are also returned for each lesson by the legacy lesson
+    // endpoint. Count unique quiz ids so the summary does not multiply them.
+    function countUniqueQuizzes(modules) {
+        const ids = new Set();
+        let anonymous = 0;
+        const add = (quiz) => {
+            if (!quiz) return;
+            if (quiz.id === undefined || quiz.id === null) {
+                anonymous++;
+                return;
+            }
+            ids.add(String(quiz.id));
+        };
+        (modules || []).forEach((mod) => {
+            (mod.quizzes || []).forEach(add);
+            (mod.lessons || []).forEach((lesson) => (lesson.quizzes || []).forEach(add));
+        });
+        return ids.size + anonymous;
+    }
+
     function updateStats(data) {
         const stats = $('#course-stats');
         if (!stats) return;
         const modules = data.modules || data;
         const evaluations = data.evaluations || [];
         const totalLessons = modules.reduce((s, m) => s + (m.lessons || []).length, 0);
-        const totalQuizzes = modules.reduce((s, m) => s + (m.quizzes || []).length, 0);
-        const totalLessonQuizzes = modules.reduce((s, m) => s + (m.lessons || []).reduce((ls, l) => ls + (l.quizzes || []).length, 0), 0);
+        const totalQuizzes = countUniqueQuizzes(modules);
         stats.innerHTML = `
             <span class="cs-stat-chip cs-stat-modules"><i class="fas fa-cube"></i> ${modules.length} Module${modules.length !== 1 ? 's' : ''}</span>
             <span class="cs-stat-chip cs-stat-lessons"><i class="fas fa-book-open"></i> ${totalLessons} Lesson${totalLessons !== 1 ? 's' : ''}</span>
-            <span class="cs-stat-chip cs-stat-quizzes"><i class="fas fa-question-circle"></i> ${totalQuizzes + totalLessonQuizzes} Quiz${(totalQuizzes + totalLessonQuizzes) !== 1 ? 'zes' : ''}</span>
+            <span class="cs-stat-chip cs-stat-quizzes"><i class="fas fa-question-circle"></i> ${totalQuizzes} Quiz${totalQuizzes !== 1 ? 'zes' : ''}</span>
             ${evaluations.length > 0 ? '<span class="cs-stat-chip cs-stat-evals"><i class="fas fa-check-circle"></i> ' + evaluations.length + ' Evaluation' + (evaluations.length !== 1 ? 's' : '') + '</span>' : ''}
         `;
     }
@@ -526,14 +545,13 @@
             if (!mod) { body.innerHTML = '<p style="color:#ef4444;">Module not found.</p>'; return; }
             titleEl.textContent = mod.title;
             const lessonCount = (mod.lessons || []).length;
-            const quizCount = (mod.quizzes || []).length;
-            const lessonQuizzes = (mod.lessons || []).reduce((s, l) => s + (l.quizzes || []).length, 0);
+            const quizCount = countUniqueQuizzes([mod]);
             body.innerHTML = `
                 <div class="cs-drawer-section">
                     <div class="cs-drawer-label">Overview</div>
                     <div class="cs-drawer-stats">
                         <span class="cs-drawer-stat" style="background:rgba(59,130,246,0.08); color:#3b82f6;"><i class="fas fa-book-open"></i> ${lessonCount} Lesson${lessonCount !== 1 ? 's' : ''}</span>
-                        <span class="cs-drawer-stat" style="background:rgba(245,158,11,0.08); color:#d97706;"><i class="fas fa-question-circle"></i> ${quizCount + lessonQuizzes} Quiz${(quizCount + lessonQuizzes) !== 1 ? 'zes' : ''}</span>
+                        <span class="cs-drawer-stat" style="background:rgba(245,158,11,0.08); color:#d97706;"><i class="fas fa-question-circle"></i> ${quizCount} Quiz${quizCount !== 1 ? 'zes' : ''}</span>
                     </div>
                 </div>
                 ${(mod.lessons || []).length > 0 ? `

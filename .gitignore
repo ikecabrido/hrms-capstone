@@ -6,3 +6,8 @@ db_config.php
 # User-uploaded profile pictures (kept out of version control)
 modules/learning/uploads/profile-photos/*
 !modules/learning/uploads/profile-photos/.htaccess
+
+# AI Course Assistant local secrets. Production should use LD_AI_* environment
+# variables or a config file outside the webroot.
+modules/learning/config/ai.local.php
+modules/learning/config/ai-master.key

@@ -42,6 +42,24 @@ try {
 
 logMsg('=== Skill snapshot cron started ===');
 
+// Employee Management stores skills in em_skills in this schema. Keep the
+// legacy employee_skills fallback for installations that still use it.
+$externalSkillsTable = null;
+foreach (['em_skills', 'employee_skills'] as $candidate) {
+    $tableStmt = $pdo->prepare(
+        'SELECT 1 FROM information_schema.tables
+          WHERE table_schema = DATABASE() AND table_name = :table_name LIMIT 1'
+    );
+    $tableStmt->execute([':table_name' => $candidate]);
+    if ($tableStmt->fetchColumn()) {
+        $externalSkillsTable = $candidate;
+        break;
+    }
+}
+if ($externalSkillsTable === null) {
+    logMsg('WARNING: No employee skills table found; external skills will be skipped.');
+}
+
 // Learners = anyone with any enrollment activity
 $learners = $pdo->query('SELECT DISTINCT learner_id FROM ld_enrollment')->fetchAll(PDO::FETCH_COLUMN);
 
@@ -94,12 +112,14 @@ $employeeContext = $pdo->prepare(
 );
 // External skills from Employee Management (proficiency-tagged) — matched to ld_skill by name.
 // These count toward both total and acquired: an externally-held skill is a real acquired skill.
-$externalSkills = $pdo->prepare(
-    "SELECT s.id, s.name
-     FROM employee_skills es
-     JOIN ld_skill s ON LOWER(s.name) = LOWER(es.skill_name)
-     WHERE es.employee_id = :lid"
-);
+$externalSkills = $externalSkillsTable !== null
+    ? $pdo->prepare(
+        "SELECT s.id, s.name
+         FROM {$externalSkillsTable} es
+         JOIN ld_skill s ON LOWER(s.name) = LOWER(es.skill_name)
+         WHERE es.employee_id = :lid"
+    )
+    : null;
 
 // ld_skill_snapshot has UNIQUE (learner_id, snapshot_date) — upsert so re-runs replace today's row
 $insertStmt = $pdo->prepare(
@@ -126,7 +146,9 @@ foreach ($learners as $learnerId) {
     $moduleSkillsAcquired->execute([':lid' => $learnerId]);
     $courseSkillsAll->execute([':lid' => $learnerId]);
     $moduleSkillsAll->execute([':lid' => $learnerId]);
-    $externalSkills->execute([':lid' => $learnerId]);
+    if ($externalSkills !== null) {
+        $externalSkills->execute([':lid' => $learnerId]);
+    }
 
     // id => name maps
     $acquired = [];
@@ -138,10 +160,12 @@ foreach ($learners as $learnerId) {
         $all[(int) $row['id']] = $row['name'];
     }
 
-    // Merge external skills into both total and acquired (E1 — consume employee_skills)
-    foreach ($externalSkills->fetchAll() as $row) {
-        $all[(int) $row['id']] = $row['name'];
-        $acquired[(int) $row['id']] = $row['name'];
+    // Merge external skills into both total and acquired (E1 — consume employee skills)
+    if ($externalSkills !== null) {
+        foreach ($externalSkills->fetchAll() as $row) {
+            $all[(int) $row['id']] = $row['name'];
+            $acquired[(int) $row['id']] = $row['name'];
+        }
     }
 
     $gap = array_diff_key($all, $acquired);

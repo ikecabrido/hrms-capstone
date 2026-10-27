@@ -177,9 +177,21 @@
         list-style: none;
     }
 
+    /* Keep the fixed-height identity blocks from shrinking. The footer stays in
+       normal flow instead of sticking over the nav, so it cannot cover the last
+       menu items while the sidebar itself scrolls on short screens. */
+    .school-logo,
+    .sidebar-header,
     .sidebar-footer {
-        position: sticky;
-        bottom: -1.2rem;
+        flex: 0 0 auto;
+    }
+
+    .sidebar > ul {
+        padding: 0 0 0.35rem;
+    }
+
+    .sidebar-footer {
+        position: static;
         z-index: 1;
         margin-top: auto;
         padding: 0.75rem 0 0.25rem;
@@ -325,6 +337,39 @@
 
     .sidebar::-webkit-scrollbar {
         display: none;
+    }
+
+    /* Short viewports: tighten the identity block and menu rows so the active
+       item is not pushed under the logout footer. The sidebar still scrolls
+       normally, and the footer stays in flow instead of covering the last
+       links. */
+    @media (max-height: 700px) {
+        .school-logo {
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-header {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .user_avatar {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        .sidebar .menu-link,
+        .sidebar .active-menu-link {
+            padding: 0.65rem 0.5rem;
+            margin-bottom: 0.35rem;
+            font-size: 0.92rem;
+        }
+
+        .sidebar-footer {
+            padding-top: 0.55rem;
+        }
     }
 
     @media (max-width: 768px) {
