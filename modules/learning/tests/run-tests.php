@@ -242,6 +242,11 @@ check(
         && strpos($exportPageSource, 'id="ld-schema-file"') !== false
         && strpos($exportPageSource, 'id="ld-data-import-file"') !== false
 );
+check(
+    'database export form bypasses the generic AJAX form handler',
+    is_string($exportPageSource)
+        && preg_match('/<form\b(?=[^>]*method="get")(?=[^>]*data-skip)[^>]*>/', $exportPageSource) === 1
+);
 
 request('learner', null);
 same('no page requested serves the dashboard', 'dashboard-overview', $pageController->getPage());

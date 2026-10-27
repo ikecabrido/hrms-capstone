@@ -35,7 +35,7 @@ try {
                             <span class="ldx-metric-label">Learning table<?= $learningTableCount === 1 ? '' : 's' ?></span>
                         </p>
                     </div>
-                    <form class="ldx-form" method="get" action="pages/admin/ajax/export-ld-database.php">
+                    <form class="ldx-form" method="get" action="pages/admin/ajax/export-ld-database.php" data-skip>
                         <div class="ldx-export-controls">
                             <label class="ldx-export-type-field">
                                 <span class="ldx-label">Export type</span>
