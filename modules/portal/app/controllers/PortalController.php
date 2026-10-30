@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Employee;
 use App\Models\Announcement;
+use App\Models\JobPosting;
 use App\Models\Performance;
 
 class PortalController
@@ -11,19 +12,21 @@ class PortalController
     private Employee $employeeModel;
     private Announcement $announcementModel;
     private Performance $performanceModel;
+    private jobPosting $jobPostingModel;
 
     public function __construct()
     {
         $this->employeeModel = new Employee();
         $this->announcementModel = new Announcement();
         $this->performanceModel = new Performance();
+        $this->jobPostingModel = new jobPosting();
     }
     public function dashboard()
     {
         $userId = $_SESSION['user_id'];
         $employee = $this->employeeModel->getByUserId($userId);
         $employeeDashboard = $this->employeeModel->getByUserId($_SESSION['user_id']);
-
+        $jobPostings = $this->jobPostingModel->all();
         $employeeName = trim(
             ($employeeDashboard['first_name'] ?? '') . ' ' .
             ($employeeDashboard['middle_name'] ?? '') . ' ' .

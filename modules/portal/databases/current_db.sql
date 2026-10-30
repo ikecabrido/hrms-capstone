@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 23, 2026 at 12:36 PM
+-- Generation Time: Oct 30, 2026 at 05:17 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -170,7 +170,7 @@ CREATE TABLE `em_employees` (
 
 INSERT INTO `em_employees` (`employee_id`, `employee_code`, `user_id`, `first_name`, `middle_name`, `last_name`, `suffix`, `gender`, `birth_date`, `birth_place`, `civil_status`, `citizenship`, `religion`, `email`, `mobile_no`, `phone_no`, `current_address`, `permanent_address`, `department_id`, `position_id`, `hire_date`, `regular_date`, `employment_status`, `employment_type`, `unit_load`, `graduate_level`, `ranking`, `credentials`, `faculty_notes`, `negotiated_salary`, `created_at`, `updated_at`, `is_archived`, `archived_at`, `archived_date`) VALUES
 (1, 'EMP-000001', 4, 'Ronaldo', 'G.', 'Raymundo', '', 'Male', '1995-01-02', NULL, 'Married', 'Filipino', NULL, 'ronaldocruz22@gmail.com', '09123456789', '0287654321', 'San Jose Del Monte, Bulacan', NULL, 3, 9, '2026-08-06', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-06 13:47:35', '2026-09-13 04:12:02', 0, NULL, NULL),
-(3, 'EMP-000003', 8, 'Erwin', 'M.', 'De Guzman', NULL, NULL, '1995-09-18', NULL, NULL, NULL, NULL, 'erwindeguzman@gmail.com', '09123456789', '0987654321', '', NULL, 3, 6, '2026-08-11', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-11 19:09:33', '2026-09-18 11:12:32', 0, NULL, NULL),
+(3, 'EMP-000003', 8, 'Erwin', 'C.', 'De Guzman', '', '', '1995-09-18', NULL, '', NULL, NULL, 'erwindeguzman@gmail.com', '09123456789', '0987654321', '', NULL, 3, 6, '2026-08-11', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-11 19:09:33', '2026-10-24 12:54:44', 0, NULL, NULL),
 (4, 'EMP-000004', 4, 'David', 'J', 'Albert', NULL, NULL, '1998-02-12', NULL, NULL, NULL, NULL, 'robert@gmail.com', '09123456789', '987654321', '', NULL, 3, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'None', '', '', '', 20000.00, '2026-08-13 11:01:36', '2026-09-21 04:32:17', 0, NULL, NULL),
 (5, 'EMP-000005', NULL, 'Althea', 'M.', 'Santos', NULL, NULL, '1999-09-19', NULL, NULL, NULL, NULL, 'admin@hrsystem.com', '09123456789', '987654321', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', 20000.00, '2026-08-13 11:04:21', '2026-08-13 15:17:40', 0, NULL, NULL),
 (6, 'EMP-000006', NULL, 'Bianca', 'G.', 'Reyes', NULL, NULL, '1995-01-11', NULL, NULL, NULL, NULL, 'admin@gmail.com', '', '987654321', '', NULL, 1, NULL, '2026-08-13', NULL, 'Active', 'Full-time', NULL, 'Masteral', '', '', '', NULL, '2026-08-13 11:05:33', '2026-08-13 15:17:40', 0, NULL, NULL),
@@ -293,6 +293,38 @@ INSERT INTO `ep_benefits_and_government_contribution` (`benefit_id`, `employee_i
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `ep_job_posting`
+--
+
+CREATE TABLE `ep_job_posting` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `comp_logo` varchar(255) DEFAULT NULL,
+  `comp_name` varchar(150) NOT NULL,
+  `open_positions` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`open_positions`)),
+  `qualifications` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`qualifications`)),
+  `benefits` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`benefits`)),
+  `comp_email` varchar(150) NOT NULL,
+  `comp_address` varchar(255) NOT NULL,
+  `comp_number` varchar(30) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `ep_job_posting`
+--
+
+INSERT INTO `ep_job_posting` (`id`, `comp_logo`, `comp_name`, `open_positions`, `qualifications`, `benefits`, `comp_email`, `comp_address`, `comp_number`, `created_at`, `updated_at`) VALUES
+(1, 'assets/uploads/company-logos/abc-tech.png', 'ABC Technologies Inc.', '[{\"title\": \"Web Developer\", \"employment_type\": \"Full-time\", \"vacancies\": 2}, {\"title\": \"IT Support Specialist\", \"employment_type\": \"Full-time\", \"vacancies\": 1}, {\"title\": \"UI/UX Designer\", \"employment_type\": \"Contractual\", \"vacancies\": 1}]', '[\"Bachelor\'s degree in Information Technology, Computer Science, or a related field\", \"Knowledge of HTML, CSS, JavaScript, and PHP\", \"Good problem-solving and communication skills\", \"Fresh graduates are welcome to apply\"]', '[\"Government-mandated benefits\", \"Health insurance\", \"Paid leave credits\", \"Training and professional development\"]', 'careers@abctech.example', 'Meycauayan City, Bulacan', '+63 917 100 1001', '2026-10-30 13:04:52', '2026-10-30 13:04:52'),
+(2, 'assets/uploads/company-logos/prime-manufacturing.png', 'Prime Manufacturing Corporation', '[{\"title\": \"Production Supervisor\", \"employment_type\": \"Full-time\", \"vacancies\": 1}, {\"title\": \"Quality Assurance Staff\", \"employment_type\": \"Full-time\", \"vacancies\": 3}, {\"title\": \"Warehouse Assistant\", \"employment_type\": \"Full-time\", \"vacancies\": 2}]', '[\"Relevant degree or vocational qualification\", \"Knowledge of workplace safety procedures\", \"Ability to work in a team-oriented environment\", \"Willing to work on shifting schedules\"]', '[\"13th month pay\", \"SSS, PhilHealth, and Pag-IBIG contributions\", \"Meal allowance\", \"Overtime pay\"]', 'hr@primemanufacturing.example', 'Marilao, Bulacan', '+63 917 100 1002', '2026-10-30 13:04:52', '2026-10-30 13:04:52'),
+(3, 'assets/uploads/company-logos/greenfield.png', 'Greenfield Retail Solutions', '[{\"title\": \"Store Manager\", \"employment_type\": \"Full-time\", \"vacancies\": 1}, {\"title\": \"Sales Associate\", \"employment_type\": \"Full-time\", \"vacancies\": 5}, {\"title\": \"Inventory Clerk\", \"employment_type\": \"Part-time\", \"vacancies\": 2}]', '[\"At least a high school diploma; college level is an advantage\", \"Customer service skills\", \"Basic computer and inventory management skills\", \"Willing to work weekends and holidays when scheduled\"]', '[\"Employee discounts\", \"Performance incentives\", \"Paid leave credits\", \"Career advancement opportunities\"]', 'recruitment@greenfield.example', 'Malolos City, Bulacan', '+63 917 100 1003', '2026-10-30 13:04:52', '2026-10-30 13:04:52'),
+(4, 'assets/uploads/company-logos/careplus.png', 'CarePlus Community Clinic', '[{\"title\": \"Registered Nurse\", \"employment_type\": \"Full-time\", \"vacancies\": 2}, {\"title\": \"Medical Receptionist\", \"employment_type\": \"Full-time\", \"vacancies\": 1}, {\"title\": \"Clinic Assistant\", \"employment_type\": \"Part-time\", \"vacancies\": 1}]', '[\"Valid professional license for positions that require one\", \"Relevant education or work experience\", \"Strong interpersonal and organizational skills\", \"Ability to handle confidential information responsibly\"]', '[\"Health and medical benefits\", \"Paid leave credits\", \"Continuing education support\", \"Government-mandated benefits\"]', 'jobs@careplusclinic.example', 'Baliwag City, Bulacan', '+63 917 100 1004', '2026-10-30 13:04:52', '2026-10-30 13:04:52'),
+(5, 'assets/uploads/company-logos/brightpath.png', 'BrightPath Learning Center', '[{\"title\": \"Elementary Teacher\", \"employment_type\": \"Full-time\", \"vacancies\": 2}, {\"title\": \"Administrative Assistant\", \"employment_type\": \"Full-time\", \"vacancies\": 1}, {\"title\": \"Guidance Associate\", \"employment_type\": \"Full-time\", \"vacancies\": 1}]', '[\"Bachelor\'s degree in Education or a related field for teaching roles\", \"Relevant professional license when required\", \"Good written and verbal communication skills\", \"Patience, adaptability, and a commitment to student development\"]', '[\"Professional development and seminars\", \"Paid leave credits\", \"Health assistance\", \"Government-mandated benefits\"]', 'careers@brightpath.example', 'San Jose del Monte City, Bulacan', '+63 917 100 1005', '2026-10-30 13:04:52', '2026-10-30 13:04:52'),
+(6, 'assets/uploads/job-postings/4baeaa5650d8b2e549aca14cb6f179c6.webp', 'sample', '[\"sample\"]', '[\"sample\"]', '[\"sample\"]', 'sample@gmail.sample', 'sample', '09929292929', '2026-10-30 15:04:31', '2026-10-30 15:04:31');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `ep_notifications`
 --
 
@@ -401,7 +433,7 @@ CREATE TABLE `ep_online_meetings` (
 
 INSERT INTO `ep_online_meetings` (`meetings_id`, `title`, `meeting_link`, `created_by`, `employee_id`, `scheduled_at`, `status`) VALUES
 (2, 'Academic Forum', 'https://meet.jit.si/hr_meeting_69d0b6b27deb8', 3, 6, '2026-04-06 14:58:00', 'cancelled'),
-(3, 'Midterm Planning', 'https://meet.jit.si/hr_meeting_69d0b6d45aa13', 3, 6, '2026-04-08 14:59:00', 'scheduled');
+(3, 'Midterm Planning', 'https://meet.jit.si/hr_meeting_69d0b6d45aa13', 3, 6, '2026-04-08 14:59:00', 'cancelled');
 
 -- --------------------------------------------------------
 
@@ -466,7 +498,8 @@ CREATE TABLE `ep_resignation_requests` (
 
 INSERT INTO `ep_resignation_requests` (`resignation_id`, `employee_id`, `resignation_type`, `resignation_reason`, `attachment`, `date_submitted`, `intended_last_working_day`, `status`, `employee_remarks`, `hr_remarks`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at`) VALUES
 (1, 5, 'With Notice', 'I have accepted a new career opportunity that aligns with my professional goals.', 'uploads/resignation/resignation_1.pdf', '2026-08-01 09:15:00', '2026-08-31', 'Rejected', 'I will ensure a proper turnover of my responsibilities.', 'sample', 3, '2026-08-17 19:40:34', '2026-08-01 07:01:43', '2026-08-17 11:40:34'),
-(8, 1, 'With Notice', 'sample', 'uploads/resignation/resignation_1_1786844898.pdf', '2026-08-16 03:48:18', '2026-08-24', 'Approved', 'sample', 'sample', 3, '2026-08-17 19:35:16', '2026-08-15 19:48:18', '2026-08-17 11:35:16');
+(8, 1, 'With Notice', 'sample', 'uploads/resignation/resignation_1_1786844898.pdf', '2026-08-16 03:48:18', '2026-08-24', 'Approved', 'sample', 'sample', 3, '2026-08-17 19:35:16', '2026-08-15 19:48:18', '2026-08-17 11:35:16'),
+(9, 3, 'Immediate', 'sample', 'uploads/resignation/resignation_3_1792848277.pdf', '2026-10-24 15:24:37', '2026-10-27', 'Pending', 'sample', NULL, NULL, NULL, '2026-10-24 07:24:37', '2026-10-24 07:24:37');
 
 -- --------------------------------------------------------
 
@@ -570,10 +603,10 @@ CREATE TABLE `ld_course` (
 
 INSERT INTO `ld_course` (`id`, `instructor_id`, `title`, `description`, `thumbnail_path`, `category`, `status`, `start_date`, `enrollment_deadline`, `created_at`, `updated_at`) VALUES
 (1, 18, 'Effective Workplace Communication', 'Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.', 'assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg', 'Communication', 'draft', '2026-09-07', '2026-09-04', '2026-08-28 14:00:22', '2026-08-31 04:26:21'),
-(2, 2, 'Time Management and Productivity', 'Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.', 'assets/uploads/learning/course_20260829_115529_1ed358fae5.png', 'Productivity', 'active', '2026-09-09', '2026-09-06', '2026-08-28 14:00:22', '2026-08-31 04:41:42'),
+(2, 2, 'Time Management and Productivity', 'Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.', 'assets/uploads/learning/course_20260829_115529_1ed358fae5.png', 'Productivity', 'draft', '2026-09-09', '2026-09-06', '2026-08-28 14:00:22', '2026-10-23 10:56:36'),
 (3, 3, 'Leadership Essentials', 'Learn the fundamentals of effective leadership including decision-making, delegation, motivation, accountability, and team management.', 'assets/uploads/learning/course_20260829_120838_6b5ceb7e3e.png', 'Leadership', 'active', '2026-09-14', '2026-09-11', '2026-08-28 14:00:22', '2026-08-29 10:08:38'),
 (4, 4, 'Workplace Ethics and Professional Conduct', 'Understand professional ethics, workplace behavior, accountability, confidentiality, and responsible decision-making.', 'uploads/courses/workplace-ethics.jpg', 'Compliance', 'active', '2026-09-16', '2026-09-13', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
-(5, 5, 'Microsoft Excel for Office Productivity', 'Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.', 'assets/uploads/learning/course_20260831_152555_4da469d476.png', 'Technical Skills', 'active', '2026-09-21', '2026-09-18', '2026-08-28 14:00:22', '2026-08-31 13:25:55'),
+(5, 5, 'Microsoft Excel for Office Productivity', 'Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.', 'assets/uploads/learning/course_20261023_125809_4fec43d250.png', 'Technical Skills', 'active', '2026-09-21', '2026-09-18', '2026-08-28 14:00:22', '2026-10-23 10:58:09'),
 (6, 6, 'Customer Service Excellence', 'Improve customer service skills through effective listening, problem solving, professional communication, and handling difficult situations.', 'uploads/courses/customer-service.jpg', 'Customer Service', 'active', '2026-09-23', '2026-09-20', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
 (7, 7, 'Teamwork and Collaboration', 'Build stronger teamwork skills through collaboration strategies, conflict management, trust building, and effective team participation.', 'uploads/courses/teamwork-collaboration.jpg', 'Team Development', 'active', '2026-09-28', '2026-09-25', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
 (9, 9, 'Workplace Well-Being and Stress Management', 'Learn practical strategies for managing workplace stress, maintaining work-life balance, and developing healthy professional habits.', 'uploads/courses/stress-management.jpg', 'Well-Being', 'active', '2026-10-05', '2026-10-02', '2026-08-28 14:00:22', '2026-08-28 14:00:22'),
@@ -625,7 +658,7 @@ INSERT INTO `ld_course_instructor` (`id`, `course_id`, `instructor_id`, `role`, 
 (58, 17, 5, 'co-instructor', '2026-08-30 12:38:32'),
 (74, 1, 18, 'owner', '2026-08-31 04:26:21'),
 (78, 2, 2, 'owner', '2026-08-31 04:41:42'),
-(79, 5, 5, 'owner', '2026-08-31 13:25:55');
+(80, 5, 5, 'owner', '2026-10-23 10:58:09');
 
 -- --------------------------------------------------------
 
@@ -731,7 +764,8 @@ INSERT INTO `ld_course_version` (`id`, `course_id`, `version_number`, `snapshot`
 (34, 1, 11, '{\"title\":\"Effective Workplace Communication\",\"description\":\"Develop professional communication skills for communicating clearly and effectively with colleagues, supervisors, and clients.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_113305_42333b0e9a.jpg\",\"category\":\"Communication\",\"status\":\"draft\",\"start_date\":\"2026-09-07\",\"enrollment_deadline\":\"2026-09-04\",\"instructor_id\":18,\"co_instructors\":[],\"skills\":[1,2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:26:21'),
 (37, 2, 8, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity. nigger\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[],\"skills\":[2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:41:30'),
 (38, 2, 9, '{\"title\":\"Time Management and Productivity\",\"description\":\"Learn practical techniques for prioritizing tasks, managing deadlines, reducing procrastination, and improving workplace productivity.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260829_115529_1ed358fae5.png\",\"category\":\"Productivity\",\"status\":\"active\",\"start_date\":\"2026-09-09\",\"enrollment_deadline\":\"2026-09-06\",\"instructor_id\":2,\"co_instructors\":[],\"skills\":[2,3,4,5,6],\"lessons\":[]}', '2026-08-31 04:41:42'),
-(39, 5, 2, '{\"title\":\"Microsoft Excel for Office Productivity\",\"description\":\"Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260831_152555_4da469d476.png\",\"category\":\"Technical Skills\",\"status\":\"active\",\"start_date\":\"2026-09-21\",\"enrollment_deadline\":\"2026-09-18\",\"instructor_id\":5,\"co_instructors\":[],\"skills\":[],\"lessons\":[]}', '2026-08-31 13:25:55');
+(39, 5, 2, '{\"title\":\"Microsoft Excel for Office Productivity\",\"description\":\"Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.\",\"thumbnail_path\":\"assets/uploads/learning/course_20260831_152555_4da469d476.png\",\"category\":\"Technical Skills\",\"status\":\"active\",\"start_date\":\"2026-09-21\",\"enrollment_deadline\":\"2026-09-18\",\"instructor_id\":5,\"co_instructors\":[],\"skills\":[],\"lessons\":[]}', '2026-08-31 13:25:55'),
+(40, 5, 3, '{\"title\":\"Microsoft Excel for Office Productivity\",\"description\":\"Develop practical Microsoft Excel skills including formulas, functions, data organization, charts, and basic data analysis.\",\"thumbnail_path\":\"assets/uploads/learning/course_20261023_125809_4fec43d250.png\",\"category\":\"Technical Skills\",\"status\":\"active\",\"start_date\":\"2026-09-21\",\"enrollment_deadline\":\"2026-09-18\",\"instructor_id\":5,\"co_instructors\":[],\"skills\":[],\"lessons\":[]}', '2026-10-23 10:58:09');
 
 -- --------------------------------------------------------
 
@@ -1211,6 +1245,13 @@ ALTER TABLE `ep_benefits_and_government_contribution`
   ADD PRIMARY KEY (`benefit_id`);
 
 --
+-- Indexes for table `ep_job_posting`
+--
+ALTER TABLE `ep_job_posting`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_ep_job_posting_comp_name` (`comp_name`);
+
+--
 -- Indexes for table `ep_notifications`
 --
 ALTER TABLE `ep_notifications`
@@ -1401,6 +1442,12 @@ ALTER TABLE `ep_benefits_and_government_contribution`
   MODIFY `benefit_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
+-- AUTO_INCREMENT for table `ep_job_posting`
+--
+ALTER TABLE `ep_job_posting`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `ep_notifications`
 --
 ALTER TABLE `ep_notifications`
@@ -1428,7 +1475,7 @@ ALTER TABLE `ep_payroll_request`
 -- AUTO_INCREMENT for table `ep_resignation_requests`
 --
 ALTER TABLE `ep_resignation_requests`
-  MODIFY `resignation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `resignation_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `ep_users`
@@ -1452,7 +1499,7 @@ ALTER TABLE `ld_course`
 -- AUTO_INCREMENT for table `ld_course_instructor`
 --
 ALTER TABLE `ld_course_instructor`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
 
 --
 -- AUTO_INCREMENT for table `ld_course_skill`
@@ -1464,7 +1511,7 @@ ALTER TABLE `ld_course_skill`
 -- AUTO_INCREMENT for table `ld_course_version`
 --
 ALTER TABLE `ld_course_version`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `ld_enrollment`

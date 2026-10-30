@@ -13,6 +13,7 @@ use App\Controllers\TrainingController;
 use App\Controllers\ComplaintController;
 use App\Controllers\GrievanceController;
 use App\Controllers\AttendanceController;
+use App\Controllers\JobPostingController;
 use App\Controllers\ResignationController;
 use App\Controllers\PerformanceController;
 use App\Controllers\EmployeeUserController;
@@ -175,7 +176,9 @@ $routes = [
     'employee-api-login' => [SendEmployeesController::class, 'login'],
     'gen-pass' => [SendEmployeesController::class, 'genPass'],
 
-
+    // Job Posting
+    'admin-job-posting' => [JobPostingController::class, 'adminIndex'],
+    'job-posting-store' => [JobPostingController::class, 'create'],
 ];
 
 /*

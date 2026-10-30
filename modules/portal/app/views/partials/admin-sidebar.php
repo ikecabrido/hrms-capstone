@@ -45,6 +45,13 @@
             </a>
         </li>
 
+        <li>
+            <a href="index.php?url=admin-job-posting" class="menu-link">
+                <i class="fa-solid fa-clipboard-list"></i>
+                Manage Job Posting
+            </a>
+        </li>
+
         <div class="separator"></div>
 
         <!-- REQUEST MANAGEMENT -->

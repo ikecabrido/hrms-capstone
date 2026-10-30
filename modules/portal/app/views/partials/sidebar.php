@@ -167,7 +167,7 @@
                 </a>
             </li>
 
-            <li>
+            <!-- <li>
                 <a href="index.php?url=online-meeting" class="menu-link" style="
             display:flex;
             align-items:center;
@@ -176,7 +176,7 @@
                     <i class="fa-solid fa-video"></i>
                     <span>Online Meeting</span>
                 </a>
-            </li>
+            </li> -->
 
 
         </ul>

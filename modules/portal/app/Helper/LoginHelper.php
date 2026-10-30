@@ -8,7 +8,7 @@ use App\Core\Session;
 class LoginHelper
 {
     public const MAX_ATTEMPTS = 3;
-    public const LOCKOUT_SECONDS = 60;
+    public const LOCKOUT_SECONDS = 30;
     public static function checkRateLimit(): void
     {
         $lockedUntil = (int) Session::get(

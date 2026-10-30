@@ -1,6 +1,7 @@
 <div class="employee-dashboard">
     <div class="cursor-tracer"> </div>
-    <section class="dashboard-welcome" id="dashboardWelcome">
+    <section class="dashboard-welcome" id="dashboardWelcome"
+    style="display: none !important;">
 
         <!-- Decorative animated background -->
         <div class="welcome-glow glow-one"></div>
@@ -34,6 +35,8 @@
         </div>
 
     </section>
+
+    <?php require __DIR__ . '/_job-posting.php'; ?>
 
     <?php require __DIR__ . '/../partials/notification.php'; ?>
 

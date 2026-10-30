@@ -65,7 +65,8 @@ $employeeName = $employeeName !== ''
 
 $employeePosition = $employeeDashboard['position']
     ?? 'Employee Position';
-
+$employmentType = $employeeDashboard['employment_type']
+    ?? 'Employment Type';
 
 /*
 |--------------------------------------------------------------------------

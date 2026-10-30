@@ -2,7 +2,7 @@
 
     <div class="profile-avatar">
 
-    <?php require __DIR__ . '/employee-profile-image-logo.php'; ?>
+        <?php require __DIR__ . '/employee-profile-image-logo.php'; ?>
 
     </div>
     <?php if (!empty($employeeName)): ?>
@@ -22,4 +22,11 @@
         <?php endif; ?>
     </p>
 
+    <p class="employee_position" style="font-size: 11px;">
+        <?php if ($_SESSION['is_admin'] == true): ?>
+            <span>System Administrator</span>
+        <?php else: ?>
+            <?= htmlspecialchars($employmentType) ?>
+        <?php endif; ?>
+    </p>
 </div>
