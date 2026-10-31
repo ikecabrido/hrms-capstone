@@ -12,14 +12,14 @@ class PortalController
     private Employee $employeeModel;
     private Announcement $announcementModel;
     private Performance $performanceModel;
-    private jobPosting $jobPostingModel;
+    private JobPosting $jobPostingModel;
 
     public function __construct()
     {
         $this->employeeModel = new Employee();
         $this->announcementModel = new Announcement();
         $this->performanceModel = new Performance();
-        $this->jobPostingModel = new jobPosting();
+        $this->jobPostingModel = new JobPosting();
     }
     public function dashboard()
     {
