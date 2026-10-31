@@ -1,4 +1,3 @@
-
 <style>
     .bcp-jobs {
         --bcp-primary: #0866e9;
@@ -571,340 +570,367 @@
         </div>
 
     </div>
+<?php
+$jobPostings = (isset($jobPostings) && is_array($jobPostings))
+    ? $jobPostings
+    : [];
+?>
 
-    <?php if (!empty($jobPostings)): ?>
+<?php if (!empty($jobPostings)): ?>
 
-        <?php
-        $getItems = static function ($value) {
-            if (is_array($value)) {
-                return $value;
-            }
+    <?php
+    $decodeItems = static function ($value) {
+        if (is_array($value)) {
+            return $value;
+        }
 
-            return preg_split(
-                '/\r\n|\r|\n/',
-                trim((string) $value),
-                -1,
-                PREG_SPLIT_NO_EMPTY
-            ) ?: [];
-        };
-        ?>
+        $decoded = json_decode((string) $value, true);
 
-        <div class="bcp-job-inner">
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
 
-            <?php foreach ($jobPostings as $index => $job): ?>
+        // Fallback for regular multiline text
+        return preg_split(
+            '/\r\n|\r|\n/',
+            trim((string) $value),
+            -1,
+            PREG_SPLIT_NO_EMPTY
+        ) ?: [];
+    };
+    ?>
 
-                <?php
-                $companyName = $job['comp_name'] ?? 'Company Name';
+    <div class="bcp-job-inner">
 
-                $logo = !empty($job['company_logo'])
-                    ? asset(ltrim($job['company_logo'], '/'))
-                    : '';
+        <?php foreach ($jobPostings as $index => $job): ?>
 
-$decodeItems = static function ($value) {
-    if (is_array($value)) {
-        return $value;
-    }
+            <?php
+            $companyName = $job['comp_name'] ?? 'Company Name';
 
-    $decoded = json_decode((string) $value, true);
+            $logo = !empty($job['company_logo'])
+                ? asset(ltrim($job['company_logo'], '/'))
+                : '';
 
-    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-        return $decoded;
-    }
+            $decodeItems = static function ($value) {
+                if (is_array($value)) {
+                    return $value;
+                }
 
-    // Fallback for regular multiline text
-    return preg_split(
-        '/\r\n|\r|\n/',
-        trim((string) $value),
-        -1,
-        PREG_SPLIT_NO_EMPTY
-    ) ?: [];
-};
+                $decoded = json_decode((string) $value, true);
 
-$qualifications = $decodeItems($job['qualifications'] ?? '');
-$benefits = $decodeItems($job['benefits'] ?? '');
-$positions = $decodeItems($job['open_positions'] ?? '');
-                ?>
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    return $decoded;
+                }
 
-                <article
-                    class="bcp-job-slide <?= $index === 0 ? 'active' : '' ?>"
-                    aria-hidden="<?= $index === 0 ? 'false' : 'true' ?>"
-                >
+                return preg_split(
+                    '/\r\n|\r|\n/',
+                    trim((string) $value),
+                    -1,
+                    PREG_SPLIT_NO_EMPTY
+                ) ?: [];
+            };
 
-                    <div class="bcp-job-main">
+            $qualifications = $decodeItems($job['qualifications'] ?? '');
+            $benefits = $decodeItems($job['benefits'] ?? '');
+            $positions = $decodeItems($job['open_positions'] ?? '');
+            ?>
 
-                        <!-- COMPANY INFORMATION -->
-                        <div class="bcp-company">
+            <article
+                class="bcp-job-slide <?= $index === 0 ? 'active' : '' ?>"
+                aria-hidden="<?= $index === 0 ? 'false' : 'true' ?>"
+            >
 
-                            <div class="bcp-company-logo">
+                <div class="bcp-job-main">
 
-                                <?php if ($logo): ?>
+                    <!-- COMPANY INFORMATION -->
+                    <div class="bcp-company">
 
-                                    <img
-                                        src="<?= htmlspecialchars($logo, ENT_QUOTES, 'UTF-8') ?>"
-                                        alt="<?= htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8') ?> Logo"
-                                    >
+                        <div class="bcp-company-logo">
+
+                            <?php if ($logo): ?>
+
+                                <img
+                                    src="<?= htmlspecialchars($logo, ENT_QUOTES, 'UTF-8') ?>"
+                                    alt="<?= htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8') ?> Logo"
+                                >
+
+                            <?php else: ?>
+
+                                <img
+                                    src="<?= asset('assets/images/bcp-logo.png') ?>"
+                                    alt="BCP Logo"
+                                >
+
+                            <?php endif; ?>
+
+                        </div>
+
+                        <div>
+                            <div class="bcp-company-name">
+                                <?= htmlspecialchars(strtoupper($companyName), ENT_QUOTES, 'UTF-8') ?>
+                            </div>
+
+                            <div class="bcp-company-subtitle">
+                                Education &nbsp; | &nbsp; Excellence &nbsp; | &nbsp; Service
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- JOB DETAILS -->
+                    <div class="bcp-job-grid">
+
+                        <div>
+
+                            <h1 class="bcp-hiring-title" style="font-size: 90px;">
+                                We are<br>
+                                <span>Hiring!</span>
+                            </h1>
+
+                            <!-- QUALIFICATIONS -->
+                            <div class="bcp-job-group">
+
+                                <h3 class="bcp-job-heading">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    Qualifications
+                                </h3>
+
+                                <ul class="bcp-job-list">
+
+                                    <?php if (!empty($qualifications)): ?>
+
+                                        <?php foreach ($qualifications as $item): ?>
+                                            <li>
+                                                <?= htmlspecialchars(
+                                                    is_array($item)
+                                                        ? implode(', ', array_map('strval', $item))
+                                                        : trim((string) $item),
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>
+                                            </li>
+                                        <?php endforeach; ?>
+
+                                    <?php else: ?>
+
+                                        <li>No qualifications specified.</li>
+
+                                    <?php endif; ?>
+
+                                </ul>
+
+                            </div>
+
+                            <!-- BENEFITS -->
+                            <div class="bcp-job-group">
+
+                                <h3 class="bcp-job-heading">
+                                    <i class="fas fa-gift"></i>
+                                    Benefits
+                                </h3>
+
+                                <ul class="bcp-job-list">
+
+                                    <?php if (!empty($benefits)): ?>
+
+                                        <?php foreach ($benefits as $item): ?>
+                                            <li>
+                                                <?= htmlspecialchars(
+                                                    is_array($item)
+                                                        ? implode(', ', array_map('strval', $item))
+                                                        : trim((string) $item),
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>
+                                            </li>
+                                        <?php endforeach; ?>
+
+                                    <?php else: ?>
+
+                                        <li>No benefits specified.</li>
+
+                                    <?php endif; ?>
+
+                                </ul>
+
+                            </div>
+
+                        </div>
+
+                        <!-- OPEN POSITIONS -->
+                        <div class="bcp-positions">
+
+                            <h3 class="bcp-positions-heading">
+                                <i class="fas fa-briefcase"></i>
+                                Open Positions
+                            </h3>
+
+                            <div class="bcp-position-list">
+
+                                <?php if (!empty($positions)): ?>
+
+                                    <?php foreach ($positions as $position): ?>
+
+                                        <?php
+                                        $positionName = '';
+                                        $employeeCount = 0;
+
+                                        if (is_array($position)) {
+                                            $positionName = $position['position']
+                                                ?? $position['title']
+                                                ?? $position['name']
+                                                ?? '';
+
+                                            $employeeCount = $position['quantity']
+                                                ?? $position['count']
+                                                ?? $position['vacancies']
+                                                ?? 0;
+                                        } else {
+                                            $positionName = $position;
+                                        }
+                                        ?>
+
+                                        <div class="bcp-position-item">
+
+                                            <span class="bcp-position-name">
+                                                <?= htmlspecialchars(
+                                                    trim((string) $positionName),
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>
+                                            </span>
+
+                                            <span class="bcp-position-count">
+                                                <?= (int) $employeeCount ?> needed
+                                            </span>
+
+                                        </div>
+
+                                    <?php endforeach; ?>
 
                                 <?php else: ?>
 
-                                    <img
-                                        src="<?= asset('assets/images/bcp-logo.png') ?>"
-                                        alt="BCP Logo"
-                                    >
+                                    <div class="bcp-no-position">
+                                        No open positions specified.
+                                    </div>
 
                                 <?php endif; ?>
 
                             </div>
 
-                            <div>
-<div class="bcp-company-name">
-    <?= htmlspecialchars(strtoupper($companyName), ENT_QUOTES, 'UTF-8') ?>
-</div>
-
-                                <div class="bcp-company-subtitle">
-                                    Education &nbsp; | &nbsp; Excellence &nbsp; | &nbsp; Service
-                                </div>
-                            </div>
-
                         </div>
 
-                        <!-- JOB DETAILS -->
-                        <div class="bcp-job-grid">
-
-                            <div>
-
-                                <h1 class="bcp-hiring-title" style="font-size: 90px;">
-                                    We are<br>
-                                    <span>Hiring!</span>
-                                </h1>
-<!-- QUALIFICATIONS -->
-<div class="bcp-job-group">
-
-    <h3 class="bcp-job-heading">
-        <i class="fas fa-graduation-cap"></i>
-        Qualifications
-    </h3>
-
-    <ul class="bcp-job-list">
-        <?php if (!empty($qualifications)): ?>
-
-            <?php foreach ($qualifications as $item): ?>
-                <li>
-                    <?= htmlspecialchars(trim((string) $item), ENT_QUOTES, 'UTF-8') ?>
-                </li>
-            <?php endforeach; ?>
-
-        <?php else: ?>
-
-            <li>No qualifications specified.</li>
-
-        <?php endif; ?>
-    </ul>
-
-</div>
-
-                                <!-- BENEFITS -->
-                                <div class="bcp-job-group">
-
-                                    <h3 class="bcp-job-heading">
-                                        <i class="fas fa-gift"></i>
-                                        Benefits
-                                    </h3>
-
-                                    <ul class="bcp-job-list">
-
-                                        <?php if (!empty($benefits)): ?>
-
-                                            <?php foreach ($benefits as $item): ?>
-                                                <li>
-                                                    <?= htmlspecialchars(trim((string) $item), ENT_QUOTES, 'UTF-8') ?>
-                                                </li>
-                                            <?php endforeach; ?>
-
-                                        <?php else: ?>
-
-                                            <li>No benefits specified.</li>
-
-                                        <?php endif; ?>
-
-                                    </ul>
-
-                                </div>
-
-                            </div>
-
-<!-- OPEN POSITIONS -->
-<div class="bcp-positions">
-
-    <h3 class="bcp-positions-heading">
-        <i class="fas fa-briefcase"></i>
-        Open Positions
-    </h3>
-
-    <div class="bcp-position-list">
-
-        <?php if (!empty($positions)): ?>
-
-            <?php foreach ($positions as $position): ?>
-
-                <?php
-                    $positionName = '';
-                    $employeeCount = 0;
-
-                    if (is_array($position)) {
-                        $positionName = $position['position']
-                            ?? $position['title']
-                            ?? $position['name']
-                            ?? '';
-
-                        $employeeCount = $position['quantity']
-                            ?? $position['count']
-                            ?? $position['vacancies']
-                            ?? 0;
-                    } else {
-                        $positionName = $position;
-                    }
-                ?>
-
-                <div class="bcp-position-item">
-
-                    <span class="bcp-position-name">
-                        <?= htmlspecialchars(
-                            trim((string) $positionName),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </span>
-
-                    <span class="bcp-position-count">
-                        <?= (int) $employeeCount ?> needed
-                    </span>
+                    </div>
 
                 </div>
 
-            <?php endforeach; ?>
+                <!-- CONTACT FOOTER -->
+                <div class="bcp-job-footer">
 
-        <?php else: ?>
+                    <div class="bcp-contact">
 
-            <div class="bcp-no-position">
-                No open positions specified.
+                        <div class="bcp-contact-icon">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+
+                        <div>
+                            <strong class="bcp-contact-title">
+                                Send Your CV
+                            </strong>
+
+                            <span class="bcp-contact-info">
+                                <i class="fas fa-envelope"></i>
+                                <?= htmlspecialchars($job['comp_email'] ?? 'Email not provided', ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+
+                            <span class="bcp-contact-info">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <?= htmlspecialchars($job['comp_address'] ?? 'Address not provided', ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="bcp-contact">
+
+                        <div class="bcp-contact-icon">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+
+                        <div>
+                            <strong class="bcp-contact-title">
+                                Contact Us
+                            </strong>
+
+                            <span class="bcp-contact-info">
+                                <i class="fas fa-phone"></i>
+                                <?= htmlspecialchars($job['comp_number'] ?? 'Contact number not provided', ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+
+                            <span class="bcp-contact-info">
+                                <i class="fas fa-envelope"></i>
+                                <?= htmlspecialchars($job['comp_email'] ?? 'Email not provided', ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="bcp-join-message">
+                        Join Our<br>Team!
+                    </div>
+
+                </div>
+
+            </article>
+
+        <?php endforeach; ?>
+
+        <!-- DOT PAGINATION -->
+        <?php if (count($jobPostings) > 1): ?>
+
+            <div class="bcp-job-pagination">
+
+                <?php foreach ($jobPostings as $index => $job): ?>
+
+                    <button
+                        type="button"
+                        class="bcp-job-dot <?= $index === 0 ? 'active' : '' ?>"
+                        data-index="<?= $index ?>"
+                        aria-label="Show job posting <?= $index + 1 ?>"
+                        aria-current="<?= $index === 0 ? 'true' : 'false' ?>"
+                    ></button>
+
+                <?php endforeach; ?>
+
             </div>
 
         <?php endif; ?>
 
     </div>
 
-</div>
+<?php else: ?>
 
-                        </div>
+    <!-- EMPTY STATE -->
+    <div class="bcp-job-inner">
 
-                    </div>
+        <div class="bcp-job-empty">
 
-                    <!-- CONTACT FOOTER -->
-                    <div class="bcp-job-footer">
+            <i class="fas fa-briefcase"></i>
 
-                        <div class="bcp-contact">
+            <h2 style="color:#10265c; font-size:20px; margin:15px 0 8px;">
+                No Job Openings Available
+            </h2>
 
-                            <div class="bcp-contact-icon">
-                                <i class="fas fa-paper-plane"></i>
-                            </div>
-
-                            <div>
-                                <strong class="bcp-contact-title">
-                                    Send Your CV
-                                </strong>
-
-                                <span class="bcp-contact-info">
-                                    <i class="fas fa-envelope"></i>
-                                    <?= htmlspecialchars($job['comp_email'] ?? 'Email not provided', ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-
-                                <span class="bcp-contact-info">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <?= htmlspecialchars($job['comp_address'] ?? 'Address not provided', ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                            </div>
-
-                        </div>
-
-                        <div class="bcp-contact">
-
-                            <div class="bcp-contact-icon">
-                                <i class="fas fa-phone-alt"></i>
-                            </div>
-
-                            <div>
-                                <strong class="bcp-contact-title">
-                                    Contact Us
-                                </strong>
-
-                                <span class="bcp-contact-info">
-                                    <i class="fas fa-phone"></i>
-                                    <?= htmlspecialchars($job['comp_number'] ?? 'Contact number not provided', ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-
-                                <span class="bcp-contact-info">
-                                    <i class="fas fa-envelope"></i>
-                                    <?= htmlspecialchars($job['comp_email'] ?? 'Email not provided', ENT_QUOTES, 'UTF-8') ?>
-                                </span>
-                            </div>
-
-                        </div>
-
-                        <div class="bcp-join-message">
-                            Join Our<br>Team!
-                        </div>
-
-                    </div>
-
-                </article>
-
-            <?php endforeach; ?>
-
-            <!-- DOT PAGINATION -->
-            <?php if (count($jobPostings) > 1): ?>
-
-                <div class="bcp-job-pagination">
-
-                    <?php foreach ($jobPostings as $index => $job): ?>
-
-                        <button
-                            type="button"
-                            class="bcp-job-dot <?= $index === 0 ? 'active' : '' ?>"
-                            data-index="<?= $index ?>"
-                            aria-label="Show job posting <?= $index + 1 ?>"
-                            aria-current="<?= $index === 0 ? 'true' : 'false' ?>"
-                        ></button>
-
-                    <?php endforeach; ?>
-
-                </div>
-
-            <?php endif; ?>
+            <p style="font-size:13px;">
+                There are currently no available job postings.
+                Please check again later.
+            </p>
 
         </div>
 
-    <?php else: ?>
+    </div>
 
-        <div class="bcp-job-inner">
-
-            <div class="bcp-job-empty">
-
-                <i class="fas fa-briefcase"></i>
-
-                <h2 style="color:#10265c; font-size:20px; margin:15px 0 8px;">
-                    No Job Openings Available
-                </h2>
-
-                <p style="font-size:13px;">
-                    There are currently no available job postings.
-                    Please check again later.
-                </p>
-
-            </div>
-
-        </div>
-
-    <?php endif; ?>
+<?php endif; ?>
 
 </section>
 
