@@ -712,7 +712,8 @@
 
                             <?php if ($status === 'PENDING'): ?>
 
-                              <form action="<?= htmlspecialchars(appUrl('index.php?url=leave-cancel'), ENT_QUOTES, 'UTF-8') ?>" method="POST" style="display:inline;">
+                                <form action="<?= htmlspecialchars(appUrl('index.php?url=leave-cancel'), ENT_QUOTES, 'UTF-8') ?>"
+                                    method="POST" style="display:inline;">
                                     <input type="hidden" name="leave_request_id" value="<?= htmlspecialchars($requestId) ?>">
 
                                     <button type="submit" style="
@@ -905,7 +906,8 @@
 
                     <?= count($leaveHistory ?? []) ?> Records
                 </span>
-                <button type="button" data-bs-toggle="modal" data-bs-target="#submitLeaveModal" style="
+                <a href="index.php?url=leave-create-validate" style="
+                text-decoration: none;
                 display:inline-flex;
                 align-items:center;
                 justify-content:center;
@@ -927,12 +929,11 @@
                         <i class="fas fa-plus"></i>
                         Create Leave Request
                     </span>
-                </button>
+
+                </a>
             </div>
 
         </div>
-
-
         <?php if (!empty($leaveHistory)): ?>
 
             <!-- TABLE CONTAINER -->
@@ -1349,7 +1350,7 @@
 
                                     <?php if (!empty($leave['supporting_document'])): ?>
 
-                                    <a href="<?= htmlspecialchars(asset('assets/uploads/leave/' . $leave['supporting_document']), ENT_QUOTES, 'UTF-8') ?>"
+                                        <a href="<?= htmlspecialchars(asset('assets/uploads/leave/' . $leave['supporting_document']), ENT_QUOTES, 'UTF-8') ?>"
                                             target="_blank" rel="noopener noreferrer" style="
                 display:inline-flex;
                 align-items:center;
@@ -1422,8 +1423,6 @@
                 <i class="fas fa-arrows-alt-h"></i>
                 <span>Swipe or scroll horizontally to view more</span>
             </div>
-
-
         <?php else: ?>
 
             <!-- EMPTY STATE -->

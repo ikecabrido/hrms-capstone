@@ -83,6 +83,7 @@ $routes = [
     // Leave Request
     'leave-request' => [LeaveController::class, 'index'],
     'admin-leave-request' => [LeaveController::class, 'adminIndex'],
+    'leave-create-validate' => [LeaveController::class, 'create'],
     'leave-store' => [LeaveController::class, 'store'],
     'leave-cancel' => [LeaveController::class, 'cancel'],
     'leave-reject' => [LeaveController::class, 'reject'],

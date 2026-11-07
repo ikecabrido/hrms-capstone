@@ -7,6 +7,7 @@ use App\Core\Session;
 use App\Helper\Helper;
 use App\Models\Leave;
 use App\Models\Employee;
+use App\Services\LeaveAccessValidationService;
 
 class LeaveController
 {
@@ -34,6 +35,210 @@ class LeaveController
         $content = __DIR__ . '/../views/employee-portal/leave/content.php';
         require __DIR__ . '/../views/employee-portal/index.php';
     }
+
+
+    public function create(): void
+    {
+        $title = "Employee Create Leave Request";
+
+        $content = __DIR__ . '/../views/employee-portal/leave/content.php';
+
+        // Initialize variables to prevent undefined variable warnings.
+        $employee = null;
+        $leaveHistory = [];
+        $leaveTypes = [];
+        $leaveAccess = null;
+
+        try {
+
+            // 1. Check authentication.
+            $userId = $_SESSION['user_id'] ?? null;
+
+            if (empty($userId)) {
+                $_SESSION['error'] = 'Your session has expired. Please log in again.';
+
+                error_log('[LEAVE ACCESS] Missing user_id in session.');
+
+                require __DIR__ . '/../views/employee-portal/index.php';
+                return;
+            }
+
+            // 2. Retrieve employee profile.
+            $employee = $this->employeeModel->getByUserId((int) $userId);
+
+            if (empty($employee)) {
+                $_SESSION['error'] = 'Your employee profile could not be found. Please contact HR.';
+
+                error_log(
+                    '[LEAVE ACCESS] Employee profile not found. User ID: ' . $userId
+                );
+
+                require __DIR__ . '/../views/employee-portal/index.php';
+                return;
+            }
+
+            if (empty($employee['employee_id'])) {
+                $_SESSION['error'] = 'Your employee ID is missing from your profile. Please contact HR.';
+
+                error_log(
+                    '[LEAVE ACCESS] Missing employee_id. User ID: ' . $userId
+                );
+
+                require __DIR__ . '/../views/employee-portal/index.php';
+                return;
+            }
+
+            $employeeId = (int) $employee['employee_id'];
+
+            // 3. Validate required employee information.
+            $requiredFields = [
+                'hire_date' => 'Hire date',
+                'employment_status' => 'Employment status',
+                'employment_type' => 'Employment type',
+            ];
+
+            $missingFields = [];
+
+            foreach ($requiredFields as $field => $label) {
+                if (
+                    !array_key_exists($field, $employee) ||
+                    $employee[$field] === null ||
+                    trim((string) $employee[$field]) === ''
+                ) {
+                    $missingFields[] = $label;
+                }
+            }
+
+            if (!empty($missingFields)) {
+                $missingData = implode(', ', $missingFields);
+
+                $_SESSION['error'] =
+                    'Your employee profile has incomplete information: ' .
+                    $missingData .
+                    '. Please contact HR to update your records.';
+
+                error_log(
+                    '[LEAVE ACCESS] Missing employee information. ' .
+                    'Employee ID: ' . $employeeId .
+                    ' | Missing fields: ' . $missingData
+                );
+
+                require __DIR__ . '/../views/employee-portal/index.php';
+                return;
+            }
+
+            // 4. Retrieve leave history.
+            $leaveHistory = $this->leaveModel->getLeave($employeeId);
+
+            if (!is_array($leaveHistory)) {
+                throw new \UnexpectedValueException(
+                    'Unable to retrieve employee leave history.'
+                );
+            }
+
+            // 5. Retrieve available leave types.
+            $leaveTypes = $this->leaveModel->allTypes();
+
+            if (!is_array($leaveTypes) || empty($leaveTypes)) {
+                $_SESSION['error'] =
+                    'No leave types are currently available. Please contact HR.';
+
+                error_log(
+                    '[LEAVE ACCESS] No leave types found. Employee ID: ' . $employeeId
+                );
+
+                require __DIR__ . '/../views/employee-portal/index.php';
+                return;
+            }
+
+            // 6. Perform eligibility validation.
+            $validationService = new LeaveAccessValidationService();
+
+            $validation = $validationService->validate(
+                $employee,
+                $leaveTypes
+            );
+
+            // Check whether the validation service returned a valid result.
+            if (
+                !is_array($validation) ||
+                !array_key_exists('can_access', $validation) ||
+                !array_key_exists('message', $validation) ||
+                !array_key_exists('eligible_leave_types', $validation)
+            ) {
+                throw new \UnexpectedValueException(
+                    'Leave eligibility service returned an invalid response.'
+                );
+            }
+
+            // 7. Handle failed eligibility validation.
+            if (!$validation['can_access']) {
+
+                $reason = $validation['message']
+                    ?: 'You are currently not eligible to submit a leave request.';
+
+                $_SESSION['error'] = $reason;
+
+                error_log(
+                    '[LEAVE ACCESS] Eligibility validation failed. ' .
+                    'Employee ID: ' . $employeeId .
+                    ' | Reason: ' . $reason .
+                    ' | Restrictions: ' . json_encode(
+                        $validation['restrictions'] ?? [],
+                        JSON_UNESCAPED_SLASHES
+                    )
+                );
+
+                require __DIR__ . '/../views/employee-portal/index.php';
+                return;
+            }
+
+            // 8. Check eligible leave types.
+            $leaveTypes = $validation['eligible_leave_types'];
+
+            if (empty($leaveTypes)) {
+                $_SESSION['error'] =
+                    'You do not currently have any eligible leave types. Please contact HR.';
+
+                error_log(
+                    '[LEAVE ACCESS] No eligible leave types. Employee ID: ' . $employeeId
+                );
+
+                require __DIR__ . '/../views/employee-portal/index.php';
+                return;
+            }
+
+            // 9. Pass validation information to the view.
+            $leaveAccess = $validation;
+
+            // 10. Display leave request form.
+            $content = __DIR__ . '/../views/employee-portal/leave/create-leave.php';
+
+        } catch (\Throwable $e) {
+
+            // Record detailed technical information in the server error log.
+            error_log(
+                "[LEAVE ACCESS ERROR]\n" .
+                "User ID: " . ($userId ?? 'Unknown') . "\n" .
+                "Employee ID: " . ($employee['employee_id'] ?? 'Unknown') . "\n" .
+                "Error: " . $e->getMessage() . "\n" .
+                "File: " . $e->getFile() . "\n" .
+                "Line: " . $e->getLine() . "\n" .
+                "Trace: " . $e->getTraceAsString()
+            );
+
+            // Display a safe message to the employee.
+            $_SESSION['error'] =
+                'We encountered a problem while checking your leave eligibility. ' .
+                'Please try again later or contact HR if the problem persists.';
+
+            // Return to Leave History instead of displaying an incomplete form.
+            $content = __DIR__ . '/../views/employee-portal/leave/content.php';
+        }
+
+        require __DIR__ . '/../views/employee-portal/index.php';
+    }
+
     public function store()
     {
         try {
@@ -46,7 +251,7 @@ class LeaveController
             }
 
             $employeeId = (int) $employee['employee_id'];
-            
+
             $leaveTypeId = (int) ($_POST['leave_type_id'] ?? 0);
             $startDate = trim($_POST['start_date'] ?? '');
             $endDate = trim($_POST['end_date'] ?? '');
